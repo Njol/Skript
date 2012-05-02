@@ -1,0 +1,25 @@
+name: Skript
+description: Modify how Minecraft behaves without having to write a single line of code
+author: Njol
+website: http://njol.ch/projects/skript
+main: ch.njol.skript.Skript
+load: startup
+version: 1.0 pre-5
+#commands:
+#    skript:
+#        description: allows to modify the configuration files
+#        aliases: [sk, s]
+#        permission: skript.config
+#        usage: /skript help
+permissions:
+    skript.*:
+        default: false
+        children:
+            skript.commands: true
+            #skript.config: true
+    skript.commands:
+        default: op #testing only!
+        description: allows to use effects as commands, e.g. /set health to 20
+#    skript.config:
+#        description: allows to modify the configuration files via commands
+#        default: false
