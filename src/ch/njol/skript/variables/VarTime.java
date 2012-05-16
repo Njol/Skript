@@ -21,16 +21,16 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.World;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Time;
 
 /**
@@ -38,28 +38,28 @@ import ch.njol.skript.util.Time;
  * @author Peter Güttinger
  * 
  */
-public class VarTime extends Variable<Time> {
+public class VarTime extends SimpleVariable<Time> {
 	
 	static {
-		Skript.addVariable(VarTime.class, Time.class, "time( (in|of) %world%)?");
+		Skript.addVariable(VarTime.class, Time.class, "time [(in|of) %worlds%]");
 	}
 	
 	private Variable<World> worlds = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		worlds = (Variable<World>) vars[0];
 	}
 	
 	@Override
 	protected Time[] getAll(final Event e) {
-		return get(e, worlds, new Getter<Time, World>() {
+		return worlds.getArray(e, Time.class, new Getter<Time, World>() {
 			@Override
 			public Time get(final World w) {
 				return new Time((int) w.getTime());
 			}
-		}, false);
+		});
 	}
 	
 	@Override
@@ -81,12 +81,17 @@ public class VarTime extends Variable<Time> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "time in " + worlds.getDebugMessage(e);
-		return Skript.toString(getAll(e));
+		return Skript.getDebugMessage(getAll(e));
 	}
 	
 	@Override
 	public String toString() {
 		return "the time in " + worlds;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return worlds.isSingle();
 	}
 	
 }

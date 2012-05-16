@@ -22,7 +22,6 @@
 package ch.njol.skript.variables.base;
 
 import java.lang.reflect.Array;
-import java.util.regex.Matcher;
 
 import org.bukkit.event.Event;
 
@@ -30,7 +29,9 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Parser;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * A useful class for creating default variables. It simply returns the event value of the given type.
@@ -38,7 +39,7 @@ import ch.njol.skript.api.intern.Variable;
  * @author Peter Güttinger
  * @see Skript#addClass(String, Class, Class, Parser, String...)
  */
-public abstract class EventValueVariable<T> extends Variable<T> {
+public abstract class EventValueVariable<T> extends SimpleVariable<T> {
 	
 	private final Class<T> c;
 	private final Changer<T> changer;
@@ -62,7 +63,7 @@ public abstract class EventValueVariable<T> extends Variable<T> {
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {}
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
 	
 	@Override
 	public Class<T> getReturnType() {
@@ -70,10 +71,15 @@ public abstract class EventValueVariable<T> extends Variable<T> {
 	}
 	
 	@Override
+	public boolean isSingle() {
+		return true;
+	}
+	
+	@Override
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "event-" + c.getName();
-		return Skript.toString(Skript.getEventValue(e, c));
+		return Skript.getDebugMessage(Skript.getEventValue(e, c));
 	}
 	
 	@Override

@@ -33,7 +33,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import ch.njol.skript.api.Changer;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Slot;
 import ch.njol.skript.util.Time;
@@ -51,16 +51,15 @@ public class DefaultChangers {
 		
 		@Override
 		public Class<?> acceptChange(final ChangeMode mode) {
-			return ItemType.class;
+			return ItemType[].class;
 		}
 		
-		@SuppressWarnings("unchecked")
 		@Override
 		public void change(final Event e, final Variable<Block> blocks, final Variable<?> delta, final ch.njol.skript.api.Changer.ChangeMode mode) {
-			for (final Block block : blocks.get(e, false)) {
+			for (final Block block : blocks.getArray(e)) {
 				switch (mode) {
 					case SET:
-						((ItemType) delta.getFirst(e)).setBlock(block, true);
+						((ItemType) delta.getSingle(e)).setBlock(block, true);
 					break;
 					case CLEAR:
 						block.setTypeId(0, true);
@@ -71,11 +70,11 @@ public class DefaultChangers {
 						if (!(state instanceof InventoryHolder))
 							break;
 						if (mode == ChangeMode.ADD) {
-							for (final ItemType type : (Iterable<ItemType>) delta.get(e, false)) {
+							for (final ItemType type : (ItemType[]) delta.getArray(e)) {
 								type.addTo(((InventoryHolder) state).getInventory());
 							}
 						} else {
-							for (final ItemType type : (Iterable<ItemType>) delta.get(e, false)) {
+							for (final ItemType type : (ItemType[]) delta.getArray(e)) {
 								type.removeFrom(((InventoryHolder) state).getInventory());
 							}
 						}
@@ -91,26 +90,26 @@ public class DefaultChangers {
 		
 		@Override
 		public Class<?> acceptChange(final ch.njol.skript.api.Changer.ChangeMode mode) {
-			return ItemType.class;
+			return ItemType[].class;
 		}
 		
-		@SuppressWarnings({"deprecation", "unchecked"})
+		@SuppressWarnings({"deprecation"})
 		@Override
 		public void change(final Event e, final Variable<Inventory> invis, final Variable<?> delta, final ch.njol.skript.api.Changer.ChangeMode mode) {
-			for (final Inventory invi : invis.get(e, false)) {
+			for (final Inventory invi : invis.getArray(e)) {
 				switch (mode) {
 					case SET:
 						invi.clear();
 						//$FALL-THROUGH$
 					case ADD:
-						for (final ItemType type : (Iterable<ItemType>) delta.get(e, false)) {
+						for (final ItemType type : (ItemType[]) delta.getArray(e)) {
 							if (type == null)
 								continue;
 							type.addTo(invi);
 						}
 					break;
 					case REMOVE:
-						for (final ItemType type : (Iterable<ItemType>) delta.get(e, false)) {
+						for (final ItemType type : (ItemType[]) delta.getArray(e)) {
 							if (type == null)
 								continue;
 							type.removeFrom(invi);
@@ -142,10 +141,10 @@ public class DefaultChangers {
 		@SuppressWarnings("deprecation")
 		@Override
 		public void change(final Event e, final Variable<Slot> slots, final Variable<?> delta, final ch.njol.skript.api.Changer.ChangeMode mode) {
-			final ItemType type = (ItemType) delta.getFirst(e);
+			final ItemType type = (ItemType) delta.getSingle(e);
 			if (type == null && mode != ChangeMode.CLEAR)
 				return;
-			for (final Slot slot : slots.get(e, false)) {
+			for (final Slot slot : slots.getArray(e)) {
 				switch (mode) {
 					case SET:
 						slot.getInventory().setItem(slot.getIndex(), type.getItem().getRandom());
@@ -192,8 +191,8 @@ public class DefaultChangers {
 			int x = 1;
 			switch (mode) {
 				case SET:
-					final Time time = (Time) delta.getFirst(e);
-					for (final World w : worlds.get(e, false)) {
+					final Time time = (Time) delta.getSingle(e);
+					for (final World w : worlds.getArray(e)) {
 						w.setTime(time.getTicks());
 					}
 				break;
@@ -201,8 +200,8 @@ public class DefaultChangers {
 					x = -1;
 					//$FALL-THROUGH$
 				case ADD:
-					final Timespan ts = (Timespan) delta.getFirst(e);
-					for (final World w : worlds.get(e, false)) {
+					final Timespan ts = (Timespan) delta.getSingle(e);
+					for (final World w : worlds.getArray(e)) {
 						w.setTime((long) (w.getTime() + x * ts.getTicks()));
 					}
 				break;

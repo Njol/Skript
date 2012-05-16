@@ -21,47 +21,46 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.TreeType;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 
 public class EffTree extends Effect {
 	
 	static {
 		Skript.addEffect(EffTree.class,
-				"(grow|create|generate) tree( of type %treetype%)?( at %block%)?",
-				"(grow|create|generate) %treetype%( tree)?( at %block%)?");
+				"(grow|create|generate) tree [of type %treetype%] [at %blocks%]",
+				"(grow|create|generate) %treetype% [tree] [at %blocks%]");
 	}
 	
-	Variable<Block> blocks;
-	Variable<TreeType> types;
+	private Variable<Block> blocks;
+	private Variable<TreeType> type;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
-		types = (Variable<TreeType>) vars[0];
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		type = (Variable<TreeType>) vars[0];
 		blocks = (Variable<Block>) vars[1];
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		final TreeType type = types.getFirst(e);
+		final TreeType type = this.type.getSingle(e);
 		if (type == null)
 			return;
-		for (final Block b : blocks.get(e, false)) {
+		for (final Block b : blocks.getArray(e)) {
 			b.getWorld().generateTree(b.getLocation(), type);
 		}
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "grow tree of type " + types.getDebugMessage(e) + " at " + blocks.getDebugMessage(e);
+		return "grow tree of type " + type.getDebugMessage(e) + " at " + blocks.getDebugMessage(e);
 	}
 	
 }

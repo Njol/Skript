@@ -25,7 +25,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.intern.TopLevelExpression;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.util.Checker;
 
 /**
@@ -44,7 +45,7 @@ public abstract class Condition extends TopLevelExpression {
 	 * Checks whether this condition is satisfied with the given event. This should not alter the event or the world in any way, as conditions are only checked until one returns
 	 * false. All subsequent conditions of the same trigger will then be omitted.<br/>
 	 * <br/>
-	 * You might want to use {@link Variable#check(Event, Checker)}
+	 * You might want to use {@link SimpleVariable#check(Event, Checker)}
 	 * 
 	 * @param e the event to check
 	 * @return <code>true</code> if the condition is satisfied, <code>false</code> otherwise or if the condition doesn't apply to this event.
@@ -53,7 +54,7 @@ public abstract class Condition extends TopLevelExpression {
 	public abstract boolean run(final Event e);
 	
 	/**
-	 * Sets the negation status of this condition. This will change the behaviour of {@link Variable#check(Event, Checker, Condition)}.
+	 * Sets the negation status of this condition. This will change the behaviour of {@link SimpleVariable#check(Event, Checker, Condition)}.
 	 * 
 	 * @param invert
 	 */
@@ -70,7 +71,7 @@ public abstract class Condition extends TopLevelExpression {
 	}
 	
 	public static Condition parse(final String s) {
-		return (Condition) Expressions.parse(s, Skript.getConditions().iterator());
+		return (Condition) ExprParser.parse(s, Skript.getConditions().iterator(), false);
 	}
 	
 }

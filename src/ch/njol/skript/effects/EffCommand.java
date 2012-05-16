@@ -21,15 +21,14 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.VariableString;
 
 /**
@@ -41,9 +40,9 @@ public class EffCommand extends Effect {
 	
 	static {
 		Skript.addEffect(EffCommand.class,
-				"(execute )?command %variablestring%( by %commandsender%)?",
-				"(execute )?%commandsender% command %variablestring%",
-				"(let|make) %commandsender% execute( command)? %variablestring%");
+				"[execute] command %variablestrings% [by %commandsenders%]",
+				"[execute] %commandsenders% command %variablestrings%",
+				"(let|make) %commandsenders% execute [command] %variablestrings%");
 	}
 	
 	private Variable<CommandSender> senders;
@@ -51,7 +50,7 @@ public class EffCommand extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (matchedPattern > 0) {
 			senders = (Variable<CommandSender>) vars[0];
 			commands = (Variable<VariableString>) vars[1];
@@ -63,9 +62,9 @@ public class EffCommand extends Effect {
 	
 	@Override
 	public void execute(final Event e) {
-		for (final VariableString commandVS : commands.get(e, false)) {
+		for (final VariableString commandVS : commands.getArray(e)) {
 			final String command = commandVS.get(e);
-			for (final CommandSender sender : senders.get(e, false)) {
+			for (final CommandSender sender : senders.getArray(e)) {
 				Bukkit.getServer().dispatchCommand(sender, command);
 			}
 		}

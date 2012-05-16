@@ -403,10 +403,12 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 			return false;
 		}
 		for (final ItemData d : types) {
+			if (d.typeid == 0)
+				continue;
 			int amount = 0;
 			for (final ItemStack i : clone) {
-				if (d.isOfType(i)) {
-					final int toTake = Math.min(i == null ? 1 : i.getAmount(), this.amount - amount);
+				if (i != null && d.isOfType(i)) {
+					final int toTake = Math.min(i.getAmount(), this.amount - amount);
 					amount += toTake;
 					i.setAmount(i.getAmount() - toTake);
 					if (amount >= this.amount)

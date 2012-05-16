@@ -23,6 +23,7 @@ package ch.njol.skript.api.intern;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
 
@@ -37,12 +38,12 @@ public class VariableStringLiteral extends ConvertedLiteral<String> {
 	
 	public VariableStringLiteral(final UnparsedLiteral source) {
 		super(source, null, String.class);
-		strings = VariableString.makeStringsFromQuoted((String[]) source.getAll());
+		strings = VariableString.makeStringsFromQuoted(source.getData());
 		temp = new String[strings.length];
 	}
 	
 	public static VariableStringLiteral newInstance(final UnparsedLiteral source) {
-		for (final String s : (String[]) source.getAll()) {
+		for (final String s : source.getData()) {
 			if (!s.startsWith("\"") && !s.endsWith("\""))
 				return null;
 		}
@@ -51,7 +52,7 @@ public class VariableStringLiteral extends ConvertedLiteral<String> {
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "[" + Utils.join(strings, e, and) + "]";
+		return "[" + Utils.join(strings, e, getAnd()) + "]";
 	}
 	
 	@Override
@@ -64,11 +65,11 @@ public class VariableStringLiteral extends ConvertedLiteral<String> {
 	
 	@Override
 	public String toString() {
-		return "[" + Utils.join(strings, null, and) + "]";
+		return "[" + Utils.join(strings, null, getAnd()) + "]";
 	}
 	
 	@Override
-	public Class<? extends String> getReturnType() {
+	public Class<String> getReturnType() {
 		return String.class;
 	}
 	

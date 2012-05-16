@@ -21,35 +21,33 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarCreature extends Variable<Creature> {
+public class VarCreature extends SimpleVariable<Creature> {
 	
 	static {
 		Skript.addVariable(VarCreature.class, Creature.class, "creature");
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {}
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "creature";
-		return Skript.toString(getFirst(e));
+		return Skript.getDebugMessage(getSingle(e));
 	}
 	
 	@Override
@@ -68,6 +66,11 @@ public class VarCreature extends Variable<Creature> {
 	@Override
 	public String toString() {
 		return "the creature";
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return true;
 	}
 	
 }

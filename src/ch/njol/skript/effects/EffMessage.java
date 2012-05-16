@@ -21,14 +21,13 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.VariableString;
 
 /**
@@ -40,8 +39,8 @@ public class EffMessage extends Effect {
 	
 	static {
 		Skript.addEffect(EffMessage.class,
-				"((send )?message|send) %variablestring%( to %commandsender%)?",
-				"((send )?message|send) (to )?%commandsender% %variablestring%");
+				"([send] message|send) %variablestrings% [to %commandsenders%]",
+				"([send] message|send) [to] %commandsenders% %variablestrings%");
 	}
 	
 	private Variable<VariableString> messages;
@@ -49,7 +48,7 @@ public class EffMessage extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (matchedPattern == 0) {
 			messages = (Variable<VariableString>) vars[0];
 			recipients = (Variable<CommandSender>) vars[1];
@@ -61,11 +60,11 @@ public class EffMessage extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
-		for (final VariableString messageVS : messages.get(e, false)) {
+		for (final VariableString messageVS : messages.getArray(e)) {
 			final String message = messageVS.get(e);
 			if (message == null)
 				continue;
-			for (final CommandSender s : recipients.get(e, false)) {
+			for (final CommandSender s : recipients.getArray(e)) {
 				s.sendMessage(message);
 			}
 		}

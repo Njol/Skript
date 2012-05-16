@@ -31,7 +31,9 @@ import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.LoopVar;
 import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.api.intern.ConvertedVariable;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.variables.base.VarVariable;
 
 /**
@@ -43,17 +45,17 @@ import ch.njol.skript.variables.base.VarVariable;
 public class VarLoopValue extends VarVariable<Object> {
 	
 	static {
-		Skript.addVariable(VarLoopValue.class, Object.class, "loop-(\\S+)");
+		Skript.addVariable(VarLoopValue.class, Object.class, "loop-<\\S+>");
 	}
 	
 	private String name;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws ParseException {
-		name = matcher.group();
-		String s = matcher.group(1);
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+		name = parser.expr;
+		String s = parser.regexes.get(0).group();
 		int i = 1;
-		final Matcher m = Pattern.compile("^(.+)-(\\d+)$").matcher(matcher.group(1));
+		final Matcher m = Pattern.compile("^(.+)-(\\d+)$").matcher(s);
 		if (m.matches()) {
 			s = m.group(1);
 			i = Integer.parseInt(m.group(2));
@@ -68,15 +70,15 @@ public class VarLoopValue extends VarVariable<Object> {
 				return;
 			}
 		}
-		throw new ParseException("there's no loop that matches " + matcher.group());
+		throw new ParseException("there's no loop that matches " + name);
 	}
 	
 	// this is to keep "loop-xyz" as debug message and not switch back to the loopvar's debug message
 	// which is intended to be used only as debug message of the loop.
 	@Override
 	public <R> ConvertedVariable<? extends R> getConvertedVar(final Class<R> to) {
-		final Variable<?> siht = this;
-		final Variable<? extends R> v = var.getConvertedVariable(to);
+		final SimpleVariable<?> siht = this;
+		final SimpleVariable<? extends R> v = var.getConvertedVariable(to);
 		if (v == null)
 			return null;
 		return new ConvertedVariable<R>(v, to) {
@@ -87,7 +89,7 @@ public class VarLoopValue extends VarVariable<Object> {
 			
 			@Override
 			protected R[] getAll(final Event e) {
-				return v.get(e);
+				return v.getArray(e);
 			}
 		};
 	}

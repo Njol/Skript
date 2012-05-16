@@ -4,7 +4,7 @@ author: Njol
 website: http://njol.ch/projects/skript
 main: ch.njol.skript.Skript
 load: startup
-version: 1.0 pre-5
+version: 1.0 pre-6
 #commands:
 #    skript:
 #        description: allows to modify the configuration files
@@ -18,7 +18,7 @@ permissions:
             skript.commands: true
             #skript.config: true
     skript.commands:
-        default: op #testing only!
+        default: false
         description: allows to use effects as commands, e.g. /set health to 20
 #    skript.config:
 #        description: allows to modify the configuration files via commands

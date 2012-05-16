@@ -21,8 +21,6 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -30,25 +28,25 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarGameMode extends Variable<GameMode> {
+public class VarGameMode extends SimpleVariable<GameMode> {
 	
 	static {
-		Skript.addVariable(VarGameMode.class, GameMode.class, "game ?mode of %player%", "%player%'s game ?mode");
+		Skript.addVariable(VarGameMode.class, GameMode.class, "game[ ]mode of %players%", "%players%'s game[ ]mode");
 	}
 	
 	private Variable<Player> players;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
 	}
 	
@@ -59,12 +57,12 @@ public class VarGameMode extends Variable<GameMode> {
 	
 	@Override
 	protected GameMode[] getAll(final Event e) {
-		return super.get(e, players, new Converter<Player, GameMode>() {
+		return players.getArray(e, GameMode.class, new Converter<Player, GameMode>() {
 			@Override
 			public GameMode convert(final Player p) {
 				return p.getGameMode();
 			}
-		}, false);
+		});
 	}
 	
 	@Override
@@ -81,14 +79,19 @@ public class VarGameMode extends Variable<GameMode> {
 	
 	@Override
 	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) throws UnsupportedOperationException {
-		final GameMode m = (GameMode) delta.getFirst(e);
-		for (final Player p : players.get(e, false))
+		final GameMode m = (GameMode) delta.getSingle(e);
+		for (final Player p : players.getArray(e))
 			p.setGameMode(m);
 	}
 	
 	@Override
 	public String toString() {
 		return "the gamemode of " + players;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return players.isSingle();
 	}
 	
 }

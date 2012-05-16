@@ -21,14 +21,14 @@
 
 package ch.njol.skript.events;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.GameMode;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 
 /**
  * @author Peter Güttinger
@@ -37,25 +37,27 @@ import ch.njol.skript.api.SkriptEvent;
 public final class EvtGameMode extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtGameMode.class, PlayerGameModeChangeEvent.class, "gamemode change( to %gamemode%)?");
+		Skript.addEvent(EvtGameMode.class, PlayerGameModeChangeEvent.class, "gamemode change [to %gamemode%]");
 	}
 	
-	private GameMode mode = null;
+	private GameMode mode;
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Object[][] args, final int matchedPattern, final Matcher matcher) {
-		if (args.length > 0)
-			mode = (GameMode) args[0][0];
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		mode = ((Literal<GameMode>) args[0]).getSingle();
 	}
 	
 	@Override
 	public boolean check(final Event e) {
+		if (mode == null)
+			return true;
 		return ((PlayerGameModeChangeEvent) e).getNewGameMode().equals(mode);
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "gamemode change to " + mode;
+		return "gamemode change" + (mode == null ? "" : " to " + mode.toString().toLowerCase());
 	}
 	
 }

@@ -19,36 +19,16 @@
  * 
  */
 
-package ch.njol.skript.api.exception;
+package ch.njol.skript.lang;
 
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.Variable;
-
-/**
- * @author Peter Güttinger
- * @see Expression#init(Variable[], int, ParseResult)
- */
-public class ParseException extends Exception {
+public class ExpressionInfo<E extends Expression> {
 	
-	private static final long serialVersionUID = 3060684476033398334L;
+	public final Class<E> c;
+	public final String[] patterns;
 	
-	public ParseException(final String cause) {
-		super(cause);
-	}
-	
-	/**
-	 * If this is used, Skript's error cause will not be changed. This is usually not what you want.
-	 */
-	public ParseException() {}
-	
-	/**
-	 * alias of {@link #getMessage()}
-	 * 
-	 * @return
-	 */
-	public String getError() {
-		return getMessage();
+	public ExpressionInfo(final String[] patterns, final Class<E> c) {
+		this.patterns = patterns;
+		this.c = c;
 	}
 	
 }

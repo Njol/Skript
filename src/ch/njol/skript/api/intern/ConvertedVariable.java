@@ -21,16 +21,17 @@
 
 package ch.njol.skript.api.intern;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.api.exception.ParseException;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
- * Represents a variable converted to another type. This, and not Variable, is the required return type of {@link Variable#getConvertedVar(Class)} because this class<br/>
+ * Represents a variable converted to another type. This, and not Variable, is the required return type of {@link SimpleVariable#getConvertedVar(Class)} because this class<br/>
  * <ol>
  * <li>automatically lets the source variable handle everything apart from the get() methods</li>
  * <li>will never convert itself to another type, but rather request a new converted variable from the source variable.</li>
@@ -39,19 +40,19 @@ import ch.njol.skript.api.exception.ParseException;
  * @author Peter Güttinger
  * 
  */
-public abstract class ConvertedVariable<T> extends Variable<T> {
+public abstract class ConvertedVariable<T> extends SimpleVariable<T> {
 	
 	@Override
-	public final void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public final void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult matcher) throws InitException, ParseException {
 		throw new RuntimeException();
 	}
 	
-	protected Variable<?> source;
+	protected SimpleVariable<?> source;
 	protected Class<T> to;
 	
-	public ConvertedVariable(final Variable<?> source, final Class<T> to) {
+	public ConvertedVariable(final SimpleVariable<?> source, final Class<T> to) {
 		this.source = source;
-		setAnd(source.and);
+		setAnd(source.getAnd());
 		this.to = to;
 	}
 	
@@ -68,8 +69,13 @@ public abstract class ConvertedVariable<T> extends Variable<T> {
 	}
 	
 	@Override
-	public Class<? extends T> getReturnType() {
+	public Class<T> getReturnType() {
 		return to;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return source.isSingle();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -77,7 +83,7 @@ public abstract class ConvertedVariable<T> extends Variable<T> {
 	public <R> ConvertedVariable<? extends R> getConvertedVar(final Class<R> to) {
 		if (to.isAssignableFrom(getReturnType()))
 			return (ConvertedVariable<? extends R>) this;
-		return source.getConvertedVar(to);
+		return (ConvertedVariable<? extends R>) source.getConvertedVariable(to);
 	}
 	
 	@Override

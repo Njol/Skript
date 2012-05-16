@@ -26,8 +26,10 @@ import java.io.FilenameFilter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -38,6 +40,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -63,13 +67,9 @@ import ch.njol.skript.api.LoopVar.LoopInfo;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
-import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.api.intern.ChainedConverter;
-import ch.njol.skript.api.intern.Expression.Expressions;
-import ch.njol.skript.api.intern.Expression.VariableInfo;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.api.intern.Trigger;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.command.SkriptCommand;
 import ch.njol.skript.config.Config;
@@ -85,6 +85,12 @@ import ch.njol.skript.data.DefaultConverters;
 import ch.njol.skript.data.SkriptClasses;
 import ch.njol.skript.data.SkriptEventValues;
 import ch.njol.skript.data.SkriptTriggerItems;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Expression.VariableInfo;
+import ch.njol.skript.lang.ExpressionInfo;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
+import ch.njol.skript.util.ErrorSession;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Setter;
@@ -93,7 +99,7 @@ import ch.njol.util.Validate;
 /**
  * <b>Skript</b> - A Bukkit plugin to modify how Minecraft behaves without having to write a single line of code.<br/>
  * <br/>
- * Use this class to extend this plugin's functionality by adding more {@link Condition conditions}, {@link Effect effects}, {@link Variable variables}, etc.<br/>
+ * Use this class to extend this plugin's functionality by adding more {@link Condition conditions}, {@link Effect effects}, {@link SimpleVariable variables}, etc.<br/>
  * <br/>
  * Please also take a look at the {@link Utils} class! it will probably save you a lot of time.
  * 
@@ -104,7 +110,7 @@ public class Skript extends JavaPlugin {
 	
 	// ================ PLUGIN ================
 	
-	static Skript instance;
+	static Skript instance = null;
 	
 	public static Skript getInstance() {
 		return instance;
@@ -145,17 +151,16 @@ public class Skript extends JavaPlugin {
 				if (monitorMemoryUsage) {
 					System.gc();
 				}
-				
 				final long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 				
-				loadTriggerFiles();
-				info("Skript finished loading!");
+				Skript.loadTriggerFiles();
+				Skript.info("Skript finished loading!");
 				
 				if (monitorMemoryUsage) {
 					System.gc();
 					final long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 					Skript.memoryUsed += endMemory - startMemory;
-					info("Skript is currently using roughly " + formatMemory(memoryUsed) + " of RAM");
+					Skript.info("Skript is currently using roughly " + formatMemory(memoryUsed) + " of RAM");
 				}
 			}
 		}) == -1) {
@@ -225,17 +230,17 @@ public class Skript extends JavaPlugin {
 	
 	// ================ CONDITIONS & EFFECTS ================
 	
-	static final ArrayList<VariableInfo<Boolean>> conditions = new ArrayList<VariableInfo<Boolean>>(20);
-	static final ArrayList<VariableInfo<Boolean>> effects = new ArrayList<VariableInfo<Boolean>>(20);
-	static final ArrayList<VariableInfo<Boolean>> topLevelExpressions = new ArrayList<VariableInfo<Boolean>>(40);
+	static final ArrayList<ExpressionInfo<?>> conditions = new ArrayList<ExpressionInfo<?>>(20);
+	static final ArrayList<ExpressionInfo<?>> effects = new ArrayList<ExpressionInfo<?>>(20);
+	static final ArrayList<ExpressionInfo<?>> topLevelExpressions = new ArrayList<ExpressionInfo<?>>(40);
 	
 	/**
 	 * registers a {@link Condition}.
 	 * 
 	 * @param condition
 	 */
-	public static void addCondition(final Class<? extends Condition> condition, final String... patterns) {
-		final VariableInfo<Boolean> info = new VariableInfo<Boolean>(patterns, Boolean.class, condition);
+	public static <E extends Condition> void addCondition(final Class<E> condition, final String... patterns) {
+		final ExpressionInfo<E> info = new ExpressionInfo<E>(patterns, condition);
 		conditions.add(info);
 		topLevelExpressions.add(info);
 	}
@@ -245,52 +250,52 @@ public class Skript extends JavaPlugin {
 	 * 
 	 * @param effect
 	 */
-	public static void addEffect(final Class<? extends Effect> effect, final String... patterns) {
-		final VariableInfo<Boolean> info = new VariableInfo<Boolean>(patterns, Boolean.class, effect);
+	public static <E extends Effect> void addEffect(final Class<E> effect, final String... patterns) {
+		final ExpressionInfo<E> info = new ExpressionInfo<E>(patterns, effect);
 		effects.add(info);
 		topLevelExpressions.add(info);
 	}
 	
-	public static List<VariableInfo<Boolean>> getTopLevelExpressions() {
+	public static List<ExpressionInfo<?>> getTopLevelExpressions() {
 		return topLevelExpressions;
 	}
 	
-	public static List<VariableInfo<Boolean>> getConditions() {
+	public static List<ExpressionInfo<?>> getConditions() {
 		return conditions;
 	}
 	
-	public static List<VariableInfo<Boolean>> getEffects() {
+	public static List<ExpressionInfo<?>> getEffects() {
 		return effects;
 	}
 	
 	// ================ VARIABLES ================
 	
-	static final ArrayList<VariableInfo<?>> variables = new ArrayList<VariableInfo<?>>(30);
+	static final ArrayList<VariableInfo<? extends Variable<?>, ?>> variables = new ArrayList<VariableInfo<? extends Variable<?>, ?>>(30);
 	
-	public static <T> void addVariable(final Class<? extends Variable<T>> c, final Class<T> returnType, final String... patterns) {
-		variables.add(new VariableInfo<T>(patterns, returnType, c));
+	public static <E extends SimpleVariable<T>, T> void addVariable(final Class<E> c, final Class<T> returnType, final String... patterns) {
+		variables.add(new VariableInfo<E, T>(patterns, returnType, c));
 		if (log(Verbosity.VERY_HIGH))
 			Skript.info("variable " + c.getSimpleName() + " added");
 	}
 	
-	public static List<VariableInfo<?>> getVariables() {
+	public static List<VariableInfo<? extends Variable<?>, ?>> getVariables() {
 		return variables;
 	}
 	
 	// ================ EVENTS ================
 	
-	static final ArrayList<SkriptEventInfo> events = new ArrayList<SkriptEventInfo>(50);
+	static final ArrayList<SkriptEventInfo<?>> events = new ArrayList<SkriptEventInfo<?>>(50);
 	
 	@SuppressWarnings("unchecked")
-	public static void addEvent(final Class<? extends SkriptEvent> c, final Class<? extends Event> event, final String... patterns) {
-		events.add(new SkriptEventInfo(patterns, c, array(event)));
+	public static <E extends SkriptEvent> void addEvent(final Class<E> c, final Class<? extends Event> event, final String... patterns) {
+		events.add(new SkriptEventInfo<E>(patterns, c, array(event)));
 	}
 	
-	public static void addEvent(final Class<? extends SkriptEvent> c, final Class<? extends Event>[] events, final String... patterns) {
-		Skript.events.add(new SkriptEventInfo(patterns, c, events));
+	public static <E extends SkriptEvent> void addEvent(final Class<E> c, final Class<? extends Event>[] events, final String... patterns) {
+		Skript.events.add(new SkriptEventInfo<E>(patterns, c, events));
 	}
 	
-	public static final ArrayList<SkriptEventInfo> getEvents() {
+	public static final ArrayList<SkriptEventInfo<?>> getEvents() {
 		return events;
 	}
 	
@@ -438,7 +443,7 @@ public class Skript extends JavaPlugin {
 			if (ci.getCodeName().equals(codeName))
 				return ci;
 		}
-		throw new RuntimeException("no class info found for " + codeName);
+		throw new SkriptAPIException("no class info found for " + codeName);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -449,7 +454,7 @@ public class Skript extends JavaPlugin {
 				infos.add((ClassInfo<? extends T>) ci);
 		}
 		if (infos.isEmpty())
-			throw new RuntimeException("no class info found for " + c.getName());
+			throw new SkriptAPIException("no class info found for " + c.getName());
 		return infos;
 	}
 	
@@ -488,8 +493,8 @@ public class Skript extends JavaPlugin {
 	 * @param name
 	 * @return the variable holding the default value or null if this class doesn't have one
 	 */
-	public static <T> Class<? extends Variable<?>> getDefaultVariable(final String name) {
-		return getClassInfo(name).getDefaultVariable();
+	public static <T> Class<? extends SimpleVariable<?>> getDefaultVariable(final String name) {
+		return getClassInfo(name).getDefaultSimpleVariable();
 	}
 	
 	/**
@@ -582,40 +587,43 @@ public class Skript extends JavaPlugin {
 	 * @see #toString(Object, boolean)
 	 * @see Parser
 	 */
-	public static <T> String toString(final T o) {
+	public static String toString(final Object o) {
 		return toString(o, false);
+	}
+	
+	public static String getDebugMessage(final Object o) {
+		return toString(o, true);
 	}
 	
 	/**
 	 * @param o The object
-	 * @param classname Whether to return the object's ({@link Class#getSimpleName() simple}) class name instead of {@link String#valueOf(Object)} if no parser was found
 	 * @return String representation of the object
 	 * @see #toString(Object)
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T> String toString(final T o, final boolean classname) {
+	private static <T> String toString(final T o, final boolean debug) {
 		if (o == null)
 			return "<none>";
 		if (o.getClass().isArray()) {
+			if (((Object[]) o).length == 0)
+				return "<none>";
 			final StringBuilder b = new StringBuilder();
 			boolean first = true;
 			for (final Object i : (Object[]) o) {
 				if (!first)
 					b.append(", ");
-				b.append(toString(i));
+				b.append(toString(i, debug));
 				first = false;
 			}
 			return "[" + b.toString() + "]";
 		}
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getParser() != null && ci.getC().isAssignableFrom(o.getClass())) {
-				final String s = ((Parser<T>) ci.getParser()).toString(o);
+				final String s = debug ? ((Parser<T>) ci.getParser()).getDebugMessage(o) : ((Parser<T>) ci.getParser()).toString(o);
 				if (s != null)
 					return s;
 			}
 		}
-		if (classname)
-			return o.getClass().getSimpleName();
 		return String.valueOf(o);
 	}
 	
@@ -811,7 +819,7 @@ public class Skript extends JavaPlugin {
 	
 	// ================ LOOPS ================
 	
-	static final ArrayList<LoopInfo<?>> loops = new ArrayList<LoopVar.LoopInfo<?>>();
+	static final ArrayList<LoopInfo<?, ?>> loops = new ArrayList<LoopVar.LoopInfo<?, ?>>();
 	
 	/**
 	 * Registers a loopable value.
@@ -821,8 +829,8 @@ public class Skript extends JavaPlugin {
 	 * @param patterns
 	 * @see LoopVar
 	 */
-	public static <T> void addLoop(final Class<? extends LoopVar<T>> c, final Class<T> returnType, final String... patterns) {
-		loops.add(new LoopInfo<T>(c, returnType, patterns));
+	public static <E extends LoopVar<T>, T> void addLoop(final Class<E> c, final Class<T> returnType, final String... patterns) {
+		loops.add(new LoopInfo<E, T>(c, returnType, patterns));
 	}
 	
 	// ================ COMMANDS ================
@@ -859,7 +867,7 @@ public class Skript extends JavaPlugin {
 	}
 	
 	public static void outdatedError() {
-		error("The version of Skript you're using is not compatible with " + Bukkit.getVersion());
+		SkriptLogger.log(Level.SEVERE, "The version of Skript you're using is not compatible with " + Bukkit.getVersion());
 	}
 	
 	public static void outdatedError(final Throwable t) {
@@ -868,11 +876,6 @@ public class Skript extends JavaPlugin {
 	}
 	
 	// ================ LOGGING ================
-	
-	private static int errorCount = 0;
-	private static void resetErrorCount() {
-		errorCount = 0;
-	}
 	
 	public static final boolean logNormal() {
 		return SkriptLogger.log(Verbosity.NORMAL);
@@ -886,8 +889,8 @@ public class Skript extends JavaPlugin {
 		return SkriptLogger.log(Verbosity.VERY_HIGH);
 	}
 	
-	public static final boolean logExtreme() {
-		return SkriptLogger.log(Verbosity.EXTREME);
+	public static final boolean debug() {
+		return SkriptLogger.log(Verbosity.DEBUG);
 	}
 	
 	public static final boolean log(final Verbosity minVerb) {
@@ -908,80 +911,39 @@ public class Skript extends JavaPlugin {
 		SkriptLogger.log(Level.INFO, info);
 	}
 	
+	private static final Deque<ErrorSession> errorSessionStack = new LinkedList<ErrorSession>();
+	private static ErrorSession errorSession = null;
+	
+	public final static ErrorSession startErrorSession() {
+		if (errorSession != null)
+			errorSessionStack.addFirst(errorSession);
+		return errorSession = new ErrorSession();
+	}
+	
+	public final static void stopErrorSession() {
+		errorSession = errorSessionStack.poll();
+	}
+	
+	public final static ErrorSession getCurrentErrorSession() {
+		return errorSession;
+	}
+	
 	/**
 	 * @see #addWarning(String)
 	 * @see SkriptLogger#log(Level, String)
 	 */
 	public static void warning(final String warning) {
-		SkriptLogger.log(Level.WARNING, warning);
-	}
-	
-	private final static ArrayList<String> warnings = new ArrayList<String>();
-	
-	public static void addWarning(final String warning) {
-		warnings.add(warning);
-	}
-	
-	/**
-	 * Error cause. Must never be null.
-	 */
-	private static String cause = "";
-	
-	public static void printErrorAndCause(final String error) {
-		errorCount++;
-		warnings.clear();
-		SkriptLogger.log(Level.SEVERE, error + (hasErrorCause() ? " because " + cause : ""));
-		clearErrorCause();
-	}
-	
-	public static void printErrorCause(final CommandSender sender) {
-		errorCount++;
-		if (sender != null)
-			sender.sendMessage(cause);
+		if (errorSession != null)
+			errorSession.warning(warning);
 		else
-			SkriptLogger.log(Level.SEVERE, cause);
-		clearErrorCause();
+			SkriptLogger.log(Level.WARNING, warning);
 	}
 	
-	public static void printErrorCause() {
-		errorCount++;
-		warnings.clear();
-		SkriptLogger.log(Level.SEVERE, cause);
-		clearErrorCause();
-	}
-	
-	public static final void printWarnings() {
-		for (final String w : warnings)
-			SkriptLogger.log(Level.WARNING, w);
-		warnings.clear();
-	}
-	
-	/**
-	 * Should not be used except in the {@link InitException} catch clause of {@link Expressions#parse(String, java.util.Iterator)}, as well as by the tigger file loader.<br/>
-	 * Also prints all warnings that occurred since the last cleared or printed error.
-	 */
-	public static final void clearErrorCause() {
-		warnings.clear();
-		cause = null;
-	}
-	
-	public static final boolean hasErrorCause() {
-		return cause != null;
-	}
-	
-	public static void setErrorCause(final String error, final boolean overwrite) {
-		Validate.notNullOrEmpty(error);
-		if (overwrite || !hasErrorCause())
-			cause = error;
-	}
-	
-	/**
-	 * @see #setErrorCause(String, boolean)
-	 * @see SkriptLogger#log(Level, String)
-	 */
 	public static void error(final String error) {
-		errorCount++;
-		SkriptLogger.log(Level.SEVERE, error);
+		if (errorSession != null)
+			errorSession.error(error);
+		else
+			SkriptLogger.log(Level.SEVERE, error);
 	}
 	
 	private final static String EXCEPTION_PREFIX = "##!! ";
@@ -993,7 +955,7 @@ public class Skript extends JavaPlugin {
 	 * @return an empty RuntimeException to throw if code execution should terminate.
 	 */
 	public final static RuntimeException exception(final String... info) {
-		return exception(new Exception(), info);
+		return exception(null, info);
 	}
 	
 	/**
@@ -1003,7 +965,7 @@ public class Skript extends JavaPlugin {
 	 * @param info Description of the error and additional information
 	 * @return an empty RuntimeException to throw if code execution should terminate.
 	 */
-	public final static RuntimeException exception(final Exception cause, final String... info) {
+	public final static RuntimeException exception(Exception cause, final String... info) {
 		SkriptLogger.setPrefix(EXCEPTION_PREFIX);
 		
 		SkriptLogger.logDirect(Level.SEVERE, "");
@@ -1013,26 +975,30 @@ public class Skript extends JavaPlugin {
 		SkriptLogger.logDirect(Level.SEVERE, "");
 		SkriptLogger.logDirect(Level.SEVERE, "If you're developing an add-on for Skript this likely means you have done something wrong.");
 		SkriptLogger.logDirect(Level.SEVERE, "If you're a server admin, please go to http://dev.bukkit.org/server-mods/skript/tickets/");
-		SkriptLogger.logDirect(Level.SEVERE, "and check whether this error has already been reported. If not, please create a new ticket,");
-		SkriptLogger.logDirect(Level.SEVERE, "copy & paste the following stacktrace into it, and please describe what you did before it happened!");
-
-//		SkriptLogger.logDirect(Level.SEVERE, "");
-//		SkriptLogger.logDirect(Level.SEVERE, "Information about the error:");
-//		SkriptLogger.logDirect(Level.SEVERE, "");
-//		SkriptLogger.logDirect(Level.SEVERE, "occurred at:");
-//		final StackTraceElement[] st = Thread.currentThread().getStackTrace();
-//		for (int i = 2; i < st.length; i++) {
-//			SkriptLogger.logDirect(Level.SEVERE, "    " + st[i].toString());
-//		}
+		SkriptLogger.logDirect(Level.SEVERE, "and create a new ticket with a meaningful title, copy & paste this whole error into it,");
+		SkriptLogger.logDirect(Level.SEVERE, "and please describe what you did before it happened and/or what you think caused the error.");
+		SkriptLogger.logDirect(Level.SEVERE, "If you feel like it's a trigger that's causing the error please post the trigger as well.");
+		SkriptLogger.logDirect(Level.SEVERE, "By following this guide fixing the error should be easy and done fast.");
 		
-		if (cause != null) {
-			SkriptLogger.logDirect(Level.SEVERE, "");
-			SkriptLogger.logDirect(Level.SEVERE, "Stacktrace:");
-			SkriptLogger.logDirect(Level.SEVERE, cause.toString());
-			for (final StackTraceElement e : cause.getStackTrace())
-				SkriptLogger.logDirect(Level.SEVERE, "    at " + e.toString());
+		SkriptLogger.logDirect(Level.SEVERE, "");
+		SkriptLogger.logDirect(Level.SEVERE, "Stacktrace:");
+		if (cause == null) {
+			SkriptLogger.logDirect(Level.SEVERE, "  warning: no exception given, dumping current stack trace instead");
+			cause = new Exception();
 		}
+		SkriptLogger.logDirect(Level.SEVERE, cause.toString());
+		for (final StackTraceElement e : cause.getStackTrace())
+			SkriptLogger.logDirect(Level.SEVERE, "    at " + e.toString());
 		
+		SkriptLogger.logDirect(Level.SEVERE, "");
+		SkriptLogger.logDirect(Level.SEVERE, "Version Information:");
+		SkriptLogger.logDirect(Level.SEVERE, "  Skript version: " + Skript.getInstance().getDescription().getVersion());
+		SkriptLogger.logDirect(Level.SEVERE, "  Bukkit version: " + Bukkit.getBukkitVersion());
+		SkriptLogger.logDirect(Level.SEVERE, "  Java version: " + System.getProperty("java.version"));
+		SkriptLogger.logDirect(Level.SEVERE, "");
+		SkriptLogger.logDirect(Level.SEVERE, "Running CraftBukkit: " + (Bukkit.getServer() instanceof CraftServer));
+		SkriptLogger.logDirect(Level.SEVERE, "");
+		SkriptLogger.logDirect(Level.SEVERE, "Current node: " + SkriptLogger.getNode());
 		SkriptLogger.logDirect(Level.SEVERE, "");
 		SkriptLogger.logDirect(Level.SEVERE, "End of Error.");
 		SkriptLogger.logDirect(Level.SEVERE, "");
@@ -1053,6 +1019,8 @@ public class Skript extends JavaPlugin {
 	private static boolean enableEffectCommands = false;
 	
 	private static final void parseMainConfig() {
+		
+		final ErrorSession session = Skript.startErrorSession();
 		
 		final ArrayList<String> aliasNodes = new ArrayList<String>();
 		
@@ -1132,7 +1100,7 @@ public class Skript extends JavaPlugin {
 						if (t != null)
 							vs.put(((EntryNode) a).getKey(), t);
 						else
-							Skript.printErrorAndCause("'" + ((EntryNode) a).getValue() + "' is invalid");
+							session.printErrors("'" + ((EntryNode) a).getValue() + "' is invalid");
 					}
 					variations.put(n.getName().substring(1, n.getName().length() - 1), vs);
 				}
@@ -1172,6 +1140,8 @@ public class Skript extends JavaPlugin {
 				}, instance);
 			}
 		}
+		
+		Skript.stopErrorSession();
 	}
 	
 	/**
@@ -1179,6 +1149,7 @@ public class Skript extends JavaPlugin {
 	 * 
 	 * @param sender
 	 * @param command
+	 * @return whether to cancel the event, i.e. prevent the "unknown command" message
 	 */
 	private static boolean handleEffectCommand(final CommandSender sender, final String command) {
 		if (!sender.hasPermission("skript.commands"))
@@ -1187,16 +1158,24 @@ public class Skript extends JavaPlugin {
 		if (commandMap.getCommand(x) != null)
 			return false;
 		
+		final ErrorSession session = Skript.startErrorSession();
 		final Effect e = Effect.parse(command);
+		Skript.stopErrorSession();
 		if (e != null) {
 			final String[] c = command.split(" ");
 			sender.sendMessage(ChatColor.GRAY + ChatColor.stripColor(command));
 			e.run(new CommandEvent(sender, c[0], c.length > 1 ? Arrays.copyOfRange(c, 1, c.length - 1) : new String[0]));
 			return true;
-		} else if (Skript.hasErrorCause()) {
+		} else if (session.hasErrors()) {
 			sender.sendMessage(ChatColor.GRAY + ChatColor.stripColor(command));
-			Skript.printErrorCause(sender);
+			session.printErrors(sender);
 			return true;
+		} else {
+			Skript.exception("Effect was neither parsed nor was any error logged!",
+					"input: " + command,
+					"sent by: " + sender.getName() + (sender instanceof ConsoleCommandSender ? "" : " (the user was told to inform an admin)"));
+			if (!(sender instanceof ConsoleCommandSender))
+				sender.sendMessage(ChatColor.RED + "[Skript] Unexpected error! Please tell an admin to check the server log.");
 		}
 		return false;
 	}
@@ -1225,13 +1204,13 @@ public class Skript extends JavaPlugin {
 		}
 	}
 	
-	private void loadTriggerFiles() {
+	private static void loadTriggerFiles() {
 		boolean successful = true;
-		resetErrorCount();
 		int numFiles = 0;
+		final ErrorSession session = Skript.startErrorSession();
 		
 		try {
-			final File includes = new File(getDataFolder(), Skript.TRIGGERFILEFOLDER + File.separatorChar);
+			final File includes = new File(instance.getDataFolder(), Skript.TRIGGERFILEFOLDER + File.separatorChar);
 			for (final File f : includes.listFiles(new FilenameFilter() {
 				@Override
 				public boolean accept(final File dir, final String name) {
@@ -1254,14 +1233,31 @@ public class Skript extends JavaPlugin {
 			info("loaded " + numFiles + " trigger file" + (numFiles == 1 ? "" : "s")
 					+ " with a total of " + TriggerFileLoader.loadedTriggers + " trigger" + (TriggerFileLoader.loadedTriggers == 1 ? "" : "s")
 					+ " and " + TriggerFileLoader.loadedCommands + " command" + (TriggerFileLoader.loadedCommands == 1 ? "" : "s"));
-		if (successful && errorCount == 0)
+		if (successful && session.getErrorCount() == 0)
 			info("No errors detected in any loaded trigger files");
 		
 		for (final Entry<Class<? extends Event>, List<Trigger>> e : SkriptEventHandler.triggers.entrySet()) {
 			Bukkit.getServer().getPluginManager().registerEvent(e.getKey(), new Listener() {}, priority, SkriptEventHandler.ee, instance);
-			if (log(Verbosity.EXTREME))
+			if (log(Verbosity.DEBUG))
 				config("registered Event " + e.getKey().getSimpleName());
 		}
+	}
+	
+	/**
+	 * @param c
+	 * @return
+	 */
+	public static String getExpressionName(final Class<? extends Expression> c) {
+		if (Condition.class.isAssignableFrom(c)) {
+			return "condition";
+		} else if (Effect.class.isAssignableFrom(c)) {
+			return "effect";
+		} else if (LoopVar.class.isAssignableFrom(c)) {
+			return "loop";
+		} else if (Variable.class.isAssignableFrom(c)) {
+			return "variable";
+		}
+		throw new SkriptAPIException(c.getName() + " is not a normal expression class");
 	}
 	
 }

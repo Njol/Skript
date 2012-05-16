@@ -21,8 +21,6 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -32,7 +30,8 @@ import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.Testable;
 import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 
 /**
@@ -43,8 +42,8 @@ public class EffEquip extends Effect implements Testable {
 	
 	static {
 		Skript.addEffect(EffEquip.class,
-				"equip( %player%)? with %itemtype%",
-				"make %player% wear %itemtype%");
+				"equip [%players%] with %itemtypes%",
+				"make %players% wear %itemtypes%");
 	}
 	
 	private Variable<Player> players;
@@ -52,7 +51,7 @@ public class EffEquip extends Effect implements Testable {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
 		players = (Variable<Player>) vars[0];
 		types = (Variable<ItemType>) vars[1];
 	}
@@ -64,8 +63,8 @@ public class EffEquip extends Effect implements Testable {
 	
 	@Override
 	protected void execute(final Event e) {
-		final Iterable<Player> ps = players.get(e, false);
-		for (final ItemType t : types.get(e, false)) {
+		final Player[] ps = players.getArray(e);
+		for (final ItemType t : types.getArray(e)) {
 			for (final ItemStack item : t.getAll()) {
 				switch (item.getType()) {
 					case LEATHER_BOOTS:
@@ -110,8 +109,8 @@ public class EffEquip extends Effect implements Testable {
 	
 	@Override
 	public boolean test(final Event e) {
-		//		final Iterable<Player> ps = players.get(e, false);
-		//		for (final ItemType t : types.get(e, false)) {
+		//		final Iterable<Player> ps = players.getArray(e);
+		//		for (final ItemType t : types.getArray(e)) {
 		//			for (final Player p : ps) {
 		//				//TODO this + think...
 		//			}

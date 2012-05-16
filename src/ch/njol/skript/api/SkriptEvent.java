@@ -21,13 +21,16 @@
 
 package ch.njol.skript.api;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.intern.Expression.ExpressionInfo;
+import ch.njol.skript.api.exception.InitException;
+import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.events.EvtRightclick;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionInfo;
+import ch.njol.skript.lang.Literal;
 
 /**
  * A SkriptEvent is like a condition. It is called when any of the registered events occurs.
@@ -40,18 +43,21 @@ import ch.njol.skript.events.EvtRightclick;
  * @see Skript#addEvent(Class, Class, String...)
  * @see Skript#addEvent(Class, Class[], String...)
  */
-public abstract class SkriptEvent implements Debuggable {
+public abstract class SkriptEvent implements Debuggable, Expression {
 	
-	public static class SkriptEventInfo extends ExpressionInfo {
+	public static class SkriptEventInfo<E extends SkriptEvent> extends ExpressionInfo<E> {
 		
 		public Class<? extends Event>[] events;
-		public Class<? extends SkriptEvent> c;
 		
-		public SkriptEventInfo(final String[] patterns, final Class<? extends SkriptEvent> c, final Class<? extends Event>[] events) {
-			super(patterns, null);
-			this.c = c;
+		public SkriptEventInfo(final String[] patterns, final Class<E> c, final Class<? extends Event>[] events) {
+			super(patterns, c);
 			this.events = events;
 		}
+	}
+	
+	@Override
+	public void init(final ch.njol.skript.lang.Variable<?>[] vars, final int matchedPattern, final ParseResult parseResult) throws InitException, ParseException {
+		throw new UnsupportedOperationException();
 	}
 	
 	/**
@@ -60,7 +66,7 @@ public abstract class SkriptEvent implements Debuggable {
 	 * @param args
 	 * @return
 	 */
-	public abstract void init(final Object[][] args, int matchedPattern, Matcher matcher);
+	public abstract void init(final Literal<?>[] args, int matchedPattern, ParseResult parser);
 	
 	/**
 	 * checks whether the given Event applies, e.g. the leftclick event is only part of the PlayerInteractEvent, and this checks whether the player rightclicked or not. This method

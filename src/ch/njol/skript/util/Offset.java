@@ -65,7 +65,9 @@ public class Offset {
 	 * @return a new location
 	 */
 	public Location getRelative(final Location location) {
-		if (location == null || !isOffset)
+		if (location == null)
+			return null;
+		if (!isOffset)
 			return location.clone();
 		return location.clone().add(mod[0], mod[1], mod[2]);
 	}
@@ -118,9 +120,9 @@ public class Offset {
 			if (mod[i] == 0)
 				continue;
 			if (mod[i] * Utils.getBlockFaceDir(dirs[i], i) > 0)
-				r += mod[i] + " " + getFaceName(dirs[i]);
+				r += (r.isEmpty() ? "" : " ") + mod[i] + " " + getFaceName(dirs[i]);
 			else
-				r += -mod[i] + " " + getFaceName(dirs[i].getOppositeFace());
+				r += (r.isEmpty() ? "" : " ") + -mod[i] + " " + getFaceName(dirs[i].getOppositeFace());
 		}
 		return r;
 	}

@@ -21,9 +21,11 @@
 
 package ch.njol.skript.api;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
+
+import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 
 /**
  * A very basic SkriptEvent which returns true for all events (i.e. all registered events). This event is especially useful for custom events.
@@ -40,7 +42,10 @@ public class SimpleEvent extends SkriptEvent {
 	}
 	
 	@Override
-	public void init(final Object[][] args, final int matchedPattern, final Matcher matcher) {}
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		if (args.length != 0)
+			throw new SkriptAPIException("Invalid use of SimpleEvent");
+	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {

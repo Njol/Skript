@@ -21,14 +21,13 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
@@ -37,20 +36,20 @@ import ch.njol.skript.api.intern.Variable;
 public class EffKill extends Effect {
 	
 	static {
-		Skript.addEffect(EffKill.class, "kill %livingentity%");
+		Skript.addEffect(EffKill.class, "kill %livingentities%");
 	}
 	
 	private Variable<LivingEntity> entities;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		entities = (Variable<LivingEntity>) vars[0];
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		for (final LivingEntity entity : entities.get(e, false)) {
+		for (final LivingEntity entity : entities.getArray(e)) {
 			entity.setHealth(0);
 		}
 	}

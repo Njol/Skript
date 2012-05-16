@@ -21,14 +21,13 @@
 
 package ch.njol.skript.conditions;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 
@@ -40,10 +39,10 @@ public class CondItemInHand extends Condition {
 	
 	static {
 		Skript.addCondition(CondItemInHand.class,
-				"(%player% )?ha(s|ve) %itemtype% in hand",
-				"(%player% )?(is|are) holding %itemtype%",
-				"(%player% )?(ha(s|ve) not|do(es)?n't have) %itemtype% in hand",
-				"(%player% )?(is not|isn't) holding %itemtype%");
+				"[%players%] ha(s|ve) %itemtypes% in hand",
+				"[%players%] (is|are) holding %itemtypes%",
+				"[%players%] (ha(s|ve) not|do[es]n't have) %itemtypes% in hand",
+				"[%players%] (is not|isn't) holding %itemtypes%");
 	}
 	
 	private Variable<Player> players;
@@ -51,7 +50,7 @@ public class CondItemInHand extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
 		types = (Variable<ItemType>) vars[1];
 		setNegated(matchedPattern >= 2);
@@ -67,9 +66,9 @@ public class CondItemInHand extends Condition {
 					public boolean check(final ItemType type) {
 						return type.isOfType(p.getItemInHand());
 					}
-				}, false);
+				});
 			}
-		}, this, false);
+		}, this);
 	}
 	
 	@Override

@@ -130,7 +130,7 @@ public abstract class Aliases {
 	static int addAliases(final String name, final String value, final HashMap<String, HashMap<String, ItemType>> variations) {
 		final ItemType t = parseAlias(value);
 		if (t == null) {
-			Skript.printErrorAndCause("'" + value + "' is invalid");
+			Skript.getCurrentErrorSession().printErrors("'" + value + "' is invalid");
 			return 0;
 		}
 		final HashMap<String, ItemType> as = getAliases(name, t, variations);
@@ -324,7 +324,7 @@ public abstract class Aliases {
 		if (c != s.length()) {
 			data = parseData(s.substring(c + 1));
 			if (data == null) {
-				Skript.setErrorCause("'" + s.substring(c) + "' is no a valid item data", false);
+				Skript.error("'" + s.substring(c) + "' is no a valid item data");
 				return null;
 			}
 		}
@@ -335,12 +335,12 @@ public abstract class Aliases {
 			ItemData d = new ItemData();
 			d.typeid = Integer.parseInt(type);
 			if (Material.getMaterial(d.typeid) == null) {
-				Skript.setErrorCause("There doesn't exist a material with id " + d.typeid + "!", false);
+				Skript.error("There doesn't exist a material with id " + d.typeid + "!");
 				return null;
 			}
 			if (data != null) {
 				if (d.typeid <= Skript.MAXBLOCKID && (data.dataMax > 15 || data.dataMin > 15)) {
-					Skript.setErrorCause("Blocks only have data values from 0 to 15", false);
+					Skript.error("Blocks only have data values from 0 to 15");
 					return null;
 				}
 				d = d.intersection(data);
@@ -351,7 +351,7 @@ public abstract class Aliases {
 			for (ItemData d : i) {
 				if (data != null) {
 					if (d.typeid <= Skript.MAXBLOCKID && (data.dataMax > 15 || data.dataMin > 15)) {
-						Skript.setErrorCause("Blocks only have data values from 0 to 15", false);
+						Skript.error("Blocks only have data values from 0 to 15");
 						return null;
 					}
 					d = d.intersection(data);
@@ -360,7 +360,7 @@ public abstract class Aliases {
 			}
 			return t;
 		}
-		Skript.setErrorCause("'" + s + "' is neither an id nor an alias", false);
+		Skript.error("'" + s + "' is neither an id nor an alias");
 		return null;
 	}
 	
@@ -382,7 +382,7 @@ public abstract class Aliases {
 		}
 		final Pair<String, Boolean> p = Utils.getPlural(s);
 		if (!ignorePluralCheck && !(p.second ^ singular))
-			Skript.addWarning("Invalid plural in '" + s + "', expected '" + (singular ? p.first : Utils.toPlural(s)) + "'. You might want to correct it.");
+			Skript.warning("Possible invalid plural detected in '" + s + "'");
 		s = p.first;
 		lc = s.toLowerCase(Locale.ENGLISH);
 		if (lc.endsWith(" block")) {
@@ -423,7 +423,7 @@ public abstract class Aliases {
 		t.dataMin = (i == 0 ? -1 : Short.parseShort(s.substring(0, i)));
 		t.dataMax = (i == s.length() ? t.dataMin : (i == s.length() - 1 ? -1 : Short.parseShort(s.substring(i + 1, s.length()))));
 		if (t.dataMax != -1 && t.dataMax < t.dataMin) {
-			Skript.setErrorCause("in a data range the first number must be smaller than the second", false);
+			Skript.error("the first number of a data range must be smaller than the second");
 			return null;
 		}
 		return t;

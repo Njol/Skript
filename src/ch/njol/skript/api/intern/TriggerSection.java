@@ -48,11 +48,11 @@ public abstract class TriggerSection extends TriggerItem {
 	private final static String indent = "  ";
 	private static String indentation = "  ";
 	
-	protected void incIndentation() {
+	protected static void incIndentation() {
 		indentation += indent;
 	}
 	
-	protected void decIndentation() {
+	protected static void decIndentation() {
 		indentation = indentation.substring(indentation.length() - indent.length());
 	}
 	

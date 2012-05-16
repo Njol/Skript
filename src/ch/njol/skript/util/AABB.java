@@ -68,11 +68,11 @@ public class AABB implements Iterable<Block> {
 				&& lowerBound.getY() <= l.getY() && l.getY() <= upperBound.getY()
 				&& lowerBound.getZ() <= l.getZ() && l.getZ() <= upperBound.getZ();
 	}
-
+	
 	public boolean containsCompletely(final Block b) {
 		return contains(b.getLocation()) && contains(b.getLocation().add(1, 1, 1));
 	}
-
+	
 	public boolean contains(final Block b) {
 		return contains(b.getLocation().add(0.5, 0.5, 0.5));
 	}

@@ -65,7 +65,7 @@ public class Argument<T> {
 			else
 				defT = conv.convert(def);
 			if (defT == null)
-				throw new ParseException("'" + def + "' is not " + Utils.addUndefinedArticle(Skript.getExactClassName(type)));
+				throw new ParseException("'" + def + "' is not " + Utils.a(Skript.getExactClassName(type)));
 		} else {
 			defT = null;
 		}
@@ -77,7 +77,7 @@ public class Argument<T> {
 		try {
 			return new Argument<T>(type, def, index, single);
 		} catch (final ParseException e) {
-			Skript.setErrorCause(e.getMessage(), false);
+			Skript.error(e.getError());
 			return null;
 		}
 	}
@@ -105,7 +105,7 @@ public class Argument<T> {
 		}
 		current[0] = conv.convert(s);
 		if (current[0] == null)
-			sender.sendMessage("'" + s + "' is not " + Utils.addUndefinedArticle(Skript.getExactClassName(type)));
+			sender.sendMessage("'" + s + "' is not " + Utils.a(Skript.getExactClassName(type)));
 		return current[0] != null;
 	}
 	
@@ -122,7 +122,7 @@ public class Argument<T> {
 		current = (T[]) Array.newInstance(type, args.length - start);
 		for (int i = 0; i < args.length - start; i++) {
 			if ((current[i] = conv.convert(args[start + i])) == null) {
-				sender.sendMessage("'" + args[start + i] + "' is not " + Utils.addUndefinedArticle(Skript.getExactClassName(type)));
+				sender.sendMessage("'" + args[start + i] + "' is not " + Utils.a(Skript.getExactClassName(type)));
 				return false;
 			}
 		}

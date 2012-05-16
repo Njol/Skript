@@ -25,8 +25,9 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * A simple base for Block Variables
@@ -34,7 +35,7 @@ import ch.njol.skript.data.DefaultChangers;
  * @author Peter Güttinger
  * 
  */
-public abstract class BlockVariable extends Variable<Block> {
+public abstract class BlockVariable extends SimpleVariable<Block> {
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {

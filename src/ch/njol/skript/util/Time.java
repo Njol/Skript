@@ -65,12 +65,12 @@ public class Time {
 		 * } else */if (s.matches("\\d?\\d:\\d\\d")) {
 			final int hours = Integer.parseInt(s.split(":")[0]);
 			if (hours >= 24) {
-				Skript.setErrorCause("a day only has 24 hours", true);
+				Skript.error("a day only has 24 hours");
 				return null;
 			}
 			final int minutes = Integer.parseInt(s.split(":")[1]);
 			if (minutes >= 60) {
-				Skript.setErrorCause("an hour only has 60 minutes", true);
+				Skript.error("an hour only has 60 minutes");
 				return null;
 			}
 			return new Time((int) Math.round(hours * 1000 - 6000 + minutes * 16.6666667));
@@ -79,14 +79,14 @@ public class Time {
 			if (m.matches()) {
 				int hours = Integer.parseInt(m.group(1));
 				if (hours > 12) {
-					Skript.setErrorCause("using 12-hour format does not allow more than 12 hours", true);
+					Skript.error("using 12-hour format does not allow more than 12 hours");
 					return null;
 				}
 				int minutes = 0;
 				if (m.group(3) != null)
 					minutes = Integer.parseInt(m.group(3));
 				if (minutes >= 60) {
-					Skript.setErrorCause("an hour only has 60 minutes", true);
+					Skript.error("an hour only has 60 minutes");
 					return null;
 				}
 				if (m.group(4).equalsIgnoreCase("pm"))

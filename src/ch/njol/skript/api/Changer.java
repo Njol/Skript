@@ -23,8 +23,9 @@ package ch.njol.skript.api;
 
 import org.bukkit.event.Event;
 
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * An interface to declare changeable values. All Variables implement this by default, but refuse any change if {@link #acceptChange(ChangeMode)} isn't overridden.<br/>
@@ -33,7 +34,7 @@ import ch.njol.skript.data.DefaultChangers;
  * 
  * @author Peter Güttinger
  * @see DefaultChangers
- * @see Variable
+ * @see SimpleVariable
  */
 public interface Changer<T> {
 	

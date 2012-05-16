@@ -21,14 +21,13 @@
 
 package ch.njol.skript.conditions;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
 
@@ -40,8 +39,8 @@ public class CondPermission extends Condition {
 	
 	static {
 		Skript.addCondition(CondPermission.class,
-				"(%commandsender% )?(do(es)?n't|don't|do(es)? not) have (the )?permissions? %variablestring%",
-				"(%commandsender% )?ha(s|ve) (the )?permissions? %variablestring%");
+				"[%commandsenders%] (do[es]n't|don't|do[es] not) have [the] permission[s] %variablestrings%",
+				"[%commandsenders%] ha(s|ve) [the] permission[s] %variablestrings%");
 	}
 	
 	private Variable<VariableString> permissions;
@@ -49,7 +48,7 @@ public class CondPermission extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		senders = (Variable<CommandSender>) vars[0];
 		permissions = (Variable<VariableString>) vars[1];
 		setNegated(matchedPattern == 0);
@@ -75,9 +74,9 @@ public class CondPermission extends Condition {
 						}
 						return false;
 					}
-				}, false);
+				});
 			}
-		}, this, false);
+		}, this);
 	}
 	
 	@Override

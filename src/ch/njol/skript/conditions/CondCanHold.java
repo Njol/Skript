@@ -21,14 +21,13 @@
 
 package ch.njol.skript.conditions;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 
@@ -38,10 +37,16 @@ import ch.njol.util.Checker;
  */
 public class CondCanHold extends Condition {
 	
+	//	static {
+	//		Skript.addCondition(CondCanHold.class,
+	//				"(%inventories% )?(can hold|ha(s|ve) (enough )?space (for|to hold)) %itemtypes%",
+	//				"(%inventories% )?(can(no|')t hold|(ha(s|ve) not|ha(s|ve)n't|do(es)?n't have) (enough )?space (for|to hold)) %itemtypes%");
+	//	}
+	
 	static {
 		Skript.addCondition(CondCanHold.class,
-				"(%inventory% )?(can hold|ha(s|ve) (enough )?space (for|to hold)) %itemtype%",
-				"(%inventory% )?(cann['o]t hold|(ha(s|ve) not|ha(s|ve)n't|do(es)?n't have) (enough )?space (for|to hold)) %itemtype%");
+				"[%inventories%] (can hold|ha(s|ve) [enough] space (for|to hold)) %itemtypes%",
+				"[%inventories%] (can(no|')t hold|(ha(s|ve) not|ha(s|ve)n't|do[es]n't have) [enough] space (for|to hold)) %itemtypes%");
 	}
 	
 	private Variable<Inventory> invis;
@@ -49,7 +54,7 @@ public class CondCanHold extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		invis = (Variable<Inventory>) vars[0];
 		items = (Variable<ItemType>) vars[1];
 		setNegated(matchedPattern == 1);
@@ -65,9 +70,9 @@ public class CondCanHold extends Condition {
 					public boolean check(final ItemType t) {
 						return t.hasSpace(i);
 					}
-				}, false);
+				});
 			}
-		}, this, false);
+		}, this);
 	}
 	
 	@Override

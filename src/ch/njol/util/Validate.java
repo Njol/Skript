@@ -45,25 +45,35 @@ public abstract class Validate {
 		if (object == null)
 			throw new ValidationException("the parameter must not be null");
 	}
-
+	
 	public static void isTrue(final boolean b, final String error) {
 		if (!b)
 			throw new ValidationException(error);
 	}
-
+	
 	public static void isFalse(final boolean b, final String error) {
 		if (b)
 			throw new ValidationException(error);
 	}
-
+	
 	public static void notEmpty(final String s) {
 		if (s != null && s.isEmpty())
 			throw new ValidationException("String parameter must not be empty");
 	}
-
+	
 	public static void notNullOrEmpty(final String s) {
 		if (s == null || s.isEmpty())
 			throw new ValidationException("String parameter must neither be null not empty");
+	}
+	
+	public static void notEmpty(final Object[] array) {
+		if (array.length == 0)
+			throw new ValidationException("Array must not be empty");
+	}
+	
+	public static void notEmpty(final int[] nums) {
+		if (nums.length == 0)
+			throw new ValidationException("Array must not be empty");
 	}
 	
 }

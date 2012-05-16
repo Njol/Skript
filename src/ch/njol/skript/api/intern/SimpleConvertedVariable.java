@@ -25,10 +25,11 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.lang.SimpleVariable;
 
 /**
  * Represents a converted variable. This is a wrapper to convert the output of a variable to the desired type. It is used by the default implementation of
- * {@link Variable#getConvertedVar(Class)}.
+ * {@link SimpleVariable#getConvertedVar(Class)}.
  * 
  * @author Peter Güttinger
  * @see Converter
@@ -36,23 +37,23 @@ import ch.njol.skript.api.Converter;
  */
 public class SimpleConvertedVariable<F, T> extends ConvertedVariable<T> {
 	
-	private final Variable<? extends F> var;
+	private final SimpleVariable<? extends F> var;
 	private final Converter<? super F, ? extends T> converter;
 	
-	private SimpleConvertedVariable(final Variable<? extends F> var, final Converter<? super F, ? extends T> converter, final Class<T> to) {
+	private SimpleConvertedVariable(final SimpleVariable<? extends F> var, final Converter<? super F, ? extends T> converter, final Class<T> to) {
 		super(var, to);
 		this.var = var;
 		this.converter = converter;
 	}
 	
-	public static <F, T> ConvertedVariable<T> newInstance(final Variable<F> v, final Class<T> to) {
+	public static <F, T> ConvertedVariable<T> newInstance(final SimpleVariable<F> v, final Class<T> to) {
 		if (v == null || to == null || to.isAssignableFrom(v.getReturnType()))
 			return null;
 		return newInstance(v, v.getReturnType(), to);
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static <F, T> SimpleConvertedVariable<F, T> newInstance(final Variable<F> v, final Class<? extends F> from, final Class<T> to) {
+	private static <F, T> SimpleConvertedVariable<F, T> newInstance(final SimpleVariable<F> v, final Class<? extends F> from, final Class<T> to) {
 		final Converter<? super F, ? extends T> c = (Converter<? super F, ? extends T>) Skript.getConverter(from, to);
 		if (c == null)
 			return null;
@@ -61,7 +62,7 @@ public class SimpleConvertedVariable<F, T> extends ConvertedVariable<T> {
 	
 	@Override
 	protected T[] getAll(final Event e) {
-		return get(e, var, converter, true);
+		return var.getArray(e, to, converter);
 	}
 	
 }

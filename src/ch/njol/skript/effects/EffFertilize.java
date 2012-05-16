@@ -21,8 +21,6 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import net.minecraft.server.Item;
 
 import org.bukkit.DyeColor;
@@ -30,8 +28,10 @@ import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.event.Event;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 
 /**
  * 
@@ -40,21 +40,21 @@ import ch.njol.skript.api.intern.Variable;
  */
 public class EffFertilize extends Effect {
 	
-	// static {
-	// Skript.addEffect(EffFertilize.class, "fertili[zs]e( %block%)?");
-	// }
+	static {
+		Skript.addEffect(EffFertilize.class, "fertili(z|s)e [%blocks%]");
+	}
 	
-	Variable<Block> blocks;
+	private Variable<Block> blocks;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		blocks = (Variable<Block>) vars[0];
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		for (final Block b : blocks.get(e, false)) {
+		for (final Block b : blocks.getArray(e)) {
 			Item.INK_SACK.interactWith(new net.minecraft.server.ItemStack(Item.INK_SACK, DyeColor.WHITE.getData(), 1), null, ((CraftWorld) b.getWorld()).getHandle(), b.getX(), b.getY(), b.getZ(), 0);
 		}
 	}

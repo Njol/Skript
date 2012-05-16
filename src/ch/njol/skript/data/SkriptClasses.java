@@ -30,9 +30,10 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Parser;
-import ch.njol.skript.api.intern.Expression.Expressions;
-import ch.njol.skript.api.intern.Literal;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.api.exception.ParseException;
+import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.lang.SimpleLiteral;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Offset;
@@ -53,7 +54,7 @@ public class SkriptClasses {
 	
 	public SkriptClasses() {}
 	
-	public static final class WeatherTypeDefaultVariable extends Literal<WeatherType> {
+	public static final class WeatherTypeDefaultVariable extends SimpleLiteral<WeatherType> {
 		public WeatherTypeDefaultVariable() {
 			super(WeatherType.clear);
 		}
@@ -75,7 +76,7 @@ public class SkriptClasses {
 		}, "weather ?types?", "weather conditions", "weathers?"));
 	}
 	
-	public static final class EntityTypeDefaultVariable extends Literal<EntityType> {
+	public static final class EntityTypeDefaultVariable extends SimpleLiteral<EntityType> {
 		public EntityTypeDefaultVariable() {
 			super(new EntityType(Entity.class, 1));
 		}
@@ -102,11 +103,15 @@ public class SkriptClasses {
 			public VariableString parse(final String s) {
 				if (!s.startsWith("\"") || !s.endsWith("\""))
 					return null;
-				if (!s.matches(Expressions.stringMatcher)) {
-					Skript.setErrorCause(Skript.quotesError, true);
+				if (!s.matches(ExprParser.stringMatcher)) {
+					Skript.error(Skript.quotesError);
 					return null;
 				}
-				return new VariableString(s.substring(1, s.length() - 1).replace("\"\"", "\""));
+				try {
+					return new VariableString(s.substring(1, s.length() - 1).replace("\"\"", "\""));
+				} catch (final ParseException e) {
+					return null;
+				}
 			}
 			
 			@Override
@@ -143,7 +148,7 @@ public class SkriptClasses {
 		
 		@Override
 		public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
-			DefaultChangers.timeChanger.change(e, new Literal<World>(Skript.getEventValue(e, World.class)), delta, mode);
+			DefaultChangers.timeChanger.change(e, new SimpleLiteral<World>(Skript.getEventValue(e, World.class)), delta, mode);
 		}
 	}
 	
@@ -167,7 +172,7 @@ public class SkriptClasses {
 		new Timespan();
 	}
 	
-	public static final class TimeperiodDefaultVariable extends Literal<Timeperiod> {
+	public static final class TimeperiodDefaultVariable extends SimpleLiteral<Timeperiod> {
 		public TimeperiodDefaultVariable() {
 			super(new Timeperiod(0, 23999));
 		}
@@ -207,7 +212,7 @@ public class SkriptClasses {
 		}, "time ?periods?", "durations?"));
 	}
 	
-	public static final class OffsetDefaultVariable extends Literal<Offset> {
+	public static final class OffsetDefaultVariable extends SimpleLiteral<Offset> {
 		public OffsetDefaultVariable() {
 			super(new Offset(0, 0, 0));
 		}

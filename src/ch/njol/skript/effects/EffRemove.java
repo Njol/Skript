@@ -21,8 +21,6 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -30,7 +28,8 @@ import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.Testable;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 
 /**
  * 
@@ -40,27 +39,35 @@ import ch.njol.skript.api.intern.Variable;
 public class EffRemove extends Effect implements Testable {
 	
 	static {
-		Skript.addEffect(EffRemove.class, "remove %object% from %object%");
+		Skript.addEffect(EffRemove.class, "remove %objects% from %objects%");
 	}
 	
 	private Variable<?> removed;
 	private Variable<?> remover;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
 		remover = vars[0];
 		removed = vars[1];
-		final Class<?> r = removed.acceptChange(ChangeMode.REMOVE);
+		Class<?> r = removed.acceptChange(ChangeMode.REMOVE);
 		if (r == null) {
 			throw new ParseException(removed + " can't have something 'removed' from it");
 		}
-		if (r.isAssignableFrom(remover.getReturnType()))
-			return;
-		final Variable<?> v = remover.getConvertedVariable(r);
-		if (v == null) {
-			throw new ParseException(remover + " can't be removed from " + removed);
+		boolean single = true;
+		if (r.isArray()) {
+			single = false;
+			r = r.getComponentType();
 		}
-		remover = v;
+		if (!r.isAssignableFrom(remover.getReturnType())) {
+			final Variable<?> v = remover.getConvertedVariable(r);
+			if (v == null) {
+				throw new ParseException(remover + " can't be removed from " + removed);
+			}
+			remover = v;
+		}
+		if (!remover.isSingle() && single) {
+			throw new ParseException("only one " + Skript.getExactClassName(r) + " can be removed from " + removed + ", but multiple are given");
+		}
 	}
 	
 	@Override

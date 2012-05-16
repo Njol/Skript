@@ -21,20 +21,20 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarEventCancelled extends Variable<Boolean> {
+public class VarEventCancelled extends SimpleVariable<Boolean> {
 	
 	static {
 		Skript.addVariable(VarEventCancelled.class, Boolean.class, "event cancelled");
@@ -48,7 +48,7 @@ public class VarEventCancelled extends Variable<Boolean> {
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {}
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
 	
 	@Override
 	public Class<? extends Boolean> getReturnType() {
@@ -81,13 +81,18 @@ public class VarEventCancelled extends Variable<Boolean> {
 				((Cancellable) e).setCancelled(false);
 			break;
 			case SET:
-				((Cancellable) e).setCancelled((Boolean) delta.getFirst(e));
+				((Cancellable) e).setCancelled((Boolean) delta.getSingle(e));
 		}
 	}
 	
 	@Override
 	public String toString() {
 		return "the cancelled state of the event";
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return true;
 	}
 	
 }

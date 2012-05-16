@@ -220,4 +220,12 @@ public abstract class Node {
 		return n;
 	}
 	
+	/**
+	 * returns information about this node which looks like the following:<br/>
+	 * <code>original node line #including comments (config.cfg, line xyz)</code>
+	 */
+	@Override
+	public String toString() {
+		return getOrig().trim() + " (" + getConfig().getFileName() + ", line " + getLine() + ")";
+	}
 }

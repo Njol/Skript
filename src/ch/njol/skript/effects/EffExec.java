@@ -21,15 +21,15 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
+import ch.njol.skript.util.ErrorSession;
 
 /**
  * @author Peter Güttinger
@@ -38,23 +38,25 @@ import ch.njol.skript.api.intern.Variable;
 public class EffExec extends Effect {
 	
 	static {
-		Skript.addEffect(EffExec.class, "exec(ute)? %string%");
+		Skript.addEffect(EffExec.class, "exec[ute] %string%");
 	}
 	
 	private Variable<String> input;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException {
 		input = (Variable<String>) vars[0];
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		final String s = input.getFirst(e);
+		final ErrorSession session = Skript.startErrorSession();
+		final String s = input.getSingle(e);
 		if (s == null) {
 			final CommandSender sender = Skript.getEventValue(e, CommandSender.class);
-			Skript.printErrorCause(sender);
+			session.printErrors(sender);
+			Skript.stopErrorSession();
 			return;
 		}
 		final Effect eff = Effect.parse(s);
@@ -62,8 +64,9 @@ public class EffExec extends Effect {
 			eff.run(e);
 		} else {
 			final CommandSender sender = Skript.getEventValue(e, CommandSender.class);
-			Skript.printErrorCause(sender);
+			session.printErrors(sender);
 		}
+		Skript.stopErrorSession();
 	}
 	
 	@Override

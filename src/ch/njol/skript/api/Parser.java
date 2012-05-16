@@ -53,4 +53,8 @@ public abstract class Parser<T> implements Converter<String, T> {
 	 * @return The String representation of the object.
 	 */
 	public abstract String toString(T o);
+	
+	public String getDebugMessage(final T o) {
+		return toString(o);
+	}
 }

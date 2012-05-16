@@ -24,7 +24,8 @@ package ch.njol.skript.api.intern;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.Registerable;
+import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.lang.Expression;
 
 /**
  * Supertype of conditions and effects
@@ -33,15 +34,10 @@ import ch.njol.skript.api.Registerable;
  * @see Condition
  * @see Effect
  */
-public abstract class TopLevelExpression extends TriggerItem implements Expression, Registerable {
+public abstract class TopLevelExpression extends TriggerItem implements Expression {
 	
 	public static TopLevelExpression parse(final String s) {
-		return (TopLevelExpression) Expressions.parse(s, Skript.getTopLevelExpressions().iterator());
-	}
-	
-	@SuppressWarnings("unused")
-	public boolean setReturnType(final Class<?> returnType) {
-		throw new RuntimeException();
+		return (TopLevelExpression) ExprParser.parse(s, Skript.getTopLevelExpressions().iterator(), false);
 	}
 	
 }

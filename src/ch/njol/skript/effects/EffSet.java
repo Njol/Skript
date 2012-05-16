@@ -21,15 +21,14 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 
 /**
  * 
@@ -39,27 +38,35 @@ import ch.njol.skript.api.intern.Variable;
 public class EffSet extends Effect {
 	
 	static {
-		Skript.addEffect(EffSet.class, "set %object% to %object%");
+		Skript.addEffect(EffSet.class, "set %objects% to %objects%");
 	}
 	
 	private Variable<?> setter;
 	private Variable<?> setted;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
 		setted = vars[0];
 		setter = vars[1];
-		final Class<?> r = setted.acceptChange(ch.njol.skript.api.Changer.ChangeMode.SET);
+		Class<?> r = setted.acceptChange(ch.njol.skript.api.Changer.ChangeMode.SET);
 		if (r == null) {
 			throw new ParseException(setted + " can't be set");
 		}
-		if (r.isAssignableFrom(setter.getReturnType()))
-			return;
-		final Variable<?> v = setter.getConvertedVariable(r);
-		if (v == null) {
-			throw new ParseException(setted + " can't be set to " + setter);
+		boolean single = true;
+		if (r.isArray()) {
+			single = false;
+			r = r.getComponentType();
 		}
-		setter = v;
+		if (!r.isAssignableFrom(setter.getReturnType())) {
+			final Variable<?> v = setter.getConvertedVariable(r);
+			if (v == null) {
+				throw new ParseException(setted + " can't be set to " + setter);
+			}
+			setter = v;
+		}
+		if (!setter.isSingle() && single) {
+			throw new ParseException(setted + " can only be set to one " + Skript.getExactClassName(r) + ", but multiple are given");
+		}
 	}
 	
 	@Override

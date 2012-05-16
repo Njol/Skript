@@ -21,14 +21,13 @@
 
 package ch.njol.skript.conditions;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.World;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.WeatherType;
 import ch.njol.util.Checker;
 
@@ -39,7 +38,7 @@ import ch.njol.util.Checker;
 public class CondWeather extends Condition {
 	
 	static {
-		Skript.addCondition(CondWeather.class, "is %weathertype%( in %world%)?");
+		Skript.addCondition(CondWeather.class, "is %weathertypes% [in %worlds%]");
 	}
 	
 	private Variable<WeatherType> weathers;
@@ -47,7 +46,7 @@ public class CondWeather extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		weathers = (Variable<WeatherType>) vars[0];
 		worlds = (Variable<World>) vars[1];
 	}
@@ -62,9 +61,9 @@ public class CondWeather extends Condition {
 					public boolean check(final World w) {
 						return wt.isWeather(w);
 					}
-				}, false);
+				});
 			}
-		}, this, false);
+		}, this);
 	}
 	
 	@Override

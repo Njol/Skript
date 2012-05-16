@@ -21,14 +21,13 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.Offset;
 
@@ -41,8 +40,8 @@ public class EffSpawn extends Effect {
 	
 	static {
 		Skript.addEffect(EffSpawn.class,
-				"spawn %entitytype%( at %location%)?",
-				"spawn %entitytype% %offset% %location%");
+				"spawn %entitytypes% [at %locations%]",
+				"spawn %entitytypes% %offset% %locations%");
 	}
 	
 	private Variable<Location> locations;
@@ -51,7 +50,7 @@ public class EffSpawn extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		types = (Variable<EntityType>) vars[0];
 		locations = (Variable<Location>) vars[vars.length - 1];
 		if (matchedPattern == 1)
@@ -60,16 +59,16 @@ public class EffSpawn extends Effect {
 	
 	@Override
 	public void execute(final Event e) {
-		final Iterable<EntityType> ts = types.get(e, false);
+		final EntityType[] ts = types.getArray(e);
 		if (offsets != null) {
-			for (final Location l : Offset.setOff(offsets.get(e), locations.get(e))) {
+			for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
 				for (final EntityType type : ts) {
 					for (int i = 0; i < type.amount; i++)
 						l.getWorld().spawn(l, type.c);
 				}
 			}
 		}
-		for (final Location l : locations.get(e, false)) {
+		for (final Location l : locations.getArray(e)) {
 			for (final EntityType type : ts) {
 				for (int i = 0; i < type.amount; i++)
 					l.getWorld().spawn(l, type.c);

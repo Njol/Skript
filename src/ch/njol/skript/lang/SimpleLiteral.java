@@ -19,15 +19,16 @@
  * 
  */
 
-package ch.njol.skript.api.intern;
+package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
-import java.util.regex.Matcher;
 
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.intern.ConvertedLiteral;
+import ch.njol.skript.lang.ExprParser.ParseResult;
 
 /**
  * Represents a literal, i.e. a static value like a number or a string.
@@ -35,27 +36,27 @@ import ch.njol.skript.api.Converter;
  * @author Peter Güttinger
  * @see UnparsedLiteral
  */
-public class Literal<T> extends Variable<T> {
+public class SimpleLiteral<T> extends SimpleVariable<T> implements ch.njol.skript.lang.Literal<T> {
 	
 	protected final T[] data;
 	protected final Class<T> c;
 	
-	public Literal(final T[] data, final Class<T> c, final boolean and) {
+	public SimpleLiteral(final T[] data, final Class<T> c, final boolean and) {
 		this.data = data;
 		this.c = c;
 		setAnd(and);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public Literal(final T data) {
+	public SimpleLiteral(final T data) {
 		this.data = (T[]) Array.newInstance(data.getClass(), 1);
 		this.data[0] = data;
 		c = (Class<T>) data.getClass();
-		and = true;
+		setAnd(true);
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -64,8 +65,14 @@ public class Literal<T> extends Variable<T> {
 		return data;
 	}
 	
-	public T[] getAll() {
-		return data;
+	@Override
+	public T[] getArray() {
+		return getArray(null);
+	}
+	
+	@Override
+	public T getSingle() {
+		return getSingle(null);
 	}
 	
 	@Override
@@ -77,7 +84,7 @@ public class Literal<T> extends Variable<T> {
 	@Override
 	public <R> ConvertedLiteral<? extends R> getConvertedVar(final Class<R> to) {
 		if (to.isAssignableFrom(c))
-			return new ConvertedLiteral<R>(this, (R[]) this.getAll(), to);
+			return new ConvertedLiteral<R>(this, (R[]) this.getAll(null), to);
 		final Converter<? super T, ? extends R> p = Skript.getConverter(c, to);
 		if (p == null)
 			return null;
@@ -98,13 +105,18 @@ public class Literal<T> extends Variable<T> {
 		for (int i = 0; i < data.length; i++) {
 			if (i != 0) {
 				if (i == data.length - 1)
-					b.append(and ? " and " : " or ");
+					b.append(getAnd() ? " and " : " or ");
 				else
 					b.append(", ");
 			}
 			b.append(Skript.toString(data[i]));
 		}
 		return b.toString();
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return !getAnd() || data.length <= 1;
 	}
 	
 }

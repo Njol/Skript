@@ -52,9 +52,9 @@ public abstract class SkriptLogger {
 	 * @see Skript#logNormal()
 	 * @see Skript#logHigh()
 	 * @see Skript#logVeryHigh()
-	 * @see Skript#logExtreme()
+	 * @see Skript#debug()
 	 */
-	static void log(final Level level, final String message) {
+	public static void log(final Level level, final String message) {
 		if (node != null && level.intValue() >= Level.WARNING.intValue()) {
 			if (node.getParent() != null)
 				logDirect(level, message +
@@ -73,6 +73,10 @@ public abstract class SkriptLogger {
 	
 	public static void setNode(final Node node) {
 		SkriptLogger.node = node == null || node.getParent() == null ? null : node;
+	}
+	
+	static Node getNode() {
+		return node;
 	}
 	
 	/**

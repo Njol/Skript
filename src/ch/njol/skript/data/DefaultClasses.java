@@ -43,8 +43,8 @@ import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Parser;
-import ch.njol.skript.api.intern.Expression.Expressions;
-import ch.njol.skript.api.intern.Literal;
+import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.lang.SimpleLiteral;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.variables.base.EventValueVariable;
@@ -61,7 +61,7 @@ public class DefaultClasses {
 		Skript.addClass(new ClassInfo<Object>("object", Object.class, null, null));
 	}
 	
-	public static final class FloatDefaultVariable extends Literal<Float> {
+	public static final class FloatDefaultVariable extends SimpleLiteral<Float> {
 		public FloatDefaultVariable() {
 			super(Float.valueOf(1));
 		}
@@ -88,7 +88,7 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class DoubleDefaultVariable extends Literal<Double> {
+	public static final class DoubleDefaultVariable extends SimpleLiteral<Double> {
 		public DoubleDefaultVariable() {
 			super(Double.valueOf(1));
 		}
@@ -115,7 +115,7 @@ public class DefaultClasses {
 		}, "number"));
 	}
 	
-	public static final class BooleanDefaultVariable extends Literal<Boolean> {
+	public static final class BooleanDefaultVariable extends SimpleLiteral<Boolean> {
 		public BooleanDefaultVariable() {
 			super(Boolean.TRUE);
 		}
@@ -140,7 +140,7 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class ByteDefaultVariable extends Literal<Byte> {
+	public static final class ByteDefaultVariable extends SimpleLiteral<Byte> {
 		public ByteDefaultVariable() {
 			super(Byte.valueOf((byte) 1));
 		}
@@ -164,7 +164,7 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class ShortDefaultVariable extends Literal<Short> {
+	public static final class ShortDefaultVariable extends SimpleLiteral<Short> {
 		public ShortDefaultVariable() {
 			super(Short.valueOf((short) 1));
 		}
@@ -188,7 +188,7 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class IntegerDefaultVariable extends Literal<Integer> {
+	public static final class IntegerDefaultVariable extends SimpleLiteral<Integer> {
 		public IntegerDefaultVariable() {
 			super(Integer.valueOf(1));
 		}
@@ -212,7 +212,7 @@ public class DefaultClasses {
 		}, "integers?"));
 	}
 	
-	public static final class LongDefaultVariable extends Literal<Long> {
+	public static final class LongDefaultVariable extends SimpleLiteral<Long> {
 		public LongDefaultVariable() {
 			super(Long.valueOf(1));
 		}
@@ -242,8 +242,8 @@ public class DefaultClasses {
 			public String parse(final String s) {
 				if (!s.startsWith("\"") || !s.endsWith("\""))
 					return null;
-				if (!s.matches(Expressions.stringMatcher)) {
-					Skript.setErrorCause(Skript.quotesError, true);
+				if (!s.matches(ExprParser.stringMatcher)) {
+					Skript.error(Skript.quotesError);
 					return null;
 				}
 				return s.substring(1, s.length() - 1).replace("\"\"", "\"");
@@ -256,7 +256,7 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class TreeTypeDefaultVariable extends Literal<TreeType> {
+	public static final class TreeTypeDefaultVariable extends SimpleLiteral<TreeType> {
 		public TreeTypeDefaultVariable() {
 			super(TreeType.TREE);
 		}
@@ -269,7 +269,7 @@ public class DefaultClasses {
 			public TreeType parse(String s) {
 				s = s.toLowerCase(Locale.ENGLISH);
 				if (s.endsWith(" tree"))
-						s = s.substring(0, s.length() - " tree".length());
+					s = s.substring(0, s.length() - " tree".length());
 				
 				if (s.equals("regular"))
 					return TreeType.TREE;
@@ -341,6 +341,11 @@ public class DefaultClasses {
 			public String toString(final Block b) {
 				return ItemType.toString(new ItemStack(b.getTypeId(), 1, b.getState().getRawData()));
 			}
+			
+			@Override
+			public String getDebugMessage(final Block b) {
+				return toString(b) + " block (" + b.getWorld().getName() + "|" + b.getX() + "," + b.getY() + "," + b.getZ() + ")";
+			}
 		}));
 	}
 	
@@ -351,7 +356,24 @@ public class DefaultClasses {
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<Location>("location", Location.class, LocationDefaultVariable.class, null));
+		Skript.addClass(new ClassInfo<Location>("location", Location.class, LocationDefaultVariable.class, new Parser<Location>() {
+			
+			@Override
+			public Location parse(final String s) {
+				return null;
+			}
+			
+			@Override
+			public String toString(final Location l) {
+				return getDebugMessage(l);
+			}
+			
+			@Override
+			public String getDebugMessage(final Location l) {
+				return "(" + l.getWorld() + "|" + l.getX() + "," + l.getY() + "," + l.getZ() + ";yaw=" + l.getYaw() + ",pitch=" + l.getPitch() + ")";
+			}
+			
+		}));
 	}
 	
 	public static final class WorldDefaultVariable extends EventValueVariable<World> {
@@ -429,6 +451,13 @@ public class DefaultClasses {
 			public String toString(final OfflinePlayer p) {
 				return p.getName();
 			}
+			
+			@Override
+			public String getDebugMessage(final OfflinePlayer p) {
+				if (p.isOnline())
+					return Skript.getDebugMessage(p.getPlayer());
+				return p.getName();
+			}
 		}, "player"));
 	}
 	
@@ -451,6 +480,13 @@ public class DefaultClasses {
 			public String toString(final CommandSender s) {
 				if (s instanceof Player)
 					return ((Player) s).getDisplayName();
+				return s.getName();
+			}
+			
+			@Override
+			public String getDebugMessage(final CommandSender s) {
+				if (s instanceof Player)
+					return null;
 				return s.getName();
 			}
 		}));
@@ -486,7 +522,7 @@ public class DefaultClasses {
 		Skript.addClass(new ClassInfo<InventoryHolder>("inventoryholder", InventoryHolder.class, InventoryHolderDefaultVariable.class, null));
 	}
 	
-	public static final class GameModeDefaultVariable extends Literal<GameMode> {
+	public static final class GameModeDefaultVariable extends SimpleLiteral<GameMode> {
 		public GameModeDefaultVariable() {
 			super(GameMode.SURVIVAL);
 		}

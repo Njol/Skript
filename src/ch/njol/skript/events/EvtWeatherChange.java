@@ -21,16 +21,16 @@
 
 package ch.njol.skript.events;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
-import ch.njol.skript.util.Utils;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.util.WeatherType;
+import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
@@ -40,30 +40,33 @@ import ch.njol.skript.util.WeatherType;
 public class EvtWeatherChange extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtWeatherChange.class, Skript.array(WeatherChangeEvent.class, ThunderChangeEvent.class), "weather change( to %weathertype%)?");
+		Skript.addEvent(EvtWeatherChange.class, Skript.array(WeatherChangeEvent.class, ThunderChangeEvent.class), "weather change [to %weathertypes%]");
 	}
 	
-	private WeatherType[] types;
+	private Literal<WeatherType> types;
 	
 	@Override
-	public void init(final Object[][] args, final int matchedPattern, final Matcher matcher) {
-		types = (WeatherType[]) args[0];
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		types = (Literal<WeatherType>) args[0];
 	}
 	
 	@Override
 	public boolean check(final Event e) {
+		if (types == null)
+			return true;
 		final boolean rain = e instanceof WeatherChangeEvent ? ((WeatherChangeEvent) e).toWeatherState() : ((ThunderChangeEvent) e).getWorld().hasStorm();
 		final boolean thunder = e instanceof ThunderChangeEvent ? ((ThunderChangeEvent) e).toThunderState() : ((WeatherChangeEvent) e).getWorld().isThundering();
-		for (final WeatherType t : types) {
-			if (t.isWeather(rain, thunder))
-				return true;
-		}
-		return false;
+		return types.check(e, new Checker<WeatherType>() {
+			@Override
+			public boolean check(final WeatherType t) {
+				return t.isWeather(rain, thunder);
+			}
+		});
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "weather change to " + Utils.join(types);
+		return "weather change" + (types == null ? "" : " to " + types);
 	}
 	
 }

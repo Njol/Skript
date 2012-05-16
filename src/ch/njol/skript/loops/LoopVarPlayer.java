@@ -24,7 +24,6 @@ package ch.njol.skript.loops;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.ListIterator;
-import java.util.regex.Matcher;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -33,7 +32,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Utils;
 
 /**
@@ -43,14 +43,14 @@ import ch.njol.skript.util.Utils;
 public class LoopVarPlayer extends LoopVar<Player> {
 	
 	static {
-		Skript.addLoop(LoopVarPlayer.class, Player.class, "players", "players in worlds? %world%");
+		Skript.addLoop(LoopVarPlayer.class, Player.class, "players", "players in world[s] %worlds%");
 	}
 	
 	private Variable<World> worlds = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (vars.length > 0)
 			worlds = (Variable<World>) vars[0];
 	}
@@ -63,7 +63,7 @@ public class LoopVarPlayer extends LoopVar<Player> {
 			
 			private final ListIterator<Player> players = Arrays.asList(Bukkit.getOnlinePlayers()).listIterator();
 			
-			private final World[] ws = worlds.get(e);
+			private final World[] ws = worlds.getArray(e);
 			
 			@Override
 			public boolean hasNext() {

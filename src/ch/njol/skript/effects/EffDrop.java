@@ -21,8 +21,6 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.Location;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -30,7 +28,8 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 
 /**
@@ -41,40 +40,37 @@ import ch.njol.skript.util.ItemType;
 public class EffDrop extends Effect {
 	
 	static {
-		Skript.addEffect(EffDrop.class,
-				"drop %itemtype% at %location%",
-				"drop %itemtype%");
+		Skript.addEffect(EffDrop.class, "drop %itemtypes% [at %-locations%]");
 	}
 	
 	private Variable<ItemType> items;
-	private Variable<Location> locations = null;
+	private Variable<Location> locations;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		items = (Variable<ItemType>) vars[0];
-		if (vars.length > 1)
-			locations = (Variable<Location>) vars[1];
+		locations = (Variable<Location>) vars[1];
 	}
 	
 	@Override
 	public void execute(final Event e) {
 		if (locations == null) {
 			if (e instanceof EntityDeathEvent) {
-				for (final ItemType type : items.get(e, false)) {
+				for (final ItemType type : items.getArray(e)) {
 					type.addTo(((EntityDeathEvent) e).getDrops());
 				}
 				return;
 			}
 			final Location l = Skript.getEventValue(e, Location.class);
-			for (final ItemType type : items.get(e, false)) {
+			for (final ItemType type : items.getArray(e)) {
 				for (final ItemStack is : type.getAll())
 					l.getWorld().dropItemNaturally(l, is);
 			}
 			return;
 		}
-		for (final Location l : locations.get(e, false)) {
-			for (final ItemType type : items.get(e, false)) {
+		for (final Location l : locations.getArray(e)) {
+			for (final ItemType type : items.getArray(e)) {
 				for (final ItemStack is : type.getAll())
 					l.getWorld().dropItemNaturally(l, is);
 			}

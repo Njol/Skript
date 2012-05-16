@@ -21,8 +21,6 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Furnace;
@@ -31,24 +29,26 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Slot;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarFurnaceSlot extends Variable<Slot> {
+public class VarFurnaceSlot extends SimpleVariable<Slot> {
 	
 	// Slot IDs:
 	// ore: 0, fuel: 1, result: 2
 	
 	static {
 		Skript.addVariable(VarFurnaceSlot.class, Slot.class,
-				"ore( slot)? of %block%", "ore slot(%block%){0}",
-				"fuel( slot)? of %block%", "fuel slot(%block%){0}",
-				"result( slot)? of %block%", "result slot(%block%){0}");
+				"ore [slot] [of %blocks%]",
+				"fuel [slot] [of %blocks%]",
+				"result [slot] [of %blocks%]");
 	}
 	
 	private Variable<Block> blocks;
@@ -58,21 +58,21 @@ public class VarFurnaceSlot extends Variable<Slot> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		blocks = (Variable<Block>) vars[0];
-		slot = matchedPattern / 2;
+		slot = matchedPattern;
 	}
 	
 	@Override
 	protected Slot[] getAll(final Event e) {
-		return get(e, blocks, new Getter<Slot, Block>() {
+		return blocks.getArray(e, Slot.class, new Getter<Slot, Block>() {
 			@Override
 			public Slot get(final Block b) {
 				if (b.getType() != Material.FURNACE)
 					return null;
 				return new Slot(((Furnace) b.getState()).getInventory(), slot);
 			}
-		}, false);
+		});
 	}
 	
 	@Override
@@ -84,7 +84,7 @@ public class VarFurnaceSlot extends Variable<Slot> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return slotNames[slot] + " slot of " + blocks.getDebugMessage(e);
-		return Skript.toString(getAll(e)[0]);
+		return Skript.getDebugMessage(getSingle(e));
 	}
 	
 	@Override
@@ -100,6 +100,11 @@ public class VarFurnaceSlot extends Variable<Slot> {
 	@Override
 	public String toString() {
 		return "the " + slotNames[slot] + " slot of " + blocks;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return blocks.isSingle();
 	}
 	
 }

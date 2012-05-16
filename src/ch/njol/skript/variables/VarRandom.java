@@ -21,36 +21,36 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarRandom extends Variable<Double> {
+public class VarRandom extends SimpleVariable<Double> {
 	
 	static {
 		Skript.addVariable(VarRandom.class, Double.class, "random number between %double% and %double%");
 	}
 	
-	Variable<Double> lower, upper;
+	private Variable<Double> lower, upper;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		lower = (Variable<Double>) vars[0];
 		upper = (Variable<Double>) vars[1];
 	}
 	
 	@Override
 	protected Double[] getAll(final Event e) {
-		final double l = lower.getFirst(e);
-		final double u = upper.getFirst(e);
+		final double l = lower.getSingle(e);
+		final double u = upper.getSingle(e);
 		
 		return new Double[] {l + Math.random() * (u - l)};
 	}
@@ -68,6 +68,11 @@ public class VarRandom extends Variable<Double> {
 	@Override
 	public String toString() {
 		return "a random number between " + lower + " and " + upper;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return true;
 	}
 	
 }

@@ -21,17 +21,19 @@
 
 package ch.njol.skript.util;
 
+import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.api.Debuggable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class Slot {
+public class Slot implements Debuggable {
 	
 	private final Inventory invi;
 	private final int index;
@@ -41,11 +43,11 @@ public class Slot {
 		this.index = index;
 	}
 	
-	protected Slot(PlayerInventory inventory) {
+	protected Slot(final PlayerInventory inventory) {
 		invi = inventory;
 		index = -1;
 	}
-
+	
 	public Inventory getInventory() {
 		return invi;
 	}
@@ -55,15 +57,22 @@ public class Slot {
 	}
 	
 	public ItemStack getItem() {
-		return invi.getItem(index);
+		return invi.getItem(index) == null ? new ItemStack(0, 1) : invi.getItem(index);
 	}
 	
 	public void setItem(final ItemStack item) {
-		invi.setItem(index, item);
+		invi.setItem(index, item != null && item.getTypeId() != 0 ? item : null);
 	}
 	
 	@Override
 	public String toString() {
 		return Skript.toString(getItem());
+	}
+	
+	@Override
+	public String getDebugMessage(final Event e) {
+		if (invi.getHolder() != null)
+			return "slot " + index + " of inventory of " + invi.getHolder().toString();
+		return "slot " + index + " of " + invi.toString();
 	}
 }

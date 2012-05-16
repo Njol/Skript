@@ -22,7 +22,6 @@
 package ch.njol.skript.loops;
 
 import java.util.Iterator;
-import java.util.regex.Matcher;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -31,8 +30,9 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.BlockSphereIterator;
 
 /**
@@ -42,22 +42,22 @@ import ch.njol.skript.util.BlockSphereIterator;
 public class LoopVarBlockSphere extends LoopVar<Block> {
 	
 	static {
-		Skript.addLoop(LoopVarBlockSphere.class, Block.class, "blocks in (radius|radii|radiuses) %float%( around %location%)?");
+		Skript.addLoop(LoopVarBlockSphere.class, Block.class, "blocks in radius %float% [around %location%]");
 	}
 	
-	private Variable<Float> radii;
-	private Variable<Location> centers;
+	private Variable<Float> radius;
+	private Variable<Location> center;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
-		radii = (Variable<Float>) vars[0];
-		centers = (Variable<Location>) vars[1];
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		radius = (Variable<Float>) vars[0];
+		center = (Variable<Location>) vars[1];
 	}
 	
 	@Override
 	protected Iterator<Block> iterator(final Event e) {
-		return new BlockSphereIterator(centers.getFirst(e), radii.getFirst(e));
+		return new BlockSphereIterator(center.getSingle(e), radius.getSingle(e));
 	}
 	
 	@Override
@@ -77,7 +77,7 @@ public class LoopVarBlockSphere extends LoopVar<Block> {
 	
 	@Override
 	public String getLoopDebugMessage(final Event e) {
-		return "blocks in radius " + radii.getDebugMessage(e) + " around " + centers.getDebugMessage(e);
+		return "blocks in radius " + radius.getDebugMessage(e) + " around " + center.getDebugMessage(e);
 	}
 	
 	@Override

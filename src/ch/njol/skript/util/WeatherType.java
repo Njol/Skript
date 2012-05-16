@@ -74,7 +74,7 @@ public enum WeatherType {
 			case thunder:
 				return "thunder";
 		}
-		return null;
+		throw new IllegalStateException();
 	}
 	
 	public String adjective() {
@@ -86,7 +86,7 @@ public enum WeatherType {
 			case thunder:
 				return "thundering";
 		}
-		return null;
+		throw new IllegalStateException();
 	}
 	
 	public boolean isWeather(final World w) {

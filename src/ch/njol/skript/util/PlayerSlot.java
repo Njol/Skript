@@ -21,16 +21,17 @@
 
 package ch.njol.skript.util;
 
+import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 /**
  * @author Peter Güttinger
- *
+ * 
  */
 public abstract class PlayerSlot extends Slot {
-
-	protected PlayerSlot(PlayerInventory inventory) {
+	
+	protected PlayerSlot(final PlayerInventory inventory) {
 		super(inventory);
 	}
 	
@@ -39,4 +40,7 @@ public abstract class PlayerSlot extends Slot {
 	
 	@Override
 	public abstract void setItem(ItemStack item);
+	
+	@Override
+	public abstract String getDebugMessage(Event e);
 }

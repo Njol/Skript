@@ -35,14 +35,14 @@ public class CaseInsensitiveString implements Serializable, Comparable<CharSeque
 	private final String lc;
 	
 	private final Locale locale;
-
+	
 	public CaseInsensitiveString(final String s) {
 		this.s = s;
 		locale = Locale.getDefault();
 		lc = s.toLowerCase(locale);
 	}
-
-	public CaseInsensitiveString(final String s, Locale locale) {
+	
+	public CaseInsensitiveString(final String s, final Locale locale) {
 		this.s = s;
 		this.locale = locale;
 		lc = s.toLowerCase(locale);
@@ -58,7 +58,7 @@ public class CaseInsensitiveString implements Serializable, Comparable<CharSeque
 		if (o == this)
 			return true;
 		if (o instanceof CharSequence)
-			return ((CharSequence) o).toString().toLowerCase(locale).equalsIgnoreCase(lc);
+			return ((CharSequence) o).toString().toLowerCase(locale).equals(lc);
 		return false;
 	}
 	
@@ -66,24 +66,24 @@ public class CaseInsensitiveString implements Serializable, Comparable<CharSeque
 	public String toString() {
 		return s;
 	}
-
+	
 	@Override
-	public char charAt(int i) {
+	public char charAt(final int i) {
 		return s.charAt(i);
 	}
-
+	
 	@Override
 	public int length() {
 		return s.length();
 	}
-
+	
 	@Override
-	public CaseInsensitiveString subSequence(int start, int end) {
+	public CaseInsensitiveString subSequence(final int start, final int end) {
 		return new CaseInsensitiveString(s.substring(start, end), locale);
 	}
-
+	
 	@Override
-	public int compareTo(CharSequence s) {
+	public int compareTo(final CharSequence s) {
 		return lc.compareTo(s.toString().toLowerCase(locale));
 	}
 }

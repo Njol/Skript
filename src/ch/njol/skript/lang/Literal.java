@@ -19,12 +19,16 @@
  * 
  */
 
-package ch.njol.skript.api;
+package ch.njol.skript.lang;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public interface Registerable {
+public interface Literal<T> extends Variable<T> {
+	
+	public T[] getArray();
+	
+	public T getSingle();
 	
 }

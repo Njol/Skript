@@ -23,12 +23,12 @@ package ch.njol.skript.api;
 
 import java.util.regex.Pattern;
 
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.SimpleVariable;
 
 public class ClassInfo<T> {
 	private final Class<T> c;
 	private final String name, codeName;
-	private final Class<? extends Variable<T>> defaultVariable;
+	private final Class<? extends SimpleVariable<T>> defaultSimpleVariable;
 	private final Parser<T> parser;
 	private final Pattern[] userInputPatterns;
 	
@@ -39,23 +39,23 @@ public class ClassInfo<T> {
 	 * @param parser a parser to parse values of this class or null if not applicable
 	 * @param userInputPatterns patterns to match &lt;arg type&gt;s in commands
 	 */
-	public ClassInfo(final String name, final String codeName, final Class<T> c, final Class<? extends Variable<T>> defaultVariable, final Parser<T> parser, final String... userInputPatterns) {
+	public ClassInfo(final String name, final String codeName, final Class<T> c, final Class<? extends SimpleVariable<T>> defaultVariable, final Parser<T> parser, final String... userInputPatterns) {
 		this.c = c;
 		this.name = name;
 		this.codeName = codeName;
-		this.defaultVariable = defaultVariable;
+		this.defaultSimpleVariable = defaultVariable;
 		this.parser = parser;
 		this.userInputPatterns = new Pattern[userInputPatterns.length];
 		for (int i = 0; i < userInputPatterns.length; i++) {
-			this.getUserInputPatterns()[i] = Pattern.compile("^" + userInputPatterns[i] + "$");
+			this.userInputPatterns[i] = Pattern.compile("^" + userInputPatterns[i] + "$");
 		}
 	}
 	
-	public ClassInfo(final String codeName, final Class<T> c, final Class<? extends Variable<T>> defaultVariable, final Parser<T> parser) {
+	public ClassInfo(final String codeName, final Class<T> c, final Class<? extends SimpleVariable<T>> defaultVariable, final Parser<T> parser) {
 		this.c = c;
 		this.name = codeName;
 		this.codeName = codeName;
-		this.defaultVariable = defaultVariable;
+		this.defaultSimpleVariable = defaultVariable;
 		this.parser = parser;
 		this.userInputPatterns = new Pattern[0];
 	}
@@ -72,8 +72,8 @@ public class ClassInfo<T> {
 		return codeName;
 	}
 	
-	public Class<? extends Variable<T>> getDefaultVariable() {
-		return defaultVariable;
+	public Class<? extends SimpleVariable<T>> getDefaultSimpleVariable() {
+		return defaultSimpleVariable;
 	}
 	
 	public Parser<T> getParser() {

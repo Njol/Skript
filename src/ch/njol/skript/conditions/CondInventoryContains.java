@@ -21,14 +21,13 @@
 
 package ch.njol.skript.conditions;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 
@@ -41,10 +40,10 @@ public class CondInventoryContains extends Condition {
 	
 	static {
 		Skript.addCondition(CondInventoryContains.class,
-				"(%inventory% )?ha(s|ve) %itemtype%( in inventory)?",
-				"(%inventory% )?contains? %itemtype%",
-				"(%inventory% )?(ha(s|ve) not|do(es)?n't have) %itemtype%( in inventory)?",
-				"(%inventory% )? do(es)?(n't| not) contain %itemtype%");
+				"[%inventories%] ha(s|ve) %itemtypes% [in inventory]",
+				"[%inventories%] contain[s] %itemtypes%",
+				"[%inventories%] (ha(s|ve) not|do[es]n't have) %itemtypes% [in inventory]",
+				"[%inventories%] do[es](n't| not) contain %itemtypes%");
 	}
 	
 	private Variable<Inventory> invis;
@@ -52,7 +51,7 @@ public class CondInventoryContains extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		invis = (Variable<Inventory>) vars[0];
 		items = (Variable<ItemType>) vars[1];
 		setNegated(matchedPattern >= 2);
@@ -68,9 +67,9 @@ public class CondInventoryContains extends Condition {
 					public boolean check(final ItemType type) {
 						return type.isContainedIn(invi);
 					}
-				}, false);
+				});
 			}
-		}, this, false);
+		}, this);
 	}
 	
 	@Override

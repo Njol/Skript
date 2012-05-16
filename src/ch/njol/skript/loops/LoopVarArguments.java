@@ -22,7 +22,6 @@
 package ch.njol.skript.loops;
 
 import java.util.Iterator;
-import java.util.regex.Matcher;
 
 import org.bukkit.event.Event;
 
@@ -30,9 +29,10 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.LoopVar;
 import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.api.intern.SkriptAPIException;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.Commands;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Container;
 import ch.njol.skript.util.Container.ContainerType;
 import ch.njol.util.StringUtils;
@@ -45,7 +45,7 @@ import ch.njol.util.iterator.ArrayIterator;
 public class LoopVarArguments extends LoopVar<Object> {
 	
 	static {
-		Skript.addLoop(LoopVarArguments.class, Object.class, "last argument", "argument[- ](\\d+)", "(?:(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th) argument", "arguments");
+		Skript.addLoop(LoopVarArguments.class, Object.class, "last argument", "argument(-| )<(\\d+)>", "<(?:(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th)> argument", "arguments");
 	}
 	
 	private Argument<?> arg;
@@ -53,7 +53,7 @@ public class LoopVarArguments extends LoopVar<Object> {
 	private boolean isContainer = false;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
 		if (Commands.currentArguments == null)
 			throw new ParseException("you can't loop through any arguments outside of a command");
 		switch (matchedPattern) {
@@ -62,7 +62,7 @@ public class LoopVarArguments extends LoopVar<Object> {
 			break;
 			case 1:
 			case 2:
-				final int a = Integer.parseInt(matcher.group(1));
+				final int a = Integer.parseInt(parser.regexes.get(0).group(1));
 				if (a - 1 >= Commands.currentArguments.size())
 					throw new ParseException("the command doesn't have a " + StringUtils.fancyOrderNumber(a) + " argument");
 				arg = Commands.currentArguments.get(a - 1);

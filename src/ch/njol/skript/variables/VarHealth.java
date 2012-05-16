@@ -21,33 +21,31 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarHealth extends Variable<Float> {
+public class VarHealth extends SimpleVariable<Float> {
 	
 	static {
-		Skript.addVariable(VarHealth.class, Float.class, "health( of %livingentity%)?");
+		Skript.addVariable(VarHealth.class, Float.class, "health [of %livingentities%]");
 	}
 	
 	private Variable<LivingEntity> entities;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		entities = (Variable<LivingEntity>) vars[0];
 	}
 	
@@ -58,12 +56,12 @@ public class VarHealth extends Variable<Float> {
 	
 	@Override
 	protected Float[] getAll(final Event e) {
-		return get(e, entities, new Getter<Float, LivingEntity>() {
+		return entities.getArray(e, Float.class, new Getter<Float, LivingEntity>() {
 			@Override
 			public Float get(final LivingEntity entity) {
 				return Float.valueOf(1f / 2 * entity.getHealth());
 			}
-		}, false);
+		});
 	}
 	
 	@Override
@@ -75,21 +73,21 @@ public class VarHealth extends Variable<Float> {
 	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
 		int s = 0;
 		if (mode != ChangeMode.CLEAR)
-			s = Math.round(((Float) delta.getFirst(e)).floatValue() * 2);
+			s = Math.round(((Float) delta.getSingle(e)).floatValue() * 2);
 		switch (mode) {
 			case CLEAR:
 			case SET:
-				for (final LivingEntity entity : entities.get(e, false)) {
+				for (final LivingEntity entity : entities.getArray(e)) {
 					entity.setHealth(s);
 				}
 				return;
 			case ADD:
-				for (final LivingEntity entity : entities.get(e, false)) {
+				for (final LivingEntity entity : entities.getArray(e)) {
 					entity.setHealth(entity.getHealth() + s);
 				}
 				return;
 			case REMOVE:
-				for (final LivingEntity entity : entities.get(e, false)) {
+				for (final LivingEntity entity : entities.getArray(e)) {
 					entity.setHealth(entity.getHealth() - s);
 				}
 				return;
@@ -104,6 +102,11 @@ public class VarHealth extends Variable<Float> {
 	@Override
 	public String toString() {
 		return "the health of " + entities;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return entities.isSingle();
 	}
 	
 }

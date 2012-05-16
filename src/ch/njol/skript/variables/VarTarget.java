@@ -22,7 +22,6 @@
 package ch.njol.skript.variables;
 
 import java.util.ArrayList;
-import java.util.regex.Matcher;
 
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
@@ -31,7 +30,9 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.Utils;
 
@@ -39,10 +40,10 @@ import ch.njol.skript.util.Utils;
  * @author Peter Güttinger
  * 
  */
-public class VarTarget extends Variable<Entity> {
+public class VarTarget extends SimpleVariable<Entity> {
 	
 	static {
-		Skript.addVariable(VarTarget.class, Entity.class, "target(ed %entitytype%)( of %livingentity%)?");
+		Skript.addVariable(VarTarget.class, Entity.class, "target[ed %entitytypes%] [of %livingentitys%]");
 	}
 	
 	private Variable<EntityType> types;
@@ -50,7 +51,7 @@ public class VarTarget extends Variable<Entity> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		types = (Variable<EntityType>) vars[0];
 		entities = (Variable<LivingEntity>) vars[1];
 	}
@@ -58,8 +59,8 @@ public class VarTarget extends Variable<Entity> {
 	@Override
 	protected Entity[] getAll(final Event evt) {
 		final ArrayList<Entity> targets = new ArrayList<Entity>();
-		final Iterable<EntityType> types = this.types.get(evt, false);
-		for (final LivingEntity e : entities.get(evt, false)) {
+		final EntityType[] types = this.types.getArray(evt);
+		for (final LivingEntity e : entities.getArray(evt)) {
 			for (final EntityType type : types) {
 				final Entity t = Utils.getTargetEntity(e, type.c);
 				if (t != null)
@@ -78,7 +79,7 @@ public class VarTarget extends Variable<Entity> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "targeted " + types.getDebugMessage(e) + " of " + entities.getDebugMessage(e);
-		return Skript.toString(getAll(e));
+		return Skript.getDebugMessage(getAll(e));
 	}
 	
 	@Override
@@ -90,8 +91,8 @@ public class VarTarget extends Variable<Entity> {
 	
 	@Override
 	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
-		final LivingEntity target = (LivingEntity) delta.getFirst(e);
-		for (final LivingEntity entity : entities.get(e, false)) {
+		final LivingEntity target = (LivingEntity) delta.getSingle(e);
+		for (final LivingEntity entity : entities.getArray(e)) {
 			if (!(entity instanceof Creature))
 				continue;
 			((Creature) entity).setTarget(target);
@@ -101,6 +102,11 @@ public class VarTarget extends Variable<Entity> {
 	@Override
 	public String toString() {
 		return "the targeted " + types + " of " + entities;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return entities.isSingle();
 	}
 	
 }

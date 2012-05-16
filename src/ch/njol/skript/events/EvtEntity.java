@@ -21,8 +21,6 @@
 
 package ch.njol.skript.events;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -30,7 +28,10 @@ import org.bukkit.event.entity.EntityDeathEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.util.EntityType;
+import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
@@ -39,15 +40,16 @@ import ch.njol.skript.util.EntityType;
 public class EvtEntity extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtEntity.class, EntityDeathEvent.class, "death( of %entitytype%)?");
-		Skript.addEvent(EvtEntity.class, CreatureSpawnEvent.class, "spawn(ing)?( of %entitytype%)");
+		Skript.addEvent(EvtEntity.class, EntityDeathEvent.class, "death [of %entitytypes%]");
+		Skript.addEvent(EvtEntity.class, CreatureSpawnEvent.class, "spawn[ing] [of %entitytypes%]");
 	}
 	
-	EntityType[] types;
+	Literal<EntityType> types;
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Object[][] args, final int matchedPattern, final Matcher matcher) {
-		types = (EntityType[]) args[0];
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		types = (Literal<EntityType>) args[0];
 	}
 	
 	@Override
@@ -55,16 +57,19 @@ public class EvtEntity extends SkriptEvent {
 		if (types == null)
 			return true;
 		final Entity en = Skript.getEventValue(e, Entity.class);
-		for (final EntityType type : types) {
-			if (type.isInstance(en))
-				return true;
-		}
-		return false;
+		if (en == null)
+			throw new RuntimeException("no entity event value for entity death/spawn");
+		return types.check(e, new Checker<EntityType>() {
+			@Override
+			public boolean check(final EntityType t) {
+				return t.isInstance(en);
+			}
+		});
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "death/spawn of " + Skript.toString(types);
+		return "death/spawn" + (types == null ? "" : " of " + types);
 	}
 	
 }

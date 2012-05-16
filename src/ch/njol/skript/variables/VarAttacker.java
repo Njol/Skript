@@ -21,8 +21,6 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Projectile;
@@ -34,7 +32,9 @@ import org.bukkit.event.vehicle.VehicleDestroyEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.variables.VarAttacker.Attacker;
 
 /**
@@ -42,7 +42,7 @@ import ch.njol.skript.variables.VarAttacker.Attacker;
  * @author Peter Güttinger
  * 
  */
-public class VarAttacker extends Variable<Attacker> {
+public class VarAttacker extends SimpleVariable<Attacker> {
 	
 	public static final class Attacker {
 		private final Object attacker;
@@ -62,7 +62,7 @@ public class VarAttacker extends Variable<Attacker> {
 	}
 	
 	static {
-		Skript.addVariable(VarAttacker.class, Attacker.class, "attacker|damager");
+		Skript.addVariable(VarAttacker.class, Attacker.class, "(attacker|damager)");
 		Skript.addConverter(Attacker.class, Block.class, new Converter<Attacker, Block>() {
 			@Override
 			public Block convert(final Attacker a) {
@@ -82,7 +82,7 @@ public class VarAttacker extends Variable<Attacker> {
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {}
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
 	
 	@Override
 	protected Attacker[] getAll(final Event e) {
@@ -114,12 +114,17 @@ public class VarAttacker extends Variable<Attacker> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "attacker";
-		return ""+getFirst(e);
+		return Skript.getDebugMessage(getSingle(e) == null ? null : getSingle(e).attacker);
 	}
 	
 	@Override
 	public String toString() {
 		return "the attacker";
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return true;
 	}
 	
 }

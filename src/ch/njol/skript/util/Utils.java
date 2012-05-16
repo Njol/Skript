@@ -398,7 +398,7 @@ public abstract class Utils {
 		return null;
 	}
 	
-	public static String join(final VariableString[] strings, final Event e, boolean and) {
+	public static String join(final VariableString[] strings, final Event e, final boolean and) {
 		final StringBuilder b = new StringBuilder();
 		for (int i = 0; i < strings.length; i++) {
 			if (i != 0) {
@@ -510,31 +510,30 @@ public abstract class Utils {
 	}
 	
 	public static Player getTargetPlayer(final Player player) {
-		return getTarget(player, player.getWorld().getPlayers(), Player.class);
+		return getTarget(player, player.getWorld().getPlayers());
 	}
 	
 	public static Entity getTargetEntity(final LivingEntity entity, final Class<? extends Entity> type) {
-		if (entity instanceof Creature && !(entity instanceof Player))
+		if (entity instanceof Creature)
 			return ((Creature) entity).getTarget();
-		return getTarget(entity, entity.getWorld().getEntities(), type);
+		return getTarget(entity, entity.getWorld().getEntitiesByClass(type));
 	}
 	
-	@SuppressWarnings("unchecked")
-	public static <T extends Entity> T getTarget(final LivingEntity entity, final Iterable<? extends Entity> entities, final Class<T> type) {
+	public static <T extends Entity> T getTarget(final LivingEntity entity, final Iterable<T> entities) {
 		if (entity == null)
 			return null;
 		T target = null;
 		double targetDistanceSquared = Double.MAX_VALUE;
 		final double radiusSquared = 1;
-		final Vector l = entity.getEyeLocation().toVector();
+		final Vector l = entity.getEyeLocation().toVector(), n = entity.getLocation().getDirection().normalize();
 		final double cos = Math.cos(Math.PI / 4);
-		for (final Entity other : entities) {
-			if (!(type.isInstance(other)) || other == entity)
+		for (final T other : entities) {
+			if (other == entity)
 				continue;
 			if (target == null || targetDistanceSquared > other.getLocation().distanceSquared(entity.getLocation())) {
-				final Vector n = other.getLocation().toVector().subtract(l);
-				if (entity.getLocation().getDirection().normalize().crossProduct(n).lengthSquared() < radiusSquared && n.normalize().dot(entity.getLocation().getDirection().normalize()) >= cos) {
-					target = (T) other;
+				final Vector t = other.getLocation().toVector().subtract(l);
+				if (n.clone().crossProduct(t).lengthSquared() < radiusSquared && t.normalize().dot(n) >= cos) {
+					target = other;
 					targetDistanceSquared = target.getLocation().distanceSquared(entity.getLocation());
 				}
 			}
@@ -598,6 +597,13 @@ public abstract class Utils {
 		return new AmountResponse(s);
 	}
 	
+	/**
+	 * equal to {@link #getPlural(String)}, but prints a warning if the found plural is not <code>expectPlural</code>.
+	 * 
+	 * @param s
+	 * @param expectPlural
+	 * @return
+	 */
 	private static Pair<String, Boolean> getPlural(final String s, final boolean expectPlural) {
 		final Pair<String, Boolean> p = getPlural(s);
 		if (p.second ^ expectPlural)
@@ -614,6 +620,8 @@ public abstract class Utils {
 		final String l = s.toLowerCase();
 		if (l.endsWith("ves")) {
 			return new Pair<String, Boolean>(s.substring(0, s.length() - 2) + "f", Boolean.TRUE);
+		} else if (l.endsWith("ies")) {
+			return new Pair<String, Boolean>(s.substring(0, s.length() - 3) + "y", Boolean.TRUE);
 		} else if (l.endsWith("s")) {
 			return new Pair<String, Boolean>(s.substring(0, s.length() - 1), Boolean.TRUE);
 		} else if (l.endsWith("i")) {
@@ -633,6 +641,8 @@ public abstract class Utils {
 			return s.substring(0, s.length() - 1) + "ves";
 		} else if (s.endsWith("s")) {
 			return s + "es";
+		} else if (s.endsWith("y")) {
+			return s.substring(0, s.length() - 1) + "ies";
 		} else if (s.endsWith("us")) {
 			return s.substring(0, s.length() - 2) + "i";
 		}
@@ -644,10 +654,10 @@ public abstract class Utils {
 	 * 
 	 * @param s the string to add the article to
 	 * @return string with an appended a/an and a space at the beginning
-	 * @see #addUndefinedArticle(String, boolean)
+	 * @see #a(String, boolean)
 	 */
-	public static final String addUndefinedArticle(final String s) {
-		return addUndefinedArticle(s, false);
+	public static final String a(final String s) {
+		return a(s, false);
 	}
 	
 	/**
@@ -657,7 +667,7 @@ public abstract class Utils {
 	 * @param capA Whether to use a capital a or not
 	 * @return string with an appended a/an (or A/An if capA is true) and a space at the beginning
 	 */
-	public static final String addUndefinedArticle(final String s, final boolean capA) {
+	public static final String a(final String s, final boolean capA) {
 		if (s == null || s.isEmpty())
 			return "";
 		switch (Character.toLowerCase(s.charAt(0))) {
@@ -666,7 +676,7 @@ public abstract class Utils {
 			case 'i':
 			case 'o':
 			case 'u':
-//			case 'y':
+				//			case 'y':
 				if (capA)
 					return "An " + s;
 				return "an " + s;
@@ -687,28 +697,28 @@ public abstract class Utils {
 		switch (type) {
 			case DIODE_BLOCK_OFF:
 			case DIODE_BLOCK_ON:
-				return 2./16;
+				return 2. / 16;
 			case TRAP_DOOR:
-				return 3./16;
+				return 3. / 16;
 			case CAKE_BLOCK:
-				return 7./16;
+				return 7. / 16;
 			case STEP:
 				return 0.5;
 			case BED_BLOCK:
-				return 9./16;
+				return 9. / 16;
 			case ENCHANTMENT_TABLE:
-				return 12./16;
+				return 12. / 16;
 			case ENDER_PORTAL_FRAME:
-				return 13./16;
+				return 13. / 16;
 			case SOUL_SAND:
-				return 14./16;
+				return 14. / 16;
 			case BREWING_STAND:
-				return 14./16;
+				return 14. / 16;
 			case FENCE:
 			case FENCE_GATE:
 				return 1.5;
 			case CAULDRON:
-				return 5./16;
+				return 5. / 16;
 			default:
 				return 1;
 		}

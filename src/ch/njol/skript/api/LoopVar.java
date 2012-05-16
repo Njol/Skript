@@ -28,17 +28,17 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.SimpleVariable;
 
 /**
  * A variable that can be looped.<br/>
- * This class extends Variable, thus has the {@link Variable#change(Event, Variable, ChangeMode)} method which has an event argument.
+ * This class extends Variable, thus has the {@link SimpleVariable#change(Event, SimpleVariable, ChangeMode)} method which has an event argument.
  * You usually don't need it for the variable itself, what you need is {@link #current()}.
  * 
  * @author Peter Güttinger
  * 
  */
-public abstract class LoopVar<T> extends Variable<T> {
+public abstract class LoopVar<T> extends SimpleVariable<T> {
 	
 	/**
 	 * holds information about a loop variable
@@ -46,9 +46,9 @@ public abstract class LoopVar<T> extends Variable<T> {
 	 * @author Peter Güttinger
 	 * 
 	 */
-	public static class LoopInfo<T> extends VariableInfo<T> {
+	public static class LoopInfo<E extends LoopVar<T>, T> extends VariableInfo<E, T> {
 		
-		public LoopInfo(final Class<? extends LoopVar<T>> c, final Class<T> returnType, final String[] patterns) {
+		public LoopInfo(final Class<E> c, final Class<T> returnType, final String[] patterns) {
 			super(patterns, returnType, c);
 		}
 		
@@ -77,6 +77,11 @@ public abstract class LoopVar<T> extends Variable<T> {
 	
 	public final T next() {
 		return current = iter.next();
+	}
+	
+	@Override
+	public final boolean isSingle() {
+		return true;
 	}
 	
 	@SuppressWarnings("unchecked")

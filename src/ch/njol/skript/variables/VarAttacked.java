@@ -22,14 +22,15 @@
 package ch.njol.skript.variables;
 
 import java.lang.reflect.Array;
-import java.util.regex.Matcher;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.Utils;
 
@@ -37,18 +38,18 @@ import ch.njol.skript.util.Utils;
  * @author Peter Güttinger
  * 
  */
-public class VarAttacked extends Variable<Entity> {
+public class VarAttacked extends SimpleVariable<Entity> {
 	
 	static {
-		Skript.addVariable(VarAttacked.class, Entity.class, "(attacked|damaged|victim)( (.+))?");
+		Skript.addVariable(VarAttacked.class, Entity.class, "(attacked|damaged|victim) [<(.+)>]");
 	}
 	
 	private EntityType type;
 	private Entity[] array;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws ParseException {
-		final String type = matcher.group(3) == null ? null : matcher.group(3);
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+		final String type = parser.regexes.size() == 0 ? null : parser.regexes.get(0).group();
 		if (type == null) {
 			this.type = new EntityType(Entity.class, 1);
 		} else {
@@ -78,12 +79,17 @@ public class VarAttacked extends Variable<Entity> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "attacked " + type;
-		return Skript.toString(getFirst(e), true);
+		return Skript.getDebugMessage(getSingle(e));
 	}
 	
 	@Override
 	public String toString() {
 		return "the attacked " + type;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return true;
 	}
 	
 }

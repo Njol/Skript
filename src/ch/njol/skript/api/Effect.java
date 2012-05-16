@@ -25,6 +25,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.intern.TopLevelExpression;
+import ch.njol.skript.lang.ExprParser;
 
 /**
  * An effect which is executed once execution of the trigger is at it's entry. After execution the trigger will continue with the next element in the trigger item list.
@@ -49,7 +50,7 @@ public abstract class Effect extends TopLevelExpression {
 	}
 	
 	public static Effect parse(final String s) {
-		return (Effect) Expressions.parse(s, Skript.getEffects().iterator());
+		return (Effect) ExprParser.parse(s, Skript.getEffects().iterator(), false);
 	}
 	
 }

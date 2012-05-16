@@ -26,7 +26,7 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- *
+ * 
  */
 public class StoppableIterator<T> implements Iterator<T> {
 	
@@ -37,14 +37,14 @@ public class StoppableIterator<T> implements Iterator<T> {
 	
 	private boolean stopped = false;
 	private boolean calledNext = false;
-
+	
 	/**
 	 * 
 	 * @param iter
 	 * @param stopper Called for every element. If it returns true the iteration is stopped.
 	 * @param returnLast whether to return the last element, i.e. the element on which the stopper stopped, or not.
 	 */
-	public StoppableIterator(Iterator<T> iter, Checker<T> stopper, boolean returnLast) {
+	public StoppableIterator(final Iterator<T> iter, final Checker<T> stopper, final boolean returnLast) {
 		this.iter = iter;
 		this.stopper = stopper;
 		this.returnLast = returnLast;
@@ -54,7 +54,7 @@ public class StoppableIterator<T> implements Iterator<T> {
 	
 	@Override
 	public boolean hasNext() {
-		boolean cn = calledNext;
+		final boolean cn = calledNext;
 		calledNext = false;
 		if (stopped || !iter.hasNext())
 			return false;

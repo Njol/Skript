@@ -27,5 +27,5 @@ package ch.njol.skript;
  * 
  */
 public enum Verbosity {
-	LOW, NORMAL, HIGH, VERY_HIGH, EXTREME;
+	LOW, NORMAL, HIGH, VERY_HIGH, DEBUG;
 }

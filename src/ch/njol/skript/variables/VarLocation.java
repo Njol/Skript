@@ -21,25 +21,23 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Offset;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarLocation extends Variable<Location> {
+public class VarLocation extends SimpleVariable<Location> {
 	
 	static {
-		Skript.addVariable(VarLocation.class, Location.class, "%offset% %location%");
+		Skript.addVariable(VarLocation.class, Location.class, "%offsets% %locations%");
 	}
 	
 	private Variable<Offset> offsets;
@@ -47,7 +45,7 @@ public class VarLocation extends Variable<Location> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		offsets = (Variable<Offset>) vars[0];
 		locations = (Variable<Location>) vars[1];
 	}
@@ -59,7 +57,7 @@ public class VarLocation extends Variable<Location> {
 	
 	@Override
 	protected Location[] getAll(final Event e) {
-		return Offset.setOff(offsets.get(e), locations.get(e));
+		return Offset.setOff(offsets.getArray(e), locations.getArray(e));
 	}
 	
 	@Override
@@ -70,6 +68,11 @@ public class VarLocation extends Variable<Location> {
 	@Override
 	public String toString() {
 		return offsets + " " + locations;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return offsets.isSingle() && locations.isSingle();
 	}
 	
 }

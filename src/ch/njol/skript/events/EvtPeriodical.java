@@ -21,29 +21,30 @@
 
 package ch.njol.skript.events;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.util.ScheduledEvent;
 import ch.njol.skript.util.Timespan;
 
 public class EvtPeriodical extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtPeriodical.class, ScheduledEvent.class, "every %timespan%( in( worlds?)? %world%)?");
+		Skript.addEvent(EvtPeriodical.class, ScheduledEvent.class, "every %timespan% [in [world[s]] %worlds%]");
 	}
 	
 	private int period;
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Object[][] args, final int matchedPattern, final Matcher matcher) {
-		period = Math.round(((Timespan) args[0][0]).getTicks());
-		final World[] worlds = (World[]) args[1];
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		period = Math.round(((Literal<Timespan>) args[0]).getSingle().getTicks());
+		final World[] worlds = args[1] == null ? null : ((Literal<World>) args[1]).getArray();
 		final EvtPeriodical evt = this;
 		if (worlds == null) {
 			Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {

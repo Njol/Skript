@@ -71,7 +71,7 @@ final class SkriptEventHandler {
 				Skript.info("# " + t.getName());
 			final long startTrigger = System.nanoTime();
 			t.run(e);
-			if (Skript.log(Verbosity.EXTREME))
+			if (Skript.log(Verbosity.DEBUG))
 				Skript.info("# " + t.getName() + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 		}
 		// in case it got forgotten somewhere (you must not rely on this, as you will disable Skript's listener for all events triggered by any effects/conditions following yours!)

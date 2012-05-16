@@ -21,8 +21,6 @@
 
 package ch.njol.skript.events;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -33,7 +31,10 @@ import org.bukkit.event.painting.PaintingPlaceEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.util.ItemType;
+import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
@@ -43,16 +44,16 @@ import ch.njol.skript.util.ItemType;
 public class EvtBlock extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class), "break(ing)?(( of)? %itemtype%)?");
-		Skript.addEvent(EvtBlock.class, BlockBurnEvent.class, "burn(ing)?(( of)? %itemtype%)?");
-		Skript.addEvent(EvtBlock.class, Skript.array(BlockPlaceEvent.class, PaintingPlaceEvent.class), "place(( of)? %itemtype%)?");
+		Skript.addEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class), "break[ing] [[of] %itemtypes%]");
+		Skript.addEvent(EvtBlock.class, BlockBurnEvent.class, "burn[ing] [[of] %itemtypes%]");
+		Skript.addEvent(EvtBlock.class, Skript.array(BlockPlaceEvent.class, PaintingPlaceEvent.class), "plac(e|ing) [[of] %itemtypes%]");
 	}
 	
-	private ItemType[] types;
+	private Literal<ItemType> types;
 	
 	@Override
-	public void init(final Object[][] args, final int matchedPattern, final Matcher matcher) {
-		types = (ItemType[]) args[0];
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		types = (Literal<ItemType>) args[0];
 	}
 	
 	@Override
@@ -62,11 +63,12 @@ public class EvtBlock extends SkriptEvent {
 		final Block b = Skript.getEventValue(e, Block.class);
 		if (b == null)
 			return false;
-		for (final ItemType type : types) {
-			if (type.isOfType(b))
-				return true;
-		}
-		return false;
+		return types.check(e, new Checker<ItemType>() {
+			@Override
+			public boolean check(final ItemType t) {
+				return t.isOfType(b);
+			}
+		});
 	}
 	
 	@Override

@@ -21,34 +21,31 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
-import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarFoodLevel extends Variable<Integer> {
+public class VarFoodLevel extends SimpleVariable<Integer> {
 	
 	static {
-		Skript.addVariable(VarFoodLevel.class, Integer.class, "food( (level|meter))?( of %player%)?");
+		Skript.addVariable(VarFoodLevel.class, Integer.class, "food[[ ](level|meter)] [of %player%]");
 	}
 	
 	private Variable<Player> players;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
 	}
 	
@@ -59,12 +56,12 @@ public class VarFoodLevel extends Variable<Integer> {
 	
 	@Override
 	protected Integer[] getAll(final Event e) {
-		return get(e, players, new Getter<Integer, Player>() {
+		return players.getArray(e, Integer.class, new Getter<Integer, Player>() {
 			@Override
 			public Integer get(final Player p) {
 				return Integer.valueOf(p.getFoodLevel());
 			}
-		}, false);
+		});
 	}
 	
 	@Override
@@ -76,22 +73,22 @@ public class VarFoodLevel extends Variable<Integer> {
 	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
 		int s = 0;
 		if (mode != ChangeMode.CLEAR)
-			s = (Integer) delta.getFirst(e);
+			s = (Integer) delta.getSingle(e);
 		switch (mode) {
 			case SET:
 			case CLEAR:
-				for (final Player player : players.get(e, false)) {
-					((CraftPlayer) player).setFoodLevel(s);
+				for (final Player player : players.getArray(e)) {
+					player.setFoodLevel(s);
 				}
 				return;
 			case ADD:
-				for (final Player player : players.get(e, false)) {
-					((CraftPlayer) player).setFoodLevel(((CraftPlayer) player).getFoodLevel() + s);
+				for (final Player player : players.getArray(e)) {
+					player.setFoodLevel(player.getFoodLevel() + s);
 				}
 				return;
 			case REMOVE:
-				for (final Player player : players.get(e, false)) {
-					((CraftPlayer) player).setFoodLevel(((CraftPlayer) player).getFoodLevel() - s);
+				for (final Player player : players.getArray(e)) {
+					player.setFoodLevel(player.getFoodLevel() - s);
 				}
 				return;
 		}
@@ -105,6 +102,11 @@ public class VarFoodLevel extends Variable<Integer> {
 	@Override
 	public String toString() {
 		return "the food level of " + players;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return players.isSingle();
 	}
 	
 }

@@ -21,8 +21,6 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -31,7 +29,9 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.PlayerSlot;
 import ch.njol.skript.util.Slot;
 
@@ -39,36 +39,36 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  * 
  */
-public class VarArmorSlot extends Variable<Slot> {
+public class VarArmorSlot extends SimpleVariable<Slot> {
 	
 	static {
 		Skript.addVariable(VarArmorSlot.class, Slot.class,
-				"(boots?|shoes?) slot( of %player%)?",
-				"leg(ging)?s slot( of %player%)?",
-				"chest(plate)? slot( of %player%)?",
-				"helm(et)? slot( of %player%)?");
+				"(boot[s]|shoe[s]) [slot] [of %players%]",
+				"leg[ging]s [slot] [of %players%]",
+				"chest[plate] [slot] [of %players%]",
+				"helm[et] [slot] [of %players%]");
 	}
 	
-	private Variable<Player> player;
+	private Variable<Player> players;
 	private int slot;
 	
 	private final static String[] slotNames = {"boots", "leggings", "chestplate", "helmet"};
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
-		player = (Variable<Player>) vars[0];
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
+		players = (Variable<Player>) vars[0];
 		slot = matchedPattern;
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return slotNames[slot] + " slot of " + player.getDebugMessage(e);
+		return slotNames[slot] + " of " + players.getDebugMessage(e);
 	}
 	
 	@Override
 	protected Slot[] getAll(final Event e) {
-		return get(e, player, new Converter<Player, Slot>() {
+		return players.getArray(e, Slot.class, new Converter<Player, Slot>() {
 			@Override
 			public Slot convert(final Player p) {
 				return new PlayerSlot(p.getInventory()) {
@@ -76,25 +76,36 @@ public class VarArmorSlot extends Variable<Slot> {
 					public ItemStack getItem() {
 						return p.getInventory().getArmorContents()[slot];
 					}
+					
 					@Override
-					public void setItem(ItemStack item) {
-						ItemStack[] armour = p.getInventory().getArmorContents();
+					public void setItem(final ItemStack item) {
+						final ItemStack[] armour = p.getInventory().getArmorContents();
 						armour[slot] = item;
 						p.getInventory().setArmorContents(null);
 					}
+					
+					@Override
+					public String getDebugMessage(final Event e) {
+						return slotNames[slot] + " of " + p.getName();
+					}
 				};
 			}
-		}, false);
+		});
 	}
 	
 	@Override
 	public String toString() {
-		return slotNames[slot] + " slot of " + player;
+		return slotNames[slot] + " of " + players;
 	}
 	
 	@Override
 	public Class<? extends Slot> getReturnType() {
 		return Slot.class;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return true;
 	}
 	
 }

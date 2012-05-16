@@ -21,8 +21,6 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -30,8 +28,10 @@ import org.bukkit.inventory.ItemStack;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.PlayerSlot;
 import ch.njol.skript.util.Slot;
 
@@ -40,23 +40,23 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  * 
  */
-public class VarTool extends Variable<Slot> {
+public class VarTool extends SimpleVariable<Slot> {
 	
 	static {
-		Skript.addVariable(VarTool.class, Slot.class, "tool( of %player%)?");
+		Skript.addVariable(VarTool.class, Slot.class, "(tool|held item) [of %players%]", "%player%'s (tool|held item)");
 	}
 	
 	private Variable<Player> players;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
 	}
 	
 	@Override
 	protected Slot[] getAll(final Event e) {
-		return get(e, players, new Getter<Slot, Player>() {
+		return players.getArray(e, Slot.class, new Getter<Slot, Player>() {
 			@Override
 			public Slot get(final Player p) {
 				// TODO find the real index if possible
@@ -70,9 +70,14 @@ public class VarTool extends Variable<Slot> {
 					public ItemStack getItem() {
 						return p.getItemInHand();
 					}
+					
+					@Override
+					public String getDebugMessage(final Event e) {
+						return "tool of " + p.getName();
+					}
 				};
 			}
-		}, false);
+		});
 	}
 	
 	@Override
@@ -94,12 +99,17 @@ public class VarTool extends Variable<Slot> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "tool of " + players.getDebugMessage(e);
-		return Skript.toString(getAll(e)[0]);
+		return Skript.getDebugMessage(getSingle(e));
 	}
 	
 	@Override
 	public String toString() {
 		return "the tool of " + players;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return players.isSingle();
 	}
 	
 }

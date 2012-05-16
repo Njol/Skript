@@ -19,27 +19,36 @@
 
 package ch.njol.util;
 
-import java.util.List;
-
 /**
- * 
- * TODO: this will be the return value of a variable, but I have to think about it first
- * 
  * @author Peter Güttinger
- *
+ * 
  */
-public abstract class GeneratedList<T> implements List<T> {
+public abstract class Math2 {
 	
-	private final int size;
-	
-	protected GeneratedList(int size) {
-		this.size = size;
+	public final static int max(final int... nums) {
+		Validate.notEmpty(nums);
+		int max = nums[0];
+		for (int i = 1; i < nums.length; i++) {
+			if (nums[i] > max)
+				max = nums[i];
+		}
+		return max;
 	}
 	
-	@Override
-	public final int size() {
-		return size;
+	/**
+	 * finds the smallest positive number in the sequence
+	 * 
+	 * @param nums
+	 * @return smallest positive number of the sequence or -1 if all numbers are negative
+	 */
+	public final static int minPositive(final int... nums) {
+		Validate.notEmpty(nums);
+		int max = -1;
+		for (int i = 0; i < nums.length; i++) {
+			if (nums[i] > 0 && nums[i] < max)
+				max = nums[i];
+		}
+		return max;
 	}
 	
-	protected abstract T next();
 }

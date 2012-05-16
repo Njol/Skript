@@ -27,8 +27,9 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Debuggable;
-import ch.njol.skript.api.intern.UnparsedLiteral;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.api.exception.ParseException;
+import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.lang.SimpleVariable;
 
 /**
  * 
@@ -43,7 +44,7 @@ public class VariableString implements Debuggable {
 	private String lastString = null;
 	private final boolean isSimple;
 	
-	public VariableString(final String s) {
+	public VariableString(final String s) throws ParseException {
 		if (!s.contains("%")) {
 			lastString = s;
 			isSimple = true;
@@ -68,11 +69,9 @@ public class VariableString implements Debuggable {
 			} else {
 				if (params.length == 0)
 					p = c2;
-				final Variable<?> var = Variable.parse(s.substring(c + 1, p), Object.class);
-				if (var == null || var instanceof UnparsedLiteral) {
-					Skript.printErrorAndCause("can't understand the variable %" + s.substring(c + 1, c2) + "%");
-					isSimple = true;
-					return;
+				final SimpleVariable<?> var = (SimpleVariable<?>) ExprParser.parse(s.substring(c + 1, p), Skript.getVariables().iterator(), false);
+				if (var == null) {
+					throw new ParseException("can't understand the variable %" + s.substring(c + 1, c2) + "%");
 				} else {
 					string.add(var);
 				}
@@ -84,19 +83,27 @@ public class VariableString implements Debuggable {
 		}
 		isSimple = false;
 	}
-
+	
 	public static VariableString[] makeStrings(final String[] args) {
 		final VariableString[] strings = new VariableString[args.length];
 		for (int i = 0; i < args.length; i++) {
-			strings[i] = new VariableString(args[i]);
+			try {
+				strings[i] = new VariableString(args[i]);
+			} catch (final ParseException e) {
+				Skript.error(e.getError());
+			}
 		}
 		return strings;
 	}
-
+	
 	public static VariableString[] makeStringsFromQuoted(final String[] args) {
 		final VariableString[] strings = new VariableString[args.length];
 		for (int i = 0; i < args.length; i++) {
-			strings[i] = new VariableString(args[i].substring(1, args[i].length() - 1));
+			try {
+				strings[i] = new VariableString(args[i].substring(1, args[i].length() - 1));
+			} catch (final ParseException e) {
+				Skript.error(e.getError());
+			}
 		}
 		return strings;
 	}
@@ -112,17 +119,13 @@ public class VariableString implements Debuggable {
 			return lastString;
 		final StringBuilder b = new StringBuilder();
 		for (final Object o : string) {
-			if (o instanceof Variable) {
-				boolean first = true;
-				for (final Object x : ((Variable<?>) o).get(e, false)) {
-					if (!first)
-						b.append(", ");
-					else
-						first = false;
-					b.append(Skript.toString(x));
-				}
-			} else if (o instanceof String) {
-				b.append((String) o);
+			if (o instanceof SimpleVariable<?>) {
+				if (((SimpleVariable<?>) o).isSingle())
+					b.append(Skript.toString(((SimpleVariable<?>) o).getSingle(e)));
+				else
+					b.append(Skript.toString(((SimpleVariable<?>) o).getArray(e)));
+			} else {
+				b.append(o);
 			}
 		}
 		last = e;
@@ -137,8 +140,8 @@ public class VariableString implements Debuggable {
 			return '"' + get(e) + '"';
 		final StringBuilder b = new StringBuilder("\"");
 		for (final Object o : string) {
-			if (o instanceof Variable) {
-				b.append("%" + ((Variable<?>) o).getDebugMessage(e) + "%");
+			if (o instanceof SimpleVariable) {
+				b.append("%" + ((SimpleVariable<?>) o).getDebugMessage(e) + "%");
 			} else {
 				b.append(o);
 			}

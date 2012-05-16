@@ -97,7 +97,7 @@ public class SkriptCommand extends Command {
 			Skript.info("# /" + getName() + " " + Utils.join(args, ", "));
 		final long startTrigger = System.nanoTime();
 		trigger.run(event);
-		if (Skript.log(Verbosity.EXTREME))
+		if (Skript.log(Verbosity.DEBUG))
 			Skript.info("# " + getName() + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 		
 		return true;

@@ -25,7 +25,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.intern.ConvertedVariable;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.util.Validate;
 
 /**
@@ -34,26 +35,26 @@ import ch.njol.util.Validate;
  * 
  * @author Peter Güttinger
  */
-public abstract class VarVariable<T> extends Variable<T> {
+public abstract class VarVariable<T> extends SimpleVariable<T> {
 	
 	/** the wrapped variable */
-	protected Variable<? extends T> var;
+	protected SimpleVariable<? extends T> var;
 	
 	protected VarVariable() {}
 	
-	public VarVariable(final Variable<? extends T> var) {
+	public VarVariable(final SimpleVariable<? extends T> var) {
 		Validate.notNull(var);
 		this.var = var;
 	}
 	
 	@Override
 	protected <R> ConvertedVariable<? extends R> getConvertedVar(final Class<R> to) {
-		final Variable<?> siht = this;
-		final Variable<? extends R> v = var.getConvertedVariable(to);
+		final SimpleVariable<?> siht = this;
+		final SimpleVariable<? extends R> v = var.getConvertedVariable(to);
 		return new ConvertedVariable<R>(v, to) {
 			@Override
 			protected R[] getAll(final Event e) {
-				return v.get(e);
+				return v.getArray(e);
 			}
 			
 			@Override
@@ -65,7 +66,12 @@ public abstract class VarVariable<T> extends Variable<T> {
 	
 	@Override
 	protected T[] getAll(final Event e) {
-		return var.get(e);
+		return var.getArray(e);
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return var.isSingle();
 	}
 	
 	@Override

@@ -21,8 +21,6 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.World;
 import org.bukkit.event.Event;
 
@@ -31,24 +29,26 @@ import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
 import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.WeatherType;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarWeather extends Variable<WeatherType> {
+public class VarWeather extends SimpleVariable<WeatherType> {
 	
 	static {
-		Skript.addVariable(VarWeather.class, WeatherType.class, "weather( (in|of) %world%)?");
+		Skript.addVariable(VarWeather.class, WeatherType.class, "weather [(in|of) %world%]");
 	}
 	
 	private Variable<World> worlds;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
 		worlds = (Variable<World>) vars[0];
 	}
 	
@@ -59,12 +59,12 @@ public class VarWeather extends Variable<WeatherType> {
 	
 	@Override
 	protected WeatherType[] getAll(final Event e) {
-		return get(e, worlds, new Getter<WeatherType, World>() {
+		return worlds.getArray(e, WeatherType.class, new Getter<WeatherType, World>() {
 			@Override
 			public WeatherType get(final World w) {
 				return WeatherType.fromWorld(w);
 			}
-		}, false);
+		});
 	}
 	
 	@Override
@@ -79,14 +79,14 @@ public class VarWeather extends Variable<WeatherType> {
 	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
 		switch (mode) {
 			case CLEAR:
-				for (final World w : worlds.get(e, false)) {
+				for (final World w : worlds.getArray(e)) {
 					w.setStorm(false);
 					w.setThundering(false);
 				}
 			break;
 			case SET:
-				final WeatherType t = (WeatherType) delta.getFirst(e);
-				for (final World w : worlds.get(e, false)) {
+				final WeatherType t = (WeatherType) delta.getSingle(e);
+				for (final World w : worlds.getArray(e)) {
 					t.setWeather(w);
 				}
 			break;
@@ -101,6 +101,11 @@ public class VarWeather extends Variable<WeatherType> {
 	@Override
 	public String toString() {
 		return "the weather in " + worlds;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return worlds.isSingle();
 	}
 	
 }

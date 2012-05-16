@@ -21,8 +21,6 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
@@ -30,22 +28,24 @@ import org.bukkit.inventory.Inventory;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.intern.Literal;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleLiteral;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarPlayer extends Variable<Player> {
+public class VarPlayer extends SimpleVariable<Player> {
 	
 	static {
 		Skript.addVariable(VarPlayer.class, Player.class, "player", "me");
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException {}
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException {}
 	
 	@Override
 	protected Player[] getAll(final Event e) {
@@ -61,7 +61,7 @@ public class VarPlayer extends Variable<Player> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "player";
-		return Skript.toString(getFirst(e));
+		return Skript.getDebugMessage(getSingle(e));
 	}
 	
 	@Override
@@ -71,15 +71,20 @@ public class VarPlayer extends Variable<Player> {
 	
 	@Override
 	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
-		final Player p = getFirst(e);
+		final Player p = getSingle(e);
 		if (p == null)
 			return;
-		DefaultChangers.inventoryChanger.change(e, new Literal<Inventory>(p.getInventory()), delta, mode);
+		DefaultChangers.inventoryChanger.change(e, new SimpleLiteral<Inventory>(p.getInventory()), delta, mode);
 	}
 	
 	@Override
 	public String toString() {
 		return "the player";
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return true;
 	}
 	
 }

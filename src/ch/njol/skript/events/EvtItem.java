@@ -21,8 +21,6 @@
 
 package ch.njol.skript.events;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
@@ -32,7 +30,10 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.util.ItemType;
+import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
@@ -41,17 +42,18 @@ import ch.njol.skript.util.ItemType;
 public class EvtItem extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtItem.class, BlockDispenseEvent.class, "dispense(( of)? %itemtype%)?");
-		Skript.addEvent(EvtItem.class, ItemSpawnEvent.class, "item spawn(( of)? %itemtype%)?");
-		Skript.addEvent(EvtItem.class, PlayerDropItemEvent.class, "drop(( of)? %itemtype%)?");
-		Skript.addEvent(EvtItem.class, PlayerEggThrowEvent.class, "throw(( of)? %itemtype%)?");
+		Skript.addEvent(EvtItem.class, BlockDispenseEvent.class, "dispense [[of] %itemtypes%]");
+		Skript.addEvent(EvtItem.class, ItemSpawnEvent.class, "item spawn [[of] %itemtypes%]");
+		Skript.addEvent(EvtItem.class, PlayerDropItemEvent.class, "drop [[of] %itemtypes%]");
+		Skript.addEvent(EvtItem.class, PlayerEggThrowEvent.class, "throw [[of] %itemtypes%]");
 	}
 	
-	private ItemType[] types;
+	private Literal<ItemType> types;
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Object[][] args, final int matchedPattern, final Matcher matcher) {
-		types = (ItemType[]) args[0];
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		types = (Literal<ItemType>) args[0];
 	}
 	
 	@Override
@@ -59,16 +61,17 @@ public class EvtItem extends SkriptEvent {
 		if (types == null)
 			return true;
 		final ItemStack is = Skript.getEventValue(e, ItemStack.class);
-		for (final ItemType type : types) {
-			if (type.isOfType(is))
-				return true;
-		}
-		return false;
+		return types.check(e, new Checker<ItemType>() {
+			@Override
+			public boolean check(final ItemType t) {
+				return t.isOfType(is);
+			}
+		});
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "dispense/spawn/drop/throw of " + Skript.toString(types);
+		return "dispense/spawn/drop/throw" + (types == null ? "" : " of " + types);
 	}
 	
 }

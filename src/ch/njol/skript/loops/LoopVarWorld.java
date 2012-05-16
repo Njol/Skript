@@ -22,7 +22,6 @@
 package ch.njol.skript.loops;
 
 import java.util.Iterator;
-import java.util.regex.Matcher;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -30,7 +29,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
@@ -43,7 +43,7 @@ public class LoopVarWorld extends LoopVar<World> {
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {}
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
 	
 	@Override
 	protected Iterator<World> iterator(final Event e) {

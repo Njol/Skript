@@ -22,7 +22,6 @@
 package ch.njol.skript.variables;
 
 import java.util.ArrayList;
-import java.util.regex.Matcher;
 
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
@@ -30,26 +29,26 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarTargetedBlock extends Variable<Block> {
+public class VarTargetedBlock extends SimpleVariable<Block> {
 	
 	static {
-		Skript.addVariable(VarTargetedBlock.class, Block.class, "targeted block( of %livingentity%)?");
+		Skript.addVariable(VarTargetedBlock.class, Block.class, "targeted block[s] [of %livingentities%]");
 	}
 	
 	private Variable<LivingEntity> entities;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		entities = (Variable<LivingEntity>) vars[0];
 	}
 	
@@ -57,15 +56,15 @@ public class VarTargetedBlock extends Variable<Block> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "targeted block of " + entities.getDebugMessage(e);
-		return Skript.toString(getAll(e));
+		return Skript.getDebugMessage(getAll(e));
 	}
 	
 	@Override
 	protected Block[] getAll(final Event evt) {
 		final ArrayList<Block> targets = new ArrayList<Block>();
-		for (final LivingEntity e : entities.get(evt, false)) {
+		for (final LivingEntity e : entities.getArray(evt)) {
 			final Block t = e.getTargetBlock(null, Skript.TARGETBLOCKMAXDISTANCE);
-			if (t != null && t.getTypeId() != 0)// air block = max distance or end of world reached
+			if (t != null && t.getTypeId() != 0)// air block = max distance or end of world (top/bottom) reached
 				targets.add(t);
 		}
 		return targets.toArray(new Block[0]);
@@ -73,7 +72,7 @@ public class VarTargetedBlock extends Variable<Block> {
 	
 	@Override
 	public String toString() {
-		return "the targeted blocks of " + entities;
+		return "the targeted block" + (isSingle() ? "" : "s") + " of " + entities;
 	}
 	
 	@Override
@@ -89,6 +88,11 @@ public class VarTargetedBlock extends Variable<Block> {
 	@Override
 	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
 		DefaultChangers.blockChanger.change(e, this, delta, mode);
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return entities.isSingle();
 	}
 	
 }

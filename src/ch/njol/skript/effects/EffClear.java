@@ -21,16 +21,15 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Literal;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleLiteral;
+import ch.njol.skript.lang.Variable;
 
 /**
  * 
@@ -40,13 +39,13 @@ import ch.njol.skript.api.intern.Variable;
 public class EffClear extends Effect {
 	
 	static {
-		Skript.addEffect(EffClear.class, "(clear|delete) %object%");
+		Skript.addEffect(EffClear.class, "(clear|delete) %objectS%");
 	}
 	
 	private Variable<?> cleared;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
 		cleared = vars[0];
 		final Class<?> r = cleared.acceptChange(ChangeMode.CLEAR);
 		if (r == null) {
@@ -54,7 +53,7 @@ public class EffClear extends Effect {
 		}
 	}
 	
-	public final static class DummyVariable extends Literal<Object> {
+	public final static class DummyVariable extends SimpleLiteral<Object> {
 		public DummyVariable() {
 			super(new Object[] {null}, Object.class, true);
 		}

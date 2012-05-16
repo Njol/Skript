@@ -21,11 +21,13 @@
 
 package ch.njol.skript.api.exception;
 
-import ch.njol.skript.api.intern.Expression;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
- * @see Expression#init(java.util.List, int, java.util.regex.Matcher)
+ * @see Expression#init(Variable[], int, ParseResult)
  */
 public class InitException extends Exception {
 	

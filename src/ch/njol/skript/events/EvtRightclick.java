@@ -21,8 +21,6 @@
 
 package ch.njol.skript.events;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerEvent;
@@ -31,8 +29,11 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.ItemType;
+import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
@@ -43,21 +44,21 @@ public class EvtRightclick extends SkriptEvent {
 	
 	static {
 		Skript.addEvent(EvtRightclick.class, Skript.array(PlayerInteractEvent.class, PlayerInteractEntityEvent.class),
-				"rightclick(ing)?( on %itemtype%)?( (with|using|holding)( tool)? %itemtype%)?",
-				"rightclick(ing)?( on %entitytype%)?( (with|using|holding)( tool)? %itemtype%)?");
+				"rightclick[ing] [on %itemtype%] [(with|using|holding) %itemtype%]",
+				"rightclick[ing] [on %entitytype%] [(with|using|holding) %itemtype%]");
 	}
 	
-	private ItemType[] blocks = null;
-	private EntityType[] entities = null;
-	private ItemType[] tools;
+	private Literal<ItemType> blocks = null;
+	private Literal<EntityType> entities = null;
+	private Literal<ItemType> tools;
 	
 	@Override
-	public void init(final Object[][] args, final int matchedPattern, final Matcher matcher) {
-		if (args[0] instanceof ItemType[])
-			blocks = (ItemType[]) args[0];
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		if (matchedPattern == 0)
+			blocks = (Literal<ItemType>) args[0];
 		else
-			entities = (EntityType[]) args[0];
-		tools = (ItemType[]) args[1];
+			entities = (Literal<EntityType>) args[0];
+		tools = (Literal<ItemType>) args[1];
 	}
 	
 	@Override
@@ -66,35 +67,34 @@ public class EvtRightclick extends SkriptEvent {
 				|| ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_AIR
 				|| ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_BLOCK))
 			return false;
-		boolean ok = false;
 		if (tools != null) {
-			for (final ItemType tool : tools) {
-				if (tool.isOfType(((PlayerEvent) e).getPlayer().getItemInHand())) {
-					ok = true;
-					break;
+			if (!tools.check(e, new Checker<ItemType>() {
+				@Override
+				public boolean check(final ItemType t) {
+					return t.isOfType(((PlayerEvent) e).getPlayer().getItemInHand());
 				}
-			}
-			if (!ok)
+			})) {
 				return false;
+			}
 		}
 		if (blocks == null && entities == null)
 			return true;
 		if (e instanceof PlayerInteractEntityEvent && entities != null) {
-			for (final EntityType entity : entities) {
-				if (entity.isInstance(((PlayerInteractEntityEvent) e).getRightClicked())) {
-					return true;
+			return entities.check(e, new Checker<EntityType>() {
+				@Override
+				public boolean check(final EntityType t) {
+					return t.isInstance(((PlayerInteractEntityEvent) e).getRightClicked());
 				}
-			}
-			return false;
+			});
 		} else if (e instanceof PlayerInteractEvent && blocks != null) {
-			for (final ItemType block : blocks) {
-				if (block.isOfType(((PlayerInteractEvent) e).getClickedBlock())) {
-					return true;
+			return blocks.check(e, new Checker<ItemType>() {
+				@Override
+				public boolean check(final ItemType t) {
+					return t.isOfType(((PlayerInteractEvent) e).getClickedBlock());
 				}
-			}
-			return false;
+			});
 		}
-		return false;
+		return true;
 	}
 	
 	@Override

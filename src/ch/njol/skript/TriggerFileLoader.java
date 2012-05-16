@@ -28,18 +28,18 @@ import ch.njol.skript.api.LoopVar;
 import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.Conditional;
-import ch.njol.skript.api.intern.Expression.Expressions;
 import ch.njol.skript.api.intern.Loop;
 import ch.njol.skript.api.intern.TopLevelExpression;
 import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.api.intern.TriggerItem;
 import ch.njol.skript.api.intern.TriggerSection;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.config.Config;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.SimpleNode;
+import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.util.ErrorSession;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
@@ -60,36 +60,38 @@ final public class TriggerFileLoader {
 	private static String indentation = "";
 	
 	public static ArrayList<TriggerItem> loadItems(final SectionNode node) {
-		if (Skript.logExtreme())
+		
+		if (Skript.debug())
 			indentation += "    ";
+		
 		final ArrayList<TriggerItem> items = new ArrayList<TriggerItem>();
+		
+		final ErrorSession session = Skript.startErrorSession();
+		
 		for (final Node n : node) {
-			if (n.isVoid())
-				continue;
 			SkriptLogger.setNode(n);
 			if (n instanceof SimpleNode) {
 				final SimpleNode e = (SimpleNode) n;
-				
 				final TopLevelExpression expr = TopLevelExpression.parse(e.getName());
 				if (expr == null) {
-					Skript.printErrorAndCause("can't understand this condition/effect: '" + e.getName() + "'");
+					session.printErrors("can't understand this condition/effect: '" + e.getName() + "'");
 					continue;
 				}
-				Skript.printWarnings();
-				Skript.clearErrorCause();
-				if (Skript.logExtreme())
+				session.printWarnings();
+				session.clearErrors();
+				if (Skript.debug())
 					Skript.info(indentation + expr.getDebugMessage(null));
 				items.add(expr);
 			} else if (n instanceof SectionNode) {
 				if (n.getName().startsWith("loop ")) {
-					final LoopVar<?> loopvar = (LoopVar<?>) Variable.parseNoLiteral(n.getName().substring("loop ".length()), Skript.loops.listIterator());
+					final LoopVar<?> loopvar = (LoopVar<?>) ExprParser.parse(n.getName().substring("loop ".length()), Skript.loops.listIterator(), false);
 					if (loopvar == null) {
-						Skript.printErrorAndCause("can't understand this loop: '" + n.getName() + "'");
+						session.printErrors("can't understand this loop: '" + n.getName() + "'");
 						continue;
 					}
-					Skript.printWarnings();
-					Skript.clearErrorCause();
-					if (Skript.logExtreme())
+					session.printWarnings();
+					session.clearErrors();
+					if (Skript.debug())
 						Skript.info(indentation + "loop " + loopvar.getLoopDebugMessage(null) + ":");
 					currentLoops.add(loopvar);
 					final Loop loop = new Loop(loopvar, (SectionNode) n);
@@ -100,27 +102,31 @@ final public class TriggerFileLoader {
 						Skript.error("'else' has to be placed just after the end of a conditional section");
 						continue;
 					}
-					if (Skript.logExtreme())
+					if (Skript.debug())
 						Skript.info(indentation + "else:");
 					((Conditional) items.get(items.size() - 1)).loadElseClause((SectionNode) n);
 				} else {
 					final Condition cond = Condition.parse(n.getName());
 					if (cond == null) {
-						Skript.printErrorAndCause("can't understand this condition: '" + n.getName() + "'");
+						session.printErrors("can't understand this condition: '" + n.getName() + "'");
 						continue;
 					}
-					Skript.printWarnings();
-					Skript.clearErrorCause();
-					if (Skript.logExtreme())
+					session.printWarnings();
+					session.clearErrors();
+					if (Skript.debug())
 						Skript.info(indentation + cond.getDebugMessage(null) + ":");
 					final Conditional c = new Conditional(cond, (SectionNode) n);
 					items.add(c);
 				}
 			}
 		}
+		
 		SkriptLogger.setNode(node);
-		if (Skript.logExtreme())
+		Skript.stopErrorSession();
+		
+		if (Skript.debug())
 			indentation = indentation.substring(0, indentation.length() - 4);
+		
 		return items;
 	}
 	
@@ -133,19 +139,19 @@ final public class TriggerFileLoader {
 	static void load(final Config config) {
 		int numTriggers = 0;
 		int numCommands = 0;
+		final ErrorSession session = Skript.startErrorSession();
+		
 		for (final Node cnode : config.getMainNode()) {
-			if (cnode.isVoid())
-				continue;
 			if (!(cnode instanceof SectionNode)) {
-				Skript.error("invalid line");
+				session.error("invalid line");
 				continue;
 			}
 			
 			final SectionNode node = ((SectionNode) cnode);
-			final String s = node.getName();
+			String s = node.getName();
 			
 			if (StringUtils.count(s, '"') % 2 != 0) {
-				Skript.error(Skript.quotesError);
+				session.error(Skript.quotesError);
 			}
 			
 			if (s.startsWith("command ")) {
@@ -153,23 +159,28 @@ final public class TriggerFileLoader {
 					numCommands++;
 				continue;
 			}
-			if (Skript.logVeryHigh() && !Skript.logExtreme())
+			if (Skript.logVeryHigh() && !Skript.debug())
 				Skript.info("loading trigger '" + s + "'");
 			
-			final Pair<SkriptEventInfo, SkriptEvent> event = Expressions.parseEvent(s);
+			session.clearErrors();
+			if (s.toLowerCase().startsWith("on "))
+				s = s.substring("on ".length());
+			final Pair<SkriptEventInfo<?>, SkriptEvent> event = ExprParser.parseEvent(s);
 			if (event == null) {
-				Skript.printErrorAndCause("can't understand this event: '" + s + "'");
+				session.printErrors("can't understand this event: '" + s + "'");
 				continue;
 			}
 			
-			else if (Skript.logExtreme())
-				Skript.info(s + " (" + event.second.getDebugMessage(null) + "):");
+			else if (Skript.debug())
+				Skript.info("on " + s + " (" + event.second.getDebugMessage(null) + "):");
 			
 			currentEvent = event.second;
-			final Trigger trigger = new Trigger(s, event.second, loadItems(node));
+			final Trigger trigger = new Trigger("on " + s, event.second, loadItems(node));
 			SkriptEventHandler.addTrigger(event.first.events, trigger);
 			numTriggers++;
 		}
+		
+		Skript.stopErrorSession();
 		
 		if (Skript.logHigh())
 			Skript.info("loaded " + numTriggers + " trigger" + (numTriggers == 1 ? "" : "s") + " and " + numCommands + " command" + (numCommands == 1 ? "" : "s") + (!Skript.logVeryHigh() ? " from '" + config.getFileName() + "'" : ""));

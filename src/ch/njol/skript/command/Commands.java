@@ -29,9 +29,9 @@ import java.util.regex.Pattern;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.TriggerFileLoader;
-import ch.njol.skript.api.intern.Expression.Expressions;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.validate.SectionValidator;
+import ch.njol.skript.lang.ExprParser;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
@@ -63,7 +63,7 @@ public abstract class Commands {
 			return false;
 		}
 		
-		final String argPattern = "<([a-zA-Z -]+?)\\s*(=\\s*(" + Expressions.wildcard + "))?>";
+		final String argPattern = "<([a-zA-Z -]+?)\\s*(=\\s*(" + ExprParser.wildcard + "))?>";
 		
 		Matcher m = Pattern.compile("^command /?(\\S+)( " + argPattern + ")*$").matcher(s);
 		if (!m.matches()) {
@@ -71,7 +71,7 @@ public abstract class Commands {
 			return false;
 		}
 		
-		String command = m.group(1);
+		final String command = m.group(1);
 		
 		currentArguments = new ArrayList<Argument<?>>();
 		m = Pattern.compile(argPattern).matcher(s);
@@ -99,7 +99,7 @@ public abstract class Commands {
 			}
 			final Argument<?> arg = Argument.newInstance(c, m.group(3), i, !hadNonSingle);
 			if (arg == null) {
-				Skript.printErrorAndCause("The " + StringUtils.fancyOrderNumber(i + 1) + " argument is invalid");
+				Skript.getCurrentErrorSession().printErrors("The " + StringUtils.fancyOrderNumber(i + 1) + " argument is invalid");
 				return false;
 			}
 			currentArguments.add(arg);
@@ -130,10 +130,10 @@ public abstract class Commands {
 			Skript.warning("command /" + command + " has a permission message set, but not a permission.");
 		}
 		
-		if (Skript.logExtreme())
+		if (Skript.debug())
 			Skript.info("command " + desc + ":");
 		Skript.addCommand(new SkriptCommand(command, currentArguments, description, usage, aliases, permission, permissionMessage, TriggerFileLoader.loadItems(trigger)));
-		if (Skript.logVeryHigh() && !Skript.logExtreme())
+		if (Skript.logVeryHigh() && !Skript.debug())
 			Skript.info("registered command /" + command);
 		currentArguments = null;
 		return true;

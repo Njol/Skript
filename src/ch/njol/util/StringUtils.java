@@ -71,4 +71,15 @@ public abstract class StringUtils {
 		return r;
 	}
 	
+	public static int count(final String s, final char c, final int start, final int end) {
+		if (start < 0 || end > s.length())
+			throw new StringIndexOutOfBoundsException("invalid start/end indices " + start + "," + end + " for string \"" + s + "\" (length " + s.length() + ")");
+		int r = 0;
+		for (int i = start; i < end; i++) {
+			if (s.charAt(i) == c)
+				r++;
+		}
+		return r;
+	}
+	
 }

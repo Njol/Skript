@@ -19,7 +19,7 @@
  * 
  */
 
-package ch.njol.skript.api.intern;
+package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
 
@@ -27,15 +27,18 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.intern.ConvertedLiteral;
+import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.api.intern.VariableStringLiteral;
 import ch.njol.skript.util.Utils;
 
 /**
  * A literal whioch has yet to be parsed. This is returned if %object% is used within patterns and no variable matches.
  * 
  * @author Peter Güttinger
- * @see Literal
+ * @see SimpleLiteral
  */
-public class UnparsedLiteral extends Literal<Object> {
+public class UnparsedLiteral extends SimpleLiteral<Object> {
 	
 	/**
 	 * 
@@ -46,23 +49,32 @@ public class UnparsedLiteral extends Literal<Object> {
 		super(data, Object.class, and);
 	}
 	
+	@Override
+	protected Object[] getAll(final Event e) {
+		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+	}
+	
+	public String[] getData() {
+		return (String[]) data;
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public <R> ConvertedLiteral<? extends R> getConvertedVar(final Class<R> to) {
 		if (to == String.class) {
-			VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
+			final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
 			if (vsl != null)
 				return (ConvertedLiteral<? extends R>) vsl;
-		}
-		if (to == Object.class)
+		} else if (to == Object.class) {
 			throw new SkriptAPIException("can't parse as Object");
+		}
 		final Converter<String, ? extends R> p = Skript.getParser(to);
 		if (p == null)
 			return null;
 		final R[] parsedData = (R[]) Array.newInstance(to, data.length);
 		for (int i = 0; i < data.length; i++) {
 			if ((parsedData[i] = p.convert((String) data[i])) == null) {
-				Skript.setErrorCause("'" + data[i] + "' is not a(n) " + to.getSimpleName(), false);
+				Skript.error("'" + data[i] + "' is not " + Utils.a(Skript.getExactClassName(to)));
 				return null;
 			}
 		}

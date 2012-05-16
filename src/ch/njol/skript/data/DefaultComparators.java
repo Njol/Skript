@@ -54,7 +54,7 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final ch.njol.skript.api.Comparator.Relation r) {
+			public boolean supportsRelation(final Relation r) {
 				return r.isEqualOrInverse();
 			}
 		});
@@ -69,7 +69,7 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final ch.njol.skript.api.Comparator.Relation r) {
+			public boolean supportsRelation(final Relation r) {
 				return r.isEqualOrInverse();
 			}
 		});
@@ -84,7 +84,7 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final ch.njol.skript.api.Comparator.Relation r) {
+			public boolean supportsRelation(final Relation r) {
 				return r.isEqualOrInverse();
 			}
 			
@@ -100,7 +100,7 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final ch.njol.skript.api.Comparator.Relation r) {
+			public boolean supportsRelation(final Relation r) {
 				return true;
 			}
 		});
@@ -115,22 +115,35 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final ch.njol.skript.api.Comparator.Relation r) {
+			public boolean supportsRelation(final Relation r) {
 				return r.isEqualOrInverse();
+			}
+		});
+		
+		// Time - Time
+		Skript.addComparator(Time.class, Time.class, new Comparator<Time, Time>() {
+			@Override
+			public Relation compare(final Time t1, final Time t2) {
+				return Relation.get(t1.getTicks() - t2.getTicks());
+			}
+			
+			@Override
+			public boolean supportsRelation(final Relation r) {
+				return true;
 			}
 		});
 		
 		// Time - Timeperiod
 		Skript.addComparator(Time.class, Timeperiod.class, new Comparator<Time, Timeperiod>() {
 			@Override
-			public ch.njol.skript.api.Comparator.Relation compare(final Time t, final Timeperiod p) {
+			public Relation compare(final Time t, final Timeperiod p) {
 				if (p == null || t == null)
 					return Relation.NOT_EQUAL;
 				return Relation.get(p.contains(t));
 			}
 			
 			@Override
-			public boolean supportsRelation(final ch.njol.skript.api.Comparator.Relation r) {
+			public boolean supportsRelation(final Relation r) {
 				return r.isEqualOrInverse();
 			}
 		});
@@ -146,7 +159,7 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final ch.njol.skript.api.Comparator.Relation r) {
+			public boolean supportsRelation(final Relation r) {
 				return r.isEqualOrInverse();
 			}
 			

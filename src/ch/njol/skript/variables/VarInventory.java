@@ -21,8 +21,6 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -30,26 +28,26 @@ import org.bukkit.inventory.InventoryHolder;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarInventory extends Variable<Inventory> {
+public class VarInventory extends SimpleVariable<Inventory> {
 	
 	static {
-		Skript.addVariable(VarInventory.class, Inventory.class, "inventory of %inventoryholder%");
+		Skript.addVariable(VarInventory.class, Inventory.class, "inventory of %inventoryholders%");
 	}
 	
 	private Variable<InventoryHolder> holders;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		holders = (Variable<InventoryHolder>) vars[0];
 	}
 	
@@ -60,12 +58,12 @@ public class VarInventory extends Variable<Inventory> {
 	
 	@Override
 	protected Inventory[] getAll(final Event e) {
-		return get(e, holders, new Getter<Inventory, InventoryHolder>() {
+		return holders.getArray(e, Inventory.class, new Getter<Inventory, InventoryHolder>() {
 			@Override
 			public Inventory get(final InventoryHolder h) {
 				return h.getInventory();
 			}
-		}, false);
+		});
 	}
 	
 	@Override
@@ -86,6 +84,11 @@ public class VarInventory extends Variable<Inventory> {
 	@Override
 	public String toString() {
 		return "the inventory of " + holders;
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return holders.isSingle();
 	}
 	
 }

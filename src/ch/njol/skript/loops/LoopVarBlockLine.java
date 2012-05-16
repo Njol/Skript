@@ -22,7 +22,6 @@
 package ch.njol.skript.loops;
 
 import java.util.Iterator;
-import java.util.regex.Matcher;
 
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
@@ -32,8 +31,9 @@ import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.LoopVar;
 import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.BlockLineIterator;
 import ch.njol.skript.util.Offset;
 
@@ -56,20 +56,21 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 	private Variable<Block> start;
 	private Variable<Block> end = null;
 	private Variable<Offset> direction = null;
-//	private Set<Variable<Block>> exclude = new HashSet<Variable<Block>>();
+	
+	//	private Set<Variable<Block>> exclude = new HashSet<Variable<Block>>();
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
 		switch (matchedPattern) {
 			case 0:
 			case 1:
 				start = (Variable<Block>) vars[0];
 				end = (Variable<Block>) vars[1];
-//				if (matchedPattern == 1) {
-//					exclude.add(start);
-//					exclude.add(end);
-//				}
+			//				if (matchedPattern == 1) {
+			//					exclude.add(start);
+			//					exclude.add(end);
+			//				}
 			break;
 			case 2:
 				start = (Variable<Block>) vars[0];
@@ -78,7 +79,7 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 			case 3:
 				direction = (Variable<Offset>) vars[0];
 				start = (Variable<Block>) vars[1];
-//				exclude.add(start);
+				//				exclude.add(start);
 		}
 	}
 	
@@ -93,16 +94,16 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 	
 	@Override
 	protected Iterator<? extends Block> iterator(final Event e) {
-		final Block b = start.getFirst(e);
+		final Block b = start.getSingle(e);
 		if (b == null)
 			return null;
 		if (direction != null) {
-			final Offset o = direction.getFirst(e);
+			final Offset o = direction.getSingle(e);
 			if (o == null)
 				return null;
 			return new BlockLineIterator(b, o.toVector(), MAXDIST);
 		} else {
-			final Block b2 = end.getFirst(e);
+			final Block b2 = end.getSingle(e);
 			if (b2 == null || b2.getWorld() != b.getWorld())
 				return null;
 			return new BlockLineIterator(b, b2);

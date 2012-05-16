@@ -22,7 +22,6 @@
 package ch.njol.skript.loops;
 
 import java.util.Iterator;
-import java.util.regex.Matcher;
 
 import org.bukkit.event.Event;
 
@@ -30,9 +29,11 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.LoopVar;
 import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemData;
 import ch.njol.skript.util.ItemType;
+import ch.njol.util.iterator.ArrayIterator;
 
 /**
  * @author Peter Güttinger
@@ -41,14 +42,14 @@ import ch.njol.skript.util.ItemType;
 public class LoopVarIdsOf extends LoopVar<Integer> {
 	
 	static {
-		Skript.addLoop(LoopVarIdsOf.class, Integer.class, "ids of %itemtype%");
+		Skript.addLoop(LoopVarIdsOf.class, Integer.class, "id[s] of %itemtypes%");
 	}
 	
 	private Variable<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
 		types = (Variable<ItemType>) vars[0];
 	}
 	
@@ -61,7 +62,7 @@ public class LoopVarIdsOf extends LoopVar<Integer> {
 	protected Iterator<Integer> iterator(final Event e) {
 		return new Iterator<Integer>() {
 			
-			private final Iterator<ItemType> ts = types.get(e, false).iterator();
+			private final Iterator<ItemType> ts = new ArrayIterator<ItemType>(types.getArray(e));
 			private Iterator<ItemData> ds = ts.next().iterator();
 			
 			@Override

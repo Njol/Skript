@@ -31,32 +31,34 @@ import ch.njol.util.iterator.StoppableIterator;
 
 /**
  * @author Peter Güttinger
- *
+ * 
  */
 public class BlockLineIterator extends StoppableIterator<Block> {
-
+	
 	public BlockLineIterator(final Block start, final Block end) {
 		super(new BlockIterator(start.getWorld(), start.getLocation().toVector(), end.getLocation().subtract(start.getLocation()).toVector(), 0, 0), new Checker<Block>() {
 			private final double overshotSq = Math.pow(start.getLocation().distance(end.getLocation()) + 2, 2);
+			
 			@Override
-			public boolean check(Block b) {
+			public boolean check(final Block b) {
 				if (b.getLocation().distanceSquared(start.getLocation()) > overshotSq)
 					throw new IllegalStateException("BlockLineIterator missed the end block!");
 				return b.equals(end);
 			}
 		}, true);
 	}
-
+	
 	public BlockLineIterator(final Location start, final Vector dir, final double dist) {
 		super(new BlockIterator(start.getWorld(), start.toVector(), dir, 0, 0), new Checker<Block>() {
-			private final double distSq = dist*dist;
+			private final double distSq = dist * dist;
+			
 			@Override
-			public boolean check(Block b) {
+			public boolean check(final Block b) {
 				return b.getLocation().add(0.5, 0.5, 0.5).distanceSquared(start) >= distSq;
 			}
 		}, false);
 	}
-
+	
 	public BlockLineIterator(final Block start, final Vector dir, final double dist) {
 		this(start.getLocation().add(0.5, 0.5, 0.5), dir, dist);
 	}

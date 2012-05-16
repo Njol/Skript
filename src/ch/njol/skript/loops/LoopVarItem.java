@@ -21,9 +21,7 @@
 
 package ch.njol.skript.loops;
 
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.regex.Matcher;
 
 import org.bukkit.Material;
 import org.bukkit.event.Event;
@@ -31,9 +29,11 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
+import ch.njol.util.iterator.ArrayIterator;
 import ch.njol.util.iterator.CheckedIterator;
 
 /**
@@ -43,8 +43,9 @@ import ch.njol.util.iterator.CheckedIterator;
 public class LoopVarItem extends LoopVar<ItemStack> {
 	
 	static {
-		Skript.addLoop(LoopVarItem.class, ItemStack.class, "((all|every) )?item(s| ?types)", "items of types? %itemtype%");
-		Skript.addLoop(LoopVarItem.class, ItemStack.class, "((all|every) )?block(s| ?types)", "blocks of types? %itemtype%");
+		Skript.addLoop(LoopVarItem.class, ItemStack.class,
+				"[(all|every)] item(s|[ ]types)", "items of type[s] %itemtypes%",
+				"[(all|every)] block(s|[ ]types)", "blocks of type[s] %itemtypes%");
 	}
 	
 	private Variable<ItemType> types = null;
@@ -52,10 +53,10 @@ public class LoopVarItem extends LoopVar<ItemStack> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (vars.length > 0)
 			types = (Variable<ItemType>) vars[0];
-		blocks = matcher.group().startsWith("block");
+		blocks = matchedPattern >= 2;
 	}
 	
 	@Override
@@ -64,7 +65,7 @@ public class LoopVarItem extends LoopVar<ItemStack> {
 		if (types == null) {
 			iter = new Iterator<ItemStack>() {
 				
-				private final Iterator<Material> iter = Arrays.asList(Material.values()).iterator();
+				private final Iterator<Material> iter = new ArrayIterator<Material>(Material.values());
 				
 				@Override
 				public boolean hasNext() {
@@ -83,7 +84,7 @@ public class LoopVarItem extends LoopVar<ItemStack> {
 		} else {
 			iter = new Iterator<ItemStack>() {
 				
-				private final Iterator<ItemType> iter = types.get(e, false).iterator();
+				private final Iterator<ItemType> iter = new ArrayIterator<ItemType>(types.getArray(e));
 				Iterator<ItemStack> current;
 				
 				@Override

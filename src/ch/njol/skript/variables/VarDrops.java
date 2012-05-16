@@ -22,7 +22,6 @@
 package ch.njol.skript.variables;
 
 import java.util.List;
-import java.util.regex.Matcher;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -30,21 +29,23 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarDrops extends Variable<ItemStack> {
+public class VarDrops extends SimpleVariable<ItemStack> {
 	
 	static {
 		Skript.addVariable(VarDrops.class, ItemStack.class, "drops");
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {}
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
 	
 	@Override
 	protected ItemStack[] getAll(final Event e) {
@@ -69,12 +70,12 @@ public class VarDrops extends Variable<ItemStack> {
 				drops.clear();
 				//$FALL-THROUGH$
 			case ADD:
-				for (final ItemType i : ((Variable<ItemType>) delta).get(e, false)) {
+				for (final ItemType i : ((SimpleVariable<ItemType>) delta).getArray(e)) {
 					i.addTo(drops);
 				}
 			break;
 			case REMOVE:
-				for (final ItemType i : ((Variable<ItemType>) delta).get(e, false)) {
+				for (final ItemType i : ((SimpleVariable<ItemType>) delta).getArray(e)) {
 					i.removeFrom(drops);
 				}
 			break;
@@ -93,12 +94,17 @@ public class VarDrops extends Variable<ItemStack> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "drops";
-		return Skript.toString(getAll(e));
+		return Skript.getDebugMessage(getAll(e));
 	}
 	
 	@Override
 	public String toString() {
 		return "the drops";
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return false;
 	}
 	
 }

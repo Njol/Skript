@@ -21,14 +21,13 @@
 
 package ch.njol.skript.conditions;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
@@ -37,14 +36,14 @@ import ch.njol.skript.api.intern.Variable;
 public class CondChance extends Condition {
 	
 	static {
-		Skript.addCondition(CondChance.class, "chance of (\\d+(.\\d+)?)%");
+		Skript.addCondition(CondChance.class, "chance of <\\d+(.\\d+)?>\\%");
 	}
 	
 	private double chance;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException {
-		chance = Double.parseDouble(matcher.group(1)) / 100;
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException {
+		chance = Double.parseDouble(parser.regexes.get(0).group()) / 100;
 	}
 	
 	@Override

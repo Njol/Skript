@@ -24,16 +24,18 @@ package ch.njol.skript.api.intern;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SimpleLiteral;
 
 /**
  * @author Peter Güttinger
- * @see Literal
+ * @see SimpleLiteral
  */
-public class ConvertedLiteral<T> extends ConvertedVariable<T> {
+public class ConvertedLiteral<T> extends ConvertedVariable<T> implements Literal<T> {
 	
 	private final T[] data;
 	
-	public ConvertedLiteral(final Literal<?> source, final T[] data, final Class<T> to) {
+	public ConvertedLiteral(final SimpleLiteral<?> source, final T[] data, final Class<T> to) {
 		super(source, to);
 		this.data = data;
 	}
@@ -51,5 +53,15 @@ public class ConvertedLiteral<T> extends ConvertedVariable<T> {
 	@Override
 	public String toString() {
 		return Skript.toString(data);
+	}
+	
+	@Override
+	public T[] getArray() {
+		return getArray(null);
+	}
+	
+	@Override
+	public T getSingle() {
+		return getSingle(null);
 	}
 }

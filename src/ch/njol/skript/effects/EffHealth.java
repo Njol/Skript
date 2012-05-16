@@ -21,15 +21,14 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Slot;
 
 /**
@@ -41,41 +40,42 @@ public class EffHealth extends Effect {
 	
 	static {
 		Skript.addEffect(EffHealth.class,
-				"damage %object% by %-integer%",
-				"heal %livingentity%( by %-integer%)?",
-				"repair %slot%( by %-integer%)?");
+				"damage %objects% by %integer%",
+				"heal %livingentitys% [by %-integer%]",
+				"repair %slots% [by %-integer%]");
 	}
 	
 	private Variable<Object> damageables;
-	private Variable<Integer> damages;
+	private Variable<Integer> damage;
 	private boolean heal = false;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		damageables = (Variable<Object>) vars[0];
-		damages = (Variable<Integer>) vars[1];
+		damage = (Variable<Integer>) vars[1];
 		heal = (matchedPattern != 0);
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		for (final Object damageable : damageables.get(e, false)) {
+		int damage = 0;
+		if (this.damage != null)
+			damage = this.damage.getSingle(e);
+		for (final Object damageable : damageables.getArray(e)) {
 			if (damageable instanceof Slot) {
 				final ItemStack is = ((Slot) damageable).getItem();
-				if (damages == null) {
+				if (this.damage == null) {
 					is.setDurability((short) 0);
 				} else {
-					for (final Integer damage : damages.get(e, false))
-						is.setDurability((short) (is.getDurability() + (heal ? -damage.shortValue() : damage.shortValue())));
+					is.setDurability((short) (is.getDurability() + (heal ? -damage : damage)));
 				}
 				((Slot) damageable).setItem(is);
 			} else if (damageable instanceof LivingEntity) {
-				if (damages == null) {
+				if (this.damage == null) {
 					((LivingEntity) damageable).setHealth(((LivingEntity) damageable).getMaxHealth());
 				} else {
-					for (final Integer damage : damages.get(e, false))
-						((LivingEntity) damageable).setHealth(((LivingEntity) damageable).getHealth() + (heal ? damage : -damage));
+					((LivingEntity) damageable).setHealth(((LivingEntity) damageable).getHealth() + (heal ? damage : -damage));
 				}
 			}
 		}
@@ -83,7 +83,7 @@ public class EffHealth extends Effect {
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return (heal ? "heal " : "damage ") + damageables.getDebugMessage(e) + (damages == null ? "" : " by " + damages.getDebugMessage(e));
+		return (heal ? "heal " : "damage ") + damageables.getDebugMessage(e) + (damage == null ? "" : " by " + damage.getDebugMessage(e));
 	}
 	
 }

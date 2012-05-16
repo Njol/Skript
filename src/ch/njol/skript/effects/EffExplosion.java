@@ -21,14 +21,13 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 
 /**
  * 
@@ -38,31 +37,30 @@ import ch.njol.skript.api.intern.Variable;
 public class EffExplosion extends Effect {
 	
 	static {
-		Skript.addEffect(EffExplosion.class, "(create )?explosion (of|with) (force|strength|power) %float%( at %location%)?");
+		Skript.addEffect(EffExplosion.class, "[create] explosion (of|with) (force|strength|power) %float% [at %locations%]");
 	}
 	
-	private Variable<Float> forces;
+	private Variable<Float> force;
 	private Variable<Location> locations;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
-		forces = (Variable<Float>) vars[0];
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		force = (Variable<Float>) vars[0];
 		locations = (Variable<Location>) vars[1];
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		for (final Float force : forces.get(e, false)) {
-			for (final Location l : locations.get(e, false)) {
-				l.getWorld().createExplosion(l, force);
-			}
+		final float power = force.getSingle(e);
+		for (final Location l : locations.getArray(e)) {
+			l.getWorld().createExplosion(l, power);
 		}
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "create explosion of force " + forces.getDebugMessage(e) + " at " + locations.getDebugMessage(e);
+		return "create explosion of force " + force.getDebugMessage(e) + " at " + locations.getDebugMessage(e);
 	}
 	
 }

@@ -21,17 +21,15 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
 import ch.njol.skript.data.DefaultChangers;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Offset;
 
 /**
@@ -39,10 +37,10 @@ import ch.njol.skript.util.Offset;
  * @author Peter Güttinger
  * 
  */
-public class VarBlock extends Variable<Block> {
+public class VarBlock extends SimpleVariable<Block> {
 	
 	static {
-		Skript.addVariable(VarBlock.class, Block.class, "block(s? %-offset%( %block%)?)?");
+		Skript.addVariable(VarBlock.class, Block.class, "block[[s] %-offsets% [%blocks%]]");
 	}
 	
 	private Variable<Offset> offsets;
@@ -50,7 +48,7 @@ public class VarBlock extends Variable<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws InitException, ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		offsets = (Variable<Offset>) vars[0];
 		blocks = (Variable<Block>) vars[1];
 	}
@@ -59,14 +57,14 @@ public class VarBlock extends Variable<Block> {
 	public String getDebugMessage(final Event e) {
 		if (offsets == null)
 			return blocks.getDebugMessage(e);
-		return "block " + offsets.getDebugMessage(e) + " " + blocks.getDebugMessage(e);
+		return "block"+(isSingle() ? "" : "s")+" " + offsets.getDebugMessage(e) + " " + blocks.getDebugMessage(e);
 	}
 	
 	@Override
 	protected Block[] getAll(final Event e) {
 		if (offsets == null)
-			return blocks.get(e);
-		return Offset.setOff(offsets.get(e), blocks.get(e));
+			return blocks.getArray(e);
+		return Offset.setOff(offsets.getArray(e), blocks.getArray(e));
 	}
 	
 	@Override
@@ -87,6 +85,11 @@ public class VarBlock extends Variable<Block> {
 	@Override
 	public String toString() {
 		return "the block";
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return (offsets == null || offsets.isSingle()) && blocks.isSingle();
 	}
 	
 }

@@ -21,8 +21,6 @@
 
 package ch.njol.skript.events;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.Material;
 import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Sheep;
@@ -31,6 +29,8 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.util.Checker;
 
 /**
@@ -64,7 +64,7 @@ public class EvtEntityBlockChange extends SkriptEvent {
 		});
 		
 		private final String pattern;
-		Checker<EntityChangeBlockEvent> checker;
+		final Checker<EntityChangeBlockEvent> checker;
 		
 		private ChangeEvent(final String pattern, final Checker<EntityChangeBlockEvent> c) {
 			this.pattern = pattern;
@@ -83,7 +83,7 @@ public class EvtEntityBlockChange extends SkriptEvent {
 	private ChangeEvent event;
 	
 	@Override
-	public void init(final Object[][] args, final int matchedPattern, final Matcher matcher) {
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		event = ChangeEvent.values()[matchedPattern];
 	}
 	

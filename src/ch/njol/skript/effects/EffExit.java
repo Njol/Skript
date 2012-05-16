@@ -21,8 +21,6 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -30,7 +28,8 @@ import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.api.intern.TriggerSection;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
@@ -40,16 +39,16 @@ public class EffExit extends Effect {
 	
 	static {
 		Skript.addEffect(EffExit.class,
-				"(exit|stop)( trigger)?",
-				"(exit|stop) (1 )?section",
-				"(exit|stop) (\\d+) sections",
+				"(exit|stop) [trigger]",
+				"(exit|stop) [1] section",
+				"(exit|stop) <\\d+> sections",
 				"(exit|stop) all sections");
 	}
 	
 	private int breakLevels;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
 		switch (matchedPattern) {
 			case 0:
 				breakLevels = TriggerFileLoader.currentSections.size() + 1;
@@ -58,12 +57,12 @@ public class EffExit extends Effect {
 				breakLevels = 1;
 			break;
 			case 2:
-				breakLevels = Integer.parseInt(matcher.group(2));
+				breakLevels = Integer.parseInt(parser.regexes.get(0).group());
 				if (breakLevels > TriggerFileLoader.currentSections.size()) {
 					if (TriggerFileLoader.currentSections.isEmpty())
-						throw new ParseException("you can't " + matcher.group(1) + " any sections as there are no sections present");
+						throw new ParseException("you can't exit any sections as there are no sections present");
 					else
-						throw new ParseException("you can't " + matcher.group() + " as there are only " + TriggerFileLoader.currentSections.size() + " sections present");
+						throw new ParseException("you can't exit as there are only " + TriggerFileLoader.currentSections.size() + " sections present");
 				}
 			break;
 			case 3:

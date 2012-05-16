@@ -21,8 +21,6 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -30,7 +28,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.VariableString;
 
 /**
@@ -41,7 +40,7 @@ import ch.njol.skript.util.VariableString;
 public class EffBroadcast extends Effect {
 	
 	static {
-		Skript.addEffect(EffBroadcast.class, "broadcast %variablestring%( (to|in) %-world%)?");
+		Skript.addEffect(EffBroadcast.class, "broadcast %variablestrings% [(to|in) %-worlds%]");
 	}
 	
 	private Variable<VariableString> messages;
@@ -49,21 +48,21 @@ public class EffBroadcast extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		messages = (Variable<VariableString>) vars[0];
 		worlds = (Variable<World>) vars[1];
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		for (final VariableString mVS : messages.get(e, false)) {
+		for (final VariableString mVS : messages.getArray(e)) {
 			final String m = mVS.get(e);
 			if (m == null)
 				continue;
 			if (worlds == null) {
 				Bukkit.broadcastMessage(m);
 			} else {
-				for (final World w : worlds.get(e, false)) {
+				for (final World w : worlds.getArray(e)) {
 					for (final Player p : w.getPlayers()) {
 						p.sendMessage(m);
 					}

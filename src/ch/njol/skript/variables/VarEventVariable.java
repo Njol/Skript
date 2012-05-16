@@ -21,13 +21,15 @@
 
 package ch.njol.skript.variables;
 
-import java.util.regex.Matcher;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.Variable;
+import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
+import ch.njol.skript.util.ErrorSession;
 import ch.njol.skript.variables.base.VarVariable;
 
 /**
@@ -38,14 +40,21 @@ import ch.njol.skript.variables.base.VarVariable;
 public class VarEventVariable extends VarVariable<Object> {
 	
 	static {
-		Skript.addVariable(VarEventVariable.class, Object.class, "event-(\\S+)");
+		Skript.addVariable(VarEventVariable.class, Object.class, "event-<\\S+>");
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final Matcher matcher) throws ParseException {
-		var = Variable.parseNoLiteral(matcher.group(1), Skript.getVariables().iterator());
-		if (var == null)
-			throw new ParseException("'" + matcher.group() + "' is invalid");
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+		final ErrorSession es = Skript.startErrorSession();
+		var = (SimpleVariable<?>) ExprParser.parse(parser.regexes.get(0).group(), Skript.getVariables().iterator(), false);
+		if (var == null) {
+			es.printErrors("'" + parser.expr + "' is no a valid event value");
+			Skript.stopErrorSession();
+			throw new ParseException();
+		} else {
+			es.printWarnings();
+			Skript.stopErrorSession();
+		}
 	}
 	
 	@Override
