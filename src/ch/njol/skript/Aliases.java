@@ -40,7 +40,17 @@ import ch.njol.util.Pair;
  */
 public abstract class Aliases {
 	
+	/**
+	 * Note to self: never use this, use {@link {@link #getAlias(String)} instead.
+	 */
 	private final static HashMap<String, ItemType> aliases = new HashMap<String, ItemType>(2000);
+	
+	private final static ItemType getAlias(String s) {
+		ItemType t = TriggerFileLoader.currentAliases.get(s);
+		if (t != null)
+			return t;
+		return aliases.get(s);
+	}
 	
 	private final static HashMap<Integer, MaterialName> materialNames = new HashMap<Integer, MaterialName>((int) (Material.values().length * 1.6));
 	
@@ -108,13 +118,13 @@ public abstract class Aliases {
 	 */
 	private static ItemType addInfo(final ItemType t, final String name) {
 		ItemType i;
-		if (name.endsWith(" block") && (i = aliases.get(name.substring(0, name.length() - " block".length()))) != null) {
+		if (name.endsWith(" block") && (i = getAlias(name.substring(0, name.length() - " block".length()))) != null) {
 			i.setBlock(t);
-		} else if (name.endsWith(" item") && (i = aliases.get(name.substring(0, name.length() - " item".length()))) != null) {
+		} else if (name.endsWith(" item") && (i = getAlias(name.substring(0, name.length() - " item".length()))) != null) {
 			i.setItem(t);
-		} else if ((i = aliases.get(name + " item")) != null) {
+		} else if ((i = getAlias(name + " item")) != null) {
 			t.setItem(i);
-		} else if ((i = aliases.get(name + " block")) != null) {
+		} else if ((i = getAlias(name + " block")) != null) {
 			t.setBlock(i);
 		}
 		return t;
@@ -375,7 +385,7 @@ public abstract class Aliases {
 	private final static ItemType getAlias(String s, final boolean singular, final boolean ignorePluralCheck) {
 		ItemType i;
 		String lc = s.toLowerCase(Locale.ENGLISH);
-		if ((i = aliases.get(lc)) != null)
+		if ((i = getAlias(lc)) != null)
 			return i.clone();
 		if (lc.startsWith("any ")) {
 			return getAlias(s.substring("any ".length()), true, true);
@@ -404,7 +414,7 @@ public abstract class Aliases {
 				return i;
 			}
 		}
-		return aliases.get(lc);
+		return getAlias(lc);
 	}
 	
 	/**

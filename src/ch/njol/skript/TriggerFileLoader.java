@@ -22,6 +22,11 @@
 package ch.njol.skript;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
 
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.LoopVar;
@@ -35,11 +40,14 @@ import ch.njol.skript.api.intern.TriggerItem;
 import ch.njol.skript.api.intern.TriggerSection;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.config.Config;
+import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.SimpleNode;
 import ch.njol.skript.lang.ExprParser;
 import ch.njol.skript.util.ErrorSession;
+import ch.njol.skript.util.ItemType;
+import ch.njol.util.Callback;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
@@ -52,12 +60,28 @@ final public class TriggerFileLoader {
 	private TriggerFileLoader() {}
 	
 	public static SkriptEvent currentEvent = null;
-	public static ArrayList<TriggerSection> currentSections = new ArrayList<TriggerSection>();
-	public static ArrayList<LoopVar<?>> currentLoops = new ArrayList<LoopVar<?>>();
+	public static List<TriggerSection> currentSections = new ArrayList<TriggerSection>();
+	public static List<LoopVar<?>> currentLoops = new ArrayList<LoopVar<?>>();
+	public static final Map<String, ItemType> currentAliases = new HashMap<String, ItemType>();
+	public static final HashMap<String, String> options = new HashMap<String, String>();
 	
-	static int loadedTriggers = 0, loadedCommands = 0;
+	static int loadedTriggers = 0, loadedCommands = 0, loadedAliases = 0;
 	
 	private static String indentation = "";
+	
+	private final static String replaceOptions(String s) {
+		return StringUtils.replaceAll(s, "\\{(.+?)\\}", new Callback<String, Matcher>() {
+			@Override
+			public String run(Matcher m) {
+				String option = options.get(m.group(1));
+				if (option == null) {
+					Skript.getCurrentErrorSession().severeError("undefined option "+m.group());
+					return null;
+				}
+				return option;
+			}
+		});
+	}
 	
 	public static ArrayList<TriggerItem> loadItems(final SectionNode node) {
 		
@@ -72,7 +96,10 @@ final public class TriggerFileLoader {
 			SkriptLogger.setNode(n);
 			if (n instanceof SimpleNode) {
 				final SimpleNode e = (SimpleNode) n;
-				final TopLevelExpression expr = TopLevelExpression.parse(e.getName());
+				String ex = replaceOptions(e.getName());
+				if (ex == null)
+					continue;
+				final TopLevelExpression expr = TopLevelExpression.parse(ex);
 				if (expr == null) {
 					session.printErrors("can't understand this condition/effect: '" + e.getName() + "'");
 					continue;
@@ -84,7 +111,10 @@ final public class TriggerFileLoader {
 				items.add(expr);
 			} else if (n instanceof SectionNode) {
 				if (n.getName().startsWith("loop ")) {
-					final LoopVar<?> loopvar = (LoopVar<?>) ExprParser.parse(n.getName().substring("loop ".length()), Skript.loops.listIterator(), false);
+					String l = replaceOptions(n.getName().substring("loop ".length()));
+					if (l == null)
+						continue;
+					final LoopVar<?> loopvar = (LoopVar<?>) ExprParser.parse(l, Skript.loops.listIterator(), false);
 					if (loopvar == null) {
 						session.printErrors("can't understand this loop: '" + n.getName() + "'");
 						continue;
@@ -99,14 +129,17 @@ final public class TriggerFileLoader {
 					items.add(loop);
 				} else if (n.getName().equalsIgnoreCase("else")) {
 					if (items.size() == 0 || !(items.get(items.size() - 1) instanceof Conditional)) {
-						Skript.error("'else' has to be placed just after the end of a conditional section");
+						session.severeError("'else' has to be placed just after the end of a conditional section");
 						continue;
 					}
 					if (Skript.debug())
 						Skript.info(indentation + "else:");
 					((Conditional) items.get(items.size() - 1)).loadElseClause((SectionNode) n);
 				} else {
-					final Condition cond = Condition.parse(n.getName());
+					String c = n.getName();
+					if (c == null)
+						continue;
+					final Condition cond = Condition.parse(c);
 					if (cond == null) {
 						session.printErrors("can't understand this condition: '" + n.getName() + "'");
 						continue;
@@ -115,8 +148,7 @@ final public class TriggerFileLoader {
 					session.clearErrors();
 					if (Skript.debug())
 						Skript.info(indentation + cond.getDebugMessage(null) + ":");
-					final Conditional c = new Conditional(cond, (SectionNode) n);
-					items.add(c);
+					items.add(new Conditional(cond, (SectionNode) n));
 				}
 			}
 		}
@@ -140,43 +172,77 @@ final public class TriggerFileLoader {
 		int numTriggers = 0;
 		int numCommands = 0;
 		final ErrorSession session = Skript.startErrorSession();
+		currentAliases.clear();
+		options.clear();
 		
 		for (final Node cnode : config.getMainNode()) {
+			session.clearErrors();
 			if (!(cnode instanceof SectionNode)) {
-				session.error("invalid line");
+				session.severeError("invalid line in trigger file");
 				continue;
 			}
 			
 			final SectionNode node = ((SectionNode) cnode);
-			String s = node.getName();
+			String event = node.getName();
 			
-			if (StringUtils.count(s, '"') % 2 != 0) {
+			if (event.equalsIgnoreCase("aliases")) {
+				node.convertToEntries(0, "=");
+				for (Node n:node) {
+					if (!(n instanceof EntryNode)) {
+						session.severeError("invalid line in alias section");
+						continue;
+					}
+					ItemType t = Aliases.parseAlias(((EntryNode) n).getValue());
+					if (t == null) {
+						session.printErrors("'"+((EntryNode) n).getValue()+"' is not an alias");
+					} else {
+						currentAliases.put(((EntryNode) n).getKey().toLowerCase(Locale.ENGLISH), t);
+						loadedAliases++;
+					}
+				}
+				continue;
+			} else if (event.equalsIgnoreCase("options")) {
+				node.convertToEntries(0);
+				for (Node n:node) {
+					if (!(n instanceof EntryNode)) {
+						session.severeError("invalid line in options");
+						continue;
+					}
+					options.put(((EntryNode)n).getKey(), ((EntryNode)n).getValue());
+				}
+				continue;
+			}
+			
+			if (StringUtils.count(event, '"') % 2 != 0) {
 				session.error(Skript.quotesError);
 			}
 			
-			if (s.startsWith("command ")) {
+			if (event.startsWith("command ")) {
 				if (Commands.loadCommand(node))
 					numCommands++;
 				continue;
 			}
 			if (Skript.logVeryHigh() && !Skript.debug())
-				Skript.info("loading trigger '" + s + "'");
+				Skript.info("loading trigger '" + event + "'");
 			
 			session.clearErrors();
-			if (s.toLowerCase().startsWith("on "))
-				s = s.substring("on ".length());
-			final Pair<SkriptEventInfo<?>, SkriptEvent> event = ExprParser.parseEvent(s);
-			if (event == null) {
-				session.printErrors("can't understand this event: '" + s + "'");
+			if (event.toLowerCase().startsWith("on "))
+				event = event.substring("on ".length());
+			event = replaceOptions(event);
+			if (event == null)
+				continue;
+			final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = ExprParser.parseEvent(event);
+			if (parsedEvent == null) {
+				session.printErrors("can't understand this event: '" + node.getName() + "'");
 				continue;
 			}
 			
-			else if (Skript.debug())
-				Skript.info("on " + s + " (" + event.second.getDebugMessage(null) + "):");
+			if (Skript.debug())
+				Skript.info(event + " (" + parsedEvent.second.getDebugMessage(null) + "):");
 			
-			currentEvent = event.second;
-			final Trigger trigger = new Trigger("on " + s, event.second, loadItems(node));
-			SkriptEventHandler.addTrigger(event.first.events, trigger);
+			currentEvent = parsedEvent.second;
+			final Trigger trigger = new Trigger(event, parsedEvent.second, loadItems(node));
+			SkriptEventHandler.addTrigger(parsedEvent.first.events, trigger);
 			numTriggers++;
 		}
 		

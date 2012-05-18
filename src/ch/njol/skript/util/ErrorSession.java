@@ -64,6 +64,15 @@ public class ErrorSession {
 	}
 	
 	/**
+	 * Logs this error directly without modifying the stored errors or warnings, but increases the error count.
+	 * @param error
+	 */
+	public void severeError(String error) {
+		errorCount++;
+		SkriptLogger.log(Level.SEVERE, error);
+	}
+	
+	/**
 	 * Prints all errors to the server log and clears all errors.
 	 * 
 	 * @param def

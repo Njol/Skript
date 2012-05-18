@@ -178,7 +178,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 			if (config.simple) {
 				nodes.add(new SimpleNode(line, this, r));
 			} else {
-				nodes.add(getEntry(line, r.getLine(), r.getLineNum()));
+				nodes.add(getEntry(line, r.getLine(), r.getLineNum(), config.separator));
 			}
 			
 		}
@@ -188,30 +188,35 @@ public class SectionNode extends Node implements Iterable<Node> {
 		return this;
 	}
 	
-	private final Node getEntry(final String line, final String orig, final int lineNum) {
-		final int x = line.indexOf(config.separator);
+	private final Node getEntry(final String line, final String orig, final int lineNum, String separator) {
+		final int x = line.indexOf(separator);
 		if (x == -1) {
 			final InvalidNode n = new InvalidNode(this, line, lineNum);
-			Skript.error("missing separator '" + config.separator + "'");
+			Skript.error("missing separator '" + separator + "'");
 			SkriptLogger.setNode(this);
 			return n;
 		}
 		final String key = line.substring(0, x).trim();
-		final String value = line.substring(x + config.separator.length()).trim();
+		final String value = line.substring(x + separator.length()).trim();
 		return new EntryNode(key, value, orig, this, lineNum);
 	}
 	
 	public void convertToEntries(final int levels) {
+		convertToEntries(levels, config.separator);
+	}
+
+	// FIXME: breaks saving!
+	public void convertToEntries(int levels, String separator) {
 		if (!config.simple)
 			throw new SkriptAPIException("config is not simple");
 		for (int i = 0; i < nodes.size(); i++) {
 			final Node n = nodes.get(i);
 			if (levels > 0 && n instanceof SectionNode) {
-				((SectionNode) n).convertToEntries(levels - 1);
+				((SectionNode) n).convertToEntries(levels - 1, separator);
 			}
 			if (!(n instanceof SimpleNode))
 				continue;
-			nodes.set(i, getEntry(n.getName(), n.getOrig(), n.lineNum));
+			nodes.set(i, getEntry(n.getName(), n.getOrig(), n.lineNum, separator));
 		}
 	}
 	
@@ -246,5 +251,5 @@ public class SectionNode extends Node implements Iterable<Node> {
 			return def;
 		return ((EntryNode) n).getValue();
 	}
-	
+
 }
