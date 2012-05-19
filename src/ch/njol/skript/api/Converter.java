@@ -26,10 +26,11 @@ import ch.njol.skript.Skript;
 /**
  * used to convert data from one type to another.
  * 
+ * @param <F> the accepted type of objects to convert <u>f</u>rom
+ * @param <T> the type to convert <u>t</u>o
+ * 
  * @author Peter Güttinger
  * 
- * @param <F> the accepted type of objects to convert
- * @param <T> the type to convert to
  * @see Skript#addConverter(Class, Class, Converter)
  */
 public interface Converter<F, T> {
@@ -39,7 +40,7 @@ public interface Converter<F, T> {
 	 * 
 	 * @author Peter Güttinger
 	 * 
-	 * @param <F> same as {@link Converter}
+	 * @param <F> same as in {@link Converter}
 	 * @param <T> dito
 	 */
 	public static final class ConverterInfo<F, T> {

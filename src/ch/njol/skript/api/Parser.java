@@ -29,7 +29,9 @@ import ch.njol.skript.Skript;
  * @author Peter Güttinger
  * 
  * @param <T> the type of this parser
- * @see Skript#addClass(String, Class, Class, Parser, String...)
+ * @see Skript#addClass(ClassInfo)
+ * @see ClassInfo
+ * @see Skript#toString(Object)
  */
 public abstract class Parser<T> implements Converter<String, T> {
 	
@@ -41,6 +43,9 @@ public abstract class Parser<T> implements Converter<String, T> {
 	 */
 	public abstract T parse(String s);
 	
+	/**
+	 * Alias of {@link #parse(String)} to make Parser implement Converter.
+	 */
 	@Override
 	public final T convert(final String s) {
 		return parse(s);
@@ -51,10 +56,20 @@ public abstract class Parser<T> implements Converter<String, T> {
 	 * 
 	 * @param o The object. This will never be <code>null</code>.
 	 * @return The String representation of the object.
+	 * @see #getDebugMessage(Object)
 	 */
 	public abstract String toString(T o);
 	
+	/**
+	 * Returns a string representation of the given object to be used for debugging.<br>
+	 * The Parser of 'Block' for example returns the block's type in toString, while this method also returns the coordinates of the block.<br>
+	 * The default implementation of this method returns exactly the same as {@link #toString(Object)}.
+	 * 
+	 * @param o
+	 * @return
+	 */
 	public String getDebugMessage(final T o) {
 		return toString(o);
 	}
+	
 }

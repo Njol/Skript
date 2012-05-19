@@ -188,7 +188,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 		return this;
 	}
 	
-	private final Node getEntry(final String line, final String orig, final int lineNum, String separator) {
+	private final Node getEntry(final String line, final String orig, final int lineNum, final String separator) {
 		final int x = line.indexOf(separator);
 		if (x == -1) {
 			final InvalidNode n = new InvalidNode(this, line, lineNum);
@@ -204,9 +204,9 @@ public class SectionNode extends Node implements Iterable<Node> {
 	public void convertToEntries(final int levels) {
 		convertToEntries(levels, config.separator);
 	}
-
+	
 	// FIXME: breaks saving!
-	public void convertToEntries(int levels, String separator) {
+	public void convertToEntries(final int levels, final String separator) {
 		if (!config.simple)
 			throw new SkriptAPIException("config is not simple");
 		for (int i = 0; i < nodes.size(); i++) {
@@ -251,5 +251,5 @@ public class SectionNode extends Node implements Iterable<Node> {
 			return def;
 		return ((EntryNode) n).getValue();
 	}
-
+	
 }

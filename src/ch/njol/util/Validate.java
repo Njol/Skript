@@ -41,9 +41,9 @@ public abstract class Validate {
 		}
 	}
 	
-	public static void notNull(final Object object) {
+	public static void notNull(final Object object, final String name) {
 		if (object == null)
-			throw new ValidationException("the parameter must not be null");
+			throw new ValidationException(name + " must not be null");
 	}
 	
 	public static void isTrue(final boolean b, final String error) {
@@ -56,24 +56,24 @@ public abstract class Validate {
 			throw new ValidationException(error);
 	}
 	
-	public static void notEmpty(final String s) {
+	public static void notEmpty(final String s, final String name) {
 		if (s != null && s.isEmpty())
-			throw new ValidationException("String parameter must not be empty");
+			throw new ValidationException(name + " must not be empty");
 	}
 	
-	public static void notNullOrEmpty(final String s) {
+	public static void notNullOrEmpty(final String s, final String name) {
 		if (s == null || s.isEmpty())
-			throw new ValidationException("String parameter must neither be null not empty");
+			throw new ValidationException(name + " must neither be null nor empty");
 	}
 	
-	public static void notEmpty(final Object[] array) {
+	public static void notEmpty(final Object[] array, final String name) {
 		if (array.length == 0)
-			throw new ValidationException("Array must not be empty");
+			throw new ValidationException(name + " must not be empty");
 	}
 	
-	public static void notEmpty(final int[] nums) {
+	public static void notEmpty(final int[] nums, final String name) {
 		if (nums.length == 0)
-			throw new ValidationException("Array must not be empty");
+			throw new ValidationException(name + " must not be empty");
 	}
 	
 }

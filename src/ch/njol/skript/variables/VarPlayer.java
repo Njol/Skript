@@ -27,34 +27,23 @@ import org.bukkit.inventory.Inventory;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.data.DefaultChangers;
-import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleLiteral;
-import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.variables.base.EventValueVariable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarPlayer extends SimpleVariable<Player> {
+public class VarPlayer extends EventValueVariable<Player> {
+	
+	public VarPlayer() {
+		super(Player.class);
+	}
 	
 	static {
 		Skript.addVariable(VarPlayer.class, Player.class, "player", "me");
-	}
-	
-	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException {}
-	
-	@Override
-	protected Player[] getAll(final Event e) {
-		return new Player[] {Skript.getEventValue(e, Player.class)};
-	}
-	
-	@Override
-	public Class<Player> getReturnType() {
-		return Player.class;
 	}
 	
 	@Override

@@ -65,17 +65,17 @@ final public class TriggerFileLoader {
 	public static final Map<String, ItemType> currentAliases = new HashMap<String, ItemType>();
 	public static final HashMap<String, String> options = new HashMap<String, String>();
 	
-	static int loadedTriggers = 0, loadedCommands = 0, loadedAliases = 0;
+	static int loadedTriggers = 0, loadedCommands = 0;
 	
 	private static String indentation = "";
 	
-	private final static String replaceOptions(String s) {
+	private final static String replaceOptions(final String s) {
 		return StringUtils.replaceAll(s, "\\{(.+?)\\}", new Callback<String, Matcher>() {
 			@Override
-			public String run(Matcher m) {
-				String option = options.get(m.group(1));
+			public String run(final Matcher m) {
+				final String option = options.get(m.group(1));
 				if (option == null) {
-					Skript.getCurrentErrorSession().severeError("undefined option "+m.group());
+					Skript.getCurrentErrorSession().severeError("undefined option " + m.group());
 					return null;
 				}
 				return option;
@@ -96,7 +96,7 @@ final public class TriggerFileLoader {
 			SkriptLogger.setNode(n);
 			if (n instanceof SimpleNode) {
 				final SimpleNode e = (SimpleNode) n;
-				String ex = replaceOptions(e.getName());
+				final String ex = replaceOptions(e.getName());
 				if (ex == null)
 					continue;
 				final TopLevelExpression expr = TopLevelExpression.parse(ex);
@@ -111,7 +111,7 @@ final public class TriggerFileLoader {
 				items.add(expr);
 			} else if (n instanceof SectionNode) {
 				if (n.getName().startsWith("loop ")) {
-					String l = replaceOptions(n.getName().substring("loop ".length()));
+					final String l = replaceOptions(n.getName().substring("loop ".length()));
 					if (l == null)
 						continue;
 					final LoopVar<?> loopvar = (LoopVar<?>) ExprParser.parse(l, Skript.loops.listIterator(), false);
@@ -136,7 +136,7 @@ final public class TriggerFileLoader {
 						Skript.info(indentation + "else:");
 					((Conditional) items.get(items.size() - 1)).loadElseClause((SectionNode) n);
 				} else {
-					String c = n.getName();
+					final String c = n.getName();
 					if (c == null)
 						continue;
 					final Condition cond = Condition.parse(c);
@@ -187,28 +187,27 @@ final public class TriggerFileLoader {
 			
 			if (event.equalsIgnoreCase("aliases")) {
 				node.convertToEntries(0, "=");
-				for (Node n:node) {
+				for (final Node n : node) {
 					if (!(n instanceof EntryNode)) {
 						session.severeError("invalid line in alias section");
 						continue;
 					}
-					ItemType t = Aliases.parseAlias(((EntryNode) n).getValue());
+					final ItemType t = Aliases.parseAlias(((EntryNode) n).getValue());
 					if (t == null) {
-						session.printErrors("'"+((EntryNode) n).getValue()+"' is not an alias");
+						session.printErrors("'" + ((EntryNode) n).getValue() + "' is not an alias");
 					} else {
 						currentAliases.put(((EntryNode) n).getKey().toLowerCase(Locale.ENGLISH), t);
-						loadedAliases++;
 					}
 				}
 				continue;
 			} else if (event.equalsIgnoreCase("options")) {
 				node.convertToEntries(0);
-				for (Node n:node) {
+				for (final Node n : node) {
 					if (!(n instanceof EntryNode)) {
 						session.severeError("invalid line in options");
 						continue;
 					}
-					options.put(((EntryNode)n).getKey(), ((EntryNode)n).getValue());
+					options.put(((EntryNode) n).getKey(), ((EntryNode) n).getValue());
 				}
 				continue;
 			}

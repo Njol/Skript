@@ -57,7 +57,7 @@ public class VarBlock extends SimpleVariable<Block> {
 	public String getDebugMessage(final Event e) {
 		if (offsets == null)
 			return blocks.getDebugMessage(e);
-		return "block"+(isSingle() ? "" : "s")+" " + offsets.getDebugMessage(e) + " " + blocks.getDebugMessage(e);
+		return "block" + (isSingle() ? "" : "s") + " " + offsets.getDebugMessage(e) + " " + blocks.getDebugMessage(e);
 	}
 	
 	@Override
@@ -84,7 +84,9 @@ public class VarBlock extends SimpleVariable<Block> {
 	
 	@Override
 	public String toString() {
-		return "the block";
+		if (offsets == null)
+			return "the block";
+		return "the block" + (isSingle() ? "" : "s") + " " + offsets + " " + blocks;
 	}
 	
 	@Override

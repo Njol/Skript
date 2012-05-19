@@ -45,8 +45,8 @@ public abstract class Aliases {
 	 */
 	private final static HashMap<String, ItemType> aliases = new HashMap<String, ItemType>(2000);
 	
-	private final static ItemType getAlias(String s) {
-		ItemType t = TriggerFileLoader.currentAliases.get(s);
+	private final static ItemType getAlias(final String s) {
+		final ItemType t = TriggerFileLoader.currentAliases.get(s);
 		if (t != null)
 			return t;
 		return aliases.get(s);

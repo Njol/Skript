@@ -22,6 +22,7 @@
 package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 
 import org.bukkit.event.Event;
 
@@ -108,9 +109,15 @@ public abstract class SimpleVariable<T> implements Variable<T> {
 	public final <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
 		final T[] ts = getArray(e);
 		final V[] vs = (V[]) Array.newInstance(to, ts.length);
+		int j = 0;
 		for (int i = 0; i < vs.length; i++) {
-			vs[i] = converter.convert(ts[i]);
+			final V v = converter.convert(ts[i]);
+			if (v == null)
+				continue;
+			vs[j++] = v;
 		}
+		if (j != vs.length - 1)
+			return Arrays.copyOf(vs, j + 1);
 		return vs;
 	}
 	
@@ -202,6 +209,7 @@ public abstract class SimpleVariable<T> implements Variable<T> {
 		return this.getConvertedVar(to);
 	}
 	
+	@Override
 	public boolean getAnd() {
 		return and;
 	}
@@ -216,30 +224,11 @@ public abstract class SimpleVariable<T> implements Variable<T> {
 		this.and = and;
 	}
 	
-	/**
-	 * Changes the variable's value by the given amount. This will only be called on supported modes and with the desired <code>delta</code> type as returned by
-	 * {@link #acceptChange(ChangeMode)}<br/>
-	 * The default implementation of this method throws an exception at runtime.
-	 * 
-	 * @param e
-	 * @param delta the amount to vary this variable by
-	 * @param mode
-	 * 
-	 * @throws UnsupportedOperationException if this method was called on an unsupported ChangeMode.
-	 */
 	@Override
 	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
 	
-	/**
-	 * tests whether this variable supports the given mode, and if yes what type it expects the <code>delta</code> to be.<br/>
-	 * The default implementation returns null, i.e. it rejects any change attempts to this variable.
-	 * 
-	 * @param mode
-	 * @return the type that {@link #change(Event, SimpleVariable, ChangeMode)} accepts as it's <code>delta</code> parameter,
-	 *         or null if the given mode is not supported. For {@link ChangeMode#CLEAR} this can return any non-null class instance to mark clear as supported.
-	 */
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
 		return null;

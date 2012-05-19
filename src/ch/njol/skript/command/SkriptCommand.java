@@ -25,6 +25,8 @@ import java.util.List;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginIdentifiableCommand;
+import org.bukkit.plugin.Plugin;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Verbosity;
@@ -32,6 +34,7 @@ import ch.njol.skript.api.SimpleEvent;
 import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.api.intern.TriggerItem;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Validate;
 
 /**
  * This class is used for user-defined commands.
@@ -39,7 +42,7 @@ import ch.njol.skript.util.Utils;
  * @author Peter Güttinger
  * 
  */
-public class SkriptCommand extends Command {
+public class SkriptCommand extends Command implements PluginIdentifiableCommand {
 	
 	private final Trigger trigger;
 	
@@ -60,9 +63,11 @@ public class SkriptCommand extends Command {
 	 */
 	public SkriptCommand(final String name, final List<Argument<?>> arguments, final String description, final String usageMessage, final List<String> aliases, final String permission, final String permissionMessage, final List<TriggerItem> items) {
 		super(name, description, usageMessage, aliases);
+		Validate.notNull(name, arguments, description, usageMessage, aliases, items);
+		
 		trigger = new Trigger("command /" + name, new SimpleEvent(), items);
 		setPermission(permission);
-		setPermissionMessage(permissionMessage);// == null ? "You don't have the required permission to use this command" : permissionMessage);
+		setPermissionMessage(permissionMessage == null ? "You don't have the required permission to use this command" : permissionMessage);
 		this.arguments = arguments;
 	}
 	
@@ -110,5 +115,10 @@ public class SkriptCommand extends Command {
 	 */
 	public List<Argument<?>> getArguments() {
 		return arguments;
+	}
+	
+	@Override
+	public Plugin getPlugin() {
+		return Skript.getInstance();
 	}
 }

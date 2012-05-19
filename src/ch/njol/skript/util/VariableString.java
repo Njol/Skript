@@ -30,6 +30,7 @@ import ch.njol.skript.api.Debuggable;
 import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser;
 import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.Variable;
 
 /**
  * 
@@ -59,17 +60,10 @@ public class VariableString implements Debuggable {
 				isSimple = true;
 				return;
 			}
-			int p = s.indexOf('(', c + 1);
-			String[] params = new String[0];
-			if (p != -1 && p < c2) {
-				params = s.substring(p + 1, s.indexOf(')', p + 1)).split(", ?");
-			}
 			if (c + 1 == c2) {
 				string.add("%");
 			} else {
-				if (params.length == 0)
-					p = c2;
-				final SimpleVariable<?> var = (SimpleVariable<?>) ExprParser.parse(s.substring(c + 1, p), Skript.getVariables().iterator(), false);
+				final Variable<?> var = (Variable<?>) ExprParser.parse(s.substring(c + 1, c2), Skript.getVariables().iterator(), false);
 				if (var == null) {
 					throw new ParseException("can't understand the variable %" + s.substring(c + 1, c2) + "%");
 				} else {
@@ -119,11 +113,11 @@ public class VariableString implements Debuggable {
 			return lastString;
 		final StringBuilder b = new StringBuilder();
 		for (final Object o : string) {
-			if (o instanceof SimpleVariable<?>) {
-				if (((SimpleVariable<?>) o).isSingle())
-					b.append(Skript.toString(((SimpleVariable<?>) o).getSingle(e)));
+			if (o instanceof Variable<?>) {
+				if (((Variable<?>) o).isSingle())
+					b.append(Skript.toString(((Variable<?>) o).getSingle(e)));
 				else
-					b.append(Skript.toString(((SimpleVariable<?>) o).getArray(e)));
+					b.append(Skript.toString(((Variable<?>) o).getArray(e), ((SimpleVariable<?>) o).getAnd()));
 			} else {
 				b.append(o);
 			}
@@ -140,8 +134,8 @@ public class VariableString implements Debuggable {
 			return '"' + get(e) + '"';
 		final StringBuilder b = new StringBuilder("\"");
 		for (final Object o : string) {
-			if (o instanceof SimpleVariable) {
-				b.append("%" + ((SimpleVariable<?>) o).getDebugMessage(e) + "%");
+			if (o instanceof Variable) {
+				b.append("%" + ((Variable<?>) o).getDebugMessage(e) + "%");
 			} else {
 				b.append(o);
 			}

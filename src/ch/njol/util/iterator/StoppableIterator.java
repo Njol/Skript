@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import ch.njol.util.Checker;
+import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
@@ -42,9 +43,11 @@ public class StoppableIterator<T> implements Iterator<T> {
 	 * 
 	 * @param iter
 	 * @param stopper Called for every element. If it returns true the iteration is stopped.
-	 * @param returnLast whether to return the last element, i.e. the element on which the stopper stopped, or not.
+	 * @param returnLast Whether to return the last element, i.e. the element on which the stopper stops.
+	 *            This doesn't change anything if the iterator ends before the stopper stops.
 	 */
 	public StoppableIterator(final Iterator<T> iter, final Checker<T> stopper, final boolean returnLast) {
+		Validate.notNull(stopper, "stopper");
 		this.iter = iter;
 		this.stopper = stopper;
 		this.returnLast = returnLast;
@@ -59,8 +62,6 @@ public class StoppableIterator<T> implements Iterator<T> {
 		if (stopped || !iter.hasNext())
 			return false;
 		if (cn && !returnLast) {
-			if (!iter.hasNext())
-				return false;
 			current = iter.next();
 			if (stopper.check(current)) {
 				stop();
@@ -72,13 +73,13 @@ public class StoppableIterator<T> implements Iterator<T> {
 	
 	@Override
 	public T next() {
-		if (calledNext && !hasNext())
+		if (!hasNext())
 			throw new NoSuchElementException();
 		calledNext = true;
 		if (!returnLast)
 			return current;
 		final T t = iter.next();
-		if (stopper != null && stopper.check(t))
+		if (stopper.check(t))
 			stop();
 		return t;
 	}

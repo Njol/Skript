@@ -102,7 +102,7 @@ public abstract class Utils {
 		return false;
 	}
 	
-	public static int parseBooleanNoError(final String s) {
+	public static byte parseBooleanNoError(final String s) {
 		if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("yes"))
 			return 1;
 		if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("no"))

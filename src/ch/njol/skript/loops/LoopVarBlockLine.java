@@ -57,7 +57,7 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 	private Variable<Block> end = null;
 	private Variable<Offset> direction = null;
 	
-	//	private Set<Variable<Block>> exclude = new HashSet<Variable<Block>>();
+//	private Set<Variable<Block>> exclude = new HashSet<Variable<Block>>();
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -67,10 +67,10 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 			case 1:
 				start = (Variable<Block>) vars[0];
 				end = (Variable<Block>) vars[1];
-			//				if (matchedPattern == 1) {
-			//					exclude.add(start);
-			//					exclude.add(end);
-			//				}
+//				if (matchedPattern == 1) {
+//					exclude.add(start);
+//					exclude.add(end);
+//				}
 			break;
 			case 2:
 				start = (Variable<Block>) vars[0];
@@ -79,7 +79,7 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 			case 3:
 				direction = (Variable<Offset>) vars[0];
 				start = (Variable<Block>) vars[1];
-				//				exclude.add(start);
+//				exclude.add(start);
 		}
 	}
 	
@@ -88,7 +88,7 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 		if (end != null) {
 			return "blocks from " + start.getDebugMessage(e) + " to " + end.getDebugMessage(e);
 		} else {
-			return "blocks " + direction.getDebugMessage(e) + " of " + start.getDebugMessage(e);
+			return "blocks " + direction.getDebugMessage(e) + " " + start.getDebugMessage(e);
 		}
 	}
 	

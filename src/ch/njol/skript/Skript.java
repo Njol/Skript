@@ -26,13 +26,16 @@ import java.io.FilenameFilter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -48,7 +51,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
-import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import ch.njol.skript.api.ClassInfo;
@@ -69,6 +71,7 @@ import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.ChainedConverter;
 import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.api.intern.TopLevelExpression;
 import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.command.SkriptCommand;
@@ -194,8 +197,6 @@ public class Skript extends JavaPlugin {
 	
 	// ================ CONSTANTS & OTHER ================
 	
-	// TODO aliases in trigger files?
-	
 	// TODO load triggers from all subfolders (except for those starting with '-')?
 	public static final String TRIGGERFILEFOLDER = "triggers";
 	
@@ -230,9 +231,9 @@ public class Skript extends JavaPlugin {
 	
 	// ================ CONDITIONS & EFFECTS ================
 	
-	static final ArrayList<ExpressionInfo<?>> conditions = new ArrayList<ExpressionInfo<?>>(20);
-	static final ArrayList<ExpressionInfo<?>> effects = new ArrayList<ExpressionInfo<?>>(20);
-	static final ArrayList<ExpressionInfo<?>> topLevelExpressions = new ArrayList<ExpressionInfo<?>>(40);
+	static final Collection<ExpressionInfo<? extends Condition>> conditions = new ArrayList<ExpressionInfo<? extends Condition>>(20);
+	static final Collection<ExpressionInfo<? extends Effect>> effects = new ArrayList<ExpressionInfo<? extends Effect>>(20);
+	static final Collection<ExpressionInfo<? extends TopLevelExpression>> topLevelExpressions = new ArrayList<ExpressionInfo<? extends TopLevelExpression>>(40);
 	
 	/**
 	 * registers a {@link Condition}.
@@ -256,21 +257,21 @@ public class Skript extends JavaPlugin {
 		topLevelExpressions.add(info);
 	}
 	
-	public static List<ExpressionInfo<?>> getTopLevelExpressions() {
+	public static Collection<ExpressionInfo<? extends TopLevelExpression>> getTopLevelExpressions() {
 		return topLevelExpressions;
 	}
 	
-	public static List<ExpressionInfo<?>> getConditions() {
+	public static Collection<ExpressionInfo<? extends Condition>> getConditions() {
 		return conditions;
 	}
 	
-	public static List<ExpressionInfo<?>> getEffects() {
+	public static Collection<ExpressionInfo<? extends Effect>> getEffects() {
 		return effects;
 	}
 	
 	// ================ VARIABLES ================
 	
-	static final ArrayList<VariableInfo<? extends Variable<?>, ?>> variables = new ArrayList<VariableInfo<? extends Variable<?>, ?>>(30);
+	static final Collection<VariableInfo<? extends Variable<?>, ?>> variables = new ArrayList<VariableInfo<? extends Variable<?>, ?>>(30);
 	
 	public static <E extends SimpleVariable<T>, T> void addVariable(final Class<E> c, final Class<T> returnType, final String... patterns) {
 		variables.add(new VariableInfo<E, T>(patterns, returnType, c));
@@ -278,13 +279,13 @@ public class Skript extends JavaPlugin {
 			Skript.info("variable " + c.getSimpleName() + " added");
 	}
 	
-	public static List<VariableInfo<? extends Variable<?>, ?>> getVariables() {
+	public static Collection<VariableInfo<? extends Variable<?>, ?>> getVariables() {
 		return variables;
 	}
 	
 	// ================ EVENTS ================
 	
-	static final ArrayList<SkriptEventInfo<?>> events = new ArrayList<SkriptEventInfo<?>>(50);
+	static final Collection<SkriptEventInfo<?>> events = new ArrayList<SkriptEventInfo<?>>(50);
 	
 	@SuppressWarnings("unchecked")
 	public static <E extends SkriptEvent> void addEvent(final Class<E> c, final Class<? extends Event> event, final String... patterns) {
@@ -295,13 +296,13 @@ public class Skript extends JavaPlugin {
 		Skript.events.add(new SkriptEventInfo<E>(patterns, c, events));
 	}
 	
-	public static final ArrayList<SkriptEventInfo<?>> getEvents() {
+	public static final Collection<SkriptEventInfo<?>> getEvents() {
 		return events;
 	}
 	
 	// ================ CONVERTERS ================
 	
-	private static ArrayList<ConverterInfo<?, ?>> converters = new ArrayList<ConverterInfo<?, ?>>(50);
+	private static List<ConverterInfo<?, ?>> converters = new ArrayList<ConverterInfo<?, ?>>(50);
 	
 	/**
 	 * Registers a converter.
@@ -324,12 +325,10 @@ public class Skript extends JavaPlugin {
 			if (c.from.isAssignableFrom(to)) {
 				if (!converterExists(from, c.to)) {
 					converters.add(createChainedConverter(from, converter, c));
-					i++;
 				}
 			} else if (c.to.isAssignableFrom(from)) {
 				if (!converterExists(c.from, to)) {
 					converters.add(createChainedConverter(c, converter, to));
-					i++;
 				}
 			}
 		}
@@ -351,7 +350,7 @@ public class Skript extends JavaPlugin {
 	 * 
 	 * @param o
 	 * @param to
-	 * @return The converted value or null if no converter exists or the converter returned null
+	 * @return The converted value or null if no converter exists or the converter returned null for the given value.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <F, T> T convert(final F o, final Class<T> to) {
@@ -405,7 +404,7 @@ public class Skript extends JavaPlugin {
 	
 	// ================ CLASSES ================
 	
-	private final static ArrayList<ClassInfo<?>> classInfos = new ArrayList<ClassInfo<?>>(50);
+	private final static List<ClassInfo<?>> classInfos = new ArrayList<ClassInfo<?>>(50);
 	
 	/**
 	 * Registers a class. This class will have lower proirity than any classes registered before,
@@ -421,9 +420,9 @@ public class Skript extends JavaPlugin {
 	/**
 	 * Registers a class with higher priority than some other classes.
 	 * 
-	 * @param info info about the class to register
-	 * @param addAlways whether to add this class at the end if none of the other classes are registered
-	 * @param before the classes which should have lower priority than this class
+	 * @param info Info about the class to register
+	 * @param addAlways Whether to add this class at the end if none of the other classes are registered
+	 * @param before The classes which should have lower priority than this class
 	 * @return whether any of the given classes were registered
 	 */
 	public static <T> boolean addClassBefore(final ClassInfo<T> info, final boolean addAlways, final String... before) {
@@ -444,18 +443,6 @@ public class Skript extends JavaPlugin {
 				return ci;
 		}
 		throw new SkriptAPIException("no class info found for " + codeName);
-	}
-	
-	@SuppressWarnings("unchecked")
-	private static <T> List<ClassInfo<? extends T>> getClassInfos(final Class<T> c) {
-		final ArrayList<ClassInfo<? extends T>> infos = new ArrayList<ClassInfo<? extends T>>();
-		for (final ClassInfo<?> ci : classInfos) {
-			if (c.isAssignableFrom(ci.getC()))
-				infos.add((ClassInfo<? extends T>) ci);
-		}
-		if (infos.isEmpty())
-			throw new SkriptAPIException("no class info found for " + c.getName());
-		return infos;
 	}
 	
 	/**
@@ -498,9 +485,9 @@ public class Skript extends JavaPlugin {
 	}
 	
 	/**
-	 * Gets the name this class was registered with.
+	 * Gets the name a class was registered with.
 	 * 
-	 * @param c The class
+	 * @param c The exact class
 	 * @return The name of the class or null if the given class wasn't registered.
 	 */
 	public final static String getExactClassName(final Class<?> c) {
@@ -520,11 +507,12 @@ public class Skript extends JavaPlugin {
 	 * @param c
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	private static <T> T parse_simple(final String s, final Class<T> c) {
-		for (final ClassInfo<? extends T> info : getClassInfos(c)) {
-			if (info.getParser() == null)
+		for (final ClassInfo<?> info : classInfos) {
+			if (info.getParser() == null || !c.isAssignableFrom(info.getC()))
 				continue;
-			final T t = info.getParser().parse(s);
+			final T t = (T) info.getParser().parse(s);
 			if (t != null)
 				return t;
 		}
@@ -581,9 +569,8 @@ public class Skript extends JavaPlugin {
 	}
 	
 	/**
-	 * @param o any object or array
+	 * @param o Any object, preferably not an array: use {@link #toString(Object[], boolean)} instead.
 	 * @return String representation of the object (using a parser if found or {@link String#valueOf(Object)} otherwise).
-	 * @see #addClass(String, Class, Class, Parser, String...)
 	 * @see #toString(Object, boolean)
 	 * @see Parser
 	 */
@@ -593,6 +580,20 @@ public class Skript extends JavaPlugin {
 	
 	public static String getDebugMessage(final Object o) {
 		return toString(o, true);
+	}
+	
+	public static final String toString(final Object[] os, final boolean and) {
+		final StringBuilder b = new StringBuilder();
+		for (int i = 0; i < os.length; i++) {
+			if (i != 0) {
+				if (i == os.length - 1)
+					b.append(and ? " and " : " or ");
+				else
+					b.append(", ");
+			}
+			b.append(toString(os[i]));
+		}
+		return b.toString();
 	}
 	
 	/**
@@ -835,21 +836,18 @@ public class Skript extends JavaPlugin {
 	
 	// ================ COMMANDS ================
 	
-	private static final ArrayList<SkriptCommand> commands = new ArrayList<SkriptCommand>();
+	private static final Set<SkriptCommand> commands = new HashSet<SkriptCommand>();
 	
 	public static CommandMap commandMap = null;
 	static {
 		try {
-			
-			if (Bukkit.getPluginManager() instanceof SimplePluginManager) {
-				final Field f = SimplePluginManager.class.getDeclaredField("commandMap");
+			if (Bukkit.getServer() instanceof CraftServer) {
+				final Field f = CraftServer.class.getDeclaredField("commandMap");
 				f.setAccessible(true);
-				
-				commandMap = (CommandMap) f.get(Bukkit.getPluginManager());
+				commandMap = (CommandMap) f.get(Bukkit.getServer());
 			}
-			
 		} catch (final SecurityException e) {
-			exception(e, "Please disable the security manager");
+			error("Please disable the security manager");
 		} catch (final Exception e) {
 			outdatedError(e);
 		}
@@ -867,12 +865,12 @@ public class Skript extends JavaPlugin {
 	}
 	
 	public static void outdatedError() {
-		SkriptLogger.log(Level.SEVERE, "The version of Skript you're using is not compatible with " + Bukkit.getVersion());
+		SkriptLogger.log(Level.SEVERE, "Skript " + instance.getDescription().getVersion() + " is not fully compatible with Bukkit " + Bukkit.getVersion() + ". Please download the newest version of Skript!");
 	}
 	
-	public static void outdatedError(final Throwable t) {
+	public static void outdatedError(final Exception e) {
 		outdatedError();
-		t.printStackTrace();
+		e.printStackTrace();
 	}
 	
 	// ================ LOGGING ================

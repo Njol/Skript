@@ -24,17 +24,17 @@ package ch.njol.skript.api;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.data.DefaultChangers;
-import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
 
 /**
- * An interface to declare changeable values. All Variables implement this by default, but refuse any change if {@link #acceptChange(ChangeMode)} isn't overridden.<br/>
+ * An interface to declare changeable values. All Variables implement something similar like this by default, but refuse any change if {@link Variable#acceptChange(ChangeMode)} 
+ * isn't overridden.<br/>
  * <br/>
  * Some useful Changers can be found in {@link DefaultChangers}
  * 
  * @author Peter Güttinger
  * @see DefaultChangers
- * @see SimpleVariable
+ * @see Variable
  */
 public interface Changer<T> {
 	
@@ -44,13 +44,22 @@ public interface Changer<T> {
 	
 	/**
 	 * 
+	 * @param e
 	 * @param what What to change. Can contain null elements.
-	 * @param delta An array of the type accepted by {@link #acceptChange(ChangeMode, Class)}. Note: if Integer.class was accepted this array's class will be Integer[], not
-	 *            Object[]. Can contain null elements.
+	 * @param delta A variable which returns instances of the class returned by {@link #acceptChange(ChangeMode)} for the given changemode.
 	 * @param mode
+	 * 
+	 * @throws UnsupportedOperationException (optional) if this method was called on an unsupported ChangeMode.
 	 */
 	public abstract void change(Event e, Variable<T> what, Variable<?> delta, ChangeMode mode);
 	
+	/**
+	 * test whether this changer supports the given mode, and if yes what type it expects the <code>delta</code> to be.
+	 * 
+	 * @param mode
+	 * @return the type that {@link #change(Event, Variable, Variable, ChangeMode)} accepts as it's <code>delta</code> parameter's type param,
+	 *         or null if the given mode is not supported. For {@link ChangeMode#CLEAR} this can return any non-null class instance to mark clear as supported.
+	 */
 	public abstract Class<?> acceptChange(ChangeMode mode);
 	
 }

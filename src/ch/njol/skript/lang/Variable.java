@@ -27,6 +27,7 @@ import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.Debuggable;
+import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.util.Checker;
 
 /**
@@ -36,18 +37,21 @@ import ch.njol.util.Checker;
 public interface Variable<T> extends Expression, Debuggable {
 	
 	/**
-	 * Get a/the single value of this variable
+	 * Get the single value of this variable.<br/>
+	 * Do not use this in conditions, use {@link #check(Event, Checker, Condition)} instead.
 	 * 
 	 * @param e
-	 * @return the value or null if this variable doesn't have any value for the event
+	 * @return The value or null if this variable doesn't have any value for the event
+	 * @throws SkriptAPIException (optional) if this was called on a non-single variable
 	 */
 	public T getSingle(final Event e);
 	
 	/**
-	 * Get all the values of this variable. The returned array is empty if this variable doesn't have any values for the given event.
+	 * Get all the values of this variable. The returned array is empty if this variable doesn't have any values for the given event.<br/>
+	 * Do not use this in conditions, use {@link #check(Event, Checker, Condition)} instead.
 	 * 
 	 * @param e
-	 * @return an array of values of this variable which must not contain nulls.
+	 * @return An array of values of this variable. Does not contain nulls.
 	 */
 	public T[] getArray(final Event e);
 	
@@ -56,7 +60,7 @@ public interface Variable<T> extends Expression, Debuggable {
 	 * 
 	 * @param e
 	 * @param converter
-	 * @return the converted value or null if the unconverted value was nul or the converter returned null.
+	 * @return The converted value or null if the unconverted value was null or the converter returned null for the value.
 	 */
 	public <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter);
 	
@@ -66,7 +70,7 @@ public interface Variable<T> extends Expression, Debuggable {
 	 * @param e
 	 * @param to
 	 * @param converter
-	 * @return an array which hold the converted values and which must not contain nulls.
+	 * @return An array which hold the converted values. Does not contain nulls.
 	 */
 	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter);
 	
@@ -77,17 +81,18 @@ public interface Variable<T> extends Expression, Debuggable {
 	public abstract boolean isSingle();
 	
 	/**
-	 * Checks this variable against the given checker.
+	 * Checks this variable against the given checker. This is the normal version of this method and the one which must be used for simple checks,
+	 * or as the outmost check of a nested check.
 	 * 
 	 * @param e
 	 * @param c
-	 * @param cond
+	 * @param cond The condition that is checking this variable. This is required as the check needs the condition's negated state.
 	 * @return
 	 */
 	public boolean check(final Event e, final Checker<? super T> c, final Condition cond);
 	
 	/**
-	 * Checks this variable against the given checker.
+	 * Checks this variable against the given checker. This method must only be used <b>in</b> nested variable checks, use {@link #check(Event, Checker, Condition)} otherwise!
 	 * 
 	 * @param e
 	 * @param c
@@ -120,24 +125,24 @@ public interface Variable<T> extends Expression, Debuggable {
 	/**
 	 * Changes the variable's value by the given amount. This will only be called on supported modes and with the desired <code>delta</code> type as returned by
 	 * {@link #acceptChange(ChangeMode)}<br/>
-	 * The default implementation of this method throws an exception at runtime.
 	 * 
 	 * @param e
-	 * @param delta the amount to vary this variable by
+	 * @param delta the amount to vary this variable by or null for {@link ChangeMode#CLEAR}
 	 * @param mode
 	 * 
-	 * @throws UnsupportedOperationException if this method was called on an unsupported ChangeMode.
+	 * @throws UnsupportedOperationException (optional) if this method was called on an unsupported ChangeMode.
 	 */
 	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) throws UnsupportedOperationException;
 	
 	/**
-	 * tests whether this variable supports the given mode, and if yes what type it expects the <code>delta</code> to be.<br/>
-	 * The default implementation returns null, i.e. it rejects any change attempts to this variable.
+	 * Tests whether this variable supports the given mode, and if yes what type it expects the <code>delta</code> to be.
 	 * 
 	 * @param mode
-	 * @return the type that {@link #change(Event, Variable, ChangeMode)} accepts as it's <code>delta</code> parameter,
+	 * @return the type that {@link #change(Event, Variable, ChangeMode)} accepts as it's <code>delta</code> parameter's type param,
 	 *         or null if the given mode is not supported. For {@link ChangeMode#CLEAR} this can return any non-null class instance to mark clear as supported.
 	 */
 	public Class<?> acceptChange(final ChangeMode mode);
+	
+	public boolean getAnd();
 	
 }

@@ -101,17 +101,7 @@ public class SimpleLiteral<T> extends SimpleVariable<T> implements ch.njol.skrip
 	
 	@Override
 	public String toString() {
-		final StringBuilder b = new StringBuilder();
-		for (int i = 0; i < data.length; i++) {
-			if (i != 0) {
-				if (i == data.length - 1)
-					b.append(getAnd() ? " and " : " or ");
-				else
-					b.append(", ");
-			}
-			b.append(Skript.toString(data[i]));
-		}
-		return b.toString();
+		return Skript.toString(data, getAnd());
 	}
 	
 	@Override

@@ -125,7 +125,7 @@ public class DefaultClasses {
 		Skript.addClass(new ClassInfo<Boolean>("boolean", Boolean.class, BooleanDefaultVariable.class, new Parser<Boolean>() {
 			@Override
 			public Boolean parse(final String s) {
-				final int i = Utils.parseBooleanNoError(s);
+				final byte i = Utils.parseBooleanNoError(s);
 				if (i == 1)
 					return Boolean.TRUE;
 				if (i == 0)

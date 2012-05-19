@@ -51,14 +51,14 @@ public abstract class StringUtils {
 	 * @param string the String in which should be searched & replaced
 	 * @param regex the Regex to match
 	 * @param callback the callback will be run for every match of the regex in the string, and should return the replacement string for the given match.
-	 *        If the callback returns null for any given match this function will immediately terminate and return null.
+	 *            If the callback returns null for any given match this function will immediately terminate and return null.
 	 * @return
 	 */
 	public final static String replaceAll(final String string, final String regex, final Callback<String, Matcher> callback) {
 		final Matcher m = Pattern.compile(regex).matcher(string);
 		final StringBuffer sb = new StringBuffer();
 		while (m.find()) {
-			String r = callback.run(m);
+			final String r = callback.run(m);
 			if (r == null)
 				return null;
 			m.appendReplacement(sb, r);

@@ -45,19 +45,19 @@ import ch.njol.util.StringUtils;
  */
 public class ExprParser {
 	
-	private String expr;
+	private final String expr;
 	
 	final boolean parseStatic;
 	
 	private String bestError = null;
 	private int bestErrorQuality = 0;
-
-	private ExprParser(String expr) {
+	
+	private ExprParser(final String expr) {
 		this.expr = expr;
 		parseStatic = false;
 	}
-
-	private ExprParser(String expr, boolean parseStatic) {
+	
+	private ExprParser(final String expr, final boolean parseStatic) {
 		this.expr = expr;
 		this.parseStatic = parseStatic;
 	}
@@ -96,7 +96,7 @@ public class ExprParser {
 		//error already set by parse()
 		return null;
 	}
-
+	
 	public static final Expression parse(final String expr, final Iterator<? extends ExpressionInfo<?>> source) {
 		return new ExprParser(expr).parse(source);
 	}
@@ -161,12 +161,12 @@ public class ExprParser {
 	
 	private final Variable<?> parseVar(final Class<?> returnType, final String expr, final boolean literalOnly) {
 		if (!literalOnly) {
-			ExprParser parser = new ExprParser(expr);
+			final ExprParser parser = new ExprParser(expr);
 			final Variable<?> v = (Variable<?>) parser.parse(Skript.getVariables().iterator());
 			if (v != null) {
 				final Variable<?> w = v.getConvertedVariable(returnType);
 				if (w == null && bestErrorQuality < 90) {
-					bestError = v.toString() + " "+(v.isSingle() ? "is" : "are")+" not " + Utils.a(Skript.getExactClassName(returnType));
+					bestError = v.toString() + " " + (v.isSingle() ? "is" : "are") + " not " + Utils.a(Skript.getExactClassName(returnType));
 					bestErrorQuality = 90;
 				}
 				return w;
@@ -188,10 +188,11 @@ public class ExprParser {
 		}
 		return p;
 	}
-
+	
 	public static Pair<SkriptEventInfo<?>, SkriptEvent> parseEvent(final String event) {
 		return new ExprParser(event, true).parseEvent();
 	}
+	
 	private Pair<SkriptEventInfo<?>, SkriptEvent> parseEvent() {
 		if (Skript.getCurrentErrorSession() == null)
 			throw new SkriptAPIException("must start an ErrorSession before trying to parse anything!");

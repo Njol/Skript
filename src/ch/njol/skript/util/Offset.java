@@ -36,22 +36,18 @@ import org.bukkit.util.Vector;
  */
 public class Offset {
 	private final double[] mod;
-	private boolean isOffset;
-	
-	private void checkIsOffset() {
-		isOffset = mod[0] != 0 || mod[1] != 0 || mod[2] != 0;
-	}
+	private final boolean isOffset;
 	
 	public Offset(final double modX, final double modY, final double modZ) {
 		mod = new double[] {modX, modY, modZ};
-		checkIsOffset();
+		isOffset = modX != 0 || modY != 0 || modZ != 0;
 	}
 	
 	public Offset(final double[] mod) {
 		if (mod == null || mod.length != 3)
 			throw new IllegalArgumentException();
 		this.mod = mod;
-		checkIsOffset();
+		isOffset = mod[0] != 0 || mod[1] != 0 || mod[2] != 0;
 	}
 	
 	public Block getRelative(final Block block) {
@@ -85,8 +81,6 @@ public class Offset {
 	public static Location[] setOff(final Offset[] offsets, final Location[] locations) {
 		final Location[] off = new Location[locations.length * offsets.length];
 		for (int i = 0; i < locations.length; i++) {
-			if (locations[i] == null)
-				continue;
 			for (int j = 0; j < offsets.length; j++) {
 				off[offsets.length * i + j] = offsets[j].getRelative(locations[i]);
 			}
@@ -97,8 +91,6 @@ public class Offset {
 	public static Block[] setOff(final Offset[] offsets, final Block[] blocks) {
 		final Block[] off = new Block[blocks.length * offsets.length];
 		for (int i = 0; i < blocks.length; i++) {
-			if (blocks[i] == null)
-				continue;
 			for (int j = 0; j < offsets.length; j++) {
 				off[offsets.length * i + j] = offsets[j].getRelative(blocks[i]);
 			}
@@ -140,7 +132,7 @@ public class Offset {
 			case WEST:
 				return face.toString().toLowerCase(Locale.ENGLISH);
 		}
-		return null;
+		throw new IllegalArgumentException();
 	}
 	
 	@Override
@@ -154,14 +146,12 @@ public class Offset {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof Offset))
 			return false;
 		final Offset other = (Offset) obj;
 		if (!isOffset && !other.isOffset)
 			return true;
-		if (!Arrays.equals(mod, other.mod))
-			return false;
-		return true;
+		return Arrays.equals(mod, other.mod);
 	}
 	
 	public static Offset combine(final Offset[] offsets) {

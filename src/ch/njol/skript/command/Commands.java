@@ -114,9 +114,11 @@ public abstract class Commands {
 		final String desc = "/" + command + " " + Utils.join(currentArguments);
 		final String usage = node.get("usage", desc);
 		final String description = node.get("description", "");
-		final List<String> aliases = Arrays.asList(node.get("aliases", "").split("\\s*,\\s*/?"));
+		List<String> aliases = Arrays.asList(node.get("aliases", "").split("\\s*,\\s*/?"));
 		if (aliases.get(0).startsWith("/"))
 			aliases.set(0, aliases.get(0).substring(1));
+		else if (aliases.get(0).isEmpty())
+			aliases = new ArrayList<String>(0);
 		final String permission = node.get("permission", null);
 		final String permissionMessage = node.get("permission message", null);
 		final SectionNode trigger = (SectionNode) node.get("trigger");
