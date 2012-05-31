@@ -37,7 +37,7 @@ import ch.njol.skript.lang.Variable;
 public class VarCreature extends SimpleVariable<Creature> {
 	
 	static {
-		Skript.addVariable(VarCreature.class, Creature.class, "creature");
+		Skript.registerVariable(VarCreature.class, Creature.class, "creature");
 	}
 	
 	@Override

@@ -40,7 +40,7 @@ import ch.njol.skript.lang.Variable;
 public class VarInventory extends SimpleVariable<Inventory> {
 	
 	static {
-		Skript.addVariable(VarInventory.class, Inventory.class, "inventory of %inventoryholders%");
+		Skript.registerVariable(VarInventory.class, Inventory.class, "inventory of %inventoryholders%", "%inventoryholders%'[s] inventory");
 	}
 	
 	private Variable<InventoryHolder> holders;

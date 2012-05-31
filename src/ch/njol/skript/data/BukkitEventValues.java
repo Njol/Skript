@@ -77,7 +77,7 @@ public final class BukkitEventValues {
 	static {
 		
 		// === WorldEvents ===
-		Skript.addEventValue(WorldEvent.class, World.class, new Getter<World, WorldEvent>() {
+		Skript.registerEventValue(WorldEvent.class, World.class, new Getter<World, WorldEvent>() {
 			@Override
 			public World get(final WorldEvent e) {
 				return e.getWorld();
@@ -85,7 +85,7 @@ public final class BukkitEventValues {
 		});
 		
 		// WeatherEvent
-		Skript.addEventValue(WeatherEvent.class, World.class, new Getter<World, WeatherEvent>() {
+		Skript.registerEventValue(WeatherEvent.class, World.class, new Getter<World, WeatherEvent>() {
 			@Override
 			public World get(final WeatherEvent e) {
 				return e.getWorld();
@@ -93,7 +93,7 @@ public final class BukkitEventValues {
 		});
 		
 		// ServerCommandEvent
-		Skript.addEventValue(ServerCommandEvent.class, CommandSender.class, new Getter<CommandSender, ServerCommandEvent>() {
+		Skript.registerEventValue(ServerCommandEvent.class, CommandSender.class, new Getter<CommandSender, ServerCommandEvent>() {
 			@Override
 			public CommandSender get(final ServerCommandEvent e) {
 				return e.getSender();
@@ -101,56 +101,56 @@ public final class BukkitEventValues {
 		});
 		
 		// === BlockEvents ===
-		Skript.addEventValue(BlockEvent.class, Block.class, new Getter<Block, BlockEvent>() {
+		Skript.registerEventValue(BlockEvent.class, Block.class, new Getter<Block, BlockEvent>() {
 			@Override
 			public Block get(final BlockEvent e) {
 				return e.getBlock();
 			}
 		});
 		// BlockPlaceEvent
-		Skript.addEventValue(BlockPlaceEvent.class, Player.class, new Getter<Player, BlockPlaceEvent>() {
+		Skript.registerEventValue(BlockPlaceEvent.class, Player.class, new Getter<Player, BlockPlaceEvent>() {
 			@Override
 			public Player get(final BlockPlaceEvent e) {
 				return e.getPlayer();
 			}
 		});
 		// BlockDamageEvent
-		Skript.addEventValue(BlockDamageEvent.class, Player.class, new Getter<Player, BlockDamageEvent>() {
+		Skript.registerEventValue(BlockDamageEvent.class, Player.class, new Getter<Player, BlockDamageEvent>() {
 			@Override
 			public Player get(final BlockDamageEvent e) {
 				return e.getPlayer();
 			}
 		});
 		// BlockBreakEvent
-		Skript.addEventValue(BlockBreakEvent.class, Player.class, new Getter<Player, BlockBreakEvent>() {
+		Skript.registerEventValue(BlockBreakEvent.class, Player.class, new Getter<Player, BlockBreakEvent>() {
 			@Override
 			public Player get(final BlockBreakEvent e) {
 				return e.getPlayer();
 			}
 		});
 		// BlockIgniteEvent
-		Skript.addEventValue(BlockIgniteEvent.class, Player.class, new Getter<Player, BlockIgniteEvent>() {
+		Skript.registerEventValue(BlockIgniteEvent.class, Player.class, new Getter<Player, BlockIgniteEvent>() {
 			@Override
 			public Player get(final BlockIgniteEvent e) {
 				return e.getPlayer();
 			}
 		});
 		// BlockDispenseEvent
-		Skript.addEventValue(BlockDispenseEvent.class, ItemStack.class, new Getter<ItemStack, BlockDispenseEvent>() {
+		Skript.registerEventValue(BlockDispenseEvent.class, ItemStack.class, new Getter<ItemStack, BlockDispenseEvent>() {
 			@Override
 			public ItemStack get(final BlockDispenseEvent e) {
 				return e.getItem();
 			}
 		});
 		// BlockPistonEvent
-		Skript.addEventValue(BlockPistonEvent.class, BlockFace.class, new Getter<BlockFace, BlockPistonEvent>() {
+		Skript.registerEventValue(BlockPistonEvent.class, BlockFace.class, new Getter<BlockFace, BlockPistonEvent>() {
 			@Override
 			public BlockFace get(final BlockPistonEvent e) {
 				return e.getDirection();
 			}
 		});
 		// SignChangeEvent
-		Skript.addEventValue(SignChangeEvent.class, Player.class, new Getter<Player, SignChangeEvent>() {
+		Skript.registerEventValue(SignChangeEvent.class, Player.class, new Getter<Player, SignChangeEvent>() {
 			@Override
 			public Player get(final SignChangeEvent e) {
 				return e.getPlayer();
@@ -158,34 +158,34 @@ public final class BukkitEventValues {
 		});
 		
 		// === EntityEvents ===
-		Skript.addEventValue(EntityEvent.class, Entity.class, new Getter<Entity, EntityEvent>() {
+		Skript.registerEventValue(EntityEvent.class, Entity.class, new Getter<Entity, EntityEvent>() {
 			@Override
 			public Entity get(final EntityEvent e) {
 				return e.getEntity();
 			}
 		});
 		// EntityDeathEvent
-		Skript.addEventValue(EntityDeathEvent.class, ItemStack[].class, new Getter<ItemStack[], EntityDeathEvent>() {
+		Skript.registerEventValue(EntityDeathEvent.class, ItemStack[].class, new Getter<ItemStack[], EntityDeathEvent>() {
 			@Override
 			public ItemStack[] get(final EntityDeathEvent e) {
 				return e.getDrops().toArray(new ItemStack[0]);
 			}
 		});
 		// EntityDamageEvent
-		Skript.addEventValue(EntityDamageEvent.class, DamageCause.class, new Getter<DamageCause, EntityDamageEvent>() {
+		Skript.registerEventValue(EntityDamageEvent.class, DamageCause.class, new Getter<DamageCause, EntityDamageEvent>() {
 			@Override
 			public DamageCause get(final EntityDamageEvent e) {
 				return e.getCause();
 			}
 		});
 		// ProjectileHitEvent
-		Skript.addEventValue(ProjectileHitEvent.class, Projectile.class, new Getter<Projectile, ProjectileHitEvent>() {
+		Skript.registerEventValue(ProjectileHitEvent.class, Projectile.class, new Getter<Projectile, ProjectileHitEvent>() {
 			@Override
 			public Projectile get(final ProjectileHitEvent e) {
 				return e.getEntity();
 			}
 		});
-		Skript.addEventValue(ProjectileHitEvent.class, LivingEntity.class, new Getter<LivingEntity, ProjectileHitEvent>() {
+		Skript.registerEventValue(ProjectileHitEvent.class, LivingEntity.class, new Getter<LivingEntity, ProjectileHitEvent>() {
 			@Override
 			public LivingEntity get(final ProjectileHitEvent e) {
 				return e.getEntity().getShooter();
@@ -193,63 +193,63 @@ public final class BukkitEventValues {
 		});
 		
 		// --- PlayerEvents ---
-		Skript.addEventValue(PlayerEvent.class, Player.class, new Getter<Player, PlayerEvent>() {
+		Skript.registerEventValue(PlayerEvent.class, Player.class, new Getter<Player, PlayerEvent>() {
 			@Override
 			public Player get(final PlayerEvent e) {
 				return e.getPlayer();
 			}
 		});
 		// PlayerBedEnterEvent
-		Skript.addEventValue(PlayerBedEnterEvent.class, Block.class, new Getter<Block, PlayerBedEnterEvent>() {
+		Skript.registerEventValue(PlayerBedEnterEvent.class, Block.class, new Getter<Block, PlayerBedEnterEvent>() {
 			@Override
 			public Block get(final PlayerBedEnterEvent e) {
 				return e.getBed();
 			}
 		});
 		// PlayerBedLeaveEvent
-		Skript.addEventValue(PlayerBedLeaveEvent.class, Block.class, new Getter<Block, PlayerBedLeaveEvent>() {
+		Skript.registerEventValue(PlayerBedLeaveEvent.class, Block.class, new Getter<Block, PlayerBedLeaveEvent>() {
 			@Override
 			public Block get(final PlayerBedLeaveEvent e) {
 				return e.getBed();
 			}
 		});
 		// PlayerBucketEvent
-		Skript.addEventValue(PlayerBucketEvent.class, Block.class, new Getter<Block, PlayerBucketEvent>() {
+		Skript.registerEventValue(PlayerBucketEvent.class, Block.class, new Getter<Block, PlayerBucketEvent>() {
 			@Override
 			public Block get(final PlayerBucketEvent e) {
 				return e.getBlockClicked().getRelative(e.getBlockFace());
 			}
 		});
 		// PlayerDropItemEvent
-		Skript.addEventValue(PlayerDropItemEvent.class, Item.class, new Getter<Item, PlayerDropItemEvent>() {
+		Skript.registerEventValue(PlayerDropItemEvent.class, Item.class, new Getter<Item, PlayerDropItemEvent>() {
 			@Override
 			public Item get(final PlayerDropItemEvent e) {
 				return e.getItemDrop();
 			}
 		});
 		// PlayerInteractEntityEvent
-		Skript.addEventValue(PlayerInteractEntityEvent.class, Entity.class, new Getter<Entity, PlayerInteractEntityEvent>() {
+		Skript.registerEventValue(PlayerInteractEntityEvent.class, Entity.class, new Getter<Entity, PlayerInteractEntityEvent>() {
 			@Override
 			public Entity get(final PlayerInteractEntityEvent e) {
 				return e.getRightClicked();
 			}
 		});
 		// PlayerInteractEvent
-		Skript.addEventValueBefore(PlayerInteractEvent.class, PlayerEvent.class, Block.class, new Getter<Block, PlayerInteractEvent>() {
+		Skript.registerEventValue(PlayerInteractEvent.class, Block.class, new Getter<Block, PlayerInteractEvent>() {
 			@Override
 			public Block get(final PlayerInteractEvent e) {
 				return e.getClickedBlock();
 			}
 		});
 		// PlayerShearEntityEvent
-		Skript.addEventValue(PlayerShearEntityEvent.class, Entity.class, new Getter<Entity, PlayerShearEntityEvent>() {
+		Skript.registerEventValue(PlayerShearEntityEvent.class, Entity.class, new Getter<Entity, PlayerShearEntityEvent>() {
 			@Override
 			public Entity get(final PlayerShearEntityEvent e) {
 				return e.getEntity();
 			}
 		});
 		// PlayerCommandPreprocessEvent
-		Skript.addEventValue(PlayerCommandPreprocessEvent.class, Player.class, new Getter<Player, PlayerCommandPreprocessEvent>() {
+		Skript.registerEventValue(PlayerCommandPreprocessEvent.class, Player.class, new Getter<Player, PlayerCommandPreprocessEvent>() {
 			@Override
 			public Player get(final PlayerCommandPreprocessEvent e) {
 				return e.getPlayer();
@@ -257,14 +257,14 @@ public final class BukkitEventValues {
 		});
 		
 		// --- PaintingEvents ---
-		Skript.addEventValue(PaintingEvent.class, Painting.class, new Getter<Painting, PaintingEvent>() {
+		Skript.registerEventValue(PaintingEvent.class, Painting.class, new Getter<Painting, PaintingEvent>() {
 			@Override
 			public Painting get(final PaintingEvent e) {
 				return e.getPainting();
 			}
 		});
 		// PaintingPlaceEvent
-		Skript.addEventValue(PaintingPlaceEvent.class, Player.class, new Getter<Player, PaintingPlaceEvent>() {
+		Skript.registerEventValue(PaintingPlaceEvent.class, Player.class, new Getter<Player, PaintingPlaceEvent>() {
 			@Override
 			public Player get(final PaintingPlaceEvent e) {
 				return e.getPlayer();
@@ -272,19 +272,19 @@ public final class BukkitEventValues {
 		});
 		
 		// --- VehicleEvents ---
-		Skript.addEventValue(VehicleEvent.class, Vehicle.class, new Getter<Vehicle, VehicleEvent>() {
+		Skript.registerEventValue(VehicleEvent.class, Vehicle.class, new Getter<Vehicle, VehicleEvent>() {
 			@Override
 			public Vehicle get(final VehicleEvent e) {
 				return e.getVehicle();
 			}
 		});
-		Skript.addEventValue(VehicleExitEvent.class, LivingEntity.class, new Getter<LivingEntity, VehicleExitEvent>() {
+		Skript.registerEventValue(VehicleExitEvent.class, LivingEntity.class, new Getter<LivingEntity, VehicleExitEvent>() {
 			@Override
 			public LivingEntity get(final VehicleExitEvent e) {
 				return e.getExited();
 			}
 		});
-		Skript.addEventValue(VehicleEvent.class, Entity.class, new Getter<Entity, VehicleEvent>() {
+		Skript.registerEventValue(VehicleEvent.class, Entity.class, new Getter<Entity, VehicleEvent>() {
 			@Override
 			public Entity get(final VehicleEvent e) {
 				return e.getVehicle().getPassenger();

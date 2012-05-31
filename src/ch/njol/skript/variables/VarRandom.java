@@ -35,7 +35,7 @@ import ch.njol.skript.lang.Variable;
 public class VarRandom extends SimpleVariable<Double> {
 	
 	static {
-		Skript.addVariable(VarRandom.class, Double.class, "random number between %double% and %double%");
+		Skript.registerVariable(VarRandom.class, Double.class, "random number between %double% and %double%");
 	}
 	
 	private Variable<Double> lower, upper;

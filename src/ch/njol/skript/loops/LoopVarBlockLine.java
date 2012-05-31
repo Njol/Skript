@@ -46,7 +46,7 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 	private static final int MAXDIST = 1000;
 	
 	static {
-		Skript.addLoop(LoopVarBlockLine.class, Block.class,
+		Skript.registerLoop(LoopVarBlockLine.class, Block.class,
 				"blocks from %block% to %block%",
 				"blocks between %block% and %block%",
 				"blocks from %block% on %offset%",

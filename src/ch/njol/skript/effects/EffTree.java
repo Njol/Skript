@@ -29,15 +29,17 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.util.Offset;
 
 public class EffTree extends Effect {
 	
 	static {
-		Skript.addEffect(EffTree.class,
-				"(grow|create|generate) tree [of type %treetype%] [at %blocks%]",
-				"(grow|create|generate) %treetype% [tree] [at %blocks%]");
+		Skript.registerEffect(EffTree.class,
+				"(grow|create|generate) tree [of type %treetype%] %offsets% %blocks%",
+				"(grow|create|generate) %treetype% [tree] %offsets% %blocks%");
 	}
 	
+	private Variable<Offset> offsets;
 	private Variable<Block> blocks;
 	private Variable<TreeType> type;
 	
@@ -45,7 +47,8 @@ public class EffTree extends Effect {
 	@Override
 	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		type = (Variable<TreeType>) vars[0];
-		blocks = (Variable<Block>) vars[1];
+		offsets = (Variable<Offset>) vars[1];
+		blocks = (Variable<Block>) vars[2];
 	}
 	
 	@Override
@@ -53,14 +56,14 @@ public class EffTree extends Effect {
 		final TreeType type = this.type.getSingle(e);
 		if (type == null)
 			return;
-		for (final Block b : blocks.getArray(e)) {
+		for (final Block b : Offset.setOff(offsets.getArray(e), blocks.getArray(e))) {
 			b.getWorld().generateTree(b.getLocation(), type);
 		}
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "grow tree of type " + type.getDebugMessage(e) + " at " + blocks.getDebugMessage(e);
+		return "grow tree of type " + type.getDebugMessage(e) + " " + offsets.getDebugMessage(e) + " " + blocks.getDebugMessage(e);
 	}
 	
 }

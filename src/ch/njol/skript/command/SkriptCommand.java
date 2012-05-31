@@ -67,7 +67,7 @@ public class SkriptCommand extends Command implements PluginIdentifiableCommand 
 		
 		trigger = new Trigger("command /" + name, new SimpleEvent(), items);
 		setPermission(permission);
-		setPermissionMessage(permissionMessage == null ? "You don't have the required permission to use this command" : permissionMessage);
+		setPermissionMessage(permissionMessage == null ? "You don't have the required permission to use this command" : permissionMessage);// TODO l10n
 		this.arguments = arguments;
 	}
 	
@@ -102,7 +102,7 @@ public class SkriptCommand extends Command implements PluginIdentifiableCommand 
 			Skript.info("# /" + getName() + " " + Utils.join(args, ", "));
 		final long startTrigger = System.nanoTime();
 		trigger.run(event);
-		if (Skript.log(Verbosity.DEBUG))
+		if (Skript.log(Verbosity.VERY_HIGH))
 			Skript.info("# " + getName() + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 		
 		return true;

@@ -22,6 +22,7 @@
 package ch.njol.skript.api;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.data.DefaultComparators;
 
 /**
  * Used to compare two objects of a different or the same type.
@@ -31,7 +32,8 @@ import ch.njol.skript.Skript;
  * @param <T1> ,
  * @param <T2> the types to compare
  * 
- * @see Skript#addComparator(Class, Class, Comparator)
+ * @see Skript#registerComparator(Class, Class, Comparator)
+ * @see DefaultComparators
  */
 public interface Comparator<T1, T2> {
 	
@@ -79,6 +81,9 @@ public interface Comparator<T1, T2> {
 			return false;
 		}
 		
+		/**
+		 * Returns this relation's string representation, which is similar to "equal to" or "greater than".
+		 */
 		@Override
 		public String toString() {
 			switch (this) {
@@ -98,7 +103,12 @@ public interface Comparator<T1, T2> {
 			throw new RuntimeException();
 		}
 		
-		public ch.njol.skript.api.Comparator.Relation getInverse() {
+		/**
+		 * Gets the inverse of this relation, i.e if this relation fulfills <code>X rel Y</code>, then the returned relation fullfills <code>!(X rel Y)</code>.
+		 * 
+		 * @return
+		 */
+		public Relation getInverse() {
 			switch (this) {
 				case EQUAL:
 					return NOT_EQUAL;
@@ -113,7 +123,27 @@ public interface Comparator<T1, T2> {
 				case SMALLER_OR_EQUAL:
 					return GREATER;
 			}
-			return null;
+			throw new RuntimeException();
+		}
+		
+		/**
+		 * Gets the relation which has switched arguments, i.e. if this relation fulfills <code>X rel Y</code>, then the returned relation fullfills <code>Y rel X</code>.
+		 * 
+		 * @return
+		 */
+		public Relation getSwitched() {
+			switch (this) {
+				case GREATER:
+					return SMALLER;
+				case GREATER_OR_EQUAL:
+					return SMALLER_OR_EQUAL;
+				case SMALLER:
+					return GREATER;
+				case SMALLER_OR_EQUAL:
+					return GREATER_OR_EQUAL;
+				default:
+					return this;
+			}
 		}
 		
 		public boolean isEqualOrInverse() {
@@ -124,10 +154,8 @@ public interface Comparator<T1, T2> {
 	/**
 	 * holds information a about a comparator.
 	 * 
-	 * @author Peter Güttinger
-	 * 
-	 * @param <T1>
-	 * @param <T2>
+	 * @param <T1> see {@link Comparator}
+	 * @param <T2> dito
 	 */
 	public static class ComparatorInfo<T1, T2> {
 		
@@ -156,8 +184,8 @@ public interface Comparator<T1, T2> {
 		}
 		
 		@Override
-		public boolean supportsRelation(final ch.njol.skript.api.Comparator.Relation r) {
-			return r.isEqualOrInverse();
+		public boolean supportsOrdering() {
+			return false;
 		}
 	};
 	
@@ -170,6 +198,10 @@ public interface Comparator<T1, T2> {
 	 */
 	public Relation compare(T1 o1, T2 o2);
 	
-	public boolean supportsRelation(Relation r);
+	/**
+	 * 
+	 * @return whether this comparator supports ordering of elements or not
+	 */
+	public boolean supportsOrdering();
 	
 }

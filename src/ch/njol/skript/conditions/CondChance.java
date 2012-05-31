@@ -36,7 +36,7 @@ import ch.njol.skript.lang.Variable;
 public class CondChance extends Condition {
 	
 	static {
-		Skript.addCondition(CondChance.class, "chance of <\\d+(.\\d+)?>\\%");
+		Skript.registerCondition(CondChance.class, "chance of <\\d+(.\\d+)?>\\%");
 	}
 	
 	private double chance;

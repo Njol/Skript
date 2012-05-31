@@ -25,8 +25,6 @@ import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.api.Getter;
 import ch.njol.skript.events.EvtPeriodical;
 
 /**
@@ -35,15 +33,6 @@ import ch.njol.skript.events.EvtPeriodical;
  * 
  */
 public class ScheduledEvent extends Event {
-	static {
-		Skript.addEventValue(ScheduledEvent.class, World.class, new Getter<World, ScheduledEvent>() {
-			@Override
-			public World get(final ScheduledEvent e) {
-				return e.getWorld();
-			}
-		});
-	}
-	
 	transient private World world;
 	private final EvtPeriodical event;
 	

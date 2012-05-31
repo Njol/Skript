@@ -43,7 +43,7 @@ public class VarPlayer extends EventValueVariable<Player> {
 	}
 	
 	static {
-		Skript.addVariable(VarPlayer.class, Player.class, "player", "me");
+		Skript.registerVariable(VarPlayer.class, Player.class, "player", "me");
 	}
 	
 	@Override

@@ -40,7 +40,7 @@ import ch.njol.skript.util.Offset;
 public class VarBlock extends SimpleVariable<Block> {
 	
 	static {
-		Skript.addVariable(VarBlock.class, Block.class, "block[[s] %-offsets% [%blocks%]]");
+		Skript.registerVariable(VarBlock.class, Block.class, "block[[s] %-offsets% [%blocks%]]");
 	}
 	
 	private Variable<Offset> offsets;

@@ -29,6 +29,7 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
+import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**
@@ -38,16 +39,33 @@ import ch.njol.util.iterator.SingleItemIterator;
  */
 public class ItemData implements Cloneable {
 	
-	public int typeid = -1;
+	/**
+	 * Only ItemType may set this directly, other classes must use {@link #setId(int)} to set this.
+	 */
+	int typeid = -1;
 	public short dataMin = -1;
 	public short dataMax = -1;
 	
+	private ItemType parent = null;
+
+	public ItemData(final int typeid) {
+		this.typeid = typeid;
+	}
+	
 	public ItemData(final int typeid, final short data) {
+		if (data < -1)
+			throw new IllegalArgumentException("data (" + data + ") must be >= -1");
 		this.typeid = typeid;
 		dataMin = dataMax = data;
 	}
 	
 	public ItemData(final int typeid, final short dMin, final short dMax) {
+		if (dMin < -1 || dMax < -1)
+			throw new IllegalArgumentException("datas (" + dMin + "," + dMax + ") must be >= -1");
+		if (dMin == -1 && dMax != -1 || dMin != -1 && dMax == -1)
+			throw new IllegalArgumentException("dataMin (" + dMin + ") and dataMax (" + dMax + ") must either both be -1 or positive");
+		if (dMin > dMax)
+			throw new IllegalArgumentException("dataMin (" + dMin + ") must not be grater than dataMax (" + dMax + ")");
 		this.typeid = typeid;
 		dataMin = dMin;
 		dataMax = dMax;
@@ -61,7 +79,7 @@ public class ItemData implements Cloneable {
 	
 	public ItemData(final ItemStack i) {
 		typeid = i.getTypeId();
-		dataMin = dataMax = i.getDurability();// <- getData() returns a new data object based on the durability (see source)
+		dataMin = dataMax = i.getDurability();// <- getData() returns a new data object based on the durability (see Bukkit source)
 	}
 	
 	public ItemData(final ItemData other) {
@@ -70,22 +88,32 @@ public class ItemData implements Cloneable {
 		dataMin = other.dataMin;
 	}
 	
-	/**
-	 * Overrides all values of this ItemData with the values of the given item data if they are set there.
-	 * 
-	 * @param other
-	 */
-	public void merge(final ItemData other) {
-		if (other == null)
-			return;
-		if (other.typeid != -1)
-			typeid = other.typeid;
-		if (other.dataMin != -1)
-			dataMin = other.dataMin;
-		if (other.dataMax != -1)
-			dataMax = other.dataMax;
+	public void modified() {
+		if (parent != null)
+			parent.modified();
 	}
 	
+	public void setParent(ItemType parent) {
+		if (this.parent != null)
+			throw new SkriptAPIException("Can't set the parent of an ItemData if is is already set");
+		this.parent = parent;
+	}
+
+	public int getId() {
+		return typeid;
+	}
+
+	public void setId(int typeid) {
+		this.typeid = typeid;
+		modified();
+	}
+	
+	/**
+	 * Tests whether the given item is of this type. Returns true if null was passed and this type's typeid is 0.
+	 * 
+	 * @param item
+	 * @return
+	 */
 	public boolean isOfType(final ItemStack item) {
 		if (item == null)
 			return typeid == 0;
@@ -93,11 +121,15 @@ public class ItemData implements Cloneable {
 	}
 	
 	/**
-	 * Returns {@link Skript#getMaterialName(int, short, short) Skript.getMaterialName(typeid, dataMin, dataMax)}
+	 * Returns <code>Aliases.{@link Aliases#getMaterialName(int, short, short) getMaterialName}(typeid, dataMin, dataMax)</code>
 	 */
 	@Override
 	public String toString() {
 		return Aliases.getMaterialName(typeid, dataMin, dataMax);
+	}
+	
+	public String toString(final boolean debug) {
+		return debug ? Aliases.getDebugMaterialName(typeid, dataMin, dataMax) : Aliases.getMaterialName(typeid, dataMin, dataMax);
 	}
 	
 	@Override
@@ -121,29 +153,30 @@ public class ItemData implements Cloneable {
 	 * 
 	 * @param other
 	 * 
-	 * @return a new ItemData which is the intersection of the given types, or null if the intersection of the data ranges is empty or both datas have an id set which are not the
+	 * @return a new ItemData which is the intersection of the given types, or null if the intersection of the data ranges is empty or both datas have an id != -1 which are not the
 	 *         same.
 	 */
 	public ItemData intersection(final ItemData other) {
-		if (other.dataMax != -1 && dataMin != -1 && other.dataMax < dataMin || other.typeid != -1 && typeid != -1 && other.typeid != typeid)
+		if (other.dataMin != -1 && dataMin != -1 && (other.dataMax < dataMin || dataMax < other.dataMin) || other.typeid != -1 && typeid != -1 && other.typeid != typeid)
 			return null;
+		
 		return new ItemData(typeid == -1 ? other.typeid : typeid,
 				(short) Math.max(dataMin, other.dataMin),
 				dataMax == -1 ? other.dataMax : (other.dataMax == -1 ? dataMax : (short) Math.min(dataMax, other.dataMax)));
 	}
 	
-	public ItemStack getRandom(final ItemType type) {
+	public ItemStack getRandom() {
+		int amount = parent == null ? 1 : parent.getAmount();
 		if (dataMin == -1 && dataMax == -1) {
-			return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid, type.getAmount());
+			return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid, amount);
 		}
-		final short dmin = dataMin == -1 ? 0 : dataMin;
-		final short dmax = dataMax == -1 ? Short.MAX_VALUE : dataMax;
 		return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid,
-				type.getAmount(),
-				(short) (Skript.random.nextInt(dmax - dmin + 1) + dmin));
+				amount,
+				(short) (Skript.random.nextInt(dataMax - dataMin + 1) + dataMin));
 	}
 	
-	public Iterator<ItemStack> getAll(final ItemType type) {
+	public Iterator<ItemStack> getAll() {
+		final int amount = parent == null ? 1 : parent.getAmount();
 		if (typeid == -1) {
 			return new Iterator<ItemStack>() {
 				
@@ -159,11 +192,13 @@ public class ItemData implements Cloneable {
 				
 				@Override
 				public ItemStack next() {
-					return new ItemStack(iter.next(), type.getAmount());
+					return new ItemStack(iter.next(), amount);
 				}
 				
 				@Override
-				public void remove() {}
+				public void remove() {
+					throw new UnsupportedOperationException();
+				}
 				
 			};
 		}
@@ -171,21 +206,23 @@ public class ItemData implements Cloneable {
 			return new SingleItemIterator<ItemStack>(new ItemStack(typeid, 1));
 		return new Iterator<ItemStack>() {
 			
-			private short data = (short) (dataMin == -1 ? -1 : dataMin - 1);
+			private short data = (short) (dataMin - 1);
 			
 			@Override
 			public boolean hasNext() {
-				return data < (dataMax == -1 ? 15 : dataMax);
+				return data < dataMax;
 			}
 			
 			@Override
 			public ItemStack next() {
 				data++;
-				return new ItemStack(typeid, type.getAmount(), data, (byte) data);
+				return new ItemStack(typeid, amount, data, (byte) data);
 			}
 			
 			@Override
-			public void remove() {}
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
 			
 		};
 	}
@@ -198,5 +235,5 @@ public class ItemData implements Cloneable {
 	public boolean hasDataRange() {
 		return dataMin != dataMax;
 	}
-	
+
 }

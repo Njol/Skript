@@ -23,6 +23,7 @@ package ch.njol.skript.lang;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
@@ -31,8 +32,11 @@ import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.util.Checker;
 
 /**
- * @author Peter Güttinger
+ * Represents a variable. Variables are used within conditions, effects and other variables.
  * 
+ * @author Peter Güttinger
+ * @see Skript#registerVariable(Class, Class, String...)
+ * @see Expression
  */
 public interface Variable<T> extends Expression, Debuggable {
 	
@@ -56,7 +60,7 @@ public interface Variable<T> extends Expression, Debuggable {
 	public T[] getArray(final Event e);
 	
 	/**
-	 * Gets a/the sinle value of this variable converted with the given converter.
+	 * Gets a/the single value of this variable converted with the given converter.
 	 * 
 	 * @param e
 	 * @param converter
@@ -100,10 +104,18 @@ public interface Variable<T> extends Expression, Debuggable {
 	 */
 	public boolean check(final Event e, final Checker<? super T> c);
 	
+	/**
+	 * Tries to convert this variable to the given type.
+	 * 
+	 * @param to the desired return type of the returned variable
+	 * @return Variable with the desired return type or null if the variable can't be converted to the given type. Returns the variable itself if it already returns the desired
+	 *         type.
+	 * @see Converter
+	 */
 	public <R> Variable<? extends R> getConvertedVariable(final Class<R> to);
 	
 	/**
-	 * this is set automatically and should not be changed.
+	 * this is set automatically and must not be changed.
 	 * 
 	 * @param and
 	 */
@@ -143,6 +155,10 @@ public interface Variable<T> extends Expression, Debuggable {
 	 */
 	public Class<?> acceptChange(final ChangeMode mode);
 	
+	/**
+	 * 
+	 * @return True if this variable returns all possible values, false if it only returns one.
+	 */
 	public boolean getAnd();
 	
 }

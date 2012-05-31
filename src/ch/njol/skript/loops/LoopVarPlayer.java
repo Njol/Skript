@@ -43,7 +43,7 @@ import ch.njol.skript.util.Utils;
 public class LoopVarPlayer extends LoopVar<Player> {
 	
 	static {
-		Skript.addLoop(LoopVarPlayer.class, Player.class, "players", "players in world[s] %worlds%");
+		Skript.registerLoop(LoopVarPlayer.class, Player.class, "players", "players in world[s] %worlds%");
 	}
 	
 	private Variable<World> worlds = null;

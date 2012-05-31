@@ -32,7 +32,6 @@ import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.EntityType;
-import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
@@ -41,7 +40,7 @@ import ch.njol.skript.util.Utils;
 public class VarAttacked extends SimpleVariable<Entity> {
 	
 	static {
-		Skript.addVariable(VarAttacked.class, Entity.class, "(attacked|damaged|victim) [<(.+)>]");
+		Skript.registerVariable(VarAttacked.class, Entity.class, "(attacked|damaged|victim) [<(.+)>]");
 	}
 	
 	private EntityType type;
@@ -53,7 +52,7 @@ public class VarAttacked extends SimpleVariable<Entity> {
 		if (type == null) {
 			this.type = new EntityType(Entity.class, 1);
 		} else {
-			this.type = Utils.getEntityType(type);
+			this.type = EntityType.parse(type);
 			if (this.type == null)
 				throw new ParseException("'" + type + "' is not an entity type");
 		}

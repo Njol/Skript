@@ -28,11 +28,14 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
@@ -41,11 +44,15 @@ import ch.njol.skript.util.ItemType;
 public class VarDrops extends SimpleVariable<ItemStack> {
 	
 	static {
-		Skript.addVariable(VarDrops.class, ItemStack.class, "drops");
+		Skript.registerVariable(VarDrops.class, ItemStack.class, "drops");
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+		if (Utils.contains(TriggerFileLoader.currentEvents, EntityDeathEvent.class) == -1) {
+			throw new ParseException("'drops' can only be used in death events");
+		}
+	}
 	
 	@Override
 	protected ItemStack[] getAll(final Event e) {
@@ -70,12 +77,12 @@ public class VarDrops extends SimpleVariable<ItemStack> {
 				drops.clear();
 				//$FALL-THROUGH$
 			case ADD:
-				for (final ItemType i : ((SimpleVariable<ItemType>) delta).getArray(e)) {
+				for (final ItemType i : ((Variable<ItemType>) delta).getArray(e)) {
 					i.addTo(drops);
 				}
 			break;
 			case REMOVE:
-				for (final ItemType i : ((SimpleVariable<ItemType>) delta).getArray(e)) {
+				for (final ItemType i : ((Variable<ItemType>) delta).getArray(e)) {
 					i.removeFrom(drops);
 				}
 			break;

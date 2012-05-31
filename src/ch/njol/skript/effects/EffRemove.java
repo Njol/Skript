@@ -27,8 +27,10 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.Testable;
+import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
 
 /**
@@ -39,16 +41,18 @@ import ch.njol.skript.lang.Variable;
 public class EffRemove extends Effect implements Testable {
 	
 	static {
-		Skript.addEffect(EffRemove.class, "remove %objects% from %objects%");
+		Skript.registerEffect(EffRemove.class, "remove %objects% from %objects%");
 	}
 	
 	private Variable<?> removed;
 	private Variable<?> remover;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException, InitException {
 		remover = vars[0];
 		removed = vars[1];
+		if (removed instanceof UnparsedLiteral)
+			throw new InitException();
 		Class<?> r = removed.acceptChange(ChangeMode.REMOVE);
 		if (r == null) {
 			throw new ParseException(removed + " can't have something 'removed' from it");

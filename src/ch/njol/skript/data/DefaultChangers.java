@@ -21,7 +21,6 @@
 
 package ch.njol.skript.data;
 
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -98,33 +97,28 @@ public class DefaultChangers {
 		public void change(final Event e, final Variable<Inventory> invis, final Variable<?> delta, final ch.njol.skript.api.Changer.ChangeMode mode) {
 			for (final Inventory invi : invis.getArray(e)) {
 				switch (mode) {
+					case CLEAR:
 					case SET:
 						invi.clear();
+						if (invi instanceof PlayerInventory) {
+							((PlayerInventory) invi).setArmorContents(new ItemStack[4]);
+						}
+						if (mode == ChangeMode.CLEAR)
+							break;
 						//$FALL-THROUGH$
 					case ADD:
 						for (final ItemType type : (ItemType[]) delta.getArray(e)) {
-							if (type == null)
-								continue;
 							type.addTo(invi);
 						}
 					break;
 					case REMOVE:
 						for (final ItemType type : (ItemType[]) delta.getArray(e)) {
-							if (type == null)
-								continue;
 							type.removeFrom(invi);
 						}
 					break;
-					case CLEAR:
-						invi.clear();
-						if (invi instanceof PlayerInventory) {
-							((PlayerInventory) invi).setArmorContents(new ItemStack[4]);
-						}
 				}
 				if (invi instanceof PlayerInventory) {
-					final Player p = Bukkit.getPlayerExact(((PlayerInventory) invi).getName());
-					if (p != null)
-						p.updateInventory();
+					((Player) invi.getHolder()).updateInventory();
 				}
 			}
 		}
@@ -138,7 +132,6 @@ public class DefaultChangers {
 			return ItemType.class;
 		}
 		
-		@SuppressWarnings("deprecation")
 		@Override
 		public void change(final Event e, final Variable<Slot> slots, final Variable<?> delta, final ch.njol.skript.api.Changer.ChangeMode mode) {
 			final ItemType type = (ItemType) delta.getSingle(e);
@@ -147,21 +140,16 @@ public class DefaultChangers {
 			for (final Slot slot : slots.getArray(e)) {
 				switch (mode) {
 					case SET:
-						slot.getInventory().setItem(slot.getIndex(), type.getItem().getRandom());
+						slot.setItem(type.getItem().getRandom());
 					break;
 					case ADD:
-						slot.getInventory().setItem(slot.getIndex(), type.getItem().addTo(slot.getItem()));
+						slot.setItem(type.getItem().addTo(slot.getItem()));
 					break;
 					case REMOVE:
-						slot.getInventory().setItem(slot.getIndex(), type.removeFrom(slot.getItem()));
+						slot.setItem(type.removeFrom(slot.getItem()));
 					break;
 					case CLEAR:
-						slot.getInventory().setItem(slot.getIndex(), null);
-				}
-				if (slot.getInventory() instanceof PlayerInventory) {
-					final Player p = Bukkit.getPlayer(((PlayerInventory) slot.getInventory()).getName());
-					if (p != null)
-						p.updateInventory();
+						slot.setItem(null);
 				}
 			}
 		}
@@ -188,7 +176,7 @@ public class DefaultChangers {
 		@SuppressWarnings("incomplete-switch")
 		@Override
 		public void change(final Event e, final Variable<World> worlds, final Variable<?> delta, final ChangeMode mode) {
-			int x = 1;
+			int mod = 1;
 			switch (mode) {
 				case SET:
 					final Time time = (Time) delta.getSingle(e);
@@ -197,12 +185,12 @@ public class DefaultChangers {
 					}
 				break;
 				case REMOVE:
-					x = -1;
+					mod = -1;
 					//$FALL-THROUGH$
 				case ADD:
 					final Timespan ts = (Timespan) delta.getSingle(e);
 					for (final World w : worlds.getArray(e)) {
-						w.setTime((long) (w.getTime() + x * ts.getTicks()));
+						w.setTime((long) (w.getTime() + mod * ts.getTicks()));
 					}
 				break;
 			}

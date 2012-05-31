@@ -35,7 +35,7 @@ import ch.njol.skript.util.Timespan;
 public class EvtPeriodical extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtPeriodical.class, ScheduledEvent.class, "every %timespan% [in [world[s]] %worlds%]");
+		Skript.registerEvent(EvtPeriodical.class, ScheduledEvent.class, "every %timespan% [in [world[s]] %worlds%]");
 	}
 	
 	private int period;

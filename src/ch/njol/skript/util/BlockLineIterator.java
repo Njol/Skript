@@ -36,7 +36,7 @@ import ch.njol.util.iterator.StoppableIterator;
 public class BlockLineIterator extends StoppableIterator<Block> {
 	
 	public BlockLineIterator(final Block start, final Block end) {
-		super(new BlockIterator(start.getWorld(), start.getLocation().toVector(), end.getLocation().subtract(start.getLocation()).toVector(), 0, 0), new Checker<Block>() {
+		super(new BlockIterator(start.getWorld(), start.getLocation().add(0.5, 0.5, 0.5).toVector(), end.getLocation().subtract(start.getLocation()).toVector(), 0, 0), new Checker<Block>() {
 			private final double overshotSq = Math.pow(start.getLocation().distance(end.getLocation()) + 2, 2);
 			
 			@Override

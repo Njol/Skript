@@ -25,55 +25,46 @@ package ch.njol.util;
  */
 public abstract class Validate {
 	
-	private final static class ValidationException extends RuntimeException {
-		
-		private static final long serialVersionUID = 8696920645087221191L;
-		
-		public ValidationException(final String message) {
-			super(message);
-		}
-	}
-	
 	public static void notNull(final Object... objects) {
 		for (int i = 0; i < objects.length; i++) {
 			if (objects[i] == null)
-				throw new ValidationException("the " + StringUtils.fancyOrderNumber(i + 1) + " parameter must not be null");
+				throw new IllegalArgumentException("the " + StringUtils.fancyOrderNumber(i + 1) + " parameter must not be null");
 		}
 	}
 	
 	public static void notNull(final Object object, final String name) {
 		if (object == null)
-			throw new ValidationException(name + " must not be null");
+			throw new IllegalArgumentException(name + " must not be null");
 	}
 	
 	public static void isTrue(final boolean b, final String error) {
 		if (!b)
-			throw new ValidationException(error);
+			throw new IllegalArgumentException(error);
 	}
 	
 	public static void isFalse(final boolean b, final String error) {
 		if (b)
-			throw new ValidationException(error);
+			throw new IllegalArgumentException(error);
 	}
 	
 	public static void notEmpty(final String s, final String name) {
 		if (s != null && s.isEmpty())
-			throw new ValidationException(name + " must not be empty");
+			throw new IllegalArgumentException(name + " must not be empty");
 	}
 	
 	public static void notNullOrEmpty(final String s, final String name) {
 		if (s == null || s.isEmpty())
-			throw new ValidationException(name + " must neither be null nor empty");
+			throw new IllegalArgumentException(name + " must neither be null nor empty");
 	}
 	
 	public static void notEmpty(final Object[] array, final String name) {
 		if (array.length == 0)
-			throw new ValidationException(name + " must not be empty");
+			throw new IllegalArgumentException(name + " must not be empty");
 	}
 	
 	public static void notEmpty(final int[] nums, final String name) {
 		if (nums.length == 0)
-			throw new ValidationException(name + " must not be empty");
+			throw new IllegalArgumentException(name + " must not be empty");
 	}
 	
 }

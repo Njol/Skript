@@ -42,7 +42,7 @@ import ch.njol.skript.util.BlockSphereIterator;
 public class LoopVarBlockSphere extends LoopVar<Block> {
 	
 	static {
-		Skript.addLoop(LoopVarBlockSphere.class, Block.class, "blocks in radius %float% [around %location%]");
+		Skript.registerLoop(LoopVarBlockSphere.class, Block.class, "blocks in radius %float% [around %location%]");
 	}
 	
 	private Variable<Float> radius;

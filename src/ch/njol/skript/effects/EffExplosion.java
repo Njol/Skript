@@ -28,6 +28,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.util.Offset;
 
 /**
  * 
@@ -37,30 +38,32 @@ import ch.njol.skript.lang.Variable;
 public class EffExplosion extends Effect {
 	
 	static {
-		Skript.addEffect(EffExplosion.class, "[create] explosion (of|with) (force|strength|power) %float% [at %locations%]");
+		Skript.registerEffect(EffExplosion.class, "[create] explosion (of|with) (force|strength|power) %float% [%offsets% %locations%]");
 	}
 	
 	private Variable<Float> force;
+	private Variable<Offset> offsets;
 	private Variable<Location> locations;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		force = (Variable<Float>) vars[0];
-		locations = (Variable<Location>) vars[1];
+		offsets = (Variable<Offset>) vars[1];
+		locations = (Variable<Location>) vars[2];
 	}
 	
 	@Override
 	public void execute(final Event e) {
 		final float power = force.getSingle(e);
-		for (final Location l : locations.getArray(e)) {
+		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
 			l.getWorld().createExplosion(l, power);
 		}
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "create explosion of force " + force.getDebugMessage(e) + " at " + locations.getDebugMessage(e);
+		return "create explosion of force " + force.getDebugMessage(e) + " " + offsets.getDebugMessage(e) + " " + locations.getDebugMessage(e);
 	}
 	
 }

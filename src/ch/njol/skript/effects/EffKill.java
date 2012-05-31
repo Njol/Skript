@@ -36,7 +36,7 @@ import ch.njol.skript.lang.Variable;
 public class EffKill extends Effect {
 	
 	static {
-		Skript.addEffect(EffKill.class, "kill %livingentities%");
+		Skript.registerEffect(EffKill.class, "kill %livingentities%");
 	}
 	
 	private Variable<LivingEntity> entities;

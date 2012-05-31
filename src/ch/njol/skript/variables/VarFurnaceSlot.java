@@ -45,10 +45,10 @@ public class VarFurnaceSlot extends SimpleVariable<Slot> {
 	// ore: 0, fuel: 1, result: 2
 	
 	static {
-		Skript.addVariable(VarFurnaceSlot.class, Slot.class,
-				"ore [slot] [of %blocks%]",
-				"fuel [slot] [of %blocks%]",
-				"result [slot] [of %blocks%]");
+		Skript.registerVariable(VarFurnaceSlot.class, Slot.class,
+				"ore [slot] [of %blocks%]", "%block%'[s] ore [slot]",
+				"fuel [slot] [of %blocks%]", "%block%'[s] fuel [slot]",
+				"result [slot] [of %blocks%]", "%block%'[s] result [slot]");
 	}
 	
 	private Variable<Block> blocks;
@@ -60,7 +60,7 @@ public class VarFurnaceSlot extends SimpleVariable<Slot> {
 	@Override
 	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		blocks = (Variable<Block>) vars[0];
-		slot = matchedPattern;
+		slot = matchedPattern / 2;
 	}
 	
 	@Override

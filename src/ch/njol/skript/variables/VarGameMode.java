@@ -39,7 +39,7 @@ import ch.njol.skript.lang.Variable;
 public class VarGameMode extends SimpleVariable<GameMode> {
 	
 	static {
-		Skript.addVariable(VarGameMode.class, GameMode.class, "game[ ]mode of %players%", "%players%'s game[ ]mode");
+		Skript.registerVariable(VarGameMode.class, GameMode.class, "game[ ]mode of %players%", "%players%'[s] game[ ]mode");
 	}
 	
 	private Variable<Player> players;

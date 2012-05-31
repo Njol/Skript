@@ -33,7 +33,15 @@ public abstract class SkriptLogger {
 	private static String prefix = "";
 	private static String oldPrefix = null;
 	
-	static Verbosity verbosity = Verbosity.NORMAL;
+	private static Verbosity verbosity = Verbosity.NORMAL;
+	
+	static boolean debug;
+	
+	static void setVerbosity(final Verbosity v) {
+		verbosity = v;
+		if (v.compareTo(Verbosity.DEBUG) >= 0)
+			debug = true;
+	}
 	
 	/**
 	 * Logging should be done like this:
@@ -67,10 +75,6 @@ public abstract class SkriptLogger {
 		}
 	}
 	
-	public static void expectationError(final String expectedType, final String found) {
-		log(Level.SEVERE, "expecting " + expectedType + ", found: '" + found + "'");
-	}
-	
 	public static void setNode(final Node node) {
 		SkriptLogger.node = node == null || node.getParent() == null ? null : node;
 	}
@@ -93,7 +97,7 @@ public abstract class SkriptLogger {
 	
 	/**
 	 * Sets a prefix to be applied before all messages. This will look like this:<br/>
-	 * "[Skript] prefixmessage" (no space is added between the prefix and the message!)
+	 * "[Skript] prefixmessage" (i.e. no space is added between the prefix and the message)
 	 * 
 	 * @param prefix
 	 * @return the prefix used before

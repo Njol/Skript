@@ -40,7 +40,7 @@ import ch.njol.util.Checker;
 public class EvtWeatherChange extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtWeatherChange.class, Skript.array(WeatherChangeEvent.class, ThunderChangeEvent.class), "weather change [to %weathertypes%]");
+		Skript.registerEvent(EvtWeatherChange.class, Skript.array(WeatherChangeEvent.class, ThunderChangeEvent.class), "weather change [to %weathertypes%]");
 	}
 	
 	private Literal<WeatherType> types;

@@ -41,7 +41,7 @@ import ch.njol.skript.util.ItemType;
 public class EffEquip extends Effect implements Testable {
 	
 	static {
-		Skript.addEffect(EffEquip.class,
+		Skript.registerEffect(EffEquip.class,
 				"equip [%players%] with %itemtypes%",
 				"make %players% wear %itemtypes%");
 	}
@@ -65,7 +65,7 @@ public class EffEquip extends Effect implements Testable {
 	protected void execute(final Event e) {
 		final Player[] ps = players.getArray(e);
 		for (final ItemType t : types.getArray(e)) {
-			for (final ItemStack item : t.getAll()) {
+			for (final ItemStack item : t.getBlock().getAll()) {
 				switch (item.getType()) {
 					case LEATHER_BOOTS:
 					case IRON_BOOTS:
@@ -109,12 +109,12 @@ public class EffEquip extends Effect implements Testable {
 	
 	@Override
 	public boolean test(final Event e) {
-		//		final Iterable<Player> ps = players.getArray(e);
-		//		for (final ItemType t : types.getArray(e)) {
-		//			for (final Player p : ps) {
-		//				//TODO this + think...
-		//			}
-		//		}
+//		final Iterable<Player> ps = players.getArray(e);
+//		for (final ItemType t : types.getArray(e)) {
+//			for (final Player p : ps) {
+//				//TODO this + think...
+//			}
+//		}
 		return false;
 	}
 	

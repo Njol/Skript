@@ -41,7 +41,7 @@ import ch.njol.skript.util.Time;
 public class VarTime extends SimpleVariable<Time> {
 	
 	static {
-		Skript.addVariable(VarTime.class, Time.class, "time [(in|of) %worlds%]");
+		Skript.registerVariable(VarTime.class, Time.class, "time [(in|of) %worlds%]");
 	}
 	
 	private Variable<World> worlds = null;

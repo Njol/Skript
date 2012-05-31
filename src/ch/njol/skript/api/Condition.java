@@ -33,7 +33,7 @@ import ch.njol.util.Checker;
  * A condition which must be fulfilled for the trigger to continue. If the condition is in a section the behaviour depends on the section.
  * 
  * @author Peter Güttinger
- * @see Skript#addCondition(Class, String...)
+ * @see Skript#registerCondition(Class, String...)
  */
 public abstract class Condition extends TopLevelExpression {
 	

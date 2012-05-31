@@ -34,16 +34,6 @@ import ch.njol.skript.lang.ExprParser.ParseResult;
  */
 public interface Expression {
 	
-	public static class VariableInfo<E extends Variable<T>, T> extends ExpressionInfo<E> {
-		
-		public Class<T> returnType;
-		
-		public VariableInfo(final String[] patterns, final Class<T> returnType, final Class<E> c) {
-			super(patterns, c);
-			this.returnType = returnType;
-		}
-	}
-	
 	/**
 	 * called just after the constructor.
 	 * 
@@ -52,9 +42,9 @@ public interface Expression {
 	 * @param matchedPattern the index of the pattern which matched
 	 * @param parseResult The parser osed to parse this expression. Might hold useful information in the future.
 	 * 
-	 * @throws InitException throwing this has the same effect as if no pattern matched. This is an exception, meaning it should only be thrown in exceptional cases where a regex
+	 * @throws InitException Throwing this has the same effect as if no pattern matched. This is an exception, meaning it should only be thrown in exceptional cases where a pattern
 	 *             is not enough.
-	 * @throws ParseException throw this if some part of the expression was parsed and found to be invalid, but the whole expression still matched correctly.<br/>
+	 * @throws ParseException Throwns if some part of the expression was parsed and found to be invalid, but the whole expression still matched correctly.<br/>
 	 *             This will immediately print an error and it's cause which is set to the cause passed to the exception.
 	 */
 	public void init(Variable<?>[] vars, int matchedPattern, ParseResult parseResult) throws InitException, ParseException;

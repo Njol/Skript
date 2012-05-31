@@ -40,7 +40,7 @@ import ch.njol.util.Checker;
 public class EvtEntityBlockChange extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtEntityBlockChange.class, EntityChangeBlockEvent.class, ChangeEvent.patterns);
+		Skript.registerEvent(EvtEntityBlockChange.class, EntityChangeBlockEvent.class, ChangeEvent.patterns);
 	}
 	
 	private static enum ChangeEvent {

@@ -47,19 +47,22 @@ public class CondIs extends Condition {
 			{"%objects% ((is|are) ((greater|more|higher|bigger) or equal to|not (less|smaller) than)|\\>=) %objects%", Relation.GREATER_OR_EQUAL},
 			{"%objects% ((is|are) (less|smaller) than|\\<) %objects%", Relation.SMALLER},
 			{"%objects% ((is|are) ((less|smaller) or equal to|not (greater|more|higher|bigger) than)|\\<=) %objects%", Relation.SMALLER_OR_EQUAL},
-			{"%objects% ((is|are) not|isn't|aren't|!=) [equal to] %objects%", Relation.NOT_EQUAL},
+			{"%objects% ((is|are) (not|neither)|isn't|aren't|!=) [equal to] %objects%", Relation.NOT_EQUAL},
 			{"%objects% (is|are|=) [equal to] %objects%", Relation.EQUAL},
 			{"%objects% (is|are) between %objects% and %objects%", true},
 			{"%objects% ((is|are) not|isn't|aren't) between %objects% and %objects%", false}
 	});
 	
 	static {
-		Skript.addCondition(CondIs.class, patterns.getPatterns());
+		Skript.registerCondition(CondIs.class, patterns.getPatterns());
 	}
 	
 	private Variable<?> first, second, third;
 	private Relation relation;
 	private Comparator<?, ?> comp;
+	/**
+	 * True to compare like comp.compare(second, first), false for comp.compare(first, second)
+	 */
 	private boolean reverseOrder = false;
 	
 	@Override
@@ -70,6 +73,10 @@ public class CondIs extends Condition {
 		final Object r = patterns.getInfo(matchedPattern);
 		if (r instanceof Relation) {
 			relation = (Relation) r;
+			if (relation == Relation.NOT_EQUAL) {
+				relation = Relation.EQUAL;
+				setNegated(true);
+			}
 		} else {
 			third = vars[2];
 			relation = Relation.get((Boolean) r);
@@ -85,12 +92,11 @@ public class CondIs extends Condition {
 			}
 		}
 		if (third == null) {
-			if (!comp.supportsRelation(relation)) {
+			if (!relation.isEqualOrInverse() && !comp.supportsOrdering()) {
 				throw new ParseException("The given objects can't be compared with '" + relation + "'");
 			}
 		} else {
-			if (!((comp.supportsRelation(Relation.GREATER) || comp.supportsRelation(Relation.GREATER_OR_EQUAL))
-			&& (comp.supportsRelation(Relation.SMALLER) || comp.supportsRelation(Relation.SMALLER_OR_EQUAL)))) {
+			if (!relation.isEqualOrInverse() && !comp.supportsOrdering()) {
 				throw new ParseException("The given objects can't be checked for being 'in between'");
 			}
 		}
@@ -170,6 +176,13 @@ public class CondIs extends Condition {
 		return false;
 	}
 	
+	/*
+	 * FIXME logic:
+	 * block is not bedrock or obsidian -> true iff block is neither bedrock nor obby
+	 * block is not bedrock and obsidian -> always true (false iff block would be both)
+	 * block is not block1 or block2 -> true iff block is neither 1 nor 2
+	 * block is not block1 and block2 -> false iff b = 1 = 2
+	 */
 	@Override
 	public boolean run(final Event e) {
 		return first.check(e, new Checker<Object>() {
@@ -179,13 +192,13 @@ public class CondIs extends Condition {
 					@Override
 					public boolean check(final Object o2) {
 						if (third == null)
-							return relation.is(reverseOrder ? compare(o2, o1) : compare(o1, o2));
+							return relation.is(compare(o1, o2));
 						return third.check(e, new Checker<Object>() {
 							@Override
 							public boolean check(final Object o3) {
 								return relation == Relation.NOT_EQUAL ^
-										(Relation.GREATER_OR_EQUAL.is(reverseOrder ? compare(o2, o1) : compare(o1, o2))
-										&& Relation.SMALLER_OR_EQUAL.is(reverseOrder ? compare(o3, o1) : compare(o1, o3)));
+										(Relation.GREATER_OR_EQUAL.is(compare(o1, o2))
+										&& Relation.SMALLER_OR_EQUAL.is(compare(o1, o3)));
 							}
 						});
 					}
@@ -196,13 +209,13 @@ public class CondIs extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	private <T1, T2> Relation compare(final T1 o1, final T2 o2) {
-		return ((Comparator<? super T1, ? super T2>) comp).compare(o1, o2);
+		return reverseOrder ? ((Comparator<? super T2, ? super T1>) comp).compare(o2, o1).getSwitched() : ((Comparator<? super T1, ? super T2>) comp).compare(o1, o2);
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
 		if (third == null)
-			return first.getDebugMessage(e) + " is " + relation + " " + second.getDebugMessage(e);
+			return first.getDebugMessage(e) + " is " + (isNegated() ? relation.getInverse() : relation) + " " + second.getDebugMessage(e);
 		return first.getDebugMessage(e) + " is" + (relation == Relation.EQUAL ? "" : " not") + " between " + second.getDebugMessage(e) + " and " + third.getDebugMessage(e);
 	}
 	

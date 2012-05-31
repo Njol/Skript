@@ -31,6 +31,7 @@ import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.Offset;
 
 /**
  * 
@@ -40,38 +41,36 @@ import ch.njol.skript.util.ItemType;
 public class EffDrop extends Effect {
 	
 	static {
-		Skript.addEffect(EffDrop.class, "drop %itemtypes% [at %-locations%]");
+		Skript.registerEffect(EffDrop.class, "drop %itemtypes% [%offsets% %-locations%]");
 	}
 	
 	private Variable<ItemType> items;
+	private Variable<Offset> offsets;
 	private Variable<Location> locations;
+	private boolean hasLoc = false;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		items = (Variable<ItemType>) vars[0];
-		locations = (Variable<Location>) vars[1];
+		offsets = (Variable<Offset>) vars[1];
+		locations = (Variable<Location>) vars[2];
+		hasLoc = locations != null;
+		if (!hasLoc)
+			locations = Skript.getDefaultVariable(Location.class);
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		if (locations == null) {
-			if (e instanceof EntityDeathEvent) {
-				for (final ItemType type : items.getArray(e)) {
-					type.addTo(((EntityDeathEvent) e).getDrops());
-				}
-				return;
-			}
-			final Location l = Skript.getEventValue(e, Location.class);
+		if (!hasLoc && e instanceof EntityDeathEvent) {
 			for (final ItemType type : items.getArray(e)) {
-				for (final ItemStack is : type.getAll())
-					l.getWorld().dropItemNaturally(l, is);
+				type.addTo(((EntityDeathEvent) e).getDrops());
 			}
 			return;
 		}
-		for (final Location l : locations.getArray(e)) {
+		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
 			for (final ItemType type : items.getArray(e)) {
-				for (final ItemStack is : type.getAll())
+				for (final ItemStack is : type.getItem().getAll())
 					l.getWorld().dropItemNaturally(l, is);
 			}
 		}
@@ -79,7 +78,7 @@ public class EffDrop extends Effect {
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "drop " + items.getDebugMessage(e) + (locations == null ? "" : " at " + locations.getDebugMessage(e));
+		return "drop " + items.getDebugMessage(e) + (hasLoc ? offsets.getDebugMessage(e) + " " + locations.getDebugMessage(e) : "");
 	}
 	
 }

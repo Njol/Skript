@@ -22,17 +22,24 @@
 package ch.njol.skript.variables;
 
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.data.DefaultChangers;
 import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SimpleLiteral;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.variables.VarAttacker.Attacker;
@@ -62,8 +69,16 @@ public class VarAttacker extends SimpleVariable<Attacker> {
 	}
 	
 	static {
-		Skript.addVariable(VarAttacker.class, Attacker.class, "(attacker|damager)");
-		Skript.addConverter(Attacker.class, Block.class, new Converter<Attacker, Block>() {
+		Skript.registerVariable(VarAttacker.class, Attacker.class, "(attacker|damager)");
+		Skript.registerConverter(Attacker.class, Entity.class, new Converter<Attacker, Entity>() {
+			@Override
+			public Entity convert(final Attacker a) {
+				if (a.getAttacker() instanceof Entity)
+					return (Entity) a.getAttacker();
+				return null;
+			}
+		});
+		Skript.registerConverter(Attacker.class, Block.class, new Converter<Attacker, Block>() {
 			@Override
 			public Block convert(final Attacker a) {
 				if (a.getAttacker() instanceof Block)
@@ -71,11 +86,16 @@ public class VarAttacker extends SimpleVariable<Attacker> {
 				return null;
 			}
 		});
-		Skript.addConverter(Attacker.class, Entity.class, new Converter<Attacker, Entity>() {
+		Skript.registerConverter(Attacker.class, Inventory.class, new Converter<Attacker, Inventory>() {
 			@Override
-			public Entity convert(final Attacker a) {
-				if (a.getAttacker() instanceof Entity)
-					return (Entity) a.getAttacker();
+			public Inventory convert(final Attacker a) {
+				if (a.getAttacker() instanceof Block) {
+					final BlockState state = ((Block) a.getAttacker()).getState();
+					if (state instanceof InventoryHolder)
+						return ((InventoryHolder) state).getInventory();
+				} else if (a.getAttacker() instanceof InventoryHolder) {
+					return ((InventoryHolder) a.getAttacker()).getInventory();
+				}
 				return null;
 			}
 		});
@@ -97,6 +117,8 @@ public class VarAttacker extends SimpleVariable<Attacker> {
 			return ((EntityDamageByEntityEvent) e).getDamager();
 		} else if (e instanceof EntityDamageByBlockEvent) {
 			return ((EntityDamageByBlockEvent) e).getDamager();
+		} else if (e instanceof EntityDeathEvent) {
+			return getAttacker(((EntityDeathEvent) e).getEntity().getLastDamageCause());
 		} else if (e instanceof VehicleDamageEvent) {
 			return ((VehicleDamageEvent) e).getAttacker();
 		} else if (e instanceof VehicleDestroyEvent) {
@@ -125,6 +147,25 @@ public class VarAttacker extends SimpleVariable<Attacker> {
 	@Override
 	public boolean isSingle() {
 		return true;
+	}
+	
+	@Override
+	public Class<?> acceptChange(final ChangeMode mode) {
+		return DefaultChangers.inventoryChanger.acceptChange(mode);
+	}
+	
+	@Override
+	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
+		final Object a = getAttacker(e);
+		Inventory invi = null;
+		if (a instanceof InventoryHolder) {
+			invi = ((InventoryHolder) a).getInventory();
+		} else if (a instanceof Block && ((Block) a).getState() instanceof InventoryHolder) {
+			invi = ((InventoryHolder) ((Block) a).getState()).getInventory();
+		}
+		if (invi == null)
+			return;
+		DefaultChangers.inventoryChanger.change(e, new SimpleLiteral<Inventory>(invi), delta, mode);
 	}
 	
 }

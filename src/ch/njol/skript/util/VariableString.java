@@ -29,7 +29,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Debuggable;
 import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser;
-import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
 
 /**
@@ -117,7 +116,7 @@ public class VariableString implements Debuggable {
 				if (((Variable<?>) o).isSingle())
 					b.append(Skript.toString(((Variable<?>) o).getSingle(e)));
 				else
-					b.append(Skript.toString(((Variable<?>) o).getArray(e), ((SimpleVariable<?>) o).getAnd()));
+					b.append(Skript.toString(((Variable<?>) o).getArray(e), ((Variable<?>) o).getAnd()));
 			} else {
 				b.append(o);
 			}
@@ -130,8 +129,6 @@ public class VariableString implements Debuggable {
 	public String getDebugMessage(final Event e) {
 		if (isSimple)
 			return '"' + lastString + '"';
-		if (e != null)
-			return '"' + get(e) + '"';
 		final StringBuilder b = new StringBuilder("\"");
 		for (final Object o : string) {
 			if (o instanceof Variable) {

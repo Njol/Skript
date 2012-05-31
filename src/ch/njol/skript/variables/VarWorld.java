@@ -33,7 +33,7 @@ import ch.njol.skript.variables.base.EventValueVariable;
 public class VarWorld extends EventValueVariable<World> {
 	
 	static {
-		Skript.addVariable(VarWorld.class, World.class, "world");
+		Skript.registerVariable(VarWorld.class, World.class, "world");
 	}
 	
 	public VarWorld() {

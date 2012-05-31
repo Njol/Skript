@@ -37,7 +37,7 @@ import ch.njol.skript.lang.Literal;
 public final class EvtGameMode extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtGameMode.class, PlayerGameModeChangeEvent.class, "gamemode change [to %gamemode%]");
+		Skript.registerEvent(EvtGameMode.class, PlayerGameModeChangeEvent.class, "gamemode change [to %gamemode%]");
 	}
 	
 	private GameMode mode;

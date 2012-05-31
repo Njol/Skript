@@ -42,11 +42,11 @@ import ch.njol.skript.util.Slot;
 public class VarArmorSlot extends SimpleVariable<Slot> {
 	
 	static {
-		Skript.addVariable(VarArmorSlot.class, Slot.class,
-				"(boot[s]|shoe[s]) [slot] [of %players%]",
-				"leg[ging]s [slot] [of %players%]",
-				"chest[plate] [slot] [of %players%]",
-				"helm[et] [slot] [of %players%]");
+		Skript.registerVariable(VarArmorSlot.class, Slot.class,
+				"(boot[s]|shoe[s]) [slot] of %players%", "%player%'[s] (boot[s]|shoe[s])",
+				"leg[ging]s [slot] of %players%", "%player%'[s] leg[ging]s",
+				"chestplate [slot] of %players%", "%player%'[s] chestplate",
+				"helm[et] [slot] of %players%", "%player%'[s] helm[et]");
 	}
 	
 	private Variable<Player> players;
@@ -58,7 +58,7 @@ public class VarArmorSlot extends SimpleVariable<Slot> {
 	@Override
 	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
 		players = (Variable<Player>) vars[0];
-		slot = matchedPattern;
+		slot = matchedPattern / 2;
 	}
 	
 	@Override
@@ -81,7 +81,7 @@ public class VarArmorSlot extends SimpleVariable<Slot> {
 					public void setItem(final ItemStack item) {
 						final ItemStack[] armour = p.getInventory().getArmorContents();
 						armour[slot] = item;
-						p.getInventory().setArmorContents(null);
+						p.getInventory().setArmorContents(armour);
 					}
 					
 					@Override

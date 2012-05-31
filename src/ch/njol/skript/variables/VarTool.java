@@ -32,7 +32,6 @@ import ch.njol.skript.data.DefaultChangers;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
-import ch.njol.skript.util.PlayerSlot;
 import ch.njol.skript.util.Slot;
 
 /**
@@ -43,7 +42,7 @@ import ch.njol.skript.util.Slot;
 public class VarTool extends SimpleVariable<Slot> {
 	
 	static {
-		Skript.addVariable(VarTool.class, Slot.class, "(tool|held item) [of %players%]", "%player%'s (tool|held item)");
+		Skript.registerVariable(VarTool.class, Slot.class, "(tool|held item) [of %players%]", "%player%'[s] (tool|held item)");
 	}
 	
 	private Variable<Player> players;
@@ -59,8 +58,7 @@ public class VarTool extends SimpleVariable<Slot> {
 		return players.getArray(e, Slot.class, new Getter<Slot, Player>() {
 			@Override
 			public Slot get(final Player p) {
-				// TODO find the real index if possible
-				return new PlayerSlot(p.getInventory()) {
+				return new Slot(p.getInventory(), p.getInventory().getHeldItemSlot()) {
 					@Override
 					public void setItem(final ItemStack item) {
 						p.setItemInHand(item);

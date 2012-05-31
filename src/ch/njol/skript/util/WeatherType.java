@@ -22,6 +22,7 @@
 package ch.njol.skript.util;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.bukkit.World;
 
@@ -32,11 +33,11 @@ import org.bukkit.World;
  */
 public enum WeatherType {
 	
-	clear("clear", "sun", "sunny"), rain("rain", "rainy", "raining"), thunder("thunder", "thundering");
+	CLEAR("clear", "sun", "sunny"), RAIN("rain", "rainy", "raining"), THUNDER("thunder", "thundering");
 	
 	private final String[] names;
 	
-	private final static HashMap<String, WeatherType> byName = new HashMap<String, WeatherType>();
+	private final static Map<String, WeatherType> byName = new HashMap<String, WeatherType>();
 	
 	private WeatherType(final String... names) {
 		this.names = names;
@@ -58,32 +59,24 @@ public enum WeatherType {
 		if (world == null)
 			return null;
 		if (world.isThundering())
-			return thunder;
+			return THUNDER;
 		if (world.hasStorm())
-			return rain;
-		return clear;
+			return RAIN;
+		return CLEAR;
 	}
 	
 	@Override
 	public String toString() {
-		switch (this) {
-			case clear:
-				return "clear";
-			case rain:
-				return "rain";
-			case thunder:
-				return "thunder";
-		}
-		throw new IllegalStateException();
+		return names[0];
 	}
 	
 	public String adjective() {
 		switch (this) {
-			case clear:
+			case CLEAR:
 				return "sunny";
-			case rain:
+			case RAIN:
 				return "raining";
-			case thunder:
+			case THUNDER:
 				return "thundering";
 		}
 		throw new IllegalStateException();
@@ -95,11 +88,11 @@ public enum WeatherType {
 	
 	public boolean isWeather(final boolean rain, final boolean thunder) {
 		switch (this) {
-			case clear:
+			case CLEAR:
 				return !thunder && !rain;
-			case rain:
+			case RAIN:
 				return !thunder && rain;
-			case thunder:
+			case THUNDER:
 				return thunder && rain;
 			default:
 				throw new RuntimeException();
@@ -107,8 +100,8 @@ public enum WeatherType {
 	}
 	
 	public void setWeather(final World w) {
-		w.setStorm(this == rain || this == thunder);
-		w.setThundering(this == thunder);
+		w.setStorm(this == RAIN || this == THUNDER);
+		w.setThundering(this == THUNDER);
 	}
 	
 }

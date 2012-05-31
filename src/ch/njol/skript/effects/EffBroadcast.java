@@ -40,7 +40,7 @@ import ch.njol.skript.util.VariableString;
 public class EffBroadcast extends Effect {
 	
 	static {
-		Skript.addEffect(EffBroadcast.class, "broadcast %variablestrings% [(to|in) %-worlds%]");
+		Skript.registerEffect(EffBroadcast.class, "broadcast %variablestrings% [(to|in) %-worlds%]");
 	}
 	
 	private Variable<VariableString> messages;

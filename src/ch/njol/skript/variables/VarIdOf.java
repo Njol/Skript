@@ -27,6 +27,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemData;
@@ -39,28 +40,43 @@ import ch.njol.skript.util.ItemType;
 public class VarIdOf extends SimpleVariable<Integer> {
 	
 	static {
-		Skript.addVariable(VarIdOf.class, Integer.class, "id[s] of %itemtype%");
+		Skript.registerVariable(VarIdOf.class, Integer.class, "id[<s>] of %itemtype%", "%itemtype%'[s] id[<s>]");
 	}
 	
 	private Variable<ItemType> types;
+	
+	private boolean single = false;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		types = (Variable<ItemType>) vars[0];
+		if (parser.regexes.isEmpty()) {
+			single = true;
+			if (!types.isSingle() || (types instanceof Literal && ((Literal<ItemType>) types).getSingle().getTypes().size() != 1)) {
+				Skript.warning("'" + types + "' has multiple ids");
+				single = false;
+			}
+		}
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "ids of " + types.getDebugMessage(e);
+		return "id" + (single ? "" : "s") + " of " + types.getDebugMessage(e);
 	}
 	
 	@Override
 	protected Integer[] getAll(final Event e) {
+		if (single) {
+			final ItemType t = types.getSingle(e);
+			if (t == null)
+				return null;
+			return new Integer[] {t.getTypes().get(0).getId()};
+		}
 		final ArrayList<Integer> r = new ArrayList<Integer>();
 		for (final ItemType t : types.getArray(e)) {
 			for (final ItemData d : t) {
-				r.add(Integer.valueOf(d.typeid));
+				r.add(Integer.valueOf(d.getId()));
 			}
 		}
 		return r.toArray(new Integer[0]);
@@ -78,7 +94,7 @@ public class VarIdOf extends SimpleVariable<Integer> {
 	
 	@Override
 	public boolean isSingle() {
-		return false;
+		return single;
 	}
 	
 }

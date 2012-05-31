@@ -45,7 +45,7 @@ public interface Changer<T> {
 	/**
 	 * 
 	 * @param e
-	 * @param what What to change. Can contain null elements.
+	 * @param what The variable to change
 	 * @param delta A variable which returns instances of the class returned by {@link #acceptChange(ChangeMode)} for the given changemode.
 	 * @param mode
 	 * 

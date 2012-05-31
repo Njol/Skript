@@ -21,6 +21,7 @@
 
 package ch.njol.skript.util;
 
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -60,8 +61,12 @@ public class Slot implements Debuggable {
 		return invi.getItem(index) == null ? new ItemStack(0, 1) : invi.getItem(index);
 	}
 	
+	@SuppressWarnings("deprecation")
 	public void setItem(final ItemStack item) {
 		invi.setItem(index, item != null && item.getTypeId() != 0 ? item : null);
+		if (invi instanceof PlayerInventory) {
+			((Player) invi.getHolder()).updateInventory();
+		}
 	}
 	
 	@Override

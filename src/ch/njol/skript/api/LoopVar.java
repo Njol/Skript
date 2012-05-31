@@ -29,6 +29,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.VariableInfo;
 
 /**
  * A variable that can be looped.<br/>
@@ -109,7 +110,7 @@ public abstract class LoopVar<T> extends SimpleVariable<T> {
 	public final String getDebugMessage(final Event e) {
 		if (e == null)
 			return "loop-" + Skript.getExactClassName(getReturnType());
-		return Skript.toString(current);
+		return Skript.getDebugMessage(current);
 	}
 	
 }

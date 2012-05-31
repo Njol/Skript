@@ -38,7 +38,7 @@ import ch.njol.util.Checker;
 public class CondItemInHand extends Condition {
 	
 	static {
-		Skript.addCondition(CondItemInHand.class,
+		Skript.registerCondition(CondItemInHand.class,
 				"[%players%] ha(s|ve) %itemtypes% in hand",
 				"[%players%] (is|are) holding %itemtypes%",
 				"[%players%] (ha(s|ve) not|do[es]n't have) %itemtypes% in hand",

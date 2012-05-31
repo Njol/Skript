@@ -39,9 +39,8 @@ import ch.njol.skript.util.Offset;
 public class EffSpawn extends Effect {
 	
 	static {
-		Skript.addEffect(EffSpawn.class,
-				"spawn %entitytypes% [at %locations%]",
-				"spawn %entitytypes% %offset% %locations%");
+		Skript.registerEffect(EffSpawn.class,
+				"spawn %entitytypes% [%offset% %locations%]");
 	}
 	
 	private Variable<Location> locations;
@@ -52,23 +51,14 @@ public class EffSpawn extends Effect {
 	@Override
 	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		types = (Variable<EntityType>) vars[0];
-		locations = (Variable<Location>) vars[vars.length - 1];
-		if (matchedPattern == 1)
-			offsets = (Variable<Offset>) vars[1];
+		offsets = (Variable<Offset>) vars[1];
+		locations = (Variable<Location>) vars[2];
 	}
 	
 	@Override
 	public void execute(final Event e) {
 		final EntityType[] ts = types.getArray(e);
-		if (offsets != null) {
-			for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
-				for (final EntityType type : ts) {
-					for (int i = 0; i < type.amount; i++)
-						l.getWorld().spawn(l, type.c);
-				}
-			}
-		}
-		for (final Location l : locations.getArray(e)) {
+		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
 			for (final EntityType type : ts) {
 				for (int i = 0; i < type.amount; i++)
 					l.getWorld().spawn(l, type.c);
@@ -78,7 +68,7 @@ public class EffSpawn extends Effect {
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "spawn " + types.getDebugMessage(e) + " at " + locations.getDebugMessage(e);
+		return "spawn " + types.getDebugMessage(e) + " " + offsets.getDebugMessage(e) + " " + locations.getDebugMessage(e);
 	}
 	
 }

@@ -38,7 +38,7 @@ import ch.njol.util.Checker;
 public class CondPermission extends Condition {
 	
 	static {
-		Skript.addCondition(CondPermission.class,
+		Skript.registerCondition(CondPermission.class,
 				"[%commandsenders%] (do[es]n't|don't|do[es] not) have [the] permission[s] %variablestrings%",
 				"[%commandsenders%] ha(s|ve) [the] permission[s] %variablestrings%");
 	}
@@ -67,7 +67,7 @@ public class CondPermission extends Condition {
 							return true;
 						// player has perm skript.foo.bar if he has skript.foo.* or skript.*, but not for other plugin's permissions since they can define their own *
 						if (p.startsWith("skript.")) {
-							for (int i = p.lastIndexOf("."); i > 0; i = p.lastIndexOf(p, i - 1)) {
+							for (int i = p.lastIndexOf('.'); i > 0; i = p.lastIndexOf('.', i - 1)) {
 								if (s.hasPermission(p.substring(0, i + 1) + "*"))
 									return true;
 							}

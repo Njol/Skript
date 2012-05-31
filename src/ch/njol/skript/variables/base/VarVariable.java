@@ -23,7 +23,9 @@ package ch.njol.skript.variables.base;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.intern.ConvertedVariable;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
@@ -47,19 +49,16 @@ public abstract class VarVariable<T> extends SimpleVariable<T> {
 		this.var = var;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	protected <R> ConvertedVariable<? extends R> getConvertedVar(final Class<R> to) {
-		final SimpleVariable<?> siht = this;
-		final SimpleVariable<? extends R> v = var.getConvertedVariable(to);
-		return new ConvertedVariable<R>(v, to) {
-			@Override
-			protected R[] getAll(final Event e) {
-				return v.getArray(e);
-			}
-			
+	protected <R> ConvertedVariable<T, ? extends R> getConvertedVar(final Class<R> to) {
+		final Converter<? super T, ? extends R> conv = (Converter<? super T, ? extends R>) Skript.getConverter(getReturnType(), to);
+		if (conv == null)
+			return null;
+		return new ConvertedVariable<T, R>(var, to, conv) {
 			@Override
 			public String getDebugMessage(final Event e) {
-				return "{" + siht.getDebugMessage(e) + "}->" + to.getName();
+				return "{" + VarVariable.this.getDebugMessage(e) + "}->" + to.getName();
 			}
 		};
 	}

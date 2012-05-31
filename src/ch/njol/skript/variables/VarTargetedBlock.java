@@ -41,7 +41,7 @@ import ch.njol.skript.lang.Variable;
 public class VarTargetedBlock extends SimpleVariable<Block> {
 	
 	static {
-		Skript.addVariable(VarTargetedBlock.class, Block.class, "targeted block[s] [of %livingentities%]");
+		Skript.registerVariable(VarTargetedBlock.class, Block.class, "target[ed] block[s] [of %players%]", "%player%'[s] target[ed] block[s]");
 	}
 	
 	private Variable<LivingEntity> entities;

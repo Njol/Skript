@@ -21,55 +21,40 @@
 
 package ch.njol.skript.events;
 
-import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
-import org.bukkit.event.entity.CreatureSpawnEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityDamageByBlockEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Literal;
-import ch.njol.skript.util.EntityType;
-import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class EvtEntity extends SkriptEvent {
+@SuppressWarnings("unchecked")
+public class EvtDamage extends SkriptEvent {
 	
 	static {
-		Skript.registerEvent(EvtEntity.class, EntityDeathEvent.class, "death [of %entitytypes%]");
-		Skript.registerEvent(EvtEntity.class, CreatureSpawnEvent.class, "spawn[ing] [of %entitytypes%]");
-	}
-	
-	Literal<EntityType> types;
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		types = (Literal<EntityType>) args[0];
+		Skript.registerEvent(EvtDamage.class, Skript.array(EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class), "damag(e|ing)");
 	}
 	
 	@Override
-	public boolean check(final Event e) {
-		if (types == null)
-			return true;
-		final Entity en = Skript.getEventValue(e, Entity.class);
-		if (en == null)
-			throw new RuntimeException("no entity event value for entity death/spawn");
-		return types.check(e, new Checker<EntityType>() {
-			@Override
-			public boolean check(final EntityType t) {
-				return t.isInstance(en);
-			}
-		});
+	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {}
+	
+	@Override
+	public boolean check(final Event evt) {
+		final EntityDamageEvent e = (EntityDamageEvent) evt;
+		return !(e.getDamage() == 0 || (e.getEntity() instanceof LivingEntity && ((LivingEntity) e.getEntity()).getNoDamageTicks() > 0));
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "death/spawn" + (types == null ? "" : " of " + types);
+		return "damage";
 	}
 	
 }

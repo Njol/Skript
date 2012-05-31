@@ -86,4 +86,27 @@ public abstract class StringUtils {
 		return r;
 	}
 	
+	/**
+	 * Gets a rounded representation of a number
+	 * 
+	 * @param d The number to be turned into a string
+	 * @param accuracy Maximum number of digits after the period
+	 * @return
+	 */
+	public static final String toString(final double d, final int accuracy) {
+		final String s = "" + d;
+		final int c = s.indexOf('.');
+		if (c == -1)
+			return s;
+		int i = Math.min(c + accuracy, s.length() - 1);
+		while (i >= c && (s.charAt(i) == '0' || s.charAt(i) == '.'))
+			i--;
+		return s.substring(0, i + 1);
+	}
+	
+	public static final String firstToUpper(final String s) {
+		if (s.isEmpty())
+			return s;
+		return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+	}
 }

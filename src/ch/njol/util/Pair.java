@@ -26,7 +26,7 @@ import java.util.Map.Entry;
  * @author Peter Güttinger
  * 
  */
-public class Pair<T1, T2> implements Entry<T1, T2> {
+public class Pair<T1, T2> implements Entry<T1, T2>, Cloneable {
 	public T1 first;
 	public T2 second;
 	
@@ -53,20 +53,26 @@ public class Pair<T1, T2> implements Entry<T1, T2> {
 		return "" + first + "," + second;
 	}
 	
+	/**
+	 * Checks for equality with Entries to match {@link #hashCode()}
+	 */
 	@Override
 	public boolean equals(final Object obj) {
 		if (obj == this)
 			return true;
-		if (!(obj instanceof Pair))
+		if (!(obj instanceof Entry))
 			return false;
-		final Pair<?, ?> other = (Pair<?, ?>) obj;
-		return (first == null ? other.first == null : first.equals(other.first)) &&
-				(second == null ? other.second == null : second.equals(other.second));
+		final Entry<?, ?> other = (Entry<?, ?>) obj;
+		return (first == null ? other.getKey() == null : first.equals(other.getKey())) &&
+				(second == null ? other.getValue() == null : second.equals(other.getValue()));
 	}
 	
+	/**
+	 * As defined by {@link Entry#hashCode()}
+	 */
 	@Override
 	public int hashCode() {
-		return first.hashCode() ^ ~second.hashCode();
+		return (first == null ? 0 : first.hashCode()) ^ (second == null ? 0 : second.hashCode());
 	}
 	
 	@Override
@@ -81,8 +87,16 @@ public class Pair<T1, T2> implements Entry<T1, T2> {
 	
 	@Override
 	public T2 setValue(final T2 value) {
-		final T2 s = second;
-		second = value;
-		return s;
+		throw new UnsupportedOperationException();
 	}
+	
+	/**
+	 * @return a shallow copy of this pair
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Pair<T1, T2> clone() throws CloneNotSupportedException {
+		return (Pair<T1, T2>) super.clone();
+	}
+	
 }

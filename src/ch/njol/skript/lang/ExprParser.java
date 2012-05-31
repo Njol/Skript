@@ -30,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.api.DefaultVariable;
 import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.exception.InitException;
@@ -69,10 +70,12 @@ public class ExprParser {
 		public final Variable<?>[] vars;
 		public final List<MatchResult> regexes = new ArrayList<MatchResult>();
 		public final String expr;
+		int matchedChars = 0;
 		
-		public ParseResult(final String expr, final String pattern) {
+		public ParseResult(final String expr, final String pattern, final int matchedChars) {
 			this.expr = expr;
 			vars = new Variable<?>[StringUtils.count(pattern, '%') / 2];
+			this.matchedChars = matchedChars;
 		}
 	}
 	
@@ -84,6 +87,13 @@ public class ExprParser {
 			super("\"" + pattern + "\": " + message);
 		}
 		
+	}
+	
+	public static final <T> Literal<? extends T> parseLiteral(final String expr, final Class<T> c) {
+		final UnparsedLiteral l = parseUnparsedLiteral(expr);
+		if (l == null)
+			return null;
+		return l.getConvertedVar(c);
 	}
 	
 	public static final Expression parse(final String expr, final Iterator<? extends ExpressionInfo<?>> source, final boolean parseLiteral) {
@@ -118,13 +128,13 @@ public class ExprParser {
 								if (!name.startsWith("-")) {
 									final Pair<String, Boolean> p = Utils.getPlural(name);
 									name = p.first;
-									final Class<? extends SimpleVariable<?>> c = Skript.getDefaultVariable(name);
-									if (c == null)
-										throw new SkriptAPIException("The class '" + name + "' does not provide a default variable. Either allow null (%-" + name + "%) or make it mandatory");
-									final SimpleVariable<?> var = c.newInstance();
+									final DefaultVariable<?> var = Skript.getDefaultVariable(name);
+									if (var == null)
+										throw new SkriptAPIException("The class '" + name + "' does not provide a default variable. Either allow null (with %-" + name + "%) or make it mandatory");
 									if (!p.second && !var.isSingle()) {
 										throw new SkriptAPIException("The default variable of '" + name + "' is not a single-element variable. Change your pattern to allow multiple elements or make the variable mandatory");
 									}
+									var.init();
 									res.vars[j] = var;
 								}
 							}
@@ -273,8 +283,11 @@ public class ExprParser {
 	private final ParseResult parse_i(final String pattern, int i, int j) throws ParseException {
 		if (expr.isEmpty())
 			throw new RuntimeException(pattern);
+		
 		ParseResult res;
+		int matchedChars = 0;
 		int end, i2;
+		
 		while (j < pattern.length()) {
 			switch (pattern.charAt(j)) {
 				case '[':
@@ -337,7 +350,7 @@ public class ExprParser {
 								}
 								res.vars[StringUtils.count(pattern, '%', 0, j - 1) / 2] = var;
 								return res;
-							} else if (bestErrorQuality < 80) {
+							} else if (bestErrorQuality < 80 && res.matchedChars > 5) {
 								bestError = "'" + expr.substring(i, i2) + "' is not " + Utils.a(Skript.getExactClassName(returnType));
 								bestErrorQuality = 80;
 							}
@@ -375,6 +388,7 @@ public class ExprParser {
 					} else if (expr.charAt(i) != ' ') {
 						return null;
 					}
+					matchedChars++;
 					i++;
 					j++;
 				break;
@@ -386,18 +400,19 @@ public class ExprParser {
 				default:
 					if (i == expr.length() || Character.toLowerCase(pattern.charAt(j)) != Character.toLowerCase(expr.charAt(i)))
 						return null;
+					matchedChars++;
 					i++;
 					j++;
 			}
 		}
 		if (i == expr.length() && j == pattern.length())
-			return new ParseResult(expr, pattern);
+			return new ParseResult(expr, pattern, matchedChars);
 		return null;
 	}
 	
 	private final static UnparsedLiteral parseUnparsedLiteral(final String s) {
 		final ArrayList<String> parts = new ArrayList<String>();
-		final Pattern p = Pattern.compile("^(" + wildcard + ")(,\\s*|,?\\s+and\\s+|,?\\s+or\\s+)");
+		final Pattern p = Pattern.compile("^(" + wildcard + ")(,\\s*|,?\\s+and\\s+|,?\\s+n?or\\s+)");
 		final Matcher m = p.matcher(s);
 		int prevEnd = 0;
 		boolean and = true;

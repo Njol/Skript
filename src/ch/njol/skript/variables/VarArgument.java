@@ -44,7 +44,7 @@ import ch.njol.util.StringUtils;
 public class VarArgument extends SimpleVariable<Object> {
 	
 	static {
-		Skript.addVariable(VarArgument.class, Object.class, "last arg[ument]", "arg[ument](-| )<(\\d+)>", "<(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument]", "arg[ument]s");
+		Skript.registerVariable(VarArgument.class, Object.class, "last arg[ument]", "arg[ument](-| )<(\\d+)>", "<(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument]", "arg[ument]s");
 	}
 	
 	private Class<?> type = Object.class;
@@ -100,7 +100,7 @@ public class VarArgument extends SimpleVariable<Object> {
 	}
 	
 	@Override
-	public <R> ConvertedVariable<? extends R> getConvertedVar(final Class<R> to) {
+	public <R> ConvertedVariable<Object, ? extends R> getConvertedVar(final Class<R> to) {
 		if (arg != null) {
 			return super.getConvertedVar(to);
 		}
@@ -116,7 +116,7 @@ public class VarArgument extends SimpleVariable<Object> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return a == -1 ? "arguments" : StringUtils.fancyOrderNumber(a) + " argument";
-		return Skript.getDebugMessage(getSingle(e));
+		return Skript.getDebugMessage(getArray(e));
 	}
 	
 	@Override

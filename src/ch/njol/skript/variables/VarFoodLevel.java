@@ -38,7 +38,7 @@ import ch.njol.skript.lang.Variable;
 public class VarFoodLevel extends SimpleVariable<Integer> {
 	
 	static {
-		Skript.addVariable(VarFoodLevel.class, Integer.class, "food[[ ](level|meter)] [of %player%]");
+		Skript.registerVariable(VarFoodLevel.class, Integer.class, "food[[ ](level|meter)] [of %player%]", "%player%'[s] food[[ ](level|meter)]");
 	}
 	
 	private Variable<Player> players;

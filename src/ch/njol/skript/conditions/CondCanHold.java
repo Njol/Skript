@@ -23,10 +23,13 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
+import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
@@ -37,16 +40,10 @@ import ch.njol.util.Checker;
  */
 public class CondCanHold extends Condition {
 	
-	//	static {
-	//		Skript.addCondition(CondCanHold.class,
-	//				"(%inventories% )?(can hold|ha(s|ve) (enough )?space (for|to hold)) %itemtypes%",
-	//				"(%inventories% )?(can(no|')t hold|(ha(s|ve) not|ha(s|ve)n't|do(es)?n't have) (enough )?space (for|to hold)) %itemtypes%");
-	//	}
-	
 	static {
-		Skript.addCondition(CondCanHold.class,
-				"[%inventories%] (can hold|ha(s|ve) [enough] space (for|to hold)) %itemtypes%",
-				"[%inventories%] (can(no|')t hold|(ha(s|ve) not|ha(s|ve)n't|do[es]n't have) [enough] space (for|to hold)) %itemtypes%");
+		Skript.registerCondition(CondCanHold.class,
+				"%inventories% (can hold|ha(s|ve) [enough] space (for|to hold)) %itemtypes%",
+				"%inventories% (can(no|')t hold|(ha(s|ve) not|ha(s|ve)n't|do[es]n't have) [enough] space (for|to hold)) %itemtypes%");
 	}
 	
 	private Variable<Inventory> invis;
@@ -54,9 +51,17 @@ public class CondCanHold extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
 		invis = (Variable<Inventory>) vars[0];
 		items = (Variable<ItemType>) vars[1];
+		if (items instanceof Literal) {
+			for (ItemType t : ((Literal<ItemType>) items).getArray()) {
+				t = t.getItem();
+				if (!t.isAll() && (t.getTypes().size() != 1 || t.getTypes().get(0).hasDataRange() || t.getTypes().get(0).getId() == -1)) {
+					throw new ParseException("The condition 'can hold' can currently only be used with aliases that start with 'every' or 'all', or only stand for one item and one data value.");
+				}
+			}
+		}
 		setNegated(matchedPattern == 1);
 	}
 	
@@ -64,11 +69,20 @@ public class CondCanHold extends Condition {
 	public boolean run(final Event e) {
 		return invis.check(e, new Checker<Inventory>() {
 			@Override
-			public boolean check(final Inventory i) {
+			public boolean check(final Inventory invi) {
+				if (!items.getAnd()) {
+					return items.check(e, new Checker<ItemType>() {
+						@Override
+						public boolean check(final ItemType t) {
+							return t.getItem().hasSpace(invi);
+						}
+					});
+				}
+				final ItemStack[] buf = invi.getContents();
 				return items.check(e, new Checker<ItemType>() {
 					@Override
 					public boolean check(final ItemType t) {
-						return t.hasSpace(i);
+						return t.getItem().addTo(buf);
 					}
 				});
 			}
@@ -77,7 +91,7 @@ public class CondCanHold extends Condition {
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return invis.getDebugMessage(e) + " can hold " + items.getDebugMessage(e);
+		return invis.getDebugMessage(e) + " can" + (isNegated() ? "'t" : "") + " hold " + items.getDebugMessage(e);
 	}
 	
 }

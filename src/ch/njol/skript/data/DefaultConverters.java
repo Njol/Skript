@@ -21,12 +21,10 @@
 
 package ch.njol.skript.data;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -54,25 +52,25 @@ public class DefaultConverters {
 	static {
 		
 		//Numbers
-		Skript.addConverter(Integer.class, Float.class, new Converter<Integer, Float>() {
+		Skript.registerConverter(Integer.class, Float.class, new Converter<Integer, Float>() {
 			@Override
 			public Float convert(final Integer i) {
 				return i.floatValue();
 			}
 		});
-		Skript.addConverter(Integer.class, Double.class, new Converter<Integer, Double>() {
+		Skript.registerConverter(Integer.class, Double.class, new Converter<Integer, Double>() {
 			@Override
 			public Double convert(final Integer i) {
 				return i.doubleValue();
 			}
 		});
-		Skript.addConverter(Float.class, Double.class, new Converter<Float, Double>() {
+		Skript.registerConverter(Float.class, Double.class, new Converter<Float, Double>() {
 			@Override
 			public Double convert(final Float f) {
 				return f.doubleValue();
 			}
 		});
-		Skript.addConverter(Double.class, Float.class, new Converter<Double, Float>() {
+		Skript.registerConverter(Double.class, Float.class, new Converter<Double, Float>() {
 			@Override
 			public Float convert(final Double d) {
 				return d.floatValue();
@@ -80,7 +78,7 @@ public class DefaultConverters {
 		});
 		
 		// OfflinePlayer - PlayerInventory
-		Skript.addConverter(OfflinePlayer.class, PlayerInventory.class, new Converter<OfflinePlayer, PlayerInventory>() {
+		Skript.registerConverter(OfflinePlayer.class, PlayerInventory.class, new Converter<OfflinePlayer, PlayerInventory>() {
 			@Override
 			public PlayerInventory convert(final OfflinePlayer p) {
 				if (p == null || !p.isOnline())
@@ -88,17 +86,17 @@ public class DefaultConverters {
 				return p.getPlayer().getInventory();
 			}
 		});
-		Skript.addConverter(PlayerInventory.class, OfflinePlayer.class, new Converter<PlayerInventory, OfflinePlayer>() {
-			@Override
-			public OfflinePlayer convert(final PlayerInventory i) {
-				if (i == null)
-					return null;
-				return Bukkit.getOfflinePlayer(i.getName());
-			}
-		});
+//		Skript.registerConverter(PlayerInventory.class, OfflinePlayer.class, new Converter<PlayerInventory, OfflinePlayer>() {
+//			@Override
+//			public OfflinePlayer convert(final PlayerInventory i) {
+//				if (i == null)
+//					return null;
+//				return Bukkit.getOfflinePlayer(i.getName());
+//			}
+//		});
 		
 		// CommandSender - Player
-		Skript.addConverter(CommandSender.class, Player.class, new Converter<CommandSender, Player>() {
+		Skript.registerConverter(CommandSender.class, Player.class, new Converter<CommandSender, Player>() {
 			@Override
 			public Player convert(final CommandSender s) {
 				if (s instanceof Player)
@@ -106,9 +104,18 @@ public class DefaultConverters {
 				return null;
 			}
 		});
+//		// Entity - Player
+//		Skript.registerConverter(Entity.class, Player.class, new Converter<Entity, Player>() {
+//			@Override
+//			public Player convert(final Entity s) {
+//				if (s instanceof Player)
+//					return (Player) s;
+//				return null;
+//			}
+//		});
 		
 		// Block - Inventory
-		Skript.addConverter(Block.class, Inventory.class, new Converter<Block, Inventory>() {
+		Skript.registerConverter(Block.class, Inventory.class, new Converter<Block, Inventory>() {
 			@Override
 			public Inventory convert(final Block b) {
 				if (b == null)
@@ -119,25 +126,8 @@ public class DefaultConverters {
 			}
 		});
 		
-		// Entity - Location
-		Skript.addConverter(Entity.class, Location.class, new Converter<Entity, Location>() {
-			@Override
-			public Location convert(final Entity e) {
-				if (e == null)
-					return null;
-				return e.getLocation();
-			}
-		});
-		// Entity - EntityType
-		Skript.addConverter(Entity.class, EntityType.class, new Converter<Entity, EntityType>() {
-			@Override
-			public EntityType convert(final Entity e) {
-				return new EntityType(e.getClass(), 1);
-			}
-		});
-		
 		// Location - Block
-		Skript.addConverter(Location.class, Block.class, new Converter<Location, Block>() {
+		Skript.registerConverter(Location.class, Block.class, new Converter<Location, Block>() {
 			@Override
 			public Block convert(final Location l) {
 				if (l == null)
@@ -145,7 +135,7 @@ public class DefaultConverters {
 				return l.getBlock();
 			}
 		});
-		Skript.addConverter(Block.class, Location.class, new Converter<Block, Location>() {
+		Skript.registerConverter(Block.class, Location.class, new Converter<Block, Location>() {
 			@Override
 			public Location convert(final Block b) {
 				if (b == null)
@@ -154,8 +144,25 @@ public class DefaultConverters {
 			}
 		});
 		
+		// Entity - Location
+		Skript.registerConverter(Entity.class, Location.class, new Converter<Entity, Location>() {
+			@Override
+			public Location convert(final Entity e) {
+				if (e == null)
+					return null;
+				return e.getLocation();
+			}
+		});
+		// Entity - EntityType
+		Skript.registerConverter(Entity.class, EntityType.class, new Converter<Entity, EntityType>() {
+			@Override
+			public EntityType convert(final Entity e) {
+				return new EntityType(e.getClass(), 1);
+			}
+		});
+		
 		// Location - World
-		Skript.addConverter(Location.class, World.class, new Converter<Location, World>() {
+		Skript.registerConverter(Location.class, World.class, new Converter<Location, World>() {
 			@Override
 			public World convert(final Location l) {
 				if (l == null)
@@ -165,15 +172,15 @@ public class DefaultConverters {
 		});
 		
 		// ItemType - ItemStack
-		//		Skript.addConverter(ItemType.class, ItemStack.class, new Converter<ItemType, ItemStack>() {
-		//			@Override
-		//			public ItemStack convert(final ItemType i) {
-		//				if (i == null)
-		//					return null;
-		//				return i.getRandom();
-		//			}
-		//		});
-		Skript.addConverter(ItemStack.class, ItemType.class, new Converter<ItemStack, ItemType>() {
+//		Skript.addConverter(ItemType.class, ItemStack.class, new Converter<ItemType, ItemStack>() {
+//			@Override
+//			public ItemStack convert(final ItemType i) {
+//				if (i == null)
+//					return null;
+//				return i.getRandom();
+//			}
+//		});
+		Skript.registerConverter(ItemStack.class, ItemType.class, new Converter<ItemStack, ItemType>() {
 			@Override
 			public ItemType convert(final ItemStack i) {
 				if (i == null)
@@ -183,7 +190,7 @@ public class DefaultConverters {
 		});
 		
 		// Slot - ItemStack
-		Skript.addConverter(Slot.class, ItemStack.class, new Converter<Slot, ItemStack>() {
+		Skript.registerConverter(Slot.class, ItemStack.class, new Converter<Slot, ItemStack>() {
 			@Override
 			public ItemStack convert(final Slot s) {
 				if (s == null)
@@ -194,18 +201,18 @@ public class DefaultConverters {
 				return i;
 			}
 		});
-		//		// Slot - Inventory
-		//		Skript.addConverter(Slot.class, Inventory.class, new Converter<Slot, Inventory>() {
-		//			@Override
-		//			public Inventory convert(final Slot s) {
-		//				if (s == null)
-		//					return null;
-		//				return s.getInventory();
-		//			}
-		//		});
+//		// Slot - Inventory
+//		Skript.addConverter(Slot.class, Inventory.class, new Converter<Slot, Inventory>() {
+//			@Override
+//			public Inventory convert(final Slot s) {
+//				if (s == null)
+//					return null;
+//				return s.getInventory();
+//			}
+//		});
 		
 		// Item - ItemStack
-		Skript.addConverter(Item.class, ItemStack.class, new Converter<Item, ItemStack>() {
+		Skript.registerConverter(Item.class, ItemStack.class, new Converter<Item, ItemStack>() {
 			@Override
 			public ItemStack convert(final Item i) {
 				if (i == null)
@@ -215,7 +222,7 @@ public class DefaultConverters {
 		});
 		
 		// OfflinePlayer - InventoryHolder
-		Skript.addConverter(OfflinePlayer.class, InventoryHolder.class, new Converter<OfflinePlayer, InventoryHolder>() {
+		Skript.registerConverter(OfflinePlayer.class, InventoryHolder.class, new Converter<OfflinePlayer, InventoryHolder>() {
 			@Override
 			public InventoryHolder convert(final OfflinePlayer p) {
 				if (p == null || !p.isOnline())
@@ -225,30 +232,30 @@ public class DefaultConverters {
 		});
 		
 		// Block - InventoryHolder
-		Skript.addConverter(Block.class, InventoryHolder.class, new Converter<Block, InventoryHolder>() {
-			@Override
-			public InventoryHolder convert(final Block b) {
-				if (b == null || b.getState() == null)
-					return null;
-				final BlockState s = b.getState();
-				if (s instanceof InventoryHolder)
-					return (InventoryHolder) s;
-				return null;
-			}
-		});
-		Skript.addConverter(InventoryHolder.class, Block.class, new Converter<InventoryHolder, Block>() {
-			@Override
-			public Block convert(final InventoryHolder h) {
-				if (h == null)
-					return null;
-				if (h instanceof BlockState)
-					return ((BlockState) h).getBlock();
-				return null;
-			}
-		});
+//		Skript.registerConverter(Block.class, InventoryHolder.class, new Converter<Block, InventoryHolder>() {
+//			@Override
+//			public InventoryHolder convert(final Block b) {
+//				if (b == null || b.getState() == null)
+//					return null;
+//				final BlockState s = b.getState();
+//				if (s instanceof InventoryHolder)
+//					return (InventoryHolder) s;
+//				return null;
+//			}
+//		});
+//		Skript.registerConverter(InventoryHolder.class, Block.class, new Converter<InventoryHolder, Block>() {
+//			@Override
+//			public Block convert(final InventoryHolder h) {
+//				if (h == null)
+//					return null;
+//				if (h instanceof BlockState)
+//					return ((BlockState) h).getBlock();
+//				return null;
+//			}
+//		});
 		
 		// World - Time
-		Skript.addConverter(World.class, Time.class, new Converter<World, Time>() {
+		Skript.registerConverter(World.class, Time.class, new Converter<World, Time>() {
 			@Override
 			public Time convert(final World w) {
 				if (w == null)

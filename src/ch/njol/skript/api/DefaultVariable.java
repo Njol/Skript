@@ -19,30 +19,17 @@
  * 
  */
 
-package ch.njol.skript.variables;
+package ch.njol.skript.api;
 
-import org.bukkit.entity.Projectile;
-
-import ch.njol.skript.Skript;
-import ch.njol.skript.variables.base.EventValueVariable;
+import ch.njol.skript.api.exception.ParseException;
+import ch.njol.skript.lang.Variable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class VarProjectile extends EventValueVariable<Projectile> {
+public interface DefaultVariable<T> extends Variable<T> {
 	
-	static {
-		Skript.registerVariable(VarProjectile.class, Projectile.class, "projectile");
-	}
-	
-	public VarProjectile() {
-		super(Projectile.class);
-	}
-	
-	@Override
-	public String toString() {
-		return "the projectile";
-	}
+	public void init() throws ParseException;
 	
 }

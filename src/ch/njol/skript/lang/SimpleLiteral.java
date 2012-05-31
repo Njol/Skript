@@ -27,6 +27,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.DefaultVariable;
 import ch.njol.skript.api.intern.ConvertedLiteral;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 
@@ -36,7 +37,7 @@ import ch.njol.skript.lang.ExprParser.ParseResult;
  * @author Peter Güttinger
  * @see UnparsedLiteral
  */
-public class SimpleLiteral<T> extends SimpleVariable<T> implements ch.njol.skript.lang.Literal<T> {
+public class SimpleLiteral<T> extends SimpleVariable<T> implements Literal<T>, DefaultVariable<T> {
 	
 	protected final T[] data;
 	protected final Class<T> c;
@@ -61,6 +62,9 @@ public class SimpleLiteral<T> extends SimpleVariable<T> implements ch.njol.skrip
 	}
 	
 	@Override
+	public void init() {}
+	
+	@Override
 	protected T[] getAll(final Event e) {
 		return data;
 	}
@@ -82,16 +86,16 @@ public class SimpleLiteral<T> extends SimpleVariable<T> implements ch.njol.skrip
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> ConvertedLiteral<? extends R> getConvertedVar(final Class<R> to) {
+	public <R> ConvertedLiteral<T, ? extends R> getConvertedVar(final Class<R> to) {
 		if (to.isAssignableFrom(c))
-			return new ConvertedLiteral<R>(this, (R[]) this.getAll(null), to);
+			return new ConvertedLiteral<T, R>(this, (R[]) this.getAll(null), to);
 		final Converter<? super T, ? extends R> p = Skript.getConverter(c, to);
 		if (p == null)
 			return null;
 		final R[] parsedData = (R[]) Array.newInstance(to, data.length);
 		for (int i = 0; i < data.length; i++)
 			parsedData[i] = p.convert(data[i]);
-		return new ConvertedLiteral<R>(this, parsedData, to);
+		return new ConvertedLiteral<T, R>(this, parsedData, to);
 	}
 	
 	@Override

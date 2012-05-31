@@ -37,7 +37,7 @@ import ch.njol.skript.lang.Variable;
 public class EffCancelEvent extends Effect {
 	
 	static {
-		Skript.addEffect(EffCancelEvent.class, "cancel event", "uncancel event");
+		Skript.registerEffect(EffCancelEvent.class, "cancel event", "uncancel event");
 	}
 	
 	private boolean cancel;

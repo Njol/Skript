@@ -24,6 +24,7 @@ package ch.njol.skript;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -41,7 +42,7 @@ import ch.njol.skript.api.intern.Trigger;
 final class SkriptEventHandler {
 	private SkriptEventHandler() {}
 	
-	static HashMap<Class<? extends Event>, List<Trigger>> triggers = new HashMap<Class<? extends Event>, List<Trigger>>();
+	static Map<Class<? extends Event>, List<Trigger>> triggers = new HashMap<Class<? extends Event>, List<Trigger>>();
 	
 	public final static EventExecutor ee = new EventExecutor() {
 		@Override
@@ -67,11 +68,13 @@ final class SkriptEventHandler {
 			return;
 		}
 		for (final Trigger t : ts) {
+			if (!t.getEvent().check(e))
+				continue;
 			if (Skript.log(Verbosity.VERY_HIGH))
 				Skript.info("# " + t.getName());
 			final long startTrigger = System.nanoTime();
 			t.run(e);
-			if (Skript.log(Verbosity.DEBUG))
+			if (Skript.log(Verbosity.VERY_HIGH))
 				Skript.info("# " + t.getName() + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 		}
 		// in case it got forgotten somewhere (you must not rely on this, as you will disable Skript's listener for all events triggered by any effects/conditions following yours!)

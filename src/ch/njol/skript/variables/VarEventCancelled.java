@@ -37,7 +37,7 @@ import ch.njol.skript.lang.Variable;
 public class VarEventCancelled extends SimpleVariable<Boolean> {
 	
 	static {
-		Skript.addVariable(VarEventCancelled.class, Boolean.class, "event cancelled");
+		Skript.registerVariable(VarEventCancelled.class, Boolean.class, "event cancelled");
 	}
 	
 	@Override

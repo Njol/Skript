@@ -30,9 +30,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.LoopVar;
 import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.api.intern.ConvertedVariable;
 import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.variables.base.VarVariable;
 
@@ -45,7 +43,7 @@ import ch.njol.skript.variables.base.VarVariable;
 public class VarLoopValue extends VarVariable<Object> {
 	
 	static {
-		Skript.addVariable(VarLoopValue.class, Object.class, "loop-<\\S+>");
+		Skript.registerVariable(VarLoopValue.class, Object.class, "loop-<\\S+>");
 	}
 	
 	private String name;
@@ -71,27 +69,6 @@ public class VarLoopValue extends VarVariable<Object> {
 			}
 		}
 		throw new ParseException("there's no loop that matches " + name);
-	}
-	
-	// this is to keep "loop-xyz" as debug message and not switch back to the loopvar's debug message
-	// which is intended to be used only as debug message of the loop.
-	@Override
-	public <R> ConvertedVariable<? extends R> getConvertedVar(final Class<R> to) {
-		final SimpleVariable<?> siht = this;
-		final SimpleVariable<? extends R> v = var.getConvertedVariable(to);
-		if (v == null)
-			return null;
-		return new ConvertedVariable<R>(v, to) {
-			@Override
-			public String getDebugMessage(final Event e) {
-				return "{" + siht.getDebugMessage(e) + "}->" + to.getName();
-			}
-			
-			@Override
-			protected R[] getAll(final Event e) {
-				return v.getArray(e);
-			}
-		};
 	}
 	
 	@Override

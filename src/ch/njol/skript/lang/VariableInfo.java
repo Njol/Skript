@@ -19,30 +19,15 @@
  * 
  */
 
-package ch.njol.skript.variables;
+package ch.njol.skript.lang;
 
-import org.bukkit.entity.Projectile;
-
-import ch.njol.skript.Skript;
-import ch.njol.skript.variables.base.EventValueVariable;
-
-/**
- * @author Peter Güttinger
- * 
- */
-public class VarProjectile extends EventValueVariable<Projectile> {
+public class VariableInfo<E extends Variable<T>, T> extends ExpressionInfo<E> {
 	
-	static {
-		Skript.registerVariable(VarProjectile.class, Projectile.class, "projectile");
-	}
+	public Class<T> returnType;
 	
-	public VarProjectile() {
-		super(Projectile.class);
-	}
-	
-	@Override
-	public String toString() {
-		return "the projectile";
+	public VariableInfo(final String[] patterns, final Class<T> returnType, final Class<E> c) {
+		super(patterns, c);
+		this.returnType = returnType;
 	}
 	
 }

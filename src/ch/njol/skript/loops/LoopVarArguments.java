@@ -45,7 +45,7 @@ import ch.njol.util.iterator.ArrayIterator;
 public class LoopVarArguments extends LoopVar<Object> {
 	
 	static {
-		Skript.addLoop(LoopVarArguments.class, Object.class, "last argument", "argument(-| )<(\\d+)>", "<(?:(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th)> argument", "arguments");
+		Skript.registerLoop(LoopVarArguments.class, Object.class, "last argument", "argument(-| )<(\\d+)>", "<(?:(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th)> argument", "arguments");
 	}
 	
 	private Argument<?> arg;

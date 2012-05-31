@@ -42,10 +42,10 @@ public class DefaultComparators {
 	
 	static {
 		
-		// IMPORTANT!! NO Object - Object comparator
+		// IMPORTANT!! No Object - Object comparator
 		
 		// ItemStack - ItemType
-		Skript.addComparator(ItemStack.class, ItemType.class, new Comparator<ItemStack, ItemType>() {
+		Skript.registerComparator(ItemStack.class, ItemType.class, new Comparator<ItemStack, ItemType>() {
 			@Override
 			public Relation compare(final ItemStack is, final ItemType it) {
 				if (it == null)
@@ -54,13 +54,13 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final Relation r) {
-				return r.isEqualOrInverse();
+			public boolean supportsOrdering() {
+				return false;
 			}
 		});
 		
 		// Block - ItemType
-		Skript.addComparator(Block.class, ItemType.class, new Comparator<Block, ItemType>() {
+		Skript.registerComparator(Block.class, ItemType.class, new Comparator<Block, ItemType>() {
 			@Override
 			public Relation compare(final Block b, final ItemType it) {
 				if (it == null)
@@ -69,13 +69,13 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final Relation r) {
-				return r.isEqualOrInverse();
+			public boolean supportsOrdering() {
+				return false;
 			}
 		});
 		
 		// Block - Block
-		Skript.addComparator(Block.class, Block.class, new Comparator<Block, Block>() {
+		Skript.registerComparator(Block.class, Block.class, new Comparator<Block, Block>() {
 			@Override
 			public ch.njol.skript.api.Comparator.Relation compare(final Block b1, final Block b2) {
 				if (b1 == null || b2 == null)
@@ -84,14 +84,14 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final Relation r) {
-				return r.isEqualOrInverse();
+			public boolean supportsOrdering() {
+				return false;
 			}
 			
 		});
 		
 		// Number - Number
-		Skript.addComparator(Number.class, Number.class, new Comparator<Number, Number>() {
+		Skript.registerComparator(Number.class, Number.class, new Comparator<Number, Number>() {
 			@Override
 			public Relation compare(final Number n1, final Number n2) {
 				if (n1 == null || n2 == null)
@@ -100,13 +100,13 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final Relation r) {
+			public boolean supportsOrdering() {
 				return true;
 			}
 		});
 		
 		// Entity - EntityType
-		Skript.addComparator(Entity.class, EntityType.class, new Comparator<Entity, EntityType>() {
+		Skript.registerComparator(Entity.class, EntityType.class, new Comparator<Entity, EntityType>() {
 			@Override
 			public ch.njol.skript.api.Comparator.Relation compare(final Entity e, final EntityType t) {
 				if (t == null || e == null)
@@ -115,26 +115,26 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final Relation r) {
-				return r.isEqualOrInverse();
+			public boolean supportsOrdering() {
+				return false;
 			}
 		});
 		
 		// Time - Time
-		Skript.addComparator(Time.class, Time.class, new Comparator<Time, Time>() {
+		Skript.registerComparator(Time.class, Time.class, new Comparator<Time, Time>() {
 			@Override
 			public Relation compare(final Time t1, final Time t2) {
 				return Relation.get(t1.getTicks() - t2.getTicks());
 			}
 			
 			@Override
-			public boolean supportsRelation(final Relation r) {
+			public boolean supportsOrdering() {
 				return true;
 			}
 		});
 		
 		// Time - Timeperiod
-		Skript.addComparator(Time.class, Timeperiod.class, new Comparator<Time, Timeperiod>() {
+		Skript.registerComparator(Time.class, Timeperiod.class, new Comparator<Time, Timeperiod>() {
 			@Override
 			public Relation compare(final Time t, final Timeperiod p) {
 				if (p == null || t == null)
@@ -143,13 +143,13 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final Relation r) {
-				return r.isEqualOrInverse();
+			public boolean supportsOrdering() {
+				return false;
 			}
 		});
 		
 		// String - String
-		Skript.addComparator(String.class, String.class, new Comparator<String, String>() {
+		Skript.registerComparator(String.class, String.class, new Comparator<String, String>() {
 			
 			@Override
 			public ch.njol.skript.api.Comparator.Relation compare(final String s1, final String s2) {
@@ -159,8 +159,8 @@ public class DefaultComparators {
 			}
 			
 			@Override
-			public boolean supportsRelation(final Relation r) {
-				return r.isEqualOrInverse();
+			public boolean supportsOrdering() {
+				return false;
 			}
 			
 		});

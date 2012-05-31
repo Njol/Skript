@@ -31,7 +31,7 @@ import ch.njol.skript.Skript;
  * 
  * @author Peter Güttinger
  * 
- * @see Skript#addConverter(Class, Class, Converter)
+ * @see Skript#registerConverter(Class, Class, Converter)
  */
 public interface Converter<F, T> {
 	
@@ -82,6 +82,53 @@ public interface Converter<F, T> {
 			return null;
 		}
 		
+		public final static <F, T> Converter<?, T> createInstanceofConverter(final ConverterInfo<F, T> conv) {
+			return createInstanceofConverter(conv.from, conv.converter);
+		}
+		
+		public final static <F, T> Converter<?, T> createInstanceofConverter(final Class<F> from, final Converter<F, T> conv) {
+			return new Converter<Object, T>() {
+				@SuppressWarnings("unchecked")
+				@Override
+				public T convert(final Object o) {
+					if (!from.isInstance(o))
+						return null;
+					return conv.convert((F) o);
+				}
+			};
+		}
+		
+		public final static <F, T> Converter<F, T> createInstanceofConverter(final Converter<F, ?> conv, final Class<T> to) {
+			return new Converter<F, T>() {
+				@SuppressWarnings("unchecked")
+				@Override
+				public T convert(final F f) {
+					final Object o = conv.convert(f);
+					if (to.isInstance(o))
+						return (T) o;
+					return null;
+				}
+			};
+		}
+		
+		public final static <F, T> Converter<?, T> createDoubleInstanceofConverter(final ConverterInfo<F, ?> conv, final Class<T> to) {
+			return createDoubleInstanceofConverter(conv.from, conv.converter, to);
+		}
+		
+		public final static <F, T> Converter<?, T> createDoubleInstanceofConverter(final Class<F> from, final Converter<F, ?> conv, final Class<T> to) {
+			return new Converter<Object, T>() {
+				@SuppressWarnings("unchecked")
+				@Override
+				public T convert(final Object o) {
+					if (!from.isInstance(o))
+						return null;
+					final Object o2 = conv.convert((F) o);
+					if (to.isInstance(o2))
+						return (T) o2;
+					return null;
+				}
+			};
+		}
 	}
 	
 }

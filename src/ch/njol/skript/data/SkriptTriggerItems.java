@@ -38,7 +38,6 @@ import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.CreeperPowerEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityInteractEvent;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
@@ -115,6 +114,7 @@ import ch.njol.skript.effects.EffSpawn;
 import ch.njol.skript.effects.EffTeleport;
 import ch.njol.skript.effects.EffTree;
 import ch.njol.skript.events.EvtBlock;
+import ch.njol.skript.events.EvtDamage;
 import ch.njol.skript.events.EvtEntity;
 import ch.njol.skript.events.EvtEntityBlockChange;
 import ch.njol.skript.events.EvtGameMode;
@@ -145,7 +145,6 @@ import ch.njol.skript.variables.VarGameMode;
 import ch.njol.skript.variables.VarHealth;
 import ch.njol.skript.variables.VarIdOf;
 import ch.njol.skript.variables.VarInventory;
-import ch.njol.skript.variables.VarLocation;
 import ch.njol.skript.variables.VarLoopValue;
 import ch.njol.skript.variables.VarPlayer;
 import ch.njol.skript.variables.VarProjectile;
@@ -161,7 +160,6 @@ import ch.njol.skript.variables.VarWorld;
  * @author Peter Güttinger
  * 
  */
-@SuppressWarnings("unchecked")
 public class SkriptTriggerItems {
 	
 	static {
@@ -214,7 +212,6 @@ public class SkriptTriggerItems {
 				VarIdOf.class,
 				VarInventory.class,
 				VarLoopValue.class,
-				VarLocation.class,
 				VarPlayer.class,
 				VarProjectile.class,
 				VarRandom.class,
@@ -234,6 +231,7 @@ public class SkriptTriggerItems {
 				LoopVarWorld.class,
 				
 				EvtBlock.class,
+				EvtDamage.class,
 				EvtEntity.class,
 				EvtEntityBlockChange.class,
 				EvtGameMode.class,
@@ -253,82 +251,80 @@ public class SkriptTriggerItems {
 			}
 		}
 		
-		// Skript.addVariable(VarBetween.class, Interval.class, false, "between %object% and %object%");// TODO think about this
-		
-		Skript.addEvent(SimpleEvent.class, BlockCanBuildEvent.class, "can build check");
-		Skript.addEvent(SimpleEvent.class, BlockDamageEvent.class, "block damage");
-		Skript.addEvent(SimpleEvent.class, BlockFadeEvent.class, "fad(e|ing)");
-		Skript.addEvent(SimpleEvent.class, BlockFormEvent.class, "form[ing]");
-		Skript.addEvent(SimpleEvent.class, BlockFromToEvent.class, "flow[ing]");
-		Skript.addEvent(SimpleEvent.class, BlockIgniteEvent.class, "(ignite|ignition)");
-		Skript.addEvent(SimpleEvent.class, BlockPhysicsEvent.class, "physics");
-		Skript.addEvent(SimpleEvent.class, BlockPistonExtendEvent.class, "piston extend");
-		Skript.addEvent(SimpleEvent.class, BlockPistonRetractEvent.class, "piston retract");
-		Skript.addEvent(SimpleEvent.class, BlockSpreadEvent.class, "spread(ing)?");
-		Skript.addEvent(SimpleEvent.class, ChunkLoadEvent.class, "chunk load");
-		Skript.addEvent(SimpleEvent.class, ChunkPopulateEvent.class, "chunk populate");
-		Skript.addEvent(SimpleEvent.class, ChunkUnloadEvent.class, "chunk unload");
-		Skript.addEvent(SimpleEvent.class, CreeperPowerEvent.class, "creeper power");
-		Skript.addEvent(SimpleEvent.class, EntityCombustEvent.class, "combust[ing]");
-		Skript.addEvent(SimpleEvent.class, Skript.array(EntityDamageEvent.class, VehicleDamageEvent.class), "damag(e|ing)");
-		Skript.addEvent(SimpleEvent.class, EntityExplodeEvent.class, "(explode|explosion)");
-		Skript.addEvent(SimpleEvent.class, EntityInteractEvent.class, "interact");// = entity interacts with block, e.g. endermen?; player -> PlayerInteractEvent
-		Skript.addEvent(SimpleEvent.class, EntityPortalEnterEvent.class, "portal enter", "entering [a] portal");
-		Skript.addEvent(SimpleEvent.class, EntityRegainHealthEvent.class, "heal[ing]");
-		Skript.addEvent(SimpleEvent.class, EntityTameEvent.class, "tame");
-		Skript.addEvent(SimpleEvent.class, EntityTargetEvent.class, "target");
-		Skript.addEvent(SimpleEvent.class, ExplosionPrimeEvent.class, "explosion prime");
-		Skript.addEvent(SimpleEvent.class, FurnaceBurnEvent.class, "furnace burn");
-		Skript.addEvent(SimpleEvent.class, FurnaceSmeltEvent.class, "furnace smelt");
-		Skript.addEvent(SimpleEvent.class, LeavesDecayEvent.class, "leaves decay");
-		Skript.addEvent(SimpleEvent.class, LightningStrikeEvent.class, "lightning strike");
-		Skript.addEvent(SimpleEvent.class, PigZapEvent.class, "pig[ ]zap");
-		Skript.addEvent(SimpleEvent.class, PlayerBedEnterEvent.class, "bed enter[ing]", "entering bed");
-		Skript.addEvent(SimpleEvent.class, PlayerBedLeaveEvent.class, "bed leave", "leaving bed");
-		Skript.addEvent(SimpleEvent.class, PlayerBucketEmptyEvent.class, "bucket empty");//, "emptying bucket [of %itemtype%]", "emptying %itemtype% bucket");
-		Skript.addEvent(SimpleEvent.class, PlayerBucketFillEvent.class, "bucket fill");//, "filling bucket [with %itemtype%]");
-		Skript.addEvent(SimpleEvent.class, PlayerChatEvent.class, "chat[ting]");
-		Skript.addEvent(SimpleEvent.class, PlayerFishEvent.class, "fish[ing]");
+		Skript.registerEvent(SimpleEvent.class, BlockCanBuildEvent.class, "can build check");
+		Skript.registerEvent(SimpleEvent.class, BlockDamageEvent.class, "block damage");
+		Skript.registerEvent(SimpleEvent.class, BlockFadeEvent.class, "fad(e|ing)");
+		Skript.registerEvent(SimpleEvent.class, BlockFormEvent.class, "form[ing]");
+		Skript.registerEvent(SimpleEvent.class, BlockFromToEvent.class, "flow[ing]");
+		Skript.registerEvent(SimpleEvent.class, BlockIgniteEvent.class, "(ignite|ignition)");
+		Skript.registerEvent(SimpleEvent.class, BlockPhysicsEvent.class, "physics");
+		Skript.registerEvent(SimpleEvent.class, BlockPistonExtendEvent.class, "piston extend");
+		Skript.registerEvent(SimpleEvent.class, BlockPistonRetractEvent.class, "piston retract");
+		Skript.registerEvent(SimpleEvent.class, BlockSpreadEvent.class, "spread(ing)?");
+		Skript.registerEvent(SimpleEvent.class, ChunkLoadEvent.class, "chunk load");
+		Skript.registerEvent(SimpleEvent.class, ChunkPopulateEvent.class, "chunk populate");
+		Skript.registerEvent(SimpleEvent.class, ChunkUnloadEvent.class, "chunk unload");
+		Skript.registerEvent(SimpleEvent.class, CreeperPowerEvent.class, "creeper power");
+		Skript.registerEvent(SimpleEvent.class, EntityCombustEvent.class, "combust[ing]");
+		Skript.registerEvent(SimpleEvent.class, EntityExplodeEvent.class, "(explode|explosion)");
+		Skript.registerEvent(SimpleEvent.class, EntityInteractEvent.class, "interact");// = entity interacts with block, e.g. endermen?; player -> PlayerInteractEvent
+		Skript.registerEvent(SimpleEvent.class, EntityPortalEnterEvent.class, "portal enter", "entering [a] portal");
+		Skript.registerEvent(SimpleEvent.class, EntityRegainHealthEvent.class, "heal[ing]");
+		Skript.registerEvent(SimpleEvent.class, EntityTameEvent.class, "tame");
+		Skript.registerEvent(SimpleEvent.class, EntityTargetEvent.class, "target");
+		Skript.registerEvent(SimpleEvent.class, ExplosionPrimeEvent.class, "explosion prime");
+		Skript.registerEvent(SimpleEvent.class, FurnaceBurnEvent.class, "furnace burn");
+		Skript.registerEvent(SimpleEvent.class, FurnaceSmeltEvent.class, "furnace smelt");
+		Skript.registerEvent(SimpleEvent.class, LeavesDecayEvent.class, "leaves decay");
+		Skript.registerEvent(SimpleEvent.class, LightningStrikeEvent.class, "lightning strike");
+		Skript.registerEvent(SimpleEvent.class, PigZapEvent.class, "pig[ ]zap");
+		Skript.registerEvent(SimpleEvent.class, PlayerBedEnterEvent.class, "bed enter[ing]", "entering bed");
+		Skript.registerEvent(SimpleEvent.class, PlayerBedLeaveEvent.class, "bed leave", "leaving bed");
+		Skript.registerEvent(SimpleEvent.class, PlayerBucketEmptyEvent.class, "bucket empty");//, "emptying bucket [of %itemtype%]", "emptying %itemtype% bucket");
+		Skript.registerEvent(SimpleEvent.class, PlayerBucketFillEvent.class, "bucket fill");//, "filling bucket [with %itemtype%]");
+		Skript.registerEvent(SimpleEvent.class, PlayerChatEvent.class, "chat[ting]");
+		Skript.registerEvent(SimpleEvent.class, PlayerFishEvent.class, "fish[ing]");
 		final class EvtLeftclick extends EvtItem {
 			@Override
 			public boolean check(final Event e) {
 				return (((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_BLOCK) && super.check(e);
 			}
 		}
-		Skript.addEvent(EvtLeftclick.class, PlayerInteractEvent.class, "leftclick[ing] [on %itemtype%]");
+		Skript.registerEvent(EvtLeftclick.class, PlayerInteractEvent.class, "leftclick[ing] [on %itemtype%]");
 		final class EvtPressurePlate extends SimpleEvent {
 			@Override
 			public boolean check(final Event e) {
 				return ((PlayerInteractEvent) e).getAction() == Action.PHYSICAL;
 			}
 		}
-		Skript.addEvent(EvtPressurePlate.class, PlayerInteractEvent.class, "[pressure] plate");
-		Skript.addEvent(SimpleEvent.class, PlayerItemHeldEvent.class, "item held change");
-		Skript.addEvent(SimpleEvent.class, PlayerJoinEvent.class, "join[ing]");
-		Skript.addEvent(SimpleEvent.class, PlayerKickEvent.class, "kick|being kicked");
-		Skript.addEvent(SimpleEvent.class, PlayerLoginEvent.class, "login|logging in");
-		Skript.addEvent(SimpleEvent.class, PlayerPickupItemEvent.class, "pickup|picking up");
-		Skript.addEvent(SimpleEvent.class, PlayerPortalEvent.class, "portal");
-		Skript.addEvent(SimpleEvent.class, PlayerPreLoginEvent.class, "prelogin");
-		Skript.addEvent(SimpleEvent.class, PlayerQuitEvent.class, "quit[ting]");
-		Skript.addEvent(SimpleEvent.class, PlayerRespawnEvent.class, "respawn[ing]");
-		Skript.addEvent(SimpleEvent.class, PlayerTeleportEvent.class, "teleport[ing]");
-		Skript.addEvent(SimpleEvent.class, PlayerToggleSneakEvent.class, "toggl(e|ing) sneak", "skeak toggle");
-		Skript.addEvent(SimpleEvent.class, PlayerVelocityEvent.class, "player velocity");
-		Skript.addEvent(SimpleEvent.class, PortalCreateEvent.class, "portal create");
-		Skript.addEvent(SimpleEvent.class, ProjectileHitEvent.class, "projectile hit");
-		Skript.addEvent(SimpleEvent.class, BlockRedstoneEvent.class, "redstone");
-		Skript.addEvent(SimpleEvent.class, SignChangeEvent.class, "sign change");
-		Skript.addEvent(SimpleEvent.class, SpawnChangeEvent.class, "spawn change");
-		Skript.addEvent(SimpleEvent.class, VehicleCreateEvent.class, "vehicle create");
-		Skript.addEvent(SimpleEvent.class, VehicleDestroyEvent.class, "vehicle destroy");
-		Skript.addEvent(SimpleEvent.class, VehicleEnterEvent.class, "vehicle enter");
-		Skript.addEvent(SimpleEvent.class, VehicleExitEvent.class, "vehicle exit");
-		Skript.addEvent(SimpleEvent.class, WorldInitEvent.class, "world init");
-		Skript.addEvent(SimpleEvent.class, WorldLoadEvent.class, "world load[ing]");
-		Skript.addEvent(SimpleEvent.class, WorldSaveEvent.class, "world sav(e|ing)");
-		Skript.addEvent(SimpleEvent.class, WorldUnloadEvent.class, "world unload[ing]");
-		Skript.addEvent(SimpleEvent.class, PlayerToggleSprintEvent.class, "sprint toggle", "toggl(e|ing) sprint");
+		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class, "[pressure] plate");
+		Skript.registerEvent(SimpleEvent.class, PlayerItemHeldEvent.class, "item held change");
+		Skript.registerEvent(SimpleEvent.class, PlayerJoinEvent.class, "join[ing]");
+		Skript.registerEvent(SimpleEvent.class, PlayerKickEvent.class, "kick|being kicked");
+		Skript.registerEvent(SimpleEvent.class, PlayerLoginEvent.class, "login|logging in");
+		Skript.registerEvent(SimpleEvent.class, PlayerPickupItemEvent.class, "pickup|picking up");
+		Skript.registerEvent(SimpleEvent.class, PlayerPortalEvent.class, "portal");
+		Skript.registerEvent(SimpleEvent.class, PlayerPreLoginEvent.class, "prelogin");
+		Skript.registerEvent(SimpleEvent.class, PlayerQuitEvent.class, "quit[ting]");
+		Skript.registerEvent(SimpleEvent.class, PlayerRespawnEvent.class, "respawn[ing]");
+		Skript.registerEvent(SimpleEvent.class, PlayerTeleportEvent.class, "teleport[ing]");
+		Skript.registerEvent(SimpleEvent.class, PlayerToggleSneakEvent.class, "toggl(e|ing) sneak", "skeak toggle");
+		Skript.registerEvent(SimpleEvent.class, PlayerVelocityEvent.class, "player velocity");
+		Skript.registerEvent(SimpleEvent.class, PortalCreateEvent.class, "portal create");
+		Skript.registerEvent(SimpleEvent.class, ProjectileHitEvent.class, "projectile hit");
+		Skript.registerEvent(SimpleEvent.class, BlockRedstoneEvent.class, "redstone");
+		Skript.registerEvent(SimpleEvent.class, SignChangeEvent.class, "sign change");
+		Skript.registerEvent(SimpleEvent.class, SpawnChangeEvent.class, "spawn change");
+		Skript.registerEvent(SimpleEvent.class, VehicleCreateEvent.class, "vehicle create");
+		Skript.registerEvent(SimpleEvent.class, VehicleDamageEvent.class, "vehicle damage");
+		Skript.registerEvent(SimpleEvent.class, VehicleDestroyEvent.class, "vehicle destroy");
+		Skript.registerEvent(SimpleEvent.class, VehicleEnterEvent.class, "vehicle enter");
+		Skript.registerEvent(SimpleEvent.class, VehicleExitEvent.class, "vehicle exit");
+		Skript.registerEvent(SimpleEvent.class, WorldInitEvent.class, "world init");
+		Skript.registerEvent(SimpleEvent.class, WorldLoadEvent.class, "world load[ing]");
+		Skript.registerEvent(SimpleEvent.class, WorldSaveEvent.class, "world sav(e|ing)");
+		Skript.registerEvent(SimpleEvent.class, WorldUnloadEvent.class, "world unload[ing]");
+		Skript.registerEvent(SimpleEvent.class, PlayerToggleSprintEvent.class, "sprint toggle", "toggl(e|ing) sprint");
 		
 	}
 	

@@ -43,9 +43,9 @@ import ch.njol.util.Checker;
 public class EvtRightclick extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtRightclick.class, Skript.array(PlayerInteractEvent.class, PlayerInteractEntityEvent.class),
-				"rightclick[ing] [on %itemtype%] [(with|using|holding) %itemtype%]",
-				"rightclick[ing] [on %entitytype%] [(with|using|holding) %itemtype%]");
+		Skript.registerEvent(EvtRightclick.class, Skript.array(PlayerInteractEvent.class, PlayerInteractEntityEvent.class),
+				"rightclick[ing] [on %entitytype%] [(with|using|holding) %itemtype%]",// this must be the first
+				"rightclick[ing] [on %itemtype%] [(with|using|holding) %itemtype%]");
 	}
 	
 	private Literal<ItemType> blocks = null;
@@ -55,9 +55,9 @@ public class EvtRightclick extends SkriptEvent {
 	@Override
 	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		if (matchedPattern == 0)
-			blocks = (Literal<ItemType>) args[0];
-		else
 			entities = (Literal<EntityType>) args[0];
+		else
+			blocks = (Literal<ItemType>) args[0];
 		tools = (Literal<ItemType>) args[1];
 	}
 	
@@ -94,7 +94,7 @@ public class EvtRightclick extends SkriptEvent {
 				}
 			});
 		}
-		return true;
+		return false;
 	}
 	
 	@Override

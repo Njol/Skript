@@ -57,25 +57,39 @@ public class SectionValidator implements NodeValidator {
 		allowUndefinedEntries = true;
 	}
 	
-	public void addNode(final String name, final NodeValidator v, final boolean optional) {
+	public SectionValidator addNode(final String name, final NodeValidator v, final boolean optional) {
 		Validate.notNull(name, v);
 		nodes.put(name, new NodeInfo(v, optional));
+		return this;
 	}
 	
-	public void addEntry(final String name, final boolean optional) {
+	public SectionValidator addEntry(final String name, final boolean optional) {
 		addNode(name, new EntryValidator(), optional);
+		return this;
 	}
 	
-	public void addEntry(final String name, final Setter<String> setter, final boolean optional) {
+	public SectionValidator addEntry(final String name, final Setter<String> setter, final boolean optional) {
 		addNode(name, new EntryValidator(setter), optional);
+		return this;
 	}
 	
-	public <T> void addEntry(final String name, final Class<T> c, final Setter<T> setter, final boolean optional) {
+	public <T> SectionValidator addEntry(final String name, final Class<T> c, final Setter<T> setter, final boolean optional) {
 		addNode(name, new ParsedEntryValidator<T>(c, setter), optional);
+		return this;
 	}
 	
-	public void addSection(final String name, final boolean optional) {
+	public SectionValidator addSection(final String name, final boolean optional) {
 		addNode(name, new SectionValidator(), optional);
+		return this;
+	}
+
+	public boolean validate(final Node node, boolean printErrors) {
+		if (!validate(node)) {
+			if (printErrors && Skript.getCurrentErrorSession() != null)
+				Skript.getCurrentErrorSession().printErrors();
+			return false;
+		}
+		return true;
 	}
 	
 	@Override
@@ -88,7 +102,7 @@ public class SectionValidator implements NodeValidator {
 		for (final Entry<String, NodeInfo> e : nodes.entrySet()) {
 			final Node n = ((SectionNode) node).get(e.getKey());
 			if (n == null && !e.getValue().optional) {
-				Skript.error("Required entry '" + e.getKey() + "' is missing in " + node.getConfig().getFileName());
+				Skript.error("Required entry '" + e.getKey() + "' is missing in '" + node.getName() + "' ("+ node.getConfig().getFileName() + ", starting at line "+node.getLine() + ")");
 				ok = false;
 			} else if (n != null) {
 				ok &= e.getValue().v.validate(n);
@@ -113,12 +127,14 @@ public class SectionValidator implements NodeValidator {
 		Skript.error("'" + node.getName() + "' is not a section (like 'blah:', followed by one or more indented lines)");
 	}
 	
-	public void setAllowUndefinedSections(final boolean b) {
+	public SectionValidator setAllowUndefinedSections(final boolean b) {
 		allowUndefinedSections = b;
+		return this;
 	}
 	
-	public void setAllowUndefinedEntries(final boolean b) {
+	public SectionValidator setAllowUndefinedEntries(final boolean b) {
 		allowUndefinedEntries = b;
+		return this;
 	}
 	
 }

@@ -39,7 +39,7 @@ import ch.njol.skript.util.VariableString;
 public class EffCommand extends Effect {
 	
 	static {
-		Skript.addEffect(EffCommand.class,
+		Skript.registerEffect(EffCommand.class,
 				"[execute] command %variablestrings% [by %commandsenders%]",
 				"[execute] %commandsenders% command %variablestrings%",
 				"(let|make) %commandsenders% execute [command] %variablestrings%");

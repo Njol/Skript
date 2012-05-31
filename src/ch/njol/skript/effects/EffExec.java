@@ -38,7 +38,7 @@ import ch.njol.skript.util.ErrorSession;
 public class EffExec extends Effect {
 	
 	static {
-		Skript.addEffect(EffExec.class, "exec[ute] %string%");
+		Skript.registerEffect(EffExec.class, "exec[ute] %string%");
 	}
 	
 	private Variable<String> input;

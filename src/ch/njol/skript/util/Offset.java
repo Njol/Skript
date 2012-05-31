@@ -29,6 +29,9 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.util.Vector;
 
+import ch.njol.skript.Skript;
+import ch.njol.util.StringUtils;
+
 /**
  * 
  * @author Peter Güttinger
@@ -107,14 +110,14 @@ public class Offset {
 		if (!isOffset)
 			return "at";
 		String r = "";
-		final BlockFace[] dirs = {BlockFace.NORTH, BlockFace.UP, BlockFace.EAST};
+		final BlockFace[] dirs = {BlockFace.SOUTH, BlockFace.UP, BlockFace.WEST};// blockfaces with only positive mods
 		for (final int i : new int[] {0, 2, 1}) {
 			if (mod[i] == 0)
 				continue;
 			if (mod[i] * Utils.getBlockFaceDir(dirs[i], i) > 0)
-				r += (r.isEmpty() ? "" : " ") + mod[i] + " " + getFaceName(dirs[i]);
+				r += (r.isEmpty() ? "" : " ") + StringUtils.toString(mod[i], Skript.NUMBERACCURACY) + " " + getFaceName(dirs[i]);
 			else
-				r += (r.isEmpty() ? "" : " ") + -mod[i] + " " + getFaceName(dirs[i].getOppositeFace());
+				r += (r.isEmpty() ? "" : " ") + StringUtils.toString(-mod[i], Skript.NUMBERACCURACY) + " " + getFaceName(dirs[i].getOppositeFace());
 		}
 		return r;
 	}
@@ -176,6 +179,8 @@ public class Offset {
 	public static Offset parse(final String s) {
 		if (s.isEmpty())
 			return null;
+		if (s.equalsIgnoreCase("at"))
+			return new Offset(0, 0, 0);
 		final double[] mod = new double[3];
 		final String[] args = s.split(" ");
 		double amount = -1;
@@ -190,16 +195,14 @@ public class Offset {
 				continue;
 			} catch (final NumberFormatException e) {}
 			final BlockFace f = Utils.getBlockFace(arg, false);
-			if (f != null) {
-				if (amount == -1)
-					amount = 1;
-				mod[0] += f.getModX() * amount;
-				mod[1] += f.getModY() * amount;
-				mod[2] += f.getModZ() * amount;
-				amount = -1;
-			} else {
+			if (f == null)
 				return null;
-			}
+			if (amount == -1)
+				amount = 1;
+			mod[0] += f.getModX() * amount;
+			mod[1] += f.getModY() * amount;
+			mod[2] += f.getModZ() * amount;
+			amount = -1;
 		}
 		return new Offset(mod);
 	}

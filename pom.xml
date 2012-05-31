@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>Skript</groupId>
   <artifactId>Skript</artifactId>
-  <version>1.0 pre-6</version>
+  <version>1.0</version>
   <name>Skript</name>
   <dependencies>
   	<dependency>
@@ -21,7 +21,7 @@
   <repositories>
     <repository>
       <id>bukkit-repo</id>
-      <url>http://repo.bukkit.org/content/groups/public/</url>
+      <url>http://repo.bukkit.org/content/repositories/releases/</url>
     </repository>
   </repositories>
   <dependencyManagement>
@@ -29,7 +29,7 @@
   		<dependency>
   			<groupId>org.bukkit</groupId>
   			<artifactId>bukkit</artifactId>
-  			<version>1.2.5-R1.0</version>
+  			<version>1.2.5-R3.0</version>
   		</dependency>
   		<dependency>
   			<groupId>org.bukkit</groupId>
@@ -39,7 +39,7 @@
   		<dependency>
   			<groupId>org.bukkit</groupId>
   			<artifactId>craftbukkit</artifactId>
-  			<version>1.2.5-R1.0</version>
+  			<version>1.2.5-R3.0</version>
   		</dependency>
   	</dependencies>
   </dependencyManagement>

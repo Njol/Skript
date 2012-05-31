@@ -39,7 +39,7 @@ import ch.njol.skript.lang.Variable;
 public class LoopVarWorld extends LoopVar<World> {
 	
 	static {
-		Skript.addLoop(LoopVarWorld.class, World.class, "worlds");
+		Skript.registerLoop(LoopVarWorld.class, World.class, "worlds");
 	}
 	
 	@Override

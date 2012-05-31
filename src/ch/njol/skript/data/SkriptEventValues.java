@@ -39,14 +39,14 @@ public class SkriptEventValues {
 	
 	static {
 		
-		Skript.addEventValue(CommandEvent.class, CommandSender.class, new Getter<CommandSender, CommandEvent>() {
+		Skript.registerEventValue(CommandEvent.class, CommandSender.class, new Getter<CommandSender, CommandEvent>() {
 			@Override
 			public CommandSender get(final CommandEvent e) {
 				return e.getSender();
 			}
 		});
 		
-		Skript.addEventValue(ScheduledEvent.class, World.class, new Getter<World, ScheduledEvent>() {
+		Skript.registerEventValue(ScheduledEvent.class, World.class, new Getter<World, ScheduledEvent>() {
 			@Override
 			public World get(final ScheduledEvent e) {
 				return e.getWorld();

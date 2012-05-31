@@ -46,7 +46,7 @@ public class Trigger extends TriggerSection {
 	@Override
 	public boolean run(final Event e) {
 		try {
-			super.run(e, event.check(e));
+			super.run(e, true);// checked in SkriptEventHandler
 		} catch (final Exception ex) {
 			if (ex.getStackTrace().length != 0)// empty exceptions have already been printed
 				Skript.exception(ex);
@@ -61,6 +61,10 @@ public class Trigger extends TriggerSection {
 	
 	public String getName() {
 		return name;
+	}
+	
+	public SkriptEvent getEvent() {
+		return event;
 	}
 	
 }

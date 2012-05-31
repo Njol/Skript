@@ -26,8 +26,10 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Effect;
+import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
 
 /**
@@ -38,16 +40,18 @@ import ch.njol.skript.lang.Variable;
 public class EffSet extends Effect {
 	
 	static {
-		Skript.addEffect(EffSet.class, "set %objects% to %objects%");
+		Skript.registerEffect(EffSet.class, "set %objects% to %objects%");
 	}
 	
 	private Variable<?> setter;
 	private Variable<?> setted;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException, InitException {
 		setted = vars[0];
 		setter = vars[1];
+		if (setted instanceof UnparsedLiteral)
+			throw new InitException();
 		Class<?> r = setted.acceptChange(ch.njol.skript.api.Changer.ChangeMode.SET);
 		if (r == null) {
 			throw new ParseException(setted + " can't be set");

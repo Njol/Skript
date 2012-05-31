@@ -56,7 +56,7 @@ public abstract class Aliases {
 	
 	private final static ItemType everything = new ItemType();
 	static {
-		everything.all = true;
+		everything.setAll(true);
 		everything.add(new ItemData());
 		// this is not an alias!
 	}
@@ -95,7 +95,7 @@ public abstract class Aliases {
 					}
 					final ItemType t = v.getValue().intersection(value);
 					if (t != null)
-						r.putAll(getAliases(n, addInfo(t, n), variations));
+						r.putAll(getAliases(n, t, variations));
 					else
 						Skript.warning("'" + n + "' results in an empty alias (i.e. it doesn't map to any id/data), it will thus be ignored");
 				}
@@ -105,31 +105,11 @@ public abstract class Aliases {
 				Skript.error("unknown variation {" + m.group(1) + "}");
 			}
 		} else {
-			r.put(name, addInfo(value, name));
+			r.put(name, value);
 		}
 		return r;
 	}
-	
-	/**
-	 * 
-	 * @param t
-	 * @param name lowercase string
-	 * @return
-	 */
-	private static ItemType addInfo(final ItemType t, final String name) {
-		ItemType i;
-		if (name.endsWith(" block") && (i = getAlias(name.substring(0, name.length() - " block".length()))) != null) {
-			i.setBlock(t);
-		} else if (name.endsWith(" item") && (i = getAlias(name.substring(0, name.length() - " item".length()))) != null) {
-			i.setItem(t);
-		} else if ((i = getAlias(name + " item")) != null) {
-			t.setItem(i);
-		} else if ((i = getAlias(name + " block")) != null) {
-			t.setBlock(i);
-		}
-		return t;
-	}
-	
+
 	/**
 	 * 
 	 * @param name mixedcase string
@@ -169,17 +149,17 @@ public abstract class Aliases {
 			
 			if (e.getValue().getTypes().size() == 1) {
 				final ItemData d = e.getValue().getTypes().get(0);
-				MaterialName n = materialNames.get(Integer.valueOf(d.typeid));
+				MaterialName n = materialNames.get(Integer.valueOf(d.getId()));
 				if (d.dataMin == -1 && d.dataMax == -1) {
 					if (n != null) {
-						if (n.name.equals("" + d.typeid))
+						if (n.name.equals("" + d.getId()))
 							n.name = s;
 						continue;
 					}
-					materialNames.put(Integer.valueOf(d.typeid), new MaterialName(d.typeid, s));
+					materialNames.put(Integer.valueOf(d.getId()), new MaterialName(d.getId(), s));
 				} else {
 					if (n == null)
-						materialNames.put(Integer.valueOf(d.typeid), n = new MaterialName(d.typeid, "" + d.typeid));
+						materialNames.put(Integer.valueOf(d.getId()), n = new MaterialName(d.getId(), "" + d.getId()));
 					n.names.put(new Pair<Short, Short>(d.dataMin, d.dataMax), s);
 				}
 			}
@@ -197,7 +177,21 @@ public abstract class Aliases {
 			this.name = name;
 		}
 		
-		public String get(final short dataMin, final short dataMax) {
+		public String toString(final short dataMin, final short dataMax) {
+			if (names == null)
+				return name;
+			String s = names.get(new Pair<Short, Short>(dataMin, dataMax));
+			if (s != null)
+				return s;
+			if (dataMin == -1 && dataMax == -1 || dataMin == 0 && dataMax == 0)
+				return name;
+			s = names.get(new Pair<Short, Short>((short) -1, (short) -1));
+			if (s != null)
+				return s;
+			return name + ":" + (dataMin == -1 ? 0 : dataMin) + (dataMin == dataMax ? "" : "-" + (dataMax == -1 ? (id <= Skript.MAXBLOCKID ? 15 : Short.MAX_VALUE) : dataMax));
+		}
+		
+		public String getDebugMessage(final short dataMin, final short dataMax) {
 			if (names == null)
 				return name;
 			final String s = names.get(new Pair<Short, Short>(dataMin, dataMax));
@@ -220,12 +214,24 @@ public abstract class Aliases {
 		return getMaterialName(id, data, data);
 	}
 	
+	public final static String getDebugMaterialName(final int id, final short data) {
+		return getDebugMaterialName(id, data, data);
+	}
+	
 	public final static String getMaterialName(final int id, final short dataMin, final short dataMax) {
 		final MaterialName n = materialNames.get(Integer.valueOf(id));
 		if (n == null) {
 			return "" + id;
 		}
-		return n.get(dataMin, dataMax);
+		return n.toString(dataMin, dataMax);
+	}
+	
+	public final static String getDebugMaterialName(final int id, final short dataMin, final short dataMax) {
+		final MaterialName n = materialNames.get(Integer.valueOf(id));
+		if (n == null) {
+			return "" + id + ":" + dataMin + (dataMax == dataMin ? "" : "-" + dataMax);
+		}
+		return n.getDebugMessage(dataMin, dataMax);
 	}
 	
 	/**
@@ -287,32 +293,32 @@ public abstract class Aliases {
 		final String lc = s.toLowerCase(Locale.ENGLISH);
 		if (s.contains(",") || lc.contains(" and ") || lc.contains(" or "))
 			return null;
-		//			throw new SkriptAPIException("Invalid method call");
+//			throw new SkriptAPIException("Invalid method call");
 		
 		final ItemType t = new ItemType();
 		
 		if (lc.matches("\\d+ of (all|every) .+")) {
-			t.amount = Integer.parseInt(s.split(" ", 2)[0]);
-			t.all = true;
+			t.setAmount(Integer.parseInt(s.split(" ", 2)[0]));
+			t.setAll(true);
 			s = s.split(" ", 4)[3];
 		} else if (lc.matches("\\d+ (of )?.+")) {
-			t.amount = Integer.parseInt(s.split(" ", 2)[0]);
+			t.setAmount(Integer.parseInt(s.split(" ", 2)[0]));
 			if (s.matches("\\d+ of .+"))
 				s = s.split(" ", 3)[2];
 			else
 				s = s.split(" ", 2)[1];
 		} else if (lc.matches("an? .+")) {
-			t.amount = 1;
+			t.setAmount(1);
 			s = s.split(" ", 2)[1];
 		} else if (lc.matches("(all|every) .+")) {
-			t.all = true;
+			t.setAll(true);
 			s = s.split(" ", 2)[1];
 		}
 		
 		if (parseType(s, t) == null)
 			return null;
 		
-		if (!t.hasTypes())
+		if (t.numTypes() == 0)
 			return null;
 		
 		return t;
@@ -342,14 +348,13 @@ public abstract class Aliases {
 			t.add(data);
 			return t;
 		} else if (type.matches("\\d+")) {
-			ItemData d = new ItemData();
-			d.typeid = Integer.parseInt(type);
-			if (Material.getMaterial(d.typeid) == null) {
-				Skript.error("There doesn't exist a material with id " + d.typeid + "!");
+			ItemData d = new ItemData(Integer.parseInt(type));
+			if (Material.getMaterial(d.getId()) == null) {
+				Skript.error("There doesn't exist a material with id " + d.getId() + "!");
 				return null;
 			}
 			if (data != null) {
-				if (d.typeid <= Skript.MAXBLOCKID && (data.dataMax > 15 || data.dataMin > 15)) {
+				if (d.getId() <= Skript.MAXBLOCKID && (data.dataMax > 15 || data.dataMin > 15)) {
 					Skript.error("Blocks only have data values from 0 to 15");
 					return null;
 				}
@@ -357,14 +362,16 @@ public abstract class Aliases {
 			}
 			t.add(d);
 			return t;
-		} else if ((i = getAlias(type, t.amount == 1, t.all)) != null) {
+		} else if ((i = getAlias(type, t.getAmount() == 1, t.isAll())) != null) {
 			for (ItemData d : i) {
 				if (data != null) {
-					if (d.typeid <= Skript.MAXBLOCKID && (data.dataMax > 15 || data.dataMin > 15)) {
+					if (d.getId() <= Skript.MAXBLOCKID && (data.dataMax > 15 || data.dataMin > 15)) {
 						Skript.error("Blocks only have data values from 0 to 15");
 						return null;
 					}
 					d = d.intersection(data);
+				} else {
+					d = d.clone();
 				}
 				t.add(d);
 			}
@@ -398,7 +405,7 @@ public abstract class Aliases {
 		if (lc.endsWith(" block")) {
 			if ((i = getAlias(s.substring(0, s.length() - " block".length()), true, ignorePluralCheck)) != null) {
 				for (final ItemData d : i)
-					if (d.typeid > Skript.MAXBLOCKID)
+					if (d.getId() > Skript.MAXBLOCKID)
 						i.remove(d);
 				if (!i.iterator().hasNext())
 					return null;
@@ -407,7 +414,7 @@ public abstract class Aliases {
 		} else if (lc.endsWith(" item")) {
 			if ((i = getAlias(s.substring(0, s.length() - " item".length()), true, ignorePluralCheck)) != null) {
 				for (final ItemData d : i)
-					if (d.typeid != -1 && d.typeid <= Skript.MAXBLOCKID)
+					if (d.getId() != -1 && d.getId() <= Skript.MAXBLOCKID)
 						i.remove(d);
 				if (!i.iterator().hasNext())
 					return null;
@@ -418,21 +425,23 @@ public abstract class Aliases {
 	}
 	
 	/**
-	 * gets the data part of an item data
+	 * Gets the data part of an item data
 	 * 
-	 * @param s Everything after & not including ':'
+	 * @param s Everything after ':'
 	 * @return ItemData with only the dataMin and dataMax set
 	 */
 	private final static ItemData parseData(final String s) {
-		if (!s.matches("(\\d+)?(-(\\d+)?)?"))
+		if (s.isEmpty())
+			return new ItemData();
+		if (!s.matches("\\d+(-\\d+)?"))
 			return null;
 		final ItemData t = new ItemData();
 		int i = s.indexOf('-');
 		if (i == -1)
 			i = s.length();
-		t.dataMin = (i == 0 ? -1 : Short.parseShort(s.substring(0, i)));
-		t.dataMax = (i == s.length() ? t.dataMin : (i == s.length() - 1 ? -1 : Short.parseShort(s.substring(i + 1, s.length()))));
-		if (t.dataMax != -1 && t.dataMax < t.dataMin) {
+		t.dataMin = Short.parseShort(s.substring(0, i));
+		t.dataMax = (i == s.length() ? t.dataMin : Short.parseShort(s.substring(i + 1, s.length())));
+		if (t.dataMax < t.dataMin) {
 			Skript.error("the first number of a data range must be smaller than the second");
 			return null;
 		}

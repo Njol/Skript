@@ -31,16 +31,13 @@ import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.intern.ConvertedVariable;
-import ch.njol.skript.api.intern.SimpleConvertedVariable;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.util.Checker;
 
 /**
- * Represents a variable. Variables are used within conditions, effects and other variables.
+ * An implementation of the {@link Variable} interface. You should usually extend this class to make a new variable.
  * 
  * @author Peter Güttinger
- * @see Skript#addVariable(Class, Class, String...)
- * @see Expression
  */
 public abstract class SimpleVariable<T> implements Variable<T> {
 	
@@ -122,23 +119,14 @@ public abstract class SimpleVariable<T> implements Variable<T> {
 	}
 	
 	/**
-	 * This is the internal method to get a variable's values.
-	 * To get the variable's value from the outside use {@link #getSingle(Event, boolean)}.
+	 * This is the internal method to get a variable's values.<br>
+	 * To get the variable's value from the outside use {@link #getSingle(Event, boolean)} or {@link #getArray(Event)}.
 	 * 
-	 * @param e
-	 * @return
+	 * @param e The event
+	 * @return An array of values for this event. May contain nulls.
 	 */
 	protected abstract T[] getAll(Event e);
 	
-	/**
-	 * Checks through the values to find whether this variable matches the checker.
-	 * 
-	 * @param e
-	 * @param c
-	 * @param cond
-	 * @param includeNull
-	 * @return
-	 */
 	@Override
 	public final boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
 		return check(e, c, cond.isNegated());
@@ -150,29 +138,32 @@ public abstract class SimpleVariable<T> implements Variable<T> {
 	}
 	
 	private final boolean check(final Event e, final Checker<? super T> c, final boolean invert) throws ClassCastException {
+		return check(getAll(e), c, invert, and);
+	}
+	
+	public final static <T> boolean check(final T[] all, final Checker<? super T> c, final boolean invert, final boolean and) throws ClassCastException {
 		boolean hasElement = false;
-		boolean hasNonNullElement = false;
-		for (final T t : getAll(e)) {
-			hasElement = true;
-			if (t != null)
-				hasNonNullElement = true;
-			final boolean b = (t == null ? false : c.check(t));
-			if (invert) {
-				if (and && b)
-					return false;
-				if (!and && !b)
-					return true;
-			} else {
-				if (and && !b)
-					return false;
-				if (!and && b)
-					return true;
+		if (all != null) {
+			for (final T t : all) {
+				if (t == null)
+					continue;
+				hasElement = true;
+				final boolean b = c.check(t);
+				if (invert) {
+					if (and && b)
+						return false;
+					if (!and && !b)
+						return true;
+				} else {
+					if (and && !b)
+						return false;
+					if (!and && b)
+						return true;
+				}
 			}
 		}
 		if (!hasElement)
 			return false;
-		if (!hasNonNullElement)
-			return invert;
 		return and;
 	}
 	
@@ -182,30 +173,22 @@ public abstract class SimpleVariable<T> implements Variable<T> {
 	 * 
 	 * @param to the desired return type of the returned variable
 	 * @return variable with the desired return type or null if it can't be converted to the given type
-	 * @see SimpleConvertedVariable#newInstance(SimpleVariable, Class)
+	 * @see SimpleConvertedVariable#newInstance(Variable, Class)
 	 * @see Converter
 	 * @see SimpleVariable#getConvertedVariable(Class)
 	 */
-	protected <R> ConvertedVariable<? extends R> getConvertedVar(final Class<R> to) {
+	protected <R> ConvertedVariable<T, ? extends R> getConvertedVar(final Class<R> to) {
 		if (to.isAssignableFrom(getReturnType())) {
 			throw new SkriptAPIException("invalid call to Variable.getConvertedVar (current type: " + getReturnType().getName() + ", requested type: " + to.getName() + ")");
 		}
-		return SimpleConvertedVariable.newInstance(this, to);
+		return ConvertedVariable.newInstance(this, to);
 	}
 	
-	/**
-	 * Tries to convert this variable to the given type.
-	 * 
-	 * @param to the desired return type of the returned variable
-	 * @return Variable with the desired return type or null if the variable can't be converted to the given type. Returns the variable itself if it already returns the desired
-	 *         type.
-	 * @see Converter
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public final <R> SimpleVariable<? extends R> getConvertedVariable(final Class<R> to) {
+	public final <R> Variable<? extends R> getConvertedVariable(final Class<R> to) {
 		if (to.isAssignableFrom(getReturnType()))
-			return (SimpleVariable<? extends R>) this;
+			return (Variable<? extends R>) this;
 		return this.getConvertedVar(to);
 	}
 	

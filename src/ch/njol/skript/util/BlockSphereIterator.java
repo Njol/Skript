@@ -24,6 +24,7 @@ package ch.njol.skript.util;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 
+import ch.njol.skript.Skript;
 import ch.njol.util.Checker;
 import ch.njol.util.iterator.CheckedIterator;
 
@@ -33,7 +34,7 @@ public class BlockSphereIterator extends CheckedIterator<Block> {
 		super(new AABB(center, 2 * radius + 0.01, 2 * radius + 0.01, 2 * radius + 0.01).iterator(), new Checker<Block>() {
 			@Override
 			public boolean check(final Block b) {
-				return center.distanceSquared(b.getLocation()) <= radius * radius;
+				return center.distanceSquared(b.getLocation()) - Skript.EPSILON < radius * radius;
 			}
 		});
 	}

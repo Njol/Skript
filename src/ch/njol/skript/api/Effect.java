@@ -31,7 +31,7 @@ import ch.njol.skript.lang.ExprParser;
  * An effect which is executed once execution of the trigger is at it's entry. After execution the trigger will continue with the next element in the trigger item list.
  * 
  * @author Peter Güttinger
- * @see Skript#addEffect(Class, String...)
+ * @see Skript#registerEffect(Class, String...)
  */
 public abstract class Effect extends TopLevelExpression {
 	protected Effect() {}

@@ -40,10 +40,10 @@ import ch.njol.skript.lang.Literal;
  * It is also needed if the event has parameters.
  * 
  * @author Peter Güttinger
- * @see Skript#addEvent(Class, Class, String...)
- * @see Skript#addEvent(Class, Class[], String...)
+ * @see Skript#registerEvent(Class, Class, String...)
+ * @see Skript#registerEvent(Class, Class[], String...)
  */
-public abstract class SkriptEvent implements Debuggable, Expression {
+public abstract class SkriptEvent implements Expression, Debuggable {
 	
 	public static class SkriptEventInfo<E extends SkriptEvent> extends ExpressionInfo<E> {
 		

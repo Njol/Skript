@@ -22,48 +22,98 @@
 package ch.njol.skript.variables.base;
 
 import java.lang.reflect.Array;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.Parser;
+import ch.njol.skript.api.DefaultVariable;
+import ch.njol.skript.api.Getter;
+import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
 
 /**
- * A useful class for creating default variables. It simply returns the event value of the given type.
+ * A useful class for creating default variables. It simply returns the event value of the given type.<br/>
+ * This class can be used as default variable with <code>new EventValueVariable&lt;T&gt;(T.class)</code> or extended to make it manually placeable in expressions with:
+ * 
+ * <pre>
+ * class MyVariable extends EventValueVariable&lt;T&gt; {
+ * public MyVariable() {
+ * 	super(T.class);
+ * }
+ * </pre>
  * 
  * @author Peter Güttinger
- * @see Skript#addClass(String, Class, Class, Parser, String...)
+ * @see Skript#registerClass(ch.njol.skript.api.ClassInfo)
  */
-public abstract class EventValueVariable<T> extends SimpleVariable<T> {
+public class EventValueVariable<T> extends SimpleVariable<T> implements DefaultVariable<T> {
 	
 	private final Class<T> c;
+	private final T[] one;
 	private final Changer<T> changer;
+	private final Map<Class<? extends Event>, Getter<? extends T, ?>> getters = new HashMap<Class<? extends Event>, Getter<? extends T, ?>>();
 	
 	public EventValueVariable(final Class<T> c) {
-		this.c = c;
-		changer = null;
-	}
-	
-	public EventValueVariable(final Class<T> c, final Changer<T> changer) {
-		this.c = c;
-		this.changer = changer;
+		this(c, null);
 	}
 	
 	@SuppressWarnings("unchecked")
-	@Override
-	protected final T[] getAll(final Event e) {
-		final T[] t = (T[]) Array.newInstance(c, 1);
-		t[0] = Skript.getEventValue(e, c);
-		return t;
+	public EventValueVariable(final Class<T> c, final Changer<T> changer) {
+		this.c = c;
+		one = (T[]) Array.newInstance(c, 1);
+		this.changer = changer;
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
+	protected final T[] getAll(final Event e) {
+		if ((one[0] = getValue(e)) == null)
+			return null;
+		return one;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <E extends Event> T getValue(final E e) {
+		final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getters.get(e.getClass());
+		if (g != null)
+			return g.get(e);
+		
+		for (final Entry<Class<? extends Event>, Getter<? extends T, ?>> p : getters.entrySet()) {
+			if (p.getKey().isAssignableFrom(e.getClass()))
+				return ((Getter<? extends T, ? super E>) p.getValue()).get(e);
+		}
+		
+		return null;
+	}
+	
+	@Override
+	public final void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+		init();
+	}
+	
+	@Override
+	public void init() throws ParseException {
+		boolean hasValue = false;
+		for (final Class<? extends Event> e : TriggerFileLoader.currentEvents) {
+			if (getters.containsKey(e)) {
+				hasValue = true;
+				continue;
+			}
+			final Getter<? extends T, ?> getter = Skript.getEventValueGetter(e, c);
+			if (getter != null) {
+				getters.put(e, getter);
+				hasValue = true;
+			}
+		}
+		if (!hasValue)
+			throw new ParseException("There's no " + Skript.getExactClassName(c) + " in this event");
+	}
 	
 	@Override
 	public Class<T> getReturnType() {
@@ -79,7 +129,7 @@ public abstract class EventValueVariable<T> extends SimpleVariable<T> {
 	public String getDebugMessage(final Event e) {
 		if (e == null)
 			return "event-" + c.getName();
-		return Skript.getDebugMessage(Skript.getEventValue(e, c));
+		return Skript.getDebugMessage(getValue(e));
 	}
 	
 	@Override
@@ -98,6 +148,7 @@ public abstract class EventValueVariable<T> extends SimpleVariable<T> {
 	
 	@Override
 	public String toString() {
-		return "event-" + c.getSimpleName();
+		return "event-" + Skript.getExactClassName(c);
 	}
+	
 }

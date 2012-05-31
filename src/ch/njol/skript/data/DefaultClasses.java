@@ -45,9 +45,11 @@ import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.lang.ExprParser;
 import ch.njol.skript.lang.SimpleLiteral;
+import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.variables.base.EventValueVariable;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -58,17 +60,11 @@ public class DefaultClasses {
 	public DefaultClasses() {}
 	
 	static {
-		Skript.addClass(new ClassInfo<Object>("object", Object.class, null, null));
-	}
-	
-	public static final class FloatDefaultVariable extends SimpleLiteral<Float> {
-		public FloatDefaultVariable() {
-			super(Float.valueOf(1));
-		}
+		Skript.registerClass(new ClassInfo<Object>("object", Object.class, null, null));
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<Float>("float", Float.class, FloatDefaultVariable.class, new Parser<Float>() {
+		Skript.registerClass(new ClassInfo<Float>("float", Float.class, new SimpleLiteral<Float>(1f), new Parser<Float>() {
 			@Override
 			public Float parse(final String s) {
 				try {
@@ -82,20 +78,14 @@ public class DefaultClasses {
 			}
 			
 			@Override
-			public String toString(final Float o) {
-				return o.toString();
+			public String toString(final Float f) {
+				return StringUtils.toString(f, Skript.NUMBERACCURACY);
 			}
 		}));
 	}
 	
-	public static final class DoubleDefaultVariable extends SimpleLiteral<Double> {
-		public DoubleDefaultVariable() {
-			super(Double.valueOf(1));
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Double>("number", "double", Double.class, DoubleDefaultVariable.class, new Parser<Double>() {
+		Skript.registerClass(new ClassInfo<Double>("number", "double", Double.class, new SimpleLiteral<Double>(1.), new Parser<Double>() {
 			@Override
 			public Double parse(final String s) {
 				try {
@@ -109,20 +99,14 @@ public class DefaultClasses {
 			}
 			
 			@Override
-			public String toString(final Double o) {
-				return o.toString();
+			public String toString(final Double d) {
+				return StringUtils.toString(d, Skript.NUMBERACCURACY);
 			}
 		}, "number"));
 	}
 	
-	public static final class BooleanDefaultVariable extends SimpleLiteral<Boolean> {
-		public BooleanDefaultVariable() {
-			super(Boolean.TRUE);
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Boolean>("boolean", Boolean.class, BooleanDefaultVariable.class, new Parser<Boolean>() {
+		Skript.registerClass(new ClassInfo<Boolean>("boolean", Boolean.class, null, new Parser<Boolean>() {
 			@Override
 			public Boolean parse(final String s) {
 				final byte i = Utils.parseBooleanNoError(s);
@@ -140,14 +124,8 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class ByteDefaultVariable extends SimpleLiteral<Byte> {
-		public ByteDefaultVariable() {
-			super(Byte.valueOf((byte) 1));
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Byte>("byte", Byte.class, ByteDefaultVariable.class, new Parser<Byte>() {
+		Skript.registerClass(new ClassInfo<Byte>("byte", Byte.class, new SimpleLiteral<Byte>((byte) 1), new Parser<Byte>() {
 			@Override
 			public Byte parse(final String s) {
 				try {
@@ -164,14 +142,8 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class ShortDefaultVariable extends SimpleLiteral<Short> {
-		public ShortDefaultVariable() {
-			super(Short.valueOf((short) 1));
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Short>("short", Short.class, ShortDefaultVariable.class, new Parser<Short>() {
+		Skript.registerClass(new ClassInfo<Short>("short", Short.class, new SimpleLiteral<Short>((short) 1), new Parser<Short>() {
 			@Override
 			public Short parse(final String s) {
 				try {
@@ -188,14 +160,8 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class IntegerDefaultVariable extends SimpleLiteral<Integer> {
-		public IntegerDefaultVariable() {
-			super(Integer.valueOf(1));
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Integer>("integer", "integer", Integer.class, IntegerDefaultVariable.class, new Parser<Integer>() {
+		Skript.registerClass(new ClassInfo<Integer>("integer", "integer", Integer.class, new SimpleLiteral<Integer>(1), new Parser<Integer>() {
 			@Override
 			public Integer parse(final String s) {
 				try {
@@ -212,14 +178,8 @@ public class DefaultClasses {
 		}, "integers?"));
 	}
 	
-	public static final class LongDefaultVariable extends SimpleLiteral<Long> {
-		public LongDefaultVariable() {
-			super(Long.valueOf(1));
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Long>("long", Long.class, LongDefaultVariable.class, new Parser<Long>() {
+		Skript.registerClass(new ClassInfo<Long>("long", Long.class, new SimpleLiteral<Long>((long) 1), new Parser<Long>() {
 			@Override
 			public Long parse(final String s) {
 				try {
@@ -237,7 +197,7 @@ public class DefaultClasses {
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<String>("string", String.class, null, new Parser<String>() {
+		Skript.registerClass(new ClassInfo<String>("string", String.class, null, new Parser<String>() {
 			@Override
 			public String parse(final String s) {
 				if (!s.startsWith("\"") || !s.endsWith("\""))
@@ -256,14 +216,8 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class TreeTypeDefaultVariable extends SimpleLiteral<TreeType> {
-		public TreeTypeDefaultVariable() {
-			super(TreeType.TREE);
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<TreeType>("tree type", "treetype", TreeType.class, TreeTypeDefaultVariable.class, new Parser<TreeType>() {
+		Skript.registerClass(new ClassInfo<TreeType>("tree type", "treetype", TreeType.class, new SimpleLiteral<TreeType>(TreeType.TREE), new Parser<TreeType>() {
 			
 			@Override
 			public TreeType parse(String s) {
@@ -304,34 +258,26 @@ public class DefaultClasses {
 		}, "tree ?type", "tree"));
 	}
 	
-	public static final class EntityDefaultVariable extends EventValueVariable<Entity> {
-		public EntityDefaultVariable() {
-			super(Entity.class);
-		}
+	static {
+		Skript.registerClass(new ClassInfo<Entity>("entity", Entity.class, new EventValueVariable<Entity>(Entity.class), new Parser<Entity>() {
+			@Override
+			public Entity parse(final String s) {
+				return null;
+			}
+			
+			@Override
+			public String toString(final Entity e) {
+				return EntityType.toString(e);
+			}
+		}));
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<Entity>("entity", Entity.class, EntityDefaultVariable.class, null));
-	}
-	
-	public static final class LivingEntityDefaultVariable extends EventValueVariable<LivingEntity> {
-		public LivingEntityDefaultVariable() {
-			super(LivingEntity.class);
-		}
+		Skript.registerClass(new ClassInfo<LivingEntity>("livingentity", LivingEntity.class, new EventValueVariable<LivingEntity>(LivingEntity.class), null));
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<LivingEntity>("livingentity", LivingEntity.class, LivingEntityDefaultVariable.class, null));
-	}
-	
-	public static final class BlockDefaultVariable extends EventValueVariable<Block> {
-		public BlockDefaultVariable() {
-			super(Block.class);
-		}
-	}
-	
-	static {
-		Skript.addClass(new ClassInfo<Block>("block", Block.class, BlockDefaultVariable.class, new Parser<Block>() {
+		Skript.registerClass(new ClassInfo<Block>("block", Block.class, new EventValueVariable<Block>(Block.class), new Parser<Block>() {
 			@Override
 			public Block parse(final String s) {
 				return null;
@@ -344,19 +290,13 @@ public class DefaultClasses {
 			
 			@Override
 			public String getDebugMessage(final Block b) {
-				return toString(b) + " block (" + b.getWorld().getName() + "|" + b.getX() + "," + b.getY() + "," + b.getZ() + ")";
+				return toString(b) + " block (" + b.getWorld().getName() + "|" + b.getX() + "/" + b.getY() + "/" + b.getZ() + ")";
 			}
 		}));
 	}
 	
-	public static final class LocationDefaultVariable extends EventValueVariable<Location> {
-		public LocationDefaultVariable() {
-			super(Location.class);
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Location>("location", Location.class, LocationDefaultVariable.class, new Parser<Location>() {
+		Skript.registerClass(new ClassInfo<Location>("location", Location.class, new EventValueVariable<Location>(Location.class), new Parser<Location>() {
 			
 			@Override
 			public Location parse(final String s) {
@@ -365,25 +305,19 @@ public class DefaultClasses {
 			
 			@Override
 			public String toString(final Location l) {
-				return getDebugMessage(l);
+				return "x: " + StringUtils.toString(l.getX(), Skript.NUMBERACCURACY) + ", " + "y: " + StringUtils.toString(l.getY(), Skript.NUMBERACCURACY) + ", " + "z: " + StringUtils.toString(l.getZ(), Skript.NUMBERACCURACY);
 			}
 			
 			@Override
 			public String getDebugMessage(final Location l) {
-				return "(" + l.getWorld() + "|" + l.getX() + "," + l.getY() + "," + l.getZ() + ";yaw=" + l.getYaw() + ",pitch=" + l.getPitch() + ")";
+				return "(" + l.getWorld().getName() + "|" + l.getX() + "/" + l.getY() + "/" + l.getZ() + "|yaw=" + l.getYaw() + "/pitch=" + l.getPitch() + ")";
 			}
 			
 		}));
 	}
 	
-	public static final class WorldDefaultVariable extends EventValueVariable<World> {
-		public WorldDefaultVariable() {
-			super(World.class);
-		}
-	}
-	
 	static {
-		Skript.addClassBefore(new ClassInfo<World>("world", "world", World.class, WorldDefaultVariable.class, new Parser<World>() {
+		Skript.registerClass(new ClassInfo<World>("world", "world", World.class, new EventValueVariable<World>(World.class), new Parser<World>() {
 			@Override
 			public World parse(final String s) {
 				if (!s.matches("\".+\""))
@@ -400,51 +334,54 @@ public class DefaultClasses {
 		}, "worlds?"), true, "string");
 	}
 	
-	public static final class InventoryDefaultVariable extends EventValueVariable<Inventory> {
-		public InventoryDefaultVariable() {
-			super(Inventory.class);
-		}
+	static {
+		Skript.registerClass(new ClassInfo<Inventory>("inventory", Inventory.class, new EventValueVariable<Inventory>(Inventory.class), new Parser<Inventory>() {
+			
+			@Override
+			public Inventory parse(final String s) {
+				return null;
+			}
+			
+			@Override
+			public String toString(final Inventory i) {
+				return "inventory of " + Skript.toString(i.getHolder());
+			}
+			
+			@Override
+			public String getDebugMessage(final Inventory i) {
+				return "inventory of " + Skript.getDebugMessage(i.getHolder());
+			}
+		}));
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<Inventory>("inventory", Inventory.class, InventoryDefaultVariable.class, null));
-	}
-	
-	public static final class PlayerDefaultVariable extends EventValueVariable<Player> {
-		public PlayerDefaultVariable() {
-			super(Player.class);
-		}
-	}
-	
-	static {
-		Skript.addClass(new ClassInfo<Player>("online player", "player", Player.class, PlayerDefaultVariable.class, new Parser<Player>() {
+		Skript.registerClass(new ClassInfo<Player>("player", "player", Player.class, new EventValueVariable<Player>(Player.class), new Parser<Player>() {
 			@Override
 			public Player parse(final String s) {
-				// if (!s.matches("\"\\S+\""))
+//				if (s.matches("\"\\S+\""))
+//					return Bukkit.getPlayerExact(s.substring(1, s.length() - 1));
 				return null;
-				// return Bukkit.getPlayerExact(s.substring(1, s.length() - 1));
 			}
 			
 			@Override
 			public String toString(final Player p) {
 				return p.getDisplayName();
 			}
+			
+			@Override
+			public String getDebugMessage(final Player p) {
+				return p.getName() + " " + Skript.getDebugMessage(p.getLocation());
+			}
 		}));
 	}
 	
-	public static final class OfflinePlayerDefaultVariable extends EventValueVariable<OfflinePlayer> {
-		public OfflinePlayerDefaultVariable() {
-			super(OfflinePlayer.class);
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<OfflinePlayer>("player", "offlineplayer", OfflinePlayer.class, OfflinePlayerDefaultVariable.class, new Parser<OfflinePlayer>() {
+		Skript.registerClass(new ClassInfo<OfflinePlayer>("player", "offlineplayer", OfflinePlayer.class, new EventValueVariable<OfflinePlayer>(OfflinePlayer.class), new Parser<OfflinePlayer>() {
 			@Override
 			public OfflinePlayer parse(final String s) {
-				if (!s.matches("\"\\S+\""))
-					return null;
-				return Bukkit.getOfflinePlayer(s.substring(1, s.length() - 1));
+//				if (s.matches("\"\\S+\""))
+//					return Bukkit.getOfflinePlayer(s.substring(1, s.length() - 1));
+				return null;
 			}
 			
 			@Override
@@ -461,14 +398,8 @@ public class DefaultClasses {
 		}, "player"));
 	}
 	
-	public static final class CommandSenderDefaultVariable extends EventValueVariable<CommandSender> {
-		public CommandSenderDefaultVariable() {
-			super(CommandSender.class);
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<CommandSender>("commandsender", CommandSender.class, CommandSenderDefaultVariable.class, new Parser<CommandSender>() {
+		Skript.registerClass(new ClassInfo<CommandSender>("player", "commandsender", CommandSender.class, new EventValueVariable<CommandSender>(CommandSender.class), new Parser<CommandSender>() {
 			@Override
 			public CommandSender parse(final String s) {
 				if (s.equalsIgnoreCase("console") || s.equalsIgnoreCase("server"))
@@ -492,14 +423,8 @@ public class DefaultClasses {
 		}));
 	}
 	
-	public static final class BlockFaceDefaultVariable extends EventValueVariable<BlockFace> {
-		public BlockFaceDefaultVariable() {
-			super(BlockFace.class);
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<BlockFace>("direction", "blockface", BlockFace.class, BlockFaceDefaultVariable.class, new Parser<BlockFace>() {
+		Skript.registerClass(new ClassInfo<BlockFace>("direction", "blockface", BlockFace.class, null, new Parser<BlockFace>() {
 			@Override
 			public BlockFace parse(final String s) {
 				return Utils.getBlockFace(s, true);
@@ -512,24 +437,12 @@ public class DefaultClasses {
 		}, "direction"));
 	}
 	
-	public static final class InventoryHolderDefaultVariable extends EventValueVariable<InventoryHolder> {
-		public InventoryHolderDefaultVariable() {
-			super(InventoryHolder.class);
-		}
+	static {
+		Skript.registerClass(new ClassInfo<InventoryHolder>("inventoryholder", InventoryHolder.class, new EventValueVariable<InventoryHolder>(InventoryHolder.class), null));
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<InventoryHolder>("inventoryholder", InventoryHolder.class, InventoryHolderDefaultVariable.class, null));
-	}
-	
-	public static final class GameModeDefaultVariable extends SimpleLiteral<GameMode> {
-		public GameModeDefaultVariable() {
-			super(GameMode.SURVIVAL);
-		}
-	}
-	
-	static {
-		Skript.addClass(new ClassInfo<GameMode>("game mode", "gamemode", GameMode.class, GameModeDefaultVariable.class, new Parser<GameMode>() {
+		Skript.registerClass(new ClassInfo<GameMode>("game mode", "gamemode", GameMode.class, new SimpleLiteral<GameMode>(GameMode.SURVIVAL), new Parser<GameMode>() {
 			@Override
 			public GameMode parse(final String s) {
 				try {
@@ -547,12 +460,13 @@ public class DefaultClasses {
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<ItemStack>("material", "_itemstack", ItemStack.class, null, new Parser<ItemStack>() {
+		Skript.registerClass(new ClassInfo<ItemStack>("material", "_itemstack", ItemStack.class, null, new Parser<ItemStack>() {
 			@Override
 			public ItemStack parse(final String s) {
-				final ItemType t = Aliases.parseItemType(s);
+				ItemType t = Aliases.parseItemType(s);
 				if (t == null)
 					return null;
+				t = t.getItem();
 				if (t.numTypes() != 1)
 					return null;
 				if (!t.getTypes().get(0).hasDataRange())

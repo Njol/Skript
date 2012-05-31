@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -61,6 +60,7 @@ import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.Converter.ConverterInfo;
 import ch.njol.skript.api.Converter.ConverterUtils;
+import ch.njol.skript.api.DefaultVariable;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.Getter;
 import ch.njol.skript.api.InverseComparator;
@@ -89,10 +89,10 @@ import ch.njol.skript.data.SkriptClasses;
 import ch.njol.skript.data.SkriptEventValues;
 import ch.njol.skript.data.SkriptTriggerItems;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.Expression.VariableInfo;
 import ch.njol.skript.lang.ExpressionInfo;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.VariableInfo;
 import ch.njol.skript.util.ErrorSession;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
@@ -104,85 +104,106 @@ import ch.njol.util.Validate;
  * <br/>
  * Use this class to extend this plugin's functionality by adding more {@link Condition conditions}, {@link Effect effects}, {@link SimpleVariable variables}, etc.<br/>
  * <br/>
- * Please also take a look at the {@link Utils} class! it will probably save you a lot of time.
+ * To test whether Skript is loaded you can use
+ * 
+ * <pre>
+ * Bukkit.getPluginManager().getPlugin(&quot;Skript&quot;) instanceof Skript
+ * </pre>
+ * 
+ * After you made sure that Skript is loaded you can use <code>Skript.getinstance()</code> whenever you need a reference to the plugin, but you likely don't need it since most API
+ * methods
+ * are static.
  * 
  * @author Peter Güttinger
+ * 
+ * @see #registerClass(ClassInfo)
+ * @see #registerComparator(Class, Class, Comparator)
+ * @see #registerCondition(Class, String...)
+ * @see #registerConverter(Class, Class, Converter)
+ * @see #registerEffect(Class, String...)
+ * @see #registerEvent(Class, Class, String...)
+ * @see #registerEventValue(Class, Class, Getter)
+ * @see #registerLoop(Class, Class, String...)
+ * @see #registerVariable(Class, Class, String...)
  * 
  */
 public class Skript extends JavaPlugin {
 	
 	// ================ PLUGIN ================
 	
-	static Skript instance = null;
+	private static Skript instance = null;
 	
 	public static Skript getInstance() {
 		return instance;
 	}
 	
-	public Skript() {
+	public Skript() throws IllegalAccessException {
+		if (instance != null)
+			throw new IllegalAccessException();
 		instance = this;
 		new BukkitEventValues();
 		new DefaultClasses();
 		new DefaultComparators();
 		new DefaultConverters();
 		new SkriptClasses();
-		new SkriptTriggerItems();
 		new SkriptEventValues();
+		new SkriptTriggerItems();
 	}
 	
-	private static boolean monitorMemoryUsage = false;
-	private static long memoryUsed = 0;
+//	private static boolean monitorMemoryUsage = false;
+//	private static long memoryUsed = 0;
 	
 	@Override
 	public void onEnable() {
-		// automatically added by Bukkit now
-		// info("loading Skript v" + getDescription().getVersion() + "...");
+//		automatically added by Bukkit now
+//		info("loading Skript v" + getDescription().getVersion() + "...");
 		
-		System.gc();
-		final long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//		System.gc();
+//		final long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		
 		loadMainConfig();
 		
 		if (logNormal())
 			info(" ~ created & © by Peter Güttinger aka Njol ~");
 		
-		monitorMemoryUsage = logHigh();
+//		monitorMemoryUsage = logHigh();
 		
-		if (Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 			@Override
 			public void run() {
-				if (monitorMemoryUsage) {
-					System.gc();
-				}
-				final long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//				if (monitorMemoryUsage) {
+//					System.gc();
+//				}
+//				final long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+				
+				Skript.stopAcceptingRegistrations();
 				
 				Skript.loadTriggerFiles();
+				
 				Skript.info("Skript finished loading!");
 				
-				if (monitorMemoryUsage) {
-					System.gc();
-					final long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-					Skript.memoryUsed += endMemory - startMemory;
-					Skript.info("Skript is currently using roughly " + formatMemory(memoryUsed) + " of RAM");
-				}
+//				if (monitorMemoryUsage) {
+//					System.gc();
+//					final long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//					Skript.memoryUsed += endMemory - startMemory;
+//					Skript.info("Skript is currently using roughly " + formatMemory(memoryUsed) + " of RAM");
+//				}
 			}
-		}) == -1) {
-			error("error scheduling trigger files loader task");
-		}
+		});
 		
-		if (monitorMemoryUsage) {
-			System.gc();
-			final long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-			memoryUsed += endMemory - startMemory;
-		}
+//		if (monitorMemoryUsage) {
+//			System.gc();
+//			final long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//			memoryUsed += endMemory - startMemory;
+//		}
 		
 	}
 	
-	private final static String formatMemory(final long memory) {
-		double mb = 1. * memory / (1 << 20);
-		mb = 1. * Math.round(1000 * mb) / 1000;
-		return mb + " MiB";
-	}
+//	private final static String formatMemory(final long memory) {
+//		double mb = 1. * memory / (1 << 20);
+//		mb = 1. * Math.round(1000 * mb) / 1000;
+//		return mb + " MiB";
+//	}
 	
 	@Override
 	public void onDisable() {
@@ -190,10 +211,10 @@ public class Skript extends JavaPlugin {
 		Bukkit.getScheduler().cancelTasks(this);
 	}
 	
-	//	@Override
-	//	public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
-	//		return CommandHandler.onCommand(sender, command, label, args);
-	//	}
+//	@Override
+//	public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
+//		return CommandHandler.onCommand(sender, command, label, args);
+//	}
 	
 	// ================ CONSTANTS & OTHER ================
 	
@@ -202,12 +223,22 @@ public class Skript extends JavaPlugin {
 	
 	public static final String quotesError = "Invalid use of quotes (\"). If you want to use quotes in \"quoted text\", double them: \"\".";
 	
+	/**
+	 * A small value ({@value}), useful for comparing floating point numbers.<br>
+	 * E.g. to test whether a location is within a specific radius of another location:
+	 * <pre>location.distance(center) - Skript.EPSILON < radius</pre>
+	 */
 	public static final double EPSILON = 1e-20;
 	
 	public static final int MAXBLOCKID = 255;
 	
 	// TODO option? or in variable?
 	public static final int TARGETBLOCKMAXDISTANCE = 100;
+	
+	/**
+	 * maximum number of digits to display after the period for floats and doubles
+	 */
+	public static final int NUMBERACCURACY = 3;
 	
 	public static final Random random = new Random();
 	
@@ -229,6 +260,20 @@ public class Skript extends JavaPlugin {
 		listenerEnabled = true;
 	}
 	
+	// ================ REGISTRATIONS ================
+	
+	private static boolean acceptRegistrations = true;
+	
+	private static void checkAcceptRegistrations() {
+		if (!acceptRegistrations)
+			throw new SkriptAPIException("Registering is disabled after initialization!");
+	}
+	
+	private static void stopAcceptingRegistrations() {
+		acceptRegistrations = false;
+		createMissingConverters();
+	}
+	
 	// ================ CONDITIONS & EFFECTS ================
 	
 	static final Collection<ExpressionInfo<? extends Condition>> conditions = new ArrayList<ExpressionInfo<? extends Condition>>(20);
@@ -240,7 +285,8 @@ public class Skript extends JavaPlugin {
 	 * 
 	 * @param condition
 	 */
-	public static <E extends Condition> void addCondition(final Class<E> condition, final String... patterns) {
+	public static <E extends Condition> void registerCondition(final Class<E> condition, final String... patterns) {
+		checkAcceptRegistrations();
 		final ExpressionInfo<E> info = new ExpressionInfo<E>(patterns, condition);
 		conditions.add(info);
 		topLevelExpressions.add(info);
@@ -251,7 +297,8 @@ public class Skript extends JavaPlugin {
 	 * 
 	 * @param effect
 	 */
-	public static <E extends Effect> void addEffect(final Class<E> effect, final String... patterns) {
+	public static <E extends Effect> void registerEffect(final Class<E> effect, final String... patterns) {
+		checkAcceptRegistrations();
 		final ExpressionInfo<E> info = new ExpressionInfo<E>(patterns, effect);
 		effects.add(info);
 		topLevelExpressions.add(info);
@@ -273,10 +320,9 @@ public class Skript extends JavaPlugin {
 	
 	static final Collection<VariableInfo<? extends Variable<?>, ?>> variables = new ArrayList<VariableInfo<? extends Variable<?>, ?>>(30);
 	
-	public static <E extends SimpleVariable<T>, T> void addVariable(final Class<E> c, final Class<T> returnType, final String... patterns) {
+	public static <E extends SimpleVariable<T>, T> void registerVariable(final Class<E> c, final Class<T> returnType, final String... patterns) {
+		checkAcceptRegistrations();
 		variables.add(new VariableInfo<E, T>(patterns, returnType, c));
-		if (log(Verbosity.VERY_HIGH))
-			Skript.info("variable " + c.getSimpleName() + " added");
 	}
 	
 	public static Collection<VariableInfo<? extends Variable<?>, ?>> getVariables() {
@@ -288,11 +334,13 @@ public class Skript extends JavaPlugin {
 	static final Collection<SkriptEventInfo<?>> events = new ArrayList<SkriptEventInfo<?>>(50);
 	
 	@SuppressWarnings("unchecked")
-	public static <E extends SkriptEvent> void addEvent(final Class<E> c, final Class<? extends Event> event, final String... patterns) {
+	public static <E extends SkriptEvent> void registerEvent(final Class<E> c, final Class<? extends Event> event, final String... patterns) {
+		checkAcceptRegistrations();
 		events.add(new SkriptEventInfo<E>(patterns, c, array(event)));
 	}
 	
-	public static <E extends SkriptEvent> void addEvent(final Class<E> c, final Class<? extends Event>[] events, final String... patterns) {
+	public static <E extends SkriptEvent> void registerEvent(final Class<E> c, final Class<? extends Event>[] events, final String... patterns) {
+		checkAcceptRegistrations();
 		Skript.events.add(new SkriptEventInfo<E>(patterns, c, events));
 	}
 	
@@ -311,57 +359,29 @@ public class Skript extends JavaPlugin {
 	 * @param to
 	 * @param converter
 	 */
-	// TODO how to manage overriding of converters?
-	public static <F, T> void addConverter(final Class<F> from, final Class<T> to, final Converter<F, T> converter) {
-		for (final Iterator<ConverterInfo<?, ?>> i = converters.iterator(); i.hasNext();) {
-			final ConverterInfo<?, ?> conv = i.next();
-			if (conv.from == from && to == conv.to) {
-				i.remove();
-			}
-		}
+	public static <F, T> void registerConverter(final Class<F> from, final Class<T> to, final Converter<F, T> converter) {
+		checkAcceptRegistrations();
 		converters.add(new ConverterInfo<F, T>(from, to, converter));
+	}
+	
+	// TODO how to manage overriding of converters?
+	private static void createMissingConverters() {
 		for (int i = 0; i < converters.size(); i++) {
-			final ConverterInfo<?, ?> c = converters.get(i);
-			if (c.from.isAssignableFrom(to)) {
-				if (!converterExists(from, c.to)) {
-					converters.add(createChainedConverter(from, converter, c));
-				}
-			} else if (c.to.isAssignableFrom(from)) {
-				if (!converterExists(c.from, to)) {
-					converters.add(createChainedConverter(c, converter, to));
+			final ConverterInfo<?, ?> info = converters.get(i);
+			for (int j = 0; j < converters.size(); j++) {// not from j = i+1 since new converters get added during the loops
+				final ConverterInfo<?, ?> info2 = converters.get(j);
+				if (info2.from.isAssignableFrom(info.to) && !converterExists(info.from, info2.to)) {
+					converters.add(createChainedConverter(info, info2));
+				} else if (info.from.isAssignableFrom(info2.to) && !converterExists(info2.from, info.to)) {
+					converters.add(createChainedConverter(info2, info));
 				}
 			}
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static <F, M, T> ConverterInfo<F, T> createChainedConverter(final Class<F> from, final Converter<F, M> first, final ConverterInfo<?, ?> second) {
-		return new ConverterInfo<F, T>(from, (Class<T>) second.to, new ChainedConverter<F, M, T>(first, (Converter<M, T>) second.converter));
-	}
-	
-	@SuppressWarnings("unchecked")
-	private static <F, M, T> ConverterInfo<F, T> createChainedConverter(final ConverterInfo<?, ?> first, final Converter<M, T> second, final Class<T> to) {
-		return new ConverterInfo<F, T>((Class<F>) first.from, to, new ChainedConverter<F, M, T>((Converter<F, M>) first.converter, second));
-	}
-	
-	/**
-	 * Converts the given value to the desired type. If you want to convert multiple values of the same type you should use {@link #getConverter(Class, Class)} to get a converter
-	 * to convert the values.
-	 * 
-	 * @param o
-	 * @param to
-	 * @return The converted value or null if no converter exists or the converter returned null for the given value.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <F, T> T convert(final F o, final Class<T> to) {
-		for (final ConverterInfo<?, ?> c : converters) {
-			if (c.from.isAssignableFrom(o.getClass()) && to.isAssignableFrom(c.to)) {
-				final T t = ((Converter<F, T>) c.converter).convert(o);
-				if (t != null)
-					return t;
-			}
-		}
-		return null;
+	private static <F, M, T> ConverterInfo<F, T> createChainedConverter(final ConverterInfo<?, ?> first, final ConverterInfo<?, ?> second) {
+		return new ConverterInfo<F, T>((Class<F>) first.from, (Class<T>) second.to, new ChainedConverter<F, M, T>((Converter<F, M>) first.converter, (Converter<M, T>) second.converter));
 	}
 	
 	/**
@@ -380,17 +400,46 @@ public class Skript extends JavaPlugin {
 	}
 	
 	/**
+	 * Converts the given value to the desired type. If you want to convert multiple values of the same type you should use {@link #getConverter(Class, Class)} to get a converter
+	 * to convert the values.
+	 * 
+	 * @param o
+	 * @param to
+	 * @return The converted value or null if no converter exists or the converter returned null for the given value.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <F, T> T convert(final F o, final Class<T> to) {
+		final Converter<? super F, ? extends T> conv = (Converter<? super F, ? extends T>) getConverter(o.getClass(), to);
+		if (conv == null)
+			return null;
+		return conv.convert(o);
+	}
+	
+	/**
 	 * Gets a converter
 	 * 
 	 * @param from
 	 * @param to
 	 * @return the converter or null if none exist
 	 */
+	@SuppressWarnings("unchecked")
 	public final static <F, T> Converter<? super F, ? extends T> getConverter(final Class<F> from, final Class<T> to) {
 		final ConverterInfo<? super F, ? extends T> ci = getConverterInfo(from, to);
-		if (ci == null)
-			return null;
-		return ci.converter;
+		if (ci != null)
+			return ci.converter;
+		for (final ConverterInfo<?, ?> conv : converters) {
+			if (conv.from.isAssignableFrom(from) && conv.to.isAssignableFrom(to)) {
+				return (Converter<? super F, ? extends T>) ConverterUtils.createInstanceofConverter(conv.converter, to);
+			} else if (from.isAssignableFrom(conv.from) && to.isAssignableFrom(conv.to)) {
+				return (Converter<? super F, ? extends T>) ConverterUtils.createInstanceofConverter(conv);
+			}
+		}
+		for (final ConverterInfo<?, ?> conv : converters) {
+			if (from.isAssignableFrom(conv.from) && conv.to.isAssignableFrom(to)) {
+				return (Converter<? super F, ? extends T>) ConverterUtils.createDoubleInstanceofConverter(conv, to);
+			}
+		}
+		return null;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -409,11 +458,12 @@ public class Skript extends JavaPlugin {
 	/**
 	 * Registers a class. This class will have lower proirity than any classes registered before,
 	 * this means that parsing will be attempted last with this class, so if you want to e.g. parse
-	 * quoted strings this won't work as string will parse before. You'd have to use {@link #addClassBefore(ClassInfo, boolean, String...)} To register the class before string.
+	 * quoted strings this won't work as string will parse before. You'd have to use {@link #registerClass(ClassInfo, boolean, String...)} To register the class before "string".
 	 * 
 	 * @param info info about the class to register
 	 */
-	public static <T> void addClass(final ClassInfo<T> info) {
+	public static <T> void registerClass(final ClassInfo<T> info) {
+		checkAcceptRegistrations();
 		classInfos.add(info);
 	}
 	
@@ -425,7 +475,8 @@ public class Skript extends JavaPlugin {
 	 * @param before The classes which should have lower priority than this class
 	 * @return whether any of the given classes were registered
 	 */
-	public static <T> boolean addClassBefore(final ClassInfo<T> info, final boolean addAlways, final String... before) {
+	public static <T> boolean registerClass(final ClassInfo<T> info, final boolean addAlways, final String... before) {
+		checkAcceptRegistrations();
 		for (int i = 0; i < classInfos.size(); i++) {
 			if (Utils.contains(before, classInfos.get(i).getCodeName()) != -1) {
 				classInfos.add(i, info);
@@ -443,6 +494,21 @@ public class Skript extends JavaPlugin {
 				return ci;
 		}
 		throw new SkriptAPIException("no class info found for " + codeName);
+	}
+	
+	/**
+	 * Gets the class info for the given class
+	 * 
+	 * @param c The exact class to get the class info for
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	private static <T> ClassInfo<T> getClassInfo(final Class<T> c) {
+		for (final ClassInfo<?> ci : classInfos) {
+			if (ci.getC() == c)
+				return (ClassInfo<T>) ci;
+		}
+		throw new SkriptAPIException("no class info found for " + c.getName());
 	}
 	
 	/**
@@ -480,8 +546,18 @@ public class Skript extends JavaPlugin {
 	 * @param name
 	 * @return the variable holding the default value or null if this class doesn't have one
 	 */
-	public static <T> Class<? extends SimpleVariable<?>> getDefaultVariable(final String name) {
-		return getClassInfo(name).getDefaultSimpleVariable();
+	public static <T> DefaultVariable<?> getDefaultVariable(final String name) {
+		return getClassInfo(name).getDefaultVariable();
+	}
+	
+	/**
+	 * gets the default of a class
+	 * 
+	 * @param name
+	 * @return the variable holding the default value or null if this class doesn't have one
+	 */
+	public static <T> DefaultVariable<T> getDefaultVariable(final Class<T> c) {
+		return getClassInfo(c).getDefaultVariable();
 	}
 	
 	/**
@@ -593,6 +669,8 @@ public class Skript extends JavaPlugin {
 			}
 			b.append(toString(os[i]));
 		}
+		if (b.length() == 0)
+			return "<none>";
 		return b.toString();
 	}
 	
@@ -630,7 +708,7 @@ public class Skript extends JavaPlugin {
 	
 	// ================ COMPARATORS ================
 	
-	private final static ArrayList<ComparatorInfo<?, ?>> comparators = new ArrayList<ComparatorInfo<?, ?>>();
+	private final static Collection<ComparatorInfo<?, ?>> comparators = new ArrayList<ComparatorInfo<?, ?>>();
 	
 	/**
 	 * Registers a {@link Comparator}.
@@ -640,7 +718,8 @@ public class Skript extends JavaPlugin {
 	 * @param c
 	 * @throws SkriptAPIException if any given class is equal to <code>Object.class</code>
 	 */
-	public static <T1, T2> void addComparator(final Class<T1> t1, final Class<T2> t2, final Comparator<T1, T2> c) {
+	public static <T1, T2> void registerComparator(final Class<T1> t1, final Class<T2> t2, final Comparator<T1, T2> c) {
+		checkAcceptRegistrations();
 		if (t1 == Object.class || t2 == Object.class)
 			throw new SkriptAPIException("must not add a comparator for objects");
 		comparators.add(new ComparatorInfo<T1, T2>(t1, t2, c));
@@ -652,7 +731,7 @@ public class Skript extends JavaPlugin {
 	 * @return
 	 * @see #compare(Object, Object)
 	 */
-	public final static List<ComparatorInfo<?, ?>> getComparators() {
+	public final static Collection<ComparatorInfo<?, ?>> getComparators() {
 		return comparators;
 	}
 	
@@ -717,7 +796,7 @@ public class Skript extends JavaPlugin {
 		}
 	}
 	
-	private static final ArrayList<EventValueInfo<?, ?>> eventValues = new ArrayList<Skript.EventValueInfo<?, ?>>(30);
+	private static final List<EventValueInfo<?, ?>> eventValues = new ArrayList<Skript.EventValueInfo<?, ?>>(30);
 	
 	/**
 	 * Registers an event value.
@@ -725,24 +804,13 @@ public class Skript extends JavaPlugin {
 	 * @param e the event type
 	 * @param c the type of the default value
 	 * @param g the getter to get the value
-	 * @see #addEventValueBefore(Class, Class, Class, Getter)
+	 * @see #registerEventValueBefore(Class, Class, Class, Getter)
 	 */
-	public static <T, E extends Event> void addEventValue(final Class<E> e, final Class<T> c, final Getter<T, E> g) {
-		eventValues.add(new EventValueInfo<E, T>(e, c, g));
-	}
-	
-	/**
-	 * Registers an event value which will have higher priority than the other one given.
-	 * 
-	 * @param e
-	 * @param next
-	 * @param c
-	 * @param g
-	 * @see #addEventValue(Class, Class, Getter)
-	 */
-	public static <T, E extends Event> void addEventValueBefore(final Class<E> e, final Class<? extends Event> next, final Class<T> c, final Getter<T, E> g) {
+	public static <T, E extends Event> void registerEventValue(final Class<E> e, final Class<T> c, final Getter<T, E> g) {
+		checkAcceptRegistrations();
 		for (int i = 0; i < eventValues.size(); i++) {
-			if (eventValues.get(i).event == next) {
+			final EventValueInfo<?, ?> info = eventValues.get(i);
+			if (info.event.isAssignableFrom(e)) {
 				eventValues.add(i, new EventValueInfo<E, T>(e, c, g));
 				return;
 			}
@@ -751,68 +819,68 @@ public class Skript extends JavaPlugin {
 	}
 	
 	/**
-	 * Gets a value assiciated with the event. Returns null if the event doesn't have such a value (conversions are done to try and get the desired value).
+	 * Gets a value assiciated with the event. Returns null if the event doesn't have such a value (conversions are done to try and get the desired value).<br>
+	 * It is recommended to use {@link #getEventValueGetter(Class, Class)} or {@link #getDefaultVariable(Class)} instead of invoking this method repeatedly.
 	 * 
 	 * @param e
 	 * @param c
 	 * @return
-	 * @see #addEventValue(Class, Class, Getter)
-	 * @see Converter
+	 * @see #registerEventValue(Class, Class, Getter)
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T, E extends Event> T getEventValue(final E e, final Class<T> c) {
-		if (e == null)
-			throw new RuntimeException();
-		for (final EventValueInfo<?, ?> ev : eventValues) {
-			if (ev.event.isAssignableFrom(e.getClass())) {
-				if (c.isAssignableFrom(ev.c)) {
-					final T t = ((Getter<? extends T, ? super E>) ev.getter).get(e);
-					if (t != null)
-						return t;
-				} else {
-					final ConverterInfo<?, ? extends T> conv = getConverterInfo(ev.c, c);
-					if (conv != null) {
-						final T t = ConverterUtils.convert(conv, ((Getter<?, ? super E>) ev.getter).get(e));
-						if (t != null)
-							return t;
-					}
-				}
-			}
-		}
-		return null;
+		final Converter<? super E, ? extends T> g = getEventValueGetter((Class<E>) e.getClass(), c);
+		if (g == null)
+			return null;
+		return g.convert(e);
 	}
 	
 	/**
-	 * Returns a getter (actually a converter) to get a value from an event.
+	 * Returns a getter to get a value from an event.
 	 * 
 	 * @param e
 	 * @param c
 	 * @return
-	 * @see #addEventValue(Class, Class, Getter)
-	 * @see Getter
-	 * @see Converter
+	 * @see #registerEventValue(Class, Class, Getter)
+	 * @see #getDefaultVariable(Class)
 	 */
 	@SuppressWarnings("unchecked")
-	public static final <T, E extends Event> Converter<? super E, ? extends T> getEventValueGetter(final E e, final Class<T> c) {
+	public static final <T, E extends Event> Getter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c) {
 		for (final EventValueInfo<?, ?> ev : eventValues) {
-			if (ev.event.isAssignableFrom(e.getClass())) {
-				if (c.isAssignableFrom(ev.c)) {
-					return (Getter<? extends T, ? super E>) ev.getter;
-				} else {
-					return (Converter<? super E, ? extends T>) getConvertedGetter(ev, c);
-				}
+			if (ev.event.isAssignableFrom(e) && c.isAssignableFrom(ev.c)) {
+				return (Getter<? extends T, ? super E>) ev.getter;
+			}
+		}
+		for (final EventValueInfo<?, ?> ev : eventValues) {
+			if (ev.event.isAssignableFrom(e) && ev.c.isAssignableFrom(c)) {
+				return new Getter<T, E>() {
+					@Override
+					public T get(final E e) {
+						final Object o = ((Getter<? super T, ? super E>) ev.getter).get(e);
+						if (c.isInstance(o))
+							return (T) o;
+						return null;
+					}
+				};
+			}
+		}
+		for (final EventValueInfo<?, ?> ev : eventValues) {
+			if (ev.event.isAssignableFrom(e)) {
+				final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getConvertedGetter(ev, c);
+				if (g != null)
+					return g;
 			}
 		}
 		return null;
 	}
 	
-	private final static <E extends Event, F, T> Converter<? super E, ? extends T> getConvertedGetter(final EventValueInfo<E, F> i, final Class<T> to) {
+	private final static <E extends Event, F, T> Getter<? extends T, ? super E> getConvertedGetter(final EventValueInfo<E, F> i, final Class<T> to) {
 		final Converter<? super F, ? extends T> c = getConverter(i.c, to);
 		if (c == null)
 			return null;
-		return new Converter<E, T>() {
+		return new Getter<T, E>() {
 			@Override
-			public T convert(final E e) {
+			public T get(final E e) {
 				return c.convert(i.getter.get(e));
 			}
 		};
@@ -830,7 +898,8 @@ public class Skript extends JavaPlugin {
 	 * @param patterns
 	 * @see LoopVar
 	 */
-	public static <E extends LoopVar<T>, T> void addLoop(final Class<E> c, final Class<T> returnType, final String... patterns) {
+	public static <E extends LoopVar<T>, T> void registerLoop(final Class<E> c, final Class<T> returnType, final String... patterns) {
+		checkAcceptRegistrations();
 		loops.add(new LoopInfo<E, T>(c, returnType, patterns));
 	}
 	
@@ -859,7 +928,7 @@ public class Skript extends JavaPlugin {
 	 * @param command
 	 * @throws NullPointerException if the server is not running CraftBukkit
 	 */
-	public static void addCommand(final SkriptCommand command) {
+	public static void registerCommand(final SkriptCommand command) {
 		commands.add(command);
 		commandMap.register("/", command);
 	}
@@ -888,7 +957,7 @@ public class Skript extends JavaPlugin {
 	}
 	
 	public static final boolean debug() {
-		return SkriptLogger.log(Verbosity.DEBUG);
+		return SkriptLogger.debug;
 	}
 	
 	public static final boolean log(final Verbosity minVerb) {
@@ -1022,41 +1091,41 @@ public class Skript extends JavaPlugin {
 		
 		final ArrayList<String> aliasNodes = new ArrayList<String>();
 		
-		final SectionValidator mainConfigStructure = new SectionValidator();
-		mainConfigStructure.addNode("verbosity", new EnumEntryValidator<Verbosity>(Verbosity.class, new Setter<Verbosity>() {
+		new SectionValidator()
+		.addNode("verbosity", new EnumEntryValidator<Verbosity>(Verbosity.class, new Setter<Verbosity>() {
 			@Override
 			public void set(final Verbosity v) {
-				SkriptLogger.verbosity = v;
+				SkriptLogger.setVerbosity(v);
 			}
-		}), false);
-		mainConfigStructure.addNode("plugin priority", new EnumEntryValidator<EventPriority>(EventPriority.class, new Setter<EventPriority>() {
+		}), false)
+		.addNode("plugin priority", new EnumEntryValidator<EventPriority>(EventPriority.class, new Setter<EventPriority>() {
 			@Override
 			public void set(final EventPriority p) {
 				Skript.priority = p;
 			}
-		}, "lowest, low, normal, high, highest"), false);
-		mainConfigStructure.addEntry("aliases", new Setter<String>() {
+		}, "lowest, low, normal, high, highest"), false)
+		.addEntry("aliases", new Setter<String>() {
 			@Override
 			public void set(final String s) {
 				for (final String n : s.split(","))
 					aliasNodes.add(n.trim());
 			}
-		}, false);
-		mainConfigStructure.addEntry("keep configs loaded", Boolean.class, new Setter<Boolean>() {
+		}, false)
+		.addEntry("keep configs loaded", Boolean.class, new Setter<Boolean>() {
 			@Override
 			public void set(final Boolean b) {
 				keepConfigsLoaded = b;
 			}
-		}, false);
-		mainConfigStructure.addEntry("enable effect commands", Boolean.class, new Setter<Boolean>() {
+		}, false)
+		.addEntry("enable effect commands", Boolean.class, new Setter<Boolean>() {
 			@Override
 			public void set(final Boolean b) {
 				enableEffectCommands = b;
 			}
-		}, false);
-		mainConfigStructure.setAllowUndefinedSections(true);
+		}, false)
+		.setAllowUndefinedSections(true)
+		.validate(mainConfig.getMainNode(), true);
 		
-		mainConfig.getMainNode().validate(mainConfigStructure);
 		
 		for (final Node node : mainConfig.getMainNode()) {
 			if (node instanceof SectionNode) {
@@ -1150,7 +1219,7 @@ public class Skript extends JavaPlugin {
 	 * @return whether to cancel the event, i.e. prevent the "unknown command" message
 	 */
 	private static boolean handleEffectCommand(final CommandSender sender, final String command) {
-		if (!sender.hasPermission("skript.commands"))
+		if (!sender.hasPermission("skript.effectcommands"))
 			return false;
 		final String x = command.split(" ", 2)[0];
 		if (commandMap.getCommand(x) != null)
@@ -1179,7 +1248,7 @@ public class Skript extends JavaPlugin {
 	}
 	
 	private void loadMainConfig() {
-		info("loading main config...");
+//		info("loading main config...");
 		try {
 			
 			final File config = new File(getDataFolder(), "config.cfg");
@@ -1194,8 +1263,8 @@ public class Skript extends JavaPlugin {
 			mainConfig = new Config(config, false, "=");
 			parseMainConfig();
 			
-			if (logNormal())
-				info("main config loaded successfully.");
+//			if (logNormal())
+//				info("main config loaded successfully.");
 			
 		} catch (final Exception e) {
 			exception(e, "error loading config");
@@ -1205,6 +1274,7 @@ public class Skript extends JavaPlugin {
 	private static void loadTriggerFiles() {
 		boolean successful = true;
 		int numFiles = 0;
+		@SuppressWarnings("unused")
 		final ErrorSession session = Skript.startErrorSession();
 		
 		try {
@@ -1231,8 +1301,10 @@ public class Skript extends JavaPlugin {
 			info("loaded " + numFiles + " trigger file" + (numFiles == 1 ? "" : "s")
 					+ " with a total of " + TriggerFileLoader.loadedTriggers + " trigger" + (TriggerFileLoader.loadedTriggers == 1 ? "" : "s")
 					+ " and " + TriggerFileLoader.loadedCommands + " command" + (TriggerFileLoader.loadedCommands == 1 ? "" : "s"));
-		if (successful && session.getErrorCount() == 0)
-			info("No errors detected in any loaded trigger files");
+		
+		// TODO error count
+//		if (successful && session.getErrorCount() == 0)
+//			info("No errors detected in any loaded trigger files");
 		
 		for (final Entry<Class<? extends Event>, List<Trigger>> e : SkriptEventHandler.triggers.entrySet()) {
 			Bukkit.getServer().getPluginManager().registerEvent(e.getKey(), new Listener() {}, priority, SkriptEventHandler.ee, instance);
@@ -1255,7 +1327,7 @@ public class Skript extends JavaPlugin {
 		} else if (Variable.class.isAssignableFrom(c)) {
 			return "variable";
 		}
-		throw new SkriptAPIException(c.getName() + " is not a normal expression class");
+		throw new IllegalArgumentException(c.getName());
 	}
 	
 }

@@ -40,7 +40,7 @@ import ch.njol.skript.variables.base.VarVariable;
 public class VarEventVariable extends VarVariable<Object> {
 	
 	static {
-		Skript.addVariable(VarEventVariable.class, Object.class, "event-<\\S+>");
+		Skript.registerVariable(VarEventVariable.class, Object.class, "event-<\\S+>");
 	}
 	
 	@Override

@@ -22,12 +22,12 @@
 package ch.njol.skript.api;
 
 /**
- * Used to get a specific value from instances of the same type. The kind of value depends on where and how this getter is used.
- * 
- * @author Peter Güttinger
+ * Used to get a specific value from instances of some type.
  * 
  * @param <R> the returned value type
- * @param <A> the type which holds the value. Tipp: You can use <code>Void</code>
+ * @param <A> the type which holds the value
+ * 
+ * @author Peter Güttinger
  */
 public abstract class Getter<R, A> implements Converter<A, R> {
 	
@@ -39,8 +39,11 @@ public abstract class Getter<R, A> implements Converter<A, R> {
 	 */
 	public abstract R get(A arg);
 	
+	/**
+	 * Convenience method to make getter implement converter
+	 */
 	@Override
-	public R convert(final A a) {
+	public final R convert(final A a) {
 		return get(a);
 	}
 	

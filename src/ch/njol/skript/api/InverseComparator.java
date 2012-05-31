@@ -35,12 +35,12 @@ public class InverseComparator<T1, T2> implements Comparator<T1, T2> {
 	
 	@Override
 	public ch.njol.skript.api.Comparator.Relation compare(final T1 o1, final T2 o2) {
-		return comp.compare(o2, o1).getInverse();
+		return comp.compare(o2, o1).getSwitched();
 	}
 	
 	@Override
-	public boolean supportsRelation(final ch.njol.skript.api.Comparator.Relation r) {
-		return comp.supportsRelation(r.getInverse());
+	public boolean supportsOrdering() {
+		return comp.supportsOrdering();
 	}
 	
 }

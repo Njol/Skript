@@ -39,9 +39,10 @@ import ch.njol.skript.util.Slot;
 public class EffHealth extends Effect {
 	
 	static {
-		Skript.addEffect(EffHealth.class,
-				"damage %objects% by %integer%",
-				"heal %livingentitys% [by %-integer%]",
+		Skript.registerEffect(EffHealth.class,
+				"damage %slots% by %integer%",
+				"damage %livingentities% by %integer%",
+				"heal %livingentities% [by %-integer%]",
 				"repair %slots% [by %-integer%]");
 	}
 	
@@ -54,7 +55,7 @@ public class EffHealth extends Effect {
 	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		damageables = (Variable<Object>) vars[0];
 		damage = (Variable<Integer>) vars[1];
-		heal = (matchedPattern != 0);
+		heal = (matchedPattern >= 2);
 	}
 	
 	@Override
@@ -64,11 +65,13 @@ public class EffHealth extends Effect {
 			damage = this.damage.getSingle(e);
 		for (final Object damageable : damageables.getArray(e)) {
 			if (damageable instanceof Slot) {
-				final ItemStack is = ((Slot) damageable).getItem();
+				ItemStack is = ((Slot) damageable).getItem();
 				if (this.damage == null) {
 					is.setDurability((short) 0);
 				} else {
 					is.setDurability((short) (is.getDurability() + (heal ? -damage : damage)));
+					if (is.getDurability() >= is.getType().getMaxDurability())
+						is = null;
 				}
 				((Slot) damageable).setItem(is);
 			} else if (damageable instanceof LivingEntity) {

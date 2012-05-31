@@ -38,7 +38,7 @@ public class ParseException extends Exception {
 	}
 	
 	/**
-	 * If this is used, Skript's error cause will not be changed. This is usually not what you want.
+	 * If this constructor is used, Skript's error cause will not be changed. This is usually not what you want.
 	 */
 	public ParseException() {}
 	

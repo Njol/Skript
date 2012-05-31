@@ -28,6 +28,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 
+import org.bukkit.event.Event;
+
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.LoopVar;
 import ch.njol.skript.api.SkriptEvent;
@@ -38,6 +40,7 @@ import ch.njol.skript.api.intern.TopLevelExpression;
 import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.api.intern.TriggerItem;
 import ch.njol.skript.api.intern.TriggerSection;
+import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.config.Config;
 import ch.njol.skript.config.EntryNode;
@@ -60,6 +63,8 @@ final public class TriggerFileLoader {
 	private TriggerFileLoader() {}
 	
 	public static SkriptEvent currentEvent = null;
+	public static Class<? extends Event>[] currentEvents = null;
+	
 	public static List<TriggerSection> currentSections = new ArrayList<TriggerSection>();
 	public static List<LoopVar<?>> currentLoops = new ArrayList<LoopVar<?>>();
 	public static final Map<String, ItemType> currentAliases = new HashMap<String, ItemType>();
@@ -168,6 +173,7 @@ final public class TriggerFileLoader {
 	 * @param config Config to load from
 	 * @return how many triggers and commands were loaded (in this order)
 	 */
+	@SuppressWarnings("unchecked")
 	static void load(final Config config) {
 		int numTriggers = 0;
 		int numCommands = 0;
@@ -216,7 +222,9 @@ final public class TriggerFileLoader {
 				session.error(Skript.quotesError);
 			}
 			
-			if (event.startsWith("command ")) {
+			if (event.toLowerCase().startsWith("command ")) {
+				currentEvent = null;
+				currentEvents = Skript.array(CommandEvent.class);
 				if (Commands.loadCommand(node))
 					numCommands++;
 				continue;
@@ -240,8 +248,12 @@ final public class TriggerFileLoader {
 				Skript.info(event + " (" + parsedEvent.second.getDebugMessage(null) + "):");
 			
 			currentEvent = parsedEvent.second;
+			currentEvents = parsedEvent.first.events;
+			
 			final Trigger trigger = new Trigger(event, parsedEvent.second, loadItems(node));
+			
 			SkriptEventHandler.addTrigger(parsedEvent.first.events, trigger);
+			
 			numTriggers++;
 		}
 		

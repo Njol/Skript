@@ -43,7 +43,7 @@ import ch.njol.skript.util.Utils;
 public class EffTeleport extends Effect {
 	
 	static {
-		Skript.addEffect(EffTeleport.class, "teleport %entities% to %location%");
+		Skript.registerEffect(EffTeleport.class, "teleport %entities% to %location%");
 	}
 	
 	private Variable<Entity> entities;

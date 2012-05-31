@@ -29,7 +29,7 @@ import ch.njol.skript.Skript;
  * @author Peter Güttinger
  * 
  * @param <T> the type of this parser
- * @see Skript#addClass(ClassInfo)
+ * @see Skript#registerClass(ClassInfo)
  * @see ClassInfo
  * @see Skript#toString(Object)
  */

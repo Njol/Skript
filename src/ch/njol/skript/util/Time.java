@@ -50,7 +50,7 @@ public class Time {
 	public static String toString(final int ticks) {
 		final int t = (ticks + 6000) % 24000;
 		final int hours = (int) Math.floor(t / 1000);
-		final int minutes = (int) (Math.round((t % 1000) / 16.6666667));
+		final int minutes = (int) (Math.floor((t % 1000) / 16.666666667)); // floor to prevent ':60'
 		return "" + hours + ":" + (minutes < 10 ? "0" : "") + minutes;
 	}
 	
@@ -60,9 +60,10 @@ public class Time {
 	 * @return The parsed time of null if the input was invalid
 	 */
 	public final static Time parse(final String s) {
-		/* if (s.matches("\\d+")) {
-		 * return new Time(Integer.parseInt(s));
-		 * } else */if (s.matches("\\d?\\d:\\d\\d")) {
+//		if (s.matches("\\d+")) {
+//			return new Time(Integer.parseInt(s));
+//		} else 
+		if (s.matches("\\d?\\d:\\d\\d")) {
 			final int hours = Integer.parseInt(s.split(":")[0]);
 			if (hours >= 24) {
 				Skript.error("a day only has 24 hours");
@@ -108,12 +109,10 @@ public class Time {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof Time))
 			return false;
 		final Time other = (Time) obj;
-		if (time != other.time)
-			return false;
-		return true;
+		return time == other.time;
 	}
 	
 }

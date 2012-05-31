@@ -42,15 +42,13 @@ import ch.njol.util.StringUtils;
  */
 public abstract class Commands {
 	
-	private final static SectionValidator commandStructure = new SectionValidator();
-	static {
-		commandStructure.addEntry("usage", true);
-		commandStructure.addEntry("description", true);
-		commandStructure.addEntry("permission", true);
-		commandStructure.addEntry("permission message", true);
-		commandStructure.addEntry("aliases", true);
-		commandStructure.addSection("trigger", false);
-	}
+	private final static SectionValidator commandStructure = new SectionValidator()
+	.addEntry("usage", true)
+	.addEntry("description", true)
+	.addEntry("permission", true)
+	.addEntry("permission message", true)
+	.addEntry("aliases", true)
+	.addSection("trigger", false);
 	
 	public static List<Argument<?>> currentArguments = null;
 	
@@ -65,7 +63,7 @@ public abstract class Commands {
 		
 		final String argPattern = "<([a-zA-Z -]+?)\\s*(=\\s*(" + ExprParser.wildcard + "))?>";
 		
-		Matcher m = Pattern.compile("^command /?(\\S+)( " + argPattern + ")*$").matcher(s);
+		Matcher m = Pattern.compile("(?i)^command /?(\\S+)(,? " + argPattern + ")*$").matcher(s);
 		if (!m.matches()) {
 			Skript.error("invalid command layout. It should look like '/command <arg 1>, <arg 2>, ...'");
 			return false;
@@ -107,7 +105,7 @@ public abstract class Commands {
 		
 		node.convertToEntries(0);
 		
-		node.validate(commandStructure);
+		commandStructure.validate(node, true);
 		if (!(node.get("trigger") instanceof SectionNode))
 			return false;
 		
@@ -134,7 +132,8 @@ public abstract class Commands {
 		
 		if (Skript.debug())
 			Skript.info("command " + desc + ":");
-		Skript.addCommand(new SkriptCommand(command, currentArguments, description, usage, aliases, permission, permissionMessage, TriggerFileLoader.loadItems(trigger)));
+		
+		Skript.registerCommand(new SkriptCommand(command, currentArguments, description, usage, aliases, permission, permissionMessage, TriggerFileLoader.loadItems(trigger)));
 		if (Skript.logVeryHigh() && !Skript.debug())
 			Skript.info("registered command /" + command);
 		currentArguments = null;

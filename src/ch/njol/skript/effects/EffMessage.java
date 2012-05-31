@@ -29,6 +29,7 @@ import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.VariableString;
+import ch.njol.util.StringUtils;
 
 /**
  * 
@@ -38,7 +39,7 @@ import ch.njol.skript.util.VariableString;
 public class EffMessage extends Effect {
 	
 	static {
-		Skript.addEffect(EffMessage.class,
+		Skript.registerEffect(EffMessage.class,
 				"([send] message|send) %variablestrings% [to %commandsenders%]",
 				"([send] message|send) [to] %commandsenders% %variablestrings%");
 	}
@@ -65,7 +66,7 @@ public class EffMessage extends Effect {
 			if (message == null)
 				continue;
 			for (final CommandSender s : recipients.getArray(e)) {
-				s.sendMessage(message);
+				s.sendMessage(StringUtils.firstToUpper(message));
 			}
 		}
 	}

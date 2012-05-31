@@ -38,7 +38,7 @@ import ch.njol.util.Checker;
 public class CondWeather extends Condition {
 	
 	static {
-		Skript.addCondition(CondWeather.class, "is %weathertypes% [in %worlds%]");
+		Skript.registerCondition(CondWeather.class, "is %weathertypes% [in %worlds%]");
 	}
 	
 	private Variable<WeatherType> weathers;

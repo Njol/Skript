@@ -33,7 +33,7 @@ import ch.njol.util.Validate;
  * @param <F> same as Converter's <F> (from)
  * @param <M> the middle type, i.e. the type the first converter converts to and the second converter comverts from.
  * @param <T> same as Converter's <T> (to)
- * @see Skript#addConverter(Class, Class, Converter)
+ * @see Skript#registerConverter(Class, Class, Converter)
  * @see Converter
  */
 public final class ChainedConverter<F, M, T> implements Converter<F, T> {

@@ -23,6 +23,7 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
@@ -39,7 +40,7 @@ import ch.njol.util.Checker;
 public class CondInventoryContains extends Condition {
 	
 	static {
-		Skript.addCondition(CondInventoryContains.class,
+		Skript.registerCondition(CondInventoryContains.class,
 				"[%inventories%] ha(s|ve) %itemtypes% [in inventory]",
 				"[%inventories%] contain[s] %itemtypes%",
 				"[%inventories%] (ha(s|ve) not|do[es]n't have) %itemtypes% [in inventory]",
@@ -62,10 +63,11 @@ public class CondInventoryContains extends Condition {
 		return invis.check(e, new Checker<Inventory>() {
 			@Override
 			public boolean check(final Inventory invi) {
+				final ItemStack[] buf = invi.getContents();
 				return items.check(e, new Checker<ItemType>() {
 					@Override
 					public boolean check(final ItemType type) {
-						return type.isContainedIn(invi);
+						return type.isContainedIn(buf);
 					}
 				});
 			}

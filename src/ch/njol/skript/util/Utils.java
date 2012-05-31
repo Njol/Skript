@@ -28,58 +28,18 @@ import java.util.Map.Entry;
 
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Animals;
-import org.bukkit.entity.Arrow;
-import org.bukkit.entity.Boat;
-import org.bukkit.entity.CaveSpider;
-import org.bukkit.entity.Chicken;
-import org.bukkit.entity.Cow;
 import org.bukkit.entity.Creature;
-import org.bukkit.entity.Creeper;
-import org.bukkit.entity.Egg;
-import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.ExperienceOrb;
-import org.bukkit.entity.Explosive;
-import org.bukkit.entity.FallingSand;
-import org.bukkit.entity.Fireball;
-import org.bukkit.entity.Fish;
-import org.bukkit.entity.Flying;
-import org.bukkit.entity.Ghast;
-import org.bukkit.entity.Giant;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.LightningStrike;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Minecart;
-import org.bukkit.entity.Monster;
-import org.bukkit.entity.Painting;
-import org.bukkit.entity.Pig;
-import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.PoweredMinecart;
-import org.bukkit.entity.Projectile;
-import org.bukkit.entity.Sheep;
-import org.bukkit.entity.Silverfish;
-import org.bukkit.entity.Skeleton;
-import org.bukkit.entity.Slime;
-import org.bukkit.entity.Snowball;
-import org.bukkit.entity.Spider;
-import org.bukkit.entity.Squid;
-import org.bukkit.entity.StorageMinecart;
-import org.bukkit.entity.TNTPrimed;
-import org.bukkit.entity.Vehicle;
-import org.bukkit.entity.WaterMob;
-import org.bukkit.entity.Wolf;
-import org.bukkit.entity.Zombie;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.effects.EffTeleport;
 import ch.njol.util.Pair;
+import ch.njol.util.Validate;
 
 /**
  * 
@@ -92,13 +52,11 @@ public abstract class Utils {
 	private Utils() {}
 	
 	public static boolean parseBoolean(final String s) {
-		boolean r = (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("yes"));
-		if (r)
+		if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("yes"))
 			return true;
-		r = s.equalsIgnoreCase("false") || s.equalsIgnoreCase("no");
-		if (r)
+		if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("no"))
 			return false;
-		SkriptLogger.expectationError("boolean (true/yes or false/no)", s);
+		Skript.error("'" + s + "' is not a boolean (true/yes or false/no)");
 		return false;
 	}
 	
@@ -114,7 +72,7 @@ public abstract class Utils {
 		try {
 			return Short.parseShort(s);
 		} catch (final NumberFormatException e) {
-			SkriptLogger.expectationError("integer between -32768 and 32767", s);
+			Skript.error("'" + s + "' is not an integer between -32768 and 32767");
 		}
 		return 0;
 	}
@@ -123,7 +81,7 @@ public abstract class Utils {
 		try {
 			return Integer.parseInt(s);
 		} catch (final NumberFormatException e) {
-			SkriptLogger.expectationError("integer", s);
+			Skript.error("'" + s + "' is not an integer");
 		}
 		return 0;
 	}
@@ -132,7 +90,7 @@ public abstract class Utils {
 		try {
 			return Float.parseFloat(s);
 		} catch (final NumberFormatException e) {
-			SkriptLogger.expectationError("number", s);
+			Skript.error("'" + s + "' is not a number");
 		}
 		return 0;
 	}
@@ -141,12 +99,13 @@ public abstract class Utils {
 		try {
 			return Double.parseDouble(s);
 		} catch (final NumberFormatException e) {
-			SkriptLogger.expectationError("number", s);
+			Skript.error("'" + s + "' is not a number");
 		}
 		return 0;
 	}
 	
 	/**
+	 * Finds an object in an array using {@link Object#equals(Object)}.
 	 * 
 	 * @param array the array to search in
 	 * @param o the object to search for
@@ -155,15 +114,36 @@ public abstract class Utils {
 	public static <T> int contains(final T[] array, final T o) {
 		if (array == null)
 			return -1;
-		int i = 0;
-		for (final T a : array) {
-			if (a.equals(o))
+		for (int i = 0; i < array.length; i++) {
+			if (array[i].equals(o))
 				return i;
-			i++;
+		}
+		return -1;
+	}
+
+	public static int contains(int[] array, int num) {
+		return contains(array, num, 0, array.length);
+	}
+	public static int contains(int[] array, int num, int start) {
+		return contains(array, num, start, array.length);
+	}
+	public static int contains(int[] array, int num, int start, int end) {
+		if (array == null)
+			return -1;
+		for (int i = start; i < end; i++) {
+			if (array[i] == num)
+				return i;
 		}
 		return -1;
 	}
 	
+	/**
+	 * finds a string in an array of strings (ignoring case).
+	 * 
+	 * @param array the array to search in
+	 * @param s the string to search for
+	 * @return the index of the first occurrence of the given string or -1 if not found
+	 */
 	public static int containsIgnoreCase(final String[] array, final String s) {
 		if (array == null)
 			return -1;
@@ -177,10 +157,10 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * Finds an object in an array using {@link Object#equals(Object)} to test equality.
+	 * Finds an object in an iterable using {@link Object#equals(Object)}.
 	 * 
-	 * @param array
-	 * @param o
+	 * @param array the iterable to search in
+	 * @param o the object to search for
 	 * @return the index of the first occurrence of the given object or -1 if not found
 	 */
 	public static <T> int contains(final Iterable<T> array, final T o) {
@@ -198,8 +178,8 @@ public abstract class Utils {
 	/**
 	 * finds a string in an array of strings (ignoring case).
 	 * 
-	 * @param array
-	 * @param s
+	 * @param array the iterable to search in
+	 * @param s the string to search for
 	 * @return the index of the first occurrence of the given string or -1 if not found
 	 */
 	public static int containsIgnoreCase(final Iterable<String> array, final String s) {
@@ -214,14 +194,19 @@ public abstract class Utils {
 		return -1;
 	}
 	
-	public static <T, U> Entry<T, U> containsKey(final Map<T, U> m, final Object key) {
+	/**
+	 * 
+	 * @param m
+	 * @param key
+	 * @return a new entry object
+	 */
+	public static <T, U> Entry<T, U> containsKey(final Map<T, U> m, final T key) {
 		if (m == null)
 			return null;
-		for (final Entry<T, U> e : m.entrySet()) {
-			if (e.getKey().equals(key))
-				return e;
-		}
-		return null;
+		final U u = m.get(key);
+		if (u == null)
+			return null;
+		return new Pair<T, U>(key, u);
 	}
 	
 	public static <U> Entry<String, U> containsKeyIgnoreCase(final Map<String, U> m, final String key) {
@@ -234,36 +219,36 @@ public abstract class Utils {
 		return null;
 	}
 	
-	public static BlockFace getBlockFace(String s, final boolean printError) {
+	public static BlockFace getBlockFace(final String s, final boolean printError) {
 		if (s == null || s.isEmpty())
 			return null;
-		s = s.toUpperCase(Locale.ENGLISH).replace(' ', '_');
+		final String supper = s.toUpperCase(Locale.ENGLISH).replace(' ', '_');
 		try {
-			if (s.equals("ABOVE"))
+			if (supper.equals("ABOVE"))
 				return BlockFace.UP;
-			if (s.equals("BELOW"))
+			if (supper.equals("BELOW"))
 				return BlockFace.DOWN;
-			return BlockFace.valueOf(s);
+			return BlockFace.valueOf(supper);
 		} catch (final IllegalArgumentException e1) {
-			if (s.equals("U"))
+			if (supper.equals("U"))
 				return BlockFace.UP;
-			if (s.equals("D"))
+			if (supper.equals("D"))
 				return BlockFace.DOWN;
-			if (s.length() <= 3) {
+			if (supper.length() <= 3) {
 				try {
 					String r = "";
-					for (int i = 0; i < s.length(); i++) {
-						switch (s.charAt(i)) {
-							case 'n':
+					for (int i = 0; i < supper.length(); i++) {
+						switch (supper.charAt(i)) {
+							case 'N':
 								r += "NORTH_";
 							break;
-							case 'e':
+							case 'E':
 								r += "EAST_";
 							break;
-							case 's':
+							case 'S':
 								r += "SOUTH_";
 							break;
-							case 'w':
+							case 'W':
 								r += "WEST_";
 							break;
 							default:
@@ -277,7 +262,7 @@ public abstract class Utils {
 			}
 		}
 		if (printError)
-			Skript.error("invalid direction '" + s + "'");
+			Skript.error("invalid direction '" + supper + "'");
 		return null;
 	}
 	
@@ -286,116 +271,15 @@ public abstract class Utils {
 	}
 	
 	public static final int getBlockFaceDir(final BlockFace f, final int axis) {
-		return getBlockFaceDir(f)[axis];
-	}
-	
-	public static EntityType getEntityType(String s) {
-		int amount = 1;
-		if (s.matches("\\d+ .+")) {
-			amount = Integer.parseInt(s.split(" ", 2)[0]);
-			s = s.split(" ", 2)[1];
-		} else if (s.matches("(?i)an? .*")) {
-			s = s.split(" ", 2)[1];
+		switch (axis) {
+			case 0:
+				return f.getModX();
+			case 1:
+				return f.getModY();
+			case 2:
+				return f.getModZ();
 		}
-		final Pair<String, Boolean> p = getPlural(s, amount != 1);
-		s = p.first;
-		final Class<? extends Entity> c = getEntityClass(s.toLowerCase(Locale.ENGLISH));
-		if (c == null)
-			return null;
-		return new EntityType(c, amount);
-	}
-	
-	private static Class<? extends Entity> getEntityClass(final String name) {
-		if (name.equals("any") || name.equals("entity")) {
-			return Entity.class;
-		} else if (name.equals("animal")) {
-			return Animals.class;
-		} else if (name.equals("arrow")) {
-			return Arrow.class;
-		} else if (name.equals("boat")) {
-			return Boat.class;
-		} else if (name.equals("chicken")) {
-			return Chicken.class;
-		} else if (name.equals("cow")) {
-			return Cow.class;
-		} else if (name.equals("creature")) {
-			return Creature.class;
-		} else if (name.equals("creeper")) {
-			return Creeper.class;
-		} else if (name.equals("egg")) {
-			return Egg.class;
-		} else if (name.equals("explosive")) {
-			return Explosive.class;
-		} else if (name.equals("falling")) {
-			return FallingSand.class;
-		} else if (name.equals("fireball")) {
-			return Fireball.class;
-		} else if (name.equals("fish")) {
-			return Fish.class;
-		} else if (name.equals("flying")) {
-			return Flying.class;
-		} else if (name.equals("ghast")) {
-			return Ghast.class;
-		} else if (name.equals("giant")) {
-			return Giant.class;
-		} else if (name.equals("human")) {
-			return HumanEntity.class;
-		} else if (name.equals("item")) {
-			return Item.class;
-		} else if (name.equals("lightning strike")) {
-			return LightningStrike.class;
-		} else if (name.equals("living")) {
-			return LivingEntity.class;
-		} else if (name.equals("minecart")) {
-			return Minecart.class;
-		} else if (name.equals("monster")) {
-			return Monster.class;
-		} else if (name.equals("painting")) {
-			return Painting.class;
-		} else if (name.equals("pig")) {
-			return Pig.class;
-		} else if (name.equals("pigzombie")) {
-			return PigZombie.class;
-		} else if (name.equals("player")) {
-			return Player.class;
-		} else if (name.equals("powered minecart")) {
-			return PoweredMinecart.class;
-		} else if (name.equals("projectile")) {
-			return Projectile.class;
-		} else if (name.equals("sheep")) {
-			return Sheep.class;
-		} else if (name.equals("skeleton")) {
-			return Skeleton.class;
-		} else if (name.equals("slime")) {
-			return Slime.class;
-		} else if (name.equals("snowball")) {
-			return Snowball.class;
-		} else if (name.equals("spider")) {
-			return Spider.class;
-		} else if (name.equals("squid")) {
-			return Squid.class;
-		} else if (name.equals("storage minecart")) {
-			return StorageMinecart.class;
-		} else if (name.equals("tnt")) {
-			return TNTPrimed.class;
-		} else if (name.equals("vehicle")) {
-			return Vehicle.class;
-		} else if (name.equals("water")) {
-			return WaterMob.class;
-		} else if (name.equals("wolf")) {
-			return Wolf.class;
-		} else if (name.equals("zombie")) {
-			return Zombie.class;
-		} else if (name.equals("cave spider")) {
-			return CaveSpider.class;
-		} else if (name.equals("enderman")) {
-			return Enderman.class;
-		} else if (name.equals("experience orb")) {
-			return ExperienceOrb.class;
-		} else if (name.equals("silverfish")) {
-			return Silverfish.class;
-		}
-		return null;
+		throw new IllegalArgumentException("axis must be between 0 and 2");
 	}
 	
 	public static String join(final VariableString[] strings, final Event e, final boolean and) {
@@ -478,7 +362,7 @@ public abstract class Utils {
 	public static boolean itemStacksEqual(final ItemStack is1, final ItemStack is2) {
 		if (is1 == null || is2 == null)
 			return is1 == is2;
-		return is1.getTypeId() == is2.getTypeId() && is1.getData().getData() == is2.getData().getData() && is1.getDurability() == is2.getDurability();
+		return is1.getTypeId() == is2.getTypeId() && is1.getDurability() == is2.getDurability();
 	}
 	
 	/**
@@ -604,29 +488,36 @@ public abstract class Utils {
 	 * @param expectPlural
 	 * @return
 	 */
-	private static Pair<String, Boolean> getPlural(final String s, final boolean expectPlural) {
+	public static Pair<String, Boolean> getPlural(final String s, final boolean expectPlural) {
 		final Pair<String, Boolean> p = getPlural(s);
-		if (p.second ^ expectPlural)
+		if (p.second != expectPlural)
 			Skript.warning("Possible invalid plural detected in '" + s + "'");
 		return p;
 	}
 	
+	private final static String[][] plurals = {
+			{"f", "ves"},
+			{"y", "ies"},
+			{"man", "men"},
+			{"s", "ses"},
+			{"us", "i"},
+	};
+	
 	/**
 	 * 
 	 * @param s trimmed string
-	 * @return pair of singular string + boolean whether it was plural
+	 * @return Pair of singular string + boolean whether it was plural
 	 */
 	public static final Pair<String, Boolean> getPlural(final String s) {
-		final String l = s.toLowerCase();
-		if (l.endsWith("ves")) {
-			return new Pair<String, Boolean>(s.substring(0, s.length() - 2) + "f", Boolean.TRUE);
-		} else if (l.endsWith("ies")) {
-			return new Pair<String, Boolean>(s.substring(0, s.length() - 3) + "y", Boolean.TRUE);
-		} else if (l.endsWith("s")) {
-			return new Pair<String, Boolean>(s.substring(0, s.length() - 1), Boolean.TRUE);
-		} else if (l.endsWith("i")) {
-			return new Pair<String, Boolean>(s.substring(0, s.length() - 1) + "us", Boolean.TRUE);
+		Validate.notNullOrEmpty(s, "s");
+		for (final String[] p : plurals) {
+			if (s.endsWith(p[1]))
+				return new Pair<String, Boolean>(s.substring(0, s.length() - p[1].length()) + p[0], Boolean.TRUE);
+			if (s.endsWith(p[1].toUpperCase()))
+				return new Pair<String, Boolean>(s.substring(0, s.length() - p[1].length()) + p[0].toUpperCase(), Boolean.TRUE);
 		}
+		if (s.endsWith("s") || s.endsWith("S"))
+			return new Pair<String, Boolean>(s.substring(0, s.length() - 1), Boolean.TRUE);
 		return new Pair<String, Boolean>(s, Boolean.FALSE);
 	}
 	
@@ -637,16 +528,12 @@ public abstract class Utils {
 	 * @return
 	 */
 	public static final String toPlural(final String s) {
-		if (s.endsWith("f")) {
-			return s.substring(0, s.length() - 1) + "ves";
-		} else if (s.endsWith("s")) {
-			return s + "es";
-		} else if (s.endsWith("y")) {
-			return s.substring(0, s.length() - 1) + "ies";
-		} else if (s.endsWith("us")) {
-			return s.substring(0, s.length() - 2) + "i";
+		Validate.notNullOrEmpty(s, "s");
+		for (final String[] p : plurals) {
+			if (s.endsWith(p[0]))
+				return s.substring(0, s.length() - p[0].length()) + p[1];
 		}
-		return s + "s";
+		return s + (Character.isLowerCase(s.charAt(s.length() - 1)) ? "s" : "S");
 	}
 	
 	/**
@@ -666,6 +553,7 @@ public abstract class Utils {
 	 * @param s the string to add the article to
 	 * @param capA Whether to use a capital a or not
 	 * @return string with an appended a/an (or A/An if capA is true) and a space at the beginning
+	 * @see #a(String)
 	 */
 	public static final String a(final String s, final boolean capA) {
 		if (s == null || s.isEmpty())
@@ -676,7 +564,6 @@ public abstract class Utils {
 			case 'i':
 			case 'o':
 			case 'u':
-				//			case 'y':
 				if (capA)
 					return "An " + s;
 				return "an " + s;
@@ -716,6 +603,7 @@ public abstract class Utils {
 				return 14. / 16;
 			case FENCE:
 			case FENCE_GATE:
+			case NETHER_FENCE:
 				return 1.5;
 			case CAULDRON:
 				return 5. / 16;
@@ -723,4 +611,5 @@ public abstract class Utils {
 				return 1;
 		}
 	}
+
 }

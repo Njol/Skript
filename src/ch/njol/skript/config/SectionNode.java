@@ -201,18 +201,25 @@ public class SectionNode extends Node implements Iterable<Node> {
 		return new EntryNode(key, value, orig, this, lineNum);
 	}
 	
+	/**
+	 * Converts all SimpleNodes in this section to EntryNodes.
+	 * 
+	 * @param levels Amount of levels to go down, e.g. 0 to only convert direct subnodes of this section, -1 for all subnodes, including subnodes of subnodes etc.
+	 */
 	public void convertToEntries(final int levels) {
 		convertToEntries(levels, config.separator);
 	}
 	
 	// FIXME: breaks saving!
 	public void convertToEntries(final int levels, final String separator) {
+		if (levels < -1)
+			throw new IllegalArgumentException("levels must be >= -1");
 		if (!config.simple)
 			throw new SkriptAPIException("config is not simple");
 		for (int i = 0; i < nodes.size(); i++) {
 			final Node n = nodes.get(i);
-			if (levels > 0 && n instanceof SectionNode) {
-				((SectionNode) n).convertToEntries(levels - 1, separator);
+			if (levels != 0 && n instanceof SectionNode) {
+				((SectionNode) n).convertToEntries(levels == -1 ? -1 : levels - 1, separator);
 			}
 			if (!(n instanceof SimpleNode))
 				continue;

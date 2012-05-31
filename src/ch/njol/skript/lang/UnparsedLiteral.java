@@ -33,7 +33,7 @@ import ch.njol.skript.api.intern.VariableStringLiteral;
 import ch.njol.skript.util.Utils;
 
 /**
- * A literal whioch has yet to be parsed. This is returned if %object% is used within patterns and no variable matches.
+ * A literal which has yet to be parsed. This is returned if %object(s)% is used within patterns and no variable matches.
  * 
  * @author Peter Güttinger
  * @see SimpleLiteral
@@ -60,11 +60,11 @@ public class UnparsedLiteral extends SimpleLiteral<Object> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> ConvertedLiteral<? extends R> getConvertedVar(final Class<R> to) {
+	public <R> ConvertedLiteral<Object, ? extends R> getConvertedVar(final Class<R> to) {
 		if (to == String.class) {
 			final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
 			if (vsl != null)
-				return (ConvertedLiteral<? extends R>) vsl;
+				return (ConvertedLiteral<Object, ? extends R>) vsl;
 		} else if (to == Object.class) {
 			throw new SkriptAPIException("can't parse as Object");
 		}
@@ -78,7 +78,7 @@ public class UnparsedLiteral extends SimpleLiteral<Object> {
 				return null;
 			}
 		}
-		return new ConvertedLiteral<R>(this, parsedData, to);
+		return new ConvertedLiteral<Object, R>(this, parsedData, to);
 	}
 	
 	@Override

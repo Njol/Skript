@@ -38,7 +38,7 @@ import ch.njol.skript.lang.Variable;
 public class VarHealth extends SimpleVariable<Float> {
 	
 	static {
-		Skript.addVariable(VarHealth.class, Float.class, "health [of %livingentities%]");
+		Skript.registerVariable(VarHealth.class, Float.class, "health [of %livingentities%]", "%livingentities%'[s] health");
 	}
 	
 	private Variable<LivingEntity> entities;

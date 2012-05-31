@@ -43,7 +43,7 @@ import ch.njol.skript.util.Utils;
 public class VarTarget extends SimpleVariable<Entity> {
 	
 	static {
-		Skript.addVariable(VarTarget.class, Entity.class, "target[ed %entitytypes%] [of %livingentitys%]");
+		Skript.registerVariable(VarTarget.class, Entity.class, "target[[ed] %entitytypes%] [of %livingentities%]", "%livingentities%'[s] target[[ed] %entitytypes%]");
 	}
 	
 	private Variable<EntityType> types;
@@ -52,8 +52,8 @@ public class VarTarget extends SimpleVariable<Entity> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		types = (Variable<EntityType>) vars[0];
-		entities = (Variable<LivingEntity>) vars[1];
+		types = (Variable<EntityType>) vars[matchedPattern];
+		entities = (Variable<LivingEntity>) vars[1 - matchedPattern];
 	}
 	
 	@Override

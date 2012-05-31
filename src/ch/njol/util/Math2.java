@@ -25,6 +25,16 @@ package ch.njol.util;
  */
 public abstract class Math2 {
 	
+	public static int min(final int... nums) {
+		Validate.notEmpty(nums, "nums");
+		int min = Integer.MAX_VALUE;
+		for (final int i : nums) {
+			if (i < min)
+				min = i;
+		}
+		return min;
+	}
+	
 	public final static int max(final int... nums) {
 		Validate.notEmpty(nums, "nums");
 		int max = nums[0];
@@ -36,17 +46,16 @@ public abstract class Math2 {
 	}
 	
 	/**
-	 * finds the smallest positive number in the sequence
+	 * finds the smallest positive number (&ge;0) in the sequence
 	 * 
 	 * @param nums
-	 * @return smallest positive number of the sequence or -1 if all numbers are negative
+	 * @return smallest positive number in the sequence or -1 if no number is positive
 	 */
 	public final static int minPositive(final int... nums) {
-		Validate.notEmpty(nums, "nums");
 		int max = -1;
-		for (int i = 0; i < nums.length; i++) {
-			if (nums[i] > 0 && nums[i] < max)
-				max = nums[i];
+		for (final int num : nums) {
+			if (num >= 0 && (num < max || max == -1))
+				max = num;
 		}
 		return max;
 	}

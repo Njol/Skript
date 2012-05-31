@@ -42,10 +42,10 @@ import ch.njol.util.Checker;
 public class EvtItem extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtItem.class, BlockDispenseEvent.class, "dispense [[of] %itemtypes%]");
-		Skript.addEvent(EvtItem.class, ItemSpawnEvent.class, "item spawn [[of] %itemtypes%]");
-		Skript.addEvent(EvtItem.class, PlayerDropItemEvent.class, "drop [[of] %itemtypes%]");
-		Skript.addEvent(EvtItem.class, PlayerEggThrowEvent.class, "throw [[of] %itemtypes%]");
+		Skript.registerEvent(EvtItem.class, BlockDispenseEvent.class, "dispense [[of] %itemtypes%]");
+		Skript.registerEvent(EvtItem.class, ItemSpawnEvent.class, "item spawn [[of] %itemtypes%]");
+		Skript.registerEvent(EvtItem.class, PlayerDropItemEvent.class, "drop [[of] %itemtypes%]");
+		Skript.registerEvent(EvtItem.class, PlayerEggThrowEvent.class, "throw [[of] %itemtypes%]");
 	}
 	
 	private Literal<ItemType> types;

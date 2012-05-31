@@ -45,7 +45,7 @@ public class Timespan {
 		simpleValues.put("tick", 1f);
 		simpleValues.put("second", 1000f / 3600);
 		
-		Skript.addClass(new ClassInfo<Timespan>("timespan", Timespan.class, null, new Parser<Timespan>() {
+		Skript.registerClass(new ClassInfo<Timespan>("timespan", Timespan.class, null, new Parser<Timespan>() {
 			@Override
 			public Timespan parse(String s) {
 				if (s.isEmpty())

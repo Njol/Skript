@@ -38,7 +38,7 @@ import ch.njol.skript.lang.Variable;
 public class EffExit extends Effect {
 	
 	static {
-		Skript.addEffect(EffExit.class,
+		Skript.registerEffect(EffExit.class,
 				"(exit|stop) [trigger]",
 				"(exit|stop) [1] section",
 				"(exit|stop) <\\d+> sections",

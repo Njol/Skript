@@ -44,9 +44,9 @@ import ch.njol.util.Checker;
 public class EvtBlock extends SkriptEvent {
 	
 	static {
-		Skript.addEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class), "break[ing] [[of] %itemtypes%]");
-		Skript.addEvent(EvtBlock.class, BlockBurnEvent.class, "burn[ing] [[of] %itemtypes%]");
-		Skript.addEvent(EvtBlock.class, Skript.array(BlockPlaceEvent.class, PaintingPlaceEvent.class), "plac(e|ing) [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class), "break[ing] [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, BlockBurnEvent.class, "burn[ing] [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, Skript.array(BlockPlaceEvent.class, PaintingPlaceEvent.class), "plac(e|ing) [[of] %itemtypes%]");
 	}
 	
 	private Literal<ItemType> types;

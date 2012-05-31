@@ -20,6 +20,7 @@
 package ch.njol.util.iterator;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * @author Peter Güttinger
@@ -41,11 +42,15 @@ public class SingleItemIterator<T> implements Iterator<T> {
 	
 	@Override
 	public T next() {
+		if (returned)
+			throw new NoSuchElementException();
 		returned = true;
 		return item;
 	}
 	
 	@Override
-	public void remove() {}
+	public void remove() {
+		throw new UnsupportedOperationException();
+	}
 	
 }

@@ -21,19 +21,15 @@
 
 package ch.njol.skript.data;
 
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
-import org.bukkit.event.Event;
 
 import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser;
 import ch.njol.skript.lang.SimpleLiteral;
-import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Offset;
@@ -41,7 +37,6 @@ import ch.njol.skript.util.Slot;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
-import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
 import ch.njol.skript.util.WeatherType;
 import ch.njol.skript.variables.base.EventValueVariable;
@@ -54,14 +49,8 @@ public class SkriptClasses {
 	
 	public SkriptClasses() {}
 	
-	public static final class WeatherTypeDefaultVariable extends SimpleLiteral<WeatherType> {
-		public WeatherTypeDefaultVariable() {
-			super(WeatherType.clear);
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<WeatherType>("weather type", "weathertype", WeatherType.class, WeatherTypeDefaultVariable.class, new Parser<WeatherType>() {
+		Skript.registerClass(new ClassInfo<WeatherType>("weather type", "weathertype", WeatherType.class, new SimpleLiteral<WeatherType>(WeatherType.CLEAR), new Parser<WeatherType>() {
 			
 			@Override
 			public WeatherType parse(final String s) {
@@ -76,28 +65,22 @@ public class SkriptClasses {
 		}, "weather ?types?", "weather conditions", "weathers?"));
 	}
 	
-	public static final class EntityTypeDefaultVariable extends SimpleLiteral<EntityType> {
-		public EntityTypeDefaultVariable() {
-			super(new EntityType(Entity.class, 1));
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<EntityType>("entity type", "entitytype", EntityType.class, EntityTypeDefaultVariable.class, new Parser<EntityType>() {
+		Skript.registerClass(new ClassInfo<EntityType>("entity type", "entitytype", EntityType.class, new SimpleLiteral<EntityType>(new EntityType(Entity.class, 1)), new Parser<EntityType>() {
 			@Override
 			public EntityType parse(final String s) {
-				return Utils.getEntityType(s);
+				return EntityType.parse(s);
 			}
 			
 			@Override
-			public String toString(final EntityType o) {
-				return o.toString();
+			public String toString(final EntityType t) {
+				return t.toString();
 			}
 		}, "entity ?types?", "enit(y|ies)"));
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<VariableString>("variablestring", VariableString.class, null, new Parser<VariableString>() {
+		Skript.registerClass(new ClassInfo<VariableString>("variablestring", VariableString.class, null, new Parser<VariableString>() {
 			
 			@Override
 			public VariableString parse(final String s) {
@@ -115,45 +98,34 @@ public class SkriptClasses {
 			}
 			
 			@Override
-			public String toString(final VariableString o) {
-				return o.getDebugMessage(null);
+			public String toString(final VariableString vs) {
+				return vs.getDebugMessage(null);
 			}
 			
 		}));
 	}
 	
 	static {
-		Skript.addClass(new ClassInfo<ItemType>("item type", "itemtype", ItemType.class, null, new Parser<ItemType>() {
+		Skript.registerClass(new ClassInfo<ItemType>("item type", "itemtype", ItemType.class, null, new Parser<ItemType>() {
 			@Override
 			public ItemType parse(final String s) {
 				return Aliases.parseItemType(s);
 			}
 			
 			@Override
-			public String toString(final ItemType o) {
-				return o.toString();
+			public String toString(final ItemType t) {
+				return t.toString();
+			}
+			
+			@Override
+			public String getDebugMessage(final ItemType t) {
+				return t.getDebugMessage();
 			}
 		}, "item ?type", "items", "materials"));
 	}
 	
-	public static final class TimeDefaultVariable extends EventValueVariable<Time> {
-		public TimeDefaultVariable() {
-			super(Time.class);
-		}
-		
-		@Override
-		public Class<?> acceptChange(final ChangeMode mode) {
-			return DefaultChangers.timeChanger.acceptChange(mode);
-		}
-		
-		@Override
-		public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
-			DefaultChangers.timeChanger.change(e, new SimpleLiteral<World>(Skript.getEventValue(e, World.class)), delta, mode);
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Time>("time", "time", Time.class, TimeDefaultVariable.class, new Parser<Time>() {
+		Skript.registerClass(new ClassInfo<Time>("time", "time", Time.class, new EventValueVariable<Time>(Time.class), new Parser<Time>() {
 			
 			@Override
 			public Time parse(final String s) {
@@ -172,14 +144,8 @@ public class SkriptClasses {
 		new Timespan();
 	}
 	
-	public static final class TimeperiodDefaultVariable extends SimpleLiteral<Timeperiod> {
-		public TimeperiodDefaultVariable() {
-			super(new Timeperiod(0, 23999));
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Timeperiod>("time period", "timeperiod", Timeperiod.class, TimeperiodDefaultVariable.class, new Parser<Timeperiod>() {
+		Skript.registerClass(new ClassInfo<Timeperiod>("time period", "timeperiod", Timeperiod.class, new SimpleLiteral<Timeperiod>(new Timeperiod(0, 23999)), new Parser<Timeperiod>() {
 			@Override
 			public Timeperiod parse(final String s) {
 				if (s.equalsIgnoreCase("day")) {
@@ -212,14 +178,8 @@ public class SkriptClasses {
 		}, "time ?periods?", "durations?"));
 	}
 	
-	public static final class OffsetDefaultVariable extends SimpleLiteral<Offset> {
-		public OffsetDefaultVariable() {
-			super(new Offset(0, 0, 0));
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Offset>("offset", "offset", Offset.class, OffsetDefaultVariable.class, new Parser<Offset>() {
+		Skript.registerClass(new ClassInfo<Offset>("offset", "offset", Offset.class, new SimpleLiteral<Offset>(new Offset(0, 0, 0)), new Parser<Offset>() {
 			
 			@Override
 			public Offset parse(final String s) {
@@ -233,14 +193,8 @@ public class SkriptClasses {
 		}, "offset"));
 	}
 	
-	public static final class SlotDefaultVariable extends EventValueVariable<Slot> {
-		public SlotDefaultVariable() {
-			super(Slot.class);
-		}
-	}
-	
 	static {
-		Skript.addClass(new ClassInfo<Slot>("slot", Slot.class, SlotDefaultVariable.class, null));
+		Skript.registerClass(new ClassInfo<Slot>("slot", Slot.class, new EventValueVariable<Slot>(Slot.class), null));
 	}
 	
 }

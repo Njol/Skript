@@ -42,7 +42,7 @@ import ch.njol.util.iterator.ArrayIterator;
 public class LoopVarIdsOf extends LoopVar<Integer> {
 	
 	static {
-		Skript.addLoop(LoopVarIdsOf.class, Integer.class, "id[s] of %itemtypes%");
+		Skript.registerLoop(LoopVarIdsOf.class, Integer.class, "id[s] of %itemtypes%");
 	}
 	
 	private Variable<ItemType> types;
@@ -75,7 +75,7 @@ public class LoopVarIdsOf extends LoopVar<Integer> {
 			
 			@Override
 			public Integer next() {
-				return ds.next().typeid;
+				return ds.next().getId();
 			}
 			
 			@Override

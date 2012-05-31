@@ -30,6 +30,7 @@ import org.bukkit.inventory.ItemStack;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.LoopVar;
 import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
@@ -43,7 +44,7 @@ import ch.njol.util.iterator.CheckedIterator;
 public class LoopVarItem extends LoopVar<ItemStack> {
 	
 	static {
-		Skript.addLoop(LoopVarItem.class, ItemStack.class,
+		Skript.registerLoop(LoopVarItem.class, ItemStack.class,
 				"[(all|every)] item(s|[ ]types)", "items of type[s] %itemtypes%",
 				"[(all|every)] block(s|[ ]types)", "blocks of type[s] %itemtypes%");
 	}
@@ -57,6 +58,10 @@ public class LoopVarItem extends LoopVar<ItemStack> {
 		if (vars.length > 0)
 			types = (Variable<ItemType>) vars[0];
 		blocks = matchedPattern >= 2;
+		if (types instanceof Literal) {
+			for (ItemType t : ((Literal<ItemType>) types).getArray())
+				t.setAll(true);
+		}
 	}
 	
 	@Override

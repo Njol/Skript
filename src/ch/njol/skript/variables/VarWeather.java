@@ -41,7 +41,7 @@ import ch.njol.skript.util.WeatherType;
 public class VarWeather extends SimpleVariable<WeatherType> {
 	
 	static {
-		Skript.addVariable(VarWeather.class, WeatherType.class, "weather [(in|of) %world%]");
+		Skript.registerVariable(VarWeather.class, WeatherType.class, "weather [(in|of) %worlds%]");
 	}
 	
 	private Variable<World> worlds;

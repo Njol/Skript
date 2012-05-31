@@ -82,16 +82,16 @@ public abstract class TriggerSection extends TriggerItem {
 	public abstract boolean run(Event e);
 	
 	protected void run(final Event e, final boolean run) {
-		if (Skript.logVeryHigh() && !(this instanceof Trigger))
+		if (Skript.debug() && !(this instanceof Trigger))
 			Skript.info(indentation + (run ? "" : "-") + getDebugMessage(e) + ":");
 		if (!run)
 			return;
 		stopped = false;
-		if (Skript.logVeryHigh() && !(this instanceof Trigger))
+		if (Skript.debug() && !(this instanceof Trigger))
 			incIndentation();
 		for (final TriggerItem i : items) {
 			final boolean ok = i.run(e);
-			if (Skript.logVeryHigh() && !(i instanceof TriggerSection)) {
+			if (Skript.debug() && !(i instanceof TriggerSection)) {
 				if (!stopped)
 					Skript.info(indentation + (ok ? "" : "-") + i.getDebugMessage(e));
 				else
@@ -100,7 +100,7 @@ public abstract class TriggerSection extends TriggerItem {
 			if (stopped || !ok)
 				break;
 		}
-		if (Skript.logVeryHigh() && !(this instanceof Trigger))
+		if (Skript.debug() && !(this instanceof Trigger))
 			decIndentation();
 	}
 	

@@ -41,7 +41,7 @@ import ch.njol.skript.lang.Variable;
 public class EffFertilize extends Effect {
 	
 	static {
-		Skript.addEffect(EffFertilize.class, "fertili(z|s)e [%blocks%]");
+		Skript.registerEffect(EffFertilize.class, "fertili(z|s)e [%blocks%]");
 	}
 	
 	private Variable<Block> blocks;
