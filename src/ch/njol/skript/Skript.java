@@ -27,22 +27,21 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
+
+import net.milkbowl.vault.Vault;
+import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -50,8 +49,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Comparator;
 import ch.njol.skript.api.Comparator.ComparatorInfo;
@@ -93,7 +94,6 @@ import ch.njol.skript.lang.ExpressionInfo;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.VariableInfo;
-import ch.njol.skript.util.ErrorSession;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Setter;
@@ -127,20 +127,37 @@ import ch.njol.util.Validate;
  * @see #registerVariable(Class, Class, String...)
  * 
  */
-public class Skript extends JavaPlugin {
+public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ PLUGIN ================
 	
 	private static Skript instance = null;
 	
+	private static Economy economy = null;
+	
+	private static boolean isLoading = true;
+	
 	public static Skript getInstance() {
 		return instance;
+	}
+	
+	public static Economy getEconomy() {
+		return economy;
+	}
+	
+	public static boolean isLoading() {
+		return isLoading;
 	}
 	
 	public Skript() throws IllegalAccessException {
 		if (instance != null)
 			throw new IllegalAccessException();
 		instance = this;
+	}
+	
+	@Override
+	public void onEnable() {
+		
 		new BukkitEventValues();
 		new DefaultClasses();
 		new DefaultComparators();
@@ -148,62 +165,40 @@ public class Skript extends JavaPlugin {
 		new SkriptClasses();
 		new SkriptEventValues();
 		new SkriptTriggerItems();
-	}
-	
-//	private static boolean monitorMemoryUsage = false;
-//	private static long memoryUsed = 0;
-	
-	@Override
-	public void onEnable() {
+		
 //		automatically added by Bukkit now
 //		info("loading Skript v" + getDescription().getVersion() + "...");
-		
-//		System.gc();
-//		final long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		
 		loadMainConfig();
 		
 		if (logNormal())
-			info(" ~ created & © by Peter Güttinger aka Njol ~");
+			info(" ~ created by & © Peter Güttinger aka Njol ~");
 		
-//		monitorMemoryUsage = logHigh();
+		if (Bukkit.getPluginManager().getPlugin("Vault") instanceof Vault) {
+			final RegisteredServiceProvider<Economy> p = Bukkit.getServicesManager().getRegistration(Economy.class);
+			if (p != null)
+				economy = p.getProvider();
+		}
+		
+//		if (logNormal() && economy != null)
+//			info("hooked into Vault");
 		
 		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 			@Override
 			public void run() {
-//				if (monitorMemoryUsage) {
-//					System.gc();
-//				}
-//				final long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-				
 				Skript.stopAcceptingRegistrations();
 				
 				Skript.loadTriggerFiles();
 				
-				Skript.info("Skript finished loading!");
+				isLoading = false;
 				
-//				if (monitorMemoryUsage) {
-//					System.gc();
-//					final long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-//					Skript.memoryUsed += endMemory - startMemory;
-//					Skript.info("Skript is currently using roughly " + formatMemory(memoryUsed) + " of RAM");
-//				}
+				Skript.info("Skript finished loading!");
 			}
 		});
 		
-//		if (monitorMemoryUsage) {
-//			System.gc();
-//			final long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-//			memoryUsed += endMemory - startMemory;
-//		}
+		Bukkit.getPluginManager().registerEvents(commandListener, this);
 		
 	}
-	
-//	private final static String formatMemory(final long memory) {
-//		double mb = 1. * memory / (1 << 20);
-//		mb = 1. * Math.round(1000 * mb) / 1000;
-//		return mb + " MiB";
-//	}
 	
 	@Override
 	public void onDisable() {
@@ -224,11 +219,31 @@ public class Skript extends JavaPlugin {
 	public static final String quotesError = "Invalid use of quotes (\"). If you want to use quotes in \"quoted text\", double them: \"\".";
 	
 	/**
-	 * A small value ({@value}), useful for comparing floating point numbers.<br>
-	 * E.g. to test whether a location is within a specific radius of another location:
-	 * <pre>location.distance(center) - Skript.EPSILON < radius</pre>
+	 * Prints "Possible invalid plural detected in '" + s + "'"
+	 * 
+	 * @param s
 	 */
-	public static final double EPSILON = 1e-20;
+	public static final void pluralWarning(final String s) {
+		Skript.warning("Possible invalid plural detected in '" + s + "'");
+	}
+	
+	/**
+	 * A small value ({@value} ), useful for comparing doubles (not floats).<br>
+	 * E.g. to test whether a location is within a specific radius of another location:
+	 * 
+	 * <pre>
+	 * location.distance(center) - Skript.EPSILON &lt; radius
+	 * </pre>
+	 * 
+	 * @see #EPSILON_MULT
+	 */
+	public static final double EPSILON = 1e-16;
+	/**
+	 * A value a bit larger than 1 ({@value} )
+	 * 
+	 * @see #EPSILON
+	 */
+	public static final double EPSILON_MULT = 1 + 1e-8;
 	
 	public static final int MAXBLOCKID = 255;
 	
@@ -238,7 +253,7 @@ public class Skript extends JavaPlugin {
 	/**
 	 * maximum number of digits to display after the period for floats and doubles
 	 */
-	public static final int NUMBERACCURACY = 3;
+	public static final int NUMBERACCURACY = 2;
 	
 	public static final Random random = new Random();
 	
@@ -320,6 +335,13 @@ public class Skript extends JavaPlugin {
 	
 	static final Collection<VariableInfo<? extends Variable<?>, ?>> variables = new ArrayList<VariableInfo<? extends Variable<?>, ?>>(30);
 	
+	/**
+	 * Registers a variable.
+	 * 
+	 * @param c The variable's class. This has to be a SimpleVariable to make all variables act the same.
+	 * @param returnType
+	 * @param patterns
+	 */
 	public static <E extends SimpleVariable<T>, T> void registerVariable(final Class<E> c, final Class<T> returnType, final String... patterns) {
 		checkAcceptRegistrations();
 		variables.add(new VariableInfo<E, T>(patterns, returnType, c));
@@ -478,7 +500,7 @@ public class Skript extends JavaPlugin {
 	public static <T> boolean registerClass(final ClassInfo<T> info, final boolean addAlways, final String... before) {
 		checkAcceptRegistrations();
 		for (int i = 0; i < classInfos.size(); i++) {
-			if (Utils.contains(before, classInfos.get(i).getCodeName()) != -1) {
+			if (Utils.indexOf(before, classInfos.get(i).getCodeName()) != -1) {
 				classInfos.add(i, info);
 				return true;
 			}
@@ -596,11 +618,11 @@ public class Skript extends JavaPlugin {
 	}
 	
 	/**
-	 * Parses a string to recieve an object of the desired type.<br/>
-	 * Instead of repeatedly calling this with the same class argument, you should get a parse with {@link #getParser(Class)} and use it for parsing.
+	 * Parses a string to get an object of the desired type.<br/>
+	 * Instead of repeatedly calling this with the same class argument, you should get a parser with {@link #getParser(Class)} and use it for parsing.
 	 * 
 	 * @param s The string to parse
-	 * @param c The desired Type. The returned value will be of this type or a subclass if it.
+	 * @param c The desired type. The returned value will be of this type or a subclass if it.
 	 * @return The parsed object.
 	 */
 	@SuppressWarnings("unchecked")
@@ -622,7 +644,7 @@ public class Skript extends JavaPlugin {
 	}
 	
 	/**
-	 * Gets a parser suitable for parsing the desired type.
+	 * Gets a parser for parsing instances of the desired type from strings.
 	 * 
 	 * @param to
 	 * @return
@@ -796,7 +818,19 @@ public class Skript extends JavaPlugin {
 		}
 	}
 	
-	private static final List<EventValueInfo<?, ?>> eventValues = new ArrayList<Skript.EventValueInfo<?, ?>>(30);
+	private static final List<EventValueInfo<?, ?>> defaultEventValues = new ArrayList<Skript.EventValueInfo<?, ?>>(30);
+	private static final List<EventValueInfo<?, ?>> pastEventValues = new ArrayList<Skript.EventValueInfo<?, ?>>();
+	private static final List<EventValueInfo<?, ?>> futureEventValues = new ArrayList<Skript.EventValueInfo<?, ?>>();
+	
+	private static final List<EventValueInfo<?, ?>> getEventValuesList(final int time) {
+		if (time == -1)
+			return pastEventValues;
+		if (time == 0)
+			return defaultEventValues;
+		if (time == 1)
+			return futureEventValues;
+		throw new IllegalArgumentException("time must be -1, 0, or 1");
+	}
 	
 	/**
 	 * Registers an event value.
@@ -804,10 +838,13 @@ public class Skript extends JavaPlugin {
 	 * @param e the event type
 	 * @param c the type of the default value
 	 * @param g the getter to get the value
-	 * @see #registerEventValueBefore(Class, Class, Class, Getter)
+	 * @param time -1 if this is the value before the event, 1 if after, and 0 if it's the default or this value doesn't have distinct states.
+	 *            <b>Always register a default state!</b> You can leave out one of the other states instead, e.g. only register a default and a past state. The future state will
+	 *            default to the default state in this case.
 	 */
-	public static <T, E extends Event> void registerEventValue(final Class<E> e, final Class<T> c, final Getter<T, E> g) {
+	public static <T, E extends Event> void registerEventValue(final Class<E> e, final Class<T> c, final Getter<T, E> g, final int time) {
 		checkAcceptRegistrations();
+		final List<EventValueInfo<?, ?>> eventValues = getEventValuesList(time);
 		for (int i = 0; i < eventValues.size(); i++) {
 			final EventValueInfo<?, ?> info = eventValues.get(i);
 			if (info.event.isAssignableFrom(e)) {
@@ -819,17 +856,18 @@ public class Skript extends JavaPlugin {
 	}
 	
 	/**
-	 * Gets a value assiciated with the event. Returns null if the event doesn't have such a value (conversions are done to try and get the desired value).<br>
+	 * Gets a specific value from an event. Returns null if the event doesn't have such a value (conversions are done to try and get the desired value).<br>
 	 * It is recommended to use {@link #getEventValueGetter(Class, Class)} or {@link #getDefaultVariable(Class)} instead of invoking this method repeatedly.
 	 * 
 	 * @param e
 	 * @param c
+	 * @param time
 	 * @return
-	 * @see #registerEventValue(Class, Class, Getter)
+	 * @see #registerEventValue(Class, Class, Getter, int)
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T, E extends Event> T getEventValue(final E e, final Class<T> c) {
-		final Converter<? super E, ? extends T> g = getEventValueGetter((Class<E>) e.getClass(), c);
+	public static <T, E extends Event> T getEventValue(final E e, final Class<T> c, final int time) {
+		final Converter<? super E, ? extends T> g = getEventValueGetter((Class<E>) e.getClass(), c, time);
 		if (g == null)
 			return null;
 		return g.convert(e);
@@ -840,12 +878,18 @@ public class Skript extends JavaPlugin {
 	 * 
 	 * @param e
 	 * @param c
+	 * @param time
 	 * @return
-	 * @see #registerEventValue(Class, Class, Getter)
+	 * @see #registerEventValue(Class, Class, Getter, int)
 	 * @see #getDefaultVariable(Class)
 	 */
+	public static final <T, E extends Event> Getter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time) {
+		return getEventValueGetter(e, c, time, true);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public static final <T, E extends Event> Getter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c) {
+	private static final <T, E extends Event> Getter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time, final boolean allowDefault) {
+		final List<EventValueInfo<?, ?>> eventValues = getEventValuesList(time);
 		for (final EventValueInfo<?, ?> ev : eventValues) {
 			if (ev.event.isAssignableFrom(e) && c.isAssignableFrom(ev.c)) {
 				return (Getter<? extends T, ? super E>) ev.getter;
@@ -871,7 +915,13 @@ public class Skript extends JavaPlugin {
 					return g;
 			}
 		}
+		if (allowDefault && time != 0)
+			return getEventValueGetter(e, c, 0);
 		return null;
+	}
+	
+	public static final boolean doesEventValueHaveTimeStates(final Class<? extends Event> e, final Class<?> c) {
+		return getEventValueGetter(e, c, -1, false) != null || getEventValueGetter(e, c, 1, false) != null;
 	}
 	
 	private final static <E extends Event, F, T> Getter<? extends T, ? super E> getConvertedGetter(final EventValueInfo<E, F> i, final Class<T> to) {
@@ -905,7 +955,7 @@ public class Skript extends JavaPlugin {
 	
 	// ================ COMMANDS ================
 	
-	private static final Set<SkriptCommand> commands = new HashSet<SkriptCommand>();
+	private static final Map<String, SkriptCommand> commands = new HashMap<String, SkriptCommand>();
 	
 	public static CommandMap commandMap = null;
 	static {
@@ -922,15 +972,16 @@ public class Skript extends JavaPlugin {
 		}
 	}
 	
-	/**
-	 * Only used internally.
-	 * 
-	 * @param command
-	 * @throws NullPointerException if the server is not running CraftBukkit
-	 */
+	@SuppressWarnings("unused")
+	private static final boolean commandExists(final String lowerLabel) {
+		return commands.get(lowerLabel) != null || commandMap.getCommand(lowerLabel) != null;
+	}
+	
 	public static void registerCommand(final SkriptCommand command) {
-		commands.add(command);
-		commandMap.register("/", command);
+		commands.put(command.getName().toLowerCase(), command);
+		for (final String alias : command.getAliases()) {
+			commands.put(alias.toLowerCase(), command);
+		}
 	}
 	
 	public static void outdatedError() {
@@ -940,6 +991,64 @@ public class Skript extends JavaPlugin {
 	public static void outdatedError(final Exception e) {
 		outdatedError();
 		e.printStackTrace();
+	}
+	
+	private final static Listener commandListener = new Listener() {
+		@SuppressWarnings("unused")
+		@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+		public void onPlayerCommand(final PlayerCommandPreprocessEvent e) {
+			final String[] cmd = e.getMessage().substring(1).split(" ", 2);
+			if (commands.get(cmd[0]) != null) {
+				commands.get(cmd[0]).execute(e.getPlayer(), cmd[0], cmd.length == 1 ? "" : cmd[1]);
+				e.setCancelled(true);
+			} else if (enableEffectCommands) {
+				if (Skript.handleEffectCommand(e.getPlayer(), e.getMessage().substring(1)))
+					e.setCancelled(true);
+			}
+		}
+		
+		@SuppressWarnings("unused")
+		@EventHandler(priority = EventPriority.HIGHEST)
+		public void onServerCommand(final ServerCommandEvent e) {
+			final String[] cmd = e.getCommand().split(" ", 2);
+			if (commands.get(cmd[0]) != null) {
+				commands.get(cmd[0]).execute(e.getSender(), cmd[0], cmd.length == 1 ? "" : cmd[1]);
+				e.setCommand("");
+			} else if (enableEffectCommands) {
+				if (Skript.handleEffectCommand(e.getSender(), e.getCommand()))
+					e.setCommand("");
+			}
+		}
+	};
+	
+	/**
+	 * only called if {@link Skript#enableEffectCommands} is true
+	 * 
+	 * @param sender
+	 * @param command
+	 * @return whether to cancel the event, i.e. prevent the "unknown command" message
+	 */
+	private static boolean handleEffectCommand(final CommandSender sender, final String command) {
+		if (!sender.hasPermission("skript.effectcommands"))
+			return false;
+		final String x = command.split(" ", 2)[0];
+		if (commandMap.getCommand(x) != null)
+			return false;
+		
+		final SubLog log = SkriptLogger.startSubLog();
+		final Effect e = Effect.parse(command, null);
+		SkriptLogger.stopSubLog(log);
+		if (e != null) {
+			final String[] c = command.split(" ");
+			sender.sendMessage(ChatColor.GRAY + "executing: " + ChatColor.stripColor(command));
+			e.run(new CommandEvent(sender, c[0], c.length > 1 ? Arrays.copyOfRange(c, 1, c.length - 1) : new String[0]));
+			return true;
+		} else if (log.hasErrors()) {
+			sender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + ChatColor.stripColor(command));
+			log.printErrors(sender, null);
+			return true;
+		}
+		return false;
 	}
 	
 	// ================ LOGGING ================
@@ -978,39 +1087,15 @@ public class Skript extends JavaPlugin {
 		SkriptLogger.log(Level.INFO, info);
 	}
 	
-	private static final Deque<ErrorSession> errorSessionStack = new LinkedList<ErrorSession>();
-	private static ErrorSession errorSession = null;
-	
-	public final static ErrorSession startErrorSession() {
-		if (errorSession != null)
-			errorSessionStack.addFirst(errorSession);
-		return errorSession = new ErrorSession();
-	}
-	
-	public final static void stopErrorSession() {
-		errorSession = errorSessionStack.poll();
-	}
-	
-	public final static ErrorSession getCurrentErrorSession() {
-		return errorSession;
-	}
-	
 	/**
-	 * @see #addWarning(String)
 	 * @see SkriptLogger#log(Level, String)
 	 */
 	public static void warning(final String warning) {
-		if (errorSession != null)
-			errorSession.warning(warning);
-		else
-			SkriptLogger.log(Level.WARNING, warning);
+		SkriptLogger.log(Level.WARNING, warning);
 	}
 	
 	public static void error(final String error) {
-		if (errorSession != null)
-			errorSession.error(error);
-		else
-			SkriptLogger.log(Level.SEVERE, error);
+		SkriptLogger.log(Level.SEVERE, error);
 	}
 	
 	private final static String EXCEPTION_PREFIX = "##!! ";
@@ -1033,44 +1118,41 @@ public class Skript extends JavaPlugin {
 	 * @return an empty RuntimeException to throw if code execution should terminate.
 	 */
 	public final static RuntimeException exception(Exception cause, final String... info) {
-		SkriptLogger.setPrefix(EXCEPTION_PREFIX);
 		
-		SkriptLogger.logDirect(Level.SEVERE, "");
-		SkriptLogger.logDirect(Level.SEVERE, "Severe Error:");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Severe Error:");
 		for (final String i : info)
-			SkriptLogger.logDirect(Level.SEVERE, i);
-		SkriptLogger.logDirect(Level.SEVERE, "");
-		SkriptLogger.logDirect(Level.SEVERE, "If you're developing an add-on for Skript this likely means you have done something wrong.");
-		SkriptLogger.logDirect(Level.SEVERE, "If you're a server admin, please go to http://dev.bukkit.org/server-mods/skript/tickets/");
-		SkriptLogger.logDirect(Level.SEVERE, "and create a new ticket with a meaningful title, copy & paste this whole error into it,");
-		SkriptLogger.logDirect(Level.SEVERE, "and please describe what you did before it happened and/or what you think caused the error.");
-		SkriptLogger.logDirect(Level.SEVERE, "If you feel like it's a trigger that's causing the error please post the trigger as well.");
-		SkriptLogger.logDirect(Level.SEVERE, "By following this guide fixing the error should be easy and done fast.");
+			Bukkit.getLogger().severe(EXCEPTION_PREFIX + i);
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "If you're developing an add-on for Skript this likely means you have done something wrong.");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "If you're a server admin, please go to http://dev.bukkit.org/server-mods/skript/tickets/");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "and create a new ticket with a meaningful title, copy & paste this whole error into it,");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "and please describe what you did before it happened and/or what you think caused the error.");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "If you feel like it's a trigger that's causing the error please post the trigger as well.");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "By following this guide fixing the error should be easy and done fast.");
 		
-		SkriptLogger.logDirect(Level.SEVERE, "");
-		SkriptLogger.logDirect(Level.SEVERE, "Stacktrace:");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Stacktrace:");
 		if (cause == null) {
-			SkriptLogger.logDirect(Level.SEVERE, "  warning: no exception given, dumping current stack trace instead");
+			Bukkit.getLogger().severe(EXCEPTION_PREFIX + "  warning: no exception given, dumping current stack trace instead");
 			cause = new Exception();
 		}
-		SkriptLogger.logDirect(Level.SEVERE, cause.toString());
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + cause.toString());
 		for (final StackTraceElement e : cause.getStackTrace())
-			SkriptLogger.logDirect(Level.SEVERE, "    at " + e.toString());
+			Bukkit.getLogger().severe(EXCEPTION_PREFIX + "    at " + e.toString());
 		
-		SkriptLogger.logDirect(Level.SEVERE, "");
-		SkriptLogger.logDirect(Level.SEVERE, "Version Information:");
-		SkriptLogger.logDirect(Level.SEVERE, "  Skript version: " + Skript.getInstance().getDescription().getVersion());
-		SkriptLogger.logDirect(Level.SEVERE, "  Bukkit version: " + Bukkit.getBukkitVersion());
-		SkriptLogger.logDirect(Level.SEVERE, "  Java version: " + System.getProperty("java.version"));
-		SkriptLogger.logDirect(Level.SEVERE, "");
-		SkriptLogger.logDirect(Level.SEVERE, "Running CraftBukkit: " + (Bukkit.getServer() instanceof CraftServer));
-		SkriptLogger.logDirect(Level.SEVERE, "");
-		SkriptLogger.logDirect(Level.SEVERE, "Current node: " + SkriptLogger.getNode());
-		SkriptLogger.logDirect(Level.SEVERE, "");
-		SkriptLogger.logDirect(Level.SEVERE, "End of Error.");
-		SkriptLogger.logDirect(Level.SEVERE, "");
-		
-		SkriptLogger.resetPrefix();
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Version Information:");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "  Skript version: " + Skript.getInstance().getDescription().getVersion());
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "  Bukkit version: " + Bukkit.getBukkitVersion());
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "  Java version: " + System.getProperty("java.version"));
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Running CraftBukkit: " + (Bukkit.getServer() instanceof CraftServer));
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Current node: " + SkriptLogger.getNode());
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "End of Error.");
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
 		
 		final RuntimeException r = new RuntimeException();
 		r.setStackTrace(new StackTraceElement[0]);
@@ -1087,45 +1169,42 @@ public class Skript extends JavaPlugin {
 	
 	private static final void parseMainConfig() {
 		
-		final ErrorSession session = Skript.startErrorSession();
-		
 		final ArrayList<String> aliasNodes = new ArrayList<String>();
 		
 		new SectionValidator()
-		.addNode("verbosity", new EnumEntryValidator<Verbosity>(Verbosity.class, new Setter<Verbosity>() {
-			@Override
-			public void set(final Verbosity v) {
-				SkriptLogger.setVerbosity(v);
-			}
-		}), false)
-		.addNode("plugin priority", new EnumEntryValidator<EventPriority>(EventPriority.class, new Setter<EventPriority>() {
-			@Override
-			public void set(final EventPriority p) {
-				Skript.priority = p;
-			}
-		}, "lowest, low, normal, high, highest"), false)
-		.addEntry("aliases", new Setter<String>() {
-			@Override
-			public void set(final String s) {
-				for (final String n : s.split(","))
-					aliasNodes.add(n.trim());
-			}
-		}, false)
-		.addEntry("keep configs loaded", Boolean.class, new Setter<Boolean>() {
-			@Override
-			public void set(final Boolean b) {
-				keepConfigsLoaded = b;
-			}
-		}, false)
-		.addEntry("enable effect commands", Boolean.class, new Setter<Boolean>() {
-			@Override
-			public void set(final Boolean b) {
-				enableEffectCommands = b;
-			}
-		}, false)
-		.setAllowUndefinedSections(true)
-		.validate(mainConfig.getMainNode(), true);
-		
+				.addNode("verbosity", new EnumEntryValidator<Verbosity>(Verbosity.class, new Setter<Verbosity>() {
+					@Override
+					public void set(final Verbosity v) {
+						SkriptLogger.setVerbosity(v);
+					}
+				}), false)
+				.addNode("plugin priority", new EnumEntryValidator<EventPriority>(EventPriority.class, new Setter<EventPriority>() {
+					@Override
+					public void set(final EventPriority p) {
+						Skript.priority = p;
+					}
+				}, "lowest, low, normal, high, highest"), false)
+				.addEntry("aliases", new Setter<String>() {
+					@Override
+					public void set(final String s) {
+						for (final String n : s.split(","))
+							aliasNodes.add(n.trim());
+					}
+				}, false)
+				.addEntry("keep configs loaded", Boolean.class, new Setter<Boolean>() {
+					@Override
+					public void set(final Boolean b) {
+						keepConfigsLoaded = b;
+					}
+				}, false)
+				.addEntry("enable effect commands", Boolean.class, new Setter<Boolean>() {
+					@Override
+					public void set(final Boolean b) {
+						enableEffectCommands = b;
+					}
+				}, false)
+				.setAllowUndefinedSections(true)
+				.validate(mainConfig.getMainNode());
 		
 		for (final Node node : mainConfig.getMainNode()) {
 			if (node instanceof SectionNode) {
@@ -1166,8 +1245,6 @@ public class Skript extends JavaPlugin {
 						final ItemType t = Aliases.parseAlias(((EntryNode) a).getValue());
 						if (t != null)
 							vs.put(((EntryNode) a).getKey(), t);
-						else
-							session.printErrors("'" + ((EntryNode) a).getValue() + "' is invalid");
 					}
 					variations.put(n.getName().substring(1, n.getName().length() - 1), vs);
 				}
@@ -1186,65 +1263,6 @@ public class Skript extends JavaPlugin {
 		
 		Aliases.addMissingMaterialNames();
 		
-		if (enableEffectCommands) {
-			if (commandMap == null) {
-				error("you have to use CraftBukkit to use commands");
-			} else {
-				Bukkit.getPluginManager().registerEvents(new Listener() {
-					@SuppressWarnings("unused")
-					@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-					public void onPlayerCommand(final PlayerCommandPreprocessEvent e) {
-						if (Skript.handleEffectCommand(e.getPlayer(), e.getMessage().substring(1)))
-							e.setCancelled(true);
-					}
-					
-					@SuppressWarnings("unused")
-					@EventHandler(priority = EventPriority.HIGHEST)
-					public void onServerCommand(final ServerCommandEvent e) {
-						if (Skript.handleEffectCommand(e.getSender(), e.getCommand()))
-							e.setCommand("");
-					}
-				}, instance);
-			}
-		}
-		
-		Skript.stopErrorSession();
-	}
-	
-	/**
-	 * only called if {@link Skript#enableEffectCommands} is true
-	 * 
-	 * @param sender
-	 * @param command
-	 * @return whether to cancel the event, i.e. prevent the "unknown command" message
-	 */
-	private static boolean handleEffectCommand(final CommandSender sender, final String command) {
-		if (!sender.hasPermission("skript.effectcommands"))
-			return false;
-		final String x = command.split(" ", 2)[0];
-		if (commandMap.getCommand(x) != null)
-			return false;
-		
-		final ErrorSession session = Skript.startErrorSession();
-		final Effect e = Effect.parse(command);
-		Skript.stopErrorSession();
-		if (e != null) {
-			final String[] c = command.split(" ");
-			sender.sendMessage(ChatColor.GRAY + ChatColor.stripColor(command));
-			e.run(new CommandEvent(sender, c[0], c.length > 1 ? Arrays.copyOfRange(c, 1, c.length - 1) : new String[0]));
-			return true;
-		} else if (session.hasErrors()) {
-			sender.sendMessage(ChatColor.GRAY + ChatColor.stripColor(command));
-			session.printErrors(sender);
-			return true;
-		} else {
-			Skript.exception("Effect was neither parsed nor was any error logged!",
-					"input: " + command,
-					"sent by: " + sender.getName() + (sender instanceof ConsoleCommandSender ? "" : " (the user was told to inform an admin)"));
-			if (!(sender instanceof ConsoleCommandSender))
-				sender.sendMessage(ChatColor.RED + "[Skript] Unexpected error! Please tell an admin to check the server log.");
-		}
-		return false;
 	}
 	
 	private void loadMainConfig() {
@@ -1274,8 +1292,6 @@ public class Skript extends JavaPlugin {
 	private static void loadTriggerFiles() {
 		boolean successful = true;
 		int numFiles = 0;
-		@SuppressWarnings("unused")
-		final ErrorSession session = Skript.startErrorSession();
 		
 		try {
 			final File includes = new File(instance.getDataFolder(), Skript.TRIGGERFILEFOLDER + File.separatorChar);

@@ -27,8 +27,6 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
@@ -41,15 +39,16 @@ import ch.njol.skript.util.WeatherType;
 public class VarWeather extends SimpleVariable<WeatherType> {
 	
 	static {
-		Skript.registerVariable(VarWeather.class, WeatherType.class, "weather [(in|of) %worlds%]");
+		Skript.registerVariable(VarWeather.class, WeatherType.class, "[the] weather [(in|of) %worlds%]");
 	}
 	
 	private Variable<World> worlds;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		worlds = (Variable<World>) vars[0];
+		return true;
 	}
 	
 	@Override

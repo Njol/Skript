@@ -156,6 +156,12 @@ public abstract class BlockUtils {
 						b.setTypeIdAndData(mat.getId(), (byte) 0, applyPhysics);
 						return true;
 					}
+					if (b.getRelative(BlockFace.UP).getType() == Material.VINE) {
+						data &= b.getRelative(BlockFace.UP).getData();
+						if (data == 0)
+							return false;
+						b.setTypeIdAndData(mat.getId(), data, applyPhysics);
+					}
 					return false;
 				}
 				final Vine vine = new Vine(data);

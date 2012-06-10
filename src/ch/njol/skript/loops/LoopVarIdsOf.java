@@ -27,8 +27,6 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemData;
@@ -49,8 +47,9 @@ public class LoopVarIdsOf extends LoopVar<Integer> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		types = (Variable<ItemType>) vars[0];
+		return true;
 	}
 	
 	@Override

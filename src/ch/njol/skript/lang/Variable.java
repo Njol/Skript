@@ -105,7 +105,7 @@ public interface Variable<T> extends Expression, Debuggable {
 	public boolean check(final Event e, final Checker<? super T> c);
 	
 	/**
-	 * Tries to convert this variable to the given type.
+	 * Tries to convert this variable to the given type. This method can print an error prior to returning null to specify the cause.
 	 * 
 	 * @param to the desired return type of the returned variable
 	 * @return Variable with the desired return type or null if the variable can't be converted to the given type. Returns the variable itself if it already returns the desired
@@ -161,4 +161,25 @@ public interface Variable<T> extends Expression, Debuggable {
 	 */
 	public boolean getAnd();
 	
+	/**
+	 * Sets the time of this variable, i.e. whether the returned value represents this variable before or after the event.
+	 * 
+	 * @param time -1 for past, 0 for default and 1 for future respectively
+	 * @return whether this variable has distinct states, e.g. a player never changes but a block can. This can also be sensitive for the event but doesn't have to be.
+	 */
+	public boolean setTime(int time);
+	
+	/**
+	 * 
+	 * @return
+	 * @see #setTime(int)
+	 */
+	public int getTime();
+	
+	/**
+	 * Returns whether this value represents the default value of it's type for the event, i.e. it can be replaced with a call to event.getXyz() if one knows the event & value.
+	 * 
+	 * @return
+	 */
+	public boolean isDefault();
 }

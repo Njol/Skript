@@ -26,8 +26,6 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
@@ -47,14 +45,15 @@ public class EffSet extends Effect {
 	private Variable<?> setted;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException, InitException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		setted = vars[0];
 		setter = vars[1];
 		if (setted instanceof UnparsedLiteral)
-			throw new InitException();
+			return false;
 		Class<?> r = setted.acceptChange(ch.njol.skript.api.Changer.ChangeMode.SET);
 		if (r == null) {
-			throw new ParseException(setted + " can't be set");
+			Skript.error(setted + " can't be set");
+			return false;
 		}
 		boolean single = true;
 		if (r.isArray()) {
@@ -64,13 +63,16 @@ public class EffSet extends Effect {
 		if (!r.isAssignableFrom(setter.getReturnType())) {
 			final Variable<?> v = setter.getConvertedVariable(r);
 			if (v == null) {
-				throw new ParseException(setted + " can't be set to " + setter);
+				Skript.error(setted + " can't be set to " + setter);
+				return false;
 			}
 			setter = v;
 		}
 		if (!setter.isSingle() && single) {
-			throw new ParseException(setted + " can only be set to one " + Skript.getExactClassName(r) + ", but multiple are given");
+			Skript.error(setted + " can only be set to one " + Skript.getExactClassName(r) + ", but multiple are given");
+			return false;
 		}
+		return true;
 	}
 	
 	@Override

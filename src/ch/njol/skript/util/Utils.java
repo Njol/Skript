@@ -111,7 +111,7 @@ public abstract class Utils {
 	 * @param o the object to search for
 	 * @return the index of the first occurrence of the given object or -1 if not found
 	 */
-	public static <T> int contains(final T[] array, final T o) {
+	public static <T> int indexOf(final T[] array, final T o) {
 		if (array == null)
 			return -1;
 		for (int i = 0; i < array.length; i++) {
@@ -120,14 +120,20 @@ public abstract class Utils {
 		}
 		return -1;
 	}
-
-	public static int contains(int[] array, int num) {
-		return contains(array, num, 0, array.length);
+	
+	public static <T> boolean contains(final T[] array, final T o) {
+		return indexOf(array, o) != -1;
 	}
-	public static int contains(int[] array, int num, int start) {
-		return contains(array, num, start, array.length);
+	
+	public static int indexOf(final int[] array, final int num) {
+		return indexOf(array, num, 0, array.length);
 	}
-	public static int contains(int[] array, int num, int start, int end) {
+	
+	public static int indexOf(final int[] array, final int num, final int start) {
+		return indexOf(array, num, start, array.length);
+	}
+	
+	public static int indexOf(final int[] array, final int num, final int start, final int end) {
 		if (array == null)
 			return -1;
 		for (int i = start; i < end; i++) {
@@ -137,6 +143,10 @@ public abstract class Utils {
 		return -1;
 	}
 	
+	public static final boolean contains(final int[] array, final int num) {
+		return indexOf(array, num) != -1;
+	}
+	
 	/**
 	 * finds a string in an array of strings (ignoring case).
 	 * 
@@ -144,7 +154,7 @@ public abstract class Utils {
 	 * @param s the string to search for
 	 * @return the index of the first occurrence of the given string or -1 if not found
 	 */
-	public static int containsIgnoreCase(final String[] array, final String s) {
+	public static int indexOfIgnoreCase(final String[] array, final String s) {
 		if (array == null)
 			return -1;
 		int i = 0;
@@ -163,7 +173,7 @@ public abstract class Utils {
 	 * @param o the object to search for
 	 * @return the index of the first occurrence of the given object or -1 if not found
 	 */
-	public static <T> int contains(final Iterable<T> array, final T o) {
+	public static <T> int indexOf(final Iterable<T> array, final T o) {
 		if (array == null)
 			return -1;
 		int i = 0;
@@ -182,7 +192,7 @@ public abstract class Utils {
 	 * @param s the string to search for
 	 * @return the index of the first occurrence of the given string or -1 if not found
 	 */
-	public static int containsIgnoreCase(final Iterable<String> array, final String s) {
+	public static int indexOfIgnoreCase(final Iterable<String> array, final String s) {
 		if (array == null)
 			return -1;
 		int i = 0;
@@ -491,13 +501,14 @@ public abstract class Utils {
 	public static Pair<String, Boolean> getPlural(final String s, final boolean expectPlural) {
 		final Pair<String, Boolean> p = getPlural(s);
 		if (p.second != expectPlural)
-			Skript.warning("Possible invalid plural detected in '" + s + "'");
+			Skript.pluralWarning(s);
 		return p;
 	}
 	
 	private final static String[][] plurals = {
 			{"f", "ves"},
 			{"y", "ies"},
+			{"ch", "ches"},
 			{"man", "men"},
 			{"s", "ses"},
 			{"us", "i"},
@@ -611,5 +622,5 @@ public abstract class Utils {
 				return 1;
 		}
 	}
-
+	
 }

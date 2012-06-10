@@ -52,10 +52,11 @@ public class EffHealth extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		damageables = (Variable<Object>) vars[0];
 		damage = (Variable<Integer>) vars[1];
 		heal = (matchedPattern >= 2);
+		return true;
 	}
 	
 	@Override

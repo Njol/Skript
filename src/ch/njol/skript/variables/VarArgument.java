@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.api.intern.ConvertedVariable;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.Commands;
@@ -44,7 +43,7 @@ import ch.njol.util.StringUtils;
 public class VarArgument extends SimpleVariable<Object> {
 	
 	static {
-		Skript.registerVariable(VarArgument.class, Object.class, "last arg[ument]", "arg[ument](-| )<(\\d+)>", "<(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument]", "arg[ument]s");
+		Skript.registerVariable(VarArgument.class, Object.class, "[the] last arg[ument]", "[the] arg[ument](-| )<(\\d+)>", "[the] <(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument]", "[the] arg[ument]s");
 	}
 	
 	private Class<?> type = Object.class;
@@ -52,12 +51,14 @@ public class VarArgument extends SimpleVariable<Object> {
 	private int a = -1;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (Commands.currentArguments == null) {
-			throw new ParseException("the variable 'argument' can only be used within a command");
+			Skript.error("the variable 'argument' can only be used within a command");
+			return false;
 		}
 		if (Commands.currentArguments.size() == 0) {
-			throw new ParseException("the command doesn't allow any arguments");
+			Skript.error("the command doesn't allow any arguments");
+			return false;
 		}
 		switch (matchedPattern) {
 			case 0:
@@ -69,7 +70,8 @@ public class VarArgument extends SimpleVariable<Object> {
 			case 2:
 				a = Integer.parseInt(parser.regexes.get(0).group(1));
 				if (Commands.currentArguments.size() <= a - 1) {
-					throw new ParseException("the command doesn't have a " + StringUtils.fancyOrderNumber(a) + " argument");
+					Skript.error("the command doesn't have a " + StringUtils.fancyOrderNumber(a) + " argument");
+					return false;
 				}
 				arg = Commands.currentArguments.get(a - 1);
 				type = arg.getType();
@@ -79,9 +81,11 @@ public class VarArgument extends SimpleVariable<Object> {
 					arg = Commands.currentArguments.get(0);
 					type = arg.getType();
 				} else {
-					throw new ParseException("'arguments' cannot be used if the command has multiple arguments");
+					Skript.error("'arguments' cannot be used if the command has multiple arguments");
+					return false;
 				}
 		}
+		return true;
 	}
 	
 	@Override

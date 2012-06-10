@@ -43,8 +43,9 @@ public class EffCancelEvent extends Effect {
 	private boolean cancel;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		cancel = matchedPattern == 0;
+		return true;
 	}
 	
 	@Override

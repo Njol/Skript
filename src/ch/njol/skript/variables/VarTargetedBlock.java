@@ -41,15 +41,16 @@ import ch.njol.skript.lang.Variable;
 public class VarTargetedBlock extends SimpleVariable<Block> {
 	
 	static {
-		Skript.registerVariable(VarTargetedBlock.class, Block.class, "target[ed] block[s] [of %players%]", "%player%'[s] target[ed] block[s]");
+		Skript.registerVariable(VarTargetedBlock.class, Block.class, "[the] target[ed] block[s] [of %players%]", "%player%'[s] target[ed] block[s]");
 	}
 	
 	private Variable<LivingEntity> entities;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		entities = (Variable<LivingEntity>) vars[0];
+		return true;
 	}
 	
 	@Override

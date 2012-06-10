@@ -44,7 +44,9 @@ public class EvtDamage extends SkriptEvent {
 	}
 	
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {}
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		return true;
+	}
 	
 	@Override
 	public boolean check(final Event evt) {

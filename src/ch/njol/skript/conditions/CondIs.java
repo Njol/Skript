@@ -24,12 +24,12 @@ package ch.njol.skript.conditions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Comparator;
 import ch.njol.skript.api.Comparator.ComparatorInfo;
 import ch.njol.skript.api.Comparator.Relation;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
@@ -44,13 +44,31 @@ public class CondIs extends Condition {
 	
 	private final static Patterns<Object> patterns = new Patterns<Object>(new Object[][] {
 			{"%objects% ((is|are) (greater|more|higher|bigger) than|\\>) %objects%", Relation.GREATER},
-			{"%objects% ((is|are) ((greater|more|higher|bigger) or equal to|not (less|smaller) than)|\\>=) %objects%", Relation.GREATER_OR_EQUAL},
+			{"%objects% ((is|are) (greater|more|higher|bigger) or equal to|(is not|are not|isn't|aren't) (less|smaller) than|\\>=) %objects%", Relation.GREATER_OR_EQUAL},
 			{"%objects% ((is|are) (less|smaller) than|\\<) %objects%", Relation.SMALLER},
-			{"%objects% ((is|are) ((less|smaller) or equal to|not (greater|more|higher|bigger) than)|\\<=) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"%objects% ((is|are) (less|smaller) or equal to|(is not|are not|isn't|aren't) (greater|more|higher|bigger) than|\\<=) %objects%", Relation.SMALLER_OR_EQUAL},
 			{"%objects% ((is|are) (not|neither)|isn't|aren't|!=) [equal to] %objects%", Relation.NOT_EQUAL},
 			{"%objects% (is|are|=) [equal to] %objects%", Relation.EQUAL},
 			{"%objects% (is|are) between %objects% and %objects%", true},
-			{"%objects% ((is|are) not|isn't|aren't) between %objects% and %objects%", false}
+			{"%objects% (is not|are not|isn't|aren't) between %objects% and %objects%", false},
+			
+			{"%objects@-1% (was|were) (greater|more|higher|bigger) than %objects%", Relation.GREATER},
+			{"%objects@-1% ((was|were) (greater|more|higher|bigger) or equal to|(was not|were not|wasn't|weren't) (less|smaller) than) %objects%", Relation.GREATER_OR_EQUAL},
+			{"%objects@-1% (was|were) (less|smaller) than %objects%", Relation.SMALLER},
+			{"%objects@-1% ((was|were) (less|smaller) or equal to|(was not|were not|wasn't|weren't) (greater|more|higher|bigger) than) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"%objects@-1% ((was|were) (not|neither)|wasn't|weren't) [equal to] %objects%", Relation.NOT_EQUAL},
+			{"%objects@-1% (was|were) [equal to] %objects%", Relation.EQUAL},
+			{"%objects@-1% (was|were) between %objects% and %objects%", true},
+			{"%objects@-1% (was not|were not|wasn't|weren't) between %objects% and %objects%", false},
+			
+			{"%objects@1% will be (greater|more|higher|bigger) than %objects%", Relation.GREATER},
+			{"%objects@1% (will be (greater|more|higher|bigger) or equal to|(will not|won't) be (less|smaller) than) %objects%", Relation.GREATER_OR_EQUAL},
+			{"%objects@1% will be (less|smaller) than %objects%", Relation.SMALLER},
+			{"%objects@1% (will be (less|smaller) or equal to|(will not|won't) be (greater|more|higher|bigger) than) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"%objects@1% ((will (not|neither) be|won't be)|(isn't|aren't|is not|are not) (turning|changing) [in]to) [equal to] %objects%", Relation.NOT_EQUAL},
+			{"%objects@1% (will be [equal to]|(is|are) (turning|changing) [in]to) %objects%", Relation.EQUAL},
+			{"%objects@1% will be between %objects% and %objects%", true},
+			{"%objects@1% (will not be|won't be) between %objects% and %objects%", false}
 	});
 	
 	static {
@@ -66,7 +84,7 @@ public class CondIs extends Condition {
 	private boolean reverseOrder = false;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException, InitException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		first = vars[0];
 		second = vars[1];
 		relation = null;
@@ -83,25 +101,37 @@ public class CondIs extends Condition {
 		}
 		final boolean b = init();
 		if (!b) {
+			if (Skript.debug())
+				Skript.info("Can't compare " + first.getDebugMessage(null) + " with " + second.getDebugMessage(null) + (third == null ? "" : " and " + third.getDebugMessage(null)));
 			if (first instanceof UnparsedLiteral || second instanceof UnparsedLiteral || third instanceof UnparsedLiteral) {
-				throw new InitException();
+				return false;
 			} else {
-				if (Skript.debug())
-					Skript.info("Can't compare " + first.getReturnType().getName() + " with " + second.getReturnType().getName() + (third == null ? "" : " and " + third.getReturnType().getName()));
-				throw new ParseException("the given values cannot be compared");
+				if (third == null)
+					Skript.error(first + " and " + second + " can't be compared");
+				else
+					Skript.error(first + " can't be compared with " + second + " and/or " + third);
+				return false;
 			}
 		}
 		if (third == null) {
 			if (!relation.isEqualOrInverse() && !comp.supportsOrdering()) {
-				throw new ParseException("The given objects can't be compared with '" + relation + "'");
+				Skript.error("The given objects can't be compared with '" + relation + "'");
+				return false;
 			}
 		} else {
-			if (!relation.isEqualOrInverse() && !comp.supportsOrdering()) {
-				throw new ParseException("The given objects can't be checked for being 'in between'");
+			if (!comp.supportsOrdering()) {
+				Skript.error("The given objects can't be checked for being 'in between'");
+				return false;
 			}
 		}
+		return true;
 	}
 	
+	/**
+	 * Does not print errors
+	 * 
+	 * @return
+	 */
 	private boolean init() {
 		final Class<?> f = first.getReturnType(), s = second.getReturnType(), t = third == null ? null : third.getReturnType();
 		final int[] zeroOne = {0, 1};
@@ -115,6 +145,8 @@ public class CondIs extends Condition {
 			}
 		}
 		
+		final SubLog log = SkriptLogger.startSubLog();
+		
 		for (final ComparatorInfo<?, ?> info : Skript.getComparators()) {
 			for (final int c : zeroOne) {
 				if (info.getType(c).isAssignableFrom(f)) {
@@ -125,8 +157,12 @@ public class CondIs extends Condition {
 						comp = info.c;
 						second = temp1;
 						third = temp2;
+						
+						SkriptLogger.stopSubLog(log);
+						log.printLog();
 						return true;
 					}
+					log.clear();
 				}
 				if (info.getType(c).isAssignableFrom(s) && (third == null || info.getType(c).isAssignableFrom(t))) {
 					final Variable<?> temp = first.getConvertedVariable(info.getType(1 - c));
@@ -134,8 +170,12 @@ public class CondIs extends Condition {
 						reverseOrder = c == 0;
 						comp = info.c;
 						first = temp;
+						
+						SkriptLogger.stopSubLog(log);
+						log.printLog();
 						return true;
 					}
+					log.clear();
 				}
 			}
 		}
@@ -151,8 +191,12 @@ public class CondIs extends Condition {
 					third = v3;
 					reverseOrder = c == 1;
 					comp = info.c;
+					
+					SkriptLogger.stopSubLog(log);
+					log.printLog();
 					return true;
 				}
+				log.clear();
 			}
 		}
 		/*
@@ -173,16 +217,11 @@ public class CondIs extends Condition {
 			}
 		}
 		*/
+		
+		SkriptLogger.stopSubLog(log);
 		return false;
 	}
 	
-	/*
-	 * FIXME logic:
-	 * block is not bedrock or obsidian -> true iff block is neither bedrock nor obby
-	 * block is not bedrock and obsidian -> always true (false iff block would be both)
-	 * block is not block1 or block2 -> true iff block is neither 1 nor 2
-	 * block is not block1 and block2 -> false iff b = 1 = 2
-	 */
 	@Override
 	public boolean run(final Event e) {
 		return first.check(e, new Checker<Object>() {

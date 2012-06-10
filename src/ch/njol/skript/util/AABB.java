@@ -22,11 +22,14 @@
 package ch.njol.skript.util;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.util.Vector;
+
+import ch.njol.skript.Skript;
 
 /**
  * @author Peter Güttinger
@@ -64,9 +67,9 @@ public class AABB implements Iterable<Block> {
 	public boolean contains(final Location l) {
 		if (l.getWorld() != world)
 			return false;
-		return lowerBound.getX() <= l.getX() && l.getX() <= upperBound.getX()
-				&& lowerBound.getY() <= l.getY() && l.getY() <= upperBound.getY()
-				&& lowerBound.getZ() <= l.getZ() && l.getZ() <= upperBound.getZ();
+		return lowerBound.getX() - Skript.EPSILON < l.getX() && l.getX() < upperBound.getX() + Skript.EPSILON
+				&& lowerBound.getY() - Skript.EPSILON < l.getY() && l.getY() < upperBound.getY() + Skript.EPSILON
+				&& lowerBound.getZ() - Skript.EPSILON < l.getZ() && l.getZ() < upperBound.getZ() + Skript.EPSILON;
 	}
 	
 	public boolean containsCompletely(final Block b) {
@@ -84,12 +87,12 @@ public class AABB implements Iterable<Block> {
 	@Override
 	public Iterator<Block> iterator() {
 		return new Iterator<Block>() {
-			private int x = (int) Math.round(lowerBound.getX()) - 1,// next() increases x by one immediately
-					y = (int) Math.round(lowerBound.getY()),
-					z = (int) Math.round(lowerBound.getZ());
-			private final int maxX = (int) Math.round(upperBound.getX()) - 1,
-					maxY = (int) Math.round(upperBound.getY()) - 1,
-					maxZ = (int) Math.round(upperBound.getZ()) - 1;
+			private int x = (int) Math.round(lowerBound.getX() - Skript.EPSILON) - 1,// next() increases x by one immediately
+					y = (int) Math.round(lowerBound.getY() - Skript.EPSILON),
+					z = (int) Math.round(lowerBound.getZ() - Skript.EPSILON);
+			private final int maxX = (int) Math.round(upperBound.getX() + Skript.EPSILON) - 1,
+					maxY = (int) Math.round(upperBound.getY() + Skript.EPSILON) - 1,
+					maxZ = (int) Math.round(upperBound.getZ() + Skript.EPSILON) - 1;
 			
 			@Override
 			public boolean hasNext() {
@@ -105,10 +108,10 @@ public class AABB implements Iterable<Block> {
 					if (y > maxY) {
 						y = 0;
 						z++;
-						if (z > maxZ)
-							throw new IllegalStateException();
 					}
 				}
+				if (z > maxZ)
+					throw new NoSuchElementException();
 				return world.getBlockAt(x, y, z);
 			}
 			

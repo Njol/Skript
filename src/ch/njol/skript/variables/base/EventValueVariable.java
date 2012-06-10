@@ -34,7 +34,6 @@ import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.DefaultVariable;
 import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
@@ -72,7 +71,7 @@ public class EventValueVariable<T> extends SimpleVariable<T> implements DefaultV
 	}
 	
 	@Override
-	protected final T[] getAll(final Event e) {
+	protected T[] getAll(final Event e) {
 		if ((one[0] = getValue(e)) == null)
 			return null;
 		return one;
@@ -93,26 +92,29 @@ public class EventValueVariable<T> extends SimpleVariable<T> implements DefaultV
 	}
 	
 	@Override
-	public final void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
-		init();
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		return init();
 	}
 	
 	@Override
-	public void init() throws ParseException {
+	public boolean init() {
 		boolean hasValue = false;
 		for (final Class<? extends Event> e : TriggerFileLoader.currentEvents) {
 			if (getters.containsKey(e)) {
 				hasValue = true;
 				continue;
 			}
-			final Getter<? extends T, ?> getter = Skript.getEventValueGetter(e, c);
+			final Getter<? extends T, ?> getter = Skript.getEventValueGetter(e, c, getTime());
 			if (getter != null) {
 				getters.put(e, getter);
 				hasValue = true;
 			}
 		}
-		if (!hasValue)
-			throw new ParseException("There's no " + Skript.getExactClassName(c) + " in this event");
+		if (!hasValue) {
+			Skript.error("There's no " + Skript.getExactClassName(c) + " in this event");
+			return false;
+		}
+		return true;
 	}
 	
 	@Override
@@ -151,4 +153,22 @@ public class EventValueVariable<T> extends SimpleVariable<T> implements DefaultV
 		return "event-" + Skript.getExactClassName(c);
 	}
 	
+	@Override
+	public boolean setTime(final int time) {
+		for (final Class<? extends Event> e : TriggerFileLoader.currentEvents) {
+			if (Skript.doesEventValueHaveTimeStates(e, c)) {
+				super.setTime(time);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @return true
+	 */
+	@Override
+	public boolean isDefault() {
+		return true;
+	}
 }

@@ -51,25 +51,27 @@ public class EffDrop extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		items = (Variable<ItemType>) vars[0];
 		offsets = (Variable<Offset>) vars[1];
 		locations = (Variable<Location>) vars[2];
 		hasLoc = locations != null;
 		if (!hasLoc)
 			locations = Skript.getDefaultVariable(Location.class);
+		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
+		final ItemType[] types = items.getArray(e);
 		if (!hasLoc && e instanceof EntityDeathEvent) {
-			for (final ItemType type : items.getArray(e)) {
+			for (final ItemType type : types) {
 				type.addTo(((EntityDeathEvent) e).getDrops());
 			}
 			return;
 		}
 		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
-			for (final ItemType type : items.getArray(e)) {
+			for (final ItemType type : types) {
 				for (final ItemStack is : type.getItem().getAll())
 					l.getWorld().dropItemNaturally(l, is);
 			}

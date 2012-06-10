@@ -27,8 +27,6 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
@@ -43,10 +41,10 @@ public class VarArmorSlot extends SimpleVariable<Slot> {
 	
 	static {
 		Skript.registerVariable(VarArmorSlot.class, Slot.class,
-				"(boot[s]|shoe[s]) [slot] of %players%", "%player%'[s] (boot[s]|shoe[s])",
-				"leg[ging]s [slot] of %players%", "%player%'[s] leg[ging]s",
-				"chestplate [slot] of %players%", "%player%'[s] chestplate",
-				"helm[et] [slot] of %players%", "%player%'[s] helm[et]");
+				"[the] (boot[s]|shoe[s]) [slot] of %players%", "%player%'[s] (boot[s]|shoe[s])",
+				"[the] leg[ging]s [slot] of %players%", "%player%'[s] leg[ging]s",
+				"[the] chestplate [slot] of %players%", "%player%'[s] chestplate",
+				"[the] helm[et] [slot] of %players%", "%player%'[s] helm[et]");
 	}
 	
 	private Variable<Player> players;
@@ -56,9 +54,10 @@ public class VarArmorSlot extends SimpleVariable<Slot> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
 		slot = matchedPattern / 2;
+		return true;
 	}
 	
 	@Override

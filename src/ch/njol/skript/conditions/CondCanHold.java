@@ -27,7 +27,6 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.Variable;
@@ -51,18 +50,20 @@ public class CondCanHold extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		invis = (Variable<Inventory>) vars[0];
 		items = (Variable<ItemType>) vars[1];
 		if (items instanceof Literal) {
 			for (ItemType t : ((Literal<ItemType>) items).getArray()) {
 				t = t.getItem();
 				if (!t.isAll() && (t.getTypes().size() != 1 || t.getTypes().get(0).hasDataRange() || t.getTypes().get(0).getId() == -1)) {
-					throw new ParseException("The condition 'can hold' can currently only be used with aliases that start with 'every' or 'all', or only stand for one item and one data value.");
+					Skript.error("The condition 'can hold' can currently only be used with aliases that start with 'every' or 'all', or only stand for one item and one data value.");
+					return false;
 				}
 			}
 		}
 		setNegated(matchedPattern == 1);
+		return true;
 	}
 	
 	@Override

@@ -48,8 +48,9 @@ public class EffFertilize extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		blocks = (Variable<Block>) vars[0];
+		return true;
 	}
 	
 	@Override

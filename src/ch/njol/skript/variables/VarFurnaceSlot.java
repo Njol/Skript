@@ -21,10 +21,15 @@
 
 package ch.njol.skript.variables;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Furnace;
 import org.bukkit.event.Event;
+import org.bukkit.event.inventory.FurnaceBurnEvent;
+import org.bukkit.event.inventory.FurnaceSmeltEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
@@ -46,9 +51,9 @@ public class VarFurnaceSlot extends SimpleVariable<Slot> {
 	
 	static {
 		Skript.registerVariable(VarFurnaceSlot.class, Slot.class,
-				"ore [slot] [of %blocks%]", "%block%'[s] ore [slot]",
-				"fuel [slot] [of %blocks%]", "%block%'[s] fuel [slot]",
-				"result [slot] [of %blocks%]", "%block%'[s] result [slot]");
+				"[the] ore [slot] [of %blocks%]", "%block%'[s] ore [slot]",
+				"[the] fuel [slot] [of %blocks%]", "%block%'[s] fuel [slot]",
+				"[the] result [slot] [of %blocks%]", "%block%'[s] result [slot]");
 	}
 	
 	private Variable<Block> blocks;
@@ -58,13 +63,48 @@ public class VarFurnaceSlot extends SimpleVariable<Slot> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		blocks = (Variable<Block>) vars[0];
 		slot = matchedPattern / 2;
+		return true;
+	}
+	
+	private final class FurnaceEventSlot extends Slot {
+		
+		public FurnaceEventSlot(final Inventory invi) {
+			super(invi, slot);
+		}
+		
+		@Override
+		public ItemStack getItem() {
+			final ItemStack i = super.getItem();
+			if (getTime() == -1)
+				return i;
+			i.setAmount(i.getAmount() - 1);
+			if (i.getAmount() == 0)
+				return new ItemStack(0, 1);
+			return i;
+		}
+		
+		// FIXME 
+		@Override
+		public void setItem(final ItemStack item) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					item.setAmount(item.getAmount() + 1);
+					FurnaceEventSlot.super.setItem(item);
+				}
+			});
+		}
+		
 	}
 	
 	@Override
 	protected Slot[] getAll(final Event e) {
+		if (blocks.isDefault() && (e instanceof FurnaceSmeltEvent || e instanceof FurnaceBurnEvent)) {
+			return new Slot[] {new FurnaceEventSlot(((Furnace) blocks.getSingle(e).getState()).getInventory())};
+		}
 		return blocks.getArray(e, Slot.class, new Getter<Slot, Block>() {
 			@Override
 			public Slot get(final Block b) {
@@ -105,6 +145,12 @@ public class VarFurnaceSlot extends SimpleVariable<Slot> {
 	@Override
 	public boolean isSingle() {
 		return blocks.isSingle();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, blocks, FurnaceSmeltEvent.class, FurnaceBurnEvent.class);
 	}
 	
 }

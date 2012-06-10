@@ -21,15 +21,16 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
-import ch.njol.skript.util.ErrorSession;
 
 /**
  * @author Peter Güttinger
@@ -45,28 +46,25 @@ public class EffExec extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		input = (Variable<String>) vars[0];
+		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		final ErrorSession session = Skript.startErrorSession();
 		final String s = input.getSingle(e);
-		if (s == null) {
-			final CommandSender sender = Skript.getEventValue(e, CommandSender.class);
-			session.printErrors(sender);
-			Skript.stopErrorSession();
+		if (s == null)
 			return;
-		}
-		final Effect eff = Effect.parse(s);
+		final SubLog log = SkriptLogger.startSubLog();
+		final Effect eff = Effect.parse(s, "can't understand this effect: '" + s + "'");
+		SkriptLogger.stopSubLog(log);
 		if (eff != null) {
 			eff.run(e);
 		} else {
-			final CommandSender sender = Skript.getEventValue(e, CommandSender.class);
-			session.printErrors(sender);
+			final CommandSender sender = Skript.getEventValue(e, CommandSender.class, 0);
+			log.printErrors(sender == null ? Bukkit.getConsoleSender() : sender, null);
 		}
-		Skript.stopErrorSession();
 	}
 	
 	@Override

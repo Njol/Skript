@@ -19,36 +19,41 @@
  * 
  */
 
-package ch.njol.skript.api.exception;
+package ch.njol.skript.variables;
 
+import org.bukkit.Location;
+import org.bukkit.event.Event;
+
+import ch.njol.skript.Skript;
 import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.variables.base.VarVariable;
 
 /**
  * @author Peter Güttinger
- * @see Expression#init(Variable[], int, ParseResult)
+ * 
  */
-public class ParseException extends Exception {
+public class VarLocation extends VarVariable<Location> {
 	
-	private static final long serialVersionUID = 3060684476033398334L;
-	
-	public ParseException(final String cause) {
-		super(cause);
+	static {
+		Skript.registerVariable(VarLocation.class, Location.class, "location of %location%", "%location%'[s] location");
 	}
 	
-	/**
-	 * If this constructor is used, Skript's error cause will not be changed. This is usually not what you want.
-	 */
-	public ParseException() {}
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
+		var = (Variable<Location>) vars[0];
+		return true;
+	}
 	
-	/**
-	 * alias of {@link #getMessage()}
-	 * 
-	 * @return
-	 */
-	public String getError() {
-		return getMessage();
+	@Override
+	public String getDebugMessage(final Event e) {
+		return "location of " + var.getDebugMessage(e);
+	}
+	
+	@Override
+	public String toString() {
+		return "location of " + var;
 	}
 	
 }

@@ -21,8 +21,6 @@
 
 package ch.njol.skript.api.intern;
 
-import java.lang.reflect.Array;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -67,14 +65,9 @@ public class ConvertedLiteral<F, T> extends ConvertedVariable<F, T> implements L
 		return getArray();
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		final V[] vs = (V[]) Array.newInstance(to, data.length);
-		for (int i = 0; i < data.length; i++) {
-			vs[i] = converter.convert(data[i]);
-		}
-		return vs;
+		return SimpleVariable.getArray(this, e, to, converter);
 	}
 	
 	@Override

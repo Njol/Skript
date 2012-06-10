@@ -35,16 +35,17 @@ import ch.njol.skript.lang.Variable;
 public class VarRandom extends SimpleVariable<Double> {
 	
 	static {
-		Skript.registerVariable(VarRandom.class, Double.class, "random number between %double% and %double%");
+		Skript.registerVariable(VarRandom.class, Double.class, "[a] random number between %double% and %double%");
 	}
 	
 	private Variable<Double> lower, upper;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		lower = (Variable<Double>) vars[0];
 		upper = (Variable<Double>) vars[1];
+		return true;
 	}
 	
 	@Override

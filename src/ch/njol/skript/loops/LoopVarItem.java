@@ -54,14 +54,15 @@ public class LoopVarItem extends LoopVar<ItemStack> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (vars.length > 0)
 			types = (Variable<ItemType>) vars[0];
 		blocks = matchedPattern >= 2;
 		if (types instanceof Literal) {
-			for (ItemType t : ((Literal<ItemType>) types).getArray())
+			for (final ItemType t : ((Literal<ItemType>) types).getArray())
 				t.setAll(true);
 		}
+		return true;
 	}
 	
 	@Override

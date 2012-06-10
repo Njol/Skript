@@ -25,8 +25,6 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
@@ -45,7 +43,7 @@ public class EffAdd extends Effect {
 	private Variable<?> adder;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException, InitException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (matchedPattern == 0) {
 			adder = vars[0];
 			added = vars[1];
@@ -54,10 +52,12 @@ public class EffAdd extends Effect {
 			added = vars[0];
 		}
 		if (added instanceof UnparsedLiteral)
-			throw new InitException();
+			return false;
 		Class<?> r = added.acceptChange(ch.njol.skript.api.Changer.ChangeMode.ADD);
-		if (r == null)
-			throw new ParseException(added + " can't have something added to it");
+		if (r == null) {
+			Skript.error(added + " can't have something added to it");
+			return false;
+		}
 		boolean single = true;
 		if (r.isArray()) {
 			single = false;
@@ -65,13 +65,17 @@ public class EffAdd extends Effect {
 		}
 		if (!r.isAssignableFrom(adder.getReturnType())) {
 			final Variable<?> v = adder.getConvertedVariable(r);
-			if (v == null)
-				throw new ParseException(adder + " can't be added to " + added);
+			if (v == null) {
+				Skript.error(adder + " can't be added to " + added);
+				return false;
+			}
 			adder = v;
 		}
 		if (!adder.isSingle() && single) {
-			throw new ParseException(added + " can only be set to one " + Skript.getExactClassName(r) + ", but multiple are given");
+			Skript.error(added + " can only be set to one " + Skript.getExactClassName(r) + ", but multiple are given");
+			return false;
 		}
+		return true;
 	}
 	
 	@Override

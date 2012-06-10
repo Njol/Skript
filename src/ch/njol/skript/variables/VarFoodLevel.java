@@ -38,15 +38,16 @@ import ch.njol.skript.lang.Variable;
 public class VarFoodLevel extends SimpleVariable<Integer> {
 	
 	static {
-		Skript.registerVariable(VarFoodLevel.class, Integer.class, "food[[ ](level|meter)] [of %player%]", "%player%'[s] food[[ ](level|meter)]");
+		Skript.registerVariable(VarFoodLevel.class, Integer.class, "[the] food[[ ](level|meter)] [of %player%]", "%player%'[s] food[[ ](level|meter)]");
 	}
 	
 	private Variable<Player> players;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
+		return true;
 	}
 	
 	@Override

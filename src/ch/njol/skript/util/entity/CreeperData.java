@@ -19,45 +19,53 @@
  * 
  */
 
-package ch.njol.skript.effects;
+package ch.njol.skript.util.entity;
 
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.event.Event;
+import org.bukkit.entity.Creeper;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.util.EntityType;
 
 /**
  * @author Peter Güttinger
- * 
+ *
  */
-public class EffKill extends Effect {
-	
-	static {
-		Skript.registerEffect(EffKill.class, "kill %livingentities%");
-	}
-	
-	private Variable<LivingEntity> entities;
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		entities = (Variable<LivingEntity>) vars[0];
-		return true;
-	}
+public class CreeperData implements EntityData<Creeper> {
+
+	private boolean powered = false;
 	
 	@Override
-	protected void execute(final Event e) {
-		for (final LivingEntity entity : entities.getArray(e)) {
-			entity.setHealth(0);
+	public void set(Creeper c) {
+		c.setPowered(powered);
+	}
+
+	@Override
+	public boolean parse(String s) {
+		if (s.equalsIgnoreCase("creeper")) {
+			return true;
+		} else if (s.equalsIgnoreCase("powered creeper")) {
+			powered = true;
+			return true;
 		}
+		return false;
+	}
+	// or
+	static {
+		EntityType.registerType(Creeper.class, CreeperData.class, "powered creeper", "creeper");
+	}
+	@Override
+	public boolean init(int matchedPattern, ParseResult res) {
+		powered = matchedPattern == 0;
+	}
+
+	@Override
+	public String toString() {
+		return (powered ? "powered " : "")+"creeper";
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "kill " + entities.getDebugMessage(e);
+	public String getDebugMessage() {
+		return toString();
 	}
 	
 }

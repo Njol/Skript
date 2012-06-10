@@ -57,21 +57,21 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	 * list of pairs {item/block, block... to replace if possible}
 	 */
 	private static final int[][] preferredMaterials = {
-		{Material.STATIONARY_WATER.getId(), Material.WATER.getId()},
-		{Material.STATIONARY_LAVA.getId(), Material.LAVA.getId()},
-		{Material.BED.getId(), Material.BED_BLOCK.getId()},
-		{Material.BREWING_STAND_ITEM.getId(), Material.BREWING_STAND.getId()},
-		{Material.REDSTONE_LAMP_OFF.getId(), Material.REDSTONE_LAMP_ON.getId()},
-		{Material.REDSTONE_TORCH_OFF.getId(), Material.REDSTONE_TORCH_ON.getId()},
-		{Material.REDSTONE_ORE.getId(), Material.GLOWING_REDSTONE_ORE.getId()},
-		{Material.FURNACE.getId(), Material.BURNING_FURNACE.getId()},
-		{Material.CAULDRON_ITEM.getId(), Material.CAULDRON.getId()},
-		{Material.SEEDS.getId(), Material.CROPS.getId()},
-		{Material.DIODE.getId(), Material.DIODE_BLOCK_OFF.getId(), Material.DIODE_BLOCK_ON.getId()},
-		{Material.DIODE_BLOCK_OFF.getId(), Material.DIODE_BLOCK_ON.getId()},
-		{Material.SUGAR_CANE.getId(), Material.SUGAR_CANE_BLOCK.getId()},
-		{Material.SIGN.getId(), Material.SIGN_POST.getId(), Material.WALL_SIGN.getId()},
-		{Material.CAKE.getId(), Material.CAKE_BLOCK.getId()}
+			{Material.STATIONARY_WATER.getId(), Material.WATER.getId()},
+			{Material.STATIONARY_LAVA.getId(), Material.LAVA.getId()},
+			{Material.BED.getId(), Material.BED_BLOCK.getId()},
+			{Material.BREWING_STAND_ITEM.getId(), Material.BREWING_STAND.getId()},
+			{Material.REDSTONE_LAMP_OFF.getId(), Material.REDSTONE_LAMP_ON.getId()},
+			{Material.REDSTONE_TORCH_OFF.getId(), Material.REDSTONE_TORCH_ON.getId()},
+			{Material.REDSTONE_ORE.getId(), Material.GLOWING_REDSTONE_ORE.getId()},
+			{Material.FURNACE.getId(), Material.BURNING_FURNACE.getId()},
+			{Material.CAULDRON_ITEM.getId(), Material.CAULDRON.getId()},
+			{Material.SEEDS.getId(), Material.CROPS.getId()},
+			{Material.DIODE.getId(), Material.DIODE_BLOCK_OFF.getId(), Material.DIODE_BLOCK_ON.getId()},
+			{Material.DIODE_BLOCK_OFF.getId(), Material.DIODE_BLOCK_ON.getId()},
+			{Material.SUGAR_CANE.getId(), Material.SUGAR_CANE_BLOCK.getId()},
+			{Material.SIGN.getId(), Material.SIGN_POST.getId(), Material.WALL_SIGN.getId()},
+			{Material.CAKE.getId(), Material.CAKE_BLOCK.getId()}
 	};
 	
 	public ItemType() {}
@@ -105,15 +105,15 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		return amount == -1 ? 1 : amount;
 	}
 	
-	public void setAmount(int amount) {
+	public void setAmount(final int amount) {
 		this.amount = amount;
 	}
-
+	
 	public boolean isAll() {
 		return all;
 	}
-
-	public void setAll(boolean all) {
+	
+	public void setAll(final boolean all) {
 		this.all = all;
 	}
 	
@@ -172,18 +172,18 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	public String getDebugMessage() {
 		return toString(true);
 	}
-
+	
 	private ItemType item = null, block = null;
 	
 	public ItemType getItem() {
 		if (item != null)
 			return item;
-		if (!hasPreferred)
+		if (!hasPreferred || all)
 			return this;
-		item = this.clone();
-		for (ItemData d : item.types) {
-			for (int[] p : preferredMaterials) {
-				if (Utils.contains(p, d.typeid, 1) != -1) {
+		item = clone();
+		for (final ItemData d : item.types) {
+			for (final int[] p : preferredMaterials) {
+				if (Utils.indexOf(p, d.typeid, 1) != -1) {
 					d.typeid = p[0];
 					break;
 				}
@@ -196,12 +196,12 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	public ItemType getBlock() {
 		if (block != null)
 			return block;
-		if (!hasPreferred)
+		if (!hasPreferred || all)
 			return this;
-		block = this.clone();
-		for (ItemData d : block.types) {
-			for (int[] p : preferredMaterials) {
-				if (p[0] <= Skript.MAXBLOCKID && Utils.contains(p, d.typeid, 1) != -1) {
+		block = clone();
+		for (final ItemData d : block.types) {
+			for (final int[] p : preferredMaterials) {
+				if (p[0] <= Skript.MAXBLOCKID && Utils.indexOf(p, d.typeid, 1) != -1) {
 					d.typeid = p[0];
 					break;
 				} else if (d.typeid == p[0]) {
@@ -216,14 +216,14 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	
 	private void checkHasPreferred() {
 		int c;
-		for (int[] p : preferredMaterials) {
+		for (final int[] p : preferredMaterials) {
 			c = -1;
-			for (ItemData d : types) {
-				if (c != -1 && Utils.contains(p, d.typeid) != -1) {
+			for (final ItemData d : types) {
+				if (c != -1 && Utils.indexOf(p, d.typeid) != -1) {
 					hasPreferred = true;
 					return;
 				} else {
-					c = Utils.contains(p, d.typeid);
+					c = Utils.indexOf(p, d.typeid);
 				}
 			}
 		}
@@ -421,6 +421,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	}
 	
 	private final List<ItemData> unmodable = Collections.unmodifiableList(types);
+	
 	/**
 	 * @return List of ItemDatas. The returned list is not modifyable, use {@link #add(ItemData)} and {@link #remove(ItemData)} if you need to change the list.
 	 */
@@ -589,5 +590,5 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		}
 		return ok;
 	}
-
+	
 }

@@ -21,6 +21,7 @@
 
 package ch.njol.skript.data;
 
+import java.util.List;
 import java.util.Locale;
 
 import org.bukkit.Bukkit;
@@ -61,10 +62,8 @@ public class DefaultClasses {
 	
 	static {
 		Skript.registerClass(new ClassInfo<Object>("object", Object.class, null, null));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<Float>("float", Float.class, new SimpleLiteral<Float>(1f), new Parser<Float>() {
+		
+		Skript.registerClass(new ClassInfo<Float>("float", Float.class, new SimpleLiteral<Float>(1f, true), new Parser<Float>() {
 			@Override
 			public Float parse(final String s) {
 				try {
@@ -82,10 +81,8 @@ public class DefaultClasses {
 				return StringUtils.toString(f, Skript.NUMBERACCURACY);
 			}
 		}));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<Double>("number", "double", Double.class, new SimpleLiteral<Double>(1.), new Parser<Double>() {
+		
+		Skript.registerClass(new ClassInfo<Double>("number", "double", Double.class, new SimpleLiteral<Double>(1., true), new Parser<Double>() {
 			@Override
 			public Double parse(final String s) {
 				try {
@@ -103,9 +100,7 @@ public class DefaultClasses {
 				return StringUtils.toString(d, Skript.NUMBERACCURACY);
 			}
 		}, "number"));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<Boolean>("boolean", Boolean.class, null, new Parser<Boolean>() {
 			@Override
 			public Boolean parse(final String s) {
@@ -122,10 +117,8 @@ public class DefaultClasses {
 				return o.toString();
 			}
 		}));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<Byte>("byte", Byte.class, new SimpleLiteral<Byte>((byte) 1), new Parser<Byte>() {
+		
+		Skript.registerClass(new ClassInfo<Byte>("byte", Byte.class, new SimpleLiteral<Byte>((byte) 1, true), new Parser<Byte>() {
 			@Override
 			public Byte parse(final String s) {
 				try {
@@ -140,10 +133,8 @@ public class DefaultClasses {
 				return o.toString();
 			}
 		}));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<Short>("short", Short.class, new SimpleLiteral<Short>((short) 1), new Parser<Short>() {
+		
+		Skript.registerClass(new ClassInfo<Short>("short", Short.class, new SimpleLiteral<Short>((short) 1, true), new Parser<Short>() {
 			@Override
 			public Short parse(final String s) {
 				try {
@@ -158,10 +149,8 @@ public class DefaultClasses {
 				return o.toString();
 			}
 		}));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<Integer>("integer", "integer", Integer.class, new SimpleLiteral<Integer>(1), new Parser<Integer>() {
+		
+		Skript.registerClass(new ClassInfo<Integer>("integer", "integer", Integer.class, new SimpleLiteral<Integer>(1, true), new Parser<Integer>() {
 			@Override
 			public Integer parse(final String s) {
 				try {
@@ -176,10 +165,8 @@ public class DefaultClasses {
 				return o.toString();
 			}
 		}, "integers?"));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<Long>("long", Long.class, new SimpleLiteral<Long>((long) 1), new Parser<Long>() {
+		
+		Skript.registerClass(new ClassInfo<Long>("long", Long.class, new SimpleLiteral<Long>((long) 1, true), new Parser<Long>() {
 			@Override
 			public Long parse(final String s) {
 				try {
@@ -194,9 +181,7 @@ public class DefaultClasses {
 				return o.toString();
 			}
 		}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<String>("string", String.class, null, new Parser<String>() {
 			@Override
 			public String parse(final String s) {
@@ -214,10 +199,8 @@ public class DefaultClasses {
 				return '"' + s + '"';
 			}
 		}));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<TreeType>("tree type", "treetype", TreeType.class, new SimpleLiteral<TreeType>(TreeType.TREE), new Parser<TreeType>() {
+		
+		Skript.registerClass(new ClassInfo<TreeType>("tree type", "treetype", TreeType.class, new SimpleLiteral<TreeType>(TreeType.TREE, true), new Parser<TreeType>() {
 			
 			@Override
 			public TreeType parse(String s) {
@@ -256,9 +239,7 @@ public class DefaultClasses {
 			}
 			
 		}, "tree ?type", "tree"));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<Entity>("entity", Entity.class, new EventValueVariable<Entity>(Entity.class), new Parser<Entity>() {
 			@Override
 			public Entity parse(final String s) {
@@ -270,13 +251,9 @@ public class DefaultClasses {
 				return EntityType.toString(e);
 			}
 		}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<LivingEntity>("livingentity", LivingEntity.class, new EventValueVariable<LivingEntity>(LivingEntity.class), null));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<Block>("block", Block.class, new EventValueVariable<Block>(Block.class), new Parser<Block>() {
 			@Override
 			public Block parse(final String s) {
@@ -293,9 +270,7 @@ public class DefaultClasses {
 				return toString(b) + " block (" + b.getWorld().getName() + "|" + b.getX() + "/" + b.getY() + "/" + b.getZ() + ")";
 			}
 		}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<Location>("location", Location.class, new EventValueVariable<Location>(Location.class), new Parser<Location>() {
 			
 			@Override
@@ -305,7 +280,7 @@ public class DefaultClasses {
 			
 			@Override
 			public String toString(final Location l) {
-				return "x: " + StringUtils.toString(l.getX(), Skript.NUMBERACCURACY) + ", " + "y: " + StringUtils.toString(l.getY(), Skript.NUMBERACCURACY) + ", " + "z: " + StringUtils.toString(l.getZ(), Skript.NUMBERACCURACY);
+				return "x: " + StringUtils.toString(l.getX(), Skript.NUMBERACCURACY) + ", y: " + StringUtils.toString(l.getY(), Skript.NUMBERACCURACY) + ", z: " + StringUtils.toString(l.getZ(), Skript.NUMBERACCURACY);
 			}
 			
 			@Override
@@ -314,9 +289,7 @@ public class DefaultClasses {
 			}
 			
 		}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<World>("world", "world", World.class, new EventValueVariable<World>(World.class), new Parser<World>() {
 			@Override
 			public World parse(final String s) {
@@ -328,13 +301,11 @@ public class DefaultClasses {
 			}
 			
 			@Override
-			public String toString(final World o) {
-				return o.getName();
+			public String toString(final World w) {
+				return w.getName();
 			}
 		}, "worlds?"), true, "string");
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<Inventory>("inventory", Inventory.class, new EventValueVariable<Inventory>(Inventory.class), new Parser<Inventory>() {
 			
 			@Override
@@ -352,14 +323,15 @@ public class DefaultClasses {
 				return "inventory of " + Skript.getDebugMessage(i.getHolder());
 			}
 		}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<Player>("player", "player", Player.class, new EventValueVariable<Player>(Player.class), new Parser<Player>() {
 			@Override
 			public Player parse(final String s) {
-//				if (s.matches("\"\\S+\""))
-//					return Bukkit.getPlayerExact(s.substring(1, s.length() - 1));
+				if (Skript.isLoading())
+					return null;
+				final List<Player> ps = Bukkit.matchPlayer(s);
+				if (ps.size() == 1)
+					return ps.get(0);
 				return null;
 			}
 			
@@ -372,10 +344,8 @@ public class DefaultClasses {
 			public String getDebugMessage(final Player p) {
 				return p.getName() + " " + Skript.getDebugMessage(p.getLocation());
 			}
-		}));
-	}
-	
-	static {
+		}, "player"));
+		
 		Skript.registerClass(new ClassInfo<OfflinePlayer>("player", "offlineplayer", OfflinePlayer.class, new EventValueVariable<OfflinePlayer>(OfflinePlayer.class), new Parser<OfflinePlayer>() {
 			@Override
 			public OfflinePlayer parse(final String s) {
@@ -395,16 +365,15 @@ public class DefaultClasses {
 					return Skript.getDebugMessage(p.getPlayer());
 				return p.getName();
 			}
-		}, "player"));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<CommandSender>("player", "commandsender", CommandSender.class, new EventValueVariable<CommandSender>(CommandSender.class), new Parser<CommandSender>() {
+		}));
+		
+		Skript.registerClass(new ClassInfo<CommandSender>("player/console", "commandsender", CommandSender.class, new EventValueVariable<CommandSender>(CommandSender.class), new Parser<CommandSender>() {
 			@Override
 			public CommandSender parse(final String s) {
 				if (s.equalsIgnoreCase("console") || s.equalsIgnoreCase("server"))
 					return Bukkit.getConsoleSender();
-				return Bukkit.getServer().getPlayerExact(s);
+//				return Bukkit.getServer().getPlayerExact(s);
+				return null;
 			}
 			
 			@Override
@@ -421,9 +390,7 @@ public class DefaultClasses {
 				return s.getName();
 			}
 		}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<BlockFace>("direction", "blockface", BlockFace.class, null, new Parser<BlockFace>() {
 			@Override
 			public BlockFace parse(final String s) {
@@ -435,14 +402,10 @@ public class DefaultClasses {
 				return o.toString().toLowerCase(Locale.ENGLISH).replace('_', ' ');
 			}
 		}, "direction"));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<InventoryHolder>("inventoryholder", InventoryHolder.class, new EventValueVariable<InventoryHolder>(InventoryHolder.class), null));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<GameMode>("game mode", "gamemode", GameMode.class, new SimpleLiteral<GameMode>(GameMode.SURVIVAL), new Parser<GameMode>() {
+		
+		Skript.registerClass(new ClassInfo<GameMode>("game mode", "gamemode", GameMode.class, new SimpleLiteral<GameMode>(GameMode.SURVIVAL, true), new Parser<GameMode>() {
 			@Override
 			public GameMode parse(final String s) {
 				try {
@@ -457,22 +420,24 @@ public class DefaultClasses {
 				return m.toString().toLowerCase();
 			}
 		}, "game ?mode"));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<ItemStack>("material", "_itemstack", ItemStack.class, null, new Parser<ItemStack>() {
+		
+		Skript.registerClass(new ClassInfo<ItemStack>("material", "itemstack", ItemStack.class, null, new Parser<ItemStack>() {
 			@Override
 			public ItemStack parse(final String s) {
 				ItemType t = Aliases.parseItemType(s);
 				if (t == null)
 					return null;
 				t = t.getItem();
-				if (t.numTypes() != 1)
+				if (t.numTypes() != 1) {
+					Skript.error("'" + s + "' represents multiple materials");
 					return null;
+				}
 				if (!t.getTypes().get(0).hasDataRange())
 					return t.getRandom();
-				if (t.getTypes().get(0).dataMin > 0)
+				if (t.getTypes().get(0).dataMin > 0) {
+					Skript.error("'" + s + "' represents multiple materials");
 					return null;
+				}
 				final ItemStack i = t.getRandom();
 				i.setDurability((short) 0);
 				return i;

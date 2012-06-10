@@ -36,7 +36,7 @@ public class ClassInfo<T> {
 	 * @param c The class
 	 * @param defaultVariable The defalut value of this class or null if not applicable
 	 * @param parser A parser to parse values of this class or null if not applicable
-	 * @param userInputPatterns Pegex patterns to match &lt;arg type&gt;s in commands
+	 * @param userInputPatterns <u>Regex</u> patterns to match &lt;arg type&gt;s in commands
 	 */
 	public ClassInfo(final String name, final String codeName, final Class<T> c, final DefaultVariable<T> defaultVariable, final Parser<T> parser, final String... userInputPatterns) {
 		this.c = c;

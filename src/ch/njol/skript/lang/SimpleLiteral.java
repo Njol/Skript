@@ -42,27 +42,33 @@ public class SimpleLiteral<T> extends SimpleVariable<T> implements Literal<T>, D
 	protected final T[] data;
 	protected final Class<T> c;
 	
+	private final boolean isDefault;
+	
 	public SimpleLiteral(final T[] data, final Class<T> c, final boolean and) {
 		this.data = data;
 		this.c = c;
 		setAnd(and);
+		this.isDefault = false;
 	}
 	
 	@SuppressWarnings("unchecked")
-	public SimpleLiteral(final T data) {
+	public SimpleLiteral(final T data, final boolean isDefault) {
 		this.data = (T[]) Array.newInstance(data.getClass(), 1);
 		this.data[0] = data;
 		c = (Class<T>) data.getClass();
 		setAnd(true);
+		this.isDefault = isDefault;
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
 	@Override
-	public void init() {}
+	public boolean init() {
+		return true;
+	}
 	
 	@Override
 	protected T[] getAll(final Event e) {
@@ -111,6 +117,11 @@ public class SimpleLiteral<T> extends SimpleVariable<T> implements Literal<T>, D
 	@Override
 	public boolean isSingle() {
 		return !getAnd() || data.length <= 1;
+	}
+	
+	@Override
+	public boolean isDefault() {
+		return isDefault;
 	}
 	
 }

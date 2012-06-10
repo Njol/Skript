@@ -83,8 +83,9 @@ public class EvtEntityBlockChange extends SkriptEvent {
 	private ChangeEvent event;
 	
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		event = ChangeEvent.values()[matchedPattern];
+		return true;
 	}
 	
 	@Override

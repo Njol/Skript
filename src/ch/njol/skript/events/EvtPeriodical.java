@@ -42,8 +42,8 @@ public class EvtPeriodical extends SkriptEvent {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		period = Math.round(((Literal<Timespan>) args[0]).getSingle().getTicks());
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		period = ((Literal<Timespan>) args[0]).getSingle().getTicks();
 		final World[] worlds = args[1] == null ? null : ((Literal<World>) args[1]).getArray();
 		final EvtPeriodical evt = this;
 		if (worlds == null) {
@@ -63,6 +63,7 @@ public class EvtPeriodical extends SkriptEvent {
 				}, period - (w.getFullTime() % period), period);
 			}
 		}
+		return true;
 	}
 	
 	@Override

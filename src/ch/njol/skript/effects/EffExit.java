@@ -26,7 +26,6 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.api.intern.TriggerSection;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
@@ -48,7 +47,7 @@ public class EffExit extends Effect {
 	private int breakLevels;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 				breakLevels = TriggerFileLoader.currentSections.size() + 1;
@@ -59,16 +58,20 @@ public class EffExit extends Effect {
 			case 2:
 				breakLevels = Integer.parseInt(parser.regexes.get(0).group());
 				if (breakLevels > TriggerFileLoader.currentSections.size()) {
-					if (TriggerFileLoader.currentSections.isEmpty())
-						throw new ParseException("you can't exit any sections as there are no sections present");
-					else
-						throw new ParseException("you can't exit as there are only " + TriggerFileLoader.currentSections.size() + " sections present");
+					if (TriggerFileLoader.currentSections.isEmpty()) {
+						Skript.error("you can't exit any sections as there are no sections present");
+						return false;
+					} else {
+						Skript.error("you can't exit as there are only " + TriggerFileLoader.currentSections.size() + " sections present");
+						return false;
+					}
 				}
 			break;
 			case 3:
 				breakLevels = TriggerFileLoader.currentSections.size();
 			break;
 		}
+		return true;
 	}
 	
 	@Override

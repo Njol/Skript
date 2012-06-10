@@ -26,8 +26,6 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleLiteral;
 import ch.njol.skript.lang.UnparsedLiteral;
@@ -47,14 +45,16 @@ public class EffClear extends Effect {
 	private Variable<?> cleared;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException, InitException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		cleared = vars[0];
 		if (cleared instanceof UnparsedLiteral)
-			throw new InitException();
+			return false;
 		final Class<?> r = cleared.acceptChange(ChangeMode.CLEAR);
 		if (r == null) {
-			throw new ParseException(cleared + " can't be cleared/deleted");
+			Skript.error(cleared + " can't be cleared/deleted");
+			return false;
 		}
+		return true;
 	}
 	
 	public final static class DummyVariable extends SimpleLiteral<Object> {

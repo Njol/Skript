@@ -42,9 +42,10 @@ public class SimpleEvent extends SkriptEvent {
 	}
 	
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		if (args.length != 0)
 			throw new SkriptAPIException("Invalid use of SimpleEvent");
+		return true;
 	}
 	
 	@Override

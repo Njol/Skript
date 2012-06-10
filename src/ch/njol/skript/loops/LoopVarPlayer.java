@@ -50,9 +50,10 @@ public class LoopVarPlayer extends LoopVar<Player> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (vars.length > 0)
 			worlds = (Variable<World>) vars[0];
+		return true;
 	}
 	
 	@Override
@@ -68,7 +69,7 @@ public class LoopVarPlayer extends LoopVar<Player> {
 			@Override
 			public boolean hasNext() {
 				while (players.hasNext()) {
-					if (Utils.contains(ws, players.next().getWorld()) != -1) {
+					if (Utils.indexOf(ws, players.next().getWorld()) != -1) {
 						players.previous();
 						return true;
 					}

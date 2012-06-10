@@ -21,21 +21,142 @@
 
 package ch.njol.skript;
 
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 
 import ch.njol.skript.config.Node;
+import ch.njol.util.Pair;
+import ch.njol.util.iterator.IteratorIterable;
 
 public abstract class SkriptLogger {
 	
 	private static Node node = null;
-	private static String prefix = "";
-	private static String oldPrefix = null;
 	
 	private static Verbosity verbosity = Verbosity.NORMAL;
 	
 	static boolean debug;
+	
+	private final static Deque<SubLog> subLogs = new LinkedList<SubLog>();
+	
+	public static final class SubLog {
+		SubLog() {}
+		
+		private final Deque<Pair<Level, String>> log = new LinkedList<Pair<Level, String>>();
+		
+		/**
+		 * Print all retained errors or the given one if no errors were retained.<br>
+		 * This sublog is stopped if not already done
+		 * 
+		 * @param def error to print if no errors were logged, can be null to not print any error if there are none
+		 * @return whether there were any errors
+		 */
+		public final boolean printErrors(final String def) {
+			SkriptLogger.stopSubLog(this);
+			boolean hasError = false;
+			for (final Pair<Level, String> e : log) {
+				if (e.first == Level.SEVERE) {
+					logDirect(e);
+					hasError = true;
+				}
+			}
+			if (!hasError && def != null)
+				logDirect(Level.SEVERE, def);
+			return hasError;
+		}
+		
+		/**
+		 * Sends all retained error messages to the given recipient<br>
+		 * This sublog is stopped if not already done
+		 * 
+		 * @param recipient
+		 * @param def error to send  if no errors were logged, can be null to not print any error if there are none
+		 * @return whether there were any errors to send
+		 */
+		public final boolean printErrors(final CommandSender recipient, String def) {
+			SkriptLogger.stopSubLog(this);
+			boolean hasError = false;
+			for (final Pair<Level, String> e : log) {
+				if (e.first == Level.SEVERE) {
+					recipient.sendMessage(e.second);
+					hasError = true;
+				}
+			}
+			if (!hasError && def != null)
+				recipient.sendMessage(def);
+			log.clear();
+			return hasError;
+		}
+		
+		/**
+		 * Prints all retained log messages<br>
+		 * This sublog is stopped if not already done
+		 * 
+		 * @return
+		 */
+		public final void printLog() {
+			SkriptLogger.stopSubLog(this);
+			for (final Pair<Level, String> e : log) {
+				logDirect(e);
+			}
+		}
+		
+		public boolean hasErrors() {
+			for (final Pair<Level, String> e : log) {
+				if (e.first == Level.SEVERE)
+					return true;
+			}
+			return false;
+		}
+		
+		public String getLastError() {
+			for (final Pair<Level, String> e : new IteratorIterable<Pair<Level, String>>(log.descendingIterator())) {
+				if (e.getKey() == Level.SEVERE)
+					return e.getValue();
+			}
+			return null;
+		}
+		
+		/**
+		 * Clears the list if retained log messages.
+		 */
+		public void clear() {
+			log.clear();
+		}
+	}
+	
+	/**
+	 * Starts a sub log. All subsequent log messages will be added to this log and not printed.<br>
+	 * This should be used like this:
+	 * 
+	 * <pre>
+	 * SubLog log = SkriptLogger.startSubLog();
+	 * doSomethingThatLogsMessages();
+	 * SkriptLogger.stopSubLog(log);
+	 * // do something with the logged messages
+	 * </pre>
+	 * 
+	 * @return
+	 */
+	public final static SubLog startSubLog() {
+		final SubLog subLog = new SubLog();
+		subLogs.addLast(subLog);
+		return subLog;
+	}
+	
+	public final static void stopSubLog(final SubLog log) {
+		if (!subLogs.contains(log))
+			return;
+		if (subLogs.removeLast() != log) {
+			int i = 1;
+			while (subLogs.removeLast() != log)
+				i++;
+			throw new IllegalStateException(i + " sub log(s) was/were not stopped properly!");
+		}
+	}
 	
 	static void setVerbosity(final Verbosity v) {
 		verbosity = v;
@@ -92,33 +213,17 @@ public abstract class SkriptLogger {
 	 * @see #log(Level, String)
 	 */
 	public static void logDirect(final Level level, final String message) {
-		Bukkit.getLogger().log(level, "[Skript] " + prefix + message);
+		if (!subLogs.isEmpty())
+			subLogs.getLast().log.add(new Pair<Level, String>(level, message));
+		else
+			Bukkit.getLogger().log(level, "[Skript] " + message);
 	}
 	
-	/**
-	 * Sets a prefix to be applied before all messages. This will look like this:<br/>
-	 * "[Skript] prefixmessage" (i.e. no space is added between the prefix and the message)
-	 * 
-	 * @param prefix
-	 * @return the prefix used before
-	 * @see #resetPrefix()
-	 */
-	public final static String setPrefix(final String prefix) {
-		oldPrefix = SkriptLogger.prefix;
-		SkriptLogger.prefix = prefix;
-		return oldPrefix;
-	}
-	
-	/**
-	 * Resets the prefix to the last value.
-	 * 
-	 * @throws IllegalStateException
-	 */
-	public static final void resetPrefix() throws IllegalStateException {
-		if (oldPrefix == null)
-			throw new IllegalStateException("resetPrefix was called without a setPrefix beforehand");
-		prefix = oldPrefix;
-		oldPrefix = null;
+	public static void logDirect(final Pair<Level, String> message) {
+		if (!subLogs.isEmpty())
+			subLogs.getLast().log.add(message);
+		else
+			Bukkit.getLogger().log(message.first, "[Skript] " + message.second);
 	}
 	
 	/**

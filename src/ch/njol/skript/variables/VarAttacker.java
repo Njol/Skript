@@ -69,7 +69,7 @@ public class VarAttacker extends SimpleVariable<Attacker> {
 	}
 	
 	static {
-		Skript.registerVariable(VarAttacker.class, Attacker.class, "(attacker|damager)");
+		Skript.registerVariable(VarAttacker.class, Attacker.class, "[the] (attacker|damager)");
 		Skript.registerConverter(Attacker.class, Entity.class, new Converter<Attacker, Entity>() {
 			@Override
 			public Entity convert(final Attacker a) {
@@ -102,7 +102,9 @@ public class VarAttacker extends SimpleVariable<Attacker> {
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		return true;
+	}
 	
 	@Override
 	protected Attacker[] getAll(final Event e) {
@@ -165,7 +167,7 @@ public class VarAttacker extends SimpleVariable<Attacker> {
 		}
 		if (invi == null)
 			return;
-		DefaultChangers.inventoryChanger.change(e, new SimpleLiteral<Inventory>(invi), delta, mode);
+		DefaultChangers.inventoryChanger.change(e, new SimpleLiteral<Inventory>(invi, false), delta, mode);
 	}
 	
 }

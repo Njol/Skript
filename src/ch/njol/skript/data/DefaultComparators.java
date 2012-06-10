@@ -44,6 +44,21 @@ public class DefaultComparators {
 		
 		// IMPORTANT!! No Object - Object comparator
 		
+		// Number - Number
+		Skript.registerComparator(Number.class, Number.class, new Comparator<Number, Number>() {
+			@Override
+			public Relation compare(final Number n1, final Number n2) {
+				if (n1 == null || n2 == null)
+					return Relation.NOT_EQUAL;
+				return Relation.get(n1.doubleValue() - n2.doubleValue());
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return true;
+			}
+		});
+		
 		// ItemStack - ItemType
 		Skript.registerComparator(ItemStack.class, ItemType.class, new Comparator<ItemStack, ItemType>() {
 			@Override
@@ -88,21 +103,6 @@ public class DefaultComparators {
 				return false;
 			}
 			
-		});
-		
-		// Number - Number
-		Skript.registerComparator(Number.class, Number.class, new Comparator<Number, Number>() {
-			@Override
-			public Relation compare(final Number n1, final Number n2) {
-				if (n1 == null || n2 == null)
-					return Relation.NOT_EQUAL;
-				return Relation.get(n1.doubleValue() - n2.doubleValue());
-			}
-			
-			@Override
-			public boolean supportsOrdering() {
-				return true;
-			}
 		});
 		
 		// Entity - EntityType

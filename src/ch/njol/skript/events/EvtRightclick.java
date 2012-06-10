@@ -53,12 +53,13 @@ public class EvtRightclick extends SkriptEvent {
 	private Literal<ItemType> tools;
 	
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		if (matchedPattern == 0)
 			entities = (Literal<EntityType>) args[0];
 		else
 			blocks = (Literal<ItemType>) args[0];
 		tools = (Literal<ItemType>) args[1];
+		return true;
 	}
 	
 	@Override

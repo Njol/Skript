@@ -26,6 +26,8 @@ import java.lang.reflect.Array;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.intern.ConvertedLiteral;
 import ch.njol.skript.api.intern.SkriptAPIException;
@@ -63,8 +65,9 @@ public class UnparsedLiteral extends SimpleLiteral<Object> {
 	public <R> ConvertedLiteral<Object, ? extends R> getConvertedVar(final Class<R> to) {
 		if (to == String.class) {
 			final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
-			if (vsl != null)
-				return (ConvertedLiteral<Object, ? extends R>) vsl;
+			if (vsl == null)
+				return null;
+			return (ConvertedLiteral<Object, ? extends R>) vsl;
 		} else if (to == Object.class) {
 			throw new SkriptAPIException("can't parse as Object");
 		}
@@ -72,12 +75,15 @@ public class UnparsedLiteral extends SimpleLiteral<Object> {
 		if (p == null)
 			return null;
 		final R[] parsedData = (R[]) Array.newInstance(to, data.length);
+		final SubLog log = SkriptLogger.startSubLog();
 		for (int i = 0; i < data.length; i++) {
 			if ((parsedData[i] = p.convert((String) data[i])) == null) {
-				Skript.error("'" + data[i] + "' is not " + Utils.a(Skript.getExactClassName(to)));
+				SkriptLogger.stopSubLog(log);
+				log.printErrors("'" + data[i] + "' is not " + Utils.a(Skript.getExactClassName(to)));
 				return null;
 			}
 		}
+		SkriptLogger.stopSubLog(log);
 		return new ConvertedLiteral<Object, R>(this, parsedData, to);
 	}
 	

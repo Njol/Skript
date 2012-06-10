@@ -31,10 +31,12 @@ import ch.njol.util.iterator.CheckedIterator;
 public class BlockSphereIterator extends CheckedIterator<Block> {
 	
 	public BlockSphereIterator(final Location center, final float radius) {
-		super(new AABB(center, 2 * radius + 0.01, 2 * radius + 0.01, 2 * radius + 0.01).iterator(), new Checker<Block>() {
+		super(new AABB(center, 2 * radius, 2 * radius, 2 * radius).iterator(), new Checker<Block>() {
+			private final double rSquared = radius * radius * Skript.EPSILON_MULT;
+			
 			@Override
 			public boolean check(final Block b) {
-				return center.distanceSquared(b.getLocation()) - Skript.EPSILON < radius * radius;
+				return center.distanceSquared(b.getLocation()) < rSquared;
 			}
 		});
 	}

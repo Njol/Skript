@@ -1,17 +1,26 @@
+
 name: Skript
+
 description: Modify how Minecraft behaves without having to write a single line of code
+
 author: Njol
 website: http://njol.ch/projects/skript
+
 main: ch.njol.skript.Skript
+
 #load: startup # not needed for addons, as they should add [soft-]depend: Skript to their plugin.yml
 # must be uncommented to ever be able to have 'on world load' triggers
-version: 1.0
+
+version: 1.1
 #commands:
 #    skript:
 #        description: allows to modify the configuration files
 #        aliases: [sk, s]
 #        permission: skript.config
 #        usage: /skript help
+
+soft-depend: [Vault]
+
 permissions:
     skript.*:
         default: false

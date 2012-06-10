@@ -59,7 +59,7 @@ public interface Converter<F, T> {
 	
 	/**
 	 * converts an object from the given to the desired type.
-	 * Please note that the given object may be null, so prevent NullPointerExceptions!
+	 * Please note that the given object may be null, thus make sure that you test for null first.
 	 * 
 	 * @param f The object to convert which can be null.
 	 * @return the converted object

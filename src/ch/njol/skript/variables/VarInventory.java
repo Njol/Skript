@@ -40,15 +40,16 @@ import ch.njol.skript.lang.Variable;
 public class VarInventory extends SimpleVariable<Inventory> {
 	
 	static {
-		Skript.registerVariable(VarInventory.class, Inventory.class, "inventory of %inventoryholders%", "%inventoryholders%'[s] inventory");
+		Skript.registerVariable(VarInventory.class, Inventory.class, "[the] inventory of %inventoryholders%", "%inventoryholders%'[s] inventory");
 	}
 	
 	private Variable<InventoryHolder> holders;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		holders = (Variable<InventoryHolder>) vars[0];
+		return true;
 	}
 	
 	@Override

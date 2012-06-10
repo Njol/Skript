@@ -28,7 +28,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
-import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
 
 /**
@@ -39,19 +38,20 @@ public class CondPermission extends Condition {
 	
 	static {
 		Skript.registerCondition(CondPermission.class,
-				"[%commandsenders%] (do[es]n't|don't|do[es] not) have [the] permission[s] %variablestrings%",
-				"[%commandsenders%] ha(s|ve) [the] permission[s] %variablestrings%");
+				"[%commandsenders%] (do[es]n't|don't|do[es] not) have [the] permission[s] %strings%",
+				"[%commandsenders%] ha(s|ve) [the] permission[s] %strings%");
 	}
 	
-	private Variable<VariableString> permissions;
+	private Variable<String> permissions;
 	private Variable<CommandSender> senders;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		senders = (Variable<CommandSender>) vars[0];
-		permissions = (Variable<VariableString>) vars[1];
+		permissions = (Variable<String>) vars[1];
 		setNegated(matchedPattern == 0);
+		return true;
 	}
 	
 	@Override
@@ -59,16 +59,15 @@ public class CondPermission extends Condition {
 		return senders.check(e, new Checker<CommandSender>() {
 			@Override
 			public boolean check(final CommandSender s) {
-				return permissions.check(e, new Checker<VariableString>() {
+				return permissions.check(e, new Checker<String>() {
 					@Override
-					public boolean check(final VariableString perm) {
-						final String p = perm.get(e);
-						if (s.hasPermission(p))
+					public boolean check(final String perm) {
+						if (s.hasPermission(perm))
 							return true;
 						// player has perm skript.foo.bar if he has skript.foo.* or skript.*, but not for other plugin's permissions since they can define their own *
-						if (p.startsWith("skript.")) {
-							for (int i = p.lastIndexOf('.'); i > 0; i = p.lastIndexOf('.', i - 1)) {
-								if (s.hasPermission(p.substring(0, i + 1) + "*"))
+						if (perm.startsWith("skript.")) {
+							for (int i = perm.lastIndexOf('.'); i > 0; i = perm.lastIndexOf('.', i - 1)) {
+								if (s.hasPermission(perm.substring(0, i + 1) + "*"))
 									return true;
 							}
 						}

@@ -21,12 +21,10 @@
 
 package ch.njol.skript.command;
 
+import java.util.Collection;
 import java.util.List;
 
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginIdentifiableCommand;
-import org.bukkit.plugin.Plugin;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Verbosity;
@@ -42,11 +40,18 @@ import ch.njol.util.Validate;
  * @author Peter Güttinger
  * 
  */
-public class SkriptCommand extends Command implements PluginIdentifiableCommand {
+public class SkriptCommand {
 	
 	private final Trigger trigger;
 	
 	private final List<Argument<?>> arguments;
+	
+	final String name;
+	final String description;
+	final String usageMessage;
+	final Collection<String> aliases;
+	final String permission;
+	final String permissionMessage;
 	
 	/**
 	 * Creates a new SkriptCommand.<br/>
@@ -61,21 +66,26 @@ public class SkriptCommand extends Command implements PluginIdentifiableCommand 
 	 * @param permissionMessage message to display if the player doesn't have the given permission
 	 * @param items trigger to execute
 	 */
-	public SkriptCommand(final String name, final List<Argument<?>> arguments, final String description, final String usageMessage, final List<String> aliases, final String permission, final String permissionMessage, final List<TriggerItem> items) {
-		super(name, description, usageMessage, aliases);
+	public SkriptCommand(final String name, final List<Argument<?>> arguments, final String description, final String usageMessage, final Collection<String> aliases, final String permission, final String permissionMessage, final List<TriggerItem> items) {
 		Validate.notNull(name, arguments, description, usageMessage, aliases, items);
 		
+		this.name = name;
+		this.description = description;
+		this.usageMessage = usageMessage;
+		this.aliases = aliases;
+		
 		trigger = new Trigger("command /" + name, new SimpleEvent(), items);
-		setPermission(permission);
-		setPermissionMessage(permissionMessage == null ? "You don't have the required permission to use this command" : permissionMessage);// TODO l10n
+		this.permission = permission;
+		this.permissionMessage = permissionMessage == null ? "You don't have the required permission to use this command" : permissionMessage;// TODO l10n
 		this.arguments = arguments;
 	}
 	
-	@Override
-	public boolean execute(final CommandSender sender, final String commandLabel, String[] args) {
-		if (!testPermission(sender))// sends permission message
+	public boolean execute(final CommandSender sender, @SuppressWarnings("unused") final String commandLabel, final String rest) {
+		if (!sender.hasPermission(permission)) {
+			sender.sendMessage(permissionMessage);
 			return false;
-		args = Utils.join(args, " ").trim().split("\\s*,\\s*");
+		}
+		String[] args = rest.split("\\s*,\\s*");
 		if (args.length == 1 && args[0].isEmpty())
 			args = new String[0];
 		final SkriptCommandEvent event = new SkriptCommandEvent(this, sender, args);
@@ -84,12 +94,12 @@ public class SkriptCommand extends Command implements PluginIdentifiableCommand 
 			if (i < args.length) {
 				if (a.isSingle()) {
 					if (!a.parse(args[i], sender)) {
-						sender.sendMessage("correct usage: " + getUsage());
+//						sender.sendMessage("correct usage: " + usageMessage);
 						return false;
 					}
 				} else {
 					if (!a.parse(args, i, sender)) {
-						sender.sendMessage("correct usage: " + getUsage());
+//						sender.sendMessage("correct usage: " + usageMessage);
 						return false;
 					}
 				}
@@ -99,11 +109,11 @@ public class SkriptCommand extends Command implements PluginIdentifiableCommand 
 		}
 		
 		if (Skript.log(Verbosity.VERY_HIGH))
-			Skript.info("# /" + getName() + " " + Utils.join(args, ", "));
+			Skript.info("# /" + name + " " + Utils.join(args, ", "));
 		final long startTrigger = System.nanoTime();
 		trigger.run(event);
 		if (Skript.log(Verbosity.VERY_HIGH))
-			Skript.info("# " + getName() + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
+			Skript.info("# " + name + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 		
 		return true;
 	}
@@ -111,14 +121,18 @@ public class SkriptCommand extends Command implements PluginIdentifiableCommand 
 	/**
 	 * Gets the argumetns this command takes.
 	 * 
-	 * @return The internal list of arguments. Do not modify this.
+	 * @return The internal list of arguments. Do not modify it!
 	 */
 	public List<Argument<?>> getArguments() {
 		return arguments;
 	}
 	
-	@Override
-	public Plugin getPlugin() {
-		return Skript.getInstance();
+	public String getName() {
+		return name;
 	}
+	
+	public Collection<String> getAliases() {
+		return aliases;
+	}
+	
 }

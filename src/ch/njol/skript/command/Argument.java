@@ -27,8 +27,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
 
@@ -51,35 +52,39 @@ public class Argument<T> {
 	private final T[] singleTArray;
 	
 	@SuppressWarnings("unchecked")
-	public Argument(final Class<T> type, final String def, final int index, final boolean single) throws ParseException {
+	public Argument(final VariableString def, final T defT, final Class<T> type, final Converter<String, ? extends T> conv, final boolean single, final int index) {
+		this.def = def;
+		this.defT = defT;
 		this.type = type;
+		this.conv = conv;
+		this.single = single;
+		this.index = index;
 		singleTArray = (T[]) Array.newInstance(type, 1);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> Argument<T> newInstance(final Class<T> type, final String def, final int index, final boolean single) {
+		Converter<String, ? extends T> conv = null;
 		if (type != String.class)
 			conv = Skript.getParser(type);
-		else
-			conv = null;
-		this.def = (def == null ? null : new VariableString(def));
-		if (def != null && this.def.isSimple()) {
+		VariableString d = null;
+		if (def != null) {
+			d = VariableString.newInstance(def);
+			if (d == null)
+				return null;
+		}
+		T defT = null;
+		if (def != null && d.isSimple()) {
 			if (type == String.class)
 				defT = (T) def;
 			else
 				defT = conv.convert(def);
-			if (defT == null)
-				throw new ParseException("'" + def + "' is not " + Utils.a(Skript.getExactClassName(type)));
-		} else {
-			defT = null;
+			if (defT == null) {
+				Skript.error("'" + def + "' is not " + Utils.a(Skript.getExactClassName(type)));
+				return null;
+			}
 		}
-		this.single = single;
-		this.index = index;
-	}
-	
-	public static <T> Argument<T> newInstance(final Class<T> type, final String def, final int index, final boolean single) {
-		try {
-			return new Argument<T>(type, def, index, single);
-		} catch (final ParseException e) {
-			Skript.error(e.getError());
-			return null;
-		}
+		return new Argument<T>(d, defT, type, conv, single, index);
 	}
 	
 	@Override
@@ -103,9 +108,11 @@ public class Argument<T> {
 			current[0] = (T) s;
 			return true;
 		}
+		SubLog log = SkriptLogger.startSubLog();
 		current[0] = conv.convert(s);
+		SkriptLogger.stopSubLog(log);
 		if (current[0] == null)
-			sender.sendMessage("'" + s + "' is not " + Utils.a(Skript.getExactClassName(type)));
+			log.printErrors(sender, "'" + s + "' is not " + Utils.a(Skript.getExactClassName(type)));
 		return current[0] != null;
 	}
 	

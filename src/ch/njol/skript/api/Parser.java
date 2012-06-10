@@ -36,7 +36,7 @@ import ch.njol.skript.Skript;
 public abstract class Parser<T> implements Converter<String, T> {
 	
 	/**
-	 * Parses the input. <b>This function must not throw and/or print exceptions/syntax errors</b> but return null instead.
+	 * Parses the input. This method may print an error prior to returning null if the input couln't be parsed.
 	 * 
 	 * @param s The String to parse. This string is already trim()med.
 	 * @return The parsed input or null if the input is invalid for this parser.

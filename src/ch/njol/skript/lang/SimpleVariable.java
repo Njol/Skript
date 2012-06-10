@@ -27,11 +27,13 @@ import java.util.Arrays;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.intern.ConvertedVariable;
 import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 
 /**
@@ -42,6 +44,8 @@ import ch.njol.util.Checker;
 public abstract class SimpleVariable<T> implements Variable<T> {
 	
 	private boolean and = true;
+	
+	private int time = 0;
 	
 	protected SimpleVariable() {}
 	
@@ -98,13 +102,20 @@ public abstract class SimpleVariable<T> implements Variable<T> {
 	
 	@Override
 	public final <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter) {
-		return converter.convert(getSingle(e));
+		final T t = getSingle(e);
+		if (t == null)
+			return null;
+		return converter.convert(t);
 	}
 	
 	@Override
-	@SuppressWarnings("unchecked")
 	public final <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		final T[] ts = getArray(e);
+		return getArray(this, e, to, converter);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static final <T, V> V[] getArray(final Variable<T> var, final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
+		final T[] ts = var.getArray(e);
 		final V[] vs = (V[]) Array.newInstance(to, ts.length);
 		int j = 0;
 		for (int i = 0; i < vs.length; i++) {
@@ -113,8 +124,8 @@ public abstract class SimpleVariable<T> implements Variable<T> {
 				continue;
 			vs[j++] = v;
 		}
-		if (j != vs.length - 1)
-			return Arrays.copyOf(vs, j + 1);
+		if (j != vs.length)
+			return Arrays.copyOf(vs, j);
 		return vs;
 	}
 	
@@ -217,4 +228,54 @@ public abstract class SimpleVariable<T> implements Variable<T> {
 		return null;
 	}
 	
+	/**
+	 * {@inheritDoc} <br>
+	 * <br>
+	 * The default implementation sets the time but returns false.
+	 * 
+	 * @see #setTime(int, Class, Variable...)
+	 * @see #setTime(int, Variable, Class...)
+	 */
+	@Override
+	public boolean setTime(final int time) {
+		this.time = time;
+		return false;
+	}
+	
+	protected final boolean setTime(final int time, final Class<? extends Event> applicableEvent, final Variable<?>... mustbeDefaultVars) {
+		if (Utils.contains(TriggerFileLoader.currentEvents, applicableEvent)) {
+			for (final Variable<?> var : mustbeDefaultVars) {
+				if (var.isDefault()) {
+					this.time = time;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	protected final boolean setTime(final int time, final Variable<?> mustbeDefaultVar, final Class<? extends Event>... applicableEvents) {
+		if (mustbeDefaultVar.isDefault()) {
+			for (final Class<? extends Event> e : applicableEvents) {
+				if (Utils.contains(TriggerFileLoader.currentEvents, e)) {
+					this.time = time;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	@Override
+	public int getTime() {
+		return time;
+	}
+	
+	@Override
+	public boolean isDefault() {
+		return false;
+	}
+	
+	@Override
+	public abstract String toString();
 }

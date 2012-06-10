@@ -36,8 +36,8 @@ import ch.njol.skript.lang.Expression;
  */
 public abstract class TopLevelExpression extends TriggerItem implements Expression {
 	
-	public static TopLevelExpression parse(final String s) {
-		return (TopLevelExpression) ExprParser.parse(s, Skript.getTopLevelExpressions().iterator(), false);
+	public static TopLevelExpression parse(final String s, final String defaultError) {
+		return (TopLevelExpression) ExprParser.parse(s, Skript.getTopLevelExpressions().iterator(), false, defaultError);
 	}
 	
 }

@@ -48,7 +48,9 @@ public class VarEventCancelled extends SimpleVariable<Boolean> {
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		return true;
+	}
 	
 	@Override
 	public Class<? extends Boolean> getReturnType() {

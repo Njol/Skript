@@ -21,8 +21,15 @@
 
 package ch.njol.skript.variables;
 
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.event.Event;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockFormEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
@@ -30,6 +37,7 @@ import ch.njol.skript.data.DefaultChangers;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.util.BlockStateBlock;
 import ch.njol.skript.util.Offset;
 
 /**
@@ -40,7 +48,7 @@ import ch.njol.skript.util.Offset;
 public class VarBlock extends SimpleVariable<Block> {
 	
 	static {
-		Skript.registerVariable(VarBlock.class, Block.class, "block[[s] %-offsets% [%blocks%]]");
+		Skript.registerVariable(VarBlock.class, Block.class, "[the] block[[s] %-offsets% [%blocks%]]");
 	}
 	
 	private Variable<Offset> offsets;
@@ -48,9 +56,10 @@ public class VarBlock extends SimpleVariable<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		offsets = (Variable<Offset>) vars[0];
 		blocks = (Variable<Block>) vars[1];
+		return true;
 	}
 	
 	@Override
@@ -62,9 +71,26 @@ public class VarBlock extends SimpleVariable<Block> {
 	
 	@Override
 	protected Block[] getAll(final Event e) {
+		Block b = null;
+		if (blocks.isDefault()) {
+			if (e instanceof BlockBreakEvent && getTime() == 1) {
+				if (((BlockBreakEvent) e).getBlock().getType() == Material.ICE) {
+					final BlockState s = ((BlockBreakEvent) e).getBlock().getState();
+					s.setType(Material.STATIONARY_WATER);
+					b = new BlockStateBlock(s);
+				}
+			} else if (e instanceof BlockPlaceEvent && getTime() == -1) {
+				b = new BlockStateBlock(((BlockPlaceEvent) e).getBlockReplacedState());
+			} else if (e instanceof BlockFadeEvent && getTime() == 1) {
+				b = new BlockStateBlock(((BlockFadeEvent) e).getNewState());
+			} else if (e instanceof BlockFormEvent && !(e instanceof BlockSpreadEvent) && getTime() >= 0) { // BlockSpreadEvent is a subclass of BlockFormEvent which modifies *another* block
+				b = new BlockStateBlock(((BlockFormEvent) e).getNewState());
+			}
+		}
+		final Block[] bs = b != null ? new Block[] {b} : blocks.getArray(e);
 		if (offsets == null)
-			return blocks.getArray(e);
-		return Offset.setOff(offsets.getArray(e), blocks.getArray(e));
+			return bs;
+		return Offset.setOff(offsets.getArray(e), bs);
 	}
 	
 	@Override
@@ -94,4 +120,16 @@ public class VarBlock extends SimpleVariable<Block> {
 		return (offsets == null || offsets.isSingle()) && blocks.isSingle();
 	}
 	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, blocks,
+				BlockPlaceEvent.class, BlockBreakEvent.class,
+				BlockFormEvent.class, BlockFadeEvent.class);
+	}
+	
+	@Override
+	public boolean isDefault() {
+		return offsets == null;
+	}
 }

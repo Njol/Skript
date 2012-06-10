@@ -23,6 +23,7 @@ package ch.njol.skript.variables;
 
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
+import org.bukkit.event.entity.EntityDamageEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
@@ -38,15 +39,16 @@ import ch.njol.skript.lang.Variable;
 public class VarHealth extends SimpleVariable<Float> {
 	
 	static {
-		Skript.registerVariable(VarHealth.class, Float.class, "health [of %livingentities%]", "%livingentities%'[s] health");
+		Skript.registerVariable(VarHealth.class, Float.class, "[the] health [of %livingentities%]", "%livingentities%'[s] health");
 	}
 	
 	private Variable<LivingEntity> entities;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		entities = (Variable<LivingEntity>) vars[0];
+		return true;
 	}
 	
 	@Override
@@ -56,6 +58,14 @@ public class VarHealth extends SimpleVariable<Float> {
 	
 	@Override
 	protected Float[] getAll(final Event e) {
+		if (e instanceof EntityDamageEvent && getTime() >= 0 && entities.isDefault()) {
+			return entities.getArray(e, Float.class, new Getter<Float, LivingEntity>() {
+				@Override
+				public Float get(final LivingEntity entity) {
+					return Float.valueOf(1f / 2 * (entity.getHealth() - ((EntityDamageEvent) e).getDamage()));
+				}
+			});
+		}
 		return entities.getArray(e, Float.class, new Getter<Float, LivingEntity>() {
 			@Override
 			public Float get(final LivingEntity entity) {
@@ -109,4 +119,8 @@ public class VarHealth extends SimpleVariable<Float> {
 		return entities.isSingle();
 	}
 	
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, EntityDamageEvent.class, entities);
+	}
 }

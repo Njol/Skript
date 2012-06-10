@@ -166,10 +166,9 @@ public class SectionNode extends Node implements Iterable<Node> {
 				continue;
 			}
 			
-			if (line.endsWith(":") && (
-					config.simple
-							|| line.indexOf(config.separator) == -1
-							|| config.separator.endsWith(":") && line.indexOf(config.separator) == line.length() - config.separator.length()
+			if (line.endsWith(":") && (config.simple
+					|| line.indexOf(config.separator) == -1
+					|| config.separator.endsWith(":") && line.indexOf(config.separator) == line.length() - config.separator.length()
 					)) {
 				nodes.add(SectionNode.load(line.substring(0, line.length() - 1), this, r));
 				continue;
@@ -204,7 +203,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 	/**
 	 * Converts all SimpleNodes in this section to EntryNodes.
 	 * 
-	 * @param levels Amount of levels to go down, e.g. 0 to only convert direct subnodes of this section, -1 for all subnodes, including subnodes of subnodes etc.
+	 * @param levels Amount of levels to go down, e.g. 0 to only convert direct subnodes of this section or -1 for all subnodes including subnodes of subnodes etc.
 	 */
 	public void convertToEntries(final int levels) {
 		convertToEntries(levels, config.separator);

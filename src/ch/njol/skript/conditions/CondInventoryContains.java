@@ -52,10 +52,11 @@ public class CondInventoryContains extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		invis = (Variable<Inventory>) vars[0];
 		items = (Variable<ItemType>) vars[1];
 		setNegated(matchedPattern >= 2);
+		return true;
 	}
 	
 	@Override

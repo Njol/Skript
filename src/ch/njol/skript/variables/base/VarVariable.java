@@ -40,7 +40,7 @@ import ch.njol.util.Validate;
 public abstract class VarVariable<T> extends SimpleVariable<T> {
 	
 	/** the wrapped variable */
-	protected SimpleVariable<? extends T> var;
+	protected Variable<? extends T> var;
 	
 	protected VarVariable() {}
 	
@@ -80,6 +80,11 @@ public abstract class VarVariable<T> extends SimpleVariable<T> {
 	}
 	
 	@Override
+	public boolean getAnd() {
+		return var.getAnd();
+	}
+	
+	@Override
 	public Class<? extends T> getReturnType() {
 		return var.getReturnType();
 	}
@@ -99,4 +104,18 @@ public abstract class VarVariable<T> extends SimpleVariable<T> {
 		return var.toString();
 	}
 	
+	@Override
+	public boolean setTime(final int time) {
+		return var.setTime(time);
+	}
+	
+	@Override
+	public int getTime() {
+		return var.getTime();
+	}
+	
+	@Override
+	public boolean isDefault() {
+		return var.isDefault();
+	}
 }

@@ -43,7 +43,9 @@ public class LoopVarWorld extends LoopVar<World> {
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		return true;
+	}
 	
 	@Override
 	protected Iterator<World> iterator(final Event e) {

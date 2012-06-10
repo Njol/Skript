@@ -27,8 +27,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
@@ -83,7 +81,7 @@ public class ConvertedVariable<F, T> implements Variable<T> {
 	}
 	
 	@Override
-	public final void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult matcher) throws InitException, ParseException {
+	public final boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult matcher) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -134,7 +132,10 @@ public class ConvertedVariable<F, T> implements Variable<T> {
 	
 	@Override
 	public T getSingle(final Event e) {
-		return source.getSingle(e, conv);
+		final F f = source.getSingle(e);
+		if (f == null)
+			return null;
+		return conv.convert(f);
 	}
 	
 	@Override
@@ -144,7 +145,10 @@ public class ConvertedVariable<F, T> implements Variable<T> {
 	
 	@Override
 	public <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter) {
-		return source.getSingle(e, new ChainedConverter<F, T, V>(conv, converter));
+		final T t = getSingle(e);
+		if (t == null)
+			return null;
+		return converter.convert(t);
 	}
 	
 	@Override
@@ -157,7 +161,10 @@ public class ConvertedVariable<F, T> implements Variable<T> {
 		return source.check(e, new Checker<F>() {
 			@Override
 			public boolean check(final F f) {
-				return c.check(conv.convert(f));
+				final T t = conv.convert(f);
+				if (t == null)
+					return false;
+				return c.check(t);
 			}
 		}, cond);
 	}
@@ -167,7 +174,10 @@ public class ConvertedVariable<F, T> implements Variable<T> {
 		return source.check(e, new Checker<F>() {
 			@Override
 			public boolean check(final F f) {
-				return c.check(conv.convert(f));
+				final T t = conv.convert(f);
+				if (t == null)
+					return false;
+				return c.check(t);
 			}
 		});
 	}
@@ -175,5 +185,20 @@ public class ConvertedVariable<F, T> implements Variable<T> {
 	@Override
 	public boolean getAnd() {
 		return source.getAnd();
+	}
+	
+	@Override
+	public boolean setTime(final int time) {
+		return source.setTime(time);
+	}
+	
+	@Override
+	public int getTime() {
+		return source.getTime();
+	}
+	
+	@Override
+	public boolean isDefault() {
+		return source.isDefault();
 	}
 }

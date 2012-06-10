@@ -46,8 +46,9 @@ public class EvtWeatherChange extends SkriptEvent {
 	private Literal<WeatherType> types;
 	
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		types = (Literal<WeatherType>) args[0];
+		return true;
 	}
 	
 	@Override

@@ -44,8 +44,9 @@ public final class EvtGameMode extends SkriptEvent {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		mode = ((Literal<GameMode>) args[0]).getSingle();
+		return true;
 	}
 	
 	@Override

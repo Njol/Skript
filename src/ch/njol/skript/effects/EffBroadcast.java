@@ -30,7 +30,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
-import ch.njol.skript.util.VariableString;
 
 /**
  * 
@@ -40,25 +39,23 @@ import ch.njol.skript.util.VariableString;
 public class EffBroadcast extends Effect {
 	
 	static {
-		Skript.registerEffect(EffBroadcast.class, "broadcast %variablestrings% [(to|in) %-worlds%]");
+		Skript.registerEffect(EffBroadcast.class, "broadcast %strings% [(to|in) %-worlds%]");
 	}
 	
-	private Variable<VariableString> messages;
+	private Variable<String> messages;
 	private Variable<World> worlds;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		messages = (Variable<VariableString>) vars[0];
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		messages = (Variable<String>) vars[0];
 		worlds = (Variable<World>) vars[1];
+		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		for (final VariableString mVS : messages.getArray(e)) {
-			final String m = mVS.get(e);
-			if (m == null)
-				continue;
+		for (final String m : messages.getArray(e)) {
 			if (worlds == null) {
 				Bukkit.broadcastMessage(m);
 			} else {

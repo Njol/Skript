@@ -43,7 +43,7 @@ public class VarPlayer extends EventValueVariable<Player> {
 	}
 	
 	static {
-		Skript.registerVariable(VarPlayer.class, Player.class, "player", "me");
+		Skript.registerVariable(VarPlayer.class, Player.class, "[the] player", "me");
 	}
 	
 	@Override
@@ -63,7 +63,7 @@ public class VarPlayer extends EventValueVariable<Player> {
 		final Player p = getSingle(e);
 		if (p == null)
 			return;
-		DefaultChangers.inventoryChanger.change(e, new SimpleLiteral<Inventory>(p.getInventory()), delta, mode);
+		DefaultChangers.inventoryChanger.change(e, new SimpleLiteral<Inventory>(p.getInventory(), false), delta, mode);
 	}
 	
 	@Override

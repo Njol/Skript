@@ -21,8 +21,6 @@
 
 package ch.njol.skript.lang;
 
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.api.intern.TopLevelExpression;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 
@@ -42,11 +40,10 @@ public interface Expression {
 	 * @param matchedPattern the index of the pattern which matched
 	 * @param parseResult The parser osed to parse this expression. Might hold useful information in the future.
 	 * 
-	 * @throws InitException Throwing this has the same effect as if no pattern matched. This is an exception, meaning it should only be thrown in exceptional cases where a pattern
-	 *             is not enough.
-	 * @throws ParseException Throwns if some part of the expression was parsed and found to be invalid, but the whole expression still matched correctly.<br/>
-	 *             This will immediately print an error and it's cause which is set to the cause passed to the exception.
+	 * @return Whether this variable was sucessfully initialized.
+	 *         If this returns false, an error should be logged stating what went wrong,
+	 *         but if no error is logged the effect is the same as if no pattern matched for this expression.
 	 */
-	public void init(Variable<?>[] vars, int matchedPattern, ParseResult parseResult) throws InitException, ParseException;
+	public boolean init(Variable<?>[] vars, int matchedPattern, ParseResult parseResult);
 	
 }

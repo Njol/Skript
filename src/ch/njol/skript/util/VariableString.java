@@ -22,12 +22,12 @@
 package ch.njol.skript.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Debuggable;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser;
 import ch.njol.skript.lang.Variable;
 
@@ -39,32 +39,41 @@ import ch.njol.skript.lang.Variable;
  * 
  */
 public class VariableString implements Debuggable {
-	private final ArrayList<Object> string = new ArrayList<Object>();
+	private final ArrayList<Object> string;
 	private Event last = null;
 	private String lastString = null;
 	private final boolean isSimple;
 	
-	public VariableString(final String s) throws ParseException {
+	private VariableString(final String s) {
+		string = null;
+		isSimple = true;
+		lastString = s;
+	}
+	
+	private VariableString(final ArrayList<Object> string) {
+		isSimple = false;
+		this.string = string;
+	}
+	
+	public static VariableString newInstance(final String s) {
+		final ArrayList<Object> string = new ArrayList<Object>();
 		if (!s.contains("%")) {
-			lastString = s;
-			isSimple = true;
-			return;
+			return new VariableString(s);
 		}
 		int c = s.indexOf('%');
 		string.add(s.substring(0, c));
 		while (c != s.length()) {
 			final int c2 = s.indexOf('%', c + 1);
 			if (c2 == -1) {
-				Skript.error("The percent sign is used for variables (e.g. %player%). To insert a %, type it twice: %%. (found in \"" + s + "\")");
-				isSimple = true;
-				return;
+				Skript.error("The percent sign is used for variables (e.g. %player%). To insert a %, type it twice: %%.");
+				return null;
 			}
 			if (c + 1 == c2) {
 				string.add("%");
 			} else {
-				final Variable<?> var = (Variable<?>) ExprParser.parse(s.substring(c + 1, c2), Skript.getVariables().iterator(), false);
+				final Variable<?> var = (Variable<?>) ExprParser.parse(s.substring(c + 1, c2), Skript.getVariables().iterator(), false, "can't understand the variable %" + s.substring(c + 1, c2) + "%");
 				if (var == null) {
-					throw new ParseException("can't understand the variable %" + s.substring(c + 1, c2) + "%");
+					return null;
 				} else {
 					string.add(var);
 				}
@@ -74,29 +83,36 @@ public class VariableString implements Debuggable {
 				c = s.length();
 			string.add(s.substring(c2 + 1, c));
 		}
-		isSimple = false;
+		return new VariableString(string);
 	}
 	
 	public static VariableString[] makeStrings(final String[] args) {
 		final VariableString[] strings = new VariableString[args.length];
+		int j = 0;
 		for (int i = 0; i < args.length; i++) {
-			try {
-				strings[i] = new VariableString(args[i]);
-			} catch (final ParseException e) {
-				Skript.error(e.getError());
-			}
+			final VariableString vs = newInstance(args[i]);
+			if (vs != null)
+				strings[j++] = vs;
 		}
+		if (j != args.length)
+			return Arrays.copyOf(strings, j);
 		return strings;
 	}
 	
+	/**
+	 * 
+	 * @param args Quoted strings - This is not checked!
+	 * @return
+	 */
 	public static VariableString[] makeStringsFromQuoted(final String[] args) {
 		final VariableString[] strings = new VariableString[args.length];
 		for (int i = 0; i < args.length; i++) {
-			try {
-				strings[i] = new VariableString(args[i].substring(1, args[i].length() - 1));
-			} catch (final ParseException e) {
-				Skript.error(e.getError());
-			}
+			if (Skript.debug() && (!args[i].startsWith("\"") || !args[i].endsWith("\"")))
+				Skript.warning("Call to VariableString.makeStringsFromQuoted with unquoted string: " + args[i]);
+			final VariableString vs = newInstance(args[i].substring(1, args[i].length() - 1));
+			if (vs == null)
+				return null;
+			strings[i] = vs;
 		}
 		return strings;
 	}

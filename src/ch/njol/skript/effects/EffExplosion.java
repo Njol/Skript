@@ -47,10 +47,11 @@ public class EffExplosion extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		force = (Variable<Float>) vars[0];
 		offsets = (Variable<Offset>) vars[1];
 		locations = (Variable<Location>) vars[2];
+		return true;
 	}
 	
 	@Override

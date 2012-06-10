@@ -23,6 +23,7 @@ package ch.njol.skript.variables;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
@@ -42,19 +43,28 @@ import ch.njol.skript.util.Slot;
 public class VarTool extends SimpleVariable<Slot> {
 	
 	static {
-		Skript.registerVariable(VarTool.class, Slot.class, "(tool|held item) [of %players%]", "%player%'[s] (tool|held item)");
+		Skript.registerVariable(VarTool.class, Slot.class, "[the] (tool|held item) [of %players%]", "%player%'[s] (tool|held item)");
 	}
 	
 	private Variable<Player> players;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
+		return true;
 	}
 	
 	@Override
 	protected Slot[] getAll(final Event e) {
+		if (e instanceof PlayerItemHeldEvent && players.isDefault()) {
+			return players.getArray(e, Slot.class, new Getter<Slot, Player>() {
+				@Override
+				public Slot get(final Player p) {
+					return new Slot(p.getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot());
+				}
+			});
+		}
 		return players.getArray(e, Slot.class, new Getter<Slot, Player>() {
 			@Override
 			public Slot get(final Player p) {
@@ -71,7 +81,7 @@ public class VarTool extends SimpleVariable<Slot> {
 					
 					@Override
 					public String getDebugMessage(final Event e) {
-						return "tool of " + p.getName();
+						return (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + p.getName();
 					}
 				};
 			}
@@ -96,13 +106,13 @@ public class VarTool extends SimpleVariable<Slot> {
 	@Override
 	public String getDebugMessage(final Event e) {
 		if (e == null)
-			return "tool of " + players.getDebugMessage(e);
+			return (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + players.getDebugMessage(e);
 		return Skript.getDebugMessage(getSingle(e));
 	}
 	
 	@Override
 	public String toString() {
-		return "the tool of " + players;
+		return "the " + (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + players;
 	}
 	
 	@Override
@@ -110,4 +120,8 @@ public class VarTool extends SimpleVariable<Slot> {
 		return players.isSingle();
 	}
 	
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, PlayerItemHeldEvent.class, players);
+	}
 }

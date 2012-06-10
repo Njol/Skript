@@ -190,7 +190,7 @@ public class DefaultChangers {
 				case ADD:
 					final Timespan ts = (Timespan) delta.getSingle(e);
 					for (final World w : worlds.getArray(e)) {
-						w.setTime((long) (w.getTime() + mod * ts.getTicks()));
+						w.setTime(w.getTime() + mod * ts.getTicks());
 					}
 				break;
 			}

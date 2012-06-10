@@ -33,7 +33,7 @@ import ch.njol.skript.variables.base.EventValueVariable;
 public class VarProjectile extends EventValueVariable<Projectile> {
 	
 	static {
-		Skript.registerVariable(VarProjectile.class, Projectile.class, "projectile");
+		Skript.registerVariable(VarProjectile.class, Projectile.class, "[the] projectile");
 	}
 	
 	public VarProjectile() {

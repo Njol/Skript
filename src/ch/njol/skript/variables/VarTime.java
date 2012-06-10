@@ -41,15 +41,16 @@ import ch.njol.skript.util.Time;
 public class VarTime extends SimpleVariable<Time> {
 	
 	static {
-		Skript.registerVariable(VarTime.class, Time.class, "time [(in|of) %worlds%]");
+		Skript.registerVariable(VarTime.class, Time.class, "[the] time [(in|of) %worlds%]");
 	}
 	
 	private Variable<World> worlds = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		worlds = (Variable<World>) vars[0];
+		return true;
 	}
 	
 	@Override

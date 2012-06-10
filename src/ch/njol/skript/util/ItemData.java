@@ -47,7 +47,7 @@ public class ItemData implements Cloneable {
 	public short dataMax = -1;
 	
 	private ItemType parent = null;
-
+	
 	public ItemData(final int typeid) {
 		this.typeid = typeid;
 	}
@@ -93,17 +93,17 @@ public class ItemData implements Cloneable {
 			parent.modified();
 	}
 	
-	public void setParent(ItemType parent) {
+	public void setParent(final ItemType parent) {
 		if (this.parent != null)
 			throw new SkriptAPIException("Can't set the parent of an ItemData if is is already set");
 		this.parent = parent;
 	}
-
+	
 	public int getId() {
 		return typeid;
 	}
-
-	public void setId(int typeid) {
+	
+	public void setId(final int typeid) {
 		this.typeid = typeid;
 		modified();
 	}
@@ -166,7 +166,7 @@ public class ItemData implements Cloneable {
 	}
 	
 	public ItemStack getRandom() {
-		int amount = parent == null ? 1 : parent.getAmount();
+		final int amount = parent == null ? 1 : parent.getAmount();
 		if (dataMin == -1 && dataMax == -1) {
 			return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid, amount);
 		}
@@ -235,5 +235,5 @@ public class ItemData implements Cloneable {
 	public boolean hasDataRange() {
 		return dataMin != dataMax;
 	}
-
+	
 }

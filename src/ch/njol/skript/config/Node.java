@@ -159,9 +159,7 @@ public abstract class Node {
 	}
 	
 	/**
-	 * void here = void (incl. invalid) or parse option
-	 * 
-	 * @return
+	 * @return Whether this node holds information (i.e. is not empty, invalid or a parse option)
 	 */
 	public boolean isVoid() {
 		return this instanceof VoidNode || this instanceof ParseOptionNode;
@@ -226,6 +224,8 @@ public abstract class Node {
 	 */
 	@Override
 	public String toString() {
+		if (parent == null)
+			return config.getFileName();
 		return getOrig().trim() + " (" + getConfig().getFileName() + ", line " + getLine() + ")";
 	}
 }

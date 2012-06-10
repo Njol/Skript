@@ -102,9 +102,9 @@ import ch.njol.skript.effects.EffClear;
 import ch.njol.skript.effects.EffCommand;
 import ch.njol.skript.effects.EffDrop;
 import ch.njol.skript.effects.EffEquip;
-import ch.njol.skript.effects.EffExec;
 import ch.njol.skript.effects.EffExit;
 import ch.njol.skript.effects.EffExplosion;
+import ch.njol.skript.effects.EffFertilize;
 import ch.njol.skript.effects.EffHealth;
 import ch.njol.skript.effects.EffKill;
 import ch.njol.skript.effects.EffMessage;
@@ -152,6 +152,7 @@ import ch.njol.skript.variables.VarRandom;
 import ch.njol.skript.variables.VarTarget;
 import ch.njol.skript.variables.VarTargetedBlock;
 import ch.njol.skript.variables.VarTime;
+import ch.njol.skript.variables.VarTimeState;
 import ch.njol.skript.variables.VarTool;
 import ch.njol.skript.variables.VarWeather;
 import ch.njol.skript.variables.VarWorld;
@@ -181,10 +182,10 @@ public class SkriptTriggerItems {
 				EffCommand.class,
 				EffDrop.class,
 				EffEquip.class,
-				EffExec.class,
+				//				EffExec.class,
 				EffExit.class,
 				EffExplosion.class,
-				// EffFertilize.class,
+				EffFertilize.class,
 				EffHealth.class,
 				EffKill.class,
 				EffMessage.class,
@@ -198,7 +199,6 @@ public class SkriptTriggerItems {
 				VarArmorSlot.class,
 				VarAttacked.class,
 				VarAttacker.class,
-				// VarBetween.class,
 				VarBlock.class,
 				VarCreature.class,
 				VarDrops.class,
@@ -218,6 +218,7 @@ public class SkriptTriggerItems {
 				VarTargetedBlock.class, // targeted block
 				VarTarget.class,        // targeted *
 				VarTime.class,
+				VarTimeState.class,
 				VarTool.class,
 				VarWeather.class,
 				VarWorld.class,
@@ -273,15 +274,15 @@ public class SkriptTriggerItems {
 		Skript.registerEvent(SimpleEvent.class, EntityTameEvent.class, "tame");
 		Skript.registerEvent(SimpleEvent.class, EntityTargetEvent.class, "target");
 		Skript.registerEvent(SimpleEvent.class, ExplosionPrimeEvent.class, "explosion prime");
-		Skript.registerEvent(SimpleEvent.class, FurnaceBurnEvent.class, "furnace burn");
-		Skript.registerEvent(SimpleEvent.class, FurnaceSmeltEvent.class, "furnace smelt");
+		Skript.registerEvent(SimpleEvent.class, FurnaceBurnEvent.class, "fuel burn", "burn[ing] of fuel");
+		Skript.registerEvent(SimpleEvent.class, FurnaceSmeltEvent.class, "[ore] smelt[ing]", "smelt[ing] of ore");//"smelt[ing] of %itemtype%"
 		Skript.registerEvent(SimpleEvent.class, LeavesDecayEvent.class, "leaves decay");
 		Skript.registerEvent(SimpleEvent.class, LightningStrikeEvent.class, "lightning strike");
 		Skript.registerEvent(SimpleEvent.class, PigZapEvent.class, "pig[ ]zap");
 		Skript.registerEvent(SimpleEvent.class, PlayerBedEnterEvent.class, "bed enter[ing]", "entering bed");
 		Skript.registerEvent(SimpleEvent.class, PlayerBedLeaveEvent.class, "bed leave", "leaving bed");
 		Skript.registerEvent(SimpleEvent.class, PlayerBucketEmptyEvent.class, "bucket empty");//, "emptying bucket [of %itemtype%]", "emptying %itemtype% bucket");
-		Skript.registerEvent(SimpleEvent.class, PlayerBucketFillEvent.class, "bucket fill");//, "filling bucket [with %itemtype%]");
+		Skript.registerEvent(SimpleEvent.class, PlayerBucketFillEvent.class, "bucket fill");//, "filling bucket [(with|of) %itemtype%]", "filling %itemtype% bucket");
 		Skript.registerEvent(SimpleEvent.class, PlayerChatEvent.class, "chat[ting]");
 		Skript.registerEvent(SimpleEvent.class, PlayerFishEvent.class, "fish[ing]");
 		final class EvtLeftclick extends EvtItem {

@@ -19,20 +19,23 @@
  * 
  */
 
-package ch.njol.skript.api.exception;
+package ch.njol.skript.util.entity;
 
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.Variable;
+import org.bukkit.entity.Entity;
 
 /**
  * @author Peter Güttinger
- * @see Expression#init(Variable[], int, ParseResult)
+ * 
  */
-public class InitException extends Exception {
+public interface EntityData<E extends Entity> {
 	
-	private static final long serialVersionUID = 3060684476033398334L;
+	public void set(E entity);
 	
-	public InitException() {}
+	public boolean parse(String s);
+	
+	@Override
+	public String toString();
+	
+	public String getDebugMessage();
 	
 }

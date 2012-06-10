@@ -44,14 +44,14 @@ public class SkriptEventValues {
 			public CommandSender get(final CommandEvent e) {
 				return e.getSender();
 			}
-		});
+		}, 0);
 		
 		Skript.registerEventValue(ScheduledEvent.class, World.class, new Getter<World, ScheduledEvent>() {
 			@Override
 			public World get(final ScheduledEvent e) {
 				return e.getWorld();
 			}
-		});
+		}, 0);
 		
 	}
 	

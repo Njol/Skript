@@ -40,7 +40,7 @@ import ch.njol.skript.util.ItemType;
 public class VarIdOf extends SimpleVariable<Integer> {
 	
 	static {
-		Skript.registerVariable(VarIdOf.class, Integer.class, "id[<s>] of %itemtype%", "%itemtype%'[s] id[<s>]");
+		Skript.registerVariable(VarIdOf.class, Integer.class, "[the] id[<s>] of %itemtype%", "%itemtype%'[s] id[<s>]");
 	}
 	
 	private Variable<ItemType> types;
@@ -49,7 +49,7 @@ public class VarIdOf extends SimpleVariable<Integer> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		types = (Variable<ItemType>) vars[0];
 		if (parser.regexes.isEmpty()) {
 			single = true;
@@ -58,6 +58,7 @@ public class VarIdOf extends SimpleVariable<Integer> {
 				single = false;
 			}
 		}
+		return true;
 	}
 	
 	@Override

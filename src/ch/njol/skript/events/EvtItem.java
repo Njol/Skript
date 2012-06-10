@@ -52,15 +52,16 @@ public class EvtItem extends SkriptEvent {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		types = (Literal<ItemType>) args[0];
+		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
 		if (types == null)
 			return true;
-		final ItemStack is = Skript.getEventValue(e, ItemStack.class);
+		final ItemStack is = Skript.getEventValue(e, ItemStack.class, 0);
 		return types.check(e, new Checker<ItemType>() {
 			@Override
 			public boolean check(final ItemType t) {

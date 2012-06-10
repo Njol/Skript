@@ -28,7 +28,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
-import ch.njol.skript.util.VariableString;
 import ch.njol.util.StringUtils;
 
 /**
@@ -40,31 +39,29 @@ public class EffMessage extends Effect {
 	
 	static {
 		Skript.registerEffect(EffMessage.class,
-				"([send] message|send) %variablestrings% [to %commandsenders%]",
-				"([send] message|send) [to] %commandsenders% %variablestrings%");
+				"([send] message|send) %strings% [to %commandsenders%]",
+				"([send] message|send) [to] %commandsenders% %strings%");
 	}
 	
-	private Variable<VariableString> messages;
+	private Variable<String> messages;
 	private Variable<CommandSender> recipients;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (matchedPattern == 0) {
-			messages = (Variable<VariableString>) vars[0];
+			messages = (Variable<String>) vars[0];
 			recipients = (Variable<CommandSender>) vars[1];
 		} else {
 			recipients = (Variable<CommandSender>) vars[0];
-			messages = (Variable<VariableString>) vars[1];
+			messages = (Variable<String>) vars[1];
 		}
+		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		for (final VariableString messageVS : messages.getArray(e)) {
-			final String message = messageVS.get(e);
-			if (message == null)
-				continue;
+		for (final String message : messages.getArray(e)) {
 			for (final CommandSender s : recipients.getArray(e)) {
 				s.sendMessage(StringUtils.firstToUpper(message));
 			}

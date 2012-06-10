@@ -72,7 +72,7 @@ public abstract class Aliases {
 		final HashMap<String, ItemType> r = new HashMap<String, ItemType>();
 		Matcher m;
 		if ((m = Pattern.compile("\\[(.+?)\\]").matcher(name)).find()) {
-			r.putAll(getAliases(m.replaceFirst(""), value, variations));
+			r.putAll(getAliases(m.replaceFirst("").replace("  ", " "), value, variations));
 			r.putAll(getAliases(m.replaceFirst("$1"), value, variations));
 		} else if ((m = Pattern.compile("\\((.+?)\\)").matcher(name)).find()) {
 			final String[] split = m.group(1).split("\\|");
@@ -89,7 +89,7 @@ public abstract class Aliases {
 					String n;
 					if (v.getKey().equalsIgnoreCase("{default}")) {
 						hasDefault = true;
-						n = m.replaceFirst("");
+						n = m.replaceFirst("").replace("  ", " ");
 					} else {
 						n = m.replaceFirst(v.getKey());
 					}
@@ -100,7 +100,7 @@ public abstract class Aliases {
 						Skript.warning("'" + n + "' results in an empty alias (i.e. it doesn't map to any id/data), it will thus be ignored");
 				}
 				if (!hasDefault)
-					r.putAll(getAliases(m.replaceFirst(""), value, variations));
+					r.putAll(getAliases(m.replaceFirst("").replace("  ", " "), value, variations));
 			} else {
 				Skript.error("unknown variation {" + m.group(1) + "}");
 			}
@@ -109,8 +109,9 @@ public abstract class Aliases {
 		}
 		return r;
 	}
-
+	
 	/**
+	 * Parses & adds new aliases
 	 * 
 	 * @param name mixedcase string
 	 * @param value
@@ -120,7 +121,6 @@ public abstract class Aliases {
 	static int addAliases(final String name, final String value, final HashMap<String, HashMap<String, ItemType>> variations) {
 		final ItemType t = parseAlias(value);
 		if (t == null) {
-			Skript.getCurrentErrorSession().printErrors("'" + value + "' is invalid");
 			return 0;
 		}
 		final HashMap<String, ItemType> as = getAliases(name, t, variations);
@@ -265,8 +265,10 @@ public abstract class Aliases {
 	 * @return
 	 */
 	public static ItemType parseAlias(final String s) {
-		if (s == null || s.isEmpty())
+		if (s == null || s.isEmpty()) {
+			Skript.error("'' is not an item type");
 			return null;
+		}
 		if (s.equals("*"))
 			return everything;
 		

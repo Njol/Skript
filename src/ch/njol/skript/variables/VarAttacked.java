@@ -27,7 +27,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
@@ -40,28 +39,31 @@ import ch.njol.skript.util.EntityType;
 public class VarAttacked extends SimpleVariable<Entity> {
 	
 	static {
-		Skript.registerVariable(VarAttacked.class, Entity.class, "(attacked|damaged|victim) [<(.+)>]");
+		Skript.registerVariable(VarAttacked.class, Entity.class, "[the] (attacked|damaged|victim) [<(.+)>]");
 	}
 	
 	private EntityType type;
 	private Entity[] array;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		final String type = parser.regexes.size() == 0 ? null : parser.regexes.get(0).group();
 		if (type == null) {
 			this.type = new EntityType(Entity.class, 1);
 		} else {
 			this.type = EntityType.parse(type);
-			if (this.type == null)
-				throw new ParseException("'" + type + "' is not an entity type");
+			if (this.type == null) {
+				Skript.error("'" + type + "' is not an entity type");
+				return false;
+			}
 		}
 		array = (Entity[]) Array.newInstance(this.type.c, 1);
+		return true;
 	}
 	
 	@Override
 	protected Entity[] getAll(final Event e) {
-		final Entity entity = Skript.getEventValue(e, Entity.class);
+		final Entity entity = Skript.getEventValue(e, Entity.class, 0);
 		if (type.isInstance(entity)) {
 			array[0] = entity;
 			return array;

@@ -46,9 +46,10 @@ public class CondWeather extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		weathers = (Variable<WeatherType>) vars[0];
 		worlds = (Variable<World>) vars[1];
+		return true;
 	}
 	
 	@Override

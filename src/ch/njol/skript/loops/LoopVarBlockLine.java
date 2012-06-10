@@ -29,8 +29,6 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.data.DefaultChangers;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
@@ -61,7 +59,7 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 			case 1:
@@ -81,6 +79,7 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 				start = (Variable<Block>) vars[1];
 //				exclude.add(start);
 		}
+		return true;
 	}
 	
 	@Override

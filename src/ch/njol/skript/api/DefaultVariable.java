@@ -21,7 +21,6 @@
 
 package ch.njol.skript.api;
 
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.Variable;
 
 /**
@@ -30,6 +29,13 @@ import ch.njol.skript.lang.Variable;
  */
 public interface DefaultVariable<T> extends Variable<T> {
 	
-	public void init() throws ParseException;
+	public boolean init();
+	
+	/**
+	 * 
+	 * @return Usually true, though this is not required, as e.g. SimpleLiteral implements DefaultVariable but is usually not the default of an event.
+	 */
+	@Override
+	public boolean isDefault();
 	
 }

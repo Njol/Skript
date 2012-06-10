@@ -27,7 +27,6 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.Commands;
@@ -53,9 +52,11 @@ public class LoopVarArguments extends LoopVar<Object> {
 	private boolean isContainer = false;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
-		if (Commands.currentArguments == null)
-			throw new ParseException("you can't loop through any arguments outside of a command");
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		if (Commands.currentArguments == null) {
+			Skript.error("you can't loop through any arguments outside of a command");
+			return false;
+		}
 		switch (matchedPattern) {
 			case 0:
 				arg = Commands.currentArguments.get(Commands.currentArguments.size() - 1);
@@ -63,13 +64,17 @@ public class LoopVarArguments extends LoopVar<Object> {
 			case 1:
 			case 2:
 				final int a = Integer.parseInt(parser.regexes.get(0).group(1));
-				if (a - 1 >= Commands.currentArguments.size())
-					throw new ParseException("the command doesn't have a " + StringUtils.fancyOrderNumber(a) + " argument");
+				if (a - 1 >= Commands.currentArguments.size()) {
+					Skript.error("the command doesn't have a " + StringUtils.fancyOrderNumber(a) + " argument");
+					return false;
+				}
 				arg = Commands.currentArguments.get(a - 1);
 			break;
 			case 3:
-				if (Commands.currentArguments.size() != 1)
-					throw new ParseException("it's not possible to loop through multiple arguments (yet)");
+				if (Commands.currentArguments.size() != 1) {
+					Skript.error("it's not possible to loop through multiple arguments (yet)");
+					return false;
+				}
 				arg = Commands.currentArguments.get(0);
 		}
 		type = arg.getType();
@@ -79,6 +84,7 @@ public class LoopVarArguments extends LoopVar<Object> {
 			isContainer = true;
 			type = type.getAnnotation(ContainerType.class).value();
 		}
+		return true;
 	}
 	
 	@Override

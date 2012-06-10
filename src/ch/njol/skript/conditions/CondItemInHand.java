@@ -50,10 +50,11 @@ public class CondItemInHand extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
 		types = (Variable<ItemType>) vars[1];
 		setNegated(matchedPattern >= 2);
+		return true;
 	}
 	
 	@Override

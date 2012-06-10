@@ -21,8 +21,12 @@
 
 package ch.njol.skript.util;
 
+import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Variable;
+
 /**
- * A helper class useful when a variable/cond/eff/etc. needs to assiciate additional data with each pattern.
+ * A helper class useful when a variable/cond/eff/etc. needs to associate additional data with each pattern.
  * 
  * @author Peter Güttinger
  */
@@ -33,14 +37,14 @@ public class Patterns<T> {
 	
 	/**
 	 * 
-	 * @param info an array which must be like {{String, T}, ...}
+	 * @param info An array which must be like {{String, T}, {String, T}, ...}
 	 */
 	public Patterns(final Object[][] info) {
 		patterns = new String[info.length];
 		ts = new Object[info.length];
 		for (int i = 0; i < info.length; i++) {
-			if (!(info[i][0] instanceof String))
-				throw new IllegalArgumentException("given array is not like {{String, T}, ...}");
+			if (info[i].length != 2 || !(info[i][0] instanceof String))
+				throw new IllegalArgumentException("given array is not like {{String, T}, {String, T}, ...}");
 			patterns[i] = (String) info[i][0];
 			ts[i] = info[i][1];
 		}
@@ -50,6 +54,12 @@ public class Patterns<T> {
 		return patterns;
 	}
 	
+	/**
+	 * 
+	 * @param matchedPattern The pattern to get the data to as given in {@link Expression#init(Variable[], int, ParseResult)}
+	 * @return
+	 * @throws ClassCastException If the item in the source array is not of the requested type
+	 */
 	@SuppressWarnings("unchecked")
 	public T getInfo(final int matchedPattern) {
 		return (T) ts[matchedPattern];

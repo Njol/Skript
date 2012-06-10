@@ -22,11 +22,11 @@
 package ch.njol.skript.util;
 
 import java.util.HashMap;
-import java.util.Locale;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Parser;
+import ch.njol.util.Pair;
 
 /**
  * @author Peter Güttinger
@@ -35,26 +35,26 @@ import ch.njol.skript.api.Parser;
 public class Timespan {
 	
 	static {
-		final HashMap<String, Float> simpleValues = new HashMap<String, Float>();
-		simpleValues.put("year", 360 * 24000f);
-		simpleValues.put("month", 30 * 24000f);
-		simpleValues.put("week", 7 * 24000f);
-		simpleValues.put("day", 24000f);
-		simpleValues.put("hour", 1000f);
-		simpleValues.put("minute", 1000f / 60);
-		simpleValues.put("tick", 1f);
-		simpleValues.put("second", 1000f / 3600);
+		final HashMap<String, Integer> simpleValues = new HashMap<String, Integer>();
+		simpleValues.put("tick", 1);
+		
+		simpleValues.put("second", 20);
+		simpleValues.put("minute", 20 * 60);
+		simpleValues.put("hour", 20 * 60 * 60);
+		simpleValues.put("day", 20 * 60 * 60 * 24);
 		
 		Skript.registerClass(new ClassInfo<Timespan>("timespan", Timespan.class, null, new Parser<Timespan>() {
 			@Override
 			public Timespan parse(String s) {
 				if (s.isEmpty())
 					return null;
-				s = s.toLowerCase(Locale.ENGLISH);
-				float t = 0;
-				if (s.matches("^\\d+(:\\d\\d){1,2}$")) {
+				s = s.toLowerCase();
+				int t = 0;
+				boolean minecraftTime = false;
+				boolean setMinecraftTime = false;
+				if (s.matches("^\\d+:\\d\\d$")) {
 					final String[] ss = s.split(":");
-					final float[] times = {1000f, 1000f / 60, 1000f / 3600};
+					final int[] times = {20 * 60, 20};
 					for (int i = 0; i < ss.length; i++) {
 						t += times[i] * Integer.parseInt(ss[i]);
 					}
@@ -64,38 +64,45 @@ public class Timespan {
 						String sub = subs[i];
 						
 						if (sub.equals("and")) {
-							if (i == 0)
+							if (i == 0 || i == subs.length - 1)
 								return null;
 							continue;
 						}
 						
-						int amount = 1;
-						if (sub.matches("^\\d+$")) {
+						float amount = 1f;
+						if (sub.matches("^\\d+(.\\d+)?$")) {
 							if (i == subs.length)
 								return null;
-							amount = Integer.parseInt(sub);
+							amount = Float.parseFloat(sub);
 							sub = subs[++i];
 						}
 						
 						if (sub.equals("real") || sub.equals("rl") || sub.equals("irl")) {
-							if (i == subs.length)
+							if (i == subs.length || setMinecraftTime && minecraftTime)
 								return null;
-							amount *= 72;
+							sub = subs[++i];
+						} else if (sub.equals("mc") || sub.equals("minecraft")) {
+							if (i == subs.length || setMinecraftTime && !minecraftTime)
+								return null;
+							minecraftTime = true;
 							sub = subs[++i];
 						}
+						
+						if (minecraftTime)
+							amount /= 72f;
 						
 						if (sub.endsWith(","))
 							sub = sub.substring(0, sub.length() - 1);
 						
-						if (amount == 1 && sub.endsWith("s") || amount != 1 && !sub.endsWith("s"))
-							return null;
-						if (amount != 1)
-							sub = sub.substring(0, sub.length() - 1);
+						final Pair<String, Boolean> p = Utils.getPlural(sub, amount != 1);
+						sub = p.first;
 						
 						if (!simpleValues.containsKey(sub))
 							return null;
 						
-						t += amount * simpleValues.get(sub);
+						t += Math.round(amount * simpleValues.get(sub));
+						
+						setMinecraftTime = true;
 						
 					}
 				}
@@ -109,17 +116,17 @@ public class Timespan {
 		}));
 	}
 	
-	private final float ticks;
+	private final int ticks;
 	
 	public Timespan() {
 		ticks = 0;
 	}
 	
-	public Timespan(final float ticks) {
+	public Timespan(final int ticks) {
 		this.ticks = ticks;
 	}
 	
-	public float getTicks() {
+	public int getTicks() {
 		return ticks;
 	}
 	

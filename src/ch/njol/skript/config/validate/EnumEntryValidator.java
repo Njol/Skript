@@ -40,7 +40,7 @@ public class EnumEntryValidator<E extends Enum<E>> extends EntryValidator {
 	private String allowedValues = null;
 	
 	public EnumEntryValidator(final Class<E> enumType, final Setter<E> setter) {
-		Validate.notNull(enumType);
+		Validate.notNull(enumType, "enumType");
 		this.enumType = enumType;
 		this.setter = setter;
 		if (enumType.getEnumConstants().length <= 12) {
@@ -55,7 +55,7 @@ public class EnumEntryValidator<E extends Enum<E>> extends EntryValidator {
 	}
 	
 	public EnumEntryValidator(final Class<E> enumType, final Setter<E> setter, final String allowedValues) {
-		Validate.notNull(enumType);
+		Validate.notNull(enumType, "enumType");
 		this.enumType = enumType;
 		this.setter = setter;
 		this.allowedValues = allowedValues;

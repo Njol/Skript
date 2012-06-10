@@ -39,7 +39,7 @@ import ch.njol.skript.api.intern.Trigger;
  * @author Peter Güttinger
  * 
  */
-final class SkriptEventHandler {
+abstract class SkriptEventHandler {
 	private SkriptEventHandler() {}
 	
 	static Map<Class<? extends Event>, List<Trigger>> triggers = new HashMap<Class<? extends Event>, List<Trigger>>();

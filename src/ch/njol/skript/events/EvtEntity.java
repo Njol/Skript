@@ -48,15 +48,16 @@ public class EvtEntity extends SkriptEvent {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		types = (Literal<EntityType>) args[0];
+		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
 		if (types == null)
 			return true;
-		final Entity en = Skript.getEventValue(e, Entity.class);
+		final Entity en = Skript.getEventValue(e, Entity.class, 0);
 		if (en == null)
 			throw new RuntimeException("no entity event value for entity death/spawn");
 		return types.check(e, new Checker<EntityType>() {

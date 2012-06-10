@@ -24,6 +24,7 @@ package ch.njol.skript.variables;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
@@ -39,15 +40,16 @@ import ch.njol.skript.lang.Variable;
 public class VarGameMode extends SimpleVariable<GameMode> {
 	
 	static {
-		Skript.registerVariable(VarGameMode.class, GameMode.class, "game[ ]mode of %players%", "%players%'[s] game[ ]mode");
+		Skript.registerVariable(VarGameMode.class, GameMode.class, "[the] game[ ]mode of %players%", "%players%'[s] game[ ]mode");
 	}
 	
 	private Variable<Player> players;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
+		return true;
 	}
 	
 	@Override
@@ -57,6 +59,9 @@ public class VarGameMode extends SimpleVariable<GameMode> {
 	
 	@Override
 	protected GameMode[] getAll(final Event e) {
+		if (e instanceof PlayerGameModeChangeEvent && getTime() >= 0 && players.isDefault()) {
+			return new GameMode[] {((PlayerGameModeChangeEvent) e).getNewGameMode()};
+		}
 		return players.getArray(e, GameMode.class, new Converter<Player, GameMode>() {
 			@Override
 			public GameMode convert(final Player p) {
@@ -94,4 +99,8 @@ public class VarGameMode extends SimpleVariable<GameMode> {
 		return players.isSingle();
 	}
 	
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, PlayerGameModeChangeEvent.class, players);
+	}
 }

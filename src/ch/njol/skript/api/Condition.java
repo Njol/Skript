@@ -70,8 +70,8 @@ public abstract class Condition extends TopLevelExpression {
 		return negated;
 	}
 	
-	public static Condition parse(final String s) {
-		return (Condition) ExprParser.parse(s, Skript.getConditions().iterator(), false);
+	public static Condition parse(final String s, final String defaultError) {
+		return (Condition) ExprParser.parse(s, Skript.getConditions().iterator(), false, defaultError);
 	}
 	
 }

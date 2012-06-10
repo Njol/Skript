@@ -128,4 +128,12 @@ public class Config {
 	public File getFile() {
 		return file;
 	}
+	
+	/**
+	 * 
+	 * @return The separator last used. Only useful while the file is loading.
+	 */
+	public String getSeparator() {
+		return separator;
+	}
 }

@@ -21,8 +21,6 @@
 
 package ch.njol.skript.api.intern;
 
-import java.lang.reflect.Array;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.api.Condition;
@@ -42,9 +40,9 @@ public class VariableStringLiteral extends ConvertedLiteral<Object, String> {
 	private final VariableString[] strings;
 	private final String[] temp;
 	
-	public VariableStringLiteral(final UnparsedLiteral source) {
+	private VariableStringLiteral(final UnparsedLiteral source, final VariableString[] strings) {
 		super(source, null, String.class);
-		strings = VariableString.makeStringsFromQuoted(source.getData());
+		this.strings = strings;
 		temp = new String[strings.length];
 	}
 	
@@ -53,7 +51,10 @@ public class VariableStringLiteral extends ConvertedLiteral<Object, String> {
 			if (!s.startsWith("\"") && !s.endsWith("\""))
 				return null;
 		}
-		return new VariableStringLiteral(source);
+		final VariableString[] strings = VariableString.makeStringsFromQuoted(source.getData());
+		if (strings == null)
+			return null;
+		return new VariableStringLiteral(source, strings);
 	}
 	
 	@Override
@@ -78,14 +79,9 @@ public class VariableStringLiteral extends ConvertedLiteral<Object, String> {
 		return temp;
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super String, ? extends V> converter) {
-		final V[] vs = (V[]) Array.newInstance(to, strings.length);
-		for (int i = 0; i < strings.length; i++) {
-			vs[i] = converter.convert(strings[i].get(e));
-		}
-		return vs;
+		return SimpleVariable.getArray(this, e, to, converter);
 	}
 	
 	@Override

@@ -27,8 +27,6 @@ import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Parser;
-import ch.njol.skript.api.exception.ParseException;
-import ch.njol.skript.lang.ExprParser;
 import ch.njol.skript.lang.SimpleLiteral;
 import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.ItemType;
@@ -50,7 +48,7 @@ public class SkriptClasses {
 	public SkriptClasses() {}
 	
 	static {
-		Skript.registerClass(new ClassInfo<WeatherType>("weather type", "weathertype", WeatherType.class, new SimpleLiteral<WeatherType>(WeatherType.CLEAR), new Parser<WeatherType>() {
+		Skript.registerClass(new ClassInfo<WeatherType>("weather type", "weathertype", WeatherType.class, new SimpleLiteral<WeatherType>(WeatherType.CLEAR, true), new Parser<WeatherType>() {
 			
 			@Override
 			public WeatherType parse(final String s) {
@@ -66,7 +64,7 @@ public class SkriptClasses {
 	}
 	
 	static {
-		Skript.registerClass(new ClassInfo<EntityType>("entity type", "entitytype", EntityType.class, new SimpleLiteral<EntityType>(new EntityType(Entity.class, 1)), new Parser<EntityType>() {
+		Skript.registerClass(new ClassInfo<EntityType>("entity type", "entitytype", EntityType.class, new SimpleLiteral<EntityType>(new EntityType(Entity.class, 1), true), new Parser<EntityType>() {
 			@Override
 			public EntityType parse(final String s) {
 				return EntityType.parse(s);
@@ -80,21 +78,11 @@ public class SkriptClasses {
 	}
 	
 	static {
-		Skript.registerClass(new ClassInfo<VariableString>("variablestring", VariableString.class, null, new Parser<VariableString>() {
+		Skript.registerClass(new ClassInfo<VariableString>("_variablestring", VariableString.class, null, new Parser<VariableString>() {
 			
 			@Override
 			public VariableString parse(final String s) {
-				if (!s.startsWith("\"") || !s.endsWith("\""))
-					return null;
-				if (!s.matches(ExprParser.stringMatcher)) {
-					Skript.error(Skript.quotesError);
-					return null;
-				}
-				try {
-					return new VariableString(s.substring(1, s.length() - 1).replace("\"\"", "\""));
-				} catch (final ParseException e) {
-					return null;
-				}
+				return null;
 			}
 			
 			@Override
@@ -145,7 +133,7 @@ public class SkriptClasses {
 	}
 	
 	static {
-		Skript.registerClass(new ClassInfo<Timeperiod>("time period", "timeperiod", Timeperiod.class, new SimpleLiteral<Timeperiod>(new Timeperiod(0, 23999)), new Parser<Timeperiod>() {
+		Skript.registerClass(new ClassInfo<Timeperiod>("time period", "timeperiod", Timeperiod.class, new SimpleLiteral<Timeperiod>(new Timeperiod(0, 23999), true), new Parser<Timeperiod>() {
 			@Override
 			public Timeperiod parse(final String s) {
 				if (s.equalsIgnoreCase("day")) {
@@ -179,7 +167,7 @@ public class SkriptClasses {
 	}
 	
 	static {
-		Skript.registerClass(new ClassInfo<Offset>("offset", "offset", Offset.class, new SimpleLiteral<Offset>(new Offset(0, 0, 0)), new Parser<Offset>() {
+		Skript.registerClass(new ClassInfo<Offset>("offset", "offset", Offset.class, new SimpleLiteral<Offset>(new Offset(0, 0, 0), true), new Parser<Offset>() {
 			
 			@Override
 			public Offset parse(final String s) {

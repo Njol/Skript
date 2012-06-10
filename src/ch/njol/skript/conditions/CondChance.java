@@ -25,7 +25,6 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.exception.InitException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
 
@@ -42,8 +41,9 @@ public class CondChance extends Condition {
 	private double chance;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		chance = Double.parseDouble(parser.regexes.get(0).group()) / 100;
+		return true;
 	}
 	
 	@Override

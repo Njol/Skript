@@ -24,8 +24,6 @@ package ch.njol.skript.api;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.events.EvtRightclick;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Expression;
@@ -56,7 +54,7 @@ public abstract class SkriptEvent implements Expression, Debuggable {
 	}
 	
 	@Override
-	public void init(final ch.njol.skript.lang.Variable<?>[] vars, final int matchedPattern, final ParseResult parseResult) throws InitException, ParseException {
+	public boolean init(final ch.njol.skript.lang.Variable<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -66,7 +64,7 @@ public abstract class SkriptEvent implements Expression, Debuggable {
 	 * @param args
 	 * @return
 	 */
-	public abstract void init(final Literal<?>[] args, int matchedPattern, ParseResult parser);
+	public abstract boolean init(final Literal<?>[] args, int matchedPattern, ParseResult parser);
 	
 	/**
 	 * checks whether the given Event applies, e.g. the leftclick event is only part of the PlayerInteractEvent, and this checks whether the player rightclicked or not. This method

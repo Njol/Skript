@@ -52,10 +52,7 @@ public class SectionValidator implements NodeValidator {
 	private boolean allowUndefinedSections = false;
 	private boolean allowUndefinedEntries = false;
 	
-	public SectionValidator() {
-		allowUndefinedSections = true;
-		allowUndefinedEntries = true;
-	}
+	public SectionValidator() {}
 	
 	public SectionValidator addNode(final String name, final NodeValidator v, final boolean optional) {
 		Validate.notNull(name, v);
@@ -79,17 +76,8 @@ public class SectionValidator implements NodeValidator {
 	}
 	
 	public SectionValidator addSection(final String name, final boolean optional) {
-		addNode(name, new SectionValidator(), optional);
+		addNode(name, new SectionValidator().setAllowUndefinedEntries(true).setAllowUndefinedSections(true), optional);
 		return this;
-	}
-
-	public boolean validate(final Node node, boolean printErrors) {
-		if (!validate(node)) {
-			if (printErrors && Skript.getCurrentErrorSession() != null)
-				Skript.getCurrentErrorSession().printErrors();
-			return false;
-		}
-		return true;
 	}
 	
 	@Override
@@ -102,12 +90,13 @@ public class SectionValidator implements NodeValidator {
 		for (final Entry<String, NodeInfo> e : nodes.entrySet()) {
 			final Node n = ((SectionNode) node).get(e.getKey());
 			if (n == null && !e.getValue().optional) {
-				Skript.error("Required entry '" + e.getKey() + "' is missing in '" + node.getName() + "' ("+ node.getConfig().getFileName() + ", starting at line "+node.getLine() + ")");
+				Skript.error("Required entry '" + e.getKey() + "' is missing in '" + node.getName() + "' (" + node.getConfig().getFileName() + ", starting at line " + node.getLine() + ")");
 				ok = false;
 			} else if (n != null) {
 				ok &= e.getValue().v.validate(n);
 			}
 		}
+		SkriptLogger.setNode(null);
 		if (allowUndefinedSections && allowUndefinedEntries)
 			return ok;
 		for (final Node n : (SectionNode) node) {
@@ -115,7 +104,7 @@ public class SectionValidator implements NodeValidator {
 				if (n instanceof SectionNode && allowUndefinedSections || n instanceof EntryNode && allowUndefinedEntries)
 					continue;
 				SkriptLogger.setNode(n);
-				Skript.error("'" + n.getName() + "' is invalid. Check whether it's spelled correctly or remove it.");
+				Skript.error("Unexpected entry '" + n.getName() + "'. Check whether it's spelled correctly or remove it.");
 				ok = false;
 			}
 		}

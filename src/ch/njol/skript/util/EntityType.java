@@ -83,6 +83,14 @@ public class EntityType {
 	// creepers: bool (powered)
 	// wolves: bool (angry), String (owner)
 	// sheep: byte (color), bool (sheared)
+	// TNT: int? (fuse length)
+	// enderman: int + short (held item with data)
+	// xp orb: int (xp)
+	// item: itemstack (id, data, amount, enchantments)
+	// powered minecart: int (powered ticks)
+	// ocelot: bool? (tamed)
+	//
+	// i.e. all sorts of data => how to organize?
 	
 	public final Class<? extends Entity> c;
 	

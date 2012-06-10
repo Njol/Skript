@@ -29,7 +29,6 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.variables.base.VarVariable;
@@ -43,13 +42,13 @@ import ch.njol.skript.variables.base.VarVariable;
 public class VarLoopValue extends VarVariable<Object> {
 	
 	static {
-		Skript.registerVariable(VarLoopValue.class, Object.class, "loop-<\\S+>");
+		Skript.registerVariable(VarLoopValue.class, Object.class, "[the] loop-<\\S+>");
 	}
 	
 	private String name;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		name = parser.expr;
 		String s = parser.regexes.get(0).group();
 		int i = 1;
@@ -65,10 +64,11 @@ public class VarLoopValue extends VarVariable<Object> {
 					continue;
 				}
 				var = v;
-				return;
+				return true;
 			}
 		}
-		throw new ParseException("there's no loop that matches " + name);
+		Skript.error("there's no loop that matches " + name);
+		return false;
 	}
 	
 	@Override

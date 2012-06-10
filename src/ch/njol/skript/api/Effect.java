@@ -49,8 +49,8 @@ public abstract class Effect extends TopLevelExpression {
 		return true;
 	}
 	
-	public static Effect parse(final String s) {
-		return (Effect) ExprParser.parse(s, Skript.getEffects().iterator(), false);
+	public static Effect parse(final String s, final String defaultError) {
+		return (Effect) ExprParser.parse(s, Skript.getEffects().iterator(), false, defaultError);
 	}
 	
 }

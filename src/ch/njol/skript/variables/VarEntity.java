@@ -33,7 +33,7 @@ import ch.njol.skript.variables.base.EventValueVariable;
 public class VarEntity extends EventValueVariable<Entity> {
 	
 	static {
-		Skript.registerVariable(VarEntity.class, Entity.class, "entity");
+		Skript.registerVariable(VarEntity.class, Entity.class, "[the] entity");
 	}
 	
 	public VarEntity() {

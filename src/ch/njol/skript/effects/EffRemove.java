@@ -27,8 +27,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.Testable;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
@@ -48,14 +46,15 @@ public class EffRemove extends Effect implements Testable {
 	private Variable<?> remover;
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException, InitException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		remover = vars[0];
 		removed = vars[1];
 		if (removed instanceof UnparsedLiteral)
-			throw new InitException();
+			return false;
 		Class<?> r = removed.acceptChange(ChangeMode.REMOVE);
 		if (r == null) {
-			throw new ParseException(removed + " can't have something 'removed' from it");
+			Skript.error(removed + " can't have something 'removed' from it");
+			return false;
 		}
 		boolean single = true;
 		if (r.isArray()) {
@@ -65,13 +64,16 @@ public class EffRemove extends Effect implements Testable {
 		if (!r.isAssignableFrom(remover.getReturnType())) {
 			final Variable<?> v = remover.getConvertedVariable(r);
 			if (v == null) {
-				throw new ParseException(remover + " can't be removed from " + removed);
+				Skript.error(remover + " can't be removed from " + removed);
+				return false;
 			}
 			remover = v;
 		}
 		if (!remover.isSingle() && single) {
-			throw new ParseException("only one " + Skript.getExactClassName(r) + " can be removed from " + removed + ", but multiple are given");
+			Skript.error("only one " + Skript.getExactClassName(r) + " can be removed from " + removed + ", but multiple are given");
+			return false;
 		}
+		return true;
 	}
 	
 	@Override

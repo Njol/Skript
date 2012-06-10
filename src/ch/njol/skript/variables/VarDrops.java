@@ -30,7 +30,6 @@ import org.bukkit.inventory.ItemStack;
 import ch.njol.skript.Skript;
 import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.lang.Variable;
@@ -44,14 +43,16 @@ import ch.njol.skript.util.Utils;
 public class VarDrops extends SimpleVariable<ItemStack> {
 	
 	static {
-		Skript.registerVariable(VarDrops.class, ItemStack.class, "drops");
+		Skript.registerVariable(VarDrops.class, ItemStack.class, "[the] drops");
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws ParseException {
-		if (Utils.contains(TriggerFileLoader.currentEvents, EntityDeathEvent.class) == -1) {
-			throw new ParseException("'drops' can only be used in death events");
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		if (Utils.indexOf(TriggerFileLoader.currentEvents, EntityDeathEvent.class) == -1) {
+			Skript.error("'drops' can only be used in death events");
+			return false;
 		}
+		return true;
 	}
 	
 	@Override

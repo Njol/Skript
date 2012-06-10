@@ -34,7 +34,6 @@ import ch.njol.skript.config.validate.SectionValidator;
 import ch.njol.skript.lang.ExprParser;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -43,12 +42,12 @@ import ch.njol.util.StringUtils;
 public abstract class Commands {
 	
 	private final static SectionValidator commandStructure = new SectionValidator()
-	.addEntry("usage", true)
-	.addEntry("description", true)
-	.addEntry("permission", true)
-	.addEntry("permission message", true)
-	.addEntry("aliases", true)
-	.addSection("trigger", false);
+			.addEntry("usage", true)
+			.addEntry("description", true)
+			.addEntry("permission", true)
+			.addEntry("permission message", true)
+			.addEntry("aliases", true)
+			.addSection("trigger", false);
 	
 	public static List<Argument<?>> currentArguments = null;
 	
@@ -96,16 +95,14 @@ public abstract class Commands {
 				}
 			}
 			final Argument<?> arg = Argument.newInstance(c, m.group(3), i, !hadNonSingle);
-			if (arg == null) {
-				Skript.getCurrentErrorSession().printErrors("The " + StringUtils.fancyOrderNumber(i + 1) + " argument is invalid");
+			if (arg == null)
 				return false;
-			}
 			currentArguments.add(arg);
 		}
 		
 		node.convertToEntries(0);
 		
-		commandStructure.validate(node, true);
+		commandStructure.validate(node);
 		if (!(node.get("trigger") instanceof SectionNode))
 			return false;
 		

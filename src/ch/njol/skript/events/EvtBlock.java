@@ -44,23 +44,31 @@ import ch.njol.util.Checker;
 public class EvtBlock extends SkriptEvent {
 	
 	static {
-		Skript.registerEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class), "break[ing] [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class), "(break[ing]|min(e|ing)) [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, BlockBurnEvent.class, "burn[ing] [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, Skript.array(BlockPlaceEvent.class, PaintingPlaceEvent.class), "plac(e|ing) [[of] %itemtypes%]");
 	}
 	
 	private Literal<ItemType> types;
 	
+	private boolean mine = false;
+	
 	@Override
-	public void init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		types = (Literal<ItemType>) args[0];
+		mine = parser.expr.toLowerCase().startsWith("min");
+		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
+		if (mine && e instanceof BlockBreakEvent) {
+			if (((BlockBreakEvent) e).getBlock().getDrops(((BlockBreakEvent) e).getPlayer().getItemInHand()).isEmpty())
+				return false;
+		}
 		if (types == null)
 			return true;
-		final Block b = Skript.getEventValue(e, Block.class);
+		final Block b = Skript.getEventValue(e, Block.class, 0);
 		if (b == null)
 			return false;
 		return types.check(e, new Checker<ItemType>() {

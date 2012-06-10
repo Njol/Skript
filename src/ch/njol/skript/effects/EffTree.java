@@ -45,10 +45,11 @@ public class EffTree extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		type = (Variable<TreeType>) vars[0];
 		offsets = (Variable<Offset>) vars[1];
 		blocks = (Variable<Block>) vars[2];
+		return true;
 	}
 	
 	@Override

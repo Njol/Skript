@@ -50,9 +50,10 @@ public class LoopVarBlockSphere extends LoopVar<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		radius = (Variable<Float>) vars[0];
 		center = (Variable<Location>) vars[1];
+		return true;
 	}
 	
 	@Override

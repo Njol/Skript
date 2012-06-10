@@ -28,8 +28,6 @@ import org.bukkit.inventory.ItemStack;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.Testable;
-import ch.njol.skript.api.exception.InitException;
-import ch.njol.skript.api.exception.ParseException;
 import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
@@ -51,9 +49,10 @@ public class EffEquip extends Effect implements Testable {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) throws InitException, ParseException {
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Variable<Player>) vars[0];
 		types = (Variable<ItemType>) vars[1];
+		return true;
 	}
 	
 	@Override

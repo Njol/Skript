@@ -37,11 +37,13 @@ import ch.njol.skript.lang.Variable;
 public class VarCreature extends SimpleVariable<Creature> {
 	
 	static {
-		Skript.registerVariable(VarCreature.class, Creature.class, "creature");
+		Skript.registerVariable(VarCreature.class, Creature.class, "[the] creature");
 	}
 	
 	@Override
-	public void init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {}
+	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		return true;
+	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
@@ -52,7 +54,7 @@ public class VarCreature extends SimpleVariable<Creature> {
 	
 	@Override
 	protected Creature[] getAll(final Event e) {
-		final Entity ent = Skript.getEventValue(e, Entity.class);
+		final Entity ent = Skript.getEventValue(e, Entity.class, 0);
 		if (ent instanceof Creature)
 			return new Creature[] {(Creature) ent};
 		return null;
