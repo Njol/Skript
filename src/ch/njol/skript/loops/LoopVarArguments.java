@@ -103,9 +103,9 @@ public class LoopVarArguments extends LoopVar<Object> {
 			
 			@Override
 			public boolean hasNext() {
-				while (i < os.length && !current.hasNext())
+				while (i < os.length - 1 && !current.hasNext())
 					current = ((Container<?>) os[++i]).containerIterator();
-				return i < os.length || current.hasNext();
+				return i < os.length - 1 || current.hasNext();
 			}
 			
 			@Override

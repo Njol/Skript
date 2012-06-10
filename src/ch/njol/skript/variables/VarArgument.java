@@ -43,7 +43,7 @@ import ch.njol.util.StringUtils;
 public class VarArgument extends SimpleVariable<Object> {
 	
 	static {
-		Skript.registerVariable(VarArgument.class, Object.class, "[the] last arg[ument]", "[the] arg[ument](-| )<(\\d+)>", "[the] <(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument]", "[the] arg[ument]s");
+		Skript.registerVariable(VarArgument.class, Object.class, "[the] last arg[ument]", "[the] arg[ument](-| )<(\\d+)>", "[the] <(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument]", "[the] arg[ument][s]");
 	}
 	
 	private Class<?> type = Object.class;
@@ -81,7 +81,7 @@ public class VarArgument extends SimpleVariable<Object> {
 					arg = Commands.currentArguments.get(0);
 					type = arg.getType();
 				} else {
-					Skript.error("'arguments' cannot be used if the command has multiple arguments");
+					Skript.error("'argument(s)' cannot be used if the command has multiple arguments");
 					return false;
 				}
 		}

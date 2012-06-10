@@ -38,9 +38,7 @@ import ch.njol.util.StringUtils;
 public class EffMessage extends Effect {
 	
 	static {
-		Skript.registerEffect(EffMessage.class,
-				"([send] message|send) %strings% [to %commandsenders%]",
-				"([send] message|send) [to] %commandsenders% %strings%");
+		Skript.registerEffect(EffMessage.class, "([send] message|send) %strings% [to %commandsenders%]");
 	}
 	
 	private Variable<String> messages;

@@ -81,7 +81,7 @@ public class SkriptCommand {
 	}
 	
 	public boolean execute(final CommandSender sender, @SuppressWarnings("unused") final String commandLabel, final String rest) {
-		if (!sender.hasPermission(permission)) {
+		if (permission != null && !sender.hasPermission(permission)) {
 			sender.sendMessage(permissionMessage);
 			return false;
 		}

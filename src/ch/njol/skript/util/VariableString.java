@@ -55,6 +55,11 @@ public class VariableString implements Debuggable {
 		this.string = string;
 	}
 	
+	/**
+	 * 
+	 * @param s unquoted string
+	 * @return
+	 */
 	public static VariableString newInstance(final String s) {
 		final ArrayList<Object> string = new ArrayList<Object>();
 		if (!s.contains("%")) {

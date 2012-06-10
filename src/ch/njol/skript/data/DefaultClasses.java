@@ -44,7 +44,6 @@ import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Parser;
-import ch.njol.skript.lang.ExprParser;
 import ch.njol.skript.lang.SimpleLiteral;
 import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.ItemType;
@@ -185,17 +184,16 @@ public class DefaultClasses {
 		Skript.registerClass(new ClassInfo<String>("string", String.class, null, new Parser<String>() {
 			@Override
 			public String parse(final String s) {
-				if (!s.startsWith("\"") || !s.endsWith("\""))
-					return null;
-				if (!s.matches(ExprParser.stringMatcher)) {
-					Skript.error(Skript.quotesError);
-					return null;
-				}
-				return s.substring(1, s.length() - 1).replace("\"\"", "\"");
+				return null;
 			}
 			
 			@Override
 			public String toString(final String s) {
+				return s;
+			}
+			
+			@Override
+			public String getDebugMessage(final String s) {
 				return '"' + s + '"';
 			}
 		}));

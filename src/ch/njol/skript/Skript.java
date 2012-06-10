@@ -486,6 +486,12 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	public static <T> void registerClass(final ClassInfo<T> info) {
 		checkAcceptRegistrations();
+		for (int i = 0; i < classInfos.size(); i++) {
+			if (classInfos.get(i).getC().isAssignableFrom(info.getC())) {
+				classInfos.add(i, info);
+				return;
+			}
+		}
 		classInfos.add(info);
 	}
 	

@@ -145,6 +145,7 @@ import ch.njol.skript.variables.VarGameMode;
 import ch.njol.skript.variables.VarHealth;
 import ch.njol.skript.variables.VarIdOf;
 import ch.njol.skript.variables.VarInventory;
+import ch.njol.skript.variables.VarLocation;
 import ch.njol.skript.variables.VarLoopValue;
 import ch.njol.skript.variables.VarPlayer;
 import ch.njol.skript.variables.VarProjectile;
@@ -182,7 +183,7 @@ public class SkriptTriggerItems {
 				EffCommand.class,
 				EffDrop.class,
 				EffEquip.class,
-				//				EffExec.class,
+//				EffExec.class,
 				EffExit.class,
 				EffExplosion.class,
 				EffFertilize.class,
@@ -211,6 +212,7 @@ public class SkriptTriggerItems {
 				VarHealth.class,
 				VarIdOf.class,
 				VarInventory.class,
+				VarLocation.class,
 				VarLoopValue.class,
 				VarPlayer.class,
 				VarProjectile.class,
