@@ -80,15 +80,15 @@ import ch.njol.util.Validate;
  */
 public class EntityType {
 	// TODO: powered creepers, angry wolves, etc.
-	// creepers: bool (powered)
-	// wolves: bool (angry), String (owner)
+	// creeper: bool (powered)
+	// wolf: bool (angry), String (owner)
 	// sheep: byte (color), bool (sheared)
 	// TNT: int? (fuse length)
-	// enderman: int + short (held item with data)
+	// enderman: byte (held block without data)
 	// xp orb: int (xp)
 	// item: itemstack (id, data, amount, enchantments)
 	// powered minecart: int (powered ticks)
-	// ocelot: bool? (tamed)
+	// ocelot: bool (tamed)
 	//
 	// i.e. all sorts of data => how to organize?
 	
@@ -117,6 +117,10 @@ public class EntityType {
 	
 	public static String toString(final Entity e) {
 		return new EntityType(e).toString();
+	}
+
+	public static String toString(Class<? extends Entity> c) {
+		return new EntityType(c, 1).toString();
 	}
 	
 	public boolean sameType(final EntityType other) {
@@ -213,5 +217,5 @@ public class EntityType {
 		}
 		return "unknown entity type";
 	}
-	
+
 }

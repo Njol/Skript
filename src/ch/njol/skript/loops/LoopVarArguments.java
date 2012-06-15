@@ -26,12 +26,12 @@ import java.util.Iterator;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.LoopVar;
+import ch.njol.skript.api.LoopExpr;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.Commands;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Container;
 import ch.njol.skript.util.Container.ContainerType;
 import ch.njol.util.StringUtils;
@@ -41,7 +41,7 @@ import ch.njol.util.iterator.ArrayIterator;
  * @author Peter Güttinger
  * 
  */
-public class LoopVarArguments extends LoopVar<Object> {
+public class LoopVarArguments extends LoopExpr<Object> {
 	
 	static {
 		Skript.registerLoop(LoopVarArguments.class, Object.class, "last argument", "argument(-| )<(\\d+)>", "<(?:(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th)> argument", "arguments");
@@ -52,7 +52,7 @@ public class LoopVarArguments extends LoopVar<Object> {
 	private boolean isContainer = false;
 	
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (Commands.currentArguments == null) {
 			Skript.error("you can't loop through any arguments outside of a command");
 			return false;

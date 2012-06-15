@@ -28,8 +28,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * 
@@ -42,14 +42,14 @@ public class EffBroadcast extends Effect {
 		Skript.registerEffect(EffBroadcast.class, "broadcast %strings% [(to|in) %-worlds%]");
 	}
 	
-	private Variable<String> messages;
-	private Variable<World> worlds;
+	private Expression<String> messages;
+	private Expression<World> worlds;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		messages = (Variable<String>) vars[0];
-		worlds = (Variable<World>) vars[1];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		messages = (Expression<String>) vars[0];
+		worlds = (Expression<World>) vars[1];
 		return true;
 	}
 	

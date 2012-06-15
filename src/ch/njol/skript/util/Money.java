@@ -22,9 +22,9 @@
 package ch.njol.skript.util;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.classes.ClassInfo;
 
 /**
  * @author Peter Güttinger
@@ -33,7 +33,7 @@ import ch.njol.skript.api.intern.SkriptAPIException;
 public class Money {
 	
 	static {
-		Skript.registerClass(new ClassInfo<Money>("money", "money", Money.class, null, new Parser<Money>() {
+		Skript.registerClass(new ClassInfo<Money>(Money.class, "money").user("money", "money").parser(new Parser<Money>() {
 			@Override
 			public Money parse(final String s) {
 				return Money.parse(s);
@@ -43,7 +43,7 @@ public class Money {
 			public String toString(final Money m) {
 				return m.toString();
 			}
-		}, "money"));
+		}));
 	}
 	
 	private static String plural;

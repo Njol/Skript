@@ -24,8 +24,8 @@ package ch.njol.skript.util;
 import java.util.HashMap;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Parser;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.util.Pair;
 
 /**
@@ -43,7 +43,7 @@ public class Timespan {
 		simpleValues.put("hour", 20 * 60 * 60);
 		simpleValues.put("day", 20 * 60 * 60 * 24);
 		
-		Skript.registerClass(new ClassInfo<Timespan>("timespan", Timespan.class, null, new Parser<Timespan>() {
+		Skript.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan").parser(new Parser<Timespan>() {
 			@Override
 			public Timespan parse(String s) {
 				if (s.isEmpty())
@@ -117,10 +117,6 @@ public class Timespan {
 	}
 	
 	private final int ticks;
-	
-	public Timespan() {
-		ticks = 0;
-	}
 	
 	public Timespan(final int ticks) {
 		this.ticks = ticks;

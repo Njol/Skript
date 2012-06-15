@@ -27,9 +27,9 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.DefaultVariable;
+import ch.njol.skript.api.DefaultExpression;
 import ch.njol.skript.api.intern.ConvertedLiteral;
-import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * Represents a literal, i.e. a static value like a number or a string.
@@ -37,7 +37,7 @@ import ch.njol.skript.lang.ExprParser.ParseResult;
  * @author Peter Güttinger
  * @see UnparsedLiteral
  */
-public class SimpleLiteral<T> extends SimpleVariable<T> implements Literal<T>, DefaultVariable<T> {
+public class SimpleLiteral<T> extends SimpleExpression<T> implements Literal<T>, DefaultExpression<T> {
 	
 	protected final T[] data;
 	protected final Class<T> c;
@@ -61,7 +61,7 @@ public class SimpleLiteral<T> extends SimpleVariable<T> implements Literal<T>, D
 	}
 	
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -92,7 +92,7 @@ public class SimpleLiteral<T> extends SimpleVariable<T> implements Literal<T>, D
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> ConvertedLiteral<T, ? extends R> getConvertedVar(final Class<R> to) {
+	public <R> ConvertedLiteral<T, ? extends R> getConvertedExpr(final Class<R> to) {
 		if (to.isAssignableFrom(c))
 			return new ConvertedLiteral<T, R>(this, (R[]) this.getAll(null), to);
 		final Converter<? super T, ? extends R> p = Skript.getConverter(c, to);

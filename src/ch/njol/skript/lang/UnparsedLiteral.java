@@ -35,7 +35,7 @@ import ch.njol.skript.api.intern.VariableStringLiteral;
 import ch.njol.skript.util.Utils;
 
 /**
- * A literal which has yet to be parsed. This is returned if %object(s)% is used within patterns and no variable matches.
+ * A literal which has yet to be parsed. This is returned if %object(s)% is used within patterns and no expression matches.
  * 
  * @author Peter Güttinger
  * @see SimpleLiteral
@@ -62,7 +62,7 @@ public class UnparsedLiteral extends SimpleLiteral<Object> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> ConvertedLiteral<Object, ? extends R> getConvertedVar(final Class<R> to) {
+	public <R> ConvertedLiteral<Object, ? extends R> getConvertedExpr(final Class<R> to) {
 		if (to == String.class) {
 			final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
 			if (vsl == null)

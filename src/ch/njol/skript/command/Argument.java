@@ -108,7 +108,7 @@ public class Argument<T> {
 			current[0] = (T) s;
 			return true;
 		}
-		SubLog log = SkriptLogger.startSubLog();
+		final SubLog log = SkriptLogger.startSubLog();
 		current[0] = conv.convert(s);
 		SkriptLogger.stopSubLog(log);
 		if (current[0] == null)

@@ -26,8 +26,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
@@ -39,12 +39,12 @@ public class EffKill extends Effect {
 		Skript.registerEffect(EffKill.class, "kill %livingentities%");
 	}
 	
-	private Variable<LivingEntity> entities;
+	private Expression<LivingEntity> entities;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		entities = (Variable<LivingEntity>) vars[0];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		entities = (Expression<LivingEntity>) vars[0];
 		return true;
 	}
 	

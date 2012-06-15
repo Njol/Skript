@@ -27,8 +27,8 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SimpleLiteral;
-import ch.njol.skript.lang.SimpleVariable;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 
@@ -36,7 +36,7 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  * @see SimpleLiteral
  */
-public class ConvertedLiteral<F, T> extends ConvertedVariable<F, T> implements Literal<T> {
+public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements Literal<T> {
 	
 	private final T[] data;
 	
@@ -67,13 +67,13 @@ public class ConvertedLiteral<F, T> extends ConvertedVariable<F, T> implements L
 	
 	@Override
 	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		return SimpleVariable.getArray(this, e, to, converter);
+		return SimpleExpression.getArray(this, e, to, converter);
 	}
 	
 	@Override
 	public T getSingle() {
 		if (getAnd() && data.length > 1)
-			throw new SkriptAPIException("Call to getSingle on a non-single variable");
+			throw new SkriptAPIException("Call to getSingle on a non-single expression");
 		return Utils.getRandom(data);
 	}
 	
@@ -89,12 +89,12 @@ public class ConvertedLiteral<F, T> extends ConvertedVariable<F, T> implements L
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super T> c) {
-		return SimpleVariable.check(data, c, false, getAnd());
+		return SimpleExpression.check(data, c, false, getAnd());
 	}
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
-		return SimpleVariable.check(data, c, cond.isNegated(), getAnd());
+		return SimpleExpression.check(data, c, cond.isNegated(), getAnd());
 	}
 	
 }

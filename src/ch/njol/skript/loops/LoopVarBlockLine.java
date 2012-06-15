@@ -27,11 +27,9 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.data.DefaultChangers;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.BlockLineIterator;
 import ch.njol.skript.util.Offset;
 
@@ -39,7 +37,7 @@ import ch.njol.skript.util.Offset;
  * @author Peter Güttinger
  * 
  */
-public class LoopVarBlockLine extends LoopVar<Block> {
+public class LoopVarBlockLine extends LoopExpr<Block> {
 	
 	private static final int MAXDIST = 1000;
 	
@@ -51,32 +49,32 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 				"blocks %offset% %block%");
 	}
 	
-	private Variable<Block> start;
-	private Variable<Block> end = null;
-	private Variable<Offset> direction = null;
+	private Expression<Block> start;
+	private Expression<Block> end = null;
+	private Expression<Offset> direction = null;
 	
-//	private Set<Variable<Block>> exclude = new HashSet<Variable<Block>>();
+//	private Set<Expression<Block>> exclude = new HashSet<Expression<Block>>();
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 			case 1:
-				start = (Variable<Block>) vars[0];
-				end = (Variable<Block>) vars[1];
+				start = (Expression<Block>) vars[0];
+				end = (Expression<Block>) vars[1];
 //				if (matchedPattern == 1) {
 //					exclude.add(start);
 //					exclude.add(end);
 //				}
 			break;
 			case 2:
-				start = (Variable<Block>) vars[0];
-				direction = (Variable<Offset>) vars[1];
+				start = (Expression<Block>) vars[0];
+				direction = (Expression<Offset>) vars[1];
 			break;
 			case 3:
-				direction = (Variable<Offset>) vars[0];
-				start = (Variable<Block>) vars[1];
+				direction = (Expression<Offset>) vars[0];
+				start = (Expression<Block>) vars[1];
 //				exclude.add(start);
 		}
 		return true;
@@ -122,16 +120,6 @@ public class LoopVarBlockLine extends LoopVar<Block> {
 	@Override
 	public Class<? extends Block> getReturnType() {
 		return Block.class;
-	}
-	
-	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-		return DefaultChangers.blockChanger.acceptChange(mode);
-	}
-	
-	@Override
-	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
-		DefaultChangers.blockChanger.change(e, this, delta, mode);
 	}
 	
 }

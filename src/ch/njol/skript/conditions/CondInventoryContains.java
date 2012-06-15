@@ -27,8 +27,8 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 
@@ -47,14 +47,14 @@ public class CondInventoryContains extends Condition {
 				"[%inventories%] do[es](n't| not) contain %itemtypes%");
 	}
 	
-	private Variable<Inventory> invis;
-	private Variable<ItemType> items;
+	private Expression<Inventory> invis;
+	private Expression<ItemType> items;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		invis = (Variable<Inventory>) vars[0];
-		items = (Variable<ItemType>) vars[1];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		invis = (Expression<Inventory>) vars[0];
+		items = (Expression<ItemType>) vars[1];
 		setNegated(matchedPattern >= 2);
 		return true;
 	}

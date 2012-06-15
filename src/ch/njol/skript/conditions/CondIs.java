@@ -30,9 +30,9 @@ import ch.njol.skript.api.Comparator;
 import ch.njol.skript.api.Comparator.ComparatorInfo;
 import ch.njol.skript.api.Comparator.Relation;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
-import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Patterns;
 import ch.njol.util.Checker;
 
@@ -75,7 +75,7 @@ public class CondIs extends Condition {
 		Skript.registerCondition(CondIs.class, patterns.getPatterns());
 	}
 	
-	private Variable<?> first, second, third;
+	private Expression<?> first, second, third;
 	private Relation relation;
 	private Comparator<?, ?> comp;
 	/**
@@ -84,7 +84,7 @@ public class CondIs extends Condition {
 	private boolean reverseOrder = false;
 	
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		first = vars[0];
 		second = vars[1];
 		relation = null;
@@ -150,8 +150,8 @@ public class CondIs extends Condition {
 		for (final ComparatorInfo<?, ?> info : Skript.getComparators()) {
 			for (final int c : zeroOne) {
 				if (info.getType(c).isAssignableFrom(f)) {
-					final Variable<?> temp1 = second.getConvertedVariable(info.getType(1 - c));
-					final Variable<?> temp2 = third == null ? null : third.getConvertedVariable(info.getType(1 - c));
+					final Expression<?> temp1 = second.getConvertedExpression(info.getType(1 - c));
+					final Expression<?> temp2 = third == null ? null : third.getConvertedExpression(info.getType(1 - c));
 					if (temp1 != null && (third == null || temp2 != null)) {
 						reverseOrder = c == 1;
 						comp = info.c;
@@ -165,7 +165,7 @@ public class CondIs extends Condition {
 					log.clear();
 				}
 				if (info.getType(c).isAssignableFrom(s) && (third == null || info.getType(c).isAssignableFrom(t))) {
-					final Variable<?> temp = first.getConvertedVariable(info.getType(1 - c));
+					final Expression<?> temp = first.getConvertedExpression(info.getType(1 - c));
 					if (temp != null) {
 						reverseOrder = c == 0;
 						comp = info.c;
@@ -182,9 +182,9 @@ public class CondIs extends Condition {
 		
 		for (final ComparatorInfo<?, ?> info : Skript.getComparators()) {
 			for (final int c : zeroOne) {
-				final Variable<?> v1 = first.getConvertedVariable(info.getType(c));
-				final Variable<?> v2 = second.getConvertedVariable(info.getType(1 - c));
-				final Variable<?> v3 = third == null ? null : third.getConvertedVariable(info.getType(1 - c));
+				final Expression<?> v1 = first.getConvertedExpression(info.getType(c));
+				final Expression<?> v2 = second.getConvertedExpression(info.getType(1 - c));
+				final Expression<?> v3 = third == null ? null : third.getConvertedExpression(info.getType(1 - c));
 				if (v1 != null && v2 != null && (third == null || v3 != null)) {
 					first = v1;
 					second = v2;
@@ -201,7 +201,7 @@ public class CondIs extends Condition {
 		}
 		/*
 		if (s != Object.class) {
-			final Variable<?> v1 = first.getConvertedVariable(s);
+			final Expression<?> v1 = first.getConvertedExpression(s);
 			if (v1 != null) {
 				comp = Comparator.equalsComparator;
 				first = v1;
@@ -209,7 +209,7 @@ public class CondIs extends Condition {
 			}
 		}
 		if (f != Object.class) {
-			final Variable<?> v2 = second.getConvertedVariable(f);
+			final Expression<?> v2 = second.getConvertedExpression(f);
 			if (v2 != null) {
 				comp = Comparator.equalsComparator;
 				second = v2;

@@ -26,9 +26,9 @@ import java.util.Iterator;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemData;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.iterator.ArrayIterator;
@@ -37,18 +37,18 @@ import ch.njol.util.iterator.ArrayIterator;
  * @author Peter Güttinger
  * 
  */
-public class LoopVarIdsOf extends LoopVar<Integer> {
+public class LoopVarIdsOf extends LoopExpr<Integer> {
 	
 	static {
 		Skript.registerLoop(LoopVarIdsOf.class, Integer.class, "id[s] of %itemtypes%");
 	}
 	
-	private Variable<ItemType> types;
+	private Expression<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		types = (Variable<ItemType>) vars[0];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		types = (Expression<ItemType>) vars[0];
 		return true;
 	}
 	

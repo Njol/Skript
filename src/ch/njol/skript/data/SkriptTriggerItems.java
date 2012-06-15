@@ -54,6 +54,7 @@ import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerEggThrowEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
@@ -95,10 +96,9 @@ import ch.njol.skript.conditions.CondIs;
 import ch.njol.skript.conditions.CondItemInHand;
 import ch.njol.skript.conditions.CondPermission;
 import ch.njol.skript.conditions.CondWeather;
-import ch.njol.skript.effects.EffAdd;
 import ch.njol.skript.effects.EffBroadcast;
 import ch.njol.skript.effects.EffCancelEvent;
-import ch.njol.skript.effects.EffClear;
+import ch.njol.skript.effects.EffChange;
 import ch.njol.skript.effects.EffCommand;
 import ch.njol.skript.effects.EffDrop;
 import ch.njol.skript.effects.EffEquip;
@@ -108,8 +108,6 @@ import ch.njol.skript.effects.EffFertilize;
 import ch.njol.skript.effects.EffHealth;
 import ch.njol.skript.effects.EffKill;
 import ch.njol.skript.effects.EffMessage;
-import ch.njol.skript.effects.EffRemove;
-import ch.njol.skript.effects.EffSet;
 import ch.njol.skript.effects.EffSpawn;
 import ch.njol.skript.effects.EffTeleport;
 import ch.njol.skript.effects.EffTree;
@@ -122,6 +120,35 @@ import ch.njol.skript.events.EvtItem;
 import ch.njol.skript.events.EvtPeriodical;
 import ch.njol.skript.events.EvtRightclick;
 import ch.njol.skript.events.EvtWeatherChange;
+import ch.njol.skript.expressions.ExprArgument;
+import ch.njol.skript.expressions.ExprArmorSlot;
+import ch.njol.skript.expressions.ExprAttacked;
+import ch.njol.skript.expressions.ExprAttacker;
+import ch.njol.skript.expressions.ExprBlock;
+import ch.njol.skript.expressions.ExprCreature;
+import ch.njol.skript.expressions.ExprDistance;
+import ch.njol.skript.expressions.ExprDrops;
+import ch.njol.skript.expressions.ExprEntity;
+import ch.njol.skript.expressions.ExprEventCancelled;
+import ch.njol.skript.expressions.ExprEventExpression;
+import ch.njol.skript.expressions.ExprFoodLevel;
+import ch.njol.skript.expressions.ExprFurnaceSlot;
+import ch.njol.skript.expressions.ExprGameMode;
+import ch.njol.skript.expressions.ExprHealth;
+import ch.njol.skript.expressions.ExprIdOf;
+import ch.njol.skript.expressions.ExprInventory;
+import ch.njol.skript.expressions.ExprLocation;
+import ch.njol.skript.expressions.ExprLoopValue;
+import ch.njol.skript.expressions.ExprPlayer;
+import ch.njol.skript.expressions.ExprProjectile;
+import ch.njol.skript.expressions.ExprRandom;
+import ch.njol.skript.expressions.ExprTarget;
+import ch.njol.skript.expressions.ExprTargetedBlock;
+import ch.njol.skript.expressions.ExprTime;
+import ch.njol.skript.expressions.ExprTimeState;
+import ch.njol.skript.expressions.ExprTool;
+import ch.njol.skript.expressions.ExprWeather;
+import ch.njol.skript.expressions.ExprWorld;
 import ch.njol.skript.loops.LoopVarArguments;
 import ch.njol.skript.loops.LoopVarBlockLine;
 import ch.njol.skript.loops.LoopVarBlockSphere;
@@ -129,34 +156,6 @@ import ch.njol.skript.loops.LoopVarIdsOf;
 import ch.njol.skript.loops.LoopVarItem;
 import ch.njol.skript.loops.LoopVarPlayer;
 import ch.njol.skript.loops.LoopVarWorld;
-import ch.njol.skript.variables.VarArgument;
-import ch.njol.skript.variables.VarArmorSlot;
-import ch.njol.skript.variables.VarAttacked;
-import ch.njol.skript.variables.VarAttacker;
-import ch.njol.skript.variables.VarBlock;
-import ch.njol.skript.variables.VarCreature;
-import ch.njol.skript.variables.VarDrops;
-import ch.njol.skript.variables.VarEntity;
-import ch.njol.skript.variables.VarEventCancelled;
-import ch.njol.skript.variables.VarEventVariable;
-import ch.njol.skript.variables.VarFoodLevel;
-import ch.njol.skript.variables.VarFurnaceSlot;
-import ch.njol.skript.variables.VarGameMode;
-import ch.njol.skript.variables.VarHealth;
-import ch.njol.skript.variables.VarIdOf;
-import ch.njol.skript.variables.VarInventory;
-import ch.njol.skript.variables.VarLocation;
-import ch.njol.skript.variables.VarLoopValue;
-import ch.njol.skript.variables.VarPlayer;
-import ch.njol.skript.variables.VarProjectile;
-import ch.njol.skript.variables.VarRandom;
-import ch.njol.skript.variables.VarTarget;
-import ch.njol.skript.variables.VarTargetedBlock;
-import ch.njol.skript.variables.VarTime;
-import ch.njol.skript.variables.VarTimeState;
-import ch.njol.skript.variables.VarTool;
-import ch.njol.skript.variables.VarWeather;
-import ch.njol.skript.variables.VarWorld;
 
 /**
  * @author Peter Güttinger
@@ -176,54 +175,52 @@ public class SkriptTriggerItems {
 				CondIs.class,         // * is *
 				CondWeather.class,    // is *
 				
-				EffAdd.class,
+				EffChange.class,
 				EffBroadcast.class,
 				EffCancelEvent.class,
-				EffClear.class,
 				EffCommand.class,
 				EffDrop.class,
 				EffEquip.class,
-//				EffExec.class,
+				// EffExec.class,
 				EffExit.class,
 				EffExplosion.class,
 				EffFertilize.class,
 				EffHealth.class,
 				EffKill.class,
 				EffMessage.class,
-				EffRemove.class,
-				EffSet.class,
 				EffSpawn.class,
 				EffTeleport.class,
 				EffTree.class,
 				
-				VarArgument.class,
-				VarArmorSlot.class,
-				VarAttacked.class,
-				VarAttacker.class,
-				VarBlock.class,
-				VarCreature.class,
-				VarDrops.class,
-				VarEntity.class,
-				VarEventCancelled.class,
-				VarEventVariable.class,
-				VarFoodLevel.class,
-				VarFurnaceSlot.class,
-				VarGameMode.class,
-				VarHealth.class,
-				VarIdOf.class,
-				VarInventory.class,
-				VarLocation.class,
-				VarLoopValue.class,
-				VarPlayer.class,
-				VarProjectile.class,
-				VarRandom.class,
-				VarTargetedBlock.class, // targeted block
-				VarTarget.class,        // targeted *
-				VarTime.class,
-				VarTimeState.class,
-				VarTool.class,
-				VarWeather.class,
-				VarWorld.class,
+				ExprArgument.class,
+				ExprArmorSlot.class,
+				ExprAttacked.class,
+				ExprAttacker.class,
+				ExprBlock.class,
+				ExprCreature.class,
+				ExprDistance.class,
+				ExprDrops.class,
+				ExprEntity.class,
+				ExprEventCancelled.class,
+				ExprEventExpression.class,
+				ExprFoodLevel.class,
+				ExprFurnaceSlot.class,
+				ExprGameMode.class,
+				ExprHealth.class,
+				ExprIdOf.class,
+				ExprInventory.class,
+				ExprLocation.class,
+				ExprLoopValue.class,
+				ExprPlayer.class,
+				ExprProjectile.class,
+				ExprRandom.class,
+				ExprTargetedBlock.class, // targeted block
+				ExprTarget.class,        // targeted *
+				ExprTime.class,
+				ExprTimeState.class,
+				ExprTool.class,
+				ExprWeather.class,
+				ExprWorld.class,
 				
 				LoopVarArguments.class,
 				LoopVarBlockLine.class,
@@ -286,6 +283,7 @@ public class SkriptTriggerItems {
 		Skript.registerEvent(SimpleEvent.class, PlayerBucketEmptyEvent.class, "bucket empty");//, "emptying bucket [of %itemtype%]", "emptying %itemtype% bucket");
 		Skript.registerEvent(SimpleEvent.class, PlayerBucketFillEvent.class, "bucket fill");//, "filling bucket [(with|of) %itemtype%]", "filling %itemtype% bucket");
 		Skript.registerEvent(SimpleEvent.class, PlayerChatEvent.class, "chat[ting]");
+		Skript.registerEvent(SimpleEvent.class, PlayerEggThrowEvent.class, "throw[ing] [of [an] egg]");
 		Skript.registerEvent(SimpleEvent.class, PlayerFishEvent.class, "fish[ing]");
 		final class EvtLeftclick extends EvtItem {
 			@Override

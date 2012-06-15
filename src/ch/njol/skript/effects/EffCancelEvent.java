@@ -25,9 +25,10 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * 
@@ -37,15 +38,20 @@ import ch.njol.skript.lang.Variable;
 public class EffCancelEvent extends Effect {
 	
 	static {
-		Skript.registerEffect(EffCancelEvent.class, "cancel event", "uncancel event");
+		Skript.registerEffect(EffCancelEvent.class, "cancel event");//, "uncancel event");
 	}
 	
 	private boolean cancel;
 	
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		cancel = matchedPattern == 0;
-		return true;
+		for (final Class<? extends Event> e : TriggerFileLoader.currentEvents) {
+			if (Cancellable.class.isAssignableFrom(e))
+				return true;
+		}
+		Skript.error("This event can't be cancelled");
+		return false;
 	}
 	
 	@Override

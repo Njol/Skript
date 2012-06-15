@@ -21,6 +21,9 @@
 
 package ch.njol.skript.api;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
 import ch.njol.skript.Skript;
 
 /**
@@ -129,6 +132,26 @@ public interface Converter<F, T> {
 				}
 			};
 		}
+		
+		@SuppressWarnings("unchecked")
+		public final static <F, T> T[] convertUnsafe(final F[] from, final Converter<? super F, ? extends T> conv, final Class<?> to) {
+			return convert(from, conv, (Class<T>) to);
+		}
+		
+		@SuppressWarnings("unchecked")
+		public final static <F, T> T[] convert(final F[] from, final Converter<? super F, ? extends T> conv, final Class<T> to) {
+			final T[] ts = (T[]) Array.newInstance(to, from.length);
+			int j = 0;
+			for (int i = 0; i < from.length; i++) {
+				final T t = conv.convert(from[i]);
+				if (t != null)
+					ts[j++] = t;
+			}
+			if (j != ts.length)
+				return Arrays.copyOf(ts, j);
+			return ts;
+		}
+		
 	}
 	
 }

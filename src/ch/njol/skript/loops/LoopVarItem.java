@@ -28,10 +28,10 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.lang.ExprParser.ParseResult;
+import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 import ch.njol.util.iterator.ArrayIterator;
@@ -41,7 +41,7 @@ import ch.njol.util.iterator.CheckedIterator;
  * @author Peter Güttinger
  * 
  */
-public class LoopVarItem extends LoopVar<ItemStack> {
+public class LoopVarItem extends LoopExpr<ItemStack> {
 	
 	static {
 		Skript.registerLoop(LoopVarItem.class, ItemStack.class,
@@ -49,14 +49,14 @@ public class LoopVarItem extends LoopVar<ItemStack> {
 				"[(all|every)] block(s|[ ]types)", "blocks of type[s] %itemtypes%");
 	}
 	
-	private Variable<ItemType> types = null;
+	private Expression<ItemType> types = null;
 	private boolean blocks = false;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (vars.length > 0)
-			types = (Variable<ItemType>) vars[0];
+			types = (Expression<ItemType>) vars[0];
 		blocks = matchedPattern >= 2;
 		if (types instanceof Literal) {
 			for (final ItemType t : ((Literal<ItemType>) types).getArray())

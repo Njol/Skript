@@ -30,8 +30,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * 
@@ -44,12 +44,12 @@ public class EffFertilize extends Effect {
 		Skript.registerEffect(EffFertilize.class, "fertili(z|s)e [%blocks%]");
 	}
 	
-	private Variable<Block> blocks;
+	private Expression<Block> blocks;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		blocks = (Variable<Block>) vars[0];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		blocks = (Expression<Block>) vars[0];
 		return true;
 	}
 	

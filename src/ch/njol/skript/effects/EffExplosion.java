@@ -26,8 +26,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Offset;
 
 /**
@@ -41,16 +41,16 @@ public class EffExplosion extends Effect {
 		Skript.registerEffect(EffExplosion.class, "[create] explosion (of|with) (force|strength|power) %float% [%offsets% %locations%]");
 	}
 	
-	private Variable<Float> force;
-	private Variable<Offset> offsets;
-	private Variable<Location> locations;
+	private Expression<Float> force;
+	private Expression<Offset> offsets;
+	private Expression<Location> locations;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		force = (Variable<Float>) vars[0];
-		offsets = (Variable<Offset>) vars[1];
-		locations = (Variable<Location>) vars[2];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		force = (Expression<Float>) vars[0];
+		offsets = (Expression<Offset>) vars[1];
+		locations = (Expression<Location>) vars[2];
 		return true;
 	}
 	

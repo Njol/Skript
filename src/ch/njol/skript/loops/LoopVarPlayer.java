@@ -31,28 +31,28 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class LoopVarPlayer extends LoopVar<Player> {
+public class LoopVarPlayer extends LoopExpr<Player> {
 	
 	static {
 		Skript.registerLoop(LoopVarPlayer.class, Player.class, "players", "players in world[s] %worlds%");
 	}
 	
-	private Variable<World> worlds = null;
+	private Expression<World> worlds = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (vars.length > 0)
-			worlds = (Variable<World>) vars[0];
+			worlds = (Expression<World>) vars[0];
 		return true;
 	}
 	

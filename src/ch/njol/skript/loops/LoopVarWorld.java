@@ -28,22 +28,22 @@ import org.bukkit.World;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class LoopVarWorld extends LoopVar<World> {
+public class LoopVarWorld extends LoopExpr<World> {
 	
 	static {
 		Skript.registerLoop(LoopVarWorld.class, World.class, "worlds");
 	}
 	
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		return true;
 	}
 	

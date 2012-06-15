@@ -24,8 +24,8 @@ package ch.njol.skript.api;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.intern.TopLevelExpression;
-import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.api.intern.Statement;
+import ch.njol.skript.lang.SkriptParser;
 
 /**
  * An effect which is executed once execution of the trigger is at it's entry. After execution the trigger will continue with the next element in the trigger item list.
@@ -33,7 +33,7 @@ import ch.njol.skript.lang.ExprParser;
  * @author Peter Güttinger
  * @see Skript#registerEffect(Class, String...)
  */
-public abstract class Effect extends TopLevelExpression {
+public abstract class Effect extends Statement {
 	protected Effect() {}
 	
 	/**
@@ -50,7 +50,7 @@ public abstract class Effect extends TopLevelExpression {
 	}
 	
 	public static Effect parse(final String s, final String defaultError) {
-		return (Effect) ExprParser.parse(s, Skript.getEffects().iterator(), false, defaultError);
+		return (Effect) SkriptParser.parse(s, Skript.getEffects().iterator(), false, defaultError);
 	}
 	
 }

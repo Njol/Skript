@@ -31,12 +31,12 @@ import java.util.regex.Matcher;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.LoopVar;
+import ch.njol.skript.api.LoopExpr;
 import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.Conditional;
 import ch.njol.skript.api.intern.Loop;
-import ch.njol.skript.api.intern.TopLevelExpression;
+import ch.njol.skript.api.intern.Statement;
 import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.api.intern.TriggerItem;
 import ch.njol.skript.api.intern.TriggerSection;
@@ -47,7 +47,7 @@ import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.SimpleNode;
-import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
@@ -65,7 +65,7 @@ final public class TriggerFileLoader {
 	public static Class<? extends Event>[] currentEvents = null;
 	
 	public static List<TriggerSection> currentSections = new ArrayList<TriggerSection>();
-	public static List<LoopVar<?>> currentLoops = new ArrayList<LoopVar<?>>();
+	public static List<LoopExpr<?>> currentLoops = new ArrayList<LoopExpr<?>>();
 	public static final Map<String, ItemType> currentAliases = new HashMap<String, ItemType>();
 	public static final HashMap<String, String> options = new HashMap<String, String>();
 	
@@ -101,7 +101,7 @@ final public class TriggerFileLoader {
 				final String ex = replaceOptions(e.getName());
 				if (ex == null)
 					continue;
-				final TopLevelExpression expr = TopLevelExpression.parse(ex, "can't understand this condition/effect: '" + ex + "'");
+				final Statement expr = Statement.parse(ex, "can't understand this condition/effect: '" + ex + "'");
 				if (expr == null) {
 					continue;
 				}
@@ -113,7 +113,7 @@ final public class TriggerFileLoader {
 					final String l = replaceOptions(n.getName().substring("loop ".length()));
 					if (l == null)
 						continue;
-					final LoopVar<?> loopvar = (LoopVar<?>) ExprParser.parse(l, Skript.loops.listIterator(), false, "can't understand this loop: '" + n.getName() + "'");
+					final LoopExpr<?> loopvar = (LoopExpr<?>) SkriptParser.parse(l, Skript.loops.listIterator(), false, "can't understand this loop: '" + n.getName() + "'");
 					if (loopvar == null) {
 						continue;
 					}
@@ -222,7 +222,7 @@ final public class TriggerFileLoader {
 			event = replaceOptions(event);
 			if (event == null)
 				continue;
-			final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = ExprParser.parseEvent(event, "can't understand this event: '" + node.getName() + "'");
+			final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getName() + "'");
 			if (parsedEvent == null) {
 				continue;
 			}

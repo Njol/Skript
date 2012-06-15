@@ -31,7 +31,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.validate.SectionValidator;
-import ch.njol.skript.lang.ExprParser;
+import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
 
@@ -60,7 +60,7 @@ public abstract class Commands {
 			return false;
 		}
 		
-		final String argPattern = "<([a-zA-Z -]+?)\\s*(=\\s*(" + ExprParser.wildcard + "))?>";
+		final String argPattern = "<([a-zA-Z -]+?)\\s*(=\\s*(" + SkriptParser.wildcard + "))?>";
 		
 		Matcher m = Pattern.compile("(?i)^command /?(\\S+)(,? " + argPattern + ")*$").matcher(s);
 		if (!m.matches()) {

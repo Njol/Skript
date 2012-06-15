@@ -29,8 +29,8 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
@@ -42,12 +42,12 @@ public class EffExec extends Effect {
 		Skript.registerEffect(EffExec.class, "exec[ute] %string%");
 	}
 	
-	private Variable<String> input;
+	private Expression<String> input;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		input = (Variable<String>) vars[0];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		input = (Expression<String>) vars[0];
 		return true;
 	}
 	

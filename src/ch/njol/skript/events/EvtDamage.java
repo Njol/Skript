@@ -29,8 +29,8 @@ import org.bukkit.event.entity.EntityDamageEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
-import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
@@ -51,7 +51,7 @@ public class EvtDamage extends SkriptEvent {
 	@Override
 	public boolean check(final Event evt) {
 		final EntityDamageEvent e = (EntityDamageEvent) evt;
-		return !(e.getDamage() == 0 || (e.getEntity() instanceof LivingEntity && ((LivingEntity) e.getEntity()).getNoDamageTicks() > 0));
+		return e.getDamage() != 0 && !(e.getEntity() instanceof LivingEntity && ((LivingEntity) e.getEntity()).getNoDamageTicks() > 0);
 	}
 	
 	@Override

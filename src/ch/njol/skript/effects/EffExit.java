@@ -27,8 +27,8 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.intern.TriggerSection;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
@@ -47,7 +47,7 @@ public class EffExit extends Effect {
 	private int breakLevels;
 	
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 				breakLevels = TriggerFileLoader.currentSections.size() + 1;

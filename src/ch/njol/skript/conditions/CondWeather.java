@@ -26,8 +26,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.WeatherType;
 import ch.njol.util.Checker;
 
@@ -41,14 +41,14 @@ public class CondWeather extends Condition {
 		Skript.registerCondition(CondWeather.class, "is %weathertypes% [in %worlds%]");
 	}
 	
-	private Variable<WeatherType> weathers;
-	private Variable<World> worlds;
+	private Expression<WeatherType> weathers;
+	private Expression<World> worlds;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		weathers = (Variable<WeatherType>) vars[0];
-		worlds = (Variable<World>) vars[1];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		weathers = (Expression<WeatherType>) vars[0];
+		worlds = (Expression<World>) vars[1];
 		return true;
 	}
 	

@@ -25,10 +25,10 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.events.EvtRightclick;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionInfo;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.SyntaxElement;
+import ch.njol.skript.lang.SyntaxElementInfo;
 
 /**
  * A SkriptEvent is like a condition. It is called when any of the registered events occurs.
@@ -41,9 +41,9 @@ import ch.njol.skript.lang.Literal;
  * @see Skript#registerEvent(Class, Class, String...)
  * @see Skript#registerEvent(Class, Class[], String...)
  */
-public abstract class SkriptEvent implements Expression, Debuggable {
+public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 	
-	public static class SkriptEventInfo<E extends SkriptEvent> extends ExpressionInfo<E> {
+	public static class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementInfo<E> {
 		
 		public Class<? extends Event>[] events;
 		
@@ -54,7 +54,7 @@ public abstract class SkriptEvent implements Expression, Debuggable {
 	}
 	
 	@Override
-	public boolean init(final ch.njol.skript.lang.Variable<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final ch.njol.skript.lang.Expression<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	

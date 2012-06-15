@@ -27,8 +27,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * 
@@ -44,18 +44,18 @@ public class EffCommand extends Effect {
 				"(let|make) %commandsenders% execute [command] %strings%");
 	}
 	
-	private Variable<CommandSender> senders;
-	private Variable<String> commands;
+	private Expression<CommandSender> senders;
+	private Expression<String> commands;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (matchedPattern > 0) {
-			senders = (Variable<CommandSender>) vars[0];
-			commands = (Variable<String>) vars[1];
+			senders = (Expression<CommandSender>) vars[0];
+			commands = (Expression<String>) vars[1];
 		} else {
-			commands = (Variable<String>) vars[0];
-			senders = (Variable<CommandSender>) vars[1];
+			commands = (Expression<String>) vars[0];
+			senders = (Expression<CommandSender>) vars[1];
 		}
 		return true;
 	}

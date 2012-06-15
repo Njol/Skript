@@ -53,7 +53,6 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import ch.njol.skript.SkriptLogger.SubLog;
-import ch.njol.skript.api.ClassInfo;
 import ch.njol.skript.api.Comparator;
 import ch.njol.skript.api.Comparator.ComparatorInfo;
 import ch.njol.skript.api.Comparator.Relation;
@@ -61,19 +60,23 @@ import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.Converter.ConverterInfo;
 import ch.njol.skript.api.Converter.ConverterUtils;
-import ch.njol.skript.api.DefaultVariable;
+import ch.njol.skript.api.DefaultExpression;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.Getter;
 import ch.njol.skript.api.InverseComparator;
-import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.api.LoopVar.LoopInfo;
+import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.api.LoopExpr.LoopInfo;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.ChainedConverter;
 import ch.njol.skript.api.intern.SkriptAPIException;
-import ch.njol.skript.api.intern.TopLevelExpression;
+import ch.njol.skript.api.intern.Statement;
 import ch.njol.skript.api.intern.Trigger;
+import ch.njol.skript.classes.BukkitClasses;
+import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.DefaultClasses;
+import ch.njol.skript.classes.SkriptClasses;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.command.SkriptCommand;
 import ch.njol.skript.config.Config;
@@ -83,17 +86,15 @@ import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.validate.EnumEntryValidator;
 import ch.njol.skript.config.validate.SectionValidator;
 import ch.njol.skript.data.BukkitEventValues;
-import ch.njol.skript.data.DefaultClasses;
 import ch.njol.skript.data.DefaultComparators;
 import ch.njol.skript.data.DefaultConverters;
-import ch.njol.skript.data.SkriptClasses;
 import ch.njol.skript.data.SkriptEventValues;
 import ch.njol.skript.data.SkriptTriggerItems;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionInfo;
-import ch.njol.skript.lang.SimpleVariable;
-import ch.njol.skript.lang.Variable;
-import ch.njol.skript.lang.VariableInfo;
+import ch.njol.skript.lang.SimpleExpression;
+import ch.njol.skript.lang.SyntaxElement;
+import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Setter;
@@ -102,7 +103,7 @@ import ch.njol.util.Validate;
 /**
  * <b>Skript</b> - A Bukkit plugin to modify how Minecraft behaves without having to write a single line of code.<br/>
  * <br/>
- * Use this class to extend this plugin's functionality by adding more {@link Condition conditions}, {@link Effect effects}, {@link SimpleVariable variables}, etc.<br/>
+ * Use this class to extend this plugin's functionality by adding more {@link Condition conditions}, {@link Effect effects}, {@link SimpleExpression expressions}, etc.<br/>
  * <br/>
  * To test whether Skript is loaded you can use
  * 
@@ -124,7 +125,7 @@ import ch.njol.util.Validate;
  * @see #registerEvent(Class, Class, String...)
  * @see #registerEventValue(Class, Class, Getter)
  * @see #registerLoop(Class, Class, String...)
- * @see #registerVariable(Class, Class, String...)
+ * @see #registerExpression(Class, Class, String...)
  * 
  */
 public final class Skript extends JavaPlugin implements Listener {
@@ -158,10 +159,11 @@ public final class Skript extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		
-		new BukkitEventValues();
 		new DefaultClasses();
 		new DefaultComparators();
 		new DefaultConverters();
+		new BukkitClasses();
+		new BukkitEventValues();
 		new SkriptClasses();
 		new SkriptEventValues();
 		new SkriptTriggerItems();
@@ -232,7 +234,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * E.g. to test whether a location is within a specific radius of another location:
 	 * 
 	 * <pre>
-	 * location.distance(center) - Skript.EPSILON &lt; radius
+	 * location.distanceSquared(center) - Skript.EPSILON &lt; radius * radius
 	 * </pre>
 	 * 
 	 * @see #EPSILON_MULT
@@ -247,7 +249,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static final int MAXBLOCKID = 255;
 	
-	// TODO option? or in variable?
+	// TODO option? or in expression?
 	public static final int TARGETBLOCKMAXDISTANCE = 100;
 	
 	/**
@@ -291,9 +293,9 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ CONDITIONS & EFFECTS ================
 	
-	static final Collection<ExpressionInfo<? extends Condition>> conditions = new ArrayList<ExpressionInfo<? extends Condition>>(20);
-	static final Collection<ExpressionInfo<? extends Effect>> effects = new ArrayList<ExpressionInfo<? extends Effect>>(20);
-	static final Collection<ExpressionInfo<? extends TopLevelExpression>> topLevelExpressions = new ArrayList<ExpressionInfo<? extends TopLevelExpression>>(40);
+	static final Collection<SyntaxElementInfo<? extends Condition>> conditions = new ArrayList<SyntaxElementInfo<? extends Condition>>(20);
+	static final Collection<SyntaxElementInfo<? extends Effect>> effects = new ArrayList<SyntaxElementInfo<? extends Effect>>(20);
+	static final Collection<SyntaxElementInfo<? extends Statement>> statements = new ArrayList<SyntaxElementInfo<? extends Statement>>(40);
 	
 	/**
 	 * registers a {@link Condition}.
@@ -302,9 +304,9 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	public static <E extends Condition> void registerCondition(final Class<E> condition, final String... patterns) {
 		checkAcceptRegistrations();
-		final ExpressionInfo<E> info = new ExpressionInfo<E>(patterns, condition);
+		final SyntaxElementInfo<E> info = new SyntaxElementInfo<E>(patterns, condition);
 		conditions.add(info);
-		topLevelExpressions.add(info);
+		statements.add(info);
 	}
 	
 	/**
@@ -314,41 +316,41 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	public static <E extends Effect> void registerEffect(final Class<E> effect, final String... patterns) {
 		checkAcceptRegistrations();
-		final ExpressionInfo<E> info = new ExpressionInfo<E>(patterns, effect);
+		final SyntaxElementInfo<E> info = new SyntaxElementInfo<E>(patterns, effect);
 		effects.add(info);
-		topLevelExpressions.add(info);
+		statements.add(info);
 	}
 	
-	public static Collection<ExpressionInfo<? extends TopLevelExpression>> getTopLevelExpressions() {
-		return topLevelExpressions;
+	public static Collection<SyntaxElementInfo<? extends Statement>> getStatements() {
+		return statements;
 	}
 	
-	public static Collection<ExpressionInfo<? extends Condition>> getConditions() {
+	public static Collection<SyntaxElementInfo<? extends Condition>> getConditions() {
 		return conditions;
 	}
 	
-	public static Collection<ExpressionInfo<? extends Effect>> getEffects() {
+	public static Collection<SyntaxElementInfo<? extends Effect>> getEffects() {
 		return effects;
 	}
 	
-	// ================ VARIABLES ================
+	// ================ EXPRESSIONS ================
 	
-	static final Collection<VariableInfo<? extends Variable<?>, ?>> variables = new ArrayList<VariableInfo<? extends Variable<?>, ?>>(30);
+	static final Collection<ExpressionInfo<? extends Expression<?>, ?>> expressions = new ArrayList<ExpressionInfo<? extends Expression<?>, ?>>(30);
 	
 	/**
-	 * Registers a variable.
+	 * Registers an expression.
 	 * 
-	 * @param c The variable's class. This has to be a SimpleVariable to make all variables act the same.
+	 * @param c The expression class. This has to be a SimpleExpression to make all expressions act the same.
 	 * @param returnType
 	 * @param patterns
 	 */
-	public static <E extends SimpleVariable<T>, T> void registerVariable(final Class<E> c, final Class<T> returnType, final String... patterns) {
+	public static <E extends SimpleExpression<T>, T> void registerExpression(final Class<E> c, final Class<T> returnType, final String... patterns) {
 		checkAcceptRegistrations();
-		variables.add(new VariableInfo<E, T>(patterns, returnType, c));
+		expressions.add(new ExpressionInfo<E, T>(patterns, returnType, c));
 	}
 	
-	public static Collection<VariableInfo<? extends Variable<?>, ?>> getVariables() {
-		return variables;
+	public static Collection<ExpressionInfo<? extends Expression<?>, ?>> getExpressions() {
+		return expressions;
 	}
 	
 	// ================ EVENTS ================
@@ -478,9 +480,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	private final static List<ClassInfo<?>> classInfos = new ArrayList<ClassInfo<?>>(50);
 	
 	/**
-	 * Registers a class. This class will have lower proirity than any classes registered before,
-	 * this means that parsing will be attempted last with this class, so if you want to e.g. parse
-	 * quoted strings this won't work as string will parse before. You'd have to use {@link #registerClass(ClassInfo, boolean, String...)} To register the class before "string".
+	 * Registers a class with the lowest priority possible (if any superclass of this class is already registered this class is registered before that, else at the very end)
 	 * 
 	 * @param info info about the class to register
 	 */
@@ -499,24 +499,20 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * Registers a class with higher priority than some other classes.
 	 * 
 	 * @param info Info about the class to register
-	 * @param addAlways Whether to add this class at the end if none of the other classes are registered
 	 * @param before The classes which should have lower priority than this class
-	 * @return whether any of the given classes were registered
 	 */
-	public static <T> boolean registerClass(final ClassInfo<T> info, final boolean addAlways, final String... before) {
+	public static <T> void registerClass(final ClassInfo<T> info, final String... before) {
 		checkAcceptRegistrations();
 		for (int i = 0; i < classInfos.size(); i++) {
-			if (Utils.indexOf(before, classInfos.get(i).getCodeName()) != -1) {
+			if (classInfos.get(i).getC().isAssignableFrom(info.getC()) || Utils.contains(before, classInfos.get(i).getCodeName())) {
 				classInfos.add(i, info);
-				return true;
+				return;
 			}
 		}
-		if (addAlways)
-			classInfos.add(info);
-		return false;
+		classInfos.add(info);
 	}
 	
-	private static ClassInfo<?> getClassInfo(final String codeName) {
+	public static ClassInfo<?> getClassInfo(final String codeName) {
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getCodeName().equals(codeName))
 				return ci;
@@ -528,15 +524,30 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * Gets the class info for the given class
 	 * 
 	 * @param c The exact class to get the class info for
-	 * @return
+	 * @return The class info for the given class of null if no infowas found.
 	 */
 	@SuppressWarnings("unchecked")
-	private static <T> ClassInfo<T> getClassInfo(final Class<T> c) {
+	public static <T> ClassInfo<T> getClassInfo(final Class<T> c) {
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getC() == c)
 				return (ClassInfo<T>) ci;
 		}
-		throw new SkriptAPIException("no class info found for " + c.getName());
+		return null;
+	}
+	
+	/**
+	 * Gets the class info of the given class or it's closest registered superclass.
+	 * 
+	 * @param c
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> ClassInfo<? super T> getSuperClassInfo(final Class<T> c) {
+		for (final ClassInfo<?> ci : classInfos) {
+			if (ci.getC().isAssignableFrom(c))
+				return (ClassInfo<? super T>) ci;
+		}
+		return null;
 	}
 	
 	/**
@@ -560,6 +571,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		if (name == null)
 			return null;
 		for (final ClassInfo<?> ci : classInfos) {
+			if (ci.getUserInputPatterns() == null)
+				continue;
 			for (final Pattern pattern : ci.getUserInputPatterns()) {
 				if (pattern.matcher(name).matches())
 					return ci.getC();
@@ -572,20 +585,20 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * gets the default of a class
 	 * 
 	 * @param name
-	 * @return the variable holding the default value or null if this class doesn't have one
+	 * @return the expression holding the default value or null if this class doesn't have one
 	 */
-	public static <T> DefaultVariable<?> getDefaultVariable(final String name) {
-		return getClassInfo(name).getDefaultVariable();
+	public static <T> DefaultExpression<?> getDefaultExpression(final String name) {
+		return getClassInfo(name).getDefaultExpression();
 	}
 	
 	/**
 	 * gets the default of a class
 	 * 
 	 * @param name
-	 * @return the variable holding the default value or null if this class doesn't have one
+	 * @return the expression holding the default value or null if this class doesn't have one
 	 */
-	public static <T> DefaultVariable<T> getDefaultVariable(final Class<T> c) {
-		return getClassInfo(c).getDefaultVariable();
+	public static <T> DefaultExpression<T> getDefaultExpression(final Class<T> c) {
+		return getClassInfo(c).getDefaultExpression();
 	}
 	
 	/**
@@ -863,7 +876,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	/**
 	 * Gets a specific value from an event. Returns null if the event doesn't have such a value (conversions are done to try and get the desired value).<br>
-	 * It is recommended to use {@link #getEventValueGetter(Class, Class)} or {@link #getDefaultVariable(Class)} instead of invoking this method repeatedly.
+	 * It is recommended to use {@link #getEventValueGetter(Class, Class)} or {@link #getDefaultExpression(Class)} instead of invoking this method repeatedly.
 	 * 
 	 * @param e
 	 * @param c
@@ -887,7 +900,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param time
 	 * @return
 	 * @see #registerEventValue(Class, Class, Getter, int)
-	 * @see #getDefaultVariable(Class)
+	 * @see #getDefaultExpression(Class)
 	 */
 	public static final <T, E extends Event> Getter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time) {
 		return getEventValueGetter(e, c, time, true);
@@ -944,7 +957,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ LOOPS ================
 	
-	static final ArrayList<LoopInfo<?, ?>> loops = new ArrayList<LoopVar.LoopInfo<?, ?>>();
+	static final ArrayList<LoopInfo<?, ?>> loops = new ArrayList<LoopExpr.LoopInfo<?, ?>>();
 	
 	/**
 	 * Registers a loopable value.
@@ -952,9 +965,9 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param c
 	 * @param returnType
 	 * @param patterns
-	 * @see LoopVar
+	 * @see LoopExpr
 	 */
-	public static <E extends LoopVar<T>, T> void registerLoop(final Class<E> c, final Class<T> returnType, final String... patterns) {
+	public static <E extends LoopExpr<T>, T> void registerLoop(final Class<E> c, final Class<T> returnType, final String... patterns) {
 		checkAcceptRegistrations();
 		loops.add(new LoopInfo<E, T>(c, returnType, patterns));
 	}
@@ -1001,7 +1014,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	private final static Listener commandListener = new Listener() {
 		@SuppressWarnings("unused")
-		@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+		@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 		public void onPlayerCommand(final PlayerCommandPreprocessEvent e) {
 			final String[] cmd = e.getMessage().substring(1).split(" ", 2);
 			if (commands.get(cmd[0]) != null) {
@@ -1014,7 +1027,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 		
 		@SuppressWarnings("unused")
-		@EventHandler(priority = EventPriority.HIGHEST)
+		@EventHandler(priority = EventPriority.LOW)
 		public void onServerCommand(final ServerCommandEvent e) {
 			final String[] cmd = e.getCommand().split(" ", 2);
 			if (commands.get(cmd[0]) != null) {
@@ -1125,44 +1138,52 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	public final static RuntimeException exception(Exception cause, final String... info) {
 		
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Severe Error:");
-		for (final String i : info)
-			Bukkit.getLogger().severe(EXCEPTION_PREFIX + i);
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "If you're developing an add-on for Skript this likely means you have done something wrong.");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "If you're a server admin, please go to http://dev.bukkit.org/server-mods/skript/tickets/");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "and create a new ticket with a meaningful title, copy & paste this whole error into it,");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "and please describe what you did before it happened and/or what you think caused the error.");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "If you feel like it's a trigger that's causing the error please post the trigger as well.");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "By following this guide fixing the error should be easy and done fast.");
+		logEx();
+		logEx("Severe Error:");
+		logEx(info);
+		logEx();
+		logEx("If you're developing an add-on for Skript this likely means you have done something wrong.");
+		logEx("If you're a server admin, please go to http://dev.bukkit.org/server-mods/skript/tickets/");
+		logEx("and create a new ticket with a meaningful title, copy & paste this whole error into it,");
+		logEx("and please describe what you did before it happened and/or what you think caused the error.");
+		logEx("If you feel like it's a trigger that's causing the error please post the trigger as well.");
+		logEx("By following this guide fixing the error should be easy and done fast.");
 		
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Stacktrace:");
+		logEx();
+		logEx("Stacktrace:");
 		if (cause == null) {
-			Bukkit.getLogger().severe(EXCEPTION_PREFIX + "  warning: no exception given, dumping current stack trace instead");
+			logEx("  warning: no exception given, dumping current stack trace instead");
 			cause = new Exception();
 		}
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + cause.toString());
+		logEx(cause.toString());
 		for (final StackTraceElement e : cause.getStackTrace())
-			Bukkit.getLogger().severe(EXCEPTION_PREFIX + "    at " + e.toString());
+			logEx("    at " + e.toString());
 		
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Version Information:");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "  Skript version: " + Skript.getInstance().getDescription().getVersion());
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "  Bukkit version: " + Bukkit.getBukkitVersion());
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "  Java version: " + System.getProperty("java.version"));
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Running CraftBukkit: " + (Bukkit.getServer() instanceof CraftServer));
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "Current node: " + SkriptLogger.getNode());
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "End of Error.");
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX + "");
+		logEx();
+		logEx("Version Information:");
+		logEx("  Skript: " + Skript.getInstance().getDescription().getVersion());
+		logEx("  Bukkit: " + Bukkit.getBukkitVersion());
+		logEx("  Java: " + System.getProperty("java.version"));
+		logEx();
+		logEx("Running CraftBukkit: " + (Bukkit.getServer() instanceof CraftServer));
+		logEx();
+		logEx("Current node: " + SkriptLogger.getNode());
+		logEx();
+		logEx("End of Error.");
+		logEx();
 		
 		final RuntimeException r = new RuntimeException();
 		r.setStackTrace(new StackTraceElement[0]);
 		return r;
+	}
+	
+	private final static void logEx() {
+		Bukkit.getLogger().severe(EXCEPTION_PREFIX);
+	}
+	
+	private final static void logEx(final String... lines) {
+		for (final String line : lines)
+			Bukkit.getLogger().severe(EXCEPTION_PREFIX + line);
 	}
 	
 	// ================ CONFIGS ================
@@ -1339,15 +1360,15 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param c
 	 * @return
 	 */
-	public static String getExpressionName(final Class<? extends Expression> c) {
+	public static String getSyntaxElementName(final Class<? extends SyntaxElement> c) {
 		if (Condition.class.isAssignableFrom(c)) {
 			return "condition";
 		} else if (Effect.class.isAssignableFrom(c)) {
 			return "effect";
-		} else if (LoopVar.class.isAssignableFrom(c)) {
+		} else if (LoopExpr.class.isAssignableFrom(c)) {
 			return "loop";
-		} else if (Variable.class.isAssignableFrom(c)) {
-			return "variable";
+		} else if (Expression.class.isAssignableFrom(c)) {
+			return "expression";
 		}
 		throw new IllegalArgumentException(c.getName());
 	}

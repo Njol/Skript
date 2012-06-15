@@ -26,8 +26,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.StringUtils;
 
 /**
@@ -41,18 +41,18 @@ public class EffMessage extends Effect {
 		Skript.registerEffect(EffMessage.class, "([send] message|send) %strings% [to %commandsenders%]");
 	}
 	
-	private Variable<String> messages;
-	private Variable<CommandSender> recipients;
+	private Expression<String> messages;
+	private Expression<CommandSender> recipients;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (matchedPattern == 0) {
-			messages = (Variable<String>) vars[0];
-			recipients = (Variable<CommandSender>) vars[1];
+			messages = (Expression<String>) vars[0];
+			recipients = (Expression<CommandSender>) vars[1];
 		} else {
-			recipients = (Variable<CommandSender>) vars[0];
-			messages = (Variable<String>) vars[1];
+			recipients = (Expression<CommandSender>) vars[0];
+			messages = (Expression<String>) vars[1];
 		}
 		return true;
 	}

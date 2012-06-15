@@ -30,8 +30,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Utils;
 
 /**
@@ -44,14 +44,14 @@ public class EffTeleport extends Effect {
 		Skript.registerEffect(EffTeleport.class, "teleport %entities% to %location%");
 	}
 	
-	private Variable<Entity> entities;
-	private Variable<Location> location;
+	private Expression<Entity> entities;
+	private Expression<Location> location;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		entities = (Variable<Entity>) vars[0];
-		location = (Variable<Location>) vars[1];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		entities = (Expression<Entity>) vars[0];
+		location = (Expression<Location>) vars[1];
 		return true;
 	}
 	
@@ -64,13 +64,17 @@ public class EffTeleport extends Effect {
 	protected void execute(final Event e) {
 		final Location to = location.getSingle(e);
 		final Block on = to.getBlock().getRelative(BlockFace.DOWN);
-		if (0.4 < to.getX() - to.getBlockX() && to.getX() - to.getBlockX() < 0.6 && 0.4 < to.getZ() - to.getBlockZ() && to.getZ() - to.getBlockZ() < 0.6 && on.getType() != Material.AIR)
+		if (Math.abs(to.getX() - to.getBlockX() - 0.5) < Skript.EPSILON && Math.abs(to.getZ() - to.getBlockZ() - 0.5) < Skript.EPSILON && on.getType() != Material.AIR)
 			to.setY(on.getY() + Utils.getBlockHeight(on.getType()));
 		for (final Entity entity : entities.getArray(e)) {
-			final Location loc = to.clone();
-			loc.setPitch(entity.getLocation().getPitch());
-			loc.setYaw(entity.getLocation().getYaw());
-			entity.teleport(loc);
+			if (to.getYaw() == 0 && to.getPitch() == 0) {
+				final Location loc = to.clone();
+				loc.setPitch(entity.getLocation().getPitch());
+				loc.setYaw(entity.getLocation().getYaw());
+				entity.teleport(loc);
+			} else {
+				entity.teleport(to);
+			}
 		}
 	}
 	

@@ -26,8 +26,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Checker;
 
 /**
@@ -42,14 +42,14 @@ public class CondPermission extends Condition {
 				"[%commandsenders%] ha(s|ve) [the] permission[s] %strings%");
 	}
 	
-	private Variable<String> permissions;
-	private Variable<CommandSender> senders;
+	private Expression<String> permissions;
+	private Expression<CommandSender> senders;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		senders = (Variable<CommandSender>) vars[0];
-		permissions = (Variable<String>) vars[1];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		senders = (Expression<CommandSender>) vars[0];
+		permissions = (Expression<String>) vars[1];
 		setNegated(matchedPattern == 0);
 		return true;
 	}

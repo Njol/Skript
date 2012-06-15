@@ -24,8 +24,8 @@ package ch.njol.skript.api;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.api.intern.SkriptAPIException;
-import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * A very basic SkriptEvent which returns true for all events (i.e. all registered events). This event is especially useful for custom events.

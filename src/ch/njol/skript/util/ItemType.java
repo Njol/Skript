@@ -353,11 +353,11 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	 * Adds this Itemtype to the given item stack
 	 * 
 	 * @param item
-	 * @return The passed ItemStack
+	 * @return The passed ItemStack or a new one if the passed is null or air
 	 */
 	public ItemStack addTo(final ItemStack item) {
-		if (item == null)
-			return null;
+		if (item == null || item.getTypeId() == 0)
+			return getRandom();
 		for (final ItemData type : types) {
 			if (type.isOfType(item)) {
 				item.setAmount(Math.max(item.getAmount() + getAmount(), 0));

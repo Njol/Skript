@@ -31,7 +31,7 @@ import ch.njol.skript.api.Debuggable;
  * @author Peter Güttinger
  * @see TriggerSection
  * @see Trigger
- * @see TopLevelExpression
+ * @see Statement
  */
 public abstract class TriggerItem implements Debuggable {
 	

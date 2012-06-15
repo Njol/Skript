@@ -25,7 +25,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
-import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
@@ -81,20 +81,20 @@ public class VariableStringLiteral extends ConvertedLiteral<Object, String> {
 	
 	@Override
 	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super String, ? extends V> converter) {
-		return SimpleVariable.getArray(this, e, to, converter);
+		return SimpleExpression.getArray(this, e, to, converter);
 	}
 	
 	@Override
 	public String getSingle() {
 		if (getAnd() && strings.length > 1)
-			throw new SkriptAPIException("Call to getSingle on a non-single variable");
+			throw new SkriptAPIException("Call to getSingle on a non-single expression");
 		return Utils.getRandom(((UnparsedLiteral) source).getData());
 	}
 	
 	@Override
 	public String getSingle(final Event e) {
 		if (getAnd() && strings.length > 1)
-			throw new SkriptAPIException("Call to getSingle on a non-single variable");
+			throw new SkriptAPIException("Call to getSingle on a non-single expression");
 		return Utils.getRandom(strings).get(e);
 	}
 	
@@ -105,12 +105,12 @@ public class VariableStringLiteral extends ConvertedLiteral<Object, String> {
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super String> c) {
-		return SimpleVariable.check(getArray(e), c, false, getAnd());
+		return SimpleExpression.check(getArray(e), c, false, getAnd());
 	}
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super String> c, final Condition cond) {
-		return SimpleVariable.check(getArray(e), c, cond.isNegated(), getAnd());
+		return SimpleExpression.check(getArray(e), c, cond.isNegated(), getAnd());
 	}
 	
 	@Override

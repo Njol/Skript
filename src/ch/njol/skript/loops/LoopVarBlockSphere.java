@@ -28,47 +28,35 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.LoopVar;
-import ch.njol.skript.data.DefaultChangers;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.BlockSphereIterator;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class LoopVarBlockSphere extends LoopVar<Block> {
+public class LoopVarBlockSphere extends LoopExpr<Block> {
 	
 	static {
 		Skript.registerLoop(LoopVarBlockSphere.class, Block.class, "blocks in radius %float% [around %location%]");
 	}
 	
-	private Variable<Float> radius;
-	private Variable<Location> center;
+	private Expression<Float> radius;
+	private Expression<Location> center;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		radius = (Variable<Float>) vars[0];
-		center = (Variable<Location>) vars[1];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		radius = (Expression<Float>) vars[0];
+		center = (Expression<Location>) vars[1];
 		return true;
 	}
 	
 	@Override
 	protected Iterator<Block> iterator(final Event e) {
 		return new BlockSphereIterator(center.getSingle(e), radius.getSingle(e));
-	}
-	
-	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-		return DefaultChangers.blockChanger.acceptChange(mode);
-	}
-	
-	@Override
-	public void change(final Event e, final Variable<?> delta, final ChangeMode mode) {
-		DefaultChangers.blockChanger.change(e, this, delta, mode);
 	}
 	
 	@Override

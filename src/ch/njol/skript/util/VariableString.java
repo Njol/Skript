@@ -28,12 +28,12 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Debuggable;
-import ch.njol.skript.lang.ExprParser;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser;
 
 /**
  * 
- * represents a string that may contain variables.
+ * represents a string that may contain expressions.
  * 
  * @author Peter Güttinger
  * 
@@ -70,13 +70,13 @@ public class VariableString implements Debuggable {
 		while (c != s.length()) {
 			final int c2 = s.indexOf('%', c + 1);
 			if (c2 == -1) {
-				Skript.error("The percent sign is used for variables (e.g. %player%). To insert a %, type it twice: %%.");
+				Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a %, type it twice: %%.");
 				return null;
 			}
 			if (c + 1 == c2) {
 				string.add("%");
 			} else {
-				final Variable<?> var = (Variable<?>) ExprParser.parse(s.substring(c + 1, c2), Skript.getVariables().iterator(), false, "can't understand the variable %" + s.substring(c + 1, c2) + "%");
+				final Expression<?> var = (Expression<?>) SkriptParser.parse(s.substring(c + 1, c2), Skript.getExpressions().iterator(), false, "can't understand the expression %" + s.substring(c + 1, c2) + "%");
 				if (var == null) {
 					return null;
 				} else {
@@ -123,21 +123,21 @@ public class VariableString implements Debuggable {
 	}
 	
 	/**
-	 * Parses all variables in the string and returns it. The returned string is cached as long as this method is always called with the same event argument.
+	 * Parses all expressions in the string and returns it. The returned string is cached as long as this method is always called with the same event argument.
 	 * 
-	 * @param e Event to pass to the variables.
-	 * @return The input string with all variables replaced.
+	 * @param e Event to pass to the expressions.
+	 * @return The input string with all expressions replaced.
 	 */
 	public String get(final Event e) {
 		if (isSimple || last == e)
 			return lastString;
 		final StringBuilder b = new StringBuilder();
 		for (final Object o : string) {
-			if (o instanceof Variable<?>) {
-				if (((Variable<?>) o).isSingle())
-					b.append(Skript.toString(((Variable<?>) o).getSingle(e)));
+			if (o instanceof Expression<?>) {
+				if (((Expression<?>) o).isSingle())
+					b.append(Skript.toString(((Expression<?>) o).getSingle(e)));
 				else
-					b.append(Skript.toString(((Variable<?>) o).getArray(e), ((Variable<?>) o).getAnd()));
+					b.append(Skript.toString(((Expression<?>) o).getArray(e), ((Expression<?>) o).getAnd()));
 			} else {
 				b.append(o);
 			}
@@ -152,8 +152,8 @@ public class VariableString implements Debuggable {
 			return '"' + lastString + '"';
 		final StringBuilder b = new StringBuilder("\"");
 		for (final Object o : string) {
-			if (o instanceof Variable) {
-				b.append("%" + ((Variable<?>) o).getDebugMessage(e) + "%");
+			if (o instanceof Expression) {
+				b.append("%" + ((Expression<?>) o).getDebugMessage(e) + "%");
 			} else {
 				b.append(o);
 			}

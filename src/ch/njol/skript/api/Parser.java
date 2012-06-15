@@ -22,6 +22,7 @@
 package ch.njol.skript.api;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.ClassInfo;
 
 /**
  * A parser used to parse data from a string. <br/>

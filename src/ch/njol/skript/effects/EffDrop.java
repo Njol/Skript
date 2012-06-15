@@ -28,8 +28,8 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Offset;
 
@@ -44,20 +44,20 @@ public class EffDrop extends Effect {
 		Skript.registerEffect(EffDrop.class, "drop %itemtypes% [%offsets% %-locations%]");
 	}
 	
-	private Variable<ItemType> items;
-	private Variable<Offset> offsets;
-	private Variable<Location> locations;
+	private Expression<ItemType> items;
+	private Expression<Offset> offsets;
+	private Expression<Location> locations;
 	private boolean hasLoc = false;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		items = (Variable<ItemType>) vars[0];
-		offsets = (Variable<Offset>) vars[1];
-		locations = (Variable<Location>) vars[2];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		items = (Expression<ItemType>) vars[0];
+		offsets = (Expression<Offset>) vars[1];
+		locations = (Expression<Location>) vars[2];
 		hasLoc = locations != null;
 		if (!hasLoc)
-			locations = Skript.getDefaultVariable(Location.class);
+			locations = Skript.getDefaultExpression(Location.class);
 		return true;
 	}
 	

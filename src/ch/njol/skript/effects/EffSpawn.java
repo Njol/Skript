@@ -26,8 +26,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.Offset;
 
@@ -43,16 +43,16 @@ public class EffSpawn extends Effect {
 				"spawn %entitytypes% [%offset% %locations%]");
 	}
 	
-	private Variable<Location> locations;
-	private Variable<Offset> offsets = null;
-	private Variable<EntityType> types;
+	private Expression<Location> locations;
+	private Expression<Offset> offsets = null;
+	private Expression<EntityType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		types = (Variable<EntityType>) vars[0];
-		offsets = (Variable<Offset>) vars[1];
-		locations = (Variable<Location>) vars[2];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		types = (Expression<EntityType>) vars[0];
+		offsets = (Expression<Offset>) vars[1];
+		locations = (Expression<Location>) vars[2];
 		return true;
 	}
 	

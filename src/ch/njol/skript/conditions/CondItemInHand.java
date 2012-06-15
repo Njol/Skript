@@ -26,8 +26,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 
@@ -45,14 +45,14 @@ public class CondItemInHand extends Condition {
 				"[%players%] (is not|isn't) holding %itemtypes%");
 	}
 	
-	private Variable<Player> players;
-	private Variable<ItemType> types;
+	private Expression<Player> players;
+	private Expression<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		players = (Variable<Player>) vars[0];
-		types = (Variable<ItemType>) vars[1];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		players = (Expression<Player>) vars[0];
+		types = (Expression<ItemType>) vars[1];
 		setNegated(matchedPattern >= 2);
 		return true;
 	}

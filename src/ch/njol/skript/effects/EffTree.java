@@ -27,8 +27,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Offset;
 
 public class EffTree extends Effect {
@@ -39,16 +39,16 @@ public class EffTree extends Effect {
 				"(grow|create|generate) %treetype% [tree] %offsets% %blocks%");
 	}
 	
-	private Variable<Offset> offsets;
-	private Variable<Block> blocks;
-	private Variable<TreeType> type;
+	private Expression<Offset> offsets;
+	private Expression<Block> blocks;
+	private Expression<TreeType> type;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		type = (Variable<TreeType>) vars[0];
-		offsets = (Variable<Offset>) vars[1];
-		blocks = (Variable<Block>) vars[2];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		type = (Expression<TreeType>) vars[0];
+		offsets = (Expression<Offset>) vars[1];
+		blocks = (Expression<Block>) vars[2];
 		return true;
 	}
 	

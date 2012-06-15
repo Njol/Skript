@@ -107,6 +107,8 @@ public abstract class StringUtils {
 	public static final String firstToUpper(final String s) {
 		if (s.isEmpty())
 			return s;
+		if (Character.toUpperCase(s.charAt(0)) == s.charAt(0))
+			return s;
 		return Character.toUpperCase(s.charAt(0)) + s.substring(1);
 	}
 }

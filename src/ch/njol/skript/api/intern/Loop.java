@@ -23,20 +23,20 @@ package ch.njol.skript.api.intern;
 
 import org.bukkit.event.Event;
 
-import ch.njol.skript.api.LoopVar;
+import ch.njol.skript.api.LoopExpr;
 import ch.njol.skript.config.SectionNode;
 
 /**
  * A trigger section which represents a loop.
  * 
  * @author Peter Güttinger
- * @see LoopVar
+ * @see LoopExpr
  */
 public class Loop extends TriggerSection {
 	
-	private final LoopVar<?> var;
+	private final LoopExpr<?> var;
 	
-	public <T> Loop(final LoopVar<?> var, final SectionNode node) {
+	public <T> Loop(final LoopExpr<?> var, final SectionNode node) {
 		super(node);
 		this.var = var;
 	}

@@ -24,9 +24,9 @@ package ch.njol.skript.api;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.intern.TopLevelExpression;
-import ch.njol.skript.lang.ExprParser;
-import ch.njol.skript.lang.SimpleVariable;
+import ch.njol.skript.api.intern.Statement;
+import ch.njol.skript.lang.SimpleExpression;
+import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Checker;
 
 /**
@@ -35,7 +35,7 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  * @see Skript#registerCondition(Class, String...)
  */
-public abstract class Condition extends TopLevelExpression {
+public abstract class Condition extends Statement {
 	
 	private boolean negated = false;
 	
@@ -45,7 +45,7 @@ public abstract class Condition extends TopLevelExpression {
 	 * Checks whether this condition is satisfied with the given event. This should not alter the event or the world in any way, as conditions are only checked until one returns
 	 * false. All subsequent conditions of the same trigger will then be omitted.<br/>
 	 * <br/>
-	 * You might want to use {@link SimpleVariable#check(Event, Checker)}
+	 * You might want to use {@link SimpleExpression#check(Event, Checker)}
 	 * 
 	 * @param e the event to check
 	 * @return <code>true</code> if the condition is satisfied, <code>false</code> otherwise or if the condition doesn't apply to this event.
@@ -54,7 +54,7 @@ public abstract class Condition extends TopLevelExpression {
 	public abstract boolean run(final Event e);
 	
 	/**
-	 * Sets the negation status of this condition. This will change the behaviour of {@link SimpleVariable#check(Event, Checker, Condition)}.
+	 * Sets the negation status of this condition. This will change the behaviour of {@link SimpleExpression#check(Event, Checker, Condition)}.
 	 * 
 	 * @param invert
 	 */
@@ -71,7 +71,7 @@ public abstract class Condition extends TopLevelExpression {
 	}
 	
 	public static Condition parse(final String s, final String defaultError) {
-		return (Condition) ExprParser.parse(s, Skript.getConditions().iterator(), false, defaultError);
+		return (Condition) SkriptParser.parse(s, Skript.getConditions().iterator(), false, defaultError);
 	}
 	
 }

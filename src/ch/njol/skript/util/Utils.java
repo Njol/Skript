@@ -43,7 +43,7 @@ import ch.njol.util.Validate;
 
 /**
  * 
- * Utility class. these functions are really useful if you intend to make new conditions, effects and variables.
+ * Utility class. these functions are really useful if you intend to make new conditions, effects and expressions.
  * 
  * @author Peter Güttinger
  * 

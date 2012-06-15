@@ -28,8 +28,8 @@ import org.bukkit.inventory.ItemStack;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.Testable;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 
 /**
@@ -44,14 +44,14 @@ public class EffEquip extends Effect implements Testable {
 				"make %players% wear %itemtypes%");
 	}
 	
-	private Variable<Player> players;
-	private Variable<ItemType> types;
+	private Expression<Player> players;
+	private Expression<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		players = (Variable<Player>) vars[0];
-		types = (Variable<ItemType>) vars[1];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		players = (Expression<Player>) vars[0];
+		types = (Expression<ItemType>) vars[1];
 		return true;
 	}
 	

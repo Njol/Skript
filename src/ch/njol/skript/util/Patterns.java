@@ -21,12 +21,12 @@
 
 package ch.njol.skript.util;
 
-import ch.njol.skript.lang.ExprParser.ParseResult;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.SyntaxElement;
 
 /**
- * A helper class useful when a variable/cond/eff/etc. needs to associate additional data with each pattern.
+ * A helper class useful when a expression/condition/effect/etc. needs to associate additional data with each pattern.
  * 
  * @author Peter Güttinger
  */
@@ -56,7 +56,7 @@ public class Patterns<T> {
 	
 	/**
 	 * 
-	 * @param matchedPattern The pattern to get the data to as given in {@link Expression#init(Variable[], int, ParseResult)}
+	 * @param matchedPattern The pattern to get the data to as given in {@link SyntaxElement#init(Expression[], int, ParseResult)}
 	 * @return
 	 * @throws ClassCastException If the item in the source array is not of the requested type
 	 */

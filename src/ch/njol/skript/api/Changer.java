@@ -23,20 +23,20 @@ package ch.njol.skript.api;
 
 import org.bukkit.event.Event;
 
-import ch.njol.skript.data.DefaultChangers;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.classes.DefaultChangers;
+import ch.njol.skript.lang.Expression;
 
 /**
- * An interface to declare changeable values. All Variables implement something similar like this by default, but refuse any change if {@link Variable#acceptChange(ChangeMode)} 
+ * An interface to declare changeable values. All Expressions implement something similar like this by default, but refuse any change if {@link Expression#acceptChange(ChangeMode)}
  * isn't overridden.<br/>
  * <br/>
  * Some useful Changers can be found in {@link DefaultChangers}
  * 
  * @author Peter Güttinger
  * @see DefaultChangers
- * @see Variable
+ * @see Expression
  */
-public interface Changer<T> {
+public interface Changer<T, V> {
 	
 	public static enum ChangeMode {
 		ADD, SET, REMOVE, CLEAR;
@@ -45,21 +45,30 @@ public interface Changer<T> {
 	/**
 	 * 
 	 * @param e
-	 * @param what The variable to change
-	 * @param delta A variable which returns instances of the class returned by {@link #acceptChange(ChangeMode)} for the given changemode.
+	 * @param what The expression to change
+	 * @param delta An expression which returns instances of the class returned by {@link #acceptChange(ChangeMode)} for the given changemode.
 	 * @param mode
 	 * 
 	 * @throws UnsupportedOperationException (optional) if this method was called on an unsupported ChangeMode.
 	 */
-	public abstract void change(Event e, Variable<T> what, Variable<?> delta, ChangeMode mode);
+	public abstract void change(T[] what, V delta, ChangeMode mode);
 	
 	/**
 	 * test whether this changer supports the given mode, and if yes what type it expects the <code>delta</code> to be.
 	 * 
 	 * @param mode
-	 * @return the type that {@link #change(Event, Variable, Variable, ChangeMode)} accepts as it's <code>delta</code> parameter's type param,
+	 * @return the type that {@link #change(Event, Expression, Expression, ChangeMode)} accepts as it's <code>delta</code> parameter's type param,
 	 *         or null if the given mode is not supported. For {@link ChangeMode#CLEAR} this can return any non-null class instance to mark clear as supported.
 	 */
-	public abstract Class<?> acceptChange(ChangeMode mode);
+	public abstract Class<? extends V> acceptChange(ChangeMode mode);
+	
+	public static abstract class ChangerUtils {
+		
+		@SuppressWarnings("unchecked")
+		public static final <T, V> void change(final Changer<T, V> changer, final Object[] what, final Object delta, final ChangeMode mode) {
+			changer.change((T[]) what, (V) delta, mode);
+		}
+		
+	}
 	
 }

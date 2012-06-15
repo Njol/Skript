@@ -21,14 +21,13 @@
 
 package ch.njol.skript.lang;
 
-public class ExpressionInfo<E extends Expression> {
+public class ExpressionInfo<E extends Expression<T>, T> extends SyntaxElementInfo<E> {
 	
-	public final Class<E> c;
-	public final String[] patterns;
+	public Class<T> returnType;
 	
-	public ExpressionInfo(final String[] patterns, final Class<E> c) {
-		this.patterns = patterns;
-		this.c = c;
+	public ExpressionInfo(final String[] patterns, final Class<T> returnType, final Class<E> c) {
+		super(patterns, c);
+		this.returnType = returnType;
 	}
 	
 }

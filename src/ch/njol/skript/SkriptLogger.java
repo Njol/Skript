@@ -73,10 +73,10 @@ public abstract class SkriptLogger {
 		 * This sublog is stopped if not already done
 		 * 
 		 * @param recipient
-		 * @param def error to send  if no errors were logged, can be null to not print any error if there are none
+		 * @param def error to send if no errors were logged, can be null to not print any error if there are none
 		 * @return whether there were any errors to send
 		 */
-		public final boolean printErrors(final CommandSender recipient, String def) {
+		public final boolean printErrors(final CommandSender recipient, final String def) {
 			SkriptLogger.stopSubLog(this);
 			boolean hasError = false;
 			for (final Pair<Level, String> e : log) {

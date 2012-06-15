@@ -27,8 +27,8 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.ExprParser.ParseResult;
-import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Slot;
 
 /**
@@ -46,15 +46,15 @@ public class EffHealth extends Effect {
 				"repair %slots% [by %-integer%]");
 	}
 	
-	private Variable<Object> damageables;
-	private Variable<Integer> damage;
+	private Expression<Object> damageables;
+	private Expression<Integer> damage;
 	private boolean heal = false;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Variable<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		damageables = (Variable<Object>) vars[0];
-		damage = (Variable<Integer>) vars[1];
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+		damageables = (Expression<Object>) vars[0];
+		damage = (Expression<Integer>) vars[1];
 		heal = (matchedPattern >= 2);
 		return true;
 	}

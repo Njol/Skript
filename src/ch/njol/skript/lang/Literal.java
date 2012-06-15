@@ -25,7 +25,7 @@ package ch.njol.skript.lang;
  * @author Peter Güttinger
  * 
  */
-public interface Literal<T> extends Variable<T> {
+public interface Literal<T> extends Expression<T> {
 	
 	public T[] getArray();
 	
