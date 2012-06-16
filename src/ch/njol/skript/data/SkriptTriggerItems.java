@@ -25,8 +25,6 @@ import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockDamageEvent;
-import org.bukkit.event.block.BlockFadeEvent;
-import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
@@ -93,6 +91,7 @@ import ch.njol.skript.conditions.CondCanHold;
 import ch.njol.skript.conditions.CondChance;
 import ch.njol.skript.conditions.CondInventoryContains;
 import ch.njol.skript.conditions.CondIs;
+import ch.njol.skript.conditions.CondIsSet;
 import ch.njol.skript.conditions.CondItemInHand;
 import ch.njol.skript.conditions.CondPermission;
 import ch.njol.skript.conditions.CondWeather;
@@ -125,7 +124,9 @@ import ch.njol.skript.expressions.ExprArmorSlot;
 import ch.njol.skript.expressions.ExprAttacked;
 import ch.njol.skript.expressions.ExprAttacker;
 import ch.njol.skript.expressions.ExprBlock;
+import ch.njol.skript.expressions.ExprColorOf;
 import ch.njol.skript.expressions.ExprCreature;
+import ch.njol.skript.expressions.ExprDataOf;
 import ch.njol.skript.expressions.ExprDistance;
 import ch.njol.skript.expressions.ExprDrops;
 import ch.njol.skript.expressions.ExprEntity;
@@ -149,6 +150,7 @@ import ch.njol.skript.expressions.ExprTimeState;
 import ch.njol.skript.expressions.ExprTool;
 import ch.njol.skript.expressions.ExprWeather;
 import ch.njol.skript.expressions.ExprWorld;
+import ch.njol.skript.expressions.ExprXOfItem;
 import ch.njol.skript.loops.LoopVarArguments;
 import ch.njol.skript.loops.LoopVarBlockLine;
 import ch.njol.skript.loops.LoopVarBlockSphere;
@@ -169,11 +171,12 @@ public class SkriptTriggerItems {
 				
 				CondCanHold.class,
 				CondChance.class,
-				CondPermission.class,        // has permission
-				CondInventoryContains.class, // has
-				CondItemInHand.class, // * is holding
-				CondIs.class,         // * is *
-				CondWeather.class,    // is *
+				CondPermission.class,
+				CondInventoryContains.class,
+				CondItemInHand.class,
+				CondIsSet.class,
+				CondIs.class,
+				CondWeather.class,
 				
 				EffChange.class,
 				EffBroadcast.class,
@@ -197,7 +200,9 @@ public class SkriptTriggerItems {
 				ExprAttacked.class,
 				ExprAttacker.class,
 				ExprBlock.class,
+				ExprColorOf.class,
 				ExprCreature.class,
+				ExprDataOf.class,
 				ExprDistance.class,
 				ExprDrops.class,
 				ExprEntity.class,
@@ -214,13 +219,14 @@ public class SkriptTriggerItems {
 				ExprPlayer.class,
 				ExprProjectile.class,
 				ExprRandom.class,
-				ExprTargetedBlock.class, // targeted block
-				ExprTarget.class,        // targeted *
+				ExprTargetedBlock.class,
+				ExprTarget.class,
 				ExprTime.class,
 				ExprTimeState.class,
 				ExprTool.class,
 				ExprWeather.class,
 				ExprWorld.class,
+				ExprXOfItem.class,
 				
 				LoopVarArguments.class,
 				LoopVarBlockLine.class,
@@ -253,8 +259,6 @@ public class SkriptTriggerItems {
 		
 		Skript.registerEvent(SimpleEvent.class, BlockCanBuildEvent.class, "can build check");
 		Skript.registerEvent(SimpleEvent.class, BlockDamageEvent.class, "block damage");
-		Skript.registerEvent(SimpleEvent.class, BlockFadeEvent.class, "fad(e|ing)");
-		Skript.registerEvent(SimpleEvent.class, BlockFormEvent.class, "form[ing]");
 		Skript.registerEvent(SimpleEvent.class, BlockFromToEvent.class, "flow[ing]");
 		Skript.registerEvent(SimpleEvent.class, BlockIgniteEvent.class, "(ignite|ignition)");
 		Skript.registerEvent(SimpleEvent.class, BlockPhysicsEvent.class, "physics");
@@ -298,12 +302,12 @@ public class SkriptTriggerItems {
 				return ((PlayerInteractEvent) e).getAction() == Action.PHYSICAL;
 			}
 		}
-		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class, "[pressure] plate");
+		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class, "[stepping on] [pressure] plate");
 		Skript.registerEvent(SimpleEvent.class, PlayerItemHeldEvent.class, "item held change");
 		Skript.registerEvent(SimpleEvent.class, PlayerJoinEvent.class, "join[ing]");
-		Skript.registerEvent(SimpleEvent.class, PlayerKickEvent.class, "kick|being kicked");
-		Skript.registerEvent(SimpleEvent.class, PlayerLoginEvent.class, "login|logging in");
-		Skript.registerEvent(SimpleEvent.class, PlayerPickupItemEvent.class, "pickup|picking up");
+		Skript.registerEvent(SimpleEvent.class, PlayerKickEvent.class, "(kick|being kicked)");
+		Skript.registerEvent(SimpleEvent.class, PlayerLoginEvent.class, "(login|logging in)");
+		Skript.registerEvent(SimpleEvent.class, PlayerPickupItemEvent.class, "(pickup|picking up)");
 		Skript.registerEvent(SimpleEvent.class, PlayerPortalEvent.class, "portal");
 		Skript.registerEvent(SimpleEvent.class, PlayerPreLoginEvent.class, "prelogin");
 		Skript.registerEvent(SimpleEvent.class, PlayerQuitEvent.class, "quit[ting]");

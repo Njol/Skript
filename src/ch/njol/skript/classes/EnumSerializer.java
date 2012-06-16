@@ -19,41 +19,32 @@
  * 
  */
 
-package ch.njol.skript.conditions;
-
-import org.bukkit.event.Event;
-
-import ch.njol.skript.Skript;
-import ch.njol.skript.api.Condition;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
+package ch.njol.skript.classes;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class CondChance extends Condition {
+public class EnumSerializer<T extends Enum<T>> implements Serializer<T> {
 	
-	static {
-		Skript.registerCondition(CondChance.class, "chance of <\\d+(.\\d+)?>\\%");
-	}
+	private final Class<T> c;
 	
-	private double chance;
-	
-	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		chance = Double.parseDouble(parser.regexes.get(0).group()) / 100;
-		return true;
+	public EnumSerializer(final Class<T> c) {
+		this.c = c;
 	}
 	
 	@Override
-	public boolean check(final Event e) {
-		return Math.random() < chance;
+	public String serialize(final T t) {
+		return t.name();
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "chance of " + chance * 100 + "%";
+	public T deserialize(final String s) {
+		try {
+			return Enum.valueOf(c, s);
+		} catch (final IllegalArgumentException e) {
+			return null;
+		}
 	}
 	
 }

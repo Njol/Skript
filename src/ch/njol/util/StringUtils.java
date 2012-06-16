@@ -111,4 +111,42 @@ public abstract class StringUtils {
 			return s;
 		return Character.toUpperCase(s.charAt(0)) + s.substring(1);
 	}
+	
+	public static final String substring(final String s, int start, int end) {
+		if (start < 0)
+			start = start + s.length();
+		if (end < 0)
+			end = end + s.length();
+		if (end < start)
+			throw new IllegalArgumentException("invalid indices");
+		return s.substring(start, end);
+	}
+	
+	/**
+	 * Capitalizes the first character of the string and all characters that follow periods.
+	 * 
+	 * @param string
+	 * @return
+	 */
+	public static String fixCapitalization(final String string) {
+		final char[] s = string.toCharArray();
+		int c = 0;
+		while (c != -1) {
+			while (c < s.length && Character.isWhitespace(s[c]))
+				c++;
+			if (c == s.length)
+				return new String(s);
+			s[c] = Character.toUpperCase(s[c]);
+			c = indexOf(s, '.', c + 1);
+		}
+		return new String(s);
+	}
+	
+	private final static int indexOf(final char[] s, final char c, final int start) {
+		for (int i = start; i < s.length; i++)
+			if (s[i] == c)
+				return i;
+		return -1;
+	}
+	
 }

@@ -33,7 +33,6 @@ import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.intern.ConvertedExpression;
 import ch.njol.skript.api.intern.SkriptAPIException;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 
@@ -51,9 +50,6 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	private int time = 0;
 	
 	protected SimpleExpression() {}
-	
-	@Override
-	public abstract boolean init(Expression<?>[] exprs, int matchedPattern, ParseResult parseResult);
 	
 	@Override
 	public final T getSingle(final Event e) {

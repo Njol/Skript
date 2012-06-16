@@ -21,12 +21,16 @@
 
 package ch.njol.skript.events;
 
-import org.bukkit.block.Block;
+import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.painting.PaintingBreakEvent;
+import org.bukkit.event.painting.PaintingEvent;
 import org.bukkit.event.painting.PaintingPlaceEvent;
 
 import ch.njol.skript.Skript;
@@ -47,6 +51,8 @@ public class EvtBlock extends SkriptEvent {
 		Skript.registerEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class), "(break[ing]|min(e|ing)) [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, BlockBurnEvent.class, "burn[ing] [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, Skript.array(BlockPlaceEvent.class, PaintingPlaceEvent.class), "plac(e|ing) [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, BlockFadeEvent.class, "fad(e|ing) [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, BlockFormEvent.class, "form[ing] [[of] %itemtypes%]");
 	}
 	
 	private Literal<ItemType> types;
@@ -68,20 +74,29 @@ public class EvtBlock extends SkriptEvent {
 		}
 		if (types == null)
 			return true;
-		final Block b = Skript.getEventValue(e, Block.class, 0);
-		if (b == null)
-			return false;
+		final int id;
+		final short durability;
+		if (e instanceof BlockEvent) {
+			id = ((BlockEvent) e).getBlock().getTypeId();
+			durability = ((BlockEvent) e).getBlock().getData();
+		} else if (e instanceof PaintingEvent) {
+			id = Material.PAINTING.getId();
+			durability = 0;
+			//((PaintingEvent) e).getPainting().getArt().getId();
+		} else {
+			throw new IllegalStateException();
+		}
 		return types.check(e, new Checker<ItemType>() {
 			@Override
 			public boolean check(final ItemType t) {
-				return t.isOfType(b);
+				return t.isOfType(id, durability);
 			}
 		});
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "break/place/burn of " + Skript.toString(types);
+		return "break/place/burn/fade/form of " + Skript.toString(types);
 	}
 	
 }

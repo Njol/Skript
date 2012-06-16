@@ -22,6 +22,7 @@
 package ch.njol.skript.classes;
 
 import org.bukkit.entity.Entity;
+import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
@@ -29,7 +30,9 @@ import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.SimpleLiteral;
+import ch.njol.skript.util.Color;
 import ch.njol.skript.util.EntityType;
+import ch.njol.skript.util.ItemData;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Offset;
 import ch.njol.skript.util.Slot;
@@ -49,7 +52,7 @@ public class SkriptClasses {
 	
 	static {
 		Skript.registerClass(new ClassInfo<WeatherType>(WeatherType.class, "weathertype")
-				.user("weather type", "weather ?types?", "weather conditions", "weathers?")
+				.user("weather type", "weather ?types?", "weather conditions?", "weathers?")
 				.defaultExpression(new SimpleLiteral<WeatherType>(WeatherType.CLEAR, true))
 				.parser(new Parser<WeatherType>() {
 					
@@ -63,10 +66,8 @@ public class SkriptClasses {
 						return o.toString();
 					}
 					
-				}));
-	}
-	
-	static {
+				}).serializer(new EnumSerializer<WeatherType>(WeatherType.class)));
+		
 		Skript.registerClass(new ClassInfo<EntityType>(EntityType.class, "entitytype")
 				.user("entity type", "entity ?types?", "enit(y|ies)")
 				.defaultExpression(new SimpleLiteral<EntityType>(new EntityType(Entity.class, 1), true))
@@ -80,10 +81,32 @@ public class SkriptClasses {
 					public String toString(final EntityType t) {
 						return t.toString();
 					}
+				}).serializer(new Serializer<EntityType>() {
+					@Override
+					public String serialize(final EntityType t) {
+						return t.c.getName() + "*" + t.amount;
+					}
+					
+					@SuppressWarnings("unchecked")
+					@Override
+					public EntityType deserialize(final String s) {
+						final String[] split = s.split("\\*");
+						if (split.length != 2)
+							return null;
+						try {
+							return new EntityType((Class<? extends Entity>) Entity.class.asSubclass(Class.forName(split[0])), Integer.parseInt(split[1]));
+						} catch (final LinkageError e) {
+							return null;
+						} catch (final ClassNotFoundException e) {
+							return null;
+						} catch (final ClassCastException e) {
+							return null;
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
 				}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<VariableString>(VariableString.class, "variablestring")
 				.parser(new Parser<VariableString>() {
 					
@@ -98,11 +121,9 @@ public class SkriptClasses {
 					}
 					
 				}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<ItemType>(ItemType.class, "itemtype")
-				.user("item type", "item ?type", "items", "materials")
+				.user("item type", "item ?types?", "items", "materials")
 				.parser(new Parser<ItemType>() {
 					@Override
 					public ItemType parse(final String s) {
@@ -118,30 +139,77 @@ public class SkriptClasses {
 					public String getDebugMessage(final ItemType t) {
 						return t.getDebugMessage();
 					}
+				}).serializer(new Serializer<ItemType>() {
+					@Override
+					public String serialize(final ItemType t) {
+						final StringBuilder b = new StringBuilder();
+						b.append(t.getInternalAmount());
+						b.append("," + t.isAll());
+						for (final ItemData d : t.getTypes()) {
+							b.append("," + d.getId());
+							b.append(":" + d.dataMin);
+							b.append("/" + d.dataMax);
+						}
+						return t.toString();
+					}
+					
+					@Override
+					public ItemType deserialize(final String s) {
+						final String[] split = s.split("[,:/]");
+						if (split.length < 5 || (split.length - 2) % 3 != 0)
+							return null;
+						final ItemType t = new ItemType();
+						try {
+							t.setAmount(Integer.parseInt(split[0]));
+							if (split[1].equals("true"))
+								t.setAll(true);
+							else if (split[1].equals("false"))
+								t.setAll(false);
+							else
+								return null;
+							for (int i = 2; i < split.length; i += 3) {
+								t.add(new ItemData(Integer.parseInt(split[i]), Short.parseShort(split[i + 1]), Short.parseShort(split[i + 2])));
+							}
+							return t;
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
 				}));
-	}
-	
-	static {
-		Skript.registerClass(new ClassInfo<Time>(Time.class, "time").user("time", "times?").defaultExpression(new EventValueExpression<Time>(Time.class)).parser(new Parser<Time>() {
-			
-			@Override
-			public Time parse(final String s) {
-				return Time.parse(s);
-			}
-			
-			@Override
-			public String toString(final Time t) {
-				return t.toString();
-			}
-			
-		}));
-	}
-	
-	static {
+		
+		Skript.registerClass(new ClassInfo<Time>(Time.class, "time")
+				.user("time", "times?")
+				.defaultExpression(new EventValueExpression<Time>(Time.class))
+				.parser(new Parser<Time>() {
+					
+					@Override
+					public Time parse(final String s) {
+						return Time.parse(s);
+					}
+					
+					@Override
+					public String toString(final Time t) {
+						return t.toString();
+					}
+					
+				}).serializer(new Serializer<Time>() {
+					@Override
+					public String serialize(final Time t) {
+						return "" + t.getTicks();
+					}
+					
+					@Override
+					public Time deserialize(final String s) {
+						try {
+							return new Time(Integer.parseInt(s));
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
+				}));
+		
 		new Timespan(0);
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<Timeperiod>(Timeperiod.class, "timeperiod")
 				.user("time period", "time ?periods?", "durations?")
 				.defaultExpression(new SimpleLiteral<Timeperiod>(new Timeperiod(0, 23999), true))
@@ -175,10 +243,25 @@ public class SkriptClasses {
 					public String toString(final Timeperiod o) {
 						return o.toString();
 					}
+				}).serializer(new Serializer<Timeperiod>() {
+					@Override
+					public String serialize(final Timeperiod t) {
+						return t.start + "-" + t.end;
+					}
+					
+					@Override
+					public Timeperiod deserialize(final String s) {
+						final String[] split = s.split("-");
+						if (split.length != 2)
+							return null;
+						try {
+							return new Timeperiod(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
 				}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<Offset>(Offset.class, "offset")
 				.user("offset", "offset")
 				.defaultExpression(new SimpleLiteral<Offset>(new Offset(0, 0, 0), true))
@@ -194,9 +277,7 @@ public class SkriptClasses {
 						return o.toString();
 					}
 				}));
-	}
-	
-	static {
+		
 		Skript.registerClass(new ClassInfo<Slot>(Slot.class, "slot")
 				.defaultExpression(new EventValueExpression<Slot>(Slot.class))
 				.changer(new Changer<Slot, ItemType>() {
@@ -228,7 +309,21 @@ public class SkriptClasses {
 						}
 					}
 					
-				}));
+				}).serializeAs(ItemStack.class));
+		
+		Skript.registerClass(new ClassInfo<Color>(Color.class, "color")
+				.user("color", "colou?rs?")
+				.parser(new Parser<Color>() {
+					@Override
+					public String toString(final Color c) {
+						return c.toString();
+					}
+					
+					@Override
+					public Color parse(final String s) {
+						return Color.byName(s);
+					}
+				}).serializer(new EnumSerializer<Color>(Color.class)));
 	}
 	
 }

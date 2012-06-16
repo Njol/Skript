@@ -74,7 +74,7 @@ final public class TriggerFileLoader {
 	private static String indentation = "";
 	
 	private final static String replaceOptions(final String s) {
-		return StringUtils.replaceAll(s, "\\{(.+?)\\}", new Callback<String, Matcher>() {
+		return StringUtils.replaceAll(s, "\\{@(.+?)\\}", new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
 				final String option = options.get(m.group(1));
@@ -113,7 +113,7 @@ final public class TriggerFileLoader {
 					final String l = replaceOptions(n.getName().substring("loop ".length()));
 					if (l == null)
 						continue;
-					final LoopExpr<?> loopvar = (LoopExpr<?>) SkriptParser.parse(l, Skript.loops.listIterator(), false, "can't understand this loop: '" + n.getName() + "'");
+					final LoopExpr<?> loopvar = (LoopExpr<?>) SkriptParser.parse(l, Skript.loops.listIterator(), false, false, "can't understand this loop: '" + n.getName() + "'");
 					if (loopvar == null) {
 						continue;
 					}

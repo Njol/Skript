@@ -50,7 +50,7 @@ public abstract class Effect extends Statement {
 	}
 	
 	public static Effect parse(final String s, final String defaultError) {
-		return (Effect) SkriptParser.parse(s, Skript.getEffects().iterator(), false, defaultError);
+		return (Effect) SkriptParser.parse(s, Skript.getEffects().iterator(), false, false, defaultError);
 	}
 	
 }

@@ -19,57 +19,63 @@
  * 
  */
 
-package ch.njol.skript.conditions;
+package ch.njol.skript.expressions;
 
-import org.bukkit.World;
 import org.bukkit.event.Event;
+import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Condition;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.WeatherType;
-import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class CondWeather extends Condition {
+public class ExprXOfItem extends SimpleExpression<ItemStack> {
 	
 	static {
-		Skript.registerCondition(CondWeather.class, "is %weathertypes% [in %worlds%]");
+		Skript.registerExpression(ExprXOfItem.class, ItemStack.class, "<\\d+> of %itemstacks%");
 	}
 	
-	private Expression<WeatherType> weathers;
-	private Expression<World> worlds;
+	private int amount;
+	private Expression<ItemStack> items;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		weathers = (Expression<WeatherType>) vars[0];
-		worlds = (Expression<World>) vars[1];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+		amount = Integer.parseInt(parseResult.regexes.get(0).group());
+		items = (Expression<ItemStack>) exprs[0];
 		return true;
 	}
 	
 	@Override
-	public boolean check(final Event e) {
-		return weathers.check(e, new Checker<WeatherType>() {
-			@Override
-			public boolean check(final WeatherType wt) {
-				return worlds.check(e, new Checker<World>() {
-					@Override
-					public boolean check(final World w) {
-						return wt.isWeather(w);
-					}
-				});
-			}
-		}, this);
+	public boolean isSingle() {
+		return items.isSingle();
+	}
+	
+	@Override
+	public Class<? extends ItemStack> getReturnType() {
+		return ItemStack.class;
+	}
+	
+	@Override
+	protected ItemStack[] getAll(final Event e) {
+		final ItemStack[] iss = items.getArray(e);
+		for (final ItemStack is : iss)
+			is.setAmount(amount);
+		return iss;
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "is " + weathers.getDebugMessage(e) + " in " + worlds.getDebugMessage(e);
+		return amount + " of " + items.getDebugMessage(e);
+	}
+	
+	@Override
+	public String toString() {
+		return amount + " of " + items;
 	}
 	
 }

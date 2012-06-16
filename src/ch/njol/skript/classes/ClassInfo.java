@@ -23,10 +23,10 @@ package ch.njol.skript.classes;
 
 import java.util.regex.Pattern;
 
-import ch.njol.skript.Serializer;
 import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.DefaultExpression;
 import ch.njol.skript.api.Parser;
+import ch.njol.skript.api.intern.SkriptAPIException;
 
 public class ClassInfo<T> {
 	
@@ -42,8 +42,8 @@ public class ClassInfo<T> {
 	
 	private Changer<T, ?> changer = null;
 	
-	// TODO
 	private Serializer<T> serializer = null;
+	private Class<?> serializeAs = null;
 	
 	/**
 	 * @param c The class
@@ -64,7 +64,7 @@ public class ClassInfo<T> {
 	
 	/**
 	 * @param name The name of this class as it is displayed to players
-	 * @param userInputPatterns <u>Regex</u> patterns to match &lt;arg type&gt;s in commands
+	 * @param userInputPatterns <u>Regex</u> patterns to match &lt;arg type&gt;s in commands. These patterns must match singular and plural.
 	 */
 	public ClassInfo<T> user(final String name, final String... userInputPatterns) {
 		this.name = name;
@@ -84,7 +84,16 @@ public class ClassInfo<T> {
 	}
 	
 	public ClassInfo<T> serializer(final Serializer<T> serializer) {
+		if (serializeAs != null)
+			throw new SkriptAPIException("serializeAs already set");
 		this.serializer = serializer;
+		return this;
+	}
+	
+	public ClassInfo<T> serializeAs(final Class<?> serializeAs) {
+		if (serializer != null)
+			throw new SkriptAPIException("serializer already set");
+		this.serializeAs = serializeAs;
 		return this;
 	}
 	
@@ -123,5 +132,9 @@ public class ClassInfo<T> {
 	
 	public Serializer<T> getSerializer() {
 		return serializer;
+	}
+	
+	public Class<?> getSerializeAs() {
+		return serializeAs;
 	}
 }

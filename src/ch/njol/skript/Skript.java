@@ -23,6 +23,7 @@ package ch.njol.skript;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +43,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -76,6 +78,7 @@ import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.classes.BukkitClasses;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.DefaultClasses;
+import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.classes.SkriptClasses;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.command.SkriptCommand;
@@ -168,9 +171,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		new SkriptEventValues();
 		new SkriptTriggerItems();
 		
-//		automatically added by Bukkit now
-//		info("loading Skript v" + getDescription().getVersion() + "...");
-		
 		loadMainConfig();
 		
 		if (logNormal())
@@ -190,6 +190,8 @@ public final class Skript extends JavaPlugin implements Listener {
 			public void run() {
 				Skript.stopAcceptingRegistrations();
 				
+				Skript.loadVariables();
+				
 				Skript.loadTriggerFiles();
 				
 				isLoading = false;
@@ -204,8 +206,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	@Override
 	public void onDisable() {
-		// info("disabled");
 		Bukkit.getScheduler().cancelTasks(this);
+		saveVariables();
 	}
 	
 //	@Override
@@ -275,6 +277,58 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static void enableListener() {
 		listenerEnabled = true;
+	}
+	
+	// ================ VARIABLES ================
+	
+	private final static String varFile = "variables.yml";
+	
+	public final static Map<String, Object> variables = new HashMap<String, Object>();
+	
+	private final static void loadVariables() {
+		final File varFile = new File(instance.getDataFolder(), Skript.varFile);
+		try {
+			varFile.createNewFile();
+			if (!varFile.canWrite()) {
+				Skript.error("Cannot write to variables file - no variables will be saved!");
+			}
+		} catch (final IOException e) {
+			Skript.error("Cannot create variables file - no variables will be saved!");
+		}
+		final YamlConfiguration varConfig = YamlConfiguration.loadConfiguration(varFile);
+		final SubLog log = SkriptLogger.startSubLog();
+		int unsuccessful = 0;
+		for (final Entry<String, Object> e : varConfig.getValues(true).entrySet()) {
+			if (!(e.getValue() instanceof String))
+				continue;
+			final Object d = Skript.deserialize((String) e.getValue());
+			if (d == null) {
+				unsuccessful++;
+				continue;
+			}
+			variables.put(e.getKey(), d);
+		}
+		SkriptLogger.stopSubLog(log);
+		if (unsuccessful > 0) {
+			Skript.error(unsuccessful+" variables could not be loaded!");
+			log.printErrors(null);
+		}
+	}
+	
+	private final static void saveVariables() {
+		final File varFile = new File(instance.getDataFolder(), Skript.varFile);
+		final YamlConfiguration varConfig = new YamlConfiguration();
+		for (final Entry<String, Object> e : variables.entrySet()) {
+			final String s = serialize(e.getValue());
+			if (s == null)
+				continue;
+			varConfig.set(e.getKey(), s);
+		}
+		try {
+			varConfig.save(varFile);
+		} catch (final IOException e) {
+			Skript.error("Unable to save variables - all changes are lost!");
+		}
 	}
 	
 	// ================ REGISTRATIONS ================
@@ -433,6 +487,10 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <F, T> T convert(final F o, final Class<T> to) {
+		if (o == null)
+			return null;
+		if (to.isInstance(o))
+			return (T) o;
 		final Converter<? super F, ? extends T> conv = (Converter<? super F, ? extends T>) getConverter(o.getClass(), to);
 		if (conv == null)
 			return null;
@@ -745,6 +803,42 @@ public final class Skript extends JavaPlugin implements Listener {
 			}
 		}
 		return String.valueOf(o);
+	}
+	
+	// ================ SERIALIZATION (part of classes) ================
+	
+	public final static String serialize(final Object o) {
+		final ClassInfo<?> ci = getSuperClassInfo(o.getClass());
+		if (ci == null)
+			return null;
+		if (ci.getSerializeAs() != null) {
+			final ClassInfo<?> as = getClassInfo(ci.getSerializeAs());
+			if (as == null || as.getSerializer() == null)
+				throw new SkriptAPIException(ci.getSerializeAs().getName() + ", the class to serialize " + o.getClass().getName() + " as, is not registered or not serializable");
+			final Object s = convert(o, as.getC());
+			if (s == null)
+				return null;
+			return "<" + as.getCodeName() + ">" + serialize(as.getSerializer(), s);
+		} else if (ci.getSerializer() != null) {
+			return "<" + ci.getCodeName() + ">" + serialize(ci.getSerializer(), o);
+		}
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private final static <T> String serialize(final Serializer<T> s, final Object o) {
+		return s.serialize((T) o);
+	}
+	
+	public final static Object deserialize(final String s) {
+		int c;
+		if (!s.startsWith("<") || (c = s.indexOf('>')) == -1)
+			return null;
+		final String codeName = s.substring(1, c);
+		final ClassInfo<?> ci = getClassInfo(codeName);
+		if (ci == null || ci.getSerializer() == null)
+			return null;
+		return ci.getSerializer().deserialize(s.substring(c + 1));
 	}
 	
 	// ================ COMPARATORS ================

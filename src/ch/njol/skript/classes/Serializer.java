@@ -19,7 +19,7 @@
  * 
  */
 
-package ch.njol.skript;
+package ch.njol.skript.classes;
 
 /**
  * @author Peter Güttinger
@@ -27,8 +27,19 @@ package ch.njol.skript;
  */
 public interface Serializer<T> {
 	
+	/**
+	 * Serializes an object to a string.
+	 * 
+	 * @param o
+	 * @return
+	 */
 	public String serialize(T o);
 	
+	/**
+	 * 
+	 * @param s
+	 * @return The deserialized object or null if the input is invalid. An error message may be logged to specify the cause.
+	 */
 	public T deserialize(String s);
 	
 }

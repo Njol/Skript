@@ -30,6 +30,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Utils;
 
 /**
  * 
@@ -55,7 +56,8 @@ public class EffBroadcast extends Effect {
 	
 	@Override
 	public void execute(final Event e) {
-		for (final String m : messages.getArray(e)) {
+		for (String m : messages.getArray(e)) {
+			m = Utils.prepareMessage(m);
 			if (worlds == null) {
 				Bukkit.broadcastMessage(m);
 			} else {

@@ -21,11 +21,14 @@
 
 package ch.njol.skript.util;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Creature;
@@ -38,7 +41,9 @@ import org.bukkit.util.Vector;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.effects.EffTeleport;
+import ch.njol.util.Callback;
 import ch.njol.util.Pair;
+import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
 
 /**
@@ -621,6 +626,44 @@ public abstract class Utils {
 			default:
 				return 1;
 		}
+	}
+	
+	private final static Map<String, String> chat = new HashMap<String, String>();
+	static {
+		chat.put("bold", ChatColor.BOLD.toString());
+		chat.put("b", ChatColor.BOLD.toString());
+		
+		chat.put("italic", ChatColor.ITALIC.toString());
+		chat.put("i", ChatColor.ITALIC.toString());
+		
+		chat.put("strikethrough", ChatColor.STRIKETHROUGH.toString());
+		chat.put("strike", ChatColor.STRIKETHROUGH.toString());
+		chat.put("s", ChatColor.STRIKETHROUGH.toString());
+		
+		chat.put("underlined", ChatColor.UNDERLINE.toString());
+		chat.put("underline", ChatColor.UNDERLINE.toString());
+		chat.put("u", ChatColor.UNDERLINE.toString());
+		
+		chat.put("magic", ChatColor.MAGIC.toString());
+		
+		chat.put("reset", ChatColor.RESET.toString());
+	}
+	
+	public static final String prepareMessage(String message) {
+		message = StringUtils.replaceAll(message, "<(.+?)>", new Callback<String, Matcher>() {
+			@Override
+			public String run(final Matcher m) {
+				final Color c = Color.byName(m.group(1));
+				if (c != null)
+					return c.getChat();
+				final String f = chat.get(m.group(1).toLowerCase());
+				if (f != null)
+					return f;
+				return m.group();
+			}
+		});
+		message = StringUtils.fixCapitalization(message);
+		return message;
 	}
 	
 }

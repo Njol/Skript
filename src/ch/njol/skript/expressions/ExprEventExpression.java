@@ -42,7 +42,7 @@ public class ExprEventExpression extends WrapperExpression<Object> {
 	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		expr = (Expression<?>) SkriptParser.parse(parser.regexes.get(0).group(), Skript.getExpressions().iterator(), false, "'" + parser.expr + "' is not an event expression");
+		expr = (Expression<?>) SkriptParser.parse(parser.regexes.get(0).group(), Skript.getExpressions().iterator(), false, false, "'" + parser.expr + "' is not an event expression");
 		return expr != null;
 	}
 	

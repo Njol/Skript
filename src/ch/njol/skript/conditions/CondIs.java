@@ -223,7 +223,7 @@ public class CondIs extends Condition {
 	}
 	
 	@Override
-	public boolean run(final Event e) {
+	public boolean check(final Event e) {
 		return first.check(e, new Checker<Object>() {
 			@Override
 			public boolean check(final Object o1) {

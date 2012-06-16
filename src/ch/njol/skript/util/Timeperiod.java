@@ -27,19 +27,20 @@ package ch.njol.skript.util;
  * 
  */
 public class Timeperiod {
-	int start = 0, end = 24000;
+	
+	public final int start, end;
 	
 	public Timeperiod(final int start, final int end) {
-		this.start = start;
-		this.end = end;
+		this.start = (start + 24000) % 24000;
+		this.end = (end + 24000) % 24000;
 	}
 	
 	public Timeperiod(final int time) {
-		start = end = time;
+		start = end = (time + 24000) % 24000;
 	}
 	
 	public boolean contains(final int time) {
-		return (time >= start && time <= end) || end < start && (time <= end || time >= start);
+		return start <= end ? (time >= start && time <= end) : (time <= end || time >= start);
 	}
 	
 	public boolean contains(final Time t) {

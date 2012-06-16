@@ -28,7 +28,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
+import ch.njol.skript.util.Utils;
 
 /**
  * 
@@ -59,9 +59,10 @@ public class EffMessage extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
-		for (final String message : messages.getArray(e)) {
+		for (String message : messages.getArray(e)) {
+			message = Utils.prepareMessage(message);
 			for (final CommandSender s : recipients.getArray(e)) {
-				s.sendMessage(StringUtils.firstToUpper(message));
+				s.sendMessage(message);
 			}
 		}
 	}

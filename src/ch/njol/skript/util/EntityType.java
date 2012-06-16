@@ -118,8 +118,8 @@ public class EntityType {
 	public static String toString(final Entity e) {
 		return new EntityType(e).toString();
 	}
-
-	public static String toString(Class<? extends Entity> c) {
+	
+	public static String toString(final Class<? extends Entity> c) {
 		return new EntityType(c, 1).toString();
 	}
 	
@@ -217,5 +217,5 @@ public class EntityType {
 		}
 		return "unknown entity type";
 	}
-
+	
 }

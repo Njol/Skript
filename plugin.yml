@@ -11,7 +11,7 @@ main: ch.njol.skript.Skript
 #load: startup # not needed for addons, as they should add [soft-]depend: Skript to their plugin.yml
 # must be uncommented to ever be able to have 'on world load' triggers
 
-version: 1.1
+version: 1.2
 #commands:
 #    skript:
 #        description: allows to modify the configuration files

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Serializer;
 import ch.njol.util.Pair;
 
 /**
@@ -43,77 +44,92 @@ public class Timespan {
 		simpleValues.put("hour", 20 * 60 * 60);
 		simpleValues.put("day", 20 * 60 * 60 * 24);
 		
-		Skript.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan").parser(new Parser<Timespan>() {
-			@Override
-			public Timespan parse(String s) {
-				if (s.isEmpty())
-					return null;
-				s = s.toLowerCase();
-				int t = 0;
-				boolean minecraftTime = false;
-				boolean setMinecraftTime = false;
-				if (s.matches("^\\d+:\\d\\d$")) {
-					final String[] ss = s.split(":");
-					final int[] times = {20 * 60, 20};
-					for (int i = 0; i < ss.length; i++) {
-						t += times[i] * Integer.parseInt(ss[i]);
-					}
-				} else {
-					final String[] subs = s.split("\\s+");
-					for (int i = 0; i < subs.length; i++) {
-						String sub = subs[i];
-						
-						if (sub.equals("and")) {
-							if (i == 0 || i == subs.length - 1)
-								return null;
-							continue;
-						}
-						
-						float amount = 1f;
-						if (sub.matches("^\\d+(.\\d+)?$")) {
-							if (i == subs.length)
-								return null;
-							amount = Float.parseFloat(sub);
-							sub = subs[++i];
-						}
-						
-						if (sub.equals("real") || sub.equals("rl") || sub.equals("irl")) {
-							if (i == subs.length || setMinecraftTime && minecraftTime)
-								return null;
-							sub = subs[++i];
-						} else if (sub.equals("mc") || sub.equals("minecraft")) {
-							if (i == subs.length || setMinecraftTime && !minecraftTime)
-								return null;
-							minecraftTime = true;
-							sub = subs[++i];
-						}
-						
-						if (minecraftTime)
-							amount /= 72f;
-						
-						if (sub.endsWith(","))
-							sub = sub.substring(0, sub.length() - 1);
-						
-						final Pair<String, Boolean> p = Utils.getPlural(sub, amount != 1);
-						sub = p.first;
-						
-						if (!simpleValues.containsKey(sub))
+		Skript.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan")
+				.parser(new Parser<Timespan>() {
+					@Override
+					public Timespan parse(String s) {
+						if (s.isEmpty())
 							return null;
-						
-						t += Math.round(amount * simpleValues.get(sub));
-						
-						setMinecraftTime = true;
-						
+						s = s.toLowerCase();
+						int t = 0;
+						boolean minecraftTime = false;
+						boolean setMinecraftTime = false;
+						if (s.matches("^\\d+:\\d\\d$")) {
+							final String[] ss = s.split(":");
+							final int[] times = {20 * 60, 20};
+							for (int i = 0; i < ss.length; i++) {
+								t += times[i] * Integer.parseInt(ss[i]);
+							}
+						} else {
+							final String[] subs = s.split("\\s+");
+							for (int i = 0; i < subs.length; i++) {
+								String sub = subs[i];
+								
+								if (sub.equals("and")) {
+									if (i == 0 || i == subs.length - 1)
+										return null;
+									continue;
+								}
+								
+								float amount = 1f;
+								if (sub.matches("^\\d+(.\\d+)?$")) {
+									if (i == subs.length)
+										return null;
+									amount = Float.parseFloat(sub);
+									sub = subs[++i];
+								}
+								
+								if (sub.equals("real") || sub.equals("rl") || sub.equals("irl")) {
+									if (i == subs.length || setMinecraftTime && minecraftTime)
+										return null;
+									sub = subs[++i];
+								} else if (sub.equals("mc") || sub.equals("minecraft")) {
+									if (i == subs.length || setMinecraftTime && !minecraftTime)
+										return null;
+									minecraftTime = true;
+									sub = subs[++i];
+								}
+								
+								if (minecraftTime)
+									amount /= 72f;
+								
+								if (sub.endsWith(","))
+									sub = sub.substring(0, sub.length() - 1);
+								
+								final Pair<String, Boolean> p = Utils.getPlural(sub, amount != 1);
+								sub = p.first;
+								
+								if (!simpleValues.containsKey(sub))
+									return null;
+								
+								t += Math.round(amount * simpleValues.get(sub));
+								
+								setMinecraftTime = true;
+								
+							}
+						}
+						return new Timespan(t);
 					}
-				}
-				return new Timespan(t);
-			}
-			
-			@Override
-			public String toString(final Timespan t) {
-				return Math.floor(t.ticks / 1000) + ":" + Math.floor(t.ticks % 1000 * 60 / 1000);
-			}
-		}));
+					
+					@Override
+					public String toString(final Timespan t) {
+						return Math.floor(t.ticks / 1000) + ":" + Math.floor(t.ticks % 1000 * 60 / 1000);
+					}
+				}).serializer(new Serializer<Timespan>() {
+					@Override
+					public String serialize(final Timespan t) {
+						return "" + t.ticks;
+					}
+					
+					@Override
+					public Timespan deserialize(final String s) {
+						try {
+							return new Timespan(Integer.parseInt(s));
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
+				}));
 	}
 	
 	private final int ticks;

@@ -99,7 +99,7 @@ public class EffChange extends Effect {
 		Class<?> r = changed.acceptChange(mode);
 		if (r == null) {
 			final ClassInfo<?> ci = Skript.getSuperClassInfo(changed.getReturnType());
-			if (ci == null || ci.getChanger() == null || (r = ci.getChanger().acceptChange(mode)) == null) {
+			if (ci == null || ci.getChanger() == null || ci.getChanger().acceptChange(mode) == null) {
 				if (mode == ChangeMode.SET)
 					Skript.error(changed + " can't be set");
 				else if (mode == ChangeMode.CLEAR)
@@ -109,6 +109,7 @@ public class EffChange extends Effect {
 				return false;
 			}
 			c = ci.getChanger();
+			r = c.acceptChange(mode);
 		}
 		
 		if (r.isArray()) {
@@ -143,12 +144,24 @@ public class EffChange extends Effect {
 	protected void execute(final Event e) {
 		if (c != null)
 			ChangerUtils.change(c, changed.getArray(e), changer == null ? null : single ? changer.getSingle(e) : changer.getArray(e), mode);
-		changed.change(e, changer == null ? null : single ? changer.getSingle(e) : changer.getArray(e), mode);
+		else
+			changed.change(e, changer == null ? null : single ? changer.getSingle(e) : changer.getArray(e), mode);
 	}
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "add " + changer.getDebugMessage(e) + " to " + changed.getDebugMessage(null);
+		switch (mode) {
+			case ADD:
+				return "add " + changer.getDebugMessage(e) + " to " + changed.getDebugMessage(null);
+			case CLEAR:
+				return "clear " + changed.getDebugMessage(null);
+			case REMOVE:
+				return "remove " + changer.getDebugMessage(e) + " from " + changed.getDebugMessage(null);
+			case SET:
+				return "set " + changed.getDebugMessage(e) + " to " + changer.getDebugMessage(null);
+			default:
+				throw new IllegalStateException();
+		}
 	}
 	
 }

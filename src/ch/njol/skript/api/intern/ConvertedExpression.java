@@ -88,7 +88,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	@Override
 	public String getDebugMessage(final Event e) {
 		if (e == null)
-			return "{" + source.getDebugMessage(e) + "}->" + to.getName();
+			return "(" + source.getDebugMessage(e) + ")->" + to.getName();
 		return source.getDebugMessage(e);
 	}
 	

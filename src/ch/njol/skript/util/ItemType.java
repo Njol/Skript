@@ -23,6 +23,7 @@ package ch.njol.skript.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -105,6 +106,15 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		return amount == -1 ? 1 : amount;
 	}
 	
+	/**
+	 * Only use this method if you know what you're doing
+	 * 
+	 * @return
+	 */
+	public int getInternalAmount() {
+		return amount;
+	}
+	
 	public void setAmount(final int amount) {
 		this.amount = amount;
 	}
@@ -118,22 +128,25 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	}
 	
 	public boolean isOfType(final ItemStack item) {
-		for (final ItemData type : types) {
-			if (type.isOfType(item))
-				return true;
-		}
-		return false;
+		if (item == null)
+			return isOfType(0, (short) 0);
+		return isOfType(item.getTypeId(), item.getDurability());
 	}
 	
 	public boolean isOfType(final Block block) {
 		if (block == null)
 			return false;
-		for (final ItemData d : types) {
-			if ((d.typeid == -1 || block.getTypeId() == d.typeid) && (d.dataMin == -1 || block.getData() >= d.dataMin) && (d.dataMax == -1 || block.getData() <= d.dataMax))
+		return isOfType(block.getTypeId(), block.getData());
+	}
+	
+	public boolean isOfType(int id, short data) {
+		for (final ItemData type : types) {
+			if (type.isOfType(id, data))
 				return true;
 		}
 		return false;
 	}
+	
 	
 	@Override
 	public String toString() {
@@ -275,6 +288,16 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 			types.add(type);
 			modified();
 		}
+	}
+	
+	public void addAll(final Collection<ItemData> types) {
+		for (final ItemData type : types) {
+			if (type != null) {
+				type.setParent(this);
+				this.types.add(type);
+			}
+		}
+		modified();
 	}
 	
 	public void remove(final ItemData d) {
@@ -590,5 +613,5 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		}
 		return ok;
 	}
-	
+
 }

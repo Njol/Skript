@@ -82,7 +82,7 @@ public class ExprFoodLevel extends SimpleExpression<Integer> {
 		switch (mode) {
 			case SET:
 			case CLEAR:
-				if (getTime() >= 0 && players.isDefault()) {
+				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
 					((FoodLevelChangeEvent) e).setFoodLevel(s);
 					return;
 				}
@@ -91,7 +91,7 @@ public class ExprFoodLevel extends SimpleExpression<Integer> {
 				}
 				return;
 			case ADD:
-				if (getTime() >= 0 && players.isDefault()) {
+				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
 					((FoodLevelChangeEvent) e).setFoodLevel(((FoodLevelChangeEvent) e).getFoodLevel() + s);
 					return;
 				}
@@ -100,7 +100,7 @@ public class ExprFoodLevel extends SimpleExpression<Integer> {
 				}
 				return;
 			case REMOVE:
-				if (getTime() >= 0 && players.isDefault()) {
+				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
 					((FoodLevelChangeEvent) e).setFoodLevel(Math.max(((FoodLevelChangeEvent) e).getFoodLevel() - s, 0));
 					return;
 				}
@@ -127,7 +127,7 @@ public class ExprFoodLevel extends SimpleExpression<Integer> {
 	}
 	
 	@Override
-	public boolean setTime(int time) {
+	public boolean setTime(final int time) {
 		return super.setTime(time, FoodLevelChangeEvent.class, players);
 	}
 	

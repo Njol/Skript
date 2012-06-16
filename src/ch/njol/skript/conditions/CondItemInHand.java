@@ -58,7 +58,7 @@ public class CondItemInHand extends Condition {
 	}
 	
 	@Override
-	public boolean run(final Event e) {
+	public boolean check(final Event e) {
 		return players.check(e, new Checker<Player>() {
 			@Override
 			public boolean check(final Player p) {

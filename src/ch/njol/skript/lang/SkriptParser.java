@@ -37,6 +37,7 @@ import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.util.VariableString;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
@@ -113,7 +114,13 @@ public class SkriptParser {
 	 * @param defaultError
 	 * @return
 	 */
-	public static final SyntaxElement parse(final String expr, final Iterator<? extends SyntaxElementInfo<?>> source, final boolean parseLiteral, final String defaultError) {
+	public static final SyntaxElement parse(final String expr, final Iterator<? extends SyntaxElementInfo<?>> source, final boolean parseLiteral, final boolean parseVariable, final String defaultError) {
+		Variable<?> var = parseVariable(expr, Object.class);
+		if (var != null) {
+			if (parseVariable)
+				return var;
+			return null;
+		}
 		final SubLog log = SkriptLogger.startSubLog();
 		final SyntaxElement e = parse(expr, source, null);
 		SkriptLogger.stopSubLog(log);
@@ -209,6 +216,16 @@ public class SkriptParser {
 		return null;
 	}
 	
+	private final static <T> Variable<T> parseVariable(String expr, Class<T> returnType) {
+		if ((expr.startsWith("{") || expr.startsWith("variable {") || expr.startsWith("the variable {")) && expr.endsWith("}")) {
+			final VariableString vs = VariableString.newInstance(expr.substring(expr.indexOf('{') + 1, expr.lastIndexOf('}')));
+			if (vs == null)
+				return null;
+			return new Variable<T>(vs, returnType);
+		}
+		return null;
+	}
+	
 	/**
 	 * Does not print errors
 	 * 
@@ -217,14 +234,18 @@ public class SkriptParser {
 	 * @param literalOnly
 	 * @return
 	 */
-	private final Expression<?> parseVar(final Class<?> returnType, final String expr, final boolean literalOnly) {
+	@SuppressWarnings("unchecked")
+	private final <T> Expression<? extends T> parseExpr(final Class<T> returnType, final String expr, final boolean literalOnly) {
 		if (!literalOnly) {
+			Variable<T> var = parseVariable(expr, returnType);
+			if (var != null)
+				return var;
 			final SubLog log = SkriptLogger.startSubLog();
 			final SkriptParser parser = new SkriptParser(expr);
 			final Expression<?> v = (Expression<?>) parser.parse(Skript.getExpressions().iterator());
 			SkriptLogger.stopSubLog(log);
 			if (v != null) {
-				final Expression<?> w = v.getConvertedExpression(returnType);
+				final Expression<? extends T> w = v.getConvertedExpression(returnType);
 				if (w == null && bestErrorQuality < ErrorQuality.EXPRESSION_OF_WRONG_TYPE.quality()) {
 					bestError = v.toString() + " " + (v.isSingle() ? "is" : "are") + " not " + Utils.a(Skript.getExactClassName(returnType));
 					bestErrorQuality = ErrorQuality.EXPRESSION_OF_WRONG_TYPE.quality();
@@ -239,9 +260,9 @@ public class SkriptParser {
 		}
 		final UnparsedLiteral l = makeUnparsedLiteral(expr);
 		if (returnType == Object.class)
-			return l;
+			return (Expression<? extends T>) l;
 		final SubLog log = SkriptLogger.startSubLog();
-		final Literal<?> p = l.getConvertedExpr(returnType);
+		final Literal<? extends T> p = l.getConvertedExpr(returnType);
 		SkriptLogger.stopSubLog(log);
 		if (p == null && bestErrorQuality < ErrorQuality.NOT_AN_EXPRESSION.quality()) {
 			bestError = log.getLastError() == null ? "'" + expr + "' is not " + Utils.a(Skript.getExactClassName(returnType)) : log.getLastError();
@@ -289,21 +310,21 @@ public class SkriptParser {
 		return null;
 	}
 	
-	private static int next(final String s, final char c, final char x, final int start) {
+	private static int nextBracket(final String s, final char closingBracket, final char openingBracket, final int start) {
 		int n = 0;
 		for (int i = start; i < s.length(); i++) {
 			if (s.charAt(i) == '\\') {
 				i++;
 				continue;
-			} else if (s.charAt(i) == c) {
+			} else if (s.charAt(i) == closingBracket) {
 				if (n == 0)
 					return i;
 				n--;
-			} else if (s.charAt(i) == x) {
+			} else if (s.charAt(i) == openingBracket) {
 				n++;
 			}
 		}
-		throw new MalformedPatternException(s, "missing closing bracket '" + c + "'");
+		throw new MalformedPatternException(s, "missing closing bracket '" + closingBracket + "'");
 	}
 	
 	private static int next(final String s, final char c, final int from) {
@@ -359,7 +380,7 @@ public class SkriptParser {
 					if (res != null) {
 						return res;
 					}
-					end = next(pattern, ']', '[', j + 1);
+					end = nextBracket(pattern, ']', '[', j + 1);
 					if ((hasOnly(pattern, "[(", 0, j) || pattern.charAt(j - 1) == ' ')
 							&& end < pattern.length() - 1 && pattern.charAt(end + 1) == ' ') {
 						end++;
@@ -367,7 +388,7 @@ public class SkriptParser {
 					j = end + 1;
 				break;
 				case '(':
-					end = next(pattern, ')', '(', j + 1);
+					end = nextBracket(pattern, ')', '(', j + 1);
 					final String[] gs = pattern.substring(j + 1, end).split("\\|");
 					int j2 = j + 1;
 					for (int k = 0; k < gs.length; k++) {
@@ -396,18 +417,28 @@ public class SkriptParser {
 						i2 = nextQuote(expr, i + 1) + 1;
 						if (i2 == 0)
 							return null;
+					} else if (expr.charAt(i) == '{') {
+						i2 = expr.indexOf('}', i + 1) + 1;
+						if (i2 == 0)
+							return null;
 					} else {
 						i2 = i + 1;
 					}
 					for (; i2 <= expr.length(); i2++) {
-						if (i2 < expr.length() && expr.charAt(i2) == '"') {
-							i2 = nextQuote(expr, i2 + 1) + 1;
-							if (i2 == 0)
-								return null;
+						if (i2 < expr.length()) {
+							if (expr.charAt(i2) == '"') {
+								i2 = nextQuote(expr, i2 + 1) + 1;
+								if (i2 == 0)
+									return null;
+							} else if (expr.charAt(i2) == '{') {
+								i2 = expr.indexOf('}', i2 + 1) + 1;
+								if (i2 == 0)
+									return null;
+							}
 						}
 						res = parse_i(pattern, i2, end + 1);
 						if (res != null) {
-							final Expression<?> var = parseVar(returnType, expr.substring(i, i2), parseStatic);
+							final Expression<?> var = parseExpr(returnType, expr.substring(i, i2), parseStatic);
 							if (var != null) {
 								if (!vi.isPlural && !var.isSingle()) {
 									if (bestErrorQuality < ErrorQuality.SEMANTIC_ERROR.quality()) {
@@ -452,7 +483,7 @@ public class SkriptParser {
 					j++;
 				break;
 				case '|':
-					j = next(pattern, ')', '(', j + 1) + 1;
+					j = nextBracket(pattern, ')', '(', j + 1) + 1;
 				break;
 				case ' ':
 					if (i == expr.length() || (i > 0 && expr.charAt(i - 1) == ' ')) {

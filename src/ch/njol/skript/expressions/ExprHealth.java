@@ -84,6 +84,10 @@ public class ExprHealth extends SimpleExpression<Float> {
 		int s = 0;
 		if (mode != ChangeMode.CLEAR)
 			s = Math.round(((Float) delta).floatValue() * 2);
+		if (e instanceof EntityDamageEvent && getTime() >= 0 && entities.isDefault()) {
+			((EntityDamageEvent) e).setDamage(((LivingEntity) ((EntityDamageEvent) e).getEntity()).getHealth() - s);
+			return;
+		}
 		switch (mode) {
 			case CLEAR:
 			case SET:

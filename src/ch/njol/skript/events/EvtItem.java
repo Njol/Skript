@@ -29,7 +29,6 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
-import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
@@ -48,13 +47,11 @@ public class EvtItem extends SkriptEvent {
 	}
 	
 	private Literal<ItemType> types;
-	private final EventValueExpression<ItemStack> item = new EventValueExpression<ItemStack>(ItemStack.class);
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		types = (Literal<ItemType>) args[0];
-		item.init();
 		return true;
 	}
 	
@@ -62,9 +59,16 @@ public class EvtItem extends SkriptEvent {
 	public boolean check(final Event e) {
 		if (types == null)
 			return true;
-		final ItemStack is = item.getSingle(e);
-		if (is == null)
-			throw new IllegalStateException("Event value ItemStack is null in an item event");
+		final ItemStack is;
+		if (e instanceof BlockDispenseEvent) {
+			is = ((BlockDispenseEvent) e).getItem();
+		} else if (e instanceof ItemSpawnEvent) {
+			is = ((ItemSpawnEvent) e).getEntity().getItemStack();
+		} else if (e instanceof PlayerDropItemEvent) {
+			is = ((PlayerDropItemEvent) e).getItemDrop().getItemStack();
+		} else {
+			throw new IllegalStateException();
+		}
 		return types.check(e, new Checker<ItemType>() {
 			@Override
 			public boolean check(final ItemType t) {

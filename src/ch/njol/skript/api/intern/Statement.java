@@ -37,7 +37,7 @@ import ch.njol.skript.lang.SyntaxElement;
 public abstract class Statement extends TriggerItem implements SyntaxElement {
 	
 	public static Statement parse(final String s, final String defaultError) {
-		return (Statement) SkriptParser.parse(s, Skript.getStatements().iterator(), false, defaultError);
+		return (Statement) SkriptParser.parse(s, Skript.getStatements().iterator(), false, false, defaultError);
 	}
 	
 }

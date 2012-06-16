@@ -55,7 +55,7 @@ public class CondPermission extends Condition {
 	}
 	
 	@Override
-	public boolean run(final Event e) {
+	public boolean check(final Event e) {
 		return senders.check(e, new Checker<CommandSender>() {
 			@Override
 			public boolean check(final CommandSender s) {

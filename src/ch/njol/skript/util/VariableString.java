@@ -62,13 +62,23 @@ public class VariableString implements Debuggable {
 	 */
 	public static VariableString newInstance(final String s) {
 		final ArrayList<Object> string = new ArrayList<Object>();
-		if (!s.contains("%")) {
+		int c = s.indexOf('%');
+		if (c == -1) {
 			return new VariableString(s);
 		}
-		int c = s.indexOf('%');
 		string.add(s.substring(0, c));
 		while (c != s.length()) {
-			final int c2 = s.indexOf('%', c + 1);
+			int c2 = s.indexOf('%', c + 1);
+			int a = c, b;
+			while (c2 != -1 && (b = s.indexOf('{', a + 1)) != -1 && b < c2) {
+				int b2 = s.indexOf('}', b + 1);
+				if (b2 == -1) {
+					Skript.error("Missing closing bracket '}' to end variable");
+					return null;
+				}
+				c2 = s.indexOf('%', b2 + 1);
+				a = b2;
+			}
 			if (c2 == -1) {
 				Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a %, type it twice: %%.");
 				return null;
@@ -76,11 +86,11 @@ public class VariableString implements Debuggable {
 			if (c + 1 == c2) {
 				string.add("%");
 			} else {
-				final Expression<?> var = (Expression<?>) SkriptParser.parse(s.substring(c + 1, c2), Skript.getExpressions().iterator(), false, "can't understand the expression %" + s.substring(c + 1, c2) + "%");
-				if (var == null) {
+				final Expression<?> expr = (Expression<?>) SkriptParser.parse(s.substring(c + 1, c2), Skript.getExpressions().iterator(), false, true, "can't understand the expression %" + s.substring(c + 1, c2) + "%");
+				if (expr == null) {
 					return null;
 				} else {
-					string.add(var);
+					string.add(expr);
 				}
 			}
 			c = s.indexOf('%', c2 + 1);
@@ -154,6 +164,22 @@ public class VariableString implements Debuggable {
 		for (final Object o : string) {
 			if (o instanceof Expression) {
 				b.append("%" + ((Expression<?>) o).getDebugMessage(e) + "%");
+			} else {
+				b.append(o);
+			}
+		}
+		b.append('"');
+		return b.toString();
+	}
+	
+	@Override
+	public String toString() {
+		if (isSimple)
+			return '"' + lastString + '"';
+		final StringBuilder b = new StringBuilder("\"");
+		for (final Object o : string) {
+			if (o instanceof Expression) {
+				b.append("%" + o + "%");
 			} else {
 				b.append(o);
 			}

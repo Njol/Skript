@@ -21,55 +21,45 @@
 
 package ch.njol.skript.conditions;
 
-import org.bukkit.World;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.WeatherType;
-import ch.njol.util.Checker;
+import ch.njol.skript.lang.UnparsedLiteral;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class CondWeather extends Condition {
+public class CondIsSet extends Condition {
 	
 	static {
-		Skript.registerCondition(CondWeather.class, "is %weathertypes% [in %worlds%]");
+		Skript.registerCondition(CondIsSet.class,
+				"%objects% (exists|is set)",
+				"%objects% (doesn't exist|does not exist|isn't set|is not set)");
 	}
 	
-	private Expression<WeatherType> weathers;
-	private Expression<World> worlds;
+	private Expression<?> expr;
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		weathers = (Expression<WeatherType>) vars[0];
-		worlds = (Expression<World>) vars[1];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+		expr = exprs[0];
+		if (expr instanceof UnparsedLiteral)
+			return false;
+		setNegated(matchedPattern == 1);
 		return true;
 	}
 	
 	@Override
-	public boolean check(final Event e) {
-		return weathers.check(e, new Checker<WeatherType>() {
-			@Override
-			public boolean check(final WeatherType wt) {
-				return worlds.check(e, new Checker<World>() {
-					@Override
-					public boolean check(final World w) {
-						return wt.isWeather(w);
-					}
-				});
-			}
-		}, this);
+	public String getDebugMessage(final Event e) {
+		return expr + (isNegated() ? " isn't" : " is") + " set";
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "is " + weathers.getDebugMessage(e) + " in " + worlds.getDebugMessage(e);
+	public boolean check(final Event e) {
+		return isNegated() ^ (expr.getArray(e).length > 0);
 	}
 	
 }

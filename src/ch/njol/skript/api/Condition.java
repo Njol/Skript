@@ -50,8 +50,12 @@ public abstract class Condition extends Statement {
 	 * @param e the event to check
 	 * @return <code>true</code> if the condition is satisfied, <code>false</code> otherwise or if the condition doesn't apply to this event.
 	 */
+	public abstract boolean check(final Event e);
+	
 	@Override
-	public abstract boolean run(final Event e);
+	public final boolean run(final Event e) {
+		return check(e);
+	}
 	
 	/**
 	 * Sets the negation status of this condition. This will change the behaviour of {@link SimpleExpression#check(Event, Checker, Condition)}.
@@ -71,7 +75,7 @@ public abstract class Condition extends Statement {
 	}
 	
 	public static Condition parse(final String s, final String defaultError) {
-		return (Condition) SkriptParser.parse(s, Skript.getConditions().iterator(), false, defaultError);
+		return (Condition) SkriptParser.parse(s, Skript.getConditions().iterator(), false, false, defaultError);
 	}
 	
 }

@@ -67,7 +67,7 @@ public class CondCanHold extends Condition {
 	}
 	
 	@Override
-	public boolean run(final Event e) {
+	public boolean check(final Event e) {
 		return invis.check(e, new Checker<Inventory>() {
 			@Override
 			public boolean check(final Inventory invi) {
