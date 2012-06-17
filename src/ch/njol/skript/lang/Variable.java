@@ -27,8 +27,10 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.api.Changer.ChangerUtils;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.Converter.ConverterUtils;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.VariableString;
@@ -72,17 +74,20 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return "{" + StringUtils.substring(name.getDebugMessage(e), 1, -1) + "}->" + type.getName();
+		return "{" + StringUtils.substring(name.getDebugMessage(e), 1, -1) + "}(as " + type.getName() + ")";
 	}
 	
 	@Override
-	public <R> Expression<? extends R> getConvertedExpression(Class<R> to) {
+	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
 		return new Variable<R>(name, to);
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected T get(final Event e) {
-		return type == Object.class ? (T) (Skript.variables.get(name.get(e))) : Skript.convert(Skript.variables.get(name.get(e)), type);
+		return Skript.convert(Skript.variables.get(name.get(e)), type);
+	}
+	
+	private final void set(final Event e, final Object value) {
+		Skript.variables.put(name.get(e), value);
 	}
 	
 	@Override
@@ -92,9 +97,7 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
-		if (mode == ChangeMode.SET || mode == ChangeMode.CLEAR)
-			return type;
-		return null;
+		return Object.class;
 	}
 	
 	@Override
@@ -102,69 +105,81 @@ public class Variable<T> implements Expression<T> {
 		if (mode == ChangeMode.CLEAR) {
 			Skript.variables.remove(name.get(e));
 		} else if (mode == ChangeMode.SET) {
-			ClassInfo<?> ci = Skript.getSuperClassInfo(delta.getClass());
+			final ClassInfo<?> ci = Skript.getSuperClassInfo(delta.getClass());
 			if (ci != null && ci.getSerializeAs() != null) {
-				Skript.variables.put(name.get(e), Skript.convert(delta, ci.getSerializeAs()));
+				set(e, Skript.convert(delta, ci.getSerializeAs()));
 			} else {
-				Skript.variables.put(name.get(e), delta);
+				set(e, delta);
+			}
+		} else {
+			final Object o = one[0] = get(e);
+			if (o == null)
+				return;
+			final ClassInfo<?> ci = Skript.getSuperClassInfo(o.getClass());
+			if (ci.getChanger() != null && ci.getChanger().acceptChange(mode) != null && ci.getChanger().acceptChange(mode).isAssignableFrom(delta.getClass())) {
+				ChangerUtils.change(ci.getChanger(), one, delta, mode);
+			}
+			if (o instanceof Number && delta instanceof Number) {
+				final int i = mode == ChangeMode.ADD ? 1 : -1;
+				set(e, ((Number) o).doubleValue() + i * ((Number) delta).doubleValue());
 			}
 		}
 	}
-
+	
 	@Override
-	public T getSingle(Event e) {
+	public T getSingle(final Event e) {
 		return get(e);
 	}
-
+	
 	@Override
-	public T[] getArray(Event e) {
+	public T[] getArray(final Event e) {
 		one[0] = get(e);
 		if (one[0] == null)
 			return zero;
 		return one;
 	}
-
+	
 	@Override
-	public <V> V getSingle(Event e, Converter<? super T, ? extends V> converter) {
-		T t = get(e);
+	public <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter) {
+		final T t = get(e);
 		if (t == null)
 			return null;
 		return converter.convert(t);
 	}
-
+	
 	@Override
-	public <V> V[] getArray(Event e, Class<V> to, Converter<? super T, ? extends V> converter) {
-		return SimpleExpression.getArray(this, e, to, converter);
+	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
+		return ConverterUtils.convert(getArray(e), converter, to);
 	}
-
+	
 	@Override
-	public boolean check(Event e, Checker<? super T> c, Condition cond) {
+	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
 		return SimpleExpression.check(getArray(e), c, cond.isNegated(), getAnd());
 	}
-
+	
 	@Override
-	public boolean check(Event e, Checker<? super T> c) {
+	public boolean check(final Event e, final Checker<? super T> c) {
 		return SimpleExpression.check(getArray(e), c, false, getAnd());
 	}
-
+	
 	@Override
-	public void setAnd(boolean and) {}
-
+	public void setAnd(final boolean and) {}
+	
 	@Override
 	public boolean getAnd() {
 		return false;
 	}
-
+	
 	@Override
-	public boolean setTime(int time) {
+	public boolean setTime(final int time) {
 		return false;
 	}
-
+	
 	@Override
 	public int getTime() {
 		return 0;
 	}
-
+	
 	@Override
 	public boolean isDefault() {
 		return false;

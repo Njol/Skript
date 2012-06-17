@@ -401,7 +401,7 @@ public abstract class Aliases {
 		}
 		final Pair<String, Boolean> p = Utils.getPlural(s);
 		if (!ignorePluralCheck && !(p.second ^ singular))
-			Skript.warning("Possible invalid plural detected in '" + s + "'");
+			Skript.pluralWarning(s);
 		s = p.first;
 		lc = s.toLowerCase(Locale.ENGLISH);
 		if (lc.endsWith(" block")) {

@@ -37,10 +37,10 @@ import ch.njol.skript.util.BlockSphereIterator;
  * @author Peter Güttinger
  * 
  */
-public class LoopVarBlockSphere extends LoopExpr<Block> {
+public class LoopBlockSphere extends LoopExpr<Block> {
 	
 	static {
-		Skript.registerLoop(LoopVarBlockSphere.class, Block.class, "blocks in radius %float% [around %location%]");
+		Skript.registerLoop(LoopBlockSphere.class, Block.class, "blocks in radius %float% [around %location%]");
 	}
 	
 	private Expression<Float> radius;

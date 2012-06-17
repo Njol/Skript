@@ -102,7 +102,7 @@ public class SkriptParser {
 	}
 	
 	public static final <T> Literal<? extends T> parseLiteral(final String expr, final Class<T> c) {
-		return makeUnparsedLiteral(expr).getConvertedExpr(c);
+		return makeUnparsedLiteral(expr).getConvertedExpression(c);
 	}
 	
 	/**
@@ -115,7 +115,7 @@ public class SkriptParser {
 	 * @return
 	 */
 	public static final SyntaxElement parse(final String expr, final Iterator<? extends SyntaxElementInfo<?>> source, final boolean parseLiteral, final boolean parseVariable, final String defaultError) {
-		Variable<?> var = parseVariable(expr, Object.class);
+		final Variable<?> var = parseVariable(expr, Object.class);
 		if (var != null) {
 			if (parseVariable)
 				return var;
@@ -216,7 +216,7 @@ public class SkriptParser {
 		return null;
 	}
 	
-	private final static <T> Variable<T> parseVariable(String expr, Class<T> returnType) {
+	private final static <T> Variable<T> parseVariable(final String expr, final Class<T> returnType) {
 		if ((expr.startsWith("{") || expr.startsWith("variable {") || expr.startsWith("the variable {")) && expr.endsWith("}")) {
 			final VariableString vs = VariableString.newInstance(expr.substring(expr.indexOf('{') + 1, expr.lastIndexOf('}')));
 			if (vs == null)
@@ -237,7 +237,7 @@ public class SkriptParser {
 	@SuppressWarnings("unchecked")
 	private final <T> Expression<? extends T> parseExpr(final Class<T> returnType, final String expr, final boolean literalOnly) {
 		if (!literalOnly) {
-			Variable<T> var = parseVariable(expr, returnType);
+			final Variable<T> var = parseVariable(expr, returnType);
 			if (var != null)
 				return var;
 			final SubLog log = SkriptLogger.startSubLog();
@@ -262,7 +262,7 @@ public class SkriptParser {
 		if (returnType == Object.class)
 			return (Expression<? extends T>) l;
 		final SubLog log = SkriptLogger.startSubLog();
-		final Literal<? extends T> p = l.getConvertedExpr(returnType);
+		final Literal<? extends T> p = l.getConvertedExpression(returnType);
 		SkriptLogger.stopSubLog(log);
 		if (p == null && bestErrorQuality < ErrorQuality.NOT_AN_EXPRESSION.quality()) {
 			bestError = log.getLastError() == null ? "'" + expr + "' is not " + Utils.a(Skript.getExactClassName(returnType)) : log.getLastError();

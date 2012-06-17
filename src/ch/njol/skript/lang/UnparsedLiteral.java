@@ -29,9 +29,11 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.Converter.ConverterUtils;
 import ch.njol.skript.api.intern.ConvertedLiteral;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.api.intern.VariableStringLiteral;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.util.Utils;
 
 /**
@@ -51,24 +53,24 @@ public class UnparsedLiteral extends SimpleLiteral<Object> {
 		super(data, Object.class, and);
 	}
 	
-	@Override
-	protected Object[] getAll(final Event e) {
-		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
-	}
-	
 	public String[] getData() {
 		return (String[]) data;
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> ConvertedLiteral<Object, ? extends R> getConvertedExpr(final Class<R> to) {
+	public <R> ConvertedLiteral<Object, ? extends R> getConvertedExpression(final Class<R> to) {
 		if (to == String.class) {
 			final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
 			if (vsl == null)
 				return null;
 			return (ConvertedLiteral<Object, ? extends R>) vsl;
 		} else if (to == Object.class) {
+			for (ClassInfo<?> ci : Skript.getClassInfos()) {
+				Object[] parsed = ConverterUtils.convertUnsafe((String[]) data, ci.getParser(), ci.getC());
+				if (parsed.length > 0)
+					return new ConvertedLiteral<Object, R>(this, (R[]) parsed, to);
+			}
 			throw new SkriptAPIException("can't parse as Object");
 		}
 		final Converter<String, ? extends R> p = Skript.getParser(to);
@@ -96,4 +98,35 @@ public class UnparsedLiteral extends SimpleLiteral<Object> {
 	public String toString() {
 		return Utils.join(data);
 	}
+	
+	@Override
+	public Object[] getArray() {
+		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+	}
+	
+	@Override
+	public Object[] getArray(final Event e) {
+		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+	}
+	
+	@Override
+	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super Object, ? extends V> converter) {
+		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+	}
+	
+	@Override
+	public Object getSingle() {
+		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+	}
+	
+	@Override
+	public Object getSingle(final Event e) {
+		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+	}
+	
+	@Override
+	public <V> V getSingle(final Event e, final Converter<? super Object, ? extends V> converter) {
+		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+	}
+	
 }

@@ -26,10 +26,15 @@ import java.lang.reflect.Array;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.Converter.ConverterUtils;
 import ch.njol.skript.api.DefaultExpression;
 import ch.njol.skript.api.intern.ConvertedLiteral;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Utils;
+import ch.njol.util.Checker;
 
 /**
  * Represents a literal, i.e. a static value like a number or a string.
@@ -37,17 +42,18 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  * @see UnparsedLiteral
  */
-public class SimpleLiteral<T> extends SimpleExpression<T> implements Literal<T>, DefaultExpression<T> {
+public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	protected final T[] data;
 	protected final Class<T> c;
 	
 	private final boolean isDefault;
+	private boolean and;
 	
 	public SimpleLiteral(final T[] data, final Class<T> c, final boolean and) {
 		this.data = data;
 		this.c = c;
-		setAnd(and);
+		setAnd(data.length == 1 || and);
 		this.isDefault = false;
 	}
 	
@@ -71,11 +77,6 @@ public class SimpleLiteral<T> extends SimpleExpression<T> implements Literal<T>,
 	}
 	
 	@Override
-	protected T[] getAll(final Event e) {
-		return data;
-	}
-	
-	@Override
 	public T[] getArray() {
 		return getArray(null);
 	}
@@ -92,15 +93,13 @@ public class SimpleLiteral<T> extends SimpleExpression<T> implements Literal<T>,
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> ConvertedLiteral<T, ? extends R> getConvertedExpr(final Class<R> to) {
+	public <R> ConvertedLiteral<T, ? extends R> getConvertedExpression(final Class<R> to) {
 		if (to.isAssignableFrom(c))
-			return new ConvertedLiteral<T, R>(this, (R[]) this.getAll(null), to);
+			return new ConvertedLiteral<T, R>(this, (R[]) data, to);
 		final Converter<? super T, ? extends R> p = Skript.getConverter(c, to);
 		if (p == null)
 			return null;
-		final R[] parsedData = (R[]) Array.newInstance(to, data.length);
-		for (int i = 0; i < data.length; i++)
-			parsedData[i] = p.convert(data[i]);
+		final R[] parsedData = ConverterUtils.convert(data, p, to);
 		return new ConvertedLiteral<T, R>(this, parsedData, to);
 	}
 	
@@ -122,6 +121,66 @@ public class SimpleLiteral<T> extends SimpleExpression<T> implements Literal<T>,
 	@Override
 	public boolean isDefault() {
 		return isDefault;
+	}
+	
+	@Override
+	public T getSingle(final Event e) {
+		return Utils.getRandom(data);
+	}
+	
+	@Override
+	public T[] getArray(final Event e) {
+		return data;
+	}
+	
+	@Override
+	public <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter) {
+		return converter.convert(getSingle());
+	}
+	
+	@Override
+	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
+		return ConverterUtils.convert(data, converter, to);
+	}
+	
+	@Override
+	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
+		return SimpleExpression.check(data, c, cond.isNegated(), getAnd());
+	}
+	
+	@Override
+	public boolean check(final Event e, final Checker<? super T> c) {
+		return SimpleExpression.check(data, c, false, getAnd());
+	}
+	
+	@Override
+	public void setAnd(final boolean and) {
+		this.and = and;
+	}
+	
+	@Override
+	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public Class<?> acceptChange(final ChangeMode mode) {
+		return null;
+	}
+	
+	@Override
+	public boolean getAnd() {
+		return and;
+	}
+	
+	@Override
+	public boolean setTime(final int time) {
+		return false;
+	}
+	
+	@Override
+	public int getTime() {
+		return 0;
 	}
 	
 }

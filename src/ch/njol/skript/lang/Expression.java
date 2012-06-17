@@ -156,8 +156,10 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public Class<?> acceptChange(final ChangeMode mode);
 	
 	/**
+	 * Returns true if this expression returns all possible values, false if it only returns one.<br>
+	 * This must only return false if the expression randomly chooses one value out of a set or similar.
 	 * 
-	 * @return True if this expression returns all possible values, false if it only returns one.
+	 * @return
 	 */
 	public boolean getAnd();
 	

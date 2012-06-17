@@ -87,14 +87,13 @@ public class SkriptClasses {
 						return t.c.getName() + "*" + t.amount;
 					}
 					
-					@SuppressWarnings("unchecked")
 					@Override
 					public EntityType deserialize(final String s) {
 						final String[] split = s.split("\\*");
 						if (split.length != 2)
 							return null;
 						try {
-							return new EntityType((Class<? extends Entity>) Entity.class.asSubclass(Class.forName(split[0])), Integer.parseInt(split[1]));
+							return new EntityType(Class.forName(split[0]).asSubclass(Entity.class), Integer.parseInt(split[1]));
 						} catch (final LinkageError e) {
 							return null;
 						} catch (final ClassNotFoundException e) {

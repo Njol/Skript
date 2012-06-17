@@ -21,65 +21,60 @@
 
 package ch.njol.skript.loops;
 
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.ListIterator;
 
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.LoopExpr;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Utils;
+import ch.njol.skript.util.ItemData;
+import ch.njol.skript.util.ItemType;
+import ch.njol.util.iterator.ArrayIterator;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class LoopVarPlayer extends LoopExpr<Player> {
+public class LoopIdsOf extends LoopExpr<Integer> {
 	
 	static {
-		Skript.registerLoop(LoopVarPlayer.class, Player.class, "players", "players in world[s] %worlds%");
+		Skript.registerLoop(LoopIdsOf.class, Integer.class, "id[s] of %itemtypes%");
 	}
 	
-	private Expression<World> worlds = null;
+	private Expression<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		if (vars.length > 0)
-			worlds = (Expression<World>) vars[0];
+		types = (Expression<ItemType>) vars[0];
 		return true;
 	}
 	
 	@Override
-	protected Iterator<Player> iterator(final Event e) {
-		if (worlds == null)
-			return Arrays.asList(Bukkit.getOnlinePlayers()).iterator();
-		return new Iterator<Player>() {
+	public String getLoopDebugMessage(final Event e) {
+		return "ids of " + types.getDebugMessage(e);
+	}
+	
+	@Override
+	protected Iterator<Integer> iterator(final Event e) {
+		return new Iterator<Integer>() {
 			
-			private final ListIterator<Player> players = Arrays.asList(Bukkit.getOnlinePlayers()).listIterator();
-			
-			private final World[] ws = worlds.getArray(e);
+			private final Iterator<ItemType> ts = new ArrayIterator<ItemType>(types.getArray(e));
+			private Iterator<ItemData> ds = ts.next().iterator();
 			
 			@Override
 			public boolean hasNext() {
-				while (players.hasNext()) {
-					if (Utils.indexOf(ws, players.next().getWorld()) != -1) {
-						players.previous();
-						return true;
-					}
+				while (ts.hasNext() && !ds.hasNext()) {
+					ds = ts.next().iterator();
 				}
-				return false;
+				return ts.hasNext() || ds.hasNext();
 			}
 			
 			@Override
-			public Player next() {
-				return players.next();
+			public Integer next() {
+				return ds.next().getId();
 			}
 			
 			@Override
@@ -89,23 +84,18 @@ public class LoopVarPlayer extends LoopExpr<Player> {
 	}
 	
 	@Override
-	public Class<? extends Player> getReturnType() {
-		return Player.class;
-	}
-	
-	@Override
-	public String getLoopDebugMessage(final Event e) {
-		return "players in world " + worlds.getDebugMessage(e);
+	public Class<? extends Integer> getReturnType() {
+		return Integer.class;
 	}
 	
 	@Override
 	public String toString() {
-		return "the loop-player";
+		return "the loop-ID";
 	}
 	
 	@Override
 	public boolean isLoopOf(final String s) {
-		return s.equalsIgnoreCase("player");
+		return s.equalsIgnoreCase("id");
 	}
 	
 }

@@ -71,7 +71,7 @@ public class VariableString implements Debuggable {
 			int c2 = s.indexOf('%', c + 1);
 			int a = c, b;
 			while (c2 != -1 && (b = s.indexOf('{', a + 1)) != -1 && b < c2) {
-				int b2 = s.indexOf('}', b + 1);
+				final int b2 = s.indexOf('}', b + 1);
 				if (b2 == -1) {
 					Skript.error("Missing closing bracket '}' to end variable");
 					return null;

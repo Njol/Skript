@@ -41,10 +41,10 @@ import ch.njol.util.iterator.CheckedIterator;
  * @author Peter Güttinger
  * 
  */
-public class LoopVarItem extends LoopExpr<ItemStack> {
+public class LoopItems extends LoopExpr<ItemStack> {
 	
 	static {
-		Skript.registerLoop(LoopVarItem.class, ItemStack.class,
+		Skript.registerLoop(LoopItems.class, ItemStack.class,
 				"[(all|every)] item(s|[ ]types)", "items of type[s] %itemtypes%",
 				"[(all|every)] block(s|[ ]types)", "blocks of type[s] %itemtypes%");
 	}

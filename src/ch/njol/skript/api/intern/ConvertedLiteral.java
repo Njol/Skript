@@ -26,6 +26,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.Converter.ConverterUtils;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SimpleLiteral;
@@ -43,6 +44,14 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	public ConvertedLiteral(final Literal<F> source, final T[] data, final Class<T> to) {
 		super(source, to, null);
 		this.data = data;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to) {
+		if (to.isAssignableFrom(this.to))
+			return (Literal<? extends R>) this;
+		return ((Literal<F>) source).getConvertedExpression(to);
 	}
 	
 	@Override
@@ -67,7 +76,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	
 	@Override
 	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		return SimpleExpression.getArray(this, e, to, converter);
+		return ConverterUtils.convert(data, converter, to);
 	}
 	
 	@Override

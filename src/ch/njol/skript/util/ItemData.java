@@ -107,7 +107,7 @@ public class ItemData implements Cloneable {
 		this.typeid = typeid;
 		modified();
 	}
-
+	
 	/**
 	 * Tests whether the given item is of this type. Returns true if null was passed and this type's typeid is 0.
 	 * 
@@ -119,8 +119,8 @@ public class ItemData implements Cloneable {
 			return typeid == 0;
 		return isOfType(item.getTypeId(), item.getDurability());
 	}
-
-	public boolean isOfType(int id, short data) {
+	
+	public boolean isOfType(final int id, final short data) {
 		return (typeid == -1 || typeid == id) && (dataMin == -1 || dataMin <= data) && (dataMax == -1 || data <= dataMax);
 	}
 	

@@ -44,20 +44,25 @@ public class EvtRightclick extends SkriptEvent {
 	
 	static {
 		Skript.registerEvent(EvtRightclick.class, Skript.array(PlayerInteractEvent.class, PlayerInteractEntityEvent.class),
-				"rightclick[ing] [on %entitytype%] [(with|using|holding) %itemtype%]",// this must be the first
-				"rightclick[ing] [on %itemtype%] [(with|using|holding) %itemtype%]");
+				"rightclick[ing] [on %object%] [(with|using|holding) %itemtype%]");
 	}
 	
-	private Literal<ItemType> blocks = null;
-	private Literal<EntityType> entities = null;
+	private Literal<? extends ItemType> blocks = null;
+	private Literal<? extends EntityType> entities = null;
 	private Literal<ItemType> tools;
 	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		if (matchedPattern == 0)
-			entities = (Literal<EntityType>) args[0];
-		else
-			blocks = (Literal<ItemType>) args[0];
+		if (args[0] != null) {
+			entities = args[0].getConvertedExpression(EntityType.class);
+			if (entities == null) {
+				blocks = args[0].getConvertedExpression(ItemType.class);
+				if (blocks == null) {
+					Skript.error("'" + args[0] + "' is neither an entity type nor an item type");
+					return false;
+				}
+			}
+		}
 		tools = (Literal<ItemType>) args[1];
 		return true;
 	}

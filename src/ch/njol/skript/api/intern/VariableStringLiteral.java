@@ -25,6 +25,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.Converter.ConverterUtils;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.util.Utils;
@@ -81,7 +82,7 @@ public class VariableStringLiteral extends ConvertedLiteral<Object, String> {
 	
 	@Override
 	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super String, ? extends V> converter) {
-		return SimpleExpression.getArray(this, e, to, converter);
+		return ConverterUtils.convert(getArray(e), converter, to);
 	}
 	
 	@Override

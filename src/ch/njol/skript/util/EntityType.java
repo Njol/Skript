@@ -94,7 +94,7 @@ public class EntityType {
 	
 	public final Class<? extends Entity> c;
 	
-	public int amount = 1;
+	public int amount = -1;
 	
 	public EntityType(final Class<? extends Entity> c, final int amount) {
 		Validate.notNull(c);
@@ -112,7 +112,11 @@ public class EntityType {
 	
 	@Override
 	public String toString() {
-		return amount == 1 ? entityName(c) : amount + " " + Utils.toPlural(entityName(c));
+		return getAmount() == 1 ? entityName(c) : amount + " " + Utils.toPlural(entityName(c));
+	}
+	
+	public int getAmount() {
+		return amount == -1 ? 1 : amount;
 	}
 	
 	public static String toString(final Entity e) {
@@ -195,14 +199,14 @@ public class EntityType {
 	}
 	
 	public static EntityType parse(String s) {
-		int amount = 1;
+		int amount = -1;
 		if (s.matches("\\d+ .+")) {
 			amount = Integer.parseInt(s.split(" ", 2)[0]);
 			s = s.split(" ", 2)[1];
 		} else if (s.matches("(?i)an? .+")) {
 			s = s.split(" ", 2)[1];
 		}
-		final Pair<String, Boolean> p = Utils.getPlural(s, amount != 1);
+		final Pair<String, Boolean> p = Utils.getPlural(s, amount != 1 && amount != -1);
 		s = p.first;
 		final Class<? extends Entity> c = names.get(s.toLowerCase(Locale.ENGLISH));
 		if (c == null)

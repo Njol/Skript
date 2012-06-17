@@ -41,10 +41,10 @@ import ch.njol.util.iterator.ArrayIterator;
  * @author Peter Güttinger
  * 
  */
-public class LoopVarArguments extends LoopExpr<Object> {
+public class LoopArguments extends LoopExpr<Object> {
 	
 	static {
-		Skript.registerLoop(LoopVarArguments.class, Object.class, "last argument", "argument(-| )<(\\d+)>", "<(?:(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th)> argument", "arguments");
+		Skript.registerLoop(LoopArguments.class, Object.class, "last argument", "argument(-| )<(\\d+)>", "<(?:(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th)> argument", "arguments");
 	}
 	
 	private Argument<?> arg;

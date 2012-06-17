@@ -35,7 +35,7 @@ import ch.njol.skript.lang.Expression;
 public class ExprWorld extends WrapperExpression<World> {
 	
 	static {
-		Skript.registerExpression(ExprWorld.class, World.class, "[the] world [of %world%]");
+		Skript.registerExpression(ExprWorld.class, World.class, "[the] world [of %world%]", "%world%'[s] world");
 	}
 	
 	@Override

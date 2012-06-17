@@ -47,7 +47,7 @@ public class EffChange extends Effect {
 			
 			{"set %objects% to %objects%", ChangeMode.SET},
 			
-			{"remove %objects% from %objects%", ChangeMode.REMOVE},
+			{"(remove|subtract) %objects% from %objects%", ChangeMode.REMOVE},
 			
 			{"(clear|delete) %objects%", ChangeMode.CLEAR},
 	

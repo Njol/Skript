@@ -22,7 +22,6 @@
 package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
 
 import org.bukkit.event.Event;
 
@@ -31,6 +30,7 @@ import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.Converter.ConverterUtils;
 import ch.njol.skript.api.intern.ConvertedExpression;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.util.Utils;
@@ -112,28 +112,12 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	
 	@Override
 	public final <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		return getArray(this, e, to, converter);
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static final <T, V> V[] getArray(final Expression<T> var, final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		final T[] ts = var.getArray(e);
-		final V[] vs = (V[]) Array.newInstance(to, ts.length);
-		int j = 0;
-		for (int i = 0; i < vs.length; i++) {
-			final V v = converter.convert(ts[i]);
-			if (v == null)
-				continue;
-			vs[j++] = v;
-		}
-		if (j != vs.length)
-			return Arrays.copyOf(vs, j);
-		return vs;
+		return ConverterUtils.convert(getArray(e), converter, to);
 	}
 	
 	/**
 	 * This is the internal method to get an expression's values.<br>
-	 * To get the expression value from the outside use {@link #getSingle(Event, boolean)} or {@link #getArray(Event)}.
+	 * To get the expression's value from the outside use {@link #getSingle(Event)} or {@link #getArray(Event)}.
 	 * 
 	 * @param e The event
 	 * @return An array of values for this event. May contain nulls.

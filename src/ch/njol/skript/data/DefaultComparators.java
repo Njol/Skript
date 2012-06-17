@@ -92,7 +92,7 @@ public class DefaultComparators {
 		// Block - Block
 		Skript.registerComparator(Block.class, Block.class, new Comparator<Block, Block>() {
 			@Override
-			public ch.njol.skript.api.Comparator.Relation compare(final Block b1, final Block b2) {
+			public Relation compare(final Block b1, final Block b2) {
 				if (b1 == null || b2 == null)
 					return Relation.NOT_EQUAL;
 				return Relation.get(b1.equals(b2));
@@ -108,10 +108,24 @@ public class DefaultComparators {
 		// Entity - EntityType
 		Skript.registerComparator(Entity.class, EntityType.class, new Comparator<Entity, EntityType>() {
 			@Override
-			public ch.njol.skript.api.Comparator.Relation compare(final Entity e, final EntityType t) {
+			public Relation compare(final Entity e, final EntityType t) {
 				if (t == null || e == null)
 					return Relation.NOT_EQUAL;
 				return Relation.get(t.isInstance(e));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+		// EntityType - EntityType
+		Skript.registerComparator(EntityType.class, EntityType.class, new Comparator<EntityType, EntityType>() {
+			@Override
+			public Relation compare(final EntityType t1, final EntityType t2) {
+				if (t1 == null || t2 == null)
+					return Relation.NOT_EQUAL;
+				return Relation.get(t2.c.isAssignableFrom(t1.c) && (t2.amount == -1 || t2.amount == t1.amount));
 			}
 			
 			@Override

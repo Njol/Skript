@@ -21,6 +21,7 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 
@@ -36,22 +37,23 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class EffKill extends Effect {
 	
 	static {
-		Skript.registerEffect(EffKill.class, "kill %livingentities%");
+		Skript.registerEffect(EffKill.class, "kill %entities%");
 	}
 	
-	private Expression<LivingEntity> entities;
+	private Expression<Entity> entities;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		entities = (Expression<LivingEntity>) vars[0];
+		entities = (Expression<Entity>) vars[0];
 		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		for (final LivingEntity entity : entities.getArray(e)) {
-			entity.setHealth(0);
+		for (final Entity entity : entities.getArray(e)) {
+			if (entity instanceof LivingEntity)
+				((LivingEntity) entity).setHealth(0);
 		}
 	}
 	

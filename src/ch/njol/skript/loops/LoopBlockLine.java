@@ -37,12 +37,12 @@ import ch.njol.skript.util.Offset;
  * @author Peter Güttinger
  * 
  */
-public class LoopVarBlockLine extends LoopExpr<Block> {
+public class LoopBlockLine extends LoopExpr<Block> {
 	
 	private static final int MAXDIST = 1000;
 	
 	static {
-		Skript.registerLoop(LoopVarBlockLine.class, Block.class,
+		Skript.registerLoop(LoopBlockLine.class, Block.class,
 				"blocks from %block% to %block%",
 				"blocks between %block% and %block%",
 				"blocks from %block% on %offset%",

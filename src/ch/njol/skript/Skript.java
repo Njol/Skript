@@ -223,12 +223,13 @@ public final class Skript extends JavaPlugin implements Listener {
 	public static final String quotesError = "Invalid use of quotes (\"). If you want to use quotes in \"quoted text\", double them: \"\".";
 	
 	/**
-	 * Prints "Possible invalid plural detected in '" + s + "'"
+	 * Doesn't do anything<br>
+	 * <del>Prints "Possible invalid plural detected in '" + s + "'"</del>
 	 * 
 	 * @param s
 	 */
 	public static final void pluralWarning(final String s) {
-		Skript.warning("Possible invalid plural detected in '" + s + "'");
+//		Skript.warning("Possible invalid plural detected in '" + s + "'");
 	}
 	
 	/**
@@ -310,7 +311,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 		SkriptLogger.stopSubLog(log);
 		if (unsuccessful > 0) {
-			Skript.error(unsuccessful+" variables could not be loaded!");
+			Skript.error(unsuccessful + " variables could not be loaded!");
 			log.printErrors(null);
 		}
 	}
@@ -568,6 +569,13 @@ public final class Skript extends JavaPlugin implements Listener {
 			}
 		}
 		classInfos.add(info);
+	}
+	
+	/**
+	 * @return the internal list of classinfos
+	 */
+	public static List<ClassInfo<?>> getClassInfos() {
+		return classInfos;
 	}
 	
 	public static ClassInfo<?> getClassInfo(final String codeName) {

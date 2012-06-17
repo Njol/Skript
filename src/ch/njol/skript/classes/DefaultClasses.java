@@ -37,42 +37,41 @@ public class DefaultClasses {
 	
 	static {
 		Skript.registerClass(new ClassInfo<Object>(Object.class, "object"));
-		
-		Skript.registerClass(new ClassInfo<Float>(Float.class, "float")
-				.defaultExpression(new SimpleLiteral<Float>(1f, true))
-				.parser(new Parser<Float>() {
+
+		Skript.registerClass(new ClassInfo<Integer>(Integer.class, "integer")
+				.user("integer", "integers?")
+				.defaultExpression(new SimpleLiteral<Integer>(1, true))
+				.parser(new Parser<Integer>() {
 					@Override
-					public Float parse(final String s) {
+					public Integer parse(final String s) {
 						try {
-							if (s.endsWith("%")) {
-								return Float.valueOf(Float.parseFloat(s.substring(0, s.length() - 1)) / 100);
-							}
-							return Float.valueOf(s);
+							return Integer.valueOf(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
 					}
 					
 					@Override
-					public String toString(final Float f) {
-						return StringUtils.toString(f, Skript.NUMBERACCURACY);
+					public String toString(final Integer o) {
+						return o.toString();
 					}
-				}).serializer(new Serializer<Float>() {
+				}).serializer(new Serializer<Integer>() {
+					
 					@Override
-					public String serialize(final Float f) {
-						return "" + f;
+					public String serialize(final Integer i) {
+						return "" + i;
 					}
 					
 					@Override
-					public Float deserialize(final String s) {
+					public Integer deserialize(final String s) {
 						try {
-							return Float.parseFloat(s);
+							return Integer.parseInt(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
 					}
 				}));
-		
+
 		Skript.registerClass(new ClassInfo<Double>(Double.class, "double")
 				.user("number", "numbers?")
 				.defaultExpression(new SimpleLiteral<Double>(1., true))
@@ -104,6 +103,41 @@ public class DefaultClasses {
 					public Double deserialize(final String s) {
 						try {
 							return Double.parseDouble(s);
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
+				}));
+		
+		Skript.registerClass(new ClassInfo<Float>(Float.class, "float")
+				.defaultExpression(new SimpleLiteral<Float>(1f, true))
+				.parser(new Parser<Float>() {
+					@Override
+					public Float parse(final String s) {
+						try {
+							if (s.endsWith("%")) {
+								return Float.valueOf(Float.parseFloat(s.substring(0, s.length() - 1)) / 100);
+							}
+							return Float.valueOf(s);
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
+					
+					@Override
+					public String toString(final Float f) {
+						return StringUtils.toString(f, Skript.NUMBERACCURACY);
+					}
+				}).serializer(new Serializer<Float>() {
+					@Override
+					public String serialize(final Float f) {
+						return "" + f;
+					}
+					
+					@Override
+					public Float deserialize(final String s) {
+						try {
+							return Float.parseFloat(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
@@ -202,40 +236,6 @@ public class DefaultClasses {
 					public Short deserialize(final String s) {
 						try {
 							return Short.parseShort(s);
-						} catch (final NumberFormatException e) {
-							return null;
-						}
-					}
-				}));
-		
-		Skript.registerClass(new ClassInfo<Integer>(Integer.class, "integer")
-				.user("integer", "integers?")
-				.defaultExpression(new SimpleLiteral<Integer>(1, true))
-				.parser(new Parser<Integer>() {
-					@Override
-					public Integer parse(final String s) {
-						try {
-							return Integer.valueOf(s);
-						} catch (final NumberFormatException e) {
-							return null;
-						}
-					}
-					
-					@Override
-					public String toString(final Integer o) {
-						return o.toString();
-					}
-				}).serializer(new Serializer<Integer>() {
-					
-					@Override
-					public String serialize(final Integer i) {
-						return "" + i;
-					}
-					
-					@Override
-					public Integer deserialize(final String s) {
-						try {
-							return Integer.parseInt(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}

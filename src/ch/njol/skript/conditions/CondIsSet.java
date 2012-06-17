@@ -54,7 +54,7 @@ public class CondIsSet extends Condition {
 	
 	@Override
 	public String getDebugMessage(final Event e) {
-		return expr + (isNegated() ? " isn't" : " is") + " set";
+		return expr.getDebugMessage(e) + (isNegated() ? " isn't" : " is") + " set";
 	}
 	
 	@Override

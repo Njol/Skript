@@ -61,7 +61,7 @@ public class EffSpawn extends Effect {
 		final EntityType[] ts = types.getArray(e);
 		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
 			for (final EntityType type : ts) {
-				for (int i = 0; i < type.amount; i++)
+				for (int i = 0; i < type.getAmount(); i++)
 					l.getWorld().spawn(l, type.c);
 			}
 		}

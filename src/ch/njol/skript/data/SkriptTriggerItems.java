@@ -151,13 +151,13 @@ import ch.njol.skript.expressions.ExprTool;
 import ch.njol.skript.expressions.ExprWeather;
 import ch.njol.skript.expressions.ExprWorld;
 import ch.njol.skript.expressions.ExprXOfItem;
-import ch.njol.skript.loops.LoopVarArguments;
-import ch.njol.skript.loops.LoopVarBlockLine;
-import ch.njol.skript.loops.LoopVarBlockSphere;
-import ch.njol.skript.loops.LoopVarIdsOf;
-import ch.njol.skript.loops.LoopVarItem;
-import ch.njol.skript.loops.LoopVarPlayer;
-import ch.njol.skript.loops.LoopVarWorld;
+import ch.njol.skript.loops.LoopArguments;
+import ch.njol.skript.loops.LoopBlockLine;
+import ch.njol.skript.loops.LoopBlockSphere;
+import ch.njol.skript.loops.LoopEntities;
+import ch.njol.skript.loops.LoopIdsOf;
+import ch.njol.skript.loops.LoopItems;
+import ch.njol.skript.loops.LoopWorlds;
 
 /**
  * @author Peter Güttinger
@@ -228,13 +228,13 @@ public class SkriptTriggerItems {
 				ExprWorld.class,
 				ExprXOfItem.class,
 				
-				LoopVarArguments.class,
-				LoopVarBlockLine.class,
-				LoopVarBlockSphere.class,
-				LoopVarIdsOf.class,
-				LoopVarItem.class,
-				LoopVarPlayer.class,
-				LoopVarWorld.class,
+				LoopArguments.class,
+				LoopBlockLine.class,
+				LoopBlockSphere.class,
+				LoopEntities.class,
+				LoopIdsOf.class,
+				LoopItems.class,
+				LoopWorlds.class,
 				
 				EvtBlock.class,
 				EvtDamage.class,

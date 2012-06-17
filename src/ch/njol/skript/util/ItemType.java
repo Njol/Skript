@@ -139,14 +139,13 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		return isOfType(block.getTypeId(), block.getData());
 	}
 	
-	public boolean isOfType(int id, short data) {
+	public boolean isOfType(final int id, final short data) {
 		for (final ItemData type : types) {
 			if (type.isOfType(id, data))
 				return true;
 		}
 		return false;
 	}
-	
 	
 	@Override
 	public String toString() {
@@ -613,5 +612,5 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		}
 		return ok;
 	}
-
+	
 }
