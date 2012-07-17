@@ -37,7 +37,7 @@ import ch.njol.skript.util.EntityType;
 public class ExprTypeOf extends SimpleExpression<String> {
 
 	static {
-		Skript.registerExpression(ExprTypeOf.class, String.class, "[the] type of %entitytype|itemtype%");
+		Skript.registerExpression(ExprTypeOf.class, String.class, "[the] type of %entitydata|itemtype%");
 	}
 	
 	private Expression<?> expr;
@@ -60,11 +60,11 @@ public class ExprTypeOf extends SimpleExpression<String> {
 
 	@Override
 	public String getDebugMessage(Event e) {
-		return "type of "+expr.getDebugMessage(e);
+		return "type of "+expr.toString(e, debug);
 	}
 
 	@Override
-	protected String[] getAll(Event e) {
+	protected String[] get(Event e) {
 		Object o = expr.getSingle(e);
 		if (o instanceof Entity) {
 			return new String[] {EntityType.toString((Entity) o)};
@@ -77,7 +77,7 @@ public class ExprTypeOf extends SimpleExpression<String> {
 	}
 
 	@Override
-	public String toString() {
+	public String toString(Event e, boolean debug) {
 		return "the type of "+expr;
 	}
 	

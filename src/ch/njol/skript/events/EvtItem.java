@@ -78,7 +78,7 @@ public class EvtItem extends SkriptEvent {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return "dispense/spawn/drop/throw" + (types == null ? "" : " of " + types);
 	}
 	

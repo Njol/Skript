@@ -22,19 +22,27 @@
 package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
+import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.Converter.ConverterUtils;
-import ch.njol.skript.api.intern.ConvertedLiteral;
+import ch.njol.skript.api.Parser;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.api.intern.VariableStringLiteral;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Checker;
+import ch.njol.util.iterator.NonNullIterator;
 
 /**
  * A literal which has yet to be parsed. This is returned if %object(s)% is used within patterns and no expression matches.
@@ -42,91 +50,240 @@ import ch.njol.skript.util.Utils;
  * @author Peter Güttinger
  * @see SimpleLiteral
  */
-public class UnparsedLiteral extends SimpleLiteral<Object> {
+public class UnparsedLiteral implements Literal<Object> {
+	
+	private final String data;
 	
 	/**
-	 * 
 	 * @param data trim()med Strings
 	 * @param and
 	 */
-	public UnparsedLiteral(final String[] data, final boolean and) {
-		super(data, Object.class, and);
+	public UnparsedLiteral(final String data) {
+		this.data = data;
 	}
 	
-	public String[] getData() {
-		return (String[]) data;
+	public String getData() {
+		return data;
+	}
+	
+	@Override
+	public Class<? extends Object> getReturnType() {
+		return Object.class;
+	}
+	
+	@Override
+	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to) {
+		return getConvertedExpression(to, ParseContext.DEFAULT);
 	}
 	
 	@SuppressWarnings("unchecked")
-	@Override
-	public <R> ConvertedLiteral<Object, ? extends R> getConvertedExpression(final Class<R> to) {
-		if (to == String.class) {
+	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to, final ParseContext context) {
+		if (to == String.class && context == ParseContext.DEFAULT) {
 			final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
 			if (vsl == null)
 				return null;
-			return (ConvertedLiteral<Object, ? extends R>) vsl;
+			return (Literal<? extends R>) vsl;
 		} else if (to == Object.class) {
-			for (ClassInfo<?> ci : Skript.getClassInfos()) {
-				Object[] parsed = ConverterUtils.convertUnsafe((String[]) data, ci.getParser(), ci.getC());
-				if (parsed.length > 0)
-					return new ConvertedLiteral<Object, R>(this, (R[]) parsed, to);
+			final SubLog log = SkriptLogger.startSubLog();
+			for (final ClassInfo<?> ci : Skript.getClassInfos()) {
+				if (ci.getParser() != null) {
+					log.clear();
+					final Literal<?> l = convert(ci.getClass(), ci.getParser(), context);
+					if (l != null) {
+						log.stop();
+						log.printLog();
+						return (Literal<? extends R>) l;
+					}
+				}
 			}
-			throw new SkriptAPIException("can't parse as Object");
+			log.stop();
+			return null;
 		}
-		final Converter<String, ? extends R> p = Skript.getParser(to);
+		final Parser<? extends R> p = Skript.getParser(to);
 		if (p == null)
 			return null;
-		final R[] parsedData = (R[]) Array.newInstance(to, data.length);
+		return convert(to, p, context);
+	}
+	
+	private final static Pattern literalSplitPattern = Pattern.compile("\\s*,\\s*|\\s*,?\\s+and\\s+|\\s*,?\\s+n?or\\s+", Pattern.CASE_INSENSITIVE);
+	
+	private <T> Literal<T> convert(final Class<T> to, final Parser<?> parser, final ParseContext context) {
 		final SubLog log = SkriptLogger.startSubLog();
-		for (int i = 0; i < data.length; i++) {
-			if ((parsedData[i] = p.convert((String) data[i])) == null) {
-				SkriptLogger.stopSubLog(log);
-				log.printErrors("'" + data[i] + "' is not " + Utils.a(Skript.getExactClassName(to)));
-				return null;
+		
+		String last = data, lastError = null;
+		
+		final T r = (T) parser.parse(data, context);
+		if (r != null) {
+			log.stop();
+			log.printLog();
+			return new SimpleLiteral<T>(r, false);
+		}
+		lastError = log.getLastError();
+		log.clear();
+		
+		T t = null;
+		final Deque<T> ts = new LinkedList<T>();
+		final Matcher m = literalSplitPattern.matcher(data);
+		int end = data.length();
+		int expectedEnd = -1;
+		boolean and = true;
+		boolean isAndSet = false;
+		while (m.find()) {
+			if (expectedEnd == -1)
+				expectedEnd = m.start();
+			t = (T) parser.parse(last = data.substring(m.end(), end), context);
+			lastError = log.getLastError();
+			if (t != null) {
+				if (!m.group().matches("\\s*,\\s*")) {
+					if (isAndSet) {
+						if (and != m.group().toLowerCase().contains("and")) {
+							Skript.warning("list has multiple 'and' or 'or', will default to 'and'");
+							and = true;
+						}
+					} else {
+						and = m.group().toLowerCase().contains("and");
+						isAndSet = true;
+					}
+				}
+				ts.addFirst(t);
+				log.clear();
+				end = m.start();
+				m.region(0, end);
+			} else {
+				log.clear();
 			}
 		}
-		SkriptLogger.stopSubLog(log);
-		return new ConvertedLiteral<Object, R>(this, parsedData, to);
+		if (end == expectedEnd) {
+			t = (T) parser.parse(last = data.substring(0, end), context);
+			lastError = log.getLastError();
+			log.stop();
+			if (t != null) {
+				ts.addFirst(t);
+				return new SimpleLiteral<T>(ts.toArray((T[]) Array.newInstance(to, ts.size())), to, and);
+			}
+		}
+		log.stop();
+		Skript.error(lastError != null ? lastError : "'" + last + "' is not " + Utils.a(Skript.getSuperClassInfo(to).getName()));
+		return null;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "<" + Utils.join(data) + ">";
+	public String toString(final Event e, final boolean debug) {
+		return "'" + data + "'";
 	}
 	
 	@Override
 	public String toString() {
-		return Utils.join(data);
+		return toString(null, false);
+	}
+	
+	private final static SkriptAPIException invalidAccessException() {
+		return new SkriptAPIException("UnparsedLiterals must be converted before use");
+	}
+	
+	@Override
+	public boolean getAnd() {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public boolean isSingle() {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public Object[] getAll() {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public Object[] getAll(final Event e) {
+		throw invalidAccessException();
 	}
 	
 	@Override
 	public Object[] getArray() {
-		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+		throw invalidAccessException();
 	}
 	
 	@Override
 	public Object[] getArray(final Event e) {
-		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+		throw invalidAccessException();
 	}
 	
 	@Override
 	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super Object, ? extends V> converter) {
-		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+		throw invalidAccessException();
 	}
 	
 	@Override
 	public Object getSingle() {
-		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+		throw invalidAccessException();
 	}
 	
 	@Override
 	public Object getSingle(final Event e) {
-		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+		throw invalidAccessException();
 	}
 	
 	@Override
 	public <V> V getSingle(final Event e, final Converter<? super Object, ? extends V> converter) {
-		throw new SkriptAPIException("UnparsedLiterals must be converted before use");
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public boolean canLoop() {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public NonNullIterator<Object> iterator(final Event e) {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public Class<?> acceptChange(final ChangeMode mode) {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public boolean check(final Event e, final Checker<? super Object> c) {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public boolean check(final Event e, final Checker<? super Object> c, final Condition cond) {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public boolean setTime(final int time) {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public int getTime() {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public boolean isDefault() {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public boolean isLoopOf(final String s) {
+		throw invalidAccessException();
+	}
+	
+	@Override
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+		throw invalidAccessException();
 	}
 	
 }

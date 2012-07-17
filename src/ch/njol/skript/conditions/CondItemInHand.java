@@ -73,8 +73,8 @@ public class CondItemInHand extends Condition {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return players.getDebugMessage(e) + " is holding " + types.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return players.toString(e, debug) + " is holding " + types.toString(e, debug);
 	}
 	
 }

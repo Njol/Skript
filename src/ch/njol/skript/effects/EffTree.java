@@ -63,8 +63,8 @@ public class EffTree extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "grow tree of type " + type.getDebugMessage(e) + " " + offsets.getDebugMessage(e) + " " + blocks.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "grow tree of type " + type.toString(e, debug) + " " + offsets.toString(e, debug) + " " + blocks.toString(e, debug);
 	}
 	
 }

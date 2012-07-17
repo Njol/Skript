@@ -25,7 +25,8 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.expressions.base.WrapperExpression;
+import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
@@ -33,27 +34,31 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  * 
  */
-public class ExprLocation extends WrapperExpression<Location> {
+public class ExprLocation extends PropertyExpression<Location> {
 	
 	static {
-		Skript.registerExpression(ExprLocation.class, Location.class, "location of %location%", "%location%'[s] location");
+		Skript.registerExpression(ExprLocation.class, Location.class, ExpressionType.PROPERTY, "location of %location%", "%location%'[s] location");
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
-		expr = (Expression<Location>) vars[0];
+		setExpr(vars[0]);
 		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "location of " + expr.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "the location of " + getExpr().toString(e, debug);
 	}
 	
 	@Override
-	public String toString() {
-		return "location of " + expr;
+	public Class<? extends Location> getReturnType() {
+		return Location.class;
+	}
+	
+	@Override
+	protected Location[] get(final Event e) {
+		return ((Expression<Location>) getExpr()).getArray(e);
 	}
 	
 }

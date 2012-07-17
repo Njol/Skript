@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 
 import org.bukkit.Material;
@@ -63,7 +63,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 			{Material.BED.getId(), Material.BED_BLOCK.getId()},
 			{Material.BREWING_STAND_ITEM.getId(), Material.BREWING_STAND.getId()},
 			{Material.REDSTONE_LAMP_OFF.getId(), Material.REDSTONE_LAMP_ON.getId()},
-			{Material.REDSTONE_TORCH_OFF.getId(), Material.REDSTONE_TORCH_ON.getId()},
+			{Material.REDSTONE_TORCH_ON.getId(), Material.REDSTONE_TORCH_OFF.getId()},
 			{Material.REDSTONE_ORE.getId(), Material.GLOWING_REDSTONE_ORE.getId()},
 			{Material.FURNACE.getId(), Material.BURNING_FURNACE.getId()},
 			{Material.CAULDRON_ITEM.getId(), Material.CAULDRON.getId()},
@@ -193,10 +193,14 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		if (!hasPreferred || all)
 			return this;
 		item = clone();
-		for (final ItemData d : item.types) {
+		for (int i = 0; i < item.types.size(); i++) {
+			final ItemData d = item.types.get(i);
 			for (final int[] p : preferredMaterials) {
 				if (Utils.indexOf(p, d.typeid, 1) != -1) {
-					d.typeid = p[0];
+					final ItemData c = d.clone();
+					c.typeid = p[0];
+					if (item.types.contains(c))
+						item.types.remove(i--);
 					break;
 				}
 			}
@@ -211,13 +215,20 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		if (!hasPreferred || all)
 			return this;
 		block = clone();
-		for (final ItemData d : block.types) {
+		for (int i = 0; i < block.types.size(); i++) {
+			final ItemData d = block.types.get(i);
 			for (final int[] p : preferredMaterials) {
 				if (p[0] <= Skript.MAXBLOCKID && Utils.indexOf(p, d.typeid, 1) != -1) {
-					d.typeid = p[0];
+					final ItemData c = d.clone();
+					c.typeid = p[0];
+					if (block.types.contains(c))
+						block.types.remove(i--);
 					break;
 				} else if (d.typeid == p[0]) {
-					d.typeid = p[1];
+					final ItemData c = d.clone();
+					c.typeid = p[1];
+					if (block.types.contains(c))
+						block.types.remove(i--);
 					break;
 				}
 			}
@@ -234,7 +245,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 				if (c != -1 && Utils.indexOf(p, d.typeid) != -1) {
 					hasPreferred = true;
 					return;
-				} else {
+				} else if (c == -1) {
 					c = Utils.indexOf(p, d.typeid);
 				}
 			}
@@ -329,19 +340,21 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 			public Iterator<ItemStack> iterator() {
 				return new Iterator<ItemStack>() {
 					
-					ListIterator<ItemData> iter = types.listIterator();
+					Iterator<ItemData> iter = types.iterator();
 					Iterator<ItemStack> currentDataIter;
 					
 					@Override
 					public boolean hasNext() {
+						while (iter.hasNext() && (currentDataIter == null || !currentDataIter.hasNext())) {
+							currentDataIter = iter.next().getAll();
+						}
 						return iter.hasNext() || currentDataIter.hasNext();
 					}
 					
 					@Override
 					public ItemStack next() {
-						while (currentDataIter == null || !currentDataIter.hasNext()) {
-							currentDataIter = iter.next().getAll();
-						}
+						if (!hasNext())
+							throw new NoSuchElementException();
 						return currentDataIter.next();
 					}
 					
@@ -418,28 +431,18 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	 */
 	public boolean hasSpace(final Inventory invi) {
 		if (!isAll()) {
-			if (types.size() != 1 || types.get(0).hasDataRange() || types.get(0).typeid == -1)
+			if (getItem().types.size() != 1 || getItem().types.get(0).hasDataRange() || getItem().types.get(0).typeid == -1)
 				return false;
-			final ItemStack b = types.get(0).getRandom(); // actually not random at all
-			int added = 0;
-			for (final ItemStack is : invi.getContents()) {
-				if (Utils.itemStacksEqual(is, b)) {
-					final int d = Math.min(is.getMaxStackSize() - is.getAmount(), b.getAmount() - added);
-					if (d > 0) {
-						added += d;
-						if (added == b.getAmount())
-							return true;
-					}
-				} else if (is == null) {
-					added += b.getMaxStackSize();
-					if (added >= b.getAmount())
-						return true;
-				}
-			}
-			return false;
 		}
+		return addTo(getCopiedContents(invi));
+	}
+	
+	public final static ItemStack[] getCopiedContents(final Inventory invi) {
 		final ItemStack[] buf = invi.getContents();
-		return addTo(buf);
+		for (int i = 0; i < buf.length; i++)
+			if (buf[i] != null)
+				buf[i] = buf[i].clone();
+		return buf;
 	}
 	
 	private final List<ItemData> unmodable = Collections.unmodifiableList(types);
@@ -571,17 +574,16 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	 * @return Whether everything could be added to the inventory
 	 */
 	public boolean addTo(final Inventory invi) {
-		if (!isAll()) {
-			return invi.addItem(getItem().getRandom()).isEmpty();
-		}
-		boolean ok = true;
-		for (final ItemStack is : getItem().getAll()) {
-			ok &= invi.addItem(is).isEmpty();
-		}
-		return ok;
+		// important: don't use inventory.add() - it ignores max stack sizes
+		final ItemStack[] buf = invi.getContents();
+		final boolean b = addTo(buf);
+		invi.setContents(buf);
+		return b;
 	}
 	
 	private static boolean addTo(final ItemStack is, final ItemStack[] buf) {
+		if (is == null || is.getTypeId() == 0)
+			return true;
 		int added = 0;
 		for (int i = 0; i < buf.length; i++) {
 			if (Utils.itemStacksEqual(is, buf[i])) {
@@ -594,8 +596,11 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		}
 		for (int i = 0; i < buf.length; i++) {
 			if (buf[i] == null) {
-				added += is.getMaxStackSize();
-				if (added >= is.getAmount())
+				final int toAdd = Math.min(is.getMaxStackSize(), is.getAmount() - added);
+				added += toAdd;
+				buf[i] = is.clone();
+				buf[i].setAmount(toAdd);
+				if (added == is.getAmount())
 					return true;
 			}
 		}

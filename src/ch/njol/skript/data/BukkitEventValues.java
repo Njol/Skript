@@ -21,9 +21,11 @@
 
 package ch.njol.skript.data;
 
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -36,10 +38,14 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPistonEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -50,13 +56,11 @@ import org.bukkit.event.painting.PaintingPlaceEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerBucketEvent;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
-import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.vehicle.VehicleEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.event.weather.WeatherEvent;
@@ -65,12 +69,14 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Getter;
+import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.util.BlockStateBlock;
 
 /**
  * @author Peter Güttinger
  * 
  */
+@SuppressWarnings("unchecked")
 public final class BukkitEventValues {
 	
 	public BukkitEventValues() {}
@@ -93,14 +99,6 @@ public final class BukkitEventValues {
 			}
 		}, 0);
 		
-		// ServerCommandEvent
-		Skript.registerEventValue(ServerCommandEvent.class, CommandSender.class, new Getter<CommandSender, ServerCommandEvent>() {
-			@Override
-			public CommandSender get(final ServerCommandEvent e) {
-				return e.getSender();
-			}
-		}, 0);
-		
 		// === BlockEvents ===
 		Skript.registerEventValue(BlockEvent.class, Block.class, new Getter<Block, BlockEvent>() {
 			@Override
@@ -115,11 +113,32 @@ public final class BukkitEventValues {
 				return e.getPlayer();
 			}
 		}, 0);
-		// BlockPlaceEvent
 		Skript.registerEventValue(BlockPlaceEvent.class, Block.class, new Getter<Block, BlockPlaceEvent>() {
 			@Override
 			public Block get(final BlockPlaceEvent e) {
 				return new BlockStateBlock(e.getBlockReplacedState());
+			}
+		}, -1);
+		// BlockFadeEvent
+		Skript.registerEventValue(BlockFadeEvent.class, Block.class, new Getter<Block, BlockFadeEvent>() {
+			@Override
+			public Block get(final BlockFadeEvent e) {
+				return new BlockStateBlock(e.getNewState());
+			}
+		}, 1);
+		// BlockFormEvent
+		Skript.registerEventValue(BlockFormEvent.class, Block.class, new Getter<Block, BlockFormEvent>() {
+			@Override
+			public Block get(final BlockFormEvent e) {
+				if (e instanceof BlockSpreadEvent)
+					return e.getBlock();
+				return new BlockStateBlock(e.getNewState());
+			}
+		}, 0);
+		Skript.registerEventValue(BlockFormEvent.class, Block.class, new Getter<Block, BlockFormEvent>() {
+			@Override
+			public Block get(final BlockFormEvent e) {
+				return e.getBlock();
 			}
 		}, -1);
 		// BlockDamageEvent
@@ -136,6 +155,14 @@ public final class BukkitEventValues {
 				return e.getPlayer();
 			}
 		}, 0);
+		Skript.registerEventValue(BlockBreakEvent.class, Block.class, new Getter<Block, BlockBreakEvent>() {
+			@Override
+			public Block get(final BlockBreakEvent e) {
+				final BlockState s = e.getBlock().getState();
+				s.setType(s.getType() == Material.ICE ? Material.STATIONARY_WATER : Material.AIR);
+				return new BlockStateBlock(s);
+			}
+		}, 1);
 		// BlockIgniteEvent
 		Skript.registerEventValue(BlockIgniteEvent.class, Player.class, new Getter<Player, BlockIgniteEvent>() {
 			@Override
@@ -171,19 +198,26 @@ public final class BukkitEventValues {
 			public Entity get(final EntityEvent e) {
 				return e.getEntity();
 			}
-		}, 0);
-		// EntityDeathEvent
-		Skript.registerEventValue(EntityDeathEvent.class, ItemStack[].class, new Getter<ItemStack[], EntityDeathEvent>() {
-			@Override
-			public ItemStack[] get(final EntityDeathEvent e) {
-				return e.getDrops().toArray(new ItemStack[0]);
-			}
-		}, 0);
+		}, 0, "Use 'attacker' and/or 'victim' in damage events", EntityDamageEvent.class);
 		// EntityDamageEvent
 		Skript.registerEventValue(EntityDamageEvent.class, DamageCause.class, new Getter<DamageCause, EntityDamageEvent>() {
 			@Override
 			public DamageCause get(final EntityDamageEvent e) {
 				return e.getCause();
+			}
+		}, 0);
+		Skript.registerEventValue(EntityDeathEvent.class, DamageCause.class, new Getter<DamageCause, EntityDeathEvent>() {
+			@Override
+			public DamageCause get(final EntityDeathEvent e) {
+				return e.getEntity().getLastDamageCause().getCause();
+			}
+		}, 0);
+		Skript.registerEventValue(EntityDamageByEntityEvent.class, Projectile.class, new Getter<Projectile, EntityDamageByEntityEvent>() {
+			@Override
+			public Projectile get(final EntityDamageByEntityEvent e) {
+				if (e.getDamager() instanceof Projectile)
+					return (Projectile) e.getDamager();
+				return null;
 			}
 		}, 0);
 		// ProjectileHitEvent
@@ -256,13 +290,6 @@ public final class BukkitEventValues {
 				return e.getEntity();
 			}
 		}, 0);
-		// PlayerCommandPreprocessEvent
-		Skript.registerEventValue(PlayerCommandPreprocessEvent.class, Player.class, new Getter<Player, PlayerCommandPreprocessEvent>() {
-			@Override
-			public Player get(final PlayerCommandPreprocessEvent e) {
-				return e.getPlayer();
-			}
-		}, 0);
 		
 		// --- PaintingEvents ---
 		Skript.registerEventValue(PaintingEvent.class, Painting.class, new Getter<Painting, PaintingEvent>() {
@@ -296,6 +323,14 @@ public final class BukkitEventValues {
 			@Override
 			public Entity get(final VehicleEvent e) {
 				return e.getVehicle().getPassenger();
+			}
+		}, 0);
+		
+		// === CommandEvent ===
+		Skript.registerEventValue(CommandEvent.class, CommandSender.class, new Getter<CommandSender, CommandEvent>() {
+			@Override
+			public CommandSender get(final CommandEvent e) {
+				return e.getSender();
 			}
 		}, 0);
 		

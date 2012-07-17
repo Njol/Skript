@@ -95,7 +95,7 @@ public class EvtBlock extends SkriptEvent {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return "break/place/burn/fade/form of " + Skript.toString(types);
 	}
 	

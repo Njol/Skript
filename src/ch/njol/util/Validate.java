@@ -19,6 +19,8 @@
 
 package ch.njol.util;
 
+import java.util.Collection;
+
 /**
  * @author Peter Güttinger
  * 
@@ -47,14 +49,24 @@ public abstract class Validate {
 			throw new IllegalArgumentException(error);
 	}
 	
-	public static void notEmpty(final String s, final String name) {
-		if (s != null && s.isEmpty())
-			throw new IllegalArgumentException(name + " must not be empty");
-	}
-	
 	public static void notNullOrEmpty(final String s, final String name) {
 		if (s == null || s.isEmpty())
 			throw new IllegalArgumentException(name + " must neither be null nor empty");
+	}
+	
+	public static void notNullOrEmpty(final Object[] array, final String name) {
+		if (array == null || array.length == 0)
+			throw new IllegalArgumentException(name + " must neither be null nor empty");
+	}
+	
+	public static void notNullOrEmpty(final Collection<?> collection, final String name) {
+		if (collection == null || collection.isEmpty())
+			throw new IllegalArgumentException(name + " must neither be null nor empty");
+	}
+	
+	public static void notEmpty(final String s, final String name) {
+		if (s != null && s.isEmpty())
+			throw new IllegalArgumentException(name + " must not be empty");
 	}
 	
 	public static void notEmpty(final Object[] array, final String name) {

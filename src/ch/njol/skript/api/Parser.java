@@ -23,6 +23,7 @@ package ch.njol.skript.api;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.lang.ParseContext;
 
 /**
  * A parser used to parse data from a string. <br/>
@@ -34,22 +35,24 @@ import ch.njol.skript.classes.ClassInfo;
  * @see ClassInfo
  * @see Skript#toString(Object)
  */
-public abstract class Parser<T> implements Converter<String, T> {
+public abstract class Parser<T> {
 	
 	/**
 	 * Parses the input. This method may print an error prior to returning null if the input couln't be parsed.
 	 * 
 	 * @param s The String to parse. This string is already trim()med.
+	 * @param context Context of parsing, can be null
 	 * @return The parsed input or null if the input is invalid for this parser.
 	 */
-	public abstract T parse(String s);
+	public abstract T parse(String s, ParseContext context);
 	
 	/**
-	 * Alias of {@link #parse(String)} to make Parser implement Converter.
+	 * 
+	 * @return Whether {@link #parse(String, ParseContext)} can actually return something other that null for the given context
 	 */
-	@Override
-	public final T convert(final String s) {
-		return parse(s);
+	@SuppressWarnings("static-method")
+	public boolean canParse(@SuppressWarnings("unused") final ParseContext context) {
+		return true;
 	}
 	
 	/**
@@ -60,6 +63,16 @@ public abstract class Parser<T> implements Converter<String, T> {
 	 * @see #getDebugMessage(Object)
 	 */
 	public abstract String toString(T o);
+	
+	/**
+	 * Gets a string representation of this object that will be used in variable's names.
+	 * 
+	 * @param o
+	 * @return
+	 */
+	public String getCodeString(final T o) {
+		return toString(o);
+	}
 	
 	/**
 	 * Returns a string representation of the given object to be used for debugging.<br>

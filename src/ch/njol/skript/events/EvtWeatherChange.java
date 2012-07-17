@@ -66,7 +66,7 @@ public class EvtWeatherChange extends SkriptEvent {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return "weather change" + (types == null ? "" : " to " + types);
 	}
 	

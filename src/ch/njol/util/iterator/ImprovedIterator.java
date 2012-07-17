@@ -37,8 +37,6 @@ public class ImprovedIterator<T> implements Iterator<T> {
 	
 	@Override
 	public T next() {
-		if (!hasNext())
-			return null;
 		return current = iter.next();
 	}
 	

@@ -21,10 +21,16 @@
 
 package ch.njol.skript.api.intern;
 
+import java.util.Iterator;
+
 import org.bukkit.event.Event;
 
-import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.util.Container;
+import ch.njol.skript.util.Container.ContainerType;
+import ch.njol.util.Validate;
 
 /**
  * A trigger section which represents a loop.
@@ -34,22 +40,35 @@ import ch.njol.skript.config.SectionNode;
  */
 public class Loop extends TriggerSection {
 	
-	private final LoopExpr<?> var;
+	private final Expression<?> expr;
 	
-	public <T> Loop(final LoopExpr<?> var, final SectionNode node) {
-		super(node);
-		this.var = var;
+	private Object current = null;
+	
+	public <T> Loop(final Expression<?> expr, final SectionNode node) {
+		super(false);
+		Validate.notNull(expr, node);
+		if (Container.class.isAssignableFrom(expr.getReturnType())) {
+			final ContainerType type = expr.getReturnType().getAnnotation(ContainerType.class);
+			if (type == null)
+				throw new SkriptAPIException(expr.getReturnType().getName() + " implements Container but is missing the required @ContainerType annotation");
+			this.expr = new ContanerExpression(expr, type.value());
+		} else {
+			this.expr = expr;
+		}
+		ScriptLoader.currentLoops.add(this);
+		setTriggerItems(ScriptLoader.loadItems(node));
+		ScriptLoader.currentLoops.remove(ScriptLoader.currentLoops.size() - 1);
 	}
 	
 	@Override
 	public boolean run(final Event e) {
-		var.startLoop(e);
-		if (!var.hasNext()) {
+		final Iterator<?> iter = expr.iterator(e);
+		if (iter == null || !iter.hasNext()) {
 			super.run(e, false);
 			return true;
 		}
-		while (var.hasNext()) {
-			var.next();
+		while (iter.hasNext()) {
+			current = iter.next();
 			super.run(e, true);
 			if (isStopped())
 				break;
@@ -58,8 +77,16 @@ public class Loop extends TriggerSection {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "loop " + var.getLoopDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "loop " + expr.toString(e, debug);
+	}
+	
+	public Object getCurrent() {
+		return current;
+	}
+	
+	public Expression<?> getLoopedExpression() {
+		return expr;
 	}
 	
 }

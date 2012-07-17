@@ -33,7 +33,7 @@ import ch.njol.skript.events.EvtPeriodical;
  * 
  */
 public class ScheduledEvent extends Event {
-	transient private World world;
+	private final World world;
 	private final EvtPeriodical event;
 	
 	public ScheduledEvent(final World world, final EvtPeriodical event) {

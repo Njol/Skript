@@ -25,7 +25,9 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
@@ -36,7 +38,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class ExprXOfItem extends SimpleExpression<ItemStack> {
 	
 	static {
-		Skript.registerExpression(ExprXOfItem.class, ItemStack.class, "<\\d+> of %itemstacks%");
+		Skript.registerExpression(ExprXOfItem.class, ItemStack.class, ExpressionType.PROPERTY, "<\\d+> of %itemstacks%");
 	}
 	
 	private int amount;
@@ -45,8 +47,10 @@ public class ExprXOfItem extends SimpleExpression<ItemStack> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
-		amount = Integer.parseInt(parseResult.regexes.get(0).group());
 		items = (Expression<ItemStack>) exprs[0];
+		if (items instanceof Literal)// "x of y" is also an ItemType syntax
+			return false;
+		amount = Integer.parseInt(parseResult.regexes.get(0).group());
 		return true;
 	}
 	
@@ -61,7 +65,7 @@ public class ExprXOfItem extends SimpleExpression<ItemStack> {
 	}
 	
 	@Override
-	protected ItemStack[] getAll(final Event e) {
+	protected ItemStack[] get(final Event e) {
 		final ItemStack[] iss = items.getArray(e);
 		for (final ItemStack is : iss)
 			is.setAmount(amount);
@@ -69,13 +73,13 @@ public class ExprXOfItem extends SimpleExpression<ItemStack> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return amount + " of " + items.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return amount + " of " + items.toString(e, debug);
 	}
 	
 	@Override
-	public String toString() {
-		return amount + " of " + items;
+	public boolean getAnd() {
+		return true;
 	}
 	
 }

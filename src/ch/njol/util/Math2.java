@@ -27,10 +27,10 @@ public abstract class Math2 {
 	
 	public static int min(final int... nums) {
 		Validate.notEmpty(nums, "nums");
-		int min = Integer.MAX_VALUE;
-		for (final int i : nums) {
-			if (i < min)
-				min = i;
+		int min = nums[0];
+		for (int i = 1; i < nums.length; i++) {
+			if (nums[i] < min)
+				min = nums[i];
 		}
 		return min;
 	}

@@ -19,57 +19,50 @@
  * 
  */
 
-package ch.njol.skript.loops;
+package ch.njol.skript.entity;
 
-import java.util.Iterator;
+import org.bukkit.entity.Ocelot;
 
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.event.Event;
-
-import ch.njol.skript.Skript;
-import ch.njol.skript.api.LoopExpr;
-import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class LoopWorlds extends LoopExpr<World> {
+public class OcelotData extends EntityData<Ocelot> {
 	
 	static {
-		Skript.registerLoop(LoopWorlds.class, World.class, "worlds");
+		EntityData.register(OcelotData.class, "ocelot", Ocelot.class, "(wild|untamed) ocelot", "ocelot", "(cat|tamed) ocelot");
 	}
 	
+	int tamed = 0;
+	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+		tamed = matchedPattern - 1;
 		return true;
 	}
 	
 	@Override
-	protected Iterator<World> iterator(final Event e) {
-		return Bukkit.getWorlds().iterator();
+	protected void set(final Ocelot entity) {
+		if (tamed != 0)
+			entity.setTamed(tamed == 1);
 	}
 	
 	@Override
-	public Class<? extends World> getReturnType() {
-		return World.class;
+	protected boolean match(final Ocelot entity) {
+		return tamed == 0 || entity.isTamed() == (tamed == 1);
 	}
 	
 	@Override
-	public String getLoopDebugMessage(final Event e) {
-		return "worlds";
+	public Class<? extends Ocelot> getType() {
+		return Ocelot.class;
 	}
 	
 	@Override
 	public String toString() {
-		return "the loop-world";
-	}
-	
-	@Override
-	public boolean isLoopOf(final String s) {
-		return s.equalsIgnoreCase("world");
+		return tamed == -1 ? "wild ocelot" : tamed == 1 ? "cat" : "ocelot";
 	}
 	
 }

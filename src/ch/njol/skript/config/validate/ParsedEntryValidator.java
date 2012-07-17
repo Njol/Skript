@@ -22,7 +22,7 @@
 package ch.njol.skript.config.validate;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.Parser;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
@@ -34,7 +34,7 @@ import ch.njol.util.Setter;
  */
 public class ParsedEntryValidator<T> extends EntryValidator {
 	
-	private final Converter<String, ? extends T> parser;
+	private final Parser<? extends T> parser;
 	private final Setter<T> setter;
 	
 	public ParsedEntryValidator(final Class<T> c, final Setter<T> setter) {
@@ -48,7 +48,7 @@ public class ParsedEntryValidator<T> extends EntryValidator {
 	public boolean validate(final Node node) {
 		if (!super.validate(node))
 			return false;
-		final T t = parser.convert(((EntryNode) node).getValue());
+		final T t = parser.parse(((EntryNode) node).getValue(), null);
 		if (t == null)
 			return false;
 		setter.set(t);

@@ -28,13 +28,14 @@ import org.bukkit.block.Furnace;
 import org.bukkit.event.Event;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
-import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.FurnaceInventory;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Getter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Slot;
 
@@ -42,69 +43,120 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  * 
  */
-public class ExprFurnaceSlot extends SimpleExpression<Slot> {
+public class ExprFurnaceSlot extends PropertyExpression<Slot> {
 	
-	// Slot IDs:
-	// ore: 0, fuel: 1, result: 2
+	private final static int ORE = 0, FUEL = 1, RESULT = 2;
+	private final static String[] slotNames = {"ore", "fuel", "result"};
 	
 	static {
-		Skript.registerExpression(ExprFurnaceSlot.class, Slot.class,
-				"[the] ore [slot] [of %blocks%]", "%block%'[s] ore [slot]",
-				"[the] fuel [slot] [of %blocks%]", "%block%'[s] fuel [slot]",
-				"[the] result [slot] [of %blocks%]", "%block%'[s] result [slot]");
+		Skript.registerExpression(ExprFurnaceSlot.class, Slot.class, ExpressionType.PROPERTY,
+				"[the] ore[s] [slot[s]] [of %blocks%]", "%block%'[s] ore[s] [slot[s]]",
+				"[the] fuel[s] [slot[s]] [of %blocks%]", "%block%'[s] fuel[s] [slot[s]]",
+				"[the] result[s] [slot[s]] [of %blocks%]", "%block%'[s] result[s] [slot[s]]");
 	}
 	
 	private Expression<Block> blocks;
 	private int slot;
 	
-	private final static String[] slotNames = {"ore", "fuel", "result"};
-	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		blocks = (Expression<Block>) vars[0];
+		setExpr(blocks);
 		slot = matchedPattern / 2;
 		return true;
 	}
 	
 	private final class FurnaceEventSlot extends Slot {
 		
-		public FurnaceEventSlot(final Inventory invi) {
+		private final Event e;
+		
+		public FurnaceEventSlot(final Event e, final FurnaceInventory invi) {
 			super(invi, slot);
+			this.e = e;
 		}
 		
 		@Override
 		public ItemStack getItem() {
-			final ItemStack i = super.getItem();
-			if (getTime() == -1)
-				return i;
-			i.setAmount(i.getAmount() - 1);
-			if (i.getAmount() == 0)
-				return new ItemStack(0, 1);
-			return i;
+			if (e instanceof FurnaceSmeltEvent) {
+				if (slot == RESULT) {
+					if (getTime() >= 0)
+						return ((FurnaceSmeltEvent) e).getResult().clone();
+					else
+						return super.getItem();
+				} else if (slot == ORE) {
+					if (getTime() <= 0) {
+						return super.getItem();
+					} else {
+						final ItemStack i = super.getItem();
+						i.setAmount(i.getAmount() - 1);
+						return i.getAmount() == 0 ? new ItemStack(0, 1) : i;
+					}
+				} else {
+					return super.getItem();
+				}
+			} else {
+				if (slot == FUEL) {
+					if (getTime() <= 0) {
+						return super.getItem();
+					} else {
+						final ItemStack i = super.getItem();
+						i.setAmount(i.getAmount() - 1);
+						return i.getAmount() == 0 ? new ItemStack(0, 1) : i;
+					}
+				} else {
+					return super.getItem();
+				}
+			}
 		}
 		
-		// FIXME 
 		@Override
 		public void setItem(final ItemStack item) {
-			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
-				@Override
-				public void run() {
-					item.setAmount(item.getAmount() + 1);
-					FurnaceEventSlot.super.setItem(item);
+			if (e instanceof FurnaceSmeltEvent) {
+				if (slot == RESULT) {
+					if (item == null || item.getTypeId() <= 0) { // null/air crashes the server on account of a NPE if using event.setResult(...)
+						Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+							@Override
+							public void run() {
+								FurnaceEventSlot.super.setItem(null);
+							}
+						});
+					} else {
+						((FurnaceSmeltEvent) e).setResult(item);
+					}
+				} else if (slot == ORE) {
+					Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+						@Override
+						public void run() {
+							FurnaceEventSlot.super.setItem(item);
+						}
+					});
+				} else {
+					super.setItem(item);
 				}
-			});
+			} else {
+				if (slot == FUEL) {
+					Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+						@Override
+						public void run() {
+							FurnaceEventSlot.super.setItem(item);
+						}
+					});
+				} else {
+					super.setItem(item);
+				}
+			}
 		}
 		
 	}
 	
 	@Override
-	protected Slot[] getAll(final Event e) {
+	protected Slot[] get(final Event e) {
 		if (blocks.isDefault() && (e instanceof FurnaceSmeltEvent || e instanceof FurnaceBurnEvent)) {
 			final Block b = blocks.getSingle(e);
 			if (b.getType() != Material.FURNACE && b.getType() != Material.BURNING_FURNACE)
 				return null;
-			return new Slot[] {new FurnaceEventSlot(((Furnace) b.getState()).getInventory())};
+			return new Slot[] {new FurnaceEventSlot(e, ((Furnace) b.getState()).getInventory())};
 		}
 		return blocks.getArray(e, Slot.class, new Getter<Slot, Block>() {
 			@Override
@@ -122,20 +174,10 @@ public class ExprFurnaceSlot extends SimpleExpression<Slot> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return slotNames[slot] + " slot of " + blocks.getDebugMessage(e);
+			return (getTime() == -1 ? "past " : getTime() == 1 ? "future " : "") + slotNames[slot] + " slot of " + blocks.toString(e, debug);
 		return Skript.getDebugMessage(getSingle(e));
-	}
-	
-	@Override
-	public String toString() {
-		return "the " + slotNames[slot] + " slot of " + blocks;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return blocks.isSingle();
 	}
 	
 	@SuppressWarnings("unchecked")

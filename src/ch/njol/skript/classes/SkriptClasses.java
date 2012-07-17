@@ -21,7 +21,6 @@
 
 package ch.njol.skript.classes;
 
-import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Aliases;
@@ -29,9 +28,9 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.expressions.base.EventValueExpression;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SimpleLiteral;
 import ch.njol.skript.util.Color;
-import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.ItemData;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Offset;
@@ -39,7 +38,6 @@ import ch.njol.skript.util.Slot;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
-import ch.njol.skript.util.VariableString;
 import ch.njol.skript.util.WeatherType;
 
 /**
@@ -51,13 +49,13 @@ public class SkriptClasses {
 	public SkriptClasses() {}
 	
 	static {
-		Skript.registerClass(new ClassInfo<WeatherType>(WeatherType.class, "weathertype")
-				.user("weather type", "weather ?types?", "weather conditions?", "weathers?")
+		Skript.registerClass(new ClassInfo<WeatherType>(WeatherType.class, "weathertype", "weather type")
+				.user("weather ?types?", "weather conditions?", "weathers?")
 				.defaultExpression(new SimpleLiteral<WeatherType>(WeatherType.CLEAR, true))
 				.parser(new Parser<WeatherType>() {
 					
 					@Override
-					public WeatherType parse(final String s) {
+					public WeatherType parse(final String s, final ParseContext context) {
 						return WeatherType.parse(s);
 					}
 					
@@ -68,64 +66,26 @@ public class SkriptClasses {
 					
 				}).serializer(new EnumSerializer<WeatherType>(WeatherType.class)));
 		
-		Skript.registerClass(new ClassInfo<EntityType>(EntityType.class, "entitytype")
-				.user("entity type", "entity ?types?", "enit(y|ies)")
-				.defaultExpression(new SimpleLiteral<EntityType>(new EntityType(Entity.class, 1), true))
-				.parser(new Parser<EntityType>() {
-					@Override
-					public EntityType parse(final String s) {
-						return EntityType.parse(s);
-					}
-					
-					@Override
-					public String toString(final EntityType t) {
-						return t.toString();
-					}
-				}).serializer(new Serializer<EntityType>() {
-					@Override
-					public String serialize(final EntityType t) {
-						return t.c.getName() + "*" + t.amount;
-					}
-					
-					@Override
-					public EntityType deserialize(final String s) {
-						final String[] split = s.split("\\*");
-						if (split.length != 2)
-							return null;
-						try {
-							return new EntityType(Class.forName(split[0]).asSubclass(Entity.class), Integer.parseInt(split[1]));
-						} catch (final LinkageError e) {
-							return null;
-						} catch (final ClassNotFoundException e) {
-							return null;
-						} catch (final ClassCastException e) {
-							return null;
-						} catch (final NumberFormatException e) {
-							return null;
-						}
-					}
-				}));
+//		Skript.registerClass(new ClassInfo<VariableString>(VariableString.class, "variablestring", "string")
+//				/*.parser(new Parser<VariableString>() {
+//					
+//					@Override
+//					public VariableString parse(final String s) {
+//						return null;
+//					}
+//					
+//					@Override
+//					public String toString(final VariableString vs) {
+//						return vs.toString(null, true);
+//					}
+//					
+//				})*/);
 		
-		Skript.registerClass(new ClassInfo<VariableString>(VariableString.class, "variablestring")
-				.parser(new Parser<VariableString>() {
-					
-					@Override
-					public VariableString parse(final String s) {
-						return null;
-					}
-					
-					@Override
-					public String toString(final VariableString vs) {
-						return vs.getDebugMessage(null);
-					}
-					
-				}));
-		
-		Skript.registerClass(new ClassInfo<ItemType>(ItemType.class, "itemtype")
-				.user("item type", "item ?types?", "items", "materials")
+		Skript.registerClass(new ClassInfo<ItemType>(ItemType.class, "itemtype", "item type")
+				.user("item ?types?", "items", "materials")
 				.parser(new Parser<ItemType>() {
 					@Override
-					public ItemType parse(final String s) {
+					public ItemType parse(final String s, final ParseContext context) {
 						return Aliases.parseItemType(s);
 					}
 					
@@ -176,13 +136,13 @@ public class SkriptClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Time>(Time.class, "time")
-				.user("time", "times?")
+		Skript.registerClass(new ClassInfo<Time>(Time.class, "time", "time")
+				.user("times?")
 				.defaultExpression(new EventValueExpression<Time>(Time.class))
 				.parser(new Parser<Time>() {
 					
 					@Override
-					public Time parse(final String s) {
+					public Time parse(final String s, final ParseContext context) {
 						return Time.parse(s);
 					}
 					
@@ -209,12 +169,12 @@ public class SkriptClasses {
 		
 		new Timespan(0);
 		
-		Skript.registerClass(new ClassInfo<Timeperiod>(Timeperiod.class, "timeperiod")
-				.user("time period", "time ?periods?", "durations?")
+		Skript.registerClass(new ClassInfo<Timeperiod>(Timeperiod.class, "timeperiod", "time period")
+				.user("time ?periods?", "durations?")
 				.defaultExpression(new SimpleLiteral<Timeperiod>(new Timeperiod(0, 23999), true))
 				.parser(new Parser<Timeperiod>() {
 					@Override
-					public Timeperiod parse(final String s) {
+					public Timeperiod parse(final String s, final ParseContext context) {
 						if (s.equalsIgnoreCase("day")) {
 							return new Timeperiod(0, 11999);
 						} else if (s.equalsIgnoreCase("dusk")) {
@@ -261,13 +221,13 @@ public class SkriptClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Offset>(Offset.class, "offset")
-				.user("offset", "offset")
+		Skript.registerClass(new ClassInfo<Offset>(Offset.class, "offset", "offset")
+				.user("offset")
 				.defaultExpression(new SimpleLiteral<Offset>(new Offset(0, 0, 0), true))
 				.parser(new Parser<Offset>() {
 					
 					@Override
-					public Offset parse(final String s) {
+					public Offset parse(final String s, final ParseContext context) {
 						return Offset.parse(s);
 					}
 					
@@ -277,7 +237,7 @@ public class SkriptClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Slot>(Slot.class, "slot")
+		Skript.registerClass(new ClassInfo<Slot>(Slot.class, "slot", "slot")
 				.defaultExpression(new EventValueExpression<Slot>(Slot.class))
 				.changer(new Changer<Slot, ItemType>() {
 					
@@ -310,8 +270,8 @@ public class SkriptClasses {
 					
 				}).serializeAs(ItemStack.class));
 		
-		Skript.registerClass(new ClassInfo<Color>(Color.class, "color")
-				.user("color", "colou?rs?")
+		Skript.registerClass(new ClassInfo<Color>(Color.class, "color", "color")
+				.user("colou?rs?")
 				.parser(new Parser<Color>() {
 					@Override
 					public String toString(final Color c) {
@@ -319,7 +279,7 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public Color parse(final String s) {
+					public Color parse(final String s, final ParseContext context) {
 						return Color.byName(s);
 					}
 				}).serializer(new EnumSerializer<Color>(Color.class)));

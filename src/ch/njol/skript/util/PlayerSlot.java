@@ -42,5 +42,5 @@ public abstract class PlayerSlot extends Slot {
 	public abstract void setItem(ItemStack item);
 	
 	@Override
-	public abstract String getDebugMessage(Event e);
+	public abstract String toString(Event e, boolean debug);
 }

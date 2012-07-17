@@ -63,8 +63,8 @@ public class EffExplosion extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "create explosion of force " + force.getDebugMessage(e) + " " + offsets.getDebugMessage(e) + " " + locations.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "create explosion of force " + force.toString(e, debug) + " " + offsets.toString(e, debug) + " " + locations.toString(e, debug);
 	}
 	
 }

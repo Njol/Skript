@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -36,26 +37,27 @@ import ch.njol.skript.lang.UnparsedLiteral;
 public class ExprTimeState extends WrapperExpression<Object> {
 	
 	static {
-		Skript.registerExpression(ExprTimeState.class, Object.class,
+		Skript.registerExpression(ExprTimeState.class, Object.class, ExpressionType.PROPERTY,
 				"(former|past) [state] [of] %object%", "%object% before [the event]",
-				"(future|to-be) [state] [of] %object%", "%object%(-to-be| after(|wards| the event))");
+				"(future|to-be) [state] [of] %object%", "%object%(-to-be| after[(wards| the event)])");
 	}
 	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
-		expr = vars[0];
+		final Expression<?> expr = vars[0];
 		if (expr instanceof UnparsedLiteral)
 			return false;
 		if (!expr.setTime(matchedPattern >= 2 ? 1 : -1)) {
 			Skript.error(expr + " does not have a " + (matchedPattern >= 2 ? "future" : "past") + " state");
 			return false;
 		}
+		setExpr(expr);
 		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "the " + (expr.getTime() == -1 ? "past" : "future") + " state of " + expr.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "the " + (getTime() == -1 ? "past" : "future") + " state of " + getExpr().toString(e, debug);
 	}
 	
 }

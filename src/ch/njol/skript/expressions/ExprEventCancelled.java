@@ -25,6 +25,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
@@ -37,11 +38,11 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	
 	static {
-		Skript.registerExpression(ExprEventCancelled.class, Boolean.class, "event cancelled");
+		Skript.registerExpression(ExprEventCancelled.class, Boolean.class, ExpressionType.SIMPLE, "[is] event cancelled");
 	}
 	
 	@Override
-	protected Boolean[] getAll(final Event e) {
+	protected Boolean[] get(final Event e) {
 		if (!(e instanceof Cancellable))
 			return null;
 		return new Boolean[] {((Cancellable) e).isCancelled()};
@@ -58,8 +59,8 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "event cancelled";
+	public String toString(final Event e, final boolean debug) {
+		return "is event cancelled";
 	}
 	
 	@Override
@@ -88,12 +89,12 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	}
 	
 	@Override
-	public String toString() {
-		return "the cancelled state of the event";
+	public boolean isSingle() {
+		return true;
 	}
 	
 	@Override
-	public boolean isSingle() {
+	public boolean getAnd() {
 		return true;
 	}
 	

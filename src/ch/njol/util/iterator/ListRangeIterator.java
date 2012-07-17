@@ -20,17 +20,17 @@
 package ch.njol.util.iterator;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 public class ListRangeIterator<T> implements Iterator<T> {
 	
 	private final ListIterator<T> iter;
-	private final int end;
+	private int end;
 	
-	public ListRangeIterator(final ListIterator<T> iter, final int start, final int end) {
-		this.iter = iter;
-		for (int i = 0; i < start; i++)
-			iter.next();
+	public ListRangeIterator(final List<T> list, final int start, final int end) {
+		this.iter = list.listIterator(start);
 		this.end = end;
 	}
 	
@@ -41,12 +41,15 @@ public class ListRangeIterator<T> implements Iterator<T> {
 	
 	@Override
 	public T next() {
+		if (!hasNext())
+			throw new NoSuchElementException();
 		return iter.next();
 	}
 	
 	@Override
 	public void remove() {
 		iter.remove();
+		end--;
 	}
 	
 }

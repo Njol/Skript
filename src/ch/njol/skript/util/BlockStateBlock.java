@@ -22,6 +22,7 @@
 package ch.njol.skript.util;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.bukkit.Chunk;
@@ -263,14 +264,12 @@ public class BlockStateBlock implements Block {
 	
 	@Override
 	public Collection<ItemStack> getDrops() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.emptySet();
 	}
 	
 	@Override
 	public Collection<ItemStack> getDrops(final ItemStack tool) {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.emptySet();
 	}
 	
 }

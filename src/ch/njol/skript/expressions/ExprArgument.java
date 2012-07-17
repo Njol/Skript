@@ -21,11 +21,13 @@
 
 package ch.njol.skript.expressions;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.intern.ConvertedExpression;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.Commands;
@@ -43,7 +45,11 @@ import ch.njol.util.StringUtils;
 public class ExprArgument extends SimpleExpression<Object> {
 	
 	static {
-		Skript.registerExpression(ExprArgument.class, Object.class, "[the] last arg[ument]", "[the] arg[ument](-| )<(\\d+)>", "[the] <(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument]", "[the] arg[ument][s]");
+		Skript.registerExpression(ExprArgument.class, Object.class, ExpressionType.SIMPLE,
+				"[the] last arg[ument][s]",
+				"[the] arg[ument][s](-| )<(\\d+)>", "[the] <(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument][s]",
+				"[the] arg[ument][s]",
+				"[the] <.+>( |-)arg[ument]", "[the] arg[ument]( |-)<.+>");
 	}
 	
 	private Class<?> type = Object.class;
@@ -53,7 +59,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		if (Commands.currentArguments == null) {
-			Skript.error("the Expression 'argument' can only be used within a command");
+			Skript.error("the expression 'argument' can only be used within a command");
 			return false;
 		}
 		if (Commands.currentArguments.size() == 0) {
@@ -84,12 +90,31 @@ public class ExprArgument extends SimpleExpression<Object> {
 					Skript.error("'argument(s)' cannot be used if the command has multiple arguments");
 					return false;
 				}
+			break;
+			case 4:
+				final Class<?> c = Skript.getClassFromUserInput(parser.regexes.get(0).group());
+				if (c == null)
+					return false;
+				for (final Argument<?> a : Commands.currentArguments) {
+					if (!c.isAssignableFrom(a.getType()))
+						continue;
+					if (arg != null) {
+						Skript.error("There are multiple " + Skript.getExactClassName(c) + " arguments in this command");
+						return false;
+					}
+					arg = a;
+					this.a = arg.getIndex() + 1;
+				}
+				if (arg == null) {
+					Skript.error("There is no " + Skript.getExactClassName(c) + " argument in this command");
+					return false;
+				}
 		}
 		return true;
 	}
 	
 	@Override
-	protected Object[] getAll(final Event e) {
+	protected Object[] get(final Event e) {
 		if (!(e instanceof SkriptCommandEvent))
 			return null;
 		if (arg == null) {
@@ -98,7 +123,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 				for (final Object o : a.getCurrent())
 					r.add(o);
 			}
-			return r.toArray();
+			return r.toArray((Object[]) Array.newInstance(type, r.size()));
 		}
 		return arg.getCurrent();
 	}
@@ -117,22 +142,30 @@ public class ExprArgument extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		if (e == null)
 			return a == -1 ? "arguments" : StringUtils.fancyOrderNumber(a) + " argument";
 		return Skript.getDebugMessage(getArray(e));
 	}
 	
 	@Override
-	public String toString() {
-		if (a == -1)
-			return "the arguments";
-		return "the " + StringUtils.fancyOrderNumber(a) + " argument";
+	public boolean isSingle() {
+		return arg != null && arg.isSingle();
 	}
 	
 	@Override
-	public boolean isSingle() {
-		return arg.isSingle();
+	public boolean canLoop() {
+		return arg == null || !arg.isSingle();
+	}
+	
+	@Override
+	public boolean isLoopOf(final String s) {
+		return s.equalsIgnoreCase("argument");
+	}
+	
+	@Override
+	public boolean getAnd() {
+		return true;
 	}
 	
 }

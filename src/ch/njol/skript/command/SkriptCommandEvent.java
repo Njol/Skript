@@ -32,13 +32,18 @@ public class SkriptCommandEvent extends CommandEvent {
 	
 	private final SkriptCommand skriptCommand;
 	
-	public SkriptCommandEvent(final SkriptCommand skriptCommand, final CommandSender sender, final String[] args) {
-		super(sender, skriptCommand.getName(), args);
-		this.skriptCommand = skriptCommand;
+	public SkriptCommandEvent(final SkriptCommand command, final CommandSender sender) {
+		super(sender, command.name, null);
+		skriptCommand = command;
 	}
 	
 	public SkriptCommand getSkriptCommand() {
 		return skriptCommand;
+	}
+	
+	@Override
+	public String[] getArgs() {
+		throw new UnsupportedOperationException();
 	}
 	
 	// Bukkit stuff

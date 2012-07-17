@@ -36,6 +36,9 @@ import ch.njol.skript.api.DefaultExpression;
 import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.command.Argument;
+import ch.njol.skript.command.SkriptCommand;
+import ch.njol.skript.command.SkriptCommandEvent;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
 import ch.njol.util.Pair;
@@ -53,7 +56,7 @@ public class SkriptParser {
 	
 	private final String expr;
 	
-	final boolean parseStatic;
+	private final boolean parseStatic;
 	
 	private String bestError = null;
 	private int bestErrorQuality = 0;
@@ -65,14 +68,27 @@ public class SkriptParser {
 		}
 	}
 	
+	private final void setBestError(final ErrorQuality quality, final String error) {
+		if (bestErrorQuality < quality.quality()) {
+			bestError = error;
+			bestErrorQuality = quality.quality();
+		}
+	}
+	
+	public final ParseContext context;
+	
 	private SkriptParser(final String expr) {
-		this.expr = expr;
-		parseStatic = false;
+		this(expr, false);
 	}
 	
 	private SkriptParser(final String expr, final boolean parseStatic) {
+		this(expr, parseStatic, ParseContext.DEFAULT);
+	}
+	
+	private SkriptParser(final String expr, final boolean parseStatic, final ParseContext context) {
 		this.expr = expr;
 		this.parseStatic = parseStatic;
+		this.context = context;
 	}
 	
 	public final static String wildcard = "[^\"]*?(?:\"[^\"]*?\"[^\"]*?)*?";
@@ -101,8 +117,11 @@ public class SkriptParser {
 		
 	}
 	
-	public static final <T> Literal<? extends T> parseLiteral(final String expr, final Class<T> c) {
-		return makeUnparsedLiteral(expr).getConvertedExpression(c);
+	public static final <T> Literal<? extends T> parseLiteral(String expr, final Class<T> c, final ParseContext context) {
+		expr = expr.trim();
+		if (expr.isEmpty())
+			return null;
+		return new UnparsedLiteral(expr).getConvertedExpression(c, context);
 	}
 	
 	/**
@@ -122,14 +141,15 @@ public class SkriptParser {
 			return null;
 		}
 		final SubLog log = SkriptLogger.startSubLog();
-		final SyntaxElement e = parse(expr, source, null);
+		@SuppressWarnings({"unchecked", "rawtypes"})
+		final SyntaxElement e = parse(expr, (Iterator) source, null);
 		SkriptLogger.stopSubLog(log);
 		if (e != null) {
 			log.printLog();
 			return e;
 		}
 		if (parseLiteral) {
-			return makeUnparsedLiteral(expr);
+			return new UnparsedLiteral(expr);
 		}
 		log.printErrors(defaultError);
 		return null;
@@ -143,9 +163,9 @@ public class SkriptParser {
 	 * @param defaultError
 	 * @return
 	 */
-	public static final SyntaxElement parse(final String expr, final Iterator<? extends SyntaxElementInfo<?>> source, final String defaultError) {
+	public static final <T extends SyntaxElement> T parse(final String expr, final Iterator<? extends SyntaxElementInfo<T>> source, final String defaultError) {
 		final SubLog log = SkriptLogger.startSubLog();
-		final SyntaxElement e = new SkriptParser(expr).parse(source);
+		final T e = new SkriptParser(expr).parse(source);
 		SkriptLogger.stopSubLog(log);
 		if (e != null) {
 			log.printLog();
@@ -155,9 +175,21 @@ public class SkriptParser {
 		return null;
 	}
 	
-	private final SyntaxElement parse(final Iterator<? extends SyntaxElementInfo<?>> source) {
+	public static final <T extends SyntaxElement> T parseStatic(final String expr, final Iterator<? extends SyntaxElementInfo<T>> source, final String defaultError) {
+		final SubLog log = SkriptLogger.startSubLog();
+		final T e = new SkriptParser(expr, true).parse(source);
+		SkriptLogger.stopSubLog(log);
+		if (e != null) {
+			log.printLog();
+			return e;
+		}
+		log.printErrors(defaultError);
+		return null;
+	}
+	
+	private final <T extends SyntaxElement> T parse(final Iterator<? extends SyntaxElementInfo<T>> source) {
 		while (source.hasNext()) {
-			final SyntaxElementInfo<?> info = source.next();
+			final SyntaxElementInfo<T> info = source.next();
 			for (int i = 0; i < info.patterns.length; i++) {
 				try {
 					final ParseResult res = parse_i(info.patterns[i], 0, 0);
@@ -182,27 +214,25 @@ public class SkriptParser {
 							}
 							x = x2;
 						}
-						final SyntaxElement e = info.c.newInstance();
+						final T e = info.c.newInstance();
 						final SubLog log = SkriptLogger.startSubLog();
 						if (!e.init(res.vars, i, res)) {
 							SkriptLogger.stopSubLog(log);
 							if (!log.hasErrors())
 								continue;
-							if (bestErrorQuality < ErrorQuality.SEMANTIC_ERROR.quality()) {
-								bestError = log.getLastError();
-								bestErrorQuality = ErrorQuality.SEMANTIC_ERROR.quality();
-							}
-							Skript.error(bestError);
-							return null;
+							setBestError(ErrorQuality.SEMANTIC_ERROR, log.getLastError());
+//							Skript.error(bestError);
+//							return null;
+							continue;
 						}
 						SkriptLogger.stopSubLog(log);
 						log.printLog();
 						return e;
 					}
-					if (bestErrorQuality == ErrorQuality.SEMANTIC_ERROR.quality()) {
-						Skript.error(bestError);
-						return null;
-					}
+//					if (bestErrorQuality == ErrorQuality.SEMANTIC_ERROR.quality()) {
+//						Skript.error(bestError);
+//						return null;
+//					}
 				} catch (final InstantiationException e) {
 					SkriptAPIException.instantiationException("the " + Skript.getSyntaxElementName(info.c), info.c, e);
 				} catch (final IllegalAccessException e) {
@@ -216,9 +246,11 @@ public class SkriptParser {
 		return null;
 	}
 	
+	private final static Pattern varPattern = Pattern.compile("^(?i)((the )?var(iable)? )?\\{.+\\}$");
+	
 	private final static <T> Variable<T> parseVariable(final String expr, final Class<T> returnType) {
-		if ((expr.startsWith("{") || expr.startsWith("variable {") || expr.startsWith("the variable {")) && expr.endsWith("}")) {
-			final VariableString vs = VariableString.newInstance(expr.substring(expr.indexOf('{') + 1, expr.lastIndexOf('}')));
+		if (varPattern.matcher(expr).matches()) {
+			final VariableString vs = VariableString.newInstance(expr.substring(expr.indexOf('{') + 1, expr.lastIndexOf('}')), true);
 			if (vs == null)
 				return null;
 			return new Variable<T>(vs, returnType);
@@ -242,14 +274,13 @@ public class SkriptParser {
 				return var;
 			final SubLog log = SkriptLogger.startSubLog();
 			final SkriptParser parser = new SkriptParser(expr);
-			final Expression<?> v = (Expression<?>) parser.parse(Skript.getExpressions().iterator());
+			@SuppressWarnings("rawtypes")
+			final Expression<?> v = parser.parse((Iterator) Skript.getExpressions().iterator()); // epic generics bypass XD
 			SkriptLogger.stopSubLog(log);
 			if (v != null) {
 				final Expression<? extends T> w = v.getConvertedExpression(returnType);
-				if (w == null && bestErrorQuality < ErrorQuality.EXPRESSION_OF_WRONG_TYPE.quality()) {
-					bestError = v.toString() + " " + (v.isSingle() ? "is" : "are") + " not " + Utils.a(Skript.getExactClassName(returnType));
-					bestErrorQuality = ErrorQuality.EXPRESSION_OF_WRONG_TYPE.quality();
-				}
+				if (w == null)
+					setBestError(ErrorQuality.EXPRESSION_OF_WRONG_TYPE, v.toString() + " " + (v.isSingle() ? "is" : "are") + " not " + Utils.a(Skript.getExactClassName(returnType)));
 				return w;
 			} else {
 				if (parser.bestErrorQuality > bestErrorQuality) {
@@ -258,22 +289,20 @@ public class SkriptParser {
 				}
 			}
 		}
-		final UnparsedLiteral l = makeUnparsedLiteral(expr);
+		final UnparsedLiteral l = new UnparsedLiteral(expr);
 		if (returnType == Object.class)
 			return (Expression<? extends T>) l;
 		final SubLog log = SkriptLogger.startSubLog();
-		final Literal<? extends T> p = l.getConvertedExpression(returnType);
+		final Literal<? extends T> p = l.getConvertedExpression(returnType, context);
 		SkriptLogger.stopSubLog(log);
-		if (p == null && bestErrorQuality < ErrorQuality.NOT_AN_EXPRESSION.quality()) {
-			bestError = log.getLastError() == null ? "'" + expr + "' is not " + Utils.a(Skript.getExactClassName(returnType)) : log.getLastError();
-			bestErrorQuality = ErrorQuality.NOT_AN_EXPRESSION.quality();
-		}
+		if (p == null)
+			setBestError(ErrorQuality.NOT_AN_EXPRESSION, log.getLastError() == null ? "'" + expr + "' is not " + Utils.a(Skript.getExactClassName(returnType)) : log.getLastError());
 		return p;
 	}
 	
 	public static Pair<SkriptEventInfo<?>, SkriptEvent> parseEvent(final String event, final String defaultError) {
 		final SubLog log = SkriptLogger.startSubLog();
-		final Pair<SkriptEventInfo<?>, SkriptEvent> e = new SkriptParser(event, true).parseEvent();
+		final Pair<SkriptEventInfo<?>, SkriptEvent> e = new SkriptParser(event, true, ParseContext.EVENT).parseEvent();
 		SkriptLogger.stopSubLog(log);
 		if (e != null) {
 			log.printLog();
@@ -281,6 +310,36 @@ public class SkriptParser {
 		}
 		log.printErrors(defaultError);
 		return null;
+	}
+	
+	/**
+	 * Prints errors
+	 * 
+	 * @param args
+	 * @param command
+	 * @param event
+	 * @return
+	 */
+	public static boolean parseArguments(final String args, final SkriptCommand command, final SkriptCommandEvent event) {
+		
+		final SkriptParser parser = new SkriptParser(args, true, ParseContext.COMMAND);
+		final ParseResult res = parser.parse_i(command.getPattern(), 0, 0);
+		if (res == null) {
+			if (parser.bestError != null)
+				Skript.error(parser.bestError);
+			return false;
+		}
+		
+		final List<Argument<?>> as = command.getArguments();
+		assert as.size() == res.vars.length;
+		
+		for (int i = 0; i < res.vars.length; i++) {
+			if (res.vars[i] == null)
+				as.get(i).setToDefault(event);
+			else
+				as.get(i).set(res.vars[i].getArray(null));
+		}
+		return true;
 	}
 	
 	private Pair<SkriptEventInfo<?>, SkriptEvent> parseEvent() {
@@ -293,10 +352,10 @@ public class SkriptParser {
 						e.init(Arrays.copyOf(res.vars, res.vars.length, Literal[].class), i, res);
 						return new Pair<SkriptEventInfo<?>, SkriptEvent>(info, e);
 					}
-					if (bestErrorQuality == ErrorQuality.SEMANTIC_ERROR.quality()) {
-						Skript.error(bestError);
-						return null;
-					}
+//					if (bestErrorQuality == ErrorQuality.SEMANTIC_ERROR.quality()) {
+//						Skript.error(bestError);
+//						return null;
+//					}
 				} catch (final InstantiationException e) {
 					SkriptAPIException.instantiationException("the event", info.c, e);
 				} catch (final IllegalAccessException e) {
@@ -358,7 +417,7 @@ public class SkriptParser {
 	}
 	
 	/**
-	 * Does not print errors
+	 * Does not print errors, but sets this parser's {@link #bestError}.
 	 * 
 	 * @param pattern
 	 * @param i
@@ -366,9 +425,6 @@ public class SkriptParser {
 	 * @return
 	 */
 	private final ParseResult parse_i(final String pattern, int i, int j) {
-		if (expr.isEmpty())
-			throw new SkriptAPIException("Empty expression (pattern: " + pattern + ")");
-		
 		ParseResult res;
 		int matchedChars = 0;
 		int end, i2;
@@ -440,25 +496,25 @@ public class SkriptParser {
 						if (res != null) {
 							final Expression<?> var = parseExpr(returnType, expr.substring(i, i2), parseStatic);
 							if (var != null) {
-								if (!vi.isPlural && !var.isSingle()) {
-									if (bestErrorQuality < ErrorQuality.SEMANTIC_ERROR.quality()) {
-										bestError = "this expression can only accept a single " + Skript.getExactClassName(returnType) + ", but multiple are given.";
-										bestErrorQuality = ErrorQuality.SEMANTIC_ERROR.quality();
-									}
+								if (!vi.isPlural && !(var instanceof UnparsedLiteral) && !var.isSingle()) {
+									if (context == ParseContext.COMMAND)
+										setBestError(ErrorQuality.SEMANTIC_ERROR, "this command can only accept a single " + Skript.getExactClassName(returnType) + "!");
+									else
+										setBestError(ErrorQuality.SEMANTIC_ERROR, "this expression can only accept a single " + Skript.getExactClassName(returnType) + ", but multiple are given.");
 									return null;
 								}
-								if (vi.time != 0 && !var.setTime(vi.time)) {
-									if (bestErrorQuality < ErrorQuality.SEMANTIC_ERROR.quality()) {
-										bestError = var + " does not have a " + (vi.time == -1 ? "past" : "future") + " state";
-										bestErrorQuality = ErrorQuality.SEMANTIC_ERROR.quality();
+								if (vi.time != 0) {
+									if (var instanceof UnparsedLiteral)
+										return null;
+									if (!var.setTime(vi.time)) {
+										setBestError(ErrorQuality.SEMANTIC_ERROR, " does not have a " + (vi.time == -1 ? "past" : "future") + " state");
+										return null;
 									}
-									return null;
 								}
 								res.vars[StringUtils.count(pattern, '%', 0, j - 1) / 2] = var;
 								return res;
-							} else if (bestErrorQuality < ErrorQuality.NOT_AN_EXPRESSION.quality() && res.matchedChars + matchedChars >= 5) {
-								bestError = "'" + expr.substring(i, i2) + "' is not " + Utils.a(Skript.getExactClassName(returnType));
-								bestErrorQuality = ErrorQuality.NOT_AN_EXPRESSION.quality();
+							} else if (res.matchedChars + matchedChars >= 5) {
+								setBestError(ErrorQuality.NOT_AN_EXPRESSION, "'" + expr.substring(i, i2) + "' is not " + Utils.a(Skript.getExactClassName(returnType)));
 							}
 						}
 					}
@@ -512,34 +568,6 @@ public class SkriptParser {
 		if (i == expr.length() && j == pattern.length())
 			return new ParseResult(expr, pattern, matchedChars);
 		return null;
-	}
-	
-	private final static UnparsedLiteral makeUnparsedLiteral(final String s) {
-		final ArrayList<String> parts = new ArrayList<String>();
-		final Pattern p = Pattern.compile("^(" + wildcard + ")(,\\s*|,?\\s+and\\s+|,?\\s+n?or\\s+)");
-		final Matcher m = p.matcher(s);
-		int prevEnd = 0;
-		boolean and = true;
-		boolean isAndSet = false;
-		while (m.find()) {
-			if (!m.group(2).matches(",\\s*")) {
-				if (isAndSet) {
-					Skript.warning("list has multiple 'and' or 'or', will default to 'and': " + s);
-					and = true;
-				} else {
-					and = m.group(2).contains("and");
-					isAndSet = true;
-				}
-			}
-			parts.add(m.group(1).trim());
-			prevEnd = m.end();
-			m.region(m.end(), s.length());
-		}
-		if (!isAndSet && !parts.isEmpty()) {
-			Skript.warning("list is missing 'and' or 'or', will default to 'and': " + s);
-		}
-		parts.add(s.substring(prevEnd).trim());
-		return new UnparsedLiteral(parts.toArray(new String[0]), and);
 	}
 	
 	private final static class VarInfo {

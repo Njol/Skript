@@ -25,11 +25,12 @@ import org.bukkit.World;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
 import ch.njol.skript.classes.DefaultChangers;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Time;
 
@@ -38,10 +39,10 @@ import ch.njol.skript.util.Time;
  * @author Peter Güttinger
  * 
  */
-public class ExprTime extends SimpleExpression<Time> {
+public class ExprTime extends PropertyExpression<Time> {
 	
 	static {
-		Skript.registerExpression(ExprTime.class, Time.class, "[the] time [(in|of) %worlds%]");
+		Skript.registerExpression(ExprTime.class, Time.class, ExpressionType.PROPERTY, "[the] time [(in|of) %worlds%]");
 	}
 	
 	private Expression<World> worlds = null;
@@ -50,11 +51,12 @@ public class ExprTime extends SimpleExpression<Time> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		worlds = (Expression<World>) vars[0];
+		setExpr(worlds);
 		return true;
 	}
 	
 	@Override
-	protected Time[] getAll(final Event e) {
+	protected Time[] get(final Event e) {
 		return worlds.getArray(e, Time.class, new Getter<Time, World>() {
 			@Override
 			public Time get(final World w) {
@@ -79,20 +81,10 @@ public class ExprTime extends SimpleExpression<Time> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "time in " + worlds.getDebugMessage(e);
+			return "the time in " + worlds.toString(e, debug);
 		return Skript.getDebugMessage(getAll(e));
-	}
-	
-	@Override
-	public String toString() {
-		return "the time in " + worlds;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return worlds.isSingle();
 	}
 	
 }

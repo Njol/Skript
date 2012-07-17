@@ -26,9 +26,10 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.PlayerSlot;
 import ch.njol.skript.util.Slot;
@@ -37,14 +38,14 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  * 
  */
-public class ExprArmorSlot extends SimpleExpression<Slot> {
+public class ExprArmorSlot extends PropertyExpression<Slot> {
 	
 	static {
-		Skript.registerExpression(ExprArmorSlot.class, Slot.class,
+		Skript.registerExpression(ExprArmorSlot.class, Slot.class, ExpressionType.PROPERTY,
 				"[the] (boot[s]|shoe[s]) [slot] of %players%", "%player%'[s] (boot[s]|shoe[s])",
 				"[the] leg[ging]s [slot] of %players%", "%player%'[s] leg[ging]s",
-				"[the] chestplate [slot] of %players%", "%player%'[s] chestplate",
-				"[the] helm[et] [slot] of %players%", "%player%'[s] helm[et]");
+				"[the] chestplate[s] [slot] of %players%", "%player%'[s] chestplate[s]",
+				"[the] helm[et][s] [slot] of %players%", "%player%'[s] helm[et][s]");
 	}
 	
 	private Expression<Player> players;
@@ -56,17 +57,18 @@ public class ExprArmorSlot extends SimpleExpression<Slot> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
+		setExpr(players);
 		slot = matchedPattern / 2;
 		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return slotNames[slot] + " of " + players.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return slotNames[slot] + " of " + players.toString(e, debug);
 	}
 	
 	@Override
-	protected Slot[] getAll(final Event e) {
+	protected Slot[] get(final Event e) {
 		return players.getArray(e, Slot.class, new Converter<Player, Slot>() {
 			@Override
 			public Slot convert(final Player p) {
@@ -84,7 +86,7 @@ public class ExprArmorSlot extends SimpleExpression<Slot> {
 					}
 					
 					@Override
-					public String getDebugMessage(final Event e) {
+					public String toString(final Event e, final boolean debug) {
 						return slotNames[slot] + " of " + p.getName();
 					}
 				};
@@ -93,18 +95,8 @@ public class ExprArmorSlot extends SimpleExpression<Slot> {
 	}
 	
 	@Override
-	public String toString() {
-		return slotNames[slot] + " of " + players;
-	}
-	
-	@Override
 	public Class<? extends Slot> getReturnType() {
 		return Slot.class;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return true;
 	}
 	
 }

@@ -74,8 +74,8 @@ public class EffCommand extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "let " + senders.getDebugMessage(e) + " execute " + commands.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "let " + senders.toString(e, debug) + " execute " + commands.toString(e, debug);
 	}
 	
 }

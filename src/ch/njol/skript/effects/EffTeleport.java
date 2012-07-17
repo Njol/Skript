@@ -56,8 +56,8 @@ public class EffTeleport extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "teleport " + entities.getDebugMessage(e) + " to " + location.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "teleport " + entities.toString(e, debug) + " to " + location.toString(e, debug);
 	}
 	
 	@Override
@@ -71,8 +71,10 @@ public class EffTeleport extends Effect {
 				final Location loc = to.clone();
 				loc.setPitch(entity.getLocation().getPitch());
 				loc.setYaw(entity.getLocation().getYaw());
+				loc.getChunk().load();
 				entity.teleport(loc);
 			} else {
+				to.getChunk().load();
 				entity.teleport(to);
 			}
 		}

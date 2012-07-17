@@ -27,6 +27,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Serializer;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.util.Pair;
 
 /**
@@ -44,16 +45,15 @@ public class Timespan {
 		simpleValues.put("hour", 20 * 60 * 60);
 		simpleValues.put("day", 20 * 60 * 60 * 24);
 		
-		Skript.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan")
+		Skript.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan", "time span")
 				.parser(new Parser<Timespan>() {
 					@Override
-					public Timespan parse(String s) {
+					public Timespan parse(final String s, final ParseContext context) {
 						if (s.isEmpty())
 							return null;
-						s = s.toLowerCase();
 						int t = 0;
 						boolean minecraftTime = false;
-						boolean setMinecraftTime = false;
+						boolean isMinecraftTimeSet = false;
 						if (s.matches("^\\d+:\\d\\d$")) {
 							final String[] ss = s.split(":");
 							final int[] times = {20 * 60, 20};
@@ -61,7 +61,7 @@ public class Timespan {
 								t += times[i] * Integer.parseInt(ss[i]);
 							}
 						} else {
-							final String[] subs = s.split("\\s+");
+							final String[] subs = s.toLowerCase().split("\\s+");
 							for (int i = 0; i < subs.length; i++) {
 								String sub = subs[i];
 								
@@ -80,11 +80,11 @@ public class Timespan {
 								}
 								
 								if (sub.equals("real") || sub.equals("rl") || sub.equals("irl")) {
-									if (i == subs.length || setMinecraftTime && minecraftTime)
+									if (i == subs.length || isMinecraftTimeSet && minecraftTime)
 										return null;
 									sub = subs[++i];
 								} else if (sub.equals("mc") || sub.equals("minecraft")) {
-									if (i == subs.length || setMinecraftTime && !minecraftTime)
+									if (i == subs.length || isMinecraftTimeSet && !minecraftTime)
 										return null;
 									minecraftTime = true;
 									sub = subs[++i];
@@ -102,9 +102,12 @@ public class Timespan {
 								if (!simpleValues.containsKey(sub))
 									return null;
 								
+								if (sub.equals("tick") && minecraftTime)
+									amount *= 72f;
+								
 								t += Math.round(amount * simpleValues.get(sub));
 								
-								setMinecraftTime = true;
+								isMinecraftTimeSet = true;
 								
 							}
 						}

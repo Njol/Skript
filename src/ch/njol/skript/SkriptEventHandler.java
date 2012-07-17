@@ -28,6 +28,7 @@ import java.util.Map;
 
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
+import org.bukkit.event.Event.Result;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -44,7 +45,7 @@ abstract class SkriptEventHandler {
 	
 	static Map<Class<? extends Event>, List<Trigger>> triggers = new HashMap<Class<? extends Event>, List<Trigger>>();
 	
-	public final static EventExecutor ee = new EventExecutor() {
+	final static EventExecutor ee = new EventExecutor() {
 		@Override
 		public void execute(final Listener l, final Event e) {
 			check(e);
@@ -57,30 +58,44 @@ abstract class SkriptEventHandler {
 		final List<Trigger> ts = triggers.get(e.getClass());
 		if (ts == null)
 			return;
+		
+		if (Skript.logVeryHigh()) {
+			boolean hasTrigger = false;
+			for (final Trigger t : ts) {
+				if (t.getEvent().check(e)) {
+					hasTrigger = true;
+					break;
+				}
+			}
+			if (!hasTrigger)
+				return;
+		}
+		
 		final long startEvent = System.nanoTime();
-		if (Skript.log(Verbosity.VERY_HIGH)) {
+		if (Skript.logVeryHigh()) {
 			Skript.info("");
 			Skript.info("== " + e.getClass().getName() + " ==");
 		}
-		if (e instanceof Cancellable && !(e instanceof PlayerInteractEvent && ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_AIR) && ((Cancellable) e).isCancelled()) {
-			if (Skript.log(Verbosity.VERY_HIGH))
+		if (e instanceof Cancellable && ((Cancellable) e).isCancelled() &&
+				!(e instanceof PlayerInteractEvent && (((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_AIR) && ((PlayerInteractEvent) e).useItemInHand() != Result.DENY)) {
+			if (Skript.logVeryHigh())
 				Skript.info(" -x- was cancelled");
 			return;
 		}
 		for (final Trigger t : ts) {
 			if (!t.getEvent().check(e))
 				continue;
-			if (Skript.log(Verbosity.VERY_HIGH))
+			if (Skript.logVeryHigh())
 				Skript.info("# " + t.getName());
 			final long startTrigger = System.nanoTime();
 			t.run(e);
-			if (Skript.log(Verbosity.VERY_HIGH))
+			if (Skript.logVeryHigh())
 				Skript.info("# " + t.getName() + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 		}
 		// in case it got forgotten somewhere (you must not rely on this, as you will disable Skript's listener for all events triggered by any effects/conditions following yours!)
 		Skript.enableListener();
 		
-		if (Skript.log(Verbosity.VERY_HIGH))
+		if (Skript.logVeryHigh())
 			Skript.info("== took " + 1. * (System.nanoTime() - startEvent) / 1000000. + " milliseconds ==");
 	}
 	

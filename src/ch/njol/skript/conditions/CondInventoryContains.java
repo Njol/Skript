@@ -76,8 +76,8 @@ public class CondInventoryContains extends Condition {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return invis.getDebugMessage(e) + (isNegated() ? " doesn't have " : " has ") + items.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return invis.toString(e, debug) + (isNegated() ? " doesn't have " : " has ") + items.toString(e, debug);
 	}
 	
 }

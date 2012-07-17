@@ -24,6 +24,8 @@ package ch.njol.skript.effects;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Changer.ChangerUtils;
@@ -44,10 +46,12 @@ public class EffChange extends Effect {
 			
 			{"(add|give) %objects% to %objects%", ChangeMode.ADD},
 			{"give %objects% %objects%", ChangeMode.ADD},
+			// TODO give items/xp to player
 			
 			{"set %objects% to %objects%", ChangeMode.SET},
 			
 			{"(remove|subtract) %objects% from %objects%", ChangeMode.REMOVE},
+			// TODO remove items/xp from drops
 			
 			{"(clear|delete) %objects%", ChangeMode.CLEAR},
 	
@@ -118,12 +122,14 @@ public class EffChange extends Effect {
 		}
 		
 		if (changer != null) {
+			final SubLog log = SkriptLogger.startSubLog();
 			final Expression<?> v = changer.getConvertedExpression(r);
+			log.stop();
 			if (v == null) {
 				if (mode == ChangeMode.SET)
-					Skript.error(changed + " can't be set to " + changer);
+					log.printErrors(changed + " can't be set to " + changer);
 				else
-					Skript.error(changer + " can't be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed);
+					log.printErrors(changer + " can't be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed);
 				return false;
 			}
 			changer = v;
@@ -149,16 +155,16 @@ public class EffChange extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		switch (mode) {
 			case ADD:
-				return "add " + changer.getDebugMessage(e) + " to " + changed.getDebugMessage(null);
+				return "add " + changer.toString(e, debug) + " to " + changed.toString(null, true);
 			case CLEAR:
-				return "clear " + changed.getDebugMessage(null);
+				return "clear " + changed.toString(null, true);
 			case REMOVE:
-				return "remove " + changer.getDebugMessage(e) + " from " + changed.getDebugMessage(null);
+				return "remove " + changer.toString(e, debug) + " from " + changed.toString(null, true);
 			case SET:
-				return "set " + changed.getDebugMessage(e) + " to " + changer.getDebugMessage(null);
+				return "set " + changed.toString(e, debug) + " to " + changer.toString(null, true);
 			default:
 				throw new IllegalStateException();
 		}

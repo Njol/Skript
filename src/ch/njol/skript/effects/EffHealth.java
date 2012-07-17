@@ -41,36 +41,40 @@ public class EffHealth extends Effect {
 	static {
 		Skript.registerEffect(EffHealth.class,
 				"damage %slots% by %integer%",
-				"damage %livingentities% by %integer%",
-				"heal %livingentities% [by %-integer%]",
+				"damage %livingentities% by %double% [heart[s]]",
+				"heal %livingentities% [by %-double% [heart[s]]]",
 				"repair %slots% [by %-integer%]");
 	}
 	
-	private Expression<Object> damageables;
-	private Expression<Integer> damage;
+	private Expression<?> damageables;
+	private Expression<Number> damage;
 	private boolean heal = false;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		damageables = (Expression<Object>) vars[0];
-		damage = (Expression<Integer>) vars[1];
+		damageables = vars[0];
+		damage = (Expression<Number>) vars[1];
 		heal = (matchedPattern >= 2);
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		int damage = 0;
-		if (this.damage != null)
-			damage = this.damage.getSingle(e);
+		double damage = 0;
+		if (this.damage != null) {
+			final Number n = this.damage.getSingle(e);
+			if (n == null)
+				return;
+			damage = n.doubleValue();
+		}
 		for (final Object damageable : damageables.getArray(e)) {
 			if (damageable instanceof Slot) {
 				ItemStack is = ((Slot) damageable).getItem();
 				if (this.damage == null) {
 					is.setDurability((short) 0);
 				} else {
-					is.setDurability((short) (is.getDurability() + (heal ? -damage : damage)));
+					is.setDurability((short) Math.max(0, is.getDurability() + (heal ? -damage : damage)));
 					if (is.getDurability() >= is.getType().getMaxDurability())
 						is = null;
 				}
@@ -79,15 +83,16 @@ public class EffHealth extends Effect {
 				if (this.damage == null) {
 					((LivingEntity) damageable).setHealth(((LivingEntity) damageable).getMaxHealth());
 				} else {
-					((LivingEntity) damageable).setHealth(((LivingEntity) damageable).getHealth() + (heal ? damage : -damage));
+					((LivingEntity) damageable).setHealth(Math.max(0, Math.min(((LivingEntity) damageable).getMaxHealth(),
+							((LivingEntity) damageable).getHealth() + (int) Math.round(2. * (heal ? damage : -damage)))));
 				}
 			}
 		}
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return (heal ? "heal " : "damage ") + damageables.getDebugMessage(e) + (damage == null ? "" : " by " + damage.getDebugMessage(e));
+	public String toString(final Event e, final boolean debug) {
+		return (heal ? "heal " : "damage ") + damageables.toString(e, debug) + (damage == null ? "" : " by " + damage.toString(e, debug));
 	}
 	
 }

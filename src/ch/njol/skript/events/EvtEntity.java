@@ -28,16 +28,16 @@ import org.bukkit.event.entity.EntityDeathEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.EntityType;
 import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class EvtEntity extends SkriptEvent {
+public final class EvtEntity extends SkriptEvent {
 	
 	static {
 		Skript.registerEvent(EvtEntity.class, EntityDeathEvent.class, "death [of %entitytypes%]");
@@ -57,7 +57,7 @@ public class EvtEntity extends SkriptEvent {
 	public boolean check(final Event e) {
 		if (types == null)
 			return true;
-		final Entity en = Skript.getEventValue(e, Entity.class, 0);
+		final Entity en = e instanceof EntityDeathEvent ? ((EntityDeathEvent) e).getEntity() : ((CreatureSpawnEvent) e).getEntity();
 		if (en == null)
 			throw new RuntimeException("no entity event value for entity death/spawn");
 		return types.check(e, new Checker<EntityType>() {
@@ -69,7 +69,7 @@ public class EvtEntity extends SkriptEvent {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return "death/spawn" + (types == null ? "" : " of " + types);
 	}
 	

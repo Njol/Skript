@@ -29,41 +29,43 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.entity.EntityData;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprTarget extends SimpleExpression<Entity> {
+public class ExprTarget extends PropertyExpression<Entity> {
 	
 	static {
-		Skript.registerExpression(ExprTarget.class, Entity.class, "[the] target[[ed] %entitytypes%] [of %livingentities%]", "%livingentities%'[s] target[[ed] %entitytypes%]");
+		Skript.registerExpression(ExprTarget.class, Entity.class, ExpressionType.NORMAL, "[the] target[[ed] %entitydatas%] [of %livingentities%]", "%livingentities%'[s] target[[ed] %entitydatas%]");
 	}
 	
-	private Expression<EntityType> types;
+	private Expression<EntityData<?>> types;
 	private Expression<LivingEntity> entities;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		types = (Expression<EntityType>) vars[matchedPattern];
+		types = (Expression<EntityData<?>>) vars[matchedPattern];
 		entities = (Expression<LivingEntity>) vars[1 - matchedPattern];
+		setExpr(entities);
 		return true;
 	}
 	
 	@Override
-	protected Entity[] getAll(final Event evt) {
+	protected Entity[] get(final Event evt) {
 		final ArrayList<Entity> targets = new ArrayList<Entity>();
-		final EntityType[] types = this.types.getArray(evt);
+		final EntityData<?>[] types = this.types.getArray(evt);
 		for (final LivingEntity e : entities.getArray(evt)) {
-			for (final EntityType type : types) {
-				final Entity t = Utils.getTargetEntity(e, type.c);
+			for (final EntityData<?> type : types) {
+				final Entity t = Utils.getTargetEntity(e, type.getType());
 				if (t != null)
 					targets.add(t);
 			}
@@ -77,9 +79,9 @@ public class ExprTarget extends SimpleExpression<Entity> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "targeted " + types.getDebugMessage(e) + " of " + entities.getDebugMessage(e);
+			return "the targeted " + types.toString(e, debug) + " of " + entities.toString(e, debug);
 		return Skript.getDebugMessage(getAll(e));
 	}
 	
@@ -98,16 +100,6 @@ public class ExprTarget extends SimpleExpression<Entity> {
 				continue;
 			((Creature) entity).setTarget(target);
 		}
-	}
-	
-	@Override
-	public String toString() {
-		return "the targeted " + types + " of " + entities;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return entities.isSingle();
 	}
 	
 }

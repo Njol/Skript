@@ -21,74 +21,57 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
 import org.bukkit.event.Event;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockFadeEvent;
-import org.bukkit.event.block.BlockFormEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.block.BlockSpreadEvent;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.BlockStateBlock;
 import ch.njol.skript.util.Offset;
 
 /**
- * 
  * @author Peter Güttinger
  * 
  */
 public class ExprBlock extends SimpleExpression<Block> {
 	
 	static {
-		Skript.registerExpression(ExprBlock.class, Block.class, "[the] block[[s] %-offsets% [%blocks%]]");
+		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.SIMPLE, "[the] [event-]block");
+		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.NORMAL, "[the] block %offset% [%block%]");
 	}
 	
-	private Expression<Offset> offsets;
-	private Expression<Block> blocks;
+	private Expression<Offset> offset = null;
+	private Expression<Block> block = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		offsets = (Expression<Offset>) vars[0];
-		blocks = (Expression<Block>) vars[1];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parser) {
+		if (exprs.length > 0) {
+			offset = (Expression<Offset>) exprs[0];
+			block = (Expression<Block>) exprs[1];
+		} else {
+			block = new EventValueExpression<Block>(Block.class);
+			((EventValueExpression<Block>) block).init();
+		}
 		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		if (offsets == null)
-			return blocks.getDebugMessage(e);
-		return "block" + (isSingle() ? "" : "s") + " " + offsets.getDebugMessage(e) + " " + blocks.getDebugMessage(e);
+	protected Block[] get(final Event e) {
+		if (offset == null)
+			return block.getArray(e);
+		final Offset o = offset.getSingle(e);
+		if (o == null)
+			return null;
+		return new Block[] {o.getRelative(block.getSingle(e))};
 	}
 	
 	@Override
-	protected Block[] getAll(final Event e) {
-		Block b = null;
-		if (blocks.isDefault()) {
-			if (e instanceof BlockBreakEvent && getTime() == 1) {
-				if (((BlockBreakEvent) e).getBlock().getType() == Material.ICE) {
-					final BlockState s = ((BlockBreakEvent) e).getBlock().getState();
-					s.setType(Material.STATIONARY_WATER);
-					b = new BlockStateBlock(s);
-				}
-			} else if (e instanceof BlockPlaceEvent && getTime() == -1) {
-				b = new BlockStateBlock(((BlockPlaceEvent) e).getBlockReplacedState());
-			} else if (e instanceof BlockFadeEvent && getTime() == 1) {
-				b = new BlockStateBlock(((BlockFadeEvent) e).getNewState());
-			} else if (e instanceof BlockFormEvent && !(e instanceof BlockSpreadEvent) && getTime() >= 0) { // BlockSpreadEvent is a subclass of BlockFormEvent which modifies *another* block
-				b = new BlockStateBlock(((BlockFormEvent) e).getNewState());
-			}
-		}
-		final Block[] bs = b != null ? new Block[] {b} : blocks.getArray(e);
-		if (offsets == null)
-			return bs;
-		return Offset.setOff(offsets.getArray(e), bs);
+	public boolean isSingle() {
+		return true;
 	}
 	
 	@Override
@@ -97,27 +80,25 @@ public class ExprBlock extends SimpleExpression<Block> {
 	}
 	
 	@Override
-	public String toString() {
-		if (offsets == null)
-			return "the block";
-		return "the block" + (isSingle() ? "" : "s") + " " + offsets + " " + blocks;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return (offsets == null || offsets.isSingle()) && blocks.isSingle();
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean setTime(final int time) {
-		return super.setTime(time, blocks,
-				BlockPlaceEvent.class, BlockBreakEvent.class,
-				BlockFormEvent.class, BlockFadeEvent.class);
+	public String toString(final Event e, final boolean debug) {
+		return offset == null ? "the block" : "the block " + offset.toString(e, debug) + " " + block.toString(e, debug);
 	}
 	
 	@Override
 	public boolean isDefault() {
-		return offsets == null;
+		return offset == null;
 	}
+	
+	@Override
+	public boolean setTime(final int time) {
+		if (offset != null)
+			return false;
+		return block.setTime(time);
+	}
+	
+	@Override
+	public boolean getAnd() {
+		return block == null || block.getAnd();
+	}
+	
 }

@@ -25,13 +25,16 @@ import java.util.Collection;
 import java.util.List;
 
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.Verbosity;
 import ch.njol.skript.api.SimpleEvent;
 import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.api.intern.TriggerItem;
-import ch.njol.skript.util.Utils;
+import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Validate;
 
 /**
@@ -44,35 +47,44 @@ public class SkriptCommand {
 	
 	private final Trigger trigger;
 	
+	private final String pattern;
+	
 	private final List<Argument<?>> arguments;
 	
 	final String name;
 	final String description;
-	final String usageMessage;
+	final String usage;
 	final Collection<String> aliases;
 	final String permission;
 	final String permissionMessage;
+	
+	public final static int PLAYERS = 0x1, CONSOLE = 0x2, BOTH = PLAYERS | CONSOLE;
+	final int executableBy;
 	
 	/**
 	 * Creates a new SkriptCommand.<br/>
 	 * No parameters may be null except for permission & permissionMessage.
 	 * 
 	 * @param name /name
+	 * @param pattern
 	 * @param arguments the list of Arguments this command takes
 	 * @param description description to display in /help
-	 * @param usageMessage message to display if the command was used incorrectly
+	 * @param usage message to display if the command was used incorrectly
 	 * @param aliases /alias1, /alias2, ...
 	 * @param permission permission or null if none
 	 * @param permissionMessage message to display if the player doesn't have the given permission
 	 * @param items trigger to execute
 	 */
-	public SkriptCommand(final String name, final List<Argument<?>> arguments, final String description, final String usageMessage, final Collection<String> aliases, final String permission, final String permissionMessage, final List<TriggerItem> items) {
-		Validate.notNull(name, arguments, description, usageMessage, aliases, items);
+	public SkriptCommand(final String name, final String pattern, final List<Argument<?>> arguments, final String description, final String usage, final Collection<String> aliases, final String permission, final String permissionMessage, final int executableBy, final List<TriggerItem> items) {
+		Validate.notNull(name, arguments, description, usage, aliases, items);
+		
+		this.pattern = pattern;
 		
 		this.name = name;
 		this.description = description;
-		this.usageMessage = usageMessage;
+		this.usage = usage;
 		this.aliases = aliases;
+		this.executableBy = executableBy;
 		
 		trigger = new Trigger("command /" + name, new SimpleEvent(), items);
 		this.permission = permission;
@@ -81,35 +93,36 @@ public class SkriptCommand {
 	}
 	
 	public boolean execute(final CommandSender sender, @SuppressWarnings("unused") final String commandLabel, final String rest) {
+		if (sender instanceof Player) {
+			if ((executableBy & PLAYERS) == 0) {
+				sender.sendMessage("This command can only be used by the console");
+				return false;
+			}
+		} else {
+			if ((executableBy & CONSOLE) == 0) {
+				sender.sendMessage("This command can only be used by players");
+				return false;
+			}
+		}
+		
 		if (permission != null && !sender.hasPermission(permission)) {
 			sender.sendMessage(permissionMessage);
 			return false;
 		}
-		String[] args = rest.split("\\s*,\\s*");
-		if (args.length == 1 && args[0].isEmpty())
-			args = new String[0];
-		final SkriptCommandEvent event = new SkriptCommandEvent(this, sender, args);
-		for (int i = 0; i < arguments.size(); i++) {
-			final Argument<?> a = arguments.get(i);
-			if (i < args.length) {
-				if (a.isSingle()) {
-					if (!a.parse(args[i], sender)) {
-//						sender.sendMessage("correct usage: " + usageMessage);
-						return false;
-					}
-				} else {
-					if (!a.parse(args, i, sender)) {
-//						sender.sendMessage("correct usage: " + usageMessage);
-						return false;
-					}
-				}
-			} else {
-				a.setToDefault(event);
-			}
+		
+		final SkriptCommandEvent event = new SkriptCommandEvent(this, sender);
+		
+		final SubLog log = SkriptLogger.startSubLog();
+		final boolean ok = SkriptParser.parseArguments(rest, this, event);
+		SkriptLogger.stopSubLog(log);
+		if (!ok) {
+			log.printErrors(sender, null);
+			sender.sendMessage("Correct usage: " + usage);
+			return false;
 		}
 		
 		if (Skript.log(Verbosity.VERY_HIGH))
-			Skript.info("# /" + name + " " + Utils.join(args, ", "));
+			Skript.info("# /" + name + " " + rest);
 		final long startTrigger = System.nanoTime();
 		trigger.run(event);
 		if (Skript.log(Verbosity.VERY_HIGH))
@@ -118,13 +131,23 @@ public class SkriptCommand {
 		return true;
 	}
 	
+	public void sendHelp(final CommandSender sender) {
+		if (!description.isEmpty())
+			sender.sendMessage(description);
+		sender.sendMessage("Usage: " + usage);
+	}
+	
 	/**
-	 * Gets the argumetns this command takes.
+	 * Gets the arguments this command takes.
 	 * 
 	 * @return The internal list of arguments. Do not modify it!
 	 */
 	public List<Argument<?>> getArguments() {
 		return arguments;
+	}
+	
+	public String getPattern() {
+		return pattern;
 	}
 	
 	public String getName() {
@@ -135,4 +158,11 @@ public class SkriptCommand {
 		return aliases;
 	}
 	
+	public String getUsage() {
+		return usage;
+	}
+	
+	public String getDescription() {
+		return description;
+	}
 }

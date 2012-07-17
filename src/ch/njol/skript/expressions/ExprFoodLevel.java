@@ -25,21 +25,24 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprFoodLevel extends SimpleExpression<Integer> {
+public class ExprFoodLevel extends PropertyExpression<Integer> {
 	
 	static {
-		Skript.registerExpression(ExprFoodLevel.class, Integer.class, "[the] food[[ ](level|meter)] [of %player%]", "%player%'[s] food[[ ](level|meter)]");
+		Skript.registerExpression(ExprFoodLevel.class, Integer.class, ExpressionType.PROPERTY, "[the] food[[ ](level|meter)] [of %player%]", "%player%'[s] food[[ ](level|meter)]");
 	}
 	
 	private Expression<Player> players;
@@ -48,16 +51,17 @@ public class ExprFoodLevel extends SimpleExpression<Integer> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
+		setExpr(players);
 		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "food level of " + players.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "the food level of " + players.toString(e, debug);
 	}
 	
 	@Override
-	protected Integer[] getAll(final Event e) {
+	protected Integer[] get(final Event e) {
 		if (getTime() >= 0 && players.isDefault()) {
 			return new Integer[] {((FoodLevelChangeEvent) e).getFoodLevel()};
 		}
@@ -116,19 +120,20 @@ public class ExprFoodLevel extends SimpleExpression<Integer> {
 		return Integer.class;
 	}
 	
-	@Override
-	public String toString() {
-		return "the food level of " + players;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return players.isSingle();
-	}
+	private int time = 0;
 	
 	@Override
 	public boolean setTime(final int time) {
-		return super.setTime(time, FoodLevelChangeEvent.class, players);
+		if (Utils.contains(ScriptLoader.currentEvents, FoodLevelChangeEvent.class) && players.isDefault()) {
+			this.time = time;
+			return true;
+		}
+		return false;
+	}
+	
+	@Override
+	public int getTime() {
+		return time;
 	}
 	
 }

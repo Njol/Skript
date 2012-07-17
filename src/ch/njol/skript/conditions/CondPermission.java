@@ -79,8 +79,8 @@ public class CondPermission extends Condition {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return senders.getDebugMessage(e) + " " + (isNegated() ? "doesn't have" : "has") + " permission " + permissions.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return senders.toString(e, debug) + " " + (isNegated() ? "doesn't have" : "has") + " the permission " + permissions.toString(e, debug);
 	}
 	
 }

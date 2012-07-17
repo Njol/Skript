@@ -22,13 +22,14 @@
 package ch.njol.skript.effects;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
+import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.EntityType;
 import ch.njol.skript.util.Offset;
 
 /**
@@ -40,36 +41,45 @@ public class EffSpawn extends Effect {
 	
 	static {
 		Skript.registerEffect(EffSpawn.class,
-				"spawn %entitytypes% [%offset% %locations%]");
+				"spawn %entitytypes% [%offset% %locations%]",
+				"spawn %integer% of %entitytypes% [%offset% %locations%]");
 	}
 	
 	private Expression<Location> locations;
-	private Expression<Offset> offsets = null;
+	private Expression<Offset> offsets;
 	private Expression<EntityType> types;
+	private Expression<Integer> amount;
+	
+	public static Entity lastSpawned = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		types = (Expression<EntityType>) vars[0];
-		offsets = (Expression<Offset>) vars[1];
-		locations = (Expression<Location>) vars[2];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parser) {
+		amount = matchedPattern == 0 ? null : (Expression<Integer>) (exprs[0]);
+		types = (Expression<EntityType>) exprs[matchedPattern];
+		offsets = (Expression<Offset>) exprs[1 + matchedPattern];
+		locations = (Expression<Location>) exprs[2 + matchedPattern];
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
+		if (amount != null && amount.getSingle(e) == null)
+			return;
 		final EntityType[] ts = types.getArray(e);
+		final int a = amount == null ? 1 : amount.getSingle(e);
 		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
 			for (final EntityType type : ts) {
-				for (int i = 0; i < type.getAmount(); i++)
-					l.getWorld().spawn(l, type.c);
+				for (int i = 0; i < a * type.getAmount(); i++) {
+					lastSpawned = type.data.spawn(l);
+				}
 			}
 		}
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "spawn " + types.getDebugMessage(e) + " " + offsets.getDebugMessage(e) + " " + locations.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "spawn " + types.toString(e, debug) + " " + offsets.toString(e, debug) + " " + locations.toString(e, debug);
 	}
 	
 }

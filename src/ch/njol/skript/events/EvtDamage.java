@@ -21,7 +21,9 @@
 
 package ch.njol.skript.events;
 
+import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -51,11 +53,12 @@ public class EvtDamage extends SkriptEvent {
 	@Override
 	public boolean check(final Event evt) {
 		final EntityDamageEvent e = (EntityDamageEvent) evt;
-		return e.getDamage() != 0 && !(e.getEntity() instanceof LivingEntity && ((LivingEntity) e.getEntity()).getNoDamageTicks() > 0);
+		return /*e.getDamage() != 0 && */!(e.getEntity() instanceof Player && ((LivingEntity) e.getEntity()).getNoDamageTicks() > 0) // only players can be invulnerable
+				&& !(e instanceof EntityDamageByEntityEvent && ((EntityDamageByEntityEvent) e).getDamager() instanceof EnderDragon && ((EntityDamageByEntityEvent) e).getEntity() instanceof EnderDragon);
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return "damage";
 	}
 	

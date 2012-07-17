@@ -21,57 +21,76 @@
 
 package ch.njol.skript.expressions;
 
-import java.util.ArrayList;
+import java.util.WeakHashMap;
 
 import org.bukkit.block.Block;
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.api.Converter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprTargetedBlock extends SimpleExpression<Block> {
+public class ExprTargetedBlock extends PropertyExpression<Block> {
 	
 	static {
-		Skript.registerExpression(ExprTargetedBlock.class, Block.class, "[the] target[ed] block[s] [of %players%]", "%player%'[s] target[ed] block[s]");
+		Skript.registerExpression(ExprTargetedBlock.class, Block.class, ExpressionType.NORMAL, "[the] target[ed] block[s] [of %players%]", "%players%'[s] target[ed] block[s]");
 	}
 	
-	private Expression<LivingEntity> entities;
+	private Expression<Player> players;
+	
+	private static Event last = null;
+	private final static WeakHashMap<Player, Block> targetedBlocks = new WeakHashMap<Player, Block>();
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		entities = (Expression<LivingEntity>) vars[0];
+		players = (Expression<Player>) vars[0];
+		setExpr(players);
 		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "targeted block of " + entities.getDebugMessage(e);
+			return "the targeted block" + (players.isSingle() ? "" : "s") + " of " + players.toString(e, debug);
 		return Skript.getDebugMessage(getAll(e));
 	}
 	
-	@Override
-	protected Block[] getAll(final Event evt) {
-		final ArrayList<Block> targets = new ArrayList<Block>();
-		for (final LivingEntity e : entities.getArray(evt)) {
-			final Block t = e.getTargetBlock(null, Skript.TARGETBLOCKMAXDISTANCE);
-			if (t != null && t.getTypeId() != 0)// air block = max distance or end of world (top/bottom) reached
-				targets.add(t);
-		}
-		return targets.toArray(new Block[0]);
+	private Block getTargetedBlock(final Player p, final Event e) {
+		if (p == null)
+			return null;
+		if (last != e)
+			targetedBlocks.clear();
+		last = e;
+		if (getTime() <= 0 && targetedBlocks.containsKey(p))
+			return targetedBlocks.get(p);
+//		if (e instanceof PlayerInteractEvent && p == ((PlayerInteractEvent) e).getPlayer() && (((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_BLOCK || ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_BLOCK)) {
+//			targetedBlocks.put(((PlayerInteractEvent) e).getPlayer(), ((PlayerInteractEvent) e).getClickedBlock());
+//			return ((PlayerInteractEvent) e).getClickedBlock();
+//		}
+		Block b = p.getTargetBlock(null, Skript.TARGETBLOCKMAXDISTANCE);
+		if (b.getTypeId() == 0)
+			b = null;
+		targetedBlocks.put(p, b);
+		return b;
 	}
 	
 	@Override
-	public String toString() {
-		return "the targeted block" + (isSingle() ? "" : "s") + " of " + entities;
+	protected Block[] get(final Event e) {
+		return players.getArray(e, Block.class, new Converter<Player, Block>() {
+			@Override
+			public Block convert(final Player p) {
+				return getTargetedBlock(p, e);
+			}
+		});
 	}
 	
 	@Override
@@ -80,8 +99,14 @@ public class ExprTargetedBlock extends SimpleExpression<Block> {
 	}
 	
 	@Override
-	public boolean isSingle() {
-		return entities.isSingle();
+	public boolean isDefault() {
+		return false;
+	}
+	
+	@Override
+	public boolean setTime(final int time) {
+		super.setTime(time);
+		return true;
 	}
 	
 }

@@ -19,8 +19,9 @@
  * 
  */
 
-package ch.njol.skript.loops;
+package ch.njol.skript.expressions;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.bukkit.Material;
@@ -28,23 +29,25 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 import ch.njol.util.iterator.ArrayIterator;
 import ch.njol.util.iterator.CheckedIterator;
+import ch.njol.util.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class LoopItems extends LoopExpr<ItemStack> {
+public class ExprItems extends SimpleExpression<ItemStack> {
 	
 	static {
-		Skript.registerLoop(LoopItems.class, ItemStack.class,
+		Skript.registerExpression(ExprItems.class, ItemStack.class, ExpressionType.NORMAL,
 				"[(all|every)] item(s|[ ]types)", "items of type[s] %itemtypes%",
 				"[(all|every)] block(s|[ ]types)", "blocks of type[s] %itemtypes%");
 	}
@@ -59,14 +62,33 @@ public class LoopItems extends LoopExpr<ItemStack> {
 			types = (Expression<ItemType>) vars[0];
 		blocks = matchedPattern >= 2;
 		if (types instanceof Literal) {
-			for (final ItemType t : ((Literal<ItemType>) types).getArray())
+			for (final ItemType t : ((Literal<ItemType>) types).getAll())
 				t.setAll(true);
 		}
 		return true;
 	}
 	
+	private ItemStack[] buffer = null;
+	
 	@Override
-	protected Iterator<ItemStack> iterator(final Event e) {
+	protected ItemStack[] get(final Event e) {
+		if (buffer != null)
+			return buffer;
+		final ArrayList<ItemStack> r = new ArrayList<ItemStack>();
+		for (final ItemStack is : new IteratorIterable<ItemStack>(iterator(e)))
+			r.add(is);
+		if (types instanceof Literal)
+			return buffer = r.toArray(new ItemStack[r.size()]);
+		return r.toArray(new ItemStack[r.size()]);
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return false;
+	}
+	
+	@Override
+	public Iterator<ItemStack> iterator(final Event e) {
 		Iterator<ItemStack> iter;
 		if (types == null) {
 			iter = new Iterator<ItemStack>() {
@@ -129,18 +151,23 @@ public class LoopItems extends LoopExpr<ItemStack> {
 	}
 	
 	@Override
-	public String getLoopDebugMessage(final Event e) {
-		return (blocks ? "blocks" : "items") + " of type " + types.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return (blocks ? "blocks" : "items") + " of type" + (types.isSingle() ? "" : "s") + " " + types.toString(e, debug);
 	}
 	
 	@Override
-	public String toString() {
-		return "the loop-" + (blocks ? "block" : "item");
+	public boolean canLoop() {
+		return true;
 	}
 	
 	@Override
 	public boolean isLoopOf(final String s) {
 		return blocks && s.equalsIgnoreCase("block") || !blocks && s.equalsIgnoreCase("item");
+	}
+	
+	@Override
+	public boolean getAnd() {
+		return true;
 	}
 	
 }

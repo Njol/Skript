@@ -30,10 +30,12 @@ import ch.njol.skript.api.Comparator;
 import ch.njol.skript.api.Comparator.ComparatorInfo;
 import ch.njol.skript.api.Comparator.Relation;
 import ch.njol.skript.api.Condition;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.util.Patterns;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 
 /**
@@ -43,30 +45,30 @@ import ch.njol.util.Checker;
 public class CondIs extends Condition {
 	
 	private final static Patterns<Object> patterns = new Patterns<Object>(new Object[][] {
-			{"%objects% ((is|are) (greater|more|higher|bigger) than|\\>) %objects%", Relation.GREATER},
-			{"%objects% ((is|are) (greater|more|higher|bigger) or equal to|(is not|are not|isn't|aren't) (less|smaller) than|\\>=) %objects%", Relation.GREATER_OR_EQUAL},
-			{"%objects% ((is|are) (less|smaller) than|\\<) %objects%", Relation.SMALLER},
-			{"%objects% ((is|are) (less|smaller) or equal to|(is not|are not|isn't|aren't) (greater|more|higher|bigger) than|\\<=) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"%objects% ((is|are) ((greater|more|higher|bigger) than|above)|\\>) %objects%", Relation.GREATER},
+			{"%objects% ((is|are) (greater|more|higher|bigger|above) or (equal to|the same as)|(is not|are not|isn't|aren't) ((less|smaller) than|below)|\\>=) %objects%", Relation.GREATER_OR_EQUAL},
+			{"%objects% ((is|are) ((less|smaller) than|below)|\\<) %objects%", Relation.SMALLER},
+			{"%objects% ((is|are) (less|smaller|below) or (equal to|the same as)|(is not|are not|isn't|aren't) ((greater|more|higher|bigger) than|above)|\\<=) %objects%", Relation.SMALLER_OR_EQUAL},
 			{"%objects% ((is|are) (not|neither)|isn't|aren't|!=) [equal to] %objects%", Relation.NOT_EQUAL},
-			{"%objects% (is|are|=) [equal to] %objects%", Relation.EQUAL},
+			{"%objects% (is|are|=) [(equal to|the same as)] %objects%", Relation.EQUAL},
 			{"%objects% (is|are) between %objects% and %objects%", true},
 			{"%objects% (is not|are not|isn't|aren't) between %objects% and %objects%", false},
 			
-			{"%objects@-1% (was|were) (greater|more|higher|bigger) than %objects%", Relation.GREATER},
-			{"%objects@-1% ((was|were) (greater|more|higher|bigger) or equal to|(was not|were not|wasn't|weren't) (less|smaller) than) %objects%", Relation.GREATER_OR_EQUAL},
-			{"%objects@-1% (was|were) (less|smaller) than %objects%", Relation.SMALLER},
-			{"%objects@-1% ((was|were) (less|smaller) or equal to|(was not|were not|wasn't|weren't) (greater|more|higher|bigger) than) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"%objects@-1% (was|were) ((greater|more|higher|bigger) than|above) %objects%", Relation.GREATER},
+			{"%objects@-1% ((was|were) (greater|more|higher|bigger|above) or (equal to|the same as)|(was not|were not|wasn't|weren't) ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
+			{"%objects@-1% (was|were) ((less|smaller) than|below) %objects%", Relation.SMALLER},
+			{"%objects@-1% ((was|were) (less|smaller|below) or (equal to|the same as)|(was not|were not|wasn't|weren't) ((greater|more|higher|bigger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
 			{"%objects@-1% ((was|were) (not|neither)|wasn't|weren't) [equal to] %objects%", Relation.NOT_EQUAL},
-			{"%objects@-1% (was|were) [equal to] %objects%", Relation.EQUAL},
+			{"%objects@-1% (was|were) [(equal to|the same as)] %objects%", Relation.EQUAL},
 			{"%objects@-1% (was|were) between %objects% and %objects%", true},
 			{"%objects@-1% (was not|were not|wasn't|weren't) between %objects% and %objects%", false},
 			
-			{"%objects@1% will be (greater|more|higher|bigger) than %objects%", Relation.GREATER},
-			{"%objects@1% (will be (greater|more|higher|bigger) or equal to|(will not|won't) be (less|smaller) than) %objects%", Relation.GREATER_OR_EQUAL},
-			{"%objects@1% will be (less|smaller) than %objects%", Relation.SMALLER},
-			{"%objects@1% (will be (less|smaller) or equal to|(will not|won't) be (greater|more|higher|bigger) than) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"%objects@1% will be ((greater|more|higher|bigger) than|above) %objects%", Relation.GREATER},
+			{"%objects@1% (will be (greater|more|higher|bigger|above) or (equal to|the same as)|(will not|won't) be ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
+			{"%objects@1% will be ((less|smaller) than|below) %objects%", Relation.SMALLER},
+			{"%objects@1% (will be (less|smaller|below) or (equal to|the same as)|(will not|won't) be ((greater|more|higher|bigger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
 			{"%objects@1% ((will (not|neither) be|won't be)|(isn't|aren't|is not|are not) (turning|changing) [in]to) [equal to] %objects%", Relation.NOT_EQUAL},
-			{"%objects@1% (will be [equal to]|(is|are) (turning|changing) [in]to) %objects%", Relation.EQUAL},
+			{"%objects@1% (will be [(equal to|the same as)]|(is|are) (turning|changing) [in]to) %objects%", Relation.EQUAL},
 			{"%objects@1% will be between %objects% and %objects%", true},
 			{"%objects@1% (will not be|won't be) between %objects% and %objects%", false}
 	});
@@ -101,30 +103,32 @@ public class CondIs extends Condition {
 		}
 		final boolean b = init();
 		if (!b) {
-			if (Skript.debug())
-				Skript.info("Can't compare " + first.getDebugMessage(null) + " with " + second.getDebugMessage(null) + (third == null ? "" : " and " + third.getDebugMessage(null)));
 			if (first instanceof UnparsedLiteral || second instanceof UnparsedLiteral || third instanceof UnparsedLiteral) {
 				return false;
 			} else {
-				if (third == null)
-					Skript.error(first + " and " + second + " can't be compared");
-				else
-					Skript.error(first + " can't be compared with " + second + " and/or " + third);
+				Skript.error("Can't compare " + f(first) + " with " + f(second) + (third == null ? "" : " and " + f(third)));
 				return false;
 			}
 		}
 		if (third == null) {
 			if (!relation.isEqualOrInverse() && !comp.supportsOrdering()) {
-				Skript.error("The given objects can't be compared with '" + relation + "'");
+				Skript.error("Can't test " + f(first) + " for being '" + relation + "' " + f(second));
 				return false;
 			}
 		} else {
 			if (!comp.supportsOrdering()) {
-				Skript.error("The given objects can't be checked for being 'in between'");
+				Skript.error("Can't test " + f(first) + " for being 'between' " + f(second) + " and " + f(third));
 				return false;
 			}
 		}
 		return true;
+	}
+	
+	private final static String f(final Expression<?> e) {
+		final ClassInfo<?> ci = Skript.getSuperClassInfo(e.getReturnType());
+		if (ci.getC() != Object.class)
+			return "'" + e.toString() + "'";
+		return Utils.a(ci.getName());
 	}
 	
 	/**
@@ -143,6 +147,12 @@ public class CondIs extends Condition {
 				reverseOrder = !(info.c1.isAssignableFrom(f) && info.c2.isAssignableFrom(s) && (third == null || info.c2.isAssignableFrom(t)));
 				return true;
 			}
+		}
+		
+		if (f != Object.class && s != Object.class && (f.isAssignableFrom(s) || s.isAssignableFrom(f)) && t == null) {
+			comp = Comparator.equalsComparator;
+			reverseOrder = f.isAssignableFrom(s);
+			return true;
 		}
 		
 		final SubLog log = SkriptLogger.startSubLog();
@@ -199,24 +209,65 @@ public class CondIs extends Condition {
 				log.clear();
 			}
 		}
-		/*
-		if (s != Object.class) {
-			final Expression<?> v1 = first.getConvertedExpression(s);
-			if (v1 != null) {
-				comp = Comparator.equalsComparator;
-				first = v1;
-				return true;
+		
+		if (third == null) {
+			if (f != Object.class) {
+				final Expression<?> v2 = second.getConvertedExpression(f);
+				if (v2 != null) {
+					comp = Comparator.equalsComparator;
+					second = v2;
+					SkriptLogger.stopSubLog(log);
+					log.printLog();
+					return true;
+				}
+				log.clear();
 			}
-		}
-		if (f != Object.class) {
-			final Expression<?> v2 = second.getConvertedExpression(f);
-			if (v2 != null) {
-				comp = Comparator.equalsComparator;
-				second = v2;
-				return true;
+			if (s != Object.class) {
+				final Expression<?> v1 = first.getConvertedExpression(s);
+				if (v1 != null) {
+					comp = Comparator.equalsComparator;
+					first = v1;
+					SkriptLogger.stopSubLog(log);
+					log.printLog();
+					return true;
+				}
+				log.clear();
 			}
+			
+			if (f == Object.class && s == Object.class) {
+				if (first instanceof UnparsedLiteral) {
+					final Expression<?> v1 = first.getConvertedExpression(Object.class);
+					if (v1 != null && v1.getReturnType() != Object.class) {
+						final Expression<?> v2 = second.getConvertedExpression(v1.getReturnType());
+						if (v2 != null) {
+							comp = Comparator.equalsComparator;
+							first = v1;
+							second = v2;
+							SkriptLogger.stopSubLog(log);
+							log.printLog();
+							return true;
+						}
+					}
+					log.clear();
+				}
+				if (second instanceof UnparsedLiteral) {
+					final Expression<?> v2 = second.getConvertedExpression(Object.class);
+					if (v2 != null && v2.getReturnType() != Object.class) {
+						final Expression<?> v1 = first.getConvertedExpression(v2.getReturnType());
+						if (v1 != null) {
+							comp = Comparator.equalsComparator;
+							first = v1;
+							second = v2;
+							SkriptLogger.stopSubLog(log);
+							log.printLog();
+							return true;
+						}
+					}
+					log.clear();
+				}
+			}
+			
 		}
-		*/
 		
 		SkriptLogger.stopSubLog(log);
 		return false;
@@ -252,10 +303,10 @@ public class CondIs extends Condition {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		if (third == null)
-			return first.getDebugMessage(e) + " is " + (isNegated() ? relation.getInverse() : relation) + " " + second.getDebugMessage(e);
-		return first.getDebugMessage(e) + " is" + (relation == Relation.EQUAL ? "" : " not") + " between " + second.getDebugMessage(e) + " and " + third.getDebugMessage(e);
+			return first.toString(e, debug) + " is " + (isNegated() ? relation.getInverse() : relation) + " " + second.toString(e, debug);
+		return first.toString(e, debug) + " is" + (relation == Relation.EQUAL ? "" : " not") + " between " + second.toString(e, debug) + " and " + third.toString(e, debug);
 	}
 	
 }

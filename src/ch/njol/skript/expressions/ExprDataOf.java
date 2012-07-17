@@ -25,20 +25,23 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Slot;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprDataOf extends SimpleExpression<Short> {
+public class ExprDataOf extends PropertyExpression<Short> {
 	
 	static {
-		Skript.registerExpression(ExprDataOf.class, Short.class, "(data[s] [value[s]]|durabilit(y|ies)) of %itemstacks%", "%itemstacks%'[s] (data[s] [value[s]]|durabilit(y|ies))");
+		Skript.registerExpression(ExprDataOf.class, Short.class, ExpressionType.PROPERTY,
+				"[the] ((data|damage)[s] [value[s]]|durabilit(y|ies)) of %itemstacks%", "%itemstacks%'[s] ((data|damage)[s] [value[s]]|durabilit(y|ies))");
 	}
 	
 	private Expression<ItemStack> types;
@@ -47,12 +50,8 @@ public class ExprDataOf extends SimpleExpression<Short> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		types = (Expression<ItemStack>) exprs[0];
+		setExpr(types);
 		return true;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return types.isSingle();
 	}
 	
 	@Override
@@ -61,7 +60,7 @@ public class ExprDataOf extends SimpleExpression<Short> {
 	}
 	
 	@Override
-	protected Short[] getAll(final Event e) {
+	protected Short[] get(final Event e) {
 		return types.getArray(e, Short.class, new Converter<ItemStack, Short>() {
 			@Override
 			public Short convert(final ItemStack is) {
@@ -71,25 +70,46 @@ public class ExprDataOf extends SimpleExpression<Short> {
 	}
 	
 	@Override
-	public String toString() {
-		return "data of " + types;
+	public String toString(final Event e, final boolean debug) {
+		return "data of " + types.toString(e, debug);
 	}
 	
-	@Override
-	public String getDebugMessage(final Event e) {
-		return "data of " + types.getDebugMessage(e);
-	}
+	private Expression<? extends Slot> slots = null;
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
-		// TODO Auto-generated method stub
-		return super.acceptChange(mode);
+		if ((slots = types.getConvertedExpression(Slot.class)) != null)
+			return Integer.class;
+		return null;
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		super.change(e, delta, mode);
+	public void change(final Event e, final Object delta, final ChangeMode mode) {
+		int a = 0;
+		if (mode != ChangeMode.CLEAR)
+			a = (Integer) delta;
+		switch (mode) {
+			case REMOVE:
+				a = -a;
+				//$FALL-THROUGH$
+			case ADD:
+				for (final Slot slot : slots.getArray(e)) {
+					final ItemStack item = slot.getItem();
+					item.setDurability((short) (item.getDurability() + a));
+					slot.setItem(item);
+				}
+			break;
+			case CLEAR:
+				a = 0;
+				//$FALL-THROUGH$
+			case SET:
+				for (final Slot slot : slots.getArray(e)) {
+					final ItemStack item = slot.getItem();
+					item.setDurability((short) a);
+					slot.setItem(item);
+				}
+			break;
+		}
 	}
 	
 }

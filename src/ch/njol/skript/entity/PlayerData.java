@@ -19,43 +19,56 @@
  * 
  */
 
-package ch.njol.skript.expressions;
+package ch.njol.skript.entity;
 
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.expressions.base.EventValueExpression;
+import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprPlayer extends EventValueExpression<Player> {
-	
-	public ExprPlayer() {
-		super(Player.class);
-	}
+public class PlayerData extends EntityData<Player> {
 	
 	static {
-		Skript.registerExpression(ExprPlayer.class, Player.class, "[the] player", "me");
+		EntityData.register(PlayerData.class, "player", Player.class, "non-op[s]", "player[s]", "op[s]");
+	}
+	
+	private int op = 0;
+	
+	@Override
+	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+		op = matchedPattern - 1;
+		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		if (e == null)
-			return "player";
-		return Skript.getDebugMessage(getSingle(e));
+	protected void set(final Player entity) {
+		if (op != 0)
+			entity.setOp(op == 1);
+	}
+	
+	@Override
+	protected boolean match(final Player entity) {
+		return op == 0 || entity.isOp() == (op == 1);
+	}
+	
+	@Override
+	public Class<? extends Player> getType() {
+		return Player.class;
 	}
 	
 	@Override
 	public String toString() {
-		return "the player";
+		return op == -1 ? "non-op" : op == 1 ? "op" : "player";
 	}
 	
 	@Override
-	public boolean isSingle() {
-		return true;
+	public Player spawn(final Location loc) {
+		return null;
 	}
 	
 }

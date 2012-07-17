@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -37,18 +38,19 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class ExprEventExpression extends WrapperExpression<Object> {
 	
 	static {
-		Skript.registerExpression(ExprEventExpression.class, Object.class, "[the] event-<.+>");
+		Skript.registerExpression(ExprEventExpression.class, Object.class, ExpressionType.SIMPLE, "[the] event-<.+>");
 	}
 	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		expr = (Expression<?>) SkriptParser.parse(parser.regexes.get(0).group(), Skript.getExpressions().iterator(), false, false, "'" + parser.expr + "' is not an event expression");
+		final Expression<?> expr = (Expression<?>) SkriptParser.parse(parser.regexes.get(0).group(), Skript.getExpressions().iterator(), false, false, "'" + parser.expr + "' is not a valid event value");
+		setExpr(expr);
 		return expr != null;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return expr.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return getExpr().toString(e, debug);
 	}
 	
 }

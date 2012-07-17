@@ -25,6 +25,7 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -36,7 +37,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class ExprDistance extends SimpleExpression<Double> {
 	
 	static {
-		Skript.registerExpression(ExprDistance.class, Double.class, "distance between %location% and %location%");
+		Skript.registerExpression(ExprDistance.class, Double.class, ExpressionType.COMBINED, "[the] distance between %location% and %location%");
 	}
 	
 	private Expression<Location> loc1, loc2;
@@ -50,7 +51,7 @@ public class ExprDistance extends SimpleExpression<Double> {
 	}
 	
 	@Override
-	protected Double[] getAll(final Event e) {
+	protected Double[] get(final Event e) {
 		final Location l1 = loc1.getSingle(e), l2 = loc2.getSingle(e);
 		if (l1 == null || l2 == null || l1.getWorld() != l2.getWorld())
 			return null;
@@ -58,13 +59,8 @@ public class ExprDistance extends SimpleExpression<Double> {
 	}
 	
 	@Override
-	public String toString() {
-		return "distance between " + loc1 + " and " + loc2;
-	}
-	
-	@Override
-	public String getDebugMessage(final Event e) {
-		return "distance between " + loc1.getDebugMessage(e) + " and " + loc2.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "distance between " + loc1.toString(e, debug) + " and " + loc2.toString(e, debug);
 	}
 	
 	@Override
@@ -75,6 +71,11 @@ public class ExprDistance extends SimpleExpression<Double> {
 	@Override
 	public Class<? extends Double> getReturnType() {
 		return Double.class;
+	}
+	
+	@Override
+	public boolean getAnd() {
+		return true;
 	}
 	
 }

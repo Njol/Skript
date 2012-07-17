@@ -8,16 +8,17 @@ website: http://njol.ch/projects/skript
 
 main: ch.njol.skript.Skript
 
-#load: startup # not needed for addons, as they should add [soft-]depend: Skript to their plugin.yml
-# must be uncommented to ever be able to have 'on world load' triggers
+#load: startup # not needed for addons, as they should add [soft-]depend: [Skript] to their plugin.yml
+# must be uncommented to ever be able to have 'on world load' triggers that also execute when the server starts
 
-version: 1.2.1
-#commands:
-#    skript:
-#        description: allows to modify the configuration files
+version: 1.3
+
+commands:
+    skript:
+        description: Skript's main command. Type '/skript help' for more information.
 #        aliases: [sk, s]
-#        permission: skript.config
-#        usage: /skript help
+        permission: skript.admin
+        usage: /skript (reload|help)
 
 soft-depend: [Vault]
 
@@ -25,11 +26,15 @@ permissions:
     skript.*:
         default: false
         children:
-            skript.commands: true
+            skript.effectcommands: true
+            skript.admin: true
             #skript.config: true
-    skript.commands:
+    skript.effectcommands:
         default: false
-        description: allows to use effects as commands, e.g. /set health to 20
+        description: Allows to use effects as commands, e.g. '/set health to 20'
+    skript.admin:
+        default: op
+        description: Allows to use administrative commands
 #    skript.config:
 #        description: allows to modify the configuration files via commands
 #        default: false

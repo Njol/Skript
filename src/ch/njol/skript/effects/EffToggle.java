@@ -24,7 +24,6 @@ package ch.njol.skript.effects;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -38,7 +37,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class EffToggle extends Effect {
 	
 	static {
-		Skript.registerEffect(EffToggle.class, "toggle %blocks%");
+//		Skript.registerEffect(EffToggle.class, "toggle %blocks%");
 	}
 	
 	private Expression<Block> blocks;
@@ -51,8 +50,8 @@ public class EffToggle extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "toggle " + blocks.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "toggle " + blocks.toString(e, debug);
 	}
 	
 	@Override

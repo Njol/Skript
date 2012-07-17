@@ -43,7 +43,7 @@ public enum Color {
 	LIGHT_BLUE(DyeColor.LIGHT_BLUE, ChatColor.AQUA, "light blue", "light cyan", "light aqua"),
 	
 	DARK_GREEN(DyeColor.GREEN, ChatColor.DARK_GREEN, "green", "dark green"),
-	LIGHT_GREEN(DyeColor.LIME, ChatColor.GREEN, "light green", "lime"),
+	LIGHT_GREEN(DyeColor.LIME, ChatColor.GREEN, "light green", "lime", "lime green"),
 	
 	YELLOW(DyeColor.YELLOW, ChatColor.YELLOW, "yellow", "light yellow"),
 	ORANGE(DyeColor.ORANGE, ChatColor.GOLD, "orange", "gold", "dark yellow"),
@@ -54,7 +54,7 @@ public enum Color {
 	DARK_PURPLE(DyeColor.PURPLE, ChatColor.DARK_PURPLE, "purple", "dark purple"),
 	LIGHT_PURPLE(DyeColor.MAGENTA, ChatColor.LIGHT_PURPLE, "magenta", "light purple"),
 	
-	BROWN(DyeColor.BROWN, ChatColor.BLUE, "brown", "indigo"), ;
+	BROWN(DyeColor.BROWN, ChatColor.BLUE, "brown", "indigo");
 	
 	private final DyeColor wool;
 	private final ChatColor chat;
@@ -80,10 +80,15 @@ public enum Color {
 		this.wool = wool;
 		this.chat = chat;
 		this.names = names;
+		assert names.length > 0;
 	}
 	
 	public byte getDye() {
 		return (byte) (15 - wool.getData());
+	}
+	
+	public DyeColor getWoolColor() {
+		return wool;
 	}
 	
 	public byte getWool() {
@@ -91,7 +96,7 @@ public enum Color {
 	}
 	
 	public String getChat() {
-		return "" + chat;
+		return chat.toString();
 	}
 	
 	@Override

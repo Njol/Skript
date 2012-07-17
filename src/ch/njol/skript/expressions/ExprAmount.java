@@ -21,11 +21,10 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.entity.Creature;
-import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,44 +33,42 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  * 
  */
-public class ExprCreature extends SimpleExpression<Creature> {
+public class ExprAmount extends SimpleExpression<Integer> {
 	
 	static {
-		Skript.registerExpression(ExprCreature.class, Creature.class, "[the] creature");
+		Skript.registerExpression(ExprAmount.class, Integer.class, ExpressionType.COMBINED, "(amount|number) of %objects%");
 	}
 	
+	private Expression<?> expr;
+	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+		expr = exprs[0];
 		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		if (e == null)
-			return "creature";
-		return Skript.getDebugMessage(getSingle(e));
-	}
-	
-	@Override
-	protected Creature[] getAll(final Event e) {
-		final Entity ent = Skript.getEventValue(e, Entity.class, 0);
-		if (ent instanceof Creature)
-			return new Creature[] {(Creature) ent};
-		return null;
-	}
-	
-	@Override
-	public Class<? extends Creature> getReturnType() {
-		return Creature.class;
-	}
-	
-	@Override
-	public String toString() {
-		return "the creature";
-	}
-	
-	@Override
 	public boolean isSingle() {
+		return true;
+	}
+	
+	@Override
+	public Class<? extends Integer> getReturnType() {
+		return Integer.class;
+	}
+	
+	@Override
+	public String toString(final Event e, final boolean debug) {
+		return "amount of " + expr.toString(e, debug);
+	}
+	
+	@Override
+	protected Integer[] get(final Event e) {
+		return new Integer[] {expr.getArray(e).length};
+	}
+	
+	@Override
+	public boolean getAnd() {
 		return true;
 	}
 	

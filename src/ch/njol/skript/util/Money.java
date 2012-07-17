@@ -21,10 +21,11 @@
 
 package ch.njol.skript.util;
 
+import ch.njol.skript.Economy;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Parser;
-import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.lang.ParseContext;
 
 /**
  * @author Peter Güttinger
@@ -33,33 +34,26 @@ import ch.njol.skript.classes.ClassInfo;
 public class Money {
 	
 	static {
-		Skript.registerClass(new ClassInfo<Money>(Money.class, "money").user("money", "money").parser(new Parser<Money>() {
-			@Override
-			public Money parse(final String s) {
-				return Money.parse(s);
-			}
-			
-			@Override
-			public String toString(final Money m) {
-				return m.toString();
-			}
-		}));
-	}
-	
-	private static String plural;
-	private static String singular;
-	static {
-		if (Skript.getEconomy() != null) {
-			plural = Skript.getEconomy().currencyNamePlural().toLowerCase();
-			singular = Skript.getEconomy().currencyNameSingular().toLowerCase();
+		if (Economy.getEconomy() != null) {
+			Skript.registerClass(new ClassInfo<Money>(Money.class, "money", "money")
+					.user("money")
+					.parser(new Parser<Money>() {
+						@Override
+						public Money parse(final String s, final ParseContext context) {
+							return Money.parse(s);
+						}
+						
+						@Override
+						public String toString(final Money m) {
+							return m.toString();
+						}
+					}));
 		}
 	}
 	
 	private final double amount;
 	
 	public Money(final double amount) {
-		if (Skript.getEconomy() == null)
-			throw new SkriptAPIException("can't create a new money instance if there's no economy plugin present");
 		this.amount = amount;
 	}
 	
@@ -68,21 +62,21 @@ public class Money {
 	}
 	
 	public static final Money parse(final String s) {
-		if (Skript.getEconomy() == null) {
+		if (Economy.getEconomy() == null) {
 			Skript.error("No economy plugin detected");
 			return null;
 		}
-		if (!plural.isEmpty() && s.toLowerCase().endsWith(plural)) {
+		if (!Economy.plural.isEmpty() && s.toLowerCase().endsWith(Economy.pluralLower)) {
 			try {
-				final double d = Double.parseDouble(s.substring(0, s.length() - plural.length()).trim());
-				if (d == 1 && !singular.equals(plural))
+				final double d = Double.parseDouble(s.substring(0, s.length() - Economy.plural.length()).trim());
+				if (d == 1 && !Economy.singular.equals(Economy.plural))
 					Skript.pluralWarning(s);
 				return new Money(d);
 			} catch (final NumberFormatException e) {}
 		}
-		if (!singular.isEmpty() && s.toLowerCase().endsWith(singular)) {
+		if (!Economy.singular.isEmpty() && s.toLowerCase().endsWith(Economy.singularLower)) {
 			try {
-				final double d = Double.parseDouble(s.substring(0, s.length() - singular.length()).trim());
+				final double d = Double.parseDouble(s.substring(0, s.length() - Economy.singular.length()).trim());
 				if (d != 1)
 					Skript.pluralWarning(s);
 				return new Money(d);
@@ -96,7 +90,7 @@ public class Money {
 	
 	@Override
 	public String toString() {
-		return Skript.getEconomy().format(amount);
+		return Economy.getEconomy().format(amount);
 	}
 	
 }

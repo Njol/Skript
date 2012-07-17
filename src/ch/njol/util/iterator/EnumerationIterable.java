@@ -19,30 +19,41 @@
  * 
  */
 
-package ch.njol.skript.expressions;
+package ch.njol.util.iterator;
 
-import org.bukkit.entity.Projectile;
-
-import ch.njol.skript.Skript;
-import ch.njol.skript.expressions.base.EventValueExpression;
+import java.util.Enumeration;
+import java.util.Iterator;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprProjectile extends EventValueExpression<Projectile> {
+public class EnumerationIterable<T> implements Iterable<T> {
 	
-	static {
-		Skript.registerExpression(ExprProjectile.class, Projectile.class, "[the] projectile");
-	}
+	private final Enumeration<T> e;
 	
-	public ExprProjectile() {
-		super(Projectile.class);
+	public EnumerationIterable(final Enumeration<T> e) {
+		this.e = e;
 	}
 	
 	@Override
-	public String toString() {
-		return "the projectile";
+	public Iterator<T> iterator() {
+		return new Iterator<T>() {
+			@Override
+			public boolean hasNext() {
+				return e.hasMoreElements();
+			}
+			
+			@Override
+			public T next() {
+				return e.nextElement();
+			}
+			
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 	
 }

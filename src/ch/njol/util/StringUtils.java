@@ -75,6 +75,10 @@ public abstract class StringUtils {
 		return r;
 	}
 	
+	public static int count(final String s, final char c, final int start) {
+		return count(s, c, start, s.length());
+	}
+	
 	public static int count(final String s, final char c, final int start, final int end) {
 		if (start < 0 || end > s.length())
 			throw new StringIndexOutOfBoundsException("invalid start/end indices " + start + "," + end + " for string \"" + s + "\" (length " + s.length() + ")");
@@ -107,7 +111,7 @@ public abstract class StringUtils {
 	public static final String firstToUpper(final String s) {
 		if (s.isEmpty())
 			return s;
-		if (Character.toUpperCase(s.charAt(0)) == s.charAt(0))
+		if (Character.isUpperCase(s.charAt(0)))
 			return s;
 		return Character.toUpperCase(s.charAt(0)) + s.substring(1);
 	}
@@ -132,7 +136,7 @@ public abstract class StringUtils {
 		final char[] s = string.toCharArray();
 		int c = 0;
 		while (c != -1) {
-			while (c < s.length && Character.isWhitespace(s[c]))
+			while (c < s.length && (s[c] == '.' || Character.isWhitespace(s[c])))
 				c++;
 			if (c == s.length)
 				return new String(s);
@@ -147,6 +151,43 @@ public abstract class StringUtils {
 			if (s[i] == c)
 				return i;
 		return -1;
+	}
+	
+	/**
+	 * Finds a number before the specified index (if any). Only whitespace is allowed between the index and the number.
+	 * 
+	 * @param s
+	 * @param index
+	 * @return the number or -1 if none.
+	 */
+	public final static int numberBefore(final CharSequence s, final int index) {
+		boolean stillWhitespace = true;
+		int start = -1, end = -1;
+		for (int i = index - 1; i >= 0; i--) {
+			if ('0' < s.charAt(i) && s.charAt(i) < '9') {
+				if (start == -1)
+					start = end = i;
+				else
+					start--;
+				stillWhitespace = false;
+			} else if (Character.isWhitespace(s.charAt(i))) {
+				if (stillWhitespace)
+					continue;
+				break;
+			} else {
+				break;
+			}
+		}
+		if (start == -1)
+			return -1;
+		return Integer.parseInt(s.subSequence(start, end + 1).toString());
+	}
+	
+	public static boolean startsWithIgnoreCase(final String string, final String start) {
+		Validate.notNull(string, start);
+		if (string.length() < start.length())
+			return false;
+		return string.substring(0, start.length()).equalsIgnoreCase(start);
 	}
 	
 }

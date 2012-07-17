@@ -30,22 +30,27 @@ import java.util.NoSuchElementException;
 public class ArrayIterator<T> implements Iterator<T> {
 	
 	private final T[] array;
-	private int current = 0;
+	private int index = 0;
 	
 	public ArrayIterator(final T[] array) {
 		this.array = array;
 	}
 	
+	public ArrayIterator(final T[] array, final int start) {
+		this.array = array;
+		index = start;
+	}
+	
 	@Override
 	public boolean hasNext() {
-		return current < array.length;
+		return index < array.length;
 	}
 	
 	@Override
 	public T next() {
-		if (current >= array.length)
+		if (index >= array.length)
 			throw new NoSuchElementException();
-		return array[current++];
+		return array[index++];
 	}
 	
 	/**

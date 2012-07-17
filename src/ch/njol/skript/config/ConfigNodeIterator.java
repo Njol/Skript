@@ -27,7 +27,7 @@ import ch.njol.util.iterator.CheckedIterator;
 
 public class ConfigNodeIterator extends CheckedIterator<Node> {
 	
-	private final Node node;
+	private final SectionNode node;
 	
 	public ConfigNodeIterator(final SectionNode node, final boolean includeVoid) {
 		super(node.getNodeList().iterator(), new Checker<Node>() {

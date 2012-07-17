@@ -23,8 +23,8 @@ package ch.njol.skript.effects;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.api.intern.TriggerSection;
 import ch.njol.skript.lang.Expression;
@@ -50,25 +50,25 @@ public class EffExit extends Effect {
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
-				breakLevels = TriggerFileLoader.currentSections.size() + 1;
+				breakLevels = ScriptLoader.currentSections.size() + 1;
 			break;
 			case 1:
 				breakLevels = 1;
 			break;
 			case 2:
 				breakLevels = Integer.parseInt(parser.regexes.get(0).group());
-				if (breakLevels > TriggerFileLoader.currentSections.size()) {
-					if (TriggerFileLoader.currentSections.isEmpty()) {
+				if (breakLevels > ScriptLoader.currentSections.size()) {
+					if (ScriptLoader.currentSections.isEmpty()) {
 						Skript.error("you can't exit any sections as there are no sections present");
 						return false;
 					} else {
-						Skript.error("you can't exit as there are only " + TriggerFileLoader.currentSections.size() + " sections present");
+						Skript.error("you can't exit as there are only " + ScriptLoader.currentSections.size() + " sections present");
 						return false;
 					}
 				}
 			break;
 			case 3:
-				breakLevels = TriggerFileLoader.currentSections.size();
+				breakLevels = ScriptLoader.currentSections.size();
 			break;
 		}
 		return true;
@@ -84,7 +84,7 @@ public class EffExit extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return "exit " + breakLevels + " sections";
 	}
 	

@@ -25,6 +25,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.intern.Statement;
+import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Checker;
@@ -58,7 +59,7 @@ public abstract class Condition extends Statement {
 	}
 	
 	/**
-	 * Sets the negation status of this condition. This will change the behaviour of {@link SimpleExpression#check(Event, Checker, Condition)}.
+	 * Sets the negation status of this condition. This will change the behaviour of {@link Expression#check(Event, Checker, Condition)}.
 	 * 
 	 * @param invert
 	 */

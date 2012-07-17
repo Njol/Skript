@@ -40,7 +40,7 @@ public class Conditional extends TriggerSection {
 	private TriggerSection elseClause = null;
 	
 	public Conditional(final Condition cond, final SectionNode node) {
-		super(node);
+		super(node, true);
 		this.cond = cond;
 	}
 	
@@ -54,15 +54,15 @@ public class Conditional extends TriggerSection {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return cond.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return cond.toString(e, debug);
 	}
 	
 	public void loadElseClause(final SectionNode node) {
-		elseClause = new TriggerSection(node) {
+		elseClause = new TriggerSection(node, true) {
 			
 			@Override
-			public String getDebugMessage(final Event e) {
+			public String toString(final Event e, final boolean debug) {
 				return "else";
 			}
 			

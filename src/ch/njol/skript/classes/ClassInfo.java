@@ -26,18 +26,19 @@ import java.util.regex.Pattern;
 import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.DefaultExpression;
 import ch.njol.skript.api.Parser;
-import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.expressions.base.EventValueExpression;
+import ch.njol.skript.lang.SimpleLiteral;
 
 public class ClassInfo<T> {
 	
 	private final Class<T> c;
 	private final String codeName;
+	private final String name;
 	
 	private DefaultExpression<T> defaultExpression = null;
 	
 	private Parser<T> parser = null;
 	
-	private String name = null;
 	private Pattern[] userInputPatterns = null;
 	
 	private Changer<T, ?> changer = null;
@@ -49,9 +50,10 @@ public class ClassInfo<T> {
 	 * @param c The class
 	 * @param codeName The name used in expression patterns
 	 */
-	public ClassInfo(final Class<T> c, final String codeName) {
+	public ClassInfo(final Class<T> c, final String codeName, final String name) {
 		this.c = c;
 		this.codeName = codeName;
+		this.name = name;
 	}
 	
 	/**
@@ -66,8 +68,7 @@ public class ClassInfo<T> {
 	 * @param name The name of this class as it is displayed to players
 	 * @param userInputPatterns <u>Regex</u> patterns to match &lt;arg type&gt;s in commands. These patterns must match singular and plural.
 	 */
-	public ClassInfo<T> user(final String name, final String... userInputPatterns) {
-		this.name = name;
+	public ClassInfo<T> user(final String... userInputPatterns) {
 		this.userInputPatterns = new Pattern[userInputPatterns.length];
 		for (int i = 0; i < userInputPatterns.length; i++) {
 			this.userInputPatterns[i] = Pattern.compile("^" + userInputPatterns[i] + "$");
@@ -76,23 +77,27 @@ public class ClassInfo<T> {
 	}
 	
 	/**
-	 * @param defaultExpression The defalut value of this class or null if not applicable
+	 * @param defaultExpression The defalut (event) value of this class or null if not applicable
+	 * @see EventValueExpression
+	 * @see SimpleLiteral
 	 */
 	public ClassInfo<T> defaultExpression(final DefaultExpression<T> defaultExpression) {
+		if (!defaultExpression.isDefault())
+			throw new IllegalArgumentException("defaultExpression.isDefault() must return true for the default expression of a class");
 		this.defaultExpression = defaultExpression;
 		return this;
 	}
 	
 	public ClassInfo<T> serializer(final Serializer<T> serializer) {
 		if (serializeAs != null)
-			throw new SkriptAPIException("serializeAs already set");
+			throw new IllegalStateException("Can't set a serializer if this class is set to be serialized as another one");
 		this.serializer = serializer;
 		return this;
 	}
 	
 	public ClassInfo<T> serializeAs(final Class<?> serializeAs) {
 		if (serializer != null)
-			throw new SkriptAPIException("serializer already set");
+			throw new IllegalStateException("Can't set this class to be serialized as another one if a serializer is already set");
 		this.serializeAs = serializeAs;
 		return this;
 	}
@@ -137,4 +142,5 @@ public class ClassInfo<T> {
 	public Class<?> getSerializeAs() {
 		return serializeAs;
 	}
+	
 }

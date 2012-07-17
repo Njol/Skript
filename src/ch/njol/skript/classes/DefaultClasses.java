@@ -23,8 +23,8 @@ package ch.njol.skript.classes;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Parser;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SimpleLiteral;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
 
 /**
@@ -36,14 +36,14 @@ public class DefaultClasses {
 	public DefaultClasses() {}
 	
 	static {
-		Skript.registerClass(new ClassInfo<Object>(Object.class, "object"));
-
-		Skript.registerClass(new ClassInfo<Integer>(Integer.class, "integer")
-				.user("integer", "integers?")
+		Skript.registerClass(new ClassInfo<Object>(Object.class, "object", "object"));
+		
+		Skript.registerClass(new ClassInfo<Integer>(Integer.class, "integer", "integer")
+				.user("integers?")
 				.defaultExpression(new SimpleLiteral<Integer>(1, true))
 				.parser(new Parser<Integer>() {
 					@Override
-					public Integer parse(final String s) {
+					public Integer parse(final String s, final ParseContext context) {
 						try {
 							return Integer.valueOf(s);
 						} catch (final NumberFormatException e) {
@@ -71,13 +71,13 @@ public class DefaultClasses {
 						}
 					}
 				}));
-
-		Skript.registerClass(new ClassInfo<Double>(Double.class, "double")
-				.user("number", "numbers?")
+		
+		Skript.registerClass(new ClassInfo<Double>(Double.class, "double", "number")
+				.user("numbers?")
 				.defaultExpression(new SimpleLiteral<Double>(1., true))
 				.parser(new Parser<Double>() {
 					@Override
-					public Double parse(final String s) {
+					public Double parse(final String s, final ParseContext context) {
 						try {
 							if (s.endsWith("%")) {
 								return Double.valueOf(Double.parseDouble(s.substring(0, s.length() - 1)) / 100);
@@ -109,11 +109,11 @@ public class DefaultClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Float>(Float.class, "float")
+		Skript.registerClass(new ClassInfo<Float>(Float.class, "float", "number")
 				.defaultExpression(new SimpleLiteral<Float>(1f, true))
 				.parser(new Parser<Float>() {
 					@Override
-					public Float parse(final String s) {
+					public Float parse(final String s, final ParseContext context) {
 						try {
 							if (s.endsWith("%")) {
 								return Float.valueOf(Float.parseFloat(s.substring(0, s.length() - 1)) / 100);
@@ -144,14 +144,13 @@ public class DefaultClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Boolean>(Boolean.class, "boolean")
+		Skript.registerClass(new ClassInfo<Boolean>(Boolean.class, "boolean", "boolean")
 				.parser(new Parser<Boolean>() {
 					@Override
-					public Boolean parse(final String s) {
-						final byte i = Utils.parseBooleanNoError(s);
-						if (i == 1)
+					public Boolean parse(final String s, final ParseContext context) {
+						if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("yes"))
 							return Boolean.TRUE;
-						if (i == 0)
+						if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("no"))
 							return Boolean.FALSE;
 						return null;
 					}
@@ -176,11 +175,11 @@ public class DefaultClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Byte>(Byte.class, "byte")
+		Skript.registerClass(new ClassInfo<Byte>(Byte.class, "byte", "integer")
 				.defaultExpression(new SimpleLiteral<Byte>((byte) 1, true))
 				.parser(new Parser<Byte>() {
 					@Override
-					public Byte parse(final String s) {
+					public Byte parse(final String s, final ParseContext context) {
 						try {
 							return Byte.valueOf(s);
 						} catch (final NumberFormatException e) {
@@ -209,11 +208,11 @@ public class DefaultClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Short>(Short.class, "short")
+		Skript.registerClass(new ClassInfo<Short>(Short.class, "short", "integer")
 				.defaultExpression(new SimpleLiteral<Short>((short) 1, true))
 				.parser(new Parser<Short>() {
 					@Override
-					public Short parse(final String s) {
+					public Short parse(final String s, final ParseContext context) {
 						try {
 							return Short.valueOf(s);
 						} catch (final NumberFormatException e) {
@@ -242,11 +241,11 @@ public class DefaultClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Long>(Long.class, "long")
+		Skript.registerClass(new ClassInfo<Long>(Long.class, "long", "integer")
 				.defaultExpression(new SimpleLiteral<Long>((long) 1, true))
 				.parser(new Parser<Long>() {
 					@Override
-					public Long parse(final String s) {
+					public Long parse(final String s, final ParseContext context) {
 						try {
 							return Long.valueOf(s);
 						} catch (final NumberFormatException e) {
@@ -275,10 +274,13 @@ public class DefaultClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<String>(String.class, "string")
+		Skript.registerClass(new ClassInfo<String>(String.class, "string", "text")
+				.user("text")
 				.parser(new Parser<String>() {
 					@Override
-					public String parse(final String s) {
+					public String parse(final String s, final ParseContext context) {
+						if (context == ParseContext.COMMAND && !s.isEmpty())
+							return s;
 						return null;
 					}
 					

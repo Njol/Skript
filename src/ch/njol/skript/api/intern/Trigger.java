@@ -38,7 +38,7 @@ public class Trigger extends TriggerSection {
 	private final SkriptEvent event;
 	
 	public Trigger(final String name, final SkriptEvent event, final List<TriggerItem> items) {
-		super(items);
+		super(items, false);
 		this.name = name;
 		this.event = event;
 	}
@@ -55,7 +55,7 @@ public class Trigger extends TriggerSection {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		throw new SkriptAPIException("a trigger's debug message should not be used");
 	}
 	

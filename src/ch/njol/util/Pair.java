@@ -93,7 +93,6 @@ public class Pair<T1, T2> implements Entry<T1, T2>, Cloneable {
 	/**
 	 * @return a shallow copy of this pair
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public Pair<T1, T2> clone() throws CloneNotSupportedException {
 		return (Pair<T1, T2>) super.clone();

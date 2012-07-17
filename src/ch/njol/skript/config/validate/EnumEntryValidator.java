@@ -21,8 +21,6 @@
 
 package ch.njol.skript.config.validate;
 
-import java.util.Locale;
-
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
@@ -67,7 +65,7 @@ public class EnumEntryValidator<E extends Enum<E>> extends EntryValidator {
 			return false;
 		final EntryNode n = (EntryNode) node;
 		try {
-			final E e = Enum.valueOf(enumType, n.getValue().toUpperCase(Locale.ENGLISH).replace(' ', '_'));
+			final E e = Enum.valueOf(enumType, n.getValue().toUpperCase().replace(' ', '_'));
 			if (setter != null)
 				setter.set(e);
 		} catch (final IllegalArgumentException e) {

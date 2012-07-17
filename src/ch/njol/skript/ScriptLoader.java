@@ -24,14 +24,13 @@ package ch.njol.skript;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.LoopExpr;
 import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.Conditional;
@@ -40,6 +39,7 @@ import ch.njol.skript.api.intern.Statement;
 import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.api.intern.TriggerItem;
 import ch.njol.skript.api.intern.TriggerSection;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.config.Config;
@@ -47,6 +47,7 @@ import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.SimpleNode;
+import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Callback;
@@ -58,16 +59,16 @@ import ch.njol.util.StringUtils;
  * @author Peter Güttinger
  * 
  */
-final public class TriggerFileLoader {
-	private TriggerFileLoader() {}
+final public class ScriptLoader {
+	private ScriptLoader() {}
 	
 	public static SkriptEvent currentEvent = null;
 	public static Class<? extends Event>[] currentEvents = null;
 	
 	public static List<TriggerSection> currentSections = new ArrayList<TriggerSection>();
-	public static List<LoopExpr<?>> currentLoops = new ArrayList<LoopExpr<?>>();
+	public static List<Loop> currentLoops = new ArrayList<Loop>();
 	public static final Map<String, ItemType> currentAliases = new HashMap<String, ItemType>();
-	public static final HashMap<String, String> options = new HashMap<String, String>();
+	public static final HashMap<String, String> currentOptions = new HashMap<String, String>();
 	
 	static int loadedTriggers = 0, loadedCommands = 0;
 	
@@ -77,7 +78,7 @@ final public class TriggerFileLoader {
 		return StringUtils.replaceAll(s, "\\{@(.+?)\\}", new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
-				final String option = options.get(m.group(1));
+				final String option = currentOptions.get(m.group(1));
 				if (option == null) {
 					Skript.error("undefined option " + m.group());
 					return null;
@@ -106,22 +107,23 @@ final public class TriggerFileLoader {
 					continue;
 				}
 				if (Skript.debug())
-					Skript.info(indentation + expr.getDebugMessage(null));
+					Skript.info(indentation + expr.toString(null, true));
 				items.add(expr);
 			} else if (n instanceof SectionNode) {
 				if (n.getName().startsWith("loop ")) {
 					final String l = replaceOptions(n.getName().substring("loop ".length()));
 					if (l == null)
 						continue;
-					final LoopExpr<?> loopvar = (LoopExpr<?>) SkriptParser.parse(l, Skript.loops.listIterator(), false, false, "can't understand this loop: '" + n.getName() + "'");
-					if (loopvar == null) {
+					final Expression<?> loopedExpr = (Expression<?>) SkriptParser.parse(l, Skript.getExpressions().iterator(), false, false, "can't understand this expression: '" + n.getName() + "'");
+					if (loopedExpr == null)
+						continue;
+					if (!loopedExpr.canLoop()) {
+						Skript.error("Can't loop " + loopedExpr);
 						continue;
 					}
 					if (Skript.debug())
-						Skript.info(indentation + "loop " + loopvar.getLoopDebugMessage(null) + ":");
-					currentLoops.add(loopvar);
-					final Loop loop = new Loop(loopvar, (SectionNode) n);
-					currentLoops.remove(currentLoops.size() - 1);
+						Skript.info(indentation + "loop " + loopedExpr.toString(null, true) + ":");
+					final Loop loop = new Loop(loopedExpr, (SectionNode) n);
 					items.add(loop);
 				} else if (n.getName().equalsIgnoreCase("else")) {
 					if (items.size() == 0 || !(items.get(items.size() - 1) instanceof Conditional)) {
@@ -140,7 +142,7 @@ final public class TriggerFileLoader {
 						continue;
 					}
 					if (Skript.debug())
-						Skript.info(indentation + cond.getDebugMessage(null) + ":");
+						Skript.info(indentation + cond.toString(null, true) + ":");
 					items.add(new Conditional(cond, (SectionNode) n));
 				}
 			}
@@ -158,7 +160,6 @@ final public class TriggerFileLoader {
 	 * Loads triggers and commands from a config.
 	 * 
 	 * @param config Config to load from
-	 * @return how many triggers and commands were loaded (in this order)
 	 */
 	@SuppressWarnings("unchecked")
 	static void load(final Config config) {
@@ -166,7 +167,7 @@ final public class TriggerFileLoader {
 		int numCommands = 0;
 		
 		currentAliases.clear();
-		options.clear();
+		currentOptions.clear();
 		
 		for (final Node cnode : config.getMainNode()) {
 			if (!(cnode instanceof SectionNode)) {
@@ -187,7 +188,7 @@ final public class TriggerFileLoader {
 					final ItemType t = Aliases.parseAlias(((EntryNode) n).getValue());
 					if (t == null)
 						continue;
-					currentAliases.put(((EntryNode) n).getKey().toLowerCase(Locale.ENGLISH), t);
+					currentAliases.put(((EntryNode) n).getKey().toLowerCase(), t);
 				}
 				continue;
 			} else if (event.equalsIgnoreCase("options")) {
@@ -197,7 +198,42 @@ final public class TriggerFileLoader {
 						Skript.error("invalid line in options");
 						continue;
 					}
-					options.put(((EntryNode) n).getKey(), ((EntryNode) n).getValue());
+					currentOptions.put(((EntryNode) n).getKey(), ((EntryNode) n).getValue());
+				}
+				continue;
+			} else if (event.equalsIgnoreCase("variables")) {
+				node.convertToEntries(0, "=");
+				for (final Node n : node) {
+					if (!(n instanceof EntryNode)) {
+						Skript.error("invalid line in variables");
+						continue;
+					}
+					String name = ((EntryNode) n).getKey();
+					if (name.startsWith("{") && name.endsWith("}"))
+						name = name.substring(1, name.length() - 1);
+					if (Skript.getVariable(name) != null)
+						continue;
+					final SubLog log = SkriptLogger.startSubLog();
+					Object o = Skript.parseSimple(((EntryNode) n).getValue(), Object.class);
+					SkriptLogger.stopSubLog(log);
+					if (o == null) {
+						log.printErrors("Can't understand the value '" + ((EntryNode) n).getValue() + "'");
+						continue;
+					}
+					final ClassInfo<?> ci = Skript.getSuperClassInfo(o.getClass());
+					if (ci.getSerializeAs() != null) {
+						final ClassInfo<?> as = Skript.getSuperClassInfo(ci.getSerializeAs());
+						if (as == null) {
+							Skript.exception("Missing class info for " + ci.getSerializeAs().getName() + ", the class to serialize " + ci.getC().getName() + " as");
+							continue;
+						}
+						o = Skript.convert(o, as.getC());
+						if (o == null) {
+							Skript.error("Can't save '" + ((EntryNode) n).getValue() + "' in a variable");
+							continue;
+						}
+					}
+					Skript.setVariable(name, o);
 				}
 				continue;
 			}
@@ -228,12 +264,15 @@ final public class TriggerFileLoader {
 			}
 			
 			if (Skript.debug())
-				Skript.info(event + " (" + parsedEvent.second.getDebugMessage(null) + "):");
+				Skript.info(event + " (" + parsedEvent.second.toString(null, true) + "):");
 			
 			currentEvent = parsedEvent.second;
 			currentEvents = parsedEvent.first.events;
 			
 			final Trigger trigger = new Trigger(event, parsedEvent.second, loadItems(node));
+			
+			currentEvent = null;
+			currentEvents = null;
 			
 			SkriptEventHandler.addTrigger(parsedEvent.first.events, trigger);
 			
@@ -241,10 +280,34 @@ final public class TriggerFileLoader {
 		}
 		
 		if (Skript.logHigh())
-			Skript.info("loaded " + numTriggers + " trigger" + (numTriggers == 1 ? "" : "s") + " and " + numCommands + " command" + (numCommands == 1 ? "" : "s") + (!Skript.logVeryHigh() ? " from '" + config.getFileName() + "'" : ""));
+			Skript.info("loaded " + numTriggers + " trigger" + (numTriggers == 1 ? "" : "s") + " and " + numCommands + " command" + (numCommands == 1 ? "" : "s") + " from '" + config.getFileName() + "'");
 		
 		loadedCommands += numCommands;
 		loadedTriggers += numTriggers;
+	}
+	
+	/**
+	 * For unit testing
+	 * 
+	 * @param node
+	 * @return
+	 */
+	static Trigger loadTrigger(final SectionNode node) {
+		String event = node.getName();
+		if (event.toLowerCase().startsWith("on "))
+			event = event.substring("on ".length());
+		
+		final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getName() + "'");
+		
+		currentEvent = parsedEvent.second;
+		currentEvents = parsedEvent.first.events;
+		
+		final Trigger t = new Trigger(event, parsedEvent.second, loadItems(node));
+		
+		currentEvent = null;
+		currentEvents = null;
+		
+		return t;
 	}
 	
 }

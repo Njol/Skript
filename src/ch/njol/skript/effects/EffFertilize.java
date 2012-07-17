@@ -61,8 +61,8 @@ public class EffFertilize extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "fertilize " + blocks.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "fertilize " + blocks.toString(e, debug);
 	}
 	
 }

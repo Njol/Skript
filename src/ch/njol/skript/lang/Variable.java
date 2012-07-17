@@ -37,6 +37,7 @@ import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
+import ch.njol.util.iterator.NonNullIterator;
 
 /**
  * @author Peter Güttinger
@@ -48,9 +49,10 @@ public class Variable<T> implements Expression<T> {
 	private final Class<T> type;
 	private final T[] zero, one;
 	
-	@SuppressWarnings("unchecked")
 	public Variable(final VariableString name, final Class<T> type) {
 		Validate.notNull(name, type);
+		if (!name.isCodeString())
+			throw new IllegalArgumentException("'name' must be a code string");
 		this.name = name;
 		this.type = type;
 		zero = (T[]) Array.newInstance(type, 0);
@@ -73,8 +75,13 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "{" + StringUtils.substring(name.getDebugMessage(e), 1, -1) + "}(as " + type.getName() + ")";
+	public String toString(final Event e, final boolean debug) {
+		return "{" + StringUtils.substring(name.toString(e, debug), 1, -1) + "}" + (debug ? "(as " + type.getName() + ")" : "");
+	}
+	
+	@Override
+	public String toString() {
+		return toString(null, false);
 	}
 	
 	@Override
@@ -83,16 +90,11 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	protected T get(final Event e) {
-		return Skript.convert(Skript.variables.get(name.get(e)), type);
+		return Skript.convert(Skript.getVariable(name.toString(e).toLowerCase()), type);
 	}
 	
 	private final void set(final Event e, final Object value) {
-		Skript.variables.put(name.get(e), value);
-	}
-	
-	@Override
-	public String toString() {
-		return "{" + StringUtils.substring(name.toString(), 1, -1) + "}";
+		Skript.setVariable(name.toString(e).toLowerCase(), value);
 	}
 	
 	@Override
@@ -103,7 +105,7 @@ public class Variable<T> implements Expression<T> {
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		if (mode == ChangeMode.CLEAR) {
-			Skript.variables.remove(name.get(e));
+			set(e, null);
 		} else if (mode == ChangeMode.SET) {
 			final ClassInfo<?> ci = Skript.getSuperClassInfo(delta.getClass());
 			if (ci != null && ci.getSerializeAs() != null) {
@@ -133,6 +135,11 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public T[] getArray(final Event e) {
+		return getAll(e);
+	}
+	
+	@Override
+	public T[] getAll(final Event e) {
 		one[0] = get(e);
 		if (one[0] == null)
 			return zero;
@@ -163,9 +170,6 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
-	public void setAnd(final boolean and) {}
-	
-	@Override
 	public boolean getAnd() {
 		return false;
 	}
@@ -182,6 +186,21 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public boolean isDefault() {
+		return false;
+	}
+	
+	@Override
+	public boolean canLoop() {
+		return false;
+	}
+	
+	@Override
+	public NonNullIterator<T> iterator(final Event e) {
+		return null;
+	}
+	
+	@Override
+	public boolean isLoopOf(final String s) {
 		return false;
 	}
 	

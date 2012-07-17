@@ -58,7 +58,7 @@ public class Slot implements Debuggable {
 	}
 	
 	public ItemStack getItem() {
-		return invi.getItem(index) == null ? new ItemStack(0, 1) : invi.getItem(index);
+		return invi.getItem(index) == null ? new ItemStack(0, 1) : invi.getItem(index).clone();
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -75,9 +75,11 @@ public class Slot implements Debuggable {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
+		if (!debug)
+			Skript.toString(getItem());
 		if (invi.getHolder() != null)
-			return "slot " + index + " of inventory of " + invi.getHolder().toString();
+			return "slot " + index + " of inventory of " + Skript.toString(invi.getHolder());
 		return "slot " + index + " of " + invi.toString();
 	}
 }

@@ -21,17 +21,13 @@
 
 package ch.njol.skript.command;
 
-import java.lang.reflect.Array;
-
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
-import ch.njol.skript.api.Converter;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.util.Utils;
-import ch.njol.skript.util.VariableString;
 
 /**
  * Represents an argument of a command
@@ -41,99 +37,66 @@ import ch.njol.skript.util.VariableString;
  */
 public class Argument<T> {
 	
-	private final VariableString def;
-	private final T defT;
+	private final Expression<? extends T> def;
 	private final Class<T> type;
-	private final Converter<String, ? extends T> conv;
 	private final boolean single;
 	private final int index;
 	
 	private T[] current;
-	private final T[] singleTArray;
 	
-	@SuppressWarnings("unchecked")
-	public Argument(final VariableString def, final T defT, final Class<T> type, final Converter<String, ? extends T> conv, final boolean single, final int index) {
+	public Argument(final Expression<? extends T> def, final Class<T> type, final boolean single, final int index) {
 		this.def = def;
-		this.defT = defT;
 		this.type = type;
-		this.conv = conv;
 		this.single = single;
 		this.index = index;
-		singleTArray = (T[]) Array.newInstance(type, 1);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static <T> Argument<T> newInstance(final Class<T> type, final String def, final int index, final boolean single) {
-		Converter<String, ? extends T> conv = null;
-		if (type != String.class)
-			conv = Skript.getParser(type);
-		VariableString d = null;
+		Expression<? extends T> d = null;
 		if (def != null) {
-			d = VariableString.newInstance(def);
-			if (d == null)
-				return null;
-		}
-		T defT = null;
-		if (def != null && d.isSimple()) {
-			if (type == String.class)
-				defT = (T) def;
-			else
-				defT = conv.convert(def);
-			if (defT == null) {
-				Skript.error("'" + def + "' is not " + Utils.a(Skript.getExactClassName(type)));
-				return null;
+			if (def.startsWith("%") && def.endsWith("%")) {
+				final Expression<?> e = (Expression<?>) SkriptParser.parse(def.substring(1, def.length() - 1), Skript.getExpressions().iterator(), false, true, "Can't understand the expression '" + def + "'");
+				if (e == null)
+					return null;
+				final SubLog log = SkriptLogger.startSubLog();
+				d = e.getConvertedExpression(type);
+				SkriptLogger.stopSubLog(log);
+				if (d == null) {
+					log.printErrors("'" + def + "' is not " + Utils.a(Skript.getExactClassName(type)));
+					return null;
+				}
+			} else {
+				final SubLog log = SkriptLogger.startSubLog();
+				d = SkriptParser.parseLiteral(def, type, ParseContext.DEFAULT);
+				SkriptLogger.stopSubLog(log);
+				if (d == null) {
+					log.printErrors("'" + def + "' is not " + Utils.a(Skript.getExactClassName(type)));
+					return null;
+				}
 			}
 		}
-		return new Argument<T>(d, defT, type, conv, single, index);
+		return new Argument<T>(d, type, single, index);
 	}
 	
 	@Override
 	public String toString() {
-		return "<" + Skript.getExactClassName(type) + (single ? "" : "s") + (def == null ? "" : " = " + (defT != null ? Skript.toString(defT) : Skript.toString(def))) + ">";
+		return "<" + Skript.getExactClassName(type) + (single ? "" : "s") + (def == null ? "" : " = " + def.toString()) + ">";
+	}
+	
+	public boolean isOptional() {
+		return def != null;
 	}
 	
 	public void setToDefault(final SkriptCommandEvent event) {
-		if (defT != null) {
-			current = singleTArray;
-			current[0] = defT;
-			return;
-		}
-		parse(def.get(event), Bukkit.getConsoleSender());
+		assert def != null;
+		current = def.getArray(event);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public boolean parse(final String s, final CommandSender sender) {
-		current = singleTArray;
-		if (type == String.class) {
-			current[0] = (T) s;
-			return true;
-		}
-		final SubLog log = SkriptLogger.startSubLog();
-		current[0] = conv.convert(s);
-		SkriptLogger.stopSubLog(log);
-		if (current[0] == null)
-			log.printErrors(sender, "'" + s + "' is not " + Utils.a(Skript.getExactClassName(type)));
-		return current[0] != null;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public boolean parse(final String[] args, final int start, final CommandSender sender) {
-		if (type == String.class) {
-			current = singleTArray;
-			final StringBuilder b = new StringBuilder(args[start]);
-			for (int i = start + 1; i < args.length; i++)
-				b.append(", ").append(args[i]);
-			current[0] = (T) b.toString();
-			return true;
-		}
-		current = (T[]) Array.newInstance(type, args.length - start);
-		for (int i = 0; i < args.length - start; i++) {
-			if ((current[i] = conv.convert(args[start + i])) == null) {
-				sender.sendMessage("'" + args[start + i] + "' is not " + Utils.a(Skript.getExactClassName(type)));
-				return false;
-			}
-		}
-		return true;
+	public void set(final Object[] o) {
+		if (o == null || !(type.isAssignableFrom(o.getClass().getComponentType())))
+			throw new IllegalArgumentException();
+		current = (T[]) o;
 	}
 	
 	public T[] getCurrent() {

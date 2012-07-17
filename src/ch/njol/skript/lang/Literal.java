@@ -34,4 +34,6 @@ public interface Literal<T> extends Expression<T> {
 	@Override
 	public <R> Literal<? extends R> getConvertedExpression(Class<R> to);
 	
+	public T[] getAll();
+	
 }

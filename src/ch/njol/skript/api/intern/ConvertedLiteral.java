@@ -55,17 +55,17 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return Skript.toString(data, getAnd());
-	}
-	
-	@Override
-	public String toString() {
+	public String toString(final Event e, final boolean debug) {
 		return Skript.toString(data, getAnd());
 	}
 	
 	@Override
 	public T[] getArray() {
+		return data;
+	}
+	
+	@Override
+	public T[] getAll() {
 		return data;
 	}
 	

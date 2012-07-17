@@ -22,11 +22,12 @@
 package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
+import java.util.Iterator;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
@@ -35,6 +36,7 @@ import ch.njol.skript.api.intern.ConvertedExpression;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.iterator.ArrayIterator;
 
 /**
  * An implementation of the {@link Expression} interface. You should usually extend this class to make a new expression.
@@ -44,8 +46,6 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  */
 public abstract class SimpleExpression<T> implements Expression<T> {
-	
-	private boolean and = true;
 	
 	private int time = 0;
 	
@@ -62,9 +62,29 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	@Override
-	@SuppressWarnings("unchecked")
+	public T[] getAll(final Event e) {
+		final T[] all = get(e);
+		if (all == null)
+			return (T[]) Array.newInstance(getReturnType(), 0);
+		if (all.length == 0)
+			return all;
+		int numNonNull = 0;
+		for (final T t : all)
+			if (t != null)
+				numNonNull++;
+		if (numNonNull == all.length)
+			return all;
+		final T[] r = (T[]) Array.newInstance(getReturnType(), numNonNull);
+		int i = 0;
+		for (final T t : all)
+			if (t != null)
+				r[i++] = t;
+		return r;
+	}
+	
+	@Override
 	public final T[] getArray(final Event e) {
-		final T[] all = getAll(e);
+		final T[] all = get(e);
 		if (all == null)
 			return (T[]) Array.newInstance(getReturnType(), 0);
 		if (all.length == 0)
@@ -75,7 +95,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 			if (t != null)
 				numNonNull++;
 		
-		if (!and) {
+		if (!getAnd()) {
 			if (all.length == 1 && all[0] != null)
 				return all;
 			int rand = Skript.random.nextInt(numNonNull);
@@ -89,7 +109,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 					rand--;
 				}
 			}
-			throw new RuntimeException();// shouldn't happen
+			assert false;
 		}
 		
 		if (numNonNull == all.length)
@@ -120,9 +140,9 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 * To get the expression's value from the outside use {@link #getSingle(Event)} or {@link #getArray(Event)}.
 	 * 
 	 * @param e The event
-	 * @return An array of values for this event. May contain nulls.
+	 * @return An array of values for this event. May not contain nulls.
 	 */
-	protected abstract T[] getAll(Event e);
+	protected abstract T[] get(Event e);
 	
 	@Override
 	public final boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
@@ -135,7 +155,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	private final boolean check(final Event e, final Checker<? super T> c, final boolean invert) throws ClassCastException {
-		return check(getAll(e), c, invert, and);
+		return check(getAll(e), c, invert, getAnd());
 	}
 	
 	public final static <T> boolean check(final T[] all, final Checker<? super T> c, final boolean invert, final boolean and) throws ClassCastException {
@@ -176,7 +196,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 */
 	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R> to) {
 		if (to.isAssignableFrom(getReturnType())) {
-			throw new SkriptAPIException("invalid call to SimpleExpression.getConvertedVar (current type: " + getReturnType().getName() + ", requested type: " + to.getName() + ")");
+			throw new SkriptAPIException("invalid call to SimpleExpression.getConvertedExpr (current type: " + getReturnType().getName() + ", requested type: " + to.getName() + ")");
 		}
 		return ConvertedExpression.newInstance(this, to);
 	}
@@ -187,21 +207,6 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		if (to.isAssignableFrom(getReturnType()))
 			return (Expression<? extends R>) this;
 		return this.getConvertedExpr(to);
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return and;
-	}
-	
-	/**
-	 * this is set automatically and should not be changed.
-	 * 
-	 * @param and
-	 */
-	@Override
-	public void setAnd(final boolean and) {
-		this.and = and;
 	}
 	
 	@Override
@@ -217,7 +222,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	/**
 	 * {@inheritDoc} <br>
 	 * <br>
-	 * The default implementation sets the time but returns false.
+	 * This implementation sets the time but returns false.
 	 * 
 	 * @see #setTime(int, Class, Expression...)
 	 * @see #setTime(int, Expression, Class...)
@@ -229,7 +234,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	protected final boolean setTime(final int time, final Class<? extends Event> applicableEvent, final Expression<?>... mustbeDefaultVars) {
-		if (Utils.contains(TriggerFileLoader.currentEvents, applicableEvent)) {
+		if (Utils.contains(ScriptLoader.currentEvents, applicableEvent)) {
 			for (final Expression<?> var : mustbeDefaultVars) {
 				if (var.isDefault()) {
 					this.time = time;
@@ -243,7 +248,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	protected final boolean setTime(final int time, final Expression<?> mustbeDefaultVar, final Class<? extends Event>... applicableEvents) {
 		if (mustbeDefaultVar.isDefault()) {
 			for (final Class<? extends Event> e : applicableEvents) {
-				if (Utils.contains(TriggerFileLoader.currentEvents, e)) {
+				if (Utils.contains(ScriptLoader.currentEvents, e)) {
 					this.time = time;
 					return true;
 				}
@@ -263,5 +268,23 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	@Override
-	public abstract String toString();
+	public boolean canLoop() {
+		return false;
+	}
+	
+	@Override
+	public boolean isLoopOf(final String s) {
+		return false;
+	}
+	
+	@Override
+	public Iterator<T> iterator(final Event e) {
+		return new ArrayIterator<T>(getArray(e));
+	}
+	
+	@Override
+	public String toString() {
+		return toString(null, false);
+	}
+	
 }

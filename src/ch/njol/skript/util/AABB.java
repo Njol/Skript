@@ -58,10 +58,10 @@ public class AABB implements Iterable<Block> {
 		upperBound = new Vector(Math.max(b1.getX(), b2.getX()) + 1, Math.max(b1.getY(), b2.getY()) + 1, Math.max(b1.getZ(), b2.getZ()) + 1);
 	}
 	
-	public AABB(final Location center, final double dimX, final double dimY, final double dimZ) {
+	public AABB(final Location center, final double rX, final double rY, final double rZ) {
 		world = center.getWorld();
-		lowerBound = new Vector(center.getX() - dimX / 2, center.getY() - dimY / 2, center.getZ() - dimZ / 2);
-		upperBound = new Vector(center.getX() + dimX / 2, center.getY() + dimY / 2, center.getZ() + dimZ / 2);
+		lowerBound = new Vector(center.getX() - rX, Math.max(center.getY() - rY, 0), center.getZ() - rZ);
+		upperBound = new Vector(center.getX() + rX, Math.min(center.getY() + rY, world.getMaxHeight()), center.getZ() + rZ);
 	}
 	
 	public boolean contains(final Location l) {
@@ -72,45 +72,52 @@ public class AABB implements Iterable<Block> {
 				&& lowerBound.getZ() - Skript.EPSILON < l.getZ() && l.getZ() < upperBound.getZ() + Skript.EPSILON;
 	}
 	
-	public boolean containsCompletely(final Block b) {
-		return contains(b.getLocation()) && contains(b.getLocation().add(1, 1, 1));
-	}
-	
 	public boolean contains(final Block b) {
-		return contains(b.getLocation().add(0.5, 0.5, 0.5));
+		return contains(b.getLocation()) && contains(b.getLocation().add(1, 1, 1));
 	}
 	
 	public Vector getDimensions() {
 		return upperBound.clone().subtract(lowerBound);
 	}
 	
+	public World getWorld() {
+		return world;
+	}
+	
+	/**
+	 * Returns an iterator which iterates over all blocks that are
+	 */
 	@Override
 	public Iterator<Block> iterator() {
 		return new Iterator<Block>() {
-			private int x = (int) Math.round(lowerBound.getX() - Skript.EPSILON) - 1,// next() increases x by one immediately
-					y = (int) Math.round(lowerBound.getY() - Skript.EPSILON),
-					z = (int) Math.round(lowerBound.getZ() - Skript.EPSILON);
-			private final int maxX = (int) Math.round(upperBound.getX() + Skript.EPSILON) - 1,
-					maxY = (int) Math.round(upperBound.getY() + Skript.EPSILON) - 1,
-					maxZ = (int) Math.round(upperBound.getZ() + Skript.EPSILON) - 1;
+			private final int minX = (int) Math.ceil(lowerBound.getX() - Skript.EPSILON),
+					minY = (int) Math.ceil(lowerBound.getY() - Skript.EPSILON),
+					minZ = (int) Math.ceil(lowerBound.getZ() - Skript.EPSILON);
+			private final int maxX = (int) Math.floor(upperBound.getX() + Skript.EPSILON) - 1,
+					maxY = (int) Math.floor(upperBound.getY() + Skript.EPSILON) - 1,
+					maxZ = (int) Math.floor(upperBound.getZ() + Skript.EPSILON) - 1;
+			
+			private int x = minX - 1,// next() increases x by one immediately
+					y = minY,
+					z = minZ;
 			
 			@Override
 			public boolean hasNext() {
-				return z < maxZ || y < maxY || x < maxX;
+				return x < maxX || y < maxY || z < maxZ;
 			}
 			
 			@Override
 			public Block next() {
 				x++;
 				if (x > maxX) {
-					x = 0;
-					y++;
-					if (y > maxY) {
-						y = 0;
-						z++;
+					x = minX;
+					z++;
+					if (z > maxZ) {
+						z = minZ;
+						y++;
 					}
 				}
-				if (z > maxZ)
+				if (y > maxY)
 					throw new NoSuchElementException();
 				return world.getBlockAt(x, y, z);
 			}

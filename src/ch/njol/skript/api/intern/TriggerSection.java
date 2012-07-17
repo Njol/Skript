@@ -25,8 +25,8 @@ import java.util.List;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.config.SectionNode;
 
 /**
@@ -38,9 +38,11 @@ import ch.njol.skript.config.SectionNode;
  */
 public abstract class TriggerSection extends TriggerItem {
 	
-	private final List<TriggerItem> items;
+	private List<TriggerItem> items;
 	
 	private boolean stopped = false;
+	
+	private final boolean stopParentOnFalseCondition;
 	
 	/**
 	 * how much to indent each level
@@ -59,20 +61,30 @@ public abstract class TriggerSection extends TriggerItem {
 	/**
 	 * reserved for new Trigger(...)
 	 */
-	protected TriggerSection(final List<TriggerItem> items) {
+	protected TriggerSection(final List<TriggerItem> items, final boolean stopParentOnFalseCondition) {
+		setTriggerItems(items);
+		this.stopParentOnFalseCondition = stopParentOnFalseCondition;
+	}
+	
+	protected TriggerSection(final SectionNode node, final boolean stopParentOnFalseCondition) {
+		ScriptLoader.currentSections.add(this);
+		setTriggerItems(ScriptLoader.loadItems(node));
+		ScriptLoader.currentSections.remove(ScriptLoader.currentSections.size() - 1);
+		this.stopParentOnFalseCondition = stopParentOnFalseCondition;
+	}
+	
+	/**
+	 * Important when using this constructor: set the items with {@link #setTriggerItems(List)}!
+	 */
+	protected TriggerSection(final boolean stopParentOnFalseCondition) {
+		this.stopParentOnFalseCondition = stopParentOnFalseCondition;
+	}
+	
+	protected void setTriggerItems(final List<TriggerItem> items) {
 		this.items = items;
 		for (final TriggerItem item : items) {
 			item.setParent(this);
 		}
-	}
-	
-	protected TriggerSection(final SectionNode node) {
-		TriggerFileLoader.currentSections.add(this);
-		items = TriggerFileLoader.loadItems(node);
-		for (final TriggerItem item : items) {
-			item.setParent(this);
-		}
-		TriggerFileLoader.currentSections.remove(TriggerFileLoader.currentSections.size() - 1);
 	}
 	
 	/**
@@ -83,7 +95,7 @@ public abstract class TriggerSection extends TriggerItem {
 	
 	protected void run(final Event e, final boolean run) {
 		if (Skript.debug() && !(this instanceof Trigger))
-			Skript.info(indentation + (run ? "" : "-") + getDebugMessage(e) + ":");
+			Skript.info(indentation + (run ? "" : "-") + toString(e, true) + ":");
 		if (!run)
 			return;
 		stopped = false;
@@ -93,10 +105,12 @@ public abstract class TriggerSection extends TriggerItem {
 			final boolean ok = i.run(e);
 			if (Skript.debug() && !(i instanceof TriggerSection)) {
 				if (!stopped)
-					Skript.info(indentation + (ok ? "" : "-") + i.getDebugMessage(e));
+					Skript.info(indentation + (ok ? "" : "-") + i.toString(e, true));
 				else
-					Skript.info(indentation + "#" + i.getDebugMessage(e));
+					Skript.info(indentation + "#" + i.toString(e, true));
 			}
+			if (!ok && stopParentOnFalseCondition)
+				getParent().stop();
 			if (stopped || !ok)
 				break;
 		}

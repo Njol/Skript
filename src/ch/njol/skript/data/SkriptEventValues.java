@@ -22,11 +22,9 @@
 package ch.njol.skript.data;
 
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Getter;
-import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.util.ScheduledEvent;
 
 /**
@@ -38,13 +36,6 @@ public class SkriptEventValues {
 	public SkriptEventValues() {}
 	
 	static {
-		
-		Skript.registerEventValue(CommandEvent.class, CommandSender.class, new Getter<CommandSender, CommandEvent>() {
-			@Override
-			public CommandSender get(final CommandEvent e) {
-				return e.getSender();
-			}
-		}, 0);
 		
 		Skript.registerEventValue(ScheduledEvent.class, World.class, new Getter<World, ScheduledEvent>() {
 			@Override

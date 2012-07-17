@@ -68,7 +68,7 @@ public class EffMessage extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "send " + messages.getDebugMessage(e) + " to " + recipients.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "send " + messages.toString(e, debug) + " to " + recipients.toString(e, debug);
 	}
 }

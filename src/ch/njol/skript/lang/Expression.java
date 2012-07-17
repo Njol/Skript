@@ -21,6 +21,8 @@
 
 package ch.njol.skript.lang;
 
+import java.util.Iterator;
+
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -36,6 +38,7 @@ import ch.njol.util.Checker;
  * 
  * @author Peter Güttinger
  * @see Skript#registerExpression(Class, Class, String...)
+ * @see SimpleExpression
  * @see SyntaxElement
  */
 public interface Expression<T> extends SyntaxElement, Debuggable {
@@ -58,6 +61,15 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * @return An array of values of this expression. Does not contain nulls.
 	 */
 	public T[] getArray(final Event e);
+	
+	/**
+	 * Gets all possible return values of this expression, i.e. it returns the same as {@link #getArray(Event)} if {@link #getAnd()} is true, otherwise all possible values for
+	 * {@link #getSingle(Event)}.
+	 * 
+	 * @param e
+	 * @return An array of all possible values of this expression for the given event. Does not contain nulls.
+	 */
+	public T[] getAll(final Event e);
 	
 	/**
 	 * Gets a/the single value of this expression converted with the given converter.
@@ -115,19 +127,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to);
 	
 	/**
-	 * this is set automatically and must not be changed.
-	 * 
-	 * @param and
-	 */
-	public void setAnd(final boolean and);
-	
-	/**
-	 * Returns this expression string representation destined for the end user.
-	 */
-	@Override
-	public abstract String toString();
-	
-	/**
 	 * Gets the return type of this expression.
 	 * 
 	 * @return The type retured by {@link #getSingle(Event)} and {@link #getArray(Event)}
@@ -157,7 +156,9 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	
 	/**
 	 * Returns true if this expression returns all possible values, false if it only returns one.<br>
-	 * This must only return false if the expression randomly chooses one value out of a set or similar.
+	 * This must only return false if the expression randomly chooses one value out of a set or similar.<br>
+	 * This method heavily influences {@link #check(Event, Checker)} and {@link #check(Event, Checker, Condition)} and thus breaks conditions that use this expression if it returns
+	 * a wrong value.
 	 * 
 	 * @return
 	 */
@@ -184,4 +185,28 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * @return
 	 */
 	public boolean isDefault();
+	
+	/**
+	 * 
+	 * @return Whether this expression can be looped
+	 */
+	public boolean canLoop();
+	
+	/**
+	 * 
+	 * @param e the event
+	 * @return An iterator to iterate over all values of this expression which may be empty and/or null.
+	 */
+	public Iterator<T> iterator(Event e);
+	
+	/**
+	 * Checks whether the given 'loop-...' expression should match this loop, e.g. loop-blovk matches any loops that loop through blocks while loop-argument only matches an
+	 * argument loop.<br>
+	 * You should usually just return false as e.g. loop-block will automatically match the expression if it's returnType is Block or a subtype of it.
+	 * 
+	 * @param s the entered string
+	 * @return whether this loop matches the given string
+	 */
+	public boolean isLoopOf(String s);
+	
 }

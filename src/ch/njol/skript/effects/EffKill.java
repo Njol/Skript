@@ -58,8 +58,8 @@ public class EffKill extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "kill " + entities.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "kill " + entities.toString(e, debug);
 	}
 	
 }

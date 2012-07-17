@@ -68,7 +68,7 @@ public class PlayerCommand implements CommandExecutor {
 				
 				final ArrayList<Pair<String, String>> co = parseCommandOptions(args);
 				
-				final String action = args[0].toLowerCase(Locale.ENGLISH);
+				final String action = args[0].toLowerCase();
 				final StringBuilder b = new StringBuilder();
 				for (int i = 1; i < args.length; i++) {
 					if (args[i].startsWith("--"))
@@ -329,7 +329,7 @@ public class PlayerCommand implements CommandExecutor {
 		for (int i = 0; i < args.length; i++) {
 			if (args[i].startsWith("--")) {
 				String o = "";
-				final String s = args[i].substring(1).toLowerCase(Locale.ENGLISH);
+				final String s = args[i].substring(1).toLowerCase();
 				i++;
 				while (i < args.length && !args[i].startsWith("--")) {
 					o += (o.isEmpty() ? "" : " ") + args[i];

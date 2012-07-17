@@ -24,8 +24,8 @@ package ch.njol.skript.effects;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.TriggerFileLoader;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -46,7 +46,7 @@ public class EffCancelEvent extends Effect {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		cancel = matchedPattern == 0;
-		for (final Class<? extends Event> e : TriggerFileLoader.currentEvents) {
+		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
 			if (Cancellable.class.isAssignableFrom(e))
 				return true;
 		}
@@ -61,7 +61,7 @@ public class EffCancelEvent extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return (cancel ? "" : "un") + "cancel event";
 	}
 	

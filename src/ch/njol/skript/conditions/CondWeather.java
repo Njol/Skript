@@ -68,8 +68,8 @@ public class CondWeather extends Condition {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "is " + weathers.getDebugMessage(e) + " in " + worlds.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "is " + weathers.toString(e, debug) + " in " + worlds.toString(e, debug);
 	}
 	
 }

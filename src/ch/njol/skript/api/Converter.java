@@ -25,6 +25,7 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 
 import ch.njol.skript.Skript;
+import ch.njol.util.Validate;
 
 /**
  * used to convert data from one type to another.
@@ -80,9 +81,18 @@ public interface Converter<F, T> {
 		 */
 		@SuppressWarnings("unchecked")
 		public final static <T, F> T convert(final ConverterInfo<F, T> info, final Object o) {
+			if (o == null)
+				return null;
 			if (info.from.isInstance(o))
 				return info.converter.convert((F) o);
 			return null;
+		}
+		
+		@SuppressWarnings("unchecked")
+		public final static <F, T> T convertUnsafe(final F from, final Converter<?, T> conv) {
+			if (from == null)
+				return null;
+			return ((Converter<F, T>) conv).convert(from);
 		}
 		
 		public final static <F, T> Converter<?, T> createInstanceofConverter(final ConverterInfo<F, T> conv) {
@@ -138,12 +148,12 @@ public interface Converter<F, T> {
 			return convert(from, conv, (Class<T>) to);
 		}
 		
-		@SuppressWarnings("unchecked")
 		public final static <F, T> T[] convert(final F[] from, final Converter<? super F, ? extends T> conv, final Class<T> to) {
+			Validate.notNull(from, conv, to);
 			final T[] ts = (T[]) Array.newInstance(to, from.length);
 			int j = 0;
 			for (int i = 0; i < from.length; i++) {
-				final T t = conv.convert(from[i]);
+				final T t = from[i] == null ? null : conv.convert(from[i]);
 				if (t != null)
 					ts[j++] = t;
 			}

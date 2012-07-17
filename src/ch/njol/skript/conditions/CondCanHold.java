@@ -79,7 +79,7 @@ public class CondCanHold extends Condition {
 						}
 					});
 				}
-				final ItemStack[] buf = invi.getContents();
+				final ItemStack[] buf = ItemType.getCopiedContents(invi);
 				return items.check(e, new Checker<ItemType>() {
 					@Override
 					public boolean check(final ItemType t) {
@@ -91,8 +91,8 @@ public class CondCanHold extends Condition {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return invis.getDebugMessage(e) + " can" + (isNegated() ? "'t" : "") + " hold " + items.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return invis.toString(e, debug) + " can" + (isNegated() ? "'t" : "") + " hold " + items.toString(e, debug);
 	}
 	
 }

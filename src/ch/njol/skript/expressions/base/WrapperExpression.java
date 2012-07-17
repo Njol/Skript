@@ -29,27 +29,36 @@ import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.intern.ConvertedExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Validate;
+import ch.njol.util.iterator.NonNullIterator;
 
 /**
- * Represents an expression which is a wrapper of another one. To use, set the protected field {@link #expr} to the expression you want to wrap.<br/>
- * If you don't override {@link #getConvertedExpr(Class)} you should not override any other methods of this class.
+ * Represents an expression which is a wrapper of another one. Remember to set the wrapped expression in the constructor ({@link #WrapperExpression(SimpleExpression)})
+ * or with {@link #setExpr(Expression)} in {@link #init(Expression[], int, ParseResult)}.<br/>
+ * If you override {@link #get(Event)} you must override {@link #iterator(Event)} as well.
  * 
  * @author Peter Güttinger
  */
 public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	
-	/** the wrapped expression */
 	protected Expression<? extends T> expr;
 	
 	protected WrapperExpression() {}
 	
-	public WrapperExpression(final SimpleExpression<? extends T> var) {
-		Validate.notNull(var);
-		this.expr = var;
+	public WrapperExpression(final SimpleExpression<? extends T> expr) {
+		Validate.notNull(expr);
+		setExpr(expr);
 	}
 	
-	@SuppressWarnings("unchecked")
+	protected void setExpr(final Expression<? extends T> expr) {
+		this.expr = expr;
+	}
+	
+	public Expression<?> getExpr() {
+		return expr;
+	}
+	
 	@Override
 	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R> to) {
 		final Converter<? super T, ? extends R> conv = (Converter<? super T, ? extends R>) Skript.getConverter(getReturnType(), to);
@@ -57,26 +66,27 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 			return null;
 		return new ConvertedExpression<T, R>(expr, to, conv) {
 			@Override
-			public String getDebugMessage(final Event e) {
-				return "{" + WrapperExpression.this.getDebugMessage(e) + "}->" + to.getName();
+			public String toString(final Event e, final boolean debug) {
+				if (debug && e == null)
+					return "(" + WrapperExpression.this.toString(e, debug) + ")->" + to.getName();
+				return WrapperExpression.this.toString(e, debug);
 			}
 		};
 	}
 	
 	@Override
-	protected T[] getAll(final Event e) {
+	protected T[] get(final Event e) {
 		return expr.getArray(e);
+	}
+	
+	@Override
+	public NonNullIterator<T> iterator(final Event e) {
+		return (NonNullIterator<T>) expr.iterator(e);
 	}
 	
 	@Override
 	public boolean isSingle() {
 		return expr.isSingle();
-	}
-	
-	@Override
-	public void setAnd(final boolean and) {
-		super.setAnd(and);
-		expr.setAnd(and);
 	}
 	
 	@Override
@@ -100,11 +110,6 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	}
 	
 	@Override
-	public String toString() {
-		return expr.toString();
-	}
-	
-	@Override
 	public boolean setTime(final int time) {
 		return expr.setTime(time);
 	}
@@ -118,4 +123,5 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	public boolean isDefault() {
 		return expr.isDefault();
 	}
+	
 }

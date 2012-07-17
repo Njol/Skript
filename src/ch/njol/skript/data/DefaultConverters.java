@@ -36,15 +36,16 @@ import org.bukkit.inventory.PlayerInventory;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Converter;
-import ch.njol.skript.util.EntityType;
+import ch.njol.skript.entity.EntityData;
+import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Slot;
-import ch.njol.skript.util.Time;
 
 /**
  * @author Peter Güttinger
  * 
  */
+@SuppressWarnings("rawtypes")
 public class DefaultConverters {
 	
 	public DefaultConverters() {}
@@ -104,15 +105,16 @@ public class DefaultConverters {
 				return null;
 			}
 		});
-//		// Entity - Player
-//		Skript.registerConverter(Entity.class, Player.class, new Converter<Entity, Player>() {
-//			@Override
-//			public Player convert(final Entity s) {
-//				if (s instanceof Player)
-//					return (Player) s;
-//				return null;
-//			}
-//		});
+		// Entity - CommandSender
+		// TODO: improve handling of interfaces
+		Skript.registerConverter(Entity.class, CommandSender.class, new Converter<Entity, CommandSender>() {
+			@Override
+			public CommandSender convert(final Entity e) {
+				if (e instanceof CommandSender)
+					return (CommandSender) e;
+				return null;
+			}
+		});
 		
 		// Block - Inventory
 		Skript.registerConverter(Block.class, Inventory.class, new Converter<Block, Inventory>() {
@@ -153,11 +155,18 @@ public class DefaultConverters {
 				return e.getLocation();
 			}
 		});
-		// Entity - EntityType
-		Skript.registerConverter(Entity.class, EntityType.class, new Converter<Entity, EntityType>() {
+		// Entity - EntityData
+		Skript.registerConverter(Entity.class, EntityData.class, new Converter<Entity, EntityData>() {
 			@Override
-			public EntityType convert(final Entity e) {
-				return new EntityType(e.getClass(), 1);
+			public EntityData convert(final Entity e) {
+				return EntityData.fromEntity(e);
+			}
+		});
+		// EntityData - EntityType
+		Skript.registerConverter(EntityData.class, EntityType.class, new Converter<EntityData, EntityType>() {
+			@Override
+			public EntityType convert(final EntityData data) {
+				return new EntityType(data, -1);
 			}
 		});
 		
@@ -254,15 +263,15 @@ public class DefaultConverters {
 //			}
 //		});
 		
-		// World - Time
-		Skript.registerConverter(World.class, Time.class, new Converter<World, Time>() {
-			@Override
-			public Time convert(final World w) {
-				if (w == null)
-					return null;
-				return new Time((int) w.getTime());
-			}
-		});
+//		// World - Time
+//		Skript.registerConverter(World.class, Time.class, new Converter<World, Time>() {
+//			@Override
+//			public Time convert(final World w) {
+//				if (w == null)
+//					return null;
+//				return new Time((int) w.getTime());
+//			}
+//		});
 		
 	}
 }

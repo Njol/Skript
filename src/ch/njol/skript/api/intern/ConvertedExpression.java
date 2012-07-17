@@ -21,12 +21,15 @@
 
 package ch.njol.skript.api.intern;
 
+import java.util.Iterator;
+
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Condition;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.Converter.ConverterUtils;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -86,15 +89,15 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		if (e == null)
-			return "(" + source.getDebugMessage(e) + ")->" + to.getName();
-		return source.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		if (debug && e == null)
+			return "(" + source.toString(e, debug) + ")->" + to.getName();
+		return source.toString(e, debug);
 	}
 	
 	@Override
 	public String toString() {
-		return source.toString();
+		return toString(null, false);
 	}
 	
 	@Override
@@ -113,11 +116,6 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 		if (to.isAssignableFrom(this.to))
 			return (Expression<? extends R>) this;
 		return source.getConvertedExpression(to);
-	}
-	
-	@Override
-	public void setAnd(final boolean and) {
-		source.setAnd(and);
 	}
 	
 	@Override
@@ -141,6 +139,11 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	@Override
 	public T[] getArray(final Event e) {
 		return source.getArray(e, to, conv);
+	}
+	
+	@Override
+	public T[] getAll(final Event e) {
+		return ConverterUtils.convert(source.getAll(e), conv, to);
 	}
 	
 	@Override
@@ -201,4 +204,37 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	public boolean isDefault() {
 		return source.isDefault();
 	}
+	
+	@Override
+	public boolean canLoop() {
+		return false;// A loop does not convert the variable to loop
+	}
+	
+	@Override
+	public boolean isLoopOf(final String s) {
+		return false;// same
+	}
+	
+	@Override
+	public Iterator<T> iterator(final Event e) {
+		final Iterator<? extends F> iter = source.iterator(e);
+		return new Iterator<T>() {
+			
+			@Override
+			public boolean hasNext() {
+				return iter.hasNext();
+			}
+			
+			@Override
+			public T next() {
+				return conv.convert(iter.next());
+			}
+			
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+	
 }

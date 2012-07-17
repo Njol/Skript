@@ -49,7 +49,7 @@ public class SimpleEvent extends SkriptEvent {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return "simple event";
 	}
 	

@@ -23,6 +23,7 @@ package ch.njol.skript.util;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -184,10 +185,7 @@ public class ItemData implements Cloneable {
 		if (typeid == -1) {
 			return new Iterator<ItemStack>() {
 				
-				private final Iterator<Material> iter = Arrays.asList(Material.values()).iterator();
-				{
-					iter.next();
-				}
+				private final Iterator<Material> iter = Arrays.asList(Material.values()).listIterator(1); // ignore air
 				
 				@Override
 				public boolean hasNext() {
@@ -206,8 +204,8 @@ public class ItemData implements Cloneable {
 				
 			};
 		}
-		if (dataMin == -1 && dataMax == -1)
-			return new SingleItemIterator<ItemStack>(new ItemStack(typeid, 1));
+		if (dataMin == dataMax)
+			return new SingleItemIterator<ItemStack>(new ItemStack(typeid, 1, dataMin == -1 ? 0 : dataMin));
 		return new Iterator<ItemStack>() {
 			
 			private short data = (short) (dataMin - 1);
@@ -219,8 +217,10 @@ public class ItemData implements Cloneable {
 			
 			@Override
 			public ItemStack next() {
+				if (data >= dataMax)
+					throw new NoSuchElementException();
 				data++;
-				return new ItemStack(typeid, amount, data, (byte) data);
+				return new ItemStack(typeid, amount, data);
 			}
 			
 			@Override

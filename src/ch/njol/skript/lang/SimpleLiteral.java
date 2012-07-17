@@ -35,6 +35,8 @@ import ch.njol.skript.api.intern.ConvertedLiteral;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.Validate;
+import ch.njol.util.iterator.NonNullIterator;
 
 /**
  * Represents a literal, i.e. a static value like a number or a string.
@@ -48,21 +50,23 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	protected final Class<T> c;
 	
 	private final boolean isDefault;
-	private boolean and;
+	private final boolean and;
 	
 	public SimpleLiteral(final T[] data, final Class<T> c, final boolean and) {
+		Validate.notNullOrEmpty(data, "data");
+		Validate.notNull(c, "c");
 		this.data = data;
 		this.c = c;
-		setAnd(data.length == 1 || and);
+		this.and = data.length == 1 || and;
 		this.isDefault = false;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public SimpleLiteral(final T data, final boolean isDefault) {
+		Validate.notNull(data, "data");
 		this.data = (T[]) Array.newInstance(data.getClass(), 1);
 		this.data[0] = data;
 		c = (Class<T>) data.getClass();
-		setAnd(true);
+		and = true;
 		this.isDefault = isDefault;
 	}
 	
@@ -78,12 +82,32 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	@Override
 	public T[] getArray() {
-		return getArray(null);
+		return data;
+	}
+	
+	@Override
+	public T[] getArray(final Event e) {
+		return data;
+	}
+	
+	@Override
+	public T[] getAll() {
+		return data;
+	}
+	
+	@Override
+	public T[] getAll(final Event e) {
+		return data;
 	}
 	
 	@Override
 	public T getSingle() {
-		return getSingle(null);
+		return Utils.getRandom(data);
+	}
+	
+	@Override
+	public T getSingle(final Event e) {
+		return getSingle();
 	}
 	
 	@Override
@@ -104,33 +128,25 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "[" + this + "]";
-	}
-	
-	@Override
-	public String toString() {
+	public String toString(final Event e, final boolean debug) {
+		if (debug)
+			return "[" + Skript.toString(data, getAnd()) + "]";
 		return Skript.toString(data, getAnd());
 	}
 	
 	@Override
+	public String toString() {
+		return toString(null, false);
+	}
+	
+	@Override
 	public boolean isSingle() {
-		return !getAnd() || data.length <= 1;
+		return !getAnd() || data.length == 1;
 	}
 	
 	@Override
 	public boolean isDefault() {
 		return isDefault;
-	}
-	
-	@Override
-	public T getSingle(final Event e) {
-		return Utils.getRandom(data);
-	}
-	
-	@Override
-	public T[] getArray(final Event e) {
-		return data;
 	}
 	
 	@Override
@@ -154,18 +170,13 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	@Override
-	public void setAnd(final boolean and) {
-		this.and = and;
+	public Class<?> acceptChange(final ChangeMode mode) {
+		return null;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();
-	}
-	
-	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-		return null;
 	}
 	
 	@Override
@@ -181,6 +192,30 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	@Override
 	public int getTime() {
 		return 0;
+	}
+	
+	@Override
+	public NonNullIterator<T> iterator(final Event e) {
+		return new NonNullIterator<T>() {
+			private int i = 0;
+			
+			@Override
+			protected T getNext() {
+				if (i == data.length)
+					return null;
+				return data[i++];
+			}
+		};
+	}
+	
+	@Override
+	public boolean isLoopOf(final String s) {
+		return false;
+	}
+	
+	@Override
+	public boolean canLoop() {
+		return !isSingle();
 	}
 	
 }

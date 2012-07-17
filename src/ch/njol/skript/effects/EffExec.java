@@ -39,7 +39,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class EffExec extends Effect {
 	
 	static {
-		Skript.registerEffect(EffExec.class, "exec[ute] %string%");
+//		Skript.registerEffect(EffExec.class, "exec[ute] %string%");
 	}
 	
 	private Expression<String> input;
@@ -68,8 +68,8 @@ public class EffExec extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "exec " + input.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "exec " + input.toString(e, debug);
 	}
 	
 }

@@ -22,27 +22,78 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Entity;
+import org.bukkit.event.Event;
 
+import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.SkriptLogger.SubLog;
+import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.expressions.base.EventValueExpression;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SimpleExpression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.ItemType;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprEntity extends EventValueExpression<Entity> {
+public class ExprEntity extends SimpleExpression<Entity> {
 	
 	static {
-		Skript.registerExpression(ExprEntity.class, Entity.class, "[the] entity");
+		Skript.registerExpression(ExprEntity.class, Entity.class, ExpressionType.SIMPLE, "[the] <.+>");
 	}
 	
-	public ExprEntity() {
-		super(Entity.class);
+	private EntityData<?> type;
+	
+	private EventValueExpression<Entity> entity;
+	
+	@Override
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+		final SubLog log = SkriptLogger.startSubLog();
+		final ItemType item = Aliases.parseItemType(parseResult.regexes.get(0).group());
+		log.clear();
+		if (item == null)
+			type = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
+		SkriptLogger.stopSubLog(log);
+		if (!parseResult.expr.toLowerCase().startsWith("the ") && item != null)
+			return false;
+		if (type == null)
+			return false;
+		log.printLog();
+		entity = new EventValueExpression<Entity>(type.getType());
+		entity.init();
+		return true;
 	}
 	
 	@Override
-	public String toString() {
-		return "the entity";
+	public boolean isSingle() {
+		return true;
+	}
+	
+	@Override
+	public Class<? extends Entity> getReturnType() {
+		return type.getType();
+	}
+	
+	@Override
+	protected Entity[] get(final Event e) {
+		final Entity[] es = entity.getArray(e);
+		if (es.length == 0 || type.isInstance(es[0]))
+			return es;
+		return null;
+	}
+	
+	@Override
+	public String toString(final Event e, final boolean debug) {
+		return "the " + type;
+	}
+	
+	@Override
+	public boolean getAnd() {
+		return true;
 	}
 	
 }

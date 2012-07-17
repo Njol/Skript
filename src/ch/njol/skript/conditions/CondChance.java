@@ -52,7 +52,7 @@ public class CondChance extends Condition {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return "chance of " + chance * 100 + "%";
 	}
 	

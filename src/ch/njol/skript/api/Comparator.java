@@ -100,7 +100,8 @@ public interface Comparator<T1, T2> {
 				case SMALLER_OR_EQUAL:
 					return "smaller than or equal to";
 			}
-			throw new RuntimeException();
+			assert false;
+			return null;
 		}
 		
 		/**
@@ -123,7 +124,8 @@ public interface Comparator<T1, T2> {
 				case SMALLER_OR_EQUAL:
 					return GREATER;
 			}
-			throw new RuntimeException();
+			assert false;
+			return null;
 		}
 		
 		/**
@@ -177,9 +179,9 @@ public interface Comparator<T1, T2> {
 	
 	Comparator<?, ?> equalsComparator = new Comparator<Object, Object>() {
 		@Override
-		public ch.njol.skript.api.Comparator.Relation compare(final Object o1, final Object o2) {
+		public Relation compare(final Object o1, final Object o2) {
 			if (o1 == null || o2 == null)
-				return Relation.get(o1 == o2);
+				return Relation.NOT_EQUAL;
 			return Relation.get(o1.equals(o2));
 		}
 		
@@ -190,7 +192,7 @@ public interface Comparator<T1, T2> {
 	};
 	
 	/**
-	 * Compares the given objects. Must be null-safe for both arguments.
+	 * Compares the given objects which may not be null.
 	 * 
 	 * @param o1
 	 * @param o2

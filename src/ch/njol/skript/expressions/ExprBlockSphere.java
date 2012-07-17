@@ -19,8 +19,9 @@
  * 
  */
 
-package ch.njol.skript.loops;
+package ch.njol.skript.expressions;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.bukkit.Location;
@@ -28,19 +29,23 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.LoopExpr;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.BlockSphereIterator;
+import ch.njol.util.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class LoopBlockSphere extends LoopExpr<Block> {
+public class ExprBlockSphere extends SimpleExpression<Block> {
 	
 	static {
-		Skript.registerLoop(LoopBlockSphere.class, Block.class, "blocks in radius %float% [around %location%]");
+		Skript.registerExpression(ExprBlockSphere.class, Block.class, ExpressionType.NORMAL,
+				"blocks in radius %float% [around %location%]",
+				"blocks around %location% in radius %float%");
 	}
 	
 	private Expression<Float> radius;
@@ -48,15 +53,24 @@ public class LoopBlockSphere extends LoopExpr<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		radius = (Expression<Float>) vars[0];
-		center = (Expression<Location>) vars[1];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parser) {
+		radius = (Expression<Float>) exprs[matchedPattern];
+		center = (Expression<Location>) exprs[1 - matchedPattern];
 		return true;
 	}
 	
 	@Override
-	protected Iterator<Block> iterator(final Event e) {
+	public Iterator<Block> iterator(final Event e) {
 		return new BlockSphereIterator(center.getSingle(e), radius.getSingle(e));
+	}
+	
+	@Override
+	protected Block[] get(final Event e) {
+		final float r = radius.getSingle(e);
+		final ArrayList<Block> list = new ArrayList<Block>((int) (1.1 * 4 / 3. * Math.PI * r * r * r));
+		for (final Block b : new IteratorIterable<Block>(iterator(e)))
+			list.add(b);
+		return list.toArray(new Block[list.size()]);
 	}
 	
 	@Override
@@ -65,18 +79,28 @@ public class LoopBlockSphere extends LoopExpr<Block> {
 	}
 	
 	@Override
-	public String getLoopDebugMessage(final Event e) {
-		return "blocks in radius " + radius.getDebugMessage(e) + " around " + center.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "the blocks in radius " + radius + " around " + center.toString(e, debug);
 	}
 	
 	@Override
-	public String toString() {
-		return "the loop-block";
+	public boolean canLoop() {
+		return true;
 	}
 	
 	@Override
 	public boolean isLoopOf(final String s) {
 		return s.equalsIgnoreCase("block");
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return false;
+	}
+	
+	@Override
+	public boolean getAnd() {
+		return true;
 	}
 	
 }

@@ -24,6 +24,8 @@ package ch.njol.skript.api;
 import ch.njol.skript.lang.Expression;
 
 /**
+ * Represents an expression that can be used as the default value of a certain type and event.
+ * 
  * @author Peter Güttinger
  * 
  */

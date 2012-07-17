@@ -55,7 +55,7 @@ public abstract class SkriptLogger {
 		 * @return whether there were any errors
 		 */
 		public final boolean printErrors(final String def) {
-			SkriptLogger.stopSubLog(this);
+			stop();
 			boolean hasError = false;
 			for (final Pair<Level, String> e : log) {
 				if (e.first == Level.SEVERE) {
@@ -77,7 +77,7 @@ public abstract class SkriptLogger {
 		 * @return whether there were any errors to send
 		 */
 		public final boolean printErrors(final CommandSender recipient, final String def) {
-			SkriptLogger.stopSubLog(this);
+			stop();
 			boolean hasError = false;
 			for (final Pair<Level, String> e : log) {
 				if (e.first == Level.SEVERE) {
@@ -98,7 +98,7 @@ public abstract class SkriptLogger {
 		 * @return
 		 */
 		public final void printLog() {
-			SkriptLogger.stopSubLog(this);
+			stop();
 			for (final Pair<Level, String> e : log) {
 				logDirect(e);
 			}
@@ -125,6 +125,14 @@ public abstract class SkriptLogger {
 		 */
 		public void clear() {
 			log.clear();
+		}
+		
+		public int size() {
+			return log.size();
+		}
+		
+		public void stop() {
+			SkriptLogger.stopSubLog(this);
 		}
 	}
 	
@@ -213,17 +221,19 @@ public abstract class SkriptLogger {
 	 * @see #log(Level, String)
 	 */
 	public static void logDirect(final Level level, final String message) {
-		if (!subLogs.isEmpty())
+		if (!subLogs.isEmpty()) {
 			subLogs.getLast().log.add(new Pair<Level, String>(level, message));
-		else
+		} else {
 			Bukkit.getLogger().log(level, "[Skript] " + message);
+		}
 	}
 	
 	public static void logDirect(final Pair<Level, String> message) {
-		if (!subLogs.isEmpty())
+		if (!subLogs.isEmpty()) {
 			subLogs.getLast().log.add(message);
-		else
+		} else {
 			Bukkit.getLogger().log(message.first, "[Skript] " + message.second);
+		}
 	}
 	
 	/**

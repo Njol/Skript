@@ -21,6 +21,7 @@
 
 package ch.njol.skript.expressions;
 
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
@@ -35,11 +36,17 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.api.Converter.ConverterUtils;
+import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.DefaultChangers;
 import ch.njol.skript.expressions.ExprAttacker.Attacker;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.ItemType;
 
 /**
  * 
@@ -63,10 +70,38 @@ public class ExprAttacker extends SimpleExpression<Attacker> {
 		public String toString() {
 			return Skript.toString(attacker);
 		}
+		
+		public Inventory getInventory() {
+			if (getAttacker() instanceof Block) {
+				final BlockState state = ((Block) getAttacker()).getState();
+				if (state instanceof InventoryHolder)
+					return ((InventoryHolder) state).getInventory();
+			} else if (getAttacker() instanceof InventoryHolder) {
+				return ((InventoryHolder) getAttacker()).getInventory();
+			}
+			return null;
+		}
 	}
 	
 	static {
-		Skript.registerExpression(ExprAttacker.class, Attacker.class, "[the] (attacker|damager)");
+		Skript.registerExpression(ExprAttacker.class, Attacker.class, ExpressionType.SIMPLE, "[the] (attacker|damager)");
+		Skript.registerClass(new ClassInfo<Attacker>(Attacker.class, "attacker", "attacker")
+				.changer(new Changer<Attacker, ItemType[]>() {
+					@Override
+					public void change(final Attacker[] what, final ItemType[] delta, final ChangeMode mode) {
+						DefaultChangers.inventoryChanger.change(ConverterUtils.convert(what, new Converter<Attacker, Inventory>() {
+							@Override
+							public Inventory convert(final Attacker a) {
+								return a.getInventory();
+							}
+						}, Inventory.class), delta, mode);
+					}
+					
+					@Override
+					public Class<? extends ItemType[]> acceptChange(final ChangeMode mode) {
+						return DefaultChangers.inventoryChanger.acceptChange(mode);
+					}
+				}));
 		Skript.registerConverter(Attacker.class, Entity.class, new Converter<Attacker, Entity>() {
 			@Override
 			public Entity convert(final Attacker a) {
@@ -86,14 +121,15 @@ public class ExprAttacker extends SimpleExpression<Attacker> {
 		Skript.registerConverter(Attacker.class, Inventory.class, new Converter<Attacker, Inventory>() {
 			@Override
 			public Inventory convert(final Attacker a) {
-				if (a.getAttacker() instanceof Block) {
-					final BlockState state = ((Block) a.getAttacker()).getState();
-					if (state instanceof InventoryHolder)
-						return ((InventoryHolder) state).getInventory();
-				} else if (a.getAttacker() instanceof InventoryHolder) {
-					return ((InventoryHolder) a.getAttacker()).getInventory();
-				}
-				return null;
+				return a.getInventory();
+			}
+		});
+		Skript.registerConverter(Attacker.class, Location.class, new Converter<Attacker, Location>() {
+			@Override
+			public Location convert(final Attacker a) {
+				if (a.getAttacker() instanceof Block)
+					return ((Block) a.getAttacker()).getLocation().add(0.5, 0.5, 0.5);
+				return ((Entity) a.getAttacker()).getLocation();
 			}
 		});
 	}
@@ -104,7 +140,7 @@ public class ExprAttacker extends SimpleExpression<Attacker> {
 	}
 	
 	@Override
-	protected Attacker[] getAll(final Event e) {
+	protected Attacker[] get(final Event e) {
 		return new Attacker[] {new Attacker(getAttacker(e))};
 	}
 	
@@ -132,19 +168,19 @@ public class ExprAttacker extends SimpleExpression<Attacker> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "attacker";
+			return "the attacker";
 		return Skript.getDebugMessage(getSingle(e) == null ? null : getSingle(e).attacker);
 	}
 	
 	@Override
-	public String toString() {
-		return "the attacker";
+	public boolean isSingle() {
+		return true;
 	}
 	
 	@Override
-	public boolean isSingle() {
+	public boolean getAnd() {
 		return true;
 	}
 	

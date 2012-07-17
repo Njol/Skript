@@ -28,16 +28,20 @@ import java.util.Map.Entry;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.TriggerFileLoader;
+import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Changer.ChangerUtils;
 import ch.njol.skript.api.DefaultExpression;
 import ch.njol.skript.api.Getter;
+import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Validate;
 
 /**
  * A useful class for creating default expressions. It simply returns the event value of the given type.<br/>
@@ -55,52 +59,56 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 public class EventValueExpression<T> extends SimpleExpression<T> implements DefaultExpression<T> {
 	
-	private final Class<T> c;
+	private final Class<? extends T> c;
 	private final T[] one;
-	private final Changer<T, ?> changer;
+	private final Changer<? super T, ?> changer;
 	private final Map<Class<? extends Event>, Getter<? extends T, ?>> getters = new HashMap<Class<? extends Event>, Getter<? extends T, ?>>();
 	
-	public EventValueExpression(final Class<T> c) {
+	public EventValueExpression(final Class<? extends T> c) {
 		this(c, null);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public EventValueExpression(final Class<T> c, final Changer<T, ?> changer) {
+	public EventValueExpression(final Class<? extends T> c, final Changer<? super T, ?> changer) {
+		Validate.notNull(c, "c");
 		this.c = c;
 		one = (T[]) Array.newInstance(c, 1);
 		this.changer = changer;
 	}
 	
 	@Override
-	protected T[] getAll(final Event e) {
+	protected T[] get(final Event e) {
 		if ((one[0] = getValue(e)) == null)
 			return null;
 		return one;
 	}
 	
-	@SuppressWarnings("unchecked")
 	private <E extends Event> T getValue(final E e) {
 		final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getters.get(e.getClass());
 		if (g != null)
 			return g.get(e);
 		
 		for (final Entry<Class<? extends Event>, Getter<? extends T, ?>> p : getters.entrySet()) {
-			if (p.getKey().isAssignableFrom(e.getClass()))
+			if (p.getKey().isAssignableFrom(e.getClass())) {
+				getters.put(e.getClass(), p.getValue());
 				return ((Getter<? extends T, ? super E>) p.getValue()).get(e);
+			}
 		}
 		
 		return null;
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parser) {
+		if (exprs.length != 0)
+			throw new SkriptAPIException(this.getClass().getName() + " has expressions in it's pattern but does not override init(...)");
 		return init();
 	}
 	
 	@Override
 	public boolean init() {
 		boolean hasValue = false;
-		for (final Class<? extends Event> e : TriggerFileLoader.currentEvents) {
+		final SubLog log = SkriptLogger.startSubLog();
+		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
 			if (getters.containsKey(e)) {
 				hasValue = true;
 				continue;
@@ -111,15 +119,17 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 				hasValue = true;
 			}
 		}
+		log.stop();
 		if (!hasValue) {
-			Skript.error("There's no " + Skript.getExactClassName(c) + " in this event");
+			log.printErrors("There's no " + Skript.getExactClassName(c) + " in this event");
 			return false;
 		}
+		log.printLog();
 		return true;
 	}
 	
 	@Override
-	public Class<T> getReturnType() {
+	public Class<? extends T> getReturnType() {
 		return c;
 	}
 	
@@ -129,8 +139,8 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		if (e == null)
+	public String toString(final Event e, final boolean debug) {
+		if (!debug || e == null)
 			return "event-" + Skript.getExactClassName(c);
 		return Skript.getDebugMessage(getValue(e));
 	}
@@ -150,13 +160,8 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	}
 	
 	@Override
-	public String toString() {
-		return "event-" + Skript.getExactClassName(c);
-	}
-	
-	@Override
 	public boolean setTime(final int time) {
-		for (final Class<? extends Event> e : TriggerFileLoader.currentEvents) {
+		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
 			if (Skript.doesEventValueHaveTimeStates(e, c)) {
 				super.setTime(time);
 				return true;
@@ -172,4 +177,10 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	public boolean isDefault() {
 		return true;
 	}
+	
+	@Override
+	public boolean getAnd() {
+		return true;
+	}
+	
 }

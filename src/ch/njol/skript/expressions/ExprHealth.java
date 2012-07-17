@@ -26,20 +26,21 @@ import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageEvent;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Getter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprHealth extends SimpleExpression<Float> {
+public class ExprHealth extends PropertyExpression<Float> {
 	
 	static {
-		Skript.registerExpression(ExprHealth.class, Float.class, "[the] health [of %livingentities%]", "%livingentities%'[s] health");
+		Skript.registerExpression(ExprHealth.class, Float.class, ExpressionType.PROPERTY, "[the] health [of %livingentities%]", "%livingentities%'[s] health");
 	}
 	
 	private Expression<LivingEntity> entities;
@@ -48,28 +49,29 @@ public class ExprHealth extends SimpleExpression<Float> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		entities = (Expression<LivingEntity>) vars[0];
+		setExpr(entities);
 		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "health of " + entities.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "the health of " + entities.toString(e, debug);
 	}
 	
 	@Override
-	protected Float[] getAll(final Event e) {
+	protected Float[] get(final Event e) {
 		if (e instanceof EntityDamageEvent && getTime() >= 0 && entities.isDefault()) {
 			return entities.getArray(e, Float.class, new Getter<Float, LivingEntity>() {
 				@Override
 				public Float get(final LivingEntity entity) {
-					return Float.valueOf(1f / 2 * (entity.getHealth() - ((EntityDamageEvent) e).getDamage()));
+					return Float.valueOf(0.5f * (entity.getHealth() - ((EntityDamageEvent) e).getDamage()));// FIXME this is not the actual damage taken!
 				}
 			});
 		}
 		return entities.getArray(e, Float.class, new Getter<Float, LivingEntity>() {
 			@Override
 			public Float get(final LivingEntity entity) {
-				return Float.valueOf(1f / 2 * entity.getHealth());
+				return Float.valueOf(0.5f * entity.getHealth());
 			}
 		});
 	}
@@ -84,7 +86,7 @@ public class ExprHealth extends SimpleExpression<Float> {
 		int s = 0;
 		if (mode != ChangeMode.CLEAR)
 			s = Math.round(((Float) delta).floatValue() * 2);
-		if (e instanceof EntityDamageEvent && getTime() >= 0 && entities.isDefault()) {
+		if (mode == ChangeMode.SET && e instanceof EntityDamageEvent && getTime() >= 0 && entities.isDefault()) {
 			((EntityDamageEvent) e).setDamage(((LivingEntity) ((EntityDamageEvent) e).getEntity()).getHealth() - s);
 			return;
 		}
@@ -92,35 +94,25 @@ public class ExprHealth extends SimpleExpression<Float> {
 			case CLEAR:
 			case SET:
 				for (final LivingEntity entity : entities.getArray(e)) {
-					entity.setHealth(s);
+					entity.setHealth(Math.max(0, Math.min(entity.getMaxHealth(), s)));
 				}
-				return;
+			break;
 			case ADD:
 				for (final LivingEntity entity : entities.getArray(e)) {
-					entity.setHealth(entity.getHealth() + s);
+					entity.setHealth(Math.max(0, Math.min(entity.getMaxHealth(), entity.getHealth() + s)));
 				}
-				return;
+			break;
 			case REMOVE:
 				for (final LivingEntity entity : entities.getArray(e)) {
-					entity.setHealth(entity.getHealth() - s);
+					entity.setHealth(Math.max(0, Math.min(entity.getMaxHealth(), entity.getHealth() - s)));
 				}
-				return;
+			break;
 		}
 	}
 	
 	@Override
 	public Class<? extends Float> getReturnType() {
 		return Float.class;
-	}
-	
-	@Override
-	public String toString() {
-		return "the health of " + entities;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return entities.isSingle();
 	}
 	
 	@Override

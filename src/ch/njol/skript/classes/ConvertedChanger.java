@@ -24,6 +24,7 @@ package ch.njol.skript.classes;
 import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.Converter.ConverterUtils;
+import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
@@ -36,6 +37,7 @@ public class ConvertedChanger<T1, T2> implements Changer<T1, T2> {
 	private final Changer<?, T2> changer;
 	
 	public <M> ConvertedChanger(final Converter<? super T1, ? extends M> converter, final Class<M> mid, final Changer<M, T2> changer) {
+		Validate.notNull(converter, mid, changer);
 		this.converter = converter;
 		this.mid = mid;
 		this.changer = changer;

@@ -48,7 +48,7 @@ public final class ChainedConverter<F, M, T> implements Converter<F, T> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final static <F, M, T> ChainedConverter<F, M, T> newInstance(final Converter<? super F, ?> first, @SuppressWarnings("unused") final Class<M> m, final Converter<?, ? extends T> second) {
+	public final static <F, M, T> ChainedConverter<F, M, T> newInstance(final Converter<? super F, ?> first, final Converter<?, ? extends T> second) {
 		return new ChainedConverter<F, M, T>((Converter<? super F, ? extends M>) first, (Converter<? super M, ? extends T>) second);
 	}
 	

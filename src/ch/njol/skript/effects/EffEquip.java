@@ -56,8 +56,8 @@ public class EffEquip extends Effect implements Testable {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "equip " + players.getDebugMessage(e) + " with " + types.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "equip " + players.toString(e, debug) + " with " + types.toString(e, debug);
 	}
 	
 	@Override

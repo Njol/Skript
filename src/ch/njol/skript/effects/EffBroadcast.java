@@ -71,8 +71,8 @@ public class EffBroadcast extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "broadcast " + messages.getDebugMessage(e) + (worlds == null ? "" : " to " + worlds.getDebugMessage(e));
+	public String toString(final Event e, final boolean debug) {
+		return "broadcast " + messages.toString(e, debug) + (worlds == null ? "" : " to " + worlds.toString(e, debug));
 	}
 	
 }

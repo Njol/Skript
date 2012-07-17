@@ -25,34 +25,40 @@ import org.bukkit.World;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.expressions.base.WrapperExpression;
+import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprWorld extends WrapperExpression<World> {
+public class ExprWorld extends PropertyExpression<World> {
 	
 	static {
-		Skript.registerExpression(ExprWorld.class, World.class, "[the] world [of %world%]", "%world%'[s] world");
+		Skript.registerExpression(ExprWorld.class, World.class, ExpressionType.PROPERTY, "[the] world [of %world%]", "%world%'[s] world");
 	}
 	
 	@Override
-	@SuppressWarnings("unchecked")
-	public boolean init(final ch.njol.skript.lang.Expression<?>[] vars, final int matchedPattern, final ch.njol.skript.lang.SkriptParser.ParseResult parser) {
-		expr = (Expression<World>) vars[0];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parser) {
+		setExpr(exprs[0]);
 		return true;
 	}
 	
 	@Override
-	public String toString() {
-		return "the world" + (expr.isDefault() ? "" : " of " + expr);
+	public String toString(final Event e, final boolean debug) {
+		return "the world" + (getExpr().isDefault() ? "" : " of " + getExpr().toString(e, debug));
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "the world" + (expr.isDefault() ? "" : " of " + expr.getDebugMessage(e));
+	public Class<? extends World> getReturnType() {
+		return World.class;
+	}
+	
+	@Override
+	protected World[] get(final Event e) {
+		return ((Expression<World>) getExpr()).getArray(e);
 	}
 	
 }

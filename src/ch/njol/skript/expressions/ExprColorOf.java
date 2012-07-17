@@ -26,10 +26,11 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Color;
 import ch.njol.skript.util.ItemType;
@@ -38,10 +39,10 @@ import ch.njol.skript.util.ItemType;
  * @author Peter Güttinger
  * 
  */
-public class ExprColorOf extends SimpleExpression<Color> {
+public class ExprColorOf extends PropertyExpression<Color> {
 	
 	static {
-		Skript.registerExpression(ExprColorOf.class, Color.class, "colo[u]r[s] of %itemstacks%", "%itemstacks%'[s] colo[u]r[s]");
+		Skript.registerExpression(ExprColorOf.class, Color.class, ExpressionType.PROPERTY, "colo[u]r[s] of %itemstacks%", "%itemstacks%'[s] colo[u]r[s]");
 	}
 	
 	private Expression<ItemStack> types;
@@ -50,12 +51,8 @@ public class ExprColorOf extends SimpleExpression<Color> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		types = (Expression<ItemStack>) exprs[0];
+		setExpr(types);
 		return true;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return types.isSingle();
 	}
 	
 	@Override
@@ -64,12 +61,12 @@ public class ExprColorOf extends SimpleExpression<Color> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "color of " + types.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "color of " + types.toString(e, debug);
 	}
 	
 	@Override
-	protected Color[] getAll(final Event e) {
+	protected Color[] get(final Event e) {
 		return types.getArray(e, Color.class, new Converter<ItemStack, Color>() {
 			@Override
 			public Color convert(final ItemStack is) {
@@ -82,11 +79,6 @@ public class ExprColorOf extends SimpleExpression<Color> {
 				return null;
 			}
 		});
-	}
-	
-	@Override
-	public String toString() {
-		return "color of " + types;
 	}
 	
 	@Override

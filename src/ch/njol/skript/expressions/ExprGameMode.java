@@ -27,20 +27,21 @@ import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Changer.ChangeMode;
 import ch.njol.skript.api.Converter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprGameMode extends SimpleExpression<GameMode> {
+public class ExprGameMode extends PropertyExpression<GameMode> {
 	
 	static {
-		Skript.registerExpression(ExprGameMode.class, GameMode.class, "[the] game[ ]mode of %players%", "%players%'[s] game[ ]mode");
+		Skript.registerExpression(ExprGameMode.class, GameMode.class, ExpressionType.PROPERTY, "[the] game[ ]mode of %players%", "%players%'[s] game[ ]mode");
 	}
 	
 	private Expression<Player> players;
@@ -49,16 +50,17 @@ public class ExprGameMode extends SimpleExpression<GameMode> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
+		setExpr(players);
 		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "gamemode of " + players.getDebugMessage(e);
+	public String toString(final Event e, final boolean debug) {
+		return "the gamemode of " + players.toString(e, debug);
 	}
 	
 	@Override
-	protected GameMode[] getAll(final Event e) {
+	protected GameMode[] get(final Event e) {
 		if (e instanceof PlayerGameModeChangeEvent && getTime() >= 0 && players.isDefault()) {
 			return new GameMode[] {((PlayerGameModeChangeEvent) e).getNewGameMode()};
 		}
@@ -87,16 +89,6 @@ public class ExprGameMode extends SimpleExpression<GameMode> {
 		final GameMode m = (GameMode) delta;
 		for (final Player p : players.getArray(e))
 			p.setGameMode(m);
-	}
-	
-	@Override
-	public String toString() {
-		return "the gamemode of " + players;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return players.isSingle();
 	}
 	
 	@Override

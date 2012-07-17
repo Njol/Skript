@@ -57,7 +57,7 @@ public final class EvtGameMode extends SkriptEvent {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		return "gamemode change" + (mode == null ? "" : " to " + mode.toString().toLowerCase());
 	}
 	

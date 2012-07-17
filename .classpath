@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="ch/njol/skript/PlayerCommand.java|ch/njol/skript/CommandHandler.java|ch/njol/skript/util/BlockUtils.java|ch/njol/skript/util/entity/CreeperData.java|ch/njol/skript/expressions/ExprTypeOf.java" kind="src" path="src"/>
+	<classpathentry excluding="ch/njol/skript/CommandHandler.java|ch/njol/skript/PlayerCommand.java|ch/njol/skript/expressions/ExprTypeOf.java|ch/njol/skript/util/BlockUtils.java|ch/njol/skript/ConfigCommandHandler.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER"/>
 	<classpathentry kind="lib" path="/Util/Vault.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="/Util/easymock-3.1.jar" sourcepath="/Util/easymock-3.1-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/Util/easymock-3.1-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

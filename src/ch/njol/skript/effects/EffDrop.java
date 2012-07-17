@@ -22,6 +22,7 @@
 package ch.njol.skript.effects;
 
 import org.bukkit.Location;
+import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
@@ -41,36 +42,45 @@ import ch.njol.skript.util.Offset;
 public class EffDrop extends Effect {
 	
 	static {
-		Skript.registerEffect(EffDrop.class, "drop %itemtypes% [%offsets% %-locations%]");
+		Skript.registerEffect(EffDrop.class, "drop <\\d+> ([e]xp|experience) [orb[s]] [%offsets% %locations%]", "drop %itemtypes% [%offsets% %locations%]");
 	}
 	
+	private int xp = -1;
 	private Expression<ItemType> items;
 	private Expression<Offset> offsets;
 	private Expression<Location> locations;
-	private boolean hasLoc = false;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		items = (Expression<ItemType>) vars[0];
+		if (matchedPattern == 0)
+			xp = Integer.parseInt(parser.regexes.get(0).group());
+		else
+			items = (Expression<ItemType>) vars[0];
 		offsets = (Expression<Offset>) vars[1];
 		locations = (Expression<Location>) vars[2];
-		hasLoc = locations != null;
-		if (!hasLoc)
-			locations = Skript.getDefaultExpression(Location.class);
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		final ItemType[] types = items.getArray(e);
-		if (!hasLoc && e instanceof EntityDeathEvent) {
+		final ItemType[] types = items == null ? null : items.getArray(e);
+		if (locations.isDefault() && e instanceof EntityDeathEvent) {
+			if (xp != -1) {
+				((EntityDeathEvent) e).setDroppedExp(((EntityDeathEvent) e).getDroppedExp() + xp);
+				return;
+			}
 			for (final ItemType type : types) {
 				type.addTo(((EntityDeathEvent) e).getDrops());
 			}
 			return;
 		}
 		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
+			if (xp != -1) {
+				final ExperienceOrb orb = l.getWorld().spawn(l, ExperienceOrb.class);
+				orb.setExperience(xp);
+				continue;
+			}
 			for (final ItemType type : types) {
 				for (final ItemStack is : type.getItem().getAll())
 					l.getWorld().dropItemNaturally(l, is);
@@ -79,8 +89,8 @@ public class EffDrop extends Effect {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "drop " + items.getDebugMessage(e) + (hasLoc ? offsets.getDebugMessage(e) + " " + locations.getDebugMessage(e) : "");
+	public String toString(final Event e, final boolean debug) {
+		return "drop " + items.toString(e, debug) + " " + offsets.toString(e, debug) + " " + locations.toString(e, debug);
 	}
 	
 }

@@ -27,9 +27,10 @@ import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Getter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Slot;
 
@@ -38,10 +39,10 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  * 
  */
-public class ExprTool extends SimpleExpression<Slot> {
+public class ExprTool extends PropertyExpression<Slot> {
 	
 	static {
-		Skript.registerExpression(ExprTool.class, Slot.class, "[the] (tool|held item) [of %players%]", "%player%'[s] (tool|held item)");
+		Skript.registerExpression(ExprTool.class, Slot.class, ExpressionType.PROPERTY, "[the] (tool|held item) [of %players%]", "%player%'[s] (tool|held item)");
 	}
 	
 	private Expression<Player> players;
@@ -50,11 +51,12 @@ public class ExprTool extends SimpleExpression<Slot> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
+		setExpr(players);
 		return true;
 	}
 	
 	@Override
-	protected Slot[] getAll(final Event e) {
+	protected Slot[] get(final Event e) {
 		if (e instanceof PlayerItemHeldEvent && players.isDefault()) {
 			return players.getArray(e, Slot.class, new Getter<Slot, Player>() {
 				@Override
@@ -78,7 +80,7 @@ public class ExprTool extends SimpleExpression<Slot> {
 					}
 					
 					@Override
-					public String getDebugMessage(final Event e) {
+					public String toString(final Event e, final boolean debug) {
 						return (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + p.getName();
 					}
 				};
@@ -92,20 +94,10 @@ public class ExprTool extends SimpleExpression<Slot> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + players.getDebugMessage(e);
+			return "the " + (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + players.toString(e, debug);
 		return Skript.getDebugMessage(getSingle(e));
-	}
-	
-	@Override
-	public String toString() {
-		return "the " + (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + players;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return players.isSingle();
 	}
 	
 	@Override

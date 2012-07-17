@@ -21,16 +21,18 @@
 
 package ch.njol.skript.expressions;
 
+import java.lang.reflect.Array;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.TriggerFileLoader;
-import ch.njol.skript.api.LoopExpr;
-import ch.njol.skript.expressions.base.WrapperExpression;
+import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.api.intern.Loop;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
@@ -39,43 +41,80 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  * 
  */
-public class ExprLoopValue extends WrapperExpression<Object> {
+public class ExprLoopValue extends SimpleExpression<Object> {
 	
 	static {
-		Skript.registerExpression(ExprLoopValue.class, Object.class, "[the] loop-<\\S+>");
+		Skript.registerExpression(ExprLoopValue.class, Object.class, ExpressionType.SIMPLE, "[the] loop-<.+>");
 	}
 	
 	private String name;
+	
+	private Loop loop;
+	
+	private Object[] one;
 	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
 		name = parser.expr;
 		String s = parser.regexes.get(0).group();
-		int i = 1;
+		int i = -1;
 		final Matcher m = Pattern.compile("^(.+)-(\\d+)$").matcher(s);
 		if (m.matches()) {
 			s = m.group(1);
 			i = Integer.parseInt(m.group(2));
 		}
-		for (final LoopExpr<?> v : TriggerFileLoader.currentLoops) {
-			if (v.isLoopOf(s)) {
+		Class<?> c = Skript.getClassByName(s);
+		if (c == null)
+			c = Skript.getClassFromUserInput(s);
+		for (final Loop l : ScriptLoader.currentLoops) {
+			if (c != null && c.isAssignableFrom(l.getLoopedExpression().getReturnType()) || l.getLoopedExpression().isLoopOf(s)) {
 				if (i > 1) {
 					i--;
 					continue;
 				}
-				expr = v;
-				return true;
+				if (loop != null) {
+					Skript.error("there are multiple loops that match 'loop-" + s + "'");
+					return false;
+				}
+				loop = l;
+				if (i == 1)
+					break;
 			}
 		}
-		Skript.error("there's no loop that matches " + name);
-		return false;
+		if (loop == null) {
+			Skript.error("there's no loop that matches 'loop-" + s + "'");
+			return false;
+		}
+		one = (Object[]) Array.newInstance(loop.getLoopedExpression().getReturnType(), 1);
+		return true;
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
+	public boolean isSingle() {
+		return true;
+	}
+	
+	@Override
+	public Class<? extends Object> getReturnType() {
+		return loop.getLoopedExpression().getReturnType();
+	}
+	
+	@Override
+	protected Object[] get(final Event e) {
+		one[0] = loop.getCurrent();
+		return one;
+	}
+	
+	@Override
+	public String toString(final Event e, final boolean debug) {
 		if (e == null)
 			return name;
-		return expr.getDebugMessage(e);
+		return Skript.getDebugMessage(loop.getCurrent());
+	}
+	
+	@Override
+	public boolean getAnd() {
+		return true;
 	}
 	
 }

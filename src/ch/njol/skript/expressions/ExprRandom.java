@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -35,7 +36,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class ExprRandom extends SimpleExpression<Double> {
 	
 	static {
-		Skript.registerExpression(ExprRandom.class, Double.class, "[a] random number between %double% and %double%");
+		Skript.registerExpression(ExprRandom.class, Double.class, ExpressionType.NORMAL, "[a] random number between %double% and %double%");
 	}
 	
 	private Expression<Double> lower, upper;
@@ -49,7 +50,7 @@ public class ExprRandom extends SimpleExpression<Double> {
 	}
 	
 	@Override
-	protected Double[] getAll(final Event e) {
+	protected Double[] get(final Event e) {
 		final double l = lower.getSingle(e);
 		final double u = upper.getSingle(e);
 		
@@ -62,17 +63,17 @@ public class ExprRandom extends SimpleExpression<Double> {
 	}
 	
 	@Override
-	public String getDebugMessage(final Event e) {
-		return "random number between " + lower + " and " + upper;
-	}
-	
-	@Override
-	public String toString() {
+	public String toString(final Event e, final boolean debug) {
 		return "a random number between " + lower + " and " + upper;
 	}
 	
 	@Override
 	public boolean isSingle() {
+		return true;
+	}
+	
+	@Override
+	public boolean getAnd() {
 		return true;
 	}
 	

@@ -27,7 +27,7 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Comparator;
-import ch.njol.skript.util.EntityType;
+import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
@@ -36,6 +36,7 @@ import ch.njol.skript.util.Timeperiod;
  * @author Peter Güttinger
  * 
  */
+@SuppressWarnings("rawtypes")
 public class DefaultComparators {
 	
 	public DefaultComparators() {}
@@ -43,14 +44,16 @@ public class DefaultComparators {
 	static {
 		
 		// IMPORTANT!! No Object - Object comparator
+		//  why?
 		
-		// Number - Number
-		Skript.registerComparator(Number.class, Number.class, new Comparator<Number, Number>() {
+		// Double - Double
+		// Number - Number doesn't work...
+		Skript.registerComparator(Double.class, Double.class, new Comparator<Double, Double>() {
 			@Override
-			public Relation compare(final Number n1, final Number n2) {
-				if (n1 == null || n2 == null)
-					return Relation.NOT_EQUAL;
-				return Relation.get(n1.doubleValue() - n2.doubleValue());
+			public Relation compare(final Double d1, final Double d2) {
+				if (Math.abs(d1.doubleValue() - d2.doubleValue()) < Skript.EPSILON)
+					return Relation.EQUAL;
+				return Relation.get(d1.doubleValue() - d2.doubleValue());
 			}
 			
 			@Override
@@ -63,8 +66,6 @@ public class DefaultComparators {
 		Skript.registerComparator(ItemStack.class, ItemType.class, new Comparator<ItemStack, ItemType>() {
 			@Override
 			public Relation compare(final ItemStack is, final ItemType it) {
-				if (it == null)
-					return Relation.NOT_EQUAL;
 				return Relation.get(it.isOfType(is));
 			}
 			
@@ -78,8 +79,6 @@ public class DefaultComparators {
 		Skript.registerComparator(Block.class, ItemType.class, new Comparator<Block, ItemType>() {
 			@Override
 			public Relation compare(final Block b, final ItemType it) {
-				if (it == null)
-					return Relation.NOT_EQUAL;
 				return Relation.get(it.isOfType(b));
 			}
 			
@@ -93,8 +92,6 @@ public class DefaultComparators {
 		Skript.registerComparator(Block.class, Block.class, new Comparator<Block, Block>() {
 			@Override
 			public Relation compare(final Block b1, final Block b2) {
-				if (b1 == null || b2 == null)
-					return Relation.NOT_EQUAL;
 				return Relation.get(b1.equals(b2));
 			}
 			
@@ -105,12 +102,10 @@ public class DefaultComparators {
 			
 		});
 		
-		// Entity - EntityType
-		Skript.registerComparator(Entity.class, EntityType.class, new Comparator<Entity, EntityType>() {
+		// Entity - EntityData
+		Skript.registerComparator(Entity.class, EntityData.class, new Comparator<Entity, EntityData>() {
 			@Override
-			public Relation compare(final Entity e, final EntityType t) {
-				if (t == null || e == null)
-					return Relation.NOT_EQUAL;
+			public Relation compare(final Entity e, final EntityData t) {
 				return Relation.get(t.isInstance(e));
 			}
 			
@@ -119,13 +114,11 @@ public class DefaultComparators {
 				return false;
 			}
 		});
-		// EntityType - EntityType
-		Skript.registerComparator(EntityType.class, EntityType.class, new Comparator<EntityType, EntityType>() {
+		// EntityData - EntityData
+		Skript.registerComparator(EntityData.class, EntityData.class, new Comparator<EntityData, EntityData>() {
 			@Override
-			public Relation compare(final EntityType t1, final EntityType t2) {
-				if (t1 == null || t2 == null)
-					return Relation.NOT_EQUAL;
-				return Relation.get(t2.c.isAssignableFrom(t1.c) && (t2.amount == -1 || t2.amount == t1.amount));
+			public Relation compare(final EntityData t1, final EntityData t2) {
+				return Relation.get(t2.getType().isAssignableFrom(t1.getType()));
 			}
 			
 			@Override
@@ -151,8 +144,6 @@ public class DefaultComparators {
 		Skript.registerComparator(Time.class, Timeperiod.class, new Comparator<Time, Timeperiod>() {
 			@Override
 			public Relation compare(final Time t, final Timeperiod p) {
-				if (p == null || t == null)
-					return Relation.NOT_EQUAL;
 				return Relation.get(p.contains(t));
 			}
 			
@@ -164,11 +155,8 @@ public class DefaultComparators {
 		
 		// String - String
 		Skript.registerComparator(String.class, String.class, new Comparator<String, String>() {
-			
 			@Override
-			public ch.njol.skript.api.Comparator.Relation compare(final String s1, final String s2) {
-				if (s1 == null)
-					return Relation.NOT_EQUAL;
+			public Relation compare(final String s1, final String s2) {
 				return Relation.get(s1.equalsIgnoreCase(s2));
 			}
 			
@@ -176,7 +164,6 @@ public class DefaultComparators {
 			public boolean supportsOrdering() {
 				return false;
 			}
-			
 		});
 		
 	}

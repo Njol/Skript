@@ -22,7 +22,6 @@
 package ch.njol.skript;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,18 +40,18 @@ import ch.njol.util.Pair;
 public abstract class Aliases {
 	
 	/**
-	 * Note to self: never use this, use {@link {@link #getAlias(String)} instead.
+	 * Note to self: never use this, use {@link #getAlias(String)} instead.
 	 */
-	private final static HashMap<String, ItemType> aliases = new HashMap<String, ItemType>(2000);
+	private final static HashMap<String, ItemType> aliases = new HashMap<String, ItemType>(2500);
 	
 	private final static ItemType getAlias(final String s) {
-		final ItemType t = TriggerFileLoader.currentAliases.get(s);
+		final ItemType t = ScriptLoader.currentAliases.get(s);
 		if (t != null)
 			return t;
 		return aliases.get(s);
 	}
 	
-	private final static HashMap<Integer, MaterialName> materialNames = new HashMap<Integer, MaterialName>((int) (Material.values().length * 1.6));
+	private final static HashMap<Integer, MaterialName> materialNames = new HashMap<Integer, MaterialName>(Material.values().length);
 	
 	private final static ItemType everything = new ItemType();
 	static {
@@ -116,7 +115,7 @@ public abstract class Aliases {
 	 * @param name mixedcase string
 	 * @param value
 	 * @param variations
-	 * @return
+	 * @return amount of added aliases
 	 */
 	static int addAliases(final String name, final String value, final HashMap<String, HashMap<String, ItemType>> variations) {
 		final ItemType t = parseAlias(value);
@@ -125,10 +124,10 @@ public abstract class Aliases {
 		}
 		final HashMap<String, ItemType> as = getAliases(name, t, variations);
 		boolean printedStartingWithNumberError = false;
-		boolean printedSyntaxError = false;
+//		boolean printedSyntaxError = false;
 		for (final Entry<String, ItemType> e : as.entrySet()) {
 			final String s = e.getKey().trim().replaceAll("\\s+", " ");
-			final String lc = s.toLowerCase(Locale.ENGLISH);
+			final String lc = s.toLowerCase();
 			if (lc.matches("\\d+ .*")) {
 				if (!printedStartingWithNumberError) {
 					Skript.error("aliases must not start with a number");
@@ -136,13 +135,13 @@ public abstract class Aliases {
 				}
 				continue;
 			}
-			if (lc.contains(",") || lc.contains(" and ") || lc.contains(" or ")) {
-				if (!printedSyntaxError) {
-					Skript.error("aliases must not contain syntax elements (comma, 'and', 'or')");
-					printedSyntaxError = true;
-				}
-				continue;
-			}
+//			if (lc.contains(",") || lc.contains(" and ") || lc.contains(" or ")) {
+//				if (!printedSyntaxError) {
+//					Skript.error("aliases must not contain syntax elements (comma, 'and', 'or')");
+//					printedSyntaxError = true;
+//				}
+//				continue;
+//			}
 			aliases.put(lc, e.getValue());
 			//if (logSpam()) <- =P
 			//	info("added alias " + s + " for " + e.getValue());
@@ -188,7 +187,7 @@ public abstract class Aliases {
 			s = names.get(new Pair<Short, Short>((short) -1, (short) -1));
 			if (s != null)
 				return s;
-			return name + ":" + (dataMin == -1 ? 0 : dataMin) + (dataMin == dataMax ? "" : "-" + (dataMax == -1 ? (id <= Skript.MAXBLOCKID ? 15 : Short.MAX_VALUE) : dataMax));
+			return name;
 		}
 		
 		public String getDebugMessage(final short dataMin, final short dataMax) {
@@ -284,7 +283,8 @@ public abstract class Aliases {
 	}
 	
 	/**
-	 * Parses an ItemType
+	 * Parses an ItemType.<br>
+	 * Prints errors.
 	 * 
 	 * @param s
 	 * @return The parsed ItemType or null if the input is invalid.
@@ -292,9 +292,9 @@ public abstract class Aliases {
 	public static ItemType parseItemType(String s) {
 		if (s == null || s.isEmpty())
 			return null;
-		final String lc = s.toLowerCase(Locale.ENGLISH);
-		if (s.contains(",") || lc.contains(" and ") || lc.contains(" or "))
-			return null;
+		final String lc = s.toLowerCase();
+//		if (s.contains(",") || lc.contains(" and ") || lc.contains(" or "))
+//			return null;
 //			throw new SkriptAPIException("Invalid method call");
 		
 		final ItemType t = new ItemType();
@@ -327,6 +327,7 @@ public abstract class Aliases {
 	}
 	
 	/**
+	 * Prints errors.
 	 * 
 	 * @param s The string holding the type, can be either a number or an alias, plus an optional data part. Case does not matter.
 	 * @param t The ItemType to add the parsed ItemData(s) to (i.e. this ItemType will be modified)
@@ -379,7 +380,7 @@ public abstract class Aliases {
 			}
 			return t;
 		}
-		Skript.error("'" + s + "' is neither an id nor an alias");
+		Skript.error("'" + s + "' is not an item type");
 		return null;
 	}
 	
@@ -393,7 +394,7 @@ public abstract class Aliases {
 	 */
 	private final static ItemType getAlias(String s, final boolean singular, final boolean ignorePluralCheck) {
 		ItemType i;
-		String lc = s.toLowerCase(Locale.ENGLISH);
+		String lc = s.toLowerCase();
 		if ((i = getAlias(lc)) != null)
 			return i.clone();
 		if (lc.startsWith("any ")) {
@@ -403,22 +404,30 @@ public abstract class Aliases {
 		if (!ignorePluralCheck && !(p.second ^ singular))
 			Skript.pluralWarning(s);
 		s = p.first;
-		lc = s.toLowerCase(Locale.ENGLISH);
+		lc = s.toLowerCase();
 		if (lc.endsWith(" block")) {
 			if ((i = getAlias(s.substring(0, s.length() - " block".length()), true, ignorePluralCheck)) != null) {
-				for (final ItemData d : i)
-					if (d.getId() > Skript.MAXBLOCKID)
+				for (int j = 0; j < i.numTypes(); j++) {
+					final ItemData d = i.getTypes().get(j);
+					if (d.getId() > Skript.MAXBLOCKID) {
 						i.remove(d);
-				if (!i.iterator().hasNext())
+						j--;
+					}
+				}
+				if (i.getTypes().isEmpty())
 					return null;
 				return i;
 			}
 		} else if (lc.endsWith(" item")) {
 			if ((i = getAlias(s.substring(0, s.length() - " item".length()), true, ignorePluralCheck)) != null) {
-				for (final ItemData d : i)
-					if (d.getId() != -1 && d.getId() <= Skript.MAXBLOCKID)
+				for (int j = 0; j < i.numTypes(); j++) {
+					final ItemData d = i.getTypes().get(j);
+					if (d.getId() != -1 && d.getId() <= Skript.MAXBLOCKID) {
 						i.remove(d);
-				if (!i.iterator().hasNext())
+						j--;
+					}
+				}
+				if (i.getTypes().isEmpty())
 					return null;
 				return i;
 			}
@@ -448,6 +457,11 @@ public abstract class Aliases {
 			return null;
 		}
 		return t;
+	}
+	
+	public static void clear() {
+		aliases.clear();
+		materialNames.clear();
 	}
 	
 }

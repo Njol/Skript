@@ -19,7 +19,7 @@
  * 
  */
 
-package ch.njol.skript.data;
+package ch.njol.skript.events;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
@@ -35,6 +35,7 @@ import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.CreeperPowerEvent;
+import org.bukkit.event.entity.EntityBreakDoorEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityInteractEvent;
@@ -86,176 +87,14 @@ import org.bukkit.event.world.WorldUnloadEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SimpleEvent;
-import ch.njol.skript.api.intern.SkriptAPIException;
-import ch.njol.skript.conditions.CondCanHold;
-import ch.njol.skript.conditions.CondChance;
-import ch.njol.skript.conditions.CondInventoryContains;
-import ch.njol.skript.conditions.CondIs;
-import ch.njol.skript.conditions.CondIsSet;
-import ch.njol.skript.conditions.CondItemInHand;
-import ch.njol.skript.conditions.CondPermission;
-import ch.njol.skript.conditions.CondWeather;
-import ch.njol.skript.effects.EffBroadcast;
-import ch.njol.skript.effects.EffCancelEvent;
-import ch.njol.skript.effects.EffChange;
-import ch.njol.skript.effects.EffCommand;
-import ch.njol.skript.effects.EffDrop;
-import ch.njol.skript.effects.EffEquip;
-import ch.njol.skript.effects.EffExit;
-import ch.njol.skript.effects.EffExplosion;
-import ch.njol.skript.effects.EffFertilize;
-import ch.njol.skript.effects.EffHealth;
-import ch.njol.skript.effects.EffKill;
-import ch.njol.skript.effects.EffMessage;
-import ch.njol.skript.effects.EffSpawn;
-import ch.njol.skript.effects.EffTeleport;
-import ch.njol.skript.effects.EffTree;
-import ch.njol.skript.events.EvtBlock;
-import ch.njol.skript.events.EvtDamage;
-import ch.njol.skript.events.EvtEntity;
-import ch.njol.skript.events.EvtEntityBlockChange;
-import ch.njol.skript.events.EvtGameMode;
-import ch.njol.skript.events.EvtItem;
-import ch.njol.skript.events.EvtPeriodical;
-import ch.njol.skript.events.EvtRightclick;
-import ch.njol.skript.events.EvtWeatherChange;
-import ch.njol.skript.expressions.ExprArgument;
-import ch.njol.skript.expressions.ExprArmorSlot;
-import ch.njol.skript.expressions.ExprAttacked;
-import ch.njol.skript.expressions.ExprAttacker;
-import ch.njol.skript.expressions.ExprBlock;
-import ch.njol.skript.expressions.ExprColorOf;
-import ch.njol.skript.expressions.ExprCreature;
-import ch.njol.skript.expressions.ExprDataOf;
-import ch.njol.skript.expressions.ExprDistance;
-import ch.njol.skript.expressions.ExprDrops;
-import ch.njol.skript.expressions.ExprEntity;
-import ch.njol.skript.expressions.ExprEventCancelled;
-import ch.njol.skript.expressions.ExprEventExpression;
-import ch.njol.skript.expressions.ExprFoodLevel;
-import ch.njol.skript.expressions.ExprFurnaceSlot;
-import ch.njol.skript.expressions.ExprGameMode;
-import ch.njol.skript.expressions.ExprHealth;
-import ch.njol.skript.expressions.ExprIdOf;
-import ch.njol.skript.expressions.ExprInventory;
-import ch.njol.skript.expressions.ExprLocation;
-import ch.njol.skript.expressions.ExprLoopValue;
-import ch.njol.skript.expressions.ExprPlayer;
-import ch.njol.skript.expressions.ExprProjectile;
-import ch.njol.skript.expressions.ExprRandom;
-import ch.njol.skript.expressions.ExprTarget;
-import ch.njol.skript.expressions.ExprTargetedBlock;
-import ch.njol.skript.expressions.ExprTime;
-import ch.njol.skript.expressions.ExprTimeState;
-import ch.njol.skript.expressions.ExprTool;
-import ch.njol.skript.expressions.ExprWeather;
-import ch.njol.skript.expressions.ExprWorld;
-import ch.njol.skript.expressions.ExprXOfItem;
-import ch.njol.skript.loops.LoopArguments;
-import ch.njol.skript.loops.LoopBlockLine;
-import ch.njol.skript.loops.LoopBlockSphere;
-import ch.njol.skript.loops.LoopEntities;
-import ch.njol.skript.loops.LoopIdsOf;
-import ch.njol.skript.loops.LoopItems;
-import ch.njol.skript.loops.LoopWorlds;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class SkriptTriggerItems {
+public class SimpleEvents {
 	
 	static {
-		
-		final Class<?>[] items = {
-				
-				CondCanHold.class,
-				CondChance.class,
-				CondPermission.class,
-				CondInventoryContains.class,
-				CondItemInHand.class,
-				CondIsSet.class,
-				CondIs.class,
-				CondWeather.class,
-				
-				EffChange.class,
-				EffBroadcast.class,
-				EffCancelEvent.class,
-				EffCommand.class,
-				EffDrop.class,
-				EffEquip.class,
-				// EffExec.class,
-				EffExit.class,
-				EffExplosion.class,
-				EffFertilize.class,
-				EffHealth.class,
-				EffKill.class,
-				EffMessage.class,
-				EffSpawn.class,
-				EffTeleport.class,
-				EffTree.class,
-				
-				ExprArgument.class,
-				ExprArmorSlot.class,
-				ExprAttacked.class,
-				ExprAttacker.class,
-				ExprBlock.class,
-				ExprColorOf.class,
-				ExprCreature.class,
-				ExprDataOf.class,
-				ExprDistance.class,
-				ExprDrops.class,
-				ExprEntity.class,
-				ExprEventCancelled.class,
-				ExprEventExpression.class,
-				ExprFoodLevel.class,
-				ExprFurnaceSlot.class,
-				ExprGameMode.class,
-				ExprHealth.class,
-				ExprIdOf.class,
-				ExprInventory.class,
-				ExprLocation.class,
-				ExprLoopValue.class,
-				ExprPlayer.class,
-				ExprProjectile.class,
-				ExprRandom.class,
-				ExprTargetedBlock.class,
-				ExprTarget.class,
-				ExprTime.class,
-				ExprTimeState.class,
-				ExprTool.class,
-				ExprWeather.class,
-				ExprWorld.class,
-				ExprXOfItem.class,
-				
-				LoopArguments.class,
-				LoopBlockLine.class,
-				LoopBlockSphere.class,
-				LoopEntities.class,
-				LoopIdsOf.class,
-				LoopItems.class,
-				LoopWorlds.class,
-				
-				EvtBlock.class,
-				EvtDamage.class,
-				EvtEntity.class,
-				EvtEntityBlockChange.class,
-				EvtGameMode.class,
-				EvtItem.class,
-				EvtPeriodical.class,
-				EvtRightclick.class,
-				EvtWeatherChange.class,
-		
-		};
-		for (final Class<?> c : items) {
-			try {
-				c.newInstance();
-			} catch (final InstantiationException e) {
-				SkriptAPIException.instantiationException(c, e);
-			} catch (final IllegalAccessException e) {
-				SkriptAPIException.inaccessibleConstructor(c, e);
-			}
-		}
 		
 		Skript.registerEvent(SimpleEvent.class, BlockCanBuildEvent.class, "can build check");
 		Skript.registerEvent(SimpleEvent.class, BlockDamageEvent.class, "block damage");
@@ -269,6 +108,7 @@ public class SkriptTriggerItems {
 		Skript.registerEvent(SimpleEvent.class, ChunkPopulateEvent.class, "chunk populate");
 		Skript.registerEvent(SimpleEvent.class, ChunkUnloadEvent.class, "chunk unload");
 		Skript.registerEvent(SimpleEvent.class, CreeperPowerEvent.class, "creeper power");
+		Skript.registerEvent(SimpleEvent.class, EntityBreakDoorEvent.class, "zombie break[ing] [a] [wood[en]] door");
 		Skript.registerEvent(SimpleEvent.class, EntityCombustEvent.class, "combust[ing]");
 		Skript.registerEvent(SimpleEvent.class, EntityExplodeEvent.class, "(explode|explosion)");
 		Skript.registerEvent(SimpleEvent.class, EntityInteractEvent.class, "interact");// = entity interacts with block, e.g. endermen?; player -> PlayerInteractEvent
@@ -289,13 +129,6 @@ public class SkriptTriggerItems {
 		Skript.registerEvent(SimpleEvent.class, PlayerChatEvent.class, "chat[ting]");
 		Skript.registerEvent(SimpleEvent.class, PlayerEggThrowEvent.class, "throw[ing] [of [an] egg]");
 		Skript.registerEvent(SimpleEvent.class, PlayerFishEvent.class, "fish[ing]");
-		final class EvtLeftclick extends EvtItem {
-			@Override
-			public boolean check(final Event e) {
-				return (((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_BLOCK) && super.check(e);
-			}
-		}
-		Skript.registerEvent(EvtLeftclick.class, PlayerInteractEvent.class, "leftclick[ing] [on %itemtype%]");
 		final class EvtPressurePlate extends SimpleEvent {
 			@Override
 			public boolean check(final Event e) {
