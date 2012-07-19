@@ -45,7 +45,8 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	
 	/**
 	 * Get the single value of this expression.<br/>
-	 * Do not use this in conditions, use {@link #check(Event, Checker, Condition)} instead.
+	 * Do not use this in conditions, use {@link #check(Event, Checker, Condition)} instead.<br/>
+	 * This method must only return null if it always returns null for the given event.
 	 * 
 	 * @param e
 	 * @return The value or null if this expression doesn't have any value for the event

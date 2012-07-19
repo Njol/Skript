@@ -62,7 +62,9 @@ public class EffCommand extends Effect {
 	
 	@Override
 	public void execute(final Event e) {
-		for (final String command : commands.getArray(e)) {
+		for (String command : commands.getArray(e)) {
+			if (command.startsWith("/"))
+				command = command.substring(1);
 			if (senders == null) {
 				Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
 			} else {

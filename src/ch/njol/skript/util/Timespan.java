@@ -46,6 +46,7 @@ public class Timespan {
 		simpleValues.put("day", 20 * 60 * 60 * 24);
 		
 		Skript.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan", "time span")
+				.user("time ?spans?")
 				.parser(new Parser<Timespan>() {
 					@Override
 					public Timespan parse(final String s, final ParseContext context) {

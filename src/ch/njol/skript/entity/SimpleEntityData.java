@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Boat;
+import org.bukkit.entity.CaveSpider;
 import org.bukkit.entity.Chicken;
 import org.bukkit.entity.Cow;
 import org.bukkit.entity.Creature;
@@ -78,6 +79,8 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("boat", Boat.class);
 		names.put("chicken", Chicken.class);
 		names.put("cow", Cow.class);
+		names.put("cave spider", CaveSpider.class);
+		names.put("cavespider", CaveSpider.class);
 		names.put("egg", Egg.class);
 		names.put("ender crystal", EnderCrystal.class);
 		names.put("ender dragon", EnderDragon.class);
@@ -104,6 +107,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("spider", Spider.class);
 		names.put("squid", Squid.class);
 		names.put("bottle o' enchanting", ThrownExpBottle.class);
+		names.put("bottle of enchanting", ThrownExpBottle.class);
 		names.put("thrown potion", ThrownPotion.class);
 		names.put("primed TNT", TNTPrimed.class);
 		names.put("tnt", TNTPrimed.class);

@@ -200,9 +200,10 @@ public final class Skript extends JavaPlugin implements Listener {
 		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 			@Override
 			public void run() {
-				Skript.stopAcceptingRegistrations();
 				
 //				Economy.load(); // causes an exception at least with iConomy 6
+				
+				Skript.stopAcceptingRegistrations();
 				
 				loadVariables();
 				

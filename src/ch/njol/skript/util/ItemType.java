@@ -474,16 +474,16 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 				if (d.isOfType(i)) {
 					found += i == null ? 1 : i.getAmount();
 					if (found >= getAmount()) {
-						if (!isAll())
+						if (!all)
 							return true;
 						break;
 					}
 				}
 			}
-			if (isAll() && found < getAmount())
+			if (all && found < getAmount())
 				return false;
 		}
-		return isAll();
+		return all;
 	}
 	
 	/**

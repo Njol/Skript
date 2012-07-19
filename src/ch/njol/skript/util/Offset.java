@@ -219,9 +219,11 @@ public class Offset {
 	public static Offset parse(final String s) {
 		if (s.isEmpty())
 			return null;
-		final String lower = s.toLowerCase();
-		if (lower.equalsIgnoreCase("at"))
+		String lower = s.toLowerCase();
+		if (lower.equals("at"))
 			return new Offset(0, 0, 0);
+		if (lower.startsWith("at "))
+			lower = lower.substring(3);
 		final Matcher m = offsetPattern.matcher(" " + lower);
 		if (!m.matches())
 			return null;
