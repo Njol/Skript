@@ -135,7 +135,7 @@ public class SimpleEvents {
 				return ((PlayerInteractEvent) e).getAction() == Action.PHYSICAL;
 			}
 		}
-		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class, "[stepping on] [pressure] plate");
+		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class, "[step[ping] on] [a] [pressure] plate");
 		Skript.registerEvent(SimpleEvent.class, PlayerItemHeldEvent.class, "item held change");
 		Skript.registerEvent(SimpleEvent.class, PlayerJoinEvent.class, "join[ing]");
 		Skript.registerEvent(SimpleEvent.class, PlayerKickEvent.class, "(kick|being kicked)");

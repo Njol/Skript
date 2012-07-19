@@ -19,51 +19,56 @@
  * 
  */
 
-package ch.njol.skript.effects;
+package ch.njol.skript.expressions;
 
-import net.minecraft.server.Item;
-
-import org.bukkit.DyeColor;
-import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.Bukkit;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Color;
 
 /**
- * 
  * @author Peter Güttinger
- * 
+ *
  */
-public class EffFertilize extends Effect {
-	
+public class ExprConsole extends SimpleExpression<ConsoleCommandSender> {
+
 	static {
-		Skript.registerEffect(EffFertilize.class, "fertili(z|s)e [%blocks%]");
+		Skript.registerExpression(ExprConsole.class, ConsoleCommandSender.class, ExpressionType.SIMPLE, "[the] (console|server)");
 	}
 	
-	private Expression<Block> blocks;
-	
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		blocks = (Expression<Block>) vars[0];
+	public boolean init(Expression<?>[] exprs, int matchedPattern, ParseResult parseResult) {
 		return true;
 	}
-	
+
 	@Override
-	public void execute(final Event e) {
-		for (final Block b : blocks.getArray(e)) {
-			Item.INK_SACK.interactWith(new net.minecraft.server.ItemStack(Item.INK_SACK, Color.WHITE.getDye(), 1), null, ((CraftWorld) b.getWorld()).getHandle(), b.getX(), b.getY(), b.getZ(), 0);
-		}
+	public boolean isSingle() {
+		return true;
 	}
-	
+
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "fertilize " + blocks.toString(e, debug);
+	public Class<? extends ConsoleCommandSender> getReturnType() {
+		return ConsoleCommandSender.class;
+	}
+
+	@Override
+	public boolean getAnd() {
+		return false;
+	}
+
+	@Override
+	public String toString(Event e, boolean debug) {
+		return "the console";
+	}
+
+	@Override
+	protected ConsoleCommandSender[] get(Event e) {
+		return new ConsoleCommandSender[] {Bukkit.getConsoleSender()};
 	}
 	
 }

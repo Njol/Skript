@@ -36,6 +36,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Utils;
 
 /**
+ * FIXME range 0-10 (with step 0.5), not 0-20
+ * 
  * @author Peter Güttinger
  * 
  */

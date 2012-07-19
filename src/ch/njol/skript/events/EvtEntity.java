@@ -28,6 +28,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -40,16 +41,16 @@ import ch.njol.util.Checker;
 public final class EvtEntity extends SkriptEvent {
 	
 	static {
-		Skript.registerEvent(EvtEntity.class, EntityDeathEvent.class, "death [of %entitytypes%]");
-		Skript.registerEvent(EvtEntity.class, CreatureSpawnEvent.class, "spawn[ing] [of %entitytypes%]");
+		Skript.registerEvent(EvtEntity.class, EntityDeathEvent.class, "death [of %entitydatas%]");
+		Skript.registerEvent(EvtEntity.class, CreatureSpawnEvent.class, "spawn[ing] [of %entitydatas%]");
 	}
 	
-	Literal<EntityType> types;
+	Literal<EntityData<?>> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		types = (Literal<EntityType>) args[0];
+		types = (Literal<EntityData<?>>) args[0];
 		return true;
 	}
 	
@@ -60,9 +61,9 @@ public final class EvtEntity extends SkriptEvent {
 		final Entity en = e instanceof EntityDeathEvent ? ((EntityDeathEvent) e).getEntity() : ((CreatureSpawnEvent) e).getEntity();
 		if (en == null)
 			throw new RuntimeException("no entity event value for entity death/spawn");
-		return types.check(e, new Checker<EntityType>() {
+		return types.check(e, new Checker<EntityData<?>>() {
 			@Override
-			public boolean check(final EntityType t) {
+			public boolean check(final EntityData<?> t) {
 				return t.isInstance(en);
 			}
 		});

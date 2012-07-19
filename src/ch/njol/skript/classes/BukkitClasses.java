@@ -399,11 +399,6 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String getCodeString(final OfflinePlayer p) {
-						return p.getName();
-					}
-					
-					@Override
 					public String getDebugMessage(final OfflinePlayer p) {
 						if (p.isOnline())
 							return Skript.getDebugMessage(p.getPlayer());
@@ -426,28 +421,16 @@ public class BukkitClasses {
 				.parser(new Parser<CommandSender>() {
 					@Override
 					public CommandSender parse(final String s, final ParseContext context) {
-						if (s.equalsIgnoreCase("console") || s.equalsIgnoreCase("server"))
-							return Bukkit.getConsoleSender();
-//						return Bukkit.getServer().getPlayerExact(s);
 						return null;
 					}
 					
 					@Override
+					public boolean canParse(ParseContext context) {
+						return false;
+					}
+					
+					@Override
 					public String toString(final CommandSender s) {
-						if (s instanceof Player)
-							return ((Player) s).getDisplayName();
-						return s.getName();
-					}
-					
-					@Override
-					public String getCodeString(final CommandSender s) {
-						return s.getName();
-					}
-					
-					@Override
-					public String getDebugMessage(final CommandSender s) {
-						if (s instanceof Player)
-							return null;
 						return s.getName();
 					}
 				}));

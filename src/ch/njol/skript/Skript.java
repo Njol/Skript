@@ -58,6 +58,8 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -195,12 +197,12 @@ public final class Skript extends JavaPlugin implements Listener {
 		if (logNormal())
 			info(" ~ created by & © Peter Güttinger aka Njol ~");
 		
-		Economy.load();
-		
 		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 			@Override
 			public void run() {
 				Skript.stopAcceptingRegistrations();
+				
+//				Economy.load(); // causes an exception at least with iConomy 6
 				
 				loadVariables();
 				

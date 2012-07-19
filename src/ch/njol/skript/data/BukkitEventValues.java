@@ -55,7 +55,9 @@ import org.bukkit.event.painting.PaintingEvent;
 import org.bukkit.event.painting.PaintingPlaceEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -255,11 +257,35 @@ public final class BukkitEventValues {
 				return e.getBed();
 			}
 		}, 0);
-		// PlayerBucketEvent
+		// PlayerBucketEvents
+		Skript.registerEventValue(PlayerBucketFillEvent.class, Block.class, new Getter<Block, PlayerBucketFillEvent>() {
+			@Override
+			public Block get(final PlayerBucketFillEvent e) {
+				return e.getBlockClicked().getRelative(e.getBlockFace());
+			}
+		}, 0);
+		Skript.registerEventValue(PlayerBucketFillEvent.class, Block.class, new Getter<Block, PlayerBucketFillEvent>() {
+			@Override
+			public Block get(final PlayerBucketFillEvent e) {
+				BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
+				s.setTypeId(0);
+				s.setRawData((byte) 0);
+				return new BlockStateBlock(s);
+			}
+		}, 1);
+		Skript.registerEventValue(PlayerBucketEmptyEvent.class, Block.class, new Getter<Block, PlayerBucketEmptyEvent>() {
+			@Override
+			public Block get(final PlayerBucketEmptyEvent e) {
+				return e.getBlockClicked().getRelative(e.getBlockFace());
+			}
+		}, -1);
 		Skript.registerEventValue(PlayerBucketEvent.class, Block.class, new Getter<Block, PlayerBucketEvent>() {
 			@Override
 			public Block get(final PlayerBucketEvent e) {
-				return e.getBlockClicked().getRelative(e.getBlockFace());
+				BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
+				s.setType(e.getBucket() == Material.WATER_BUCKET ? Material.STATIONARY_WATER : Material.STATIONARY_LAVA);
+				s.setRawData((byte) 0);
+				return new BlockStateBlock(s);
 			}
 		}, 0);
 		// PlayerDropItemEvent

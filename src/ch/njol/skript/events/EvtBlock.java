@@ -32,6 +32,9 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.painting.PaintingBreakEvent;
 import org.bukkit.event.painting.PaintingEvent;
 import org.bukkit.event.painting.PaintingPlaceEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
@@ -48,9 +51,9 @@ import ch.njol.util.Checker;
 public class EvtBlock extends SkriptEvent {
 	
 	static {
-		Skript.registerEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class), "(break[ing]|min(e|ing)) [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class, PlayerBucketFillEvent.class), "(break[ing]|min(e|ing)) [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, BlockBurnEvent.class, "burn[ing] [[of] %itemtypes%]");
-		Skript.registerEvent(EvtBlock.class, Skript.array(BlockPlaceEvent.class, PaintingPlaceEvent.class), "plac(e|ing) [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, Skript.array(BlockPlaceEvent.class, PaintingPlaceEvent.class, PlayerBucketEmptyEvent.class), "plac(e|ing) [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, BlockFadeEvent.class, "fad(e|ing) [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, BlockFormEvent.class, "form[ing] [[of] %itemtypes%]");
 	}
@@ -79,6 +82,12 @@ public class EvtBlock extends SkriptEvent {
 		if (e instanceof BlockEvent) {
 			id = ((BlockEvent) e).getBlock().getTypeId();
 			durability = ((BlockEvent) e).getBlock().getData();
+		} else if (e instanceof PlayerBucketFillEvent) {
+			id = ((PlayerBucketEvent) e).getBlockClicked().getRelative(((PlayerBucketEvent) e).getBlockFace()).getTypeId();
+			durability = ((PlayerBucketEvent) e).getBlockClicked().getRelative(((PlayerBucketEvent) e).getBlockFace()).getData();
+		} else if (e instanceof PlayerBucketEmptyEvent) {
+			id = ((PlayerBucketEmptyEvent)e).getBucket() == Material.WATER_BUCKET ? Material.STATIONARY_WATER.getId() : Material.STATIONARY_LAVA.getId();
+			durability = 0;
 		} else if (e instanceof PaintingEvent) {
 			id = Material.PAINTING.getId();
 			durability = 0;

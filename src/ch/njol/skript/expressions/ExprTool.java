@@ -21,8 +21,12 @@
 
 package ch.njol.skript.expressions;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -58,12 +62,26 @@ public class ExprTool extends PropertyExpression<Slot> {
 	@Override
 	protected Slot[] get(final Event e) {
 		if (e instanceof PlayerItemHeldEvent && players.isDefault()) {
-			return players.getArray(e, Slot.class, new Getter<Slot, Player>() {
-				@Override
-				public Slot get(final Player p) {
-					return new Slot(p.getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot());
-				}
-			});
+			return new Slot[] {new Slot(((PlayerItemHeldEvent)e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot())};
+		}
+		if (e instanceof PlayerBucketEvent && players.isDefault()) {
+			return new Slot[] {
+					new Slot(((PlayerBucketEvent)e).getPlayer().getInventory(), ((PlayerBucketEvent)e).getPlayer().getInventory().getHeldItemSlot()) {
+						@Override
+						public ItemStack getItem() {
+							return getTime() <= 0 ? super.getItem() : ((PlayerBucketEvent)e).getItemStack();
+						}
+						
+						@Override
+						public void setItem(final ItemStack item) {
+							if (getTime() >= 0) {
+								((PlayerBucketEvent) e).setItemStack(item);
+							} else {
+								super.setItem(item);
+							}
+						}
+					}
+			};
 		}
 		return players.getArray(e, Slot.class, new Getter<Slot, Player>() {
 			@Override
@@ -100,8 +118,9 @@ public class ExprTool extends PropertyExpression<Slot> {
 		return Skript.getDebugMessage(getSingle(e));
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean setTime(final int time) {
-		return super.setTime(time, PlayerItemHeldEvent.class, players);
+		return super.setTime(time, players, PlayerItemHeldEvent.class, PlayerBucketFillEvent.class, PlayerBucketEmptyEvent.class);
 	}
 }
