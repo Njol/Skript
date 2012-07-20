@@ -509,14 +509,14 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	/**
 	 * 
 	 * @param lists The lists to remove this type from. Each list should implement {@link RandomAccess} or this method will be slow.
-	 * @return
+	 * @return 
 	 */
 	public boolean removeFrom(final List<ItemStack>... lists) {
 		int removed = 0;
 		boolean ok = true;
 		
 		for (final ItemData d : types) {
-			if (isAll())
+			if (all)
 				removed = 0;
 			for (final List<ItemStack> list : lists) {
 				if (list == null)
@@ -524,7 +524,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 				for (int i = 0; i < list.size(); i++) {
 					final ItemStack is = list.get(i);
 					if (is != null && d.isOfType(is)) {
-						if (isAll() && amount == -1) {
+						if (all && amount == -1) {
 							list.set(i, null);
 							removed = 1;
 							continue;
@@ -537,18 +537,18 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 							is.setAmount(is.getAmount() - toRemove);
 						}
 						if (removed == getAmount()) {
-							if (!isAll())
+							if (!all)
 								return true;
 							break;
 						}
 					}
 				}
 			}
-			if (isAll())
+			if (all)
 				ok &= removed == getAmount();
 		}
 		
-		if (!isAll())
+		if (!all)
 			return false;
 		return ok;
 	}

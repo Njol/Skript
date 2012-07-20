@@ -52,9 +52,14 @@ abstract class SkriptEventHandler {
 		}
 	};
 	
+	private static Event last = null;
+	
 	static void check(final Event e) {
 		if (!Skript.listenerEnabled)
 			return;
+		if (last == e)
+			return;
+		last = e;
 		final List<Trigger> ts = triggers.get(e.getClass());
 		if (ts == null)
 			return;

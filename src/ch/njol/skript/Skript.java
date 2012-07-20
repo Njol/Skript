@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
@@ -58,11 +59,16 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.BlockVector;
 
 import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Comparator;
@@ -82,6 +88,7 @@ import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.ChainedConverter;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.api.intern.Statement;
+import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.classes.BukkitClasses;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.DefaultClasses;
@@ -212,7 +219,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				Skript.info("Skript finished loading!");
 			}
 		});
-		
+
 		Bukkit.getPluginManager().registerEvents(commandListener, this);
 		
 		Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
@@ -595,7 +602,7 @@ public final class Skript extends JavaPlugin implements Listener {
 			}
 		}
 	}
-	
+
 	// ================ REGISTRATIONS ================
 	
 	private static boolean acceptRegistrations = true;
