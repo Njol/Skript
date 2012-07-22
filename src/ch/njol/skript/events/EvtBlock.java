@@ -86,7 +86,7 @@ public class EvtBlock extends SkriptEvent {
 			id = ((PlayerBucketEvent) e).getBlockClicked().getRelative(((PlayerBucketEvent) e).getBlockFace()).getTypeId();
 			durability = ((PlayerBucketEvent) e).getBlockClicked().getRelative(((PlayerBucketEvent) e).getBlockFace()).getData();
 		} else if (e instanceof PlayerBucketEmptyEvent) {
-			id = ((PlayerBucketEmptyEvent)e).getBucket() == Material.WATER_BUCKET ? Material.STATIONARY_WATER.getId() : Material.STATIONARY_LAVA.getId();
+			id = ((PlayerBucketEmptyEvent) e).getBucket() == Material.WATER_BUCKET ? Material.STATIONARY_WATER.getId() : Material.STATIONARY_LAVA.getId();
 			durability = 0;
 		} else if (e instanceof PaintingEvent) {
 			id = Material.PAINTING.getId();

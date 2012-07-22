@@ -21,7 +21,6 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
@@ -62,14 +61,14 @@ public class ExprTool extends PropertyExpression<Slot> {
 	@Override
 	protected Slot[] get(final Event e) {
 		if (e instanceof PlayerItemHeldEvent && players.isDefault()) {
-			return new Slot[] {new Slot(((PlayerItemHeldEvent)e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot())};
+			return new Slot[] {new Slot(((PlayerItemHeldEvent) e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot())};
 		}
 		if (e instanceof PlayerBucketEvent && players.isDefault()) {
 			return new Slot[] {
-					new Slot(((PlayerBucketEvent)e).getPlayer().getInventory(), ((PlayerBucketEvent)e).getPlayer().getInventory().getHeldItemSlot()) {
+					new Slot(((PlayerBucketEvent) e).getPlayer().getInventory(), ((PlayerBucketEvent) e).getPlayer().getInventory().getHeldItemSlot()) {
 						@Override
 						public ItemStack getItem() {
-							return getTime() <= 0 ? super.getItem() : ((PlayerBucketEvent)e).getItemStack();
+							return getTime() <= 0 ? super.getItem() : ((PlayerBucketEvent) e).getItemStack();
 						}
 						
 						@Override

@@ -274,7 +274,11 @@ final public class ScriptLoader {
 			currentEvent = null;
 			currentEvents = null;
 			
-			SkriptEventHandler.addTrigger(parsedEvent.first.events, trigger);
+			if (parsedEvent.first.fire) {
+				SkriptEventHandler.addTrigger(parsedEvent.first.events, trigger);
+			} else {
+				parsedEvent.second.register(trigger);
+			}
 			
 			numTriggers++;
 		}

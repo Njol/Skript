@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
@@ -59,16 +58,9 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.BlockVector;
 
 import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.api.Comparator;
@@ -88,7 +80,6 @@ import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.ChainedConverter;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.api.intern.Statement;
-import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.classes.BukkitClasses;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.DefaultClasses;
@@ -105,7 +96,6 @@ import ch.njol.skript.config.validate.SectionValidator;
 import ch.njol.skript.data.BukkitEventValues;
 import ch.njol.skript.data.DefaultComparators;
 import ch.njol.skript.data.DefaultConverters;
-import ch.njol.skript.data.SkriptEventValues;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionInfo;
@@ -115,6 +105,7 @@ import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
 import ch.njol.util.Setter;
@@ -133,8 +124,7 @@ import ch.njol.util.iterator.EnumerationIterable;
  * </pre>
  * 
  * After you made sure that Skript is loaded you can use <code>Skript.getinstance()</code> whenever you need a reference to the plugin, but you likely don't need it since most API
- * methods
- * are static.
+ * methods are static.
  * 
  * @author Peter Güttinger
  * 
@@ -176,7 +166,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		new BukkitClasses();
 		new BukkitEventValues();
 		new SkriptClasses();
-		new SkriptEventValues();
 		
 		new DefaultComparators();
 		new DefaultConverters();
@@ -219,7 +208,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				Skript.info("Skript finished loading!");
 			}
 		});
-
+		
 		Bukkit.getPluginManager().registerEvents(commandListener, this);
 		
 		Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
@@ -404,6 +393,10 @@ public final class Skript extends JavaPlugin implements Listener {
 	public static final Random random = new Random();
 	
 	private static EventPriority priority = EventPriority.NORMAL;
+	
+	public static EventPriority getPriority() {
+		return priority;
+	}
 	
 	public static <T> T[] array(final T... array) {
 		return array;
@@ -602,7 +595,7 @@ public final class Skript extends JavaPlugin implements Listener {
 			}
 		}
 	}
-
+	
 	// ================ REGISTRATIONS ================
 	
 	private static boolean acceptRegistrations = true;
@@ -695,12 +688,18 @@ public final class Skript extends JavaPlugin implements Listener {
 	@SuppressWarnings("unchecked")
 	public static <E extends SkriptEvent> void registerEvent(final Class<E> c, final Class<? extends Event> event, final String... patterns) {
 		checkAcceptRegistrations();
-		events.add(new SkriptEventInfo<E>(patterns, c, array(event)));
+		events.add(new SkriptEventInfo<E>(patterns, c, array(event), true));
 	}
-	
+
 	public static <E extends SkriptEvent> void registerEvent(final Class<E> c, final Class<? extends Event>[] events, final String... patterns) {
 		checkAcceptRegistrations();
-		Skript.events.add(new SkriptEventInfo<E>(patterns, c, events));
+		Skript.events.add(new SkriptEventInfo<E>(patterns, c, events, true));
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <E extends SkriptEvent> void registerEvent(final Class<E> c, final Class<? extends Event> event, boolean fire, final String... patterns) {
+		checkAcceptRegistrations();
+		Skript.events.add(new SkriptEventInfo<E>(patterns, c, array(event), fire));
 	}
 	
 	public static final Collection<SkriptEventInfo<?>> getEvents() {
@@ -1092,41 +1091,19 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @see Parser
 	 */
 	public static String toString(final Object o) {
-		return toString(o, false, false);
+		return toString(o, StringMode.MESSAGE, false);
 	}
 	
 	public static String getDebugMessage(final Object o) {
-		return toString(o, true, false);
+		return toString(o, StringMode.DEBUG, false);
 	}
 	
 	public static final String toString(final Object[] os, final boolean and) {
-		return toString(os, and, false);
+		return toString(os, and, StringMode.MESSAGE, false);
 	}
 	
-	public static final String toString(final Object[] os, final boolean and, final boolean code) {
-		if (os.length == 0)
-			return toString(null);
-		if (os.length == 1)
-			return toString(os[0], false, code);
-		final StringBuilder b = new StringBuilder();
-		for (int i = 0; i < os.length; i++) {
-			if (i != 0) {
-				if (i == os.length - 1)
-					b.append(and ? " and " : " or ");
-				else
-					b.append(", ");
-			}
-			b.append(toString(os[i], false, code));
-		}
-		return b.toString();
-	}
-	
-	/**
-	 * @param o The object
-	 * @return String representation of the object
-	 * @see #toString(Object)
-	 */
-	private static <T> String toString(final T o, final boolean debug, final boolean code) {
+	public static final <T> String toString(final T o, final StringMode mode, final boolean plural) {
+		final boolean code = mode == StringMode.VARIABLE_NAME;
 		if (o == null)
 			return "<none>";
 		if (o.getClass().isArray()) {
@@ -1137,19 +1114,37 @@ public final class Skript extends JavaPlugin implements Listener {
 			for (final Object i : (Object[]) o) {
 				if (!first)
 					b.append(", ");
-				b.append(toString(i, debug, code));
+				b.append(toString(i, mode, plural));
 				first = false;
 			}
 			return "[" + b.toString() + "]";
 		}
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getParser() != null && ci.getC().isAssignableFrom(o.getClass())) {
-				final String s = debug ? ((Parser<T>) ci.getParser()).getDebugMessage(o) : code ? "<" + ci.getCodeName() + ":" + ((Parser<T>) ci.getParser()).getCodeString(o) + ">" : ((Parser<T>) ci.getParser()).toString(o);
+				final String s = code ? "<" + ci.getCodeName() + ":" + ((Parser<T>) ci.getParser()).toCodeString(o) + ">" : Utils.toPlural(((Parser<T>) ci.getParser()).toString(o, mode), plural);
 				if (s != null)
 					return s;
 			}
 		}
 		return code ? "<object:" + o + ">" : String.valueOf(o);
+	}
+	
+	public static final String toString(final Object[] os, final boolean and, final StringMode mode, final boolean plural) {
+		if (os.length == 0)
+			return toString(null);
+		if (os.length == 1)
+			return toString(os[0], mode, plural);
+		final StringBuilder b = new StringBuilder();
+		for (int i = 0; i < os.length; i++) {
+			if (i != 0) {
+				if (i == os.length - 1)
+					b.append(and ? " and " : " or ");
+				else
+					b.append(", ");
+			}
+			b.append(toString(os[i], mode, plural));
+		}
+		return b.toString();
 	}
 	
 	// ================ SERIALIZATION (part of classes) ================
@@ -1459,6 +1454,11 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 	}
 	
+	public static boolean commandExists(final String command) {
+		final SkriptCommand c = commands.get(command);
+		return c != null && c.getName().equals(command);
+	}
+	
 	public static void registerCommand(final SkriptCommand command) {
 		commands.put(command.getName().toLowerCase(), command);
 		for (final String alias : command.getAliases()) {
@@ -1484,7 +1484,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		@SuppressWarnings("unused")
 		@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 		public void onPlayerCommand(final PlayerCommandPreprocessEvent e) {
-			if (handleCommand(e.getPlayer(), e.getMessage()))
+			if (handleCommand(e.getPlayer(), e.getMessage().substring(1)))
 				e.setCancelled(true);
 		}
 		
@@ -1505,7 +1505,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @return whether to cancel the event
 	 */
 	private final static boolean handleCommand(final CommandSender sender, final String command) {
-		final String[] cmd = command.substring(1).split("\\s+", 2);
+		final String[] cmd = command.split("\\s+", 2);
 		cmd[0] = cmd[0].toLowerCase();
 		if (cmd[0].endsWith("?")) {
 			final SkriptCommand c = commands.get(cmd[0].substring(0, cmd[0].length() - 1));

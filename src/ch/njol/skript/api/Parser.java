@@ -24,6 +24,7 @@ package ch.njol.skript.api;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.util.StringMode;
 
 /**
  * A parser used to parse data from a string. <br/>
@@ -65,12 +66,32 @@ public abstract class Parser<T> {
 	public abstract String toString(T o);
 	
 	/**
-	 * Gets a string representation of this object that will be used in variable's names.
+	 * Gets a string representation of this object for the given mode
 	 * 
 	 * @param o
+	 * @param mode
 	 * @return
 	 */
-	public String getCodeString(final T o) {
+	public final String toString(final T o, final StringMode mode) {
+		switch (mode) {
+			case MESSAGE:
+				return toString(o);
+			case DEBUG:
+				return getDebugMessage(o);
+			case VARIABLE_NAME:
+				return toCodeString(o);
+			case COMMAND:
+				return toCommandString(o);
+		}
+		assert false;
+		return null;
+	}
+	
+	public String toCommandString(final T o) {
+		return toString(o);
+	}
+	
+	public String toCodeString(final T o) {
 		return toString(o);
 	}
 	

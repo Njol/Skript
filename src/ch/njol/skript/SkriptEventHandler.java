@@ -40,7 +40,7 @@ import ch.njol.skript.api.intern.Trigger;
  * @author Peter Güttinger
  * 
  */
-abstract class SkriptEventHandler {
+public abstract class SkriptEventHandler {
 	private SkriptEventHandler() {}
 	
 	static Map<Class<? extends Event>, List<Trigger>> triggers = new HashMap<Class<? extends Event>, List<Trigger>>();
@@ -76,32 +76,58 @@ abstract class SkriptEventHandler {
 				return;
 		}
 		
-		final long startEvent = System.nanoTime();
-		if (Skript.logVeryHigh()) {
-			Skript.info("");
-			Skript.info("== " + e.getClass().getName() + " ==");
-		}
+		logEventStart(e);
+		
 		if (e instanceof Cancellable && ((Cancellable) e).isCancelled() &&
 				!(e instanceof PlayerInteractEvent && (((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_AIR) && ((PlayerInteractEvent) e).useItemInHand() != Result.DENY)) {
 			if (Skript.logVeryHigh())
 				Skript.info(" -x- was cancelled");
 			return;
 		}
+		
 		for (final Trigger t : ts) {
 			if (!t.getEvent().check(e))
 				continue;
-			if (Skript.logVeryHigh())
-				Skript.info("# " + t.getName());
-			final long startTrigger = System.nanoTime();
+			logTriggerStart(t);
 			t.run(e);
-			if (Skript.logVeryHigh())
-				Skript.info("# " + t.getName() + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
+			logTriggerEnd(t);
 		}
+		
 		// in case it got forgotten somewhere (you must not rely on this, as you will disable Skript's listener for all events triggered by any effects/conditions following yours!)
 		Skript.enableListener();
 		
-		if (Skript.logVeryHigh())
-			Skript.info("== took " + 1. * (System.nanoTime() - startEvent) / 1000000. + " milliseconds ==");
+		logEventEnd();
+	}
+	
+	private static long startEvent;
+	
+	public static void logEventStart(final Event e) {
+		if (!Skript.logVeryHigh())
+			return;
+		startEvent = System.nanoTime();
+		Skript.info("");
+		Skript.info("== " + e.getClass().getName() + " ==");
+	}
+	
+	public static void logEventEnd() {
+		if (!Skript.logVeryHigh())
+			return;
+		Skript.info("== took " + 1. * (System.nanoTime() - startEvent) / 1000000. + " milliseconds ==");
+	}
+	
+	static long startTrigger;
+	
+	public static void logTriggerStart(final Trigger t) {
+		if (!Skript.logVeryHigh())
+			return;
+		Skript.info("# " + t.getName());
+		startTrigger = System.nanoTime();
+	}
+	
+	public static void logTriggerEnd(final Trigger t) {
+		if (!Skript.logVeryHigh())
+			return;
+		Skript.info("# " + t.getName() + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 	}
 	
 	static void addTrigger(final Class<? extends Event>[] events, final Trigger trigger) {

@@ -19,13 +19,14 @@
  * 
  */
 
-package ch.njol.skript.util;
+package ch.njol.skript.events;
 
 import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import ch.njol.skript.events.EvtPeriodical;
+import ch.njol.skript.Skript;
+import ch.njol.skript.api.Getter;
 
 /**
  * 
@@ -33,20 +34,24 @@ import ch.njol.skript.events.EvtPeriodical;
  * 
  */
 public class ScheduledEvent extends Event {
-	private final World world;
-	private final EvtPeriodical event;
 	
-	public ScheduledEvent(final World world, final EvtPeriodical event) {
+	static {
+		Skript.registerEventValue(ScheduledEvent.class, World.class, new Getter<World, ScheduledEvent>() {
+			@Override
+			public World get(final ScheduledEvent e) {
+				return e.getWorld();
+			}
+		}, 0);
+	}
+	
+	private final World world;
+	
+	public ScheduledEvent(final World world) {
 		this.world = world;
-		this.event = event;
 	}
 	
 	public final World getWorld() {
 		return world;
-	}
-	
-	public final EvtPeriodical getSkriptEvent() {
-		return event;
 	}
 	
 	// Bukkit stuff

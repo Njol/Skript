@@ -30,12 +30,11 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
 
 /**
  * @author Peter Güttinger
- *
+ * 
  */
 public class EffPoison extends Effect {
 	
@@ -45,8 +44,8 @@ public class EffPoison extends Effect {
 				"(cure|unpoison) %livingentities% [from poison]");
 	}
 	
-	private final static int DEFAULT_DURATION = 15*20; // 15 seconds on hard difficulty
-
+	private final static int DEFAULT_DURATION = 15 * 20; // 15 seconds on hard difficulty
+	
 	private Expression<LivingEntity> entites;
 	private Expression<Timespan> duration;
 	
@@ -54,7 +53,7 @@ public class EffPoison extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		entites = (Expression<LivingEntity>) exprs[0];
 		if (matchedPattern == 0)
 			duration = (Expression<Timespan>) exprs[1];
@@ -63,15 +62,15 @@ public class EffPoison extends Effect {
 	}
 	
 	@Override
-	public String toString(Event e, boolean debug) {
-		return "poison "+entites.toString(e, debug);
+	public String toString(final Event e, final boolean debug) {
+		return "poison " + entites.toString(e, debug);
 	}
 	
 	@Override
-	protected void execute(Event e) {
-		for (LivingEntity le : entites.getArray(e)) {
+	protected void execute(final Event e) {
+		for (final LivingEntity le : entites.getArray(e)) {
 			if (!cure) {
-				int d = duration == null || duration.getSingle(e) == null ? DEFAULT_DURATION : duration.getSingle(e).getTicks();
+				final int d = duration == null || duration.getSingle(e) == null ? DEFAULT_DURATION : duration.getSingle(e).getTicks();
 				le.addPotionEffect(new PotionEffect(PotionEffectType.POISON, d, 0), true);
 			} else {
 				le.removePotionEffect(PotionEffectType.POISON);

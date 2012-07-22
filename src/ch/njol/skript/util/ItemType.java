@@ -509,7 +509,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	/**
 	 * 
 	 * @param lists The lists to remove this type from. Each list should implement {@link RandomAccess} or this method will be slow.
-	 * @return 
+	 * @return
 	 */
 	public boolean removeFrom(final List<ItemStack>... lists) {
 		int removed = 0;

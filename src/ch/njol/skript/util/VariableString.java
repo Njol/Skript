@@ -44,20 +44,20 @@ public class VariableString implements Debuggable {
 	private final ArrayList<Object> string;
 	private final boolean isSimple;
 	private final String simple;
-	private final boolean isCodeString;
+	private StringMode mode;
 	
-	private VariableString(final String s, final boolean code) {
+	private VariableString(final String s, final StringMode mode) {
 		string = null;
 		isSimple = true;
 		simple = s;
-		isCodeString = code;
+		this.mode = mode;
 	}
 	
-	private VariableString(final ArrayList<Object> string, final boolean code) {
+	private VariableString(final ArrayList<Object> string, final StringMode mode) {
 		isSimple = false;
 		simple = null;
 		this.string = string;
-		isCodeString = code;
+		this.mode = mode;
 	}
 	
 	/**
@@ -66,18 +66,18 @@ public class VariableString implements Debuggable {
 	 * @return
 	 */
 	public static VariableString newInstance(final String s) {
-		return newInstance(s, false);
+		return newInstance(s, StringMode.MESSAGE);
 	}
 	
-	public static VariableString newInstance(final String s, final boolean code) {
-		if (code && (s.contains("<") || s.contains(">"))) {
+	public static VariableString newInstance(final String s, final StringMode mode) {
+		if (mode == StringMode.VARIABLE_NAME && (s.contains("<") || s.contains(">"))) {
 			Skript.error("A variable's name must not contain <angle brackets>");
 			return null;
 		}
 		final ArrayList<Object> string = new ArrayList<Object>();
 		int c = s.indexOf('%');
 		if (c == -1) {
-			return new VariableString(s, code);
+			return new VariableString(s, mode);
 		}
 		string.add(s.substring(0, c));
 		while (c != s.length()) {
@@ -111,7 +111,7 @@ public class VariableString implements Debuggable {
 				c = s.length();
 			string.add(s.substring(c2 + 1, c));
 		}
-		return new VariableString(string, code);
+		return new VariableString(string, mode);
 	}
 	
 	public static VariableString[] makeStrings(final String[] args) {
@@ -158,16 +158,16 @@ public class VariableString implements Debuggable {
 			final Object o = string.get(i);
 			if (o instanceof Expression<?>) {
 				boolean plural = false;
-				if (!isCodeString && i + 1 < string.size()) {
+				if (mode == StringMode.MESSAGE && i + 1 < string.size()) {
 					if (string.get(i + 1) instanceof String) {
 						if (((String) string.get(i + 1)).startsWith("s "))
 							plural = true;
 					}
 				}
-				if (!isCodeString && (plural || Math.abs(StringUtils.numberBefore(b, b.length() - 1)) != 1))
-					b.append(Utils.toPlural(Skript.toString(((Expression<?>) o).getArray(e), ((Expression<?>) o).getAnd())));
+				if (mode == StringMode.MESSAGE && (plural || Math.abs(StringUtils.numberBefore(b, b.length() - 1)) != 1))
+					b.append(Skript.toString(((Expression<?>) o).getArray(e), ((Expression<?>) o).getAnd(), mode, true));
 				else
-					b.append(Skript.toString(((Expression<?>) o).getArray(e), ((Expression<?>) o).getAnd(), isCodeString));
+					b.append(Skript.toString(((Expression<?>) o).getArray(e), ((Expression<?>) o).getAnd(), mode, false));
 			} else {
 				b.append(o);
 			}
@@ -202,8 +202,11 @@ public class VariableString implements Debuggable {
 		return isSimple;
 	}
 	
-	public boolean isCodeString() {
-		return isCodeString;
+	public StringMode getMode() {
+		return mode;
 	}
 	
+	public void setMode(final StringMode mode) {
+		this.mode = mode;
+	}
 }

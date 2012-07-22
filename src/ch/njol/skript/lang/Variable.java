@@ -33,6 +33,7 @@ import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.Converter.ConverterUtils;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
@@ -51,8 +52,8 @@ public class Variable<T> implements Expression<T> {
 	
 	public Variable(final VariableString name, final Class<T> type) {
 		Validate.notNull(name, type);
-		if (!name.isCodeString())
-			throw new IllegalArgumentException("'name' must be a code string");
+		if (name.getMode() != StringMode.VARIABLE_NAME) // not setMode as angle brackets are not allowed in variable names
+			throw new IllegalArgumentException("'name' must be a VARIABLE_NAME string");
 		this.name = name;
 		this.type = type;
 		zero = (T[]) Array.newInstance(type, 0);

@@ -103,6 +103,8 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("skeleton", Skeleton.class);
 		names.put("slime", Slime.class);
 		names.put("snowball", Snowball.class);
+		names.put("snow golem", Snowman.class);
+		names.put("snowgolem", Snowman.class);
 		names.put("snowman", Snowman.class);
 		names.put("spider", Spider.class);
 		names.put("squid", Squid.class);

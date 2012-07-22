@@ -122,7 +122,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String getCodeString(final Entity e) {
+					public String toCodeString(final Entity e) {
 						return e.getUniqueId().toString();
 					}
 					
@@ -155,7 +155,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String getCodeString(final Block b) {
+					public String toCodeString(final Block b) {
 						return b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ();
 					}
 					
@@ -246,7 +246,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String getCodeString(final Location l) {
+					public String toCodeString(final Location l) {
 						return l.getWorld().getName() + ":" + l.getX() + "," + l.getY() + "," + l.getZ();
 					}
 					
@@ -362,7 +362,12 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String getCodeString(final Player p) {
+					public String toCommandString(final Player p) {
+						return p.getName();
+					}
+					
+					@Override
+					public String toCodeString(final Player p) {
 						return p.getName();
 					}
 					
@@ -425,7 +430,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public boolean canParse(ParseContext context) {
+					public boolean canParse(final ParseContext context) {
 						return false;
 					}
 					

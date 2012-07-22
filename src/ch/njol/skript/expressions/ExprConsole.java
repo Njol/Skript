@@ -33,41 +33,41 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
- *
+ * 
  */
 public class ExprConsole extends SimpleExpression<ConsoleCommandSender> {
-
+	
 	static {
 		Skript.registerExpression(ExprConsole.class, ConsoleCommandSender.class, ExpressionType.SIMPLE, "[the] (console|server)");
 	}
 	
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		return true;
 	}
-
+	
 	@Override
 	public boolean isSingle() {
 		return true;
 	}
-
+	
 	@Override
 	public Class<? extends ConsoleCommandSender> getReturnType() {
 		return ConsoleCommandSender.class;
 	}
-
+	
 	@Override
 	public boolean getAnd() {
 		return false;
 	}
-
+	
 	@Override
-	public String toString(Event e, boolean debug) {
+	public String toString(final Event e, final boolean debug) {
 		return "the console";
 	}
-
+	
 	@Override
-	protected ConsoleCommandSender[] get(Event e) {
+	protected ConsoleCommandSender[] get(final Event e) {
 		return new ConsoleCommandSender[] {Bukkit.getConsoleSender()};
 	}
 	

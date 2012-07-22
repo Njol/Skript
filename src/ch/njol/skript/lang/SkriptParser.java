@@ -39,6 +39,7 @@ import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.SkriptCommand;
 import ch.njol.skript.command.SkriptCommandEvent;
+import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
 import ch.njol.util.Pair;
@@ -250,7 +251,7 @@ public class SkriptParser {
 	
 	private final static <T> Variable<T> parseVariable(final String expr, final Class<T> returnType) {
 		if (varPattern.matcher(expr).matches()) {
-			final VariableString vs = VariableString.newInstance(expr.substring(expr.indexOf('{') + 1, expr.lastIndexOf('}')), true);
+			final VariableString vs = VariableString.newInstance(expr.substring(expr.indexOf('{') + 1, expr.lastIndexOf('}')), StringMode.VARIABLE_NAME);
 			if (vs == null)
 				return null;
 			return new Variable<T>(vs, returnType);
@@ -582,8 +583,8 @@ public class SkriptParser {
 		if (a.length == 1) {
 			r.name = s;
 		} else {
-			r.time = Integer.parseInt(a[1]);
 			r.name = a[0];
+			r.time = Integer.parseInt(a[1]);
 		}
 		final Pair<String, Boolean> p = Utils.getPlural(r.name);
 		r.name = p.first;

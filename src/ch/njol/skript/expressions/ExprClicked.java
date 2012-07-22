@@ -51,7 +51,7 @@ import ch.njol.skript.util.Utils;
 public class ExprClicked extends SimpleExpression<Object> {
 	
 	static {
-		Skript.registerExpression(ExprClicked.class, Object.class, ExpressionType.SIMPLE, "clicked <.+>");
+		Skript.registerExpression(ExprClicked.class, Object.class, ExpressionType.SIMPLE, "[the] clicked <.+>");
 	}
 	
 	private EntityData<?> entityType = null;

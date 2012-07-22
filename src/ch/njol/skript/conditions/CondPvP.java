@@ -19,50 +19,51 @@
  * 
  */
 
-package ch.njol.skript.effects;
+package ch.njol.skript.conditions;
 
-import net.minecraft.server.Item;
-
-import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.World;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
+import ch.njol.skript.api.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Color;
+import ch.njol.util.Checker;
 
 /**
- * 
  * @author Peter Güttinger
  * 
  */
-public class EffFertilize extends Effect {
+public class CondPvP extends Condition {
 	
 	static {
-		Skript.registerEffect(EffFertilize.class, "fertili(z|s)e [%blocks%]");
+		Skript.registerCondition(CondPvP.class, "(is PvP|PvP is) enabled [in %worlds%]", "(is PvP|PvP is) disabled [in %worlds%]");
 	}
 	
-	private Expression<Block> blocks;
+	private Expression<World> worlds;
+	private boolean enabled;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		blocks = (Expression<Block>) vars[0];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+		worlds = (Expression<World>) exprs[0];
+		enabled = matchedPattern == 0;
 		return true;
 	}
 	
 	@Override
-	public void execute(final Event e) {
-		for (final Block b : blocks.getArray(e)) {
-			Item.INK_SACK.interactWith(new net.minecraft.server.ItemStack(Item.INK_SACK, Color.WHITE.getDye(), 1), null, ((CraftWorld) b.getWorld()).getHandle(), b.getX(), b.getY(), b.getZ(), 0);
-		}
+	public String toString(final Event e, final boolean debug) {
+		return "is PvP " + (enabled ? "enabled" : "disabled") + " in " + worlds.toString(e, debug);
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "fertilize " + blocks.toString(e, debug);
+	public boolean check(final Event e) {
+		return worlds.check(e, new Checker<World>() {
+			@Override
+			public boolean check(final World w) {
+				return w.getPVP() == enabled;
+			}
+		}, this);
 	}
 	
 }

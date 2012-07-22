@@ -267,7 +267,7 @@ public final class BukkitEventValues {
 		Skript.registerEventValue(PlayerBucketFillEvent.class, Block.class, new Getter<Block, PlayerBucketFillEvent>() {
 			@Override
 			public Block get(final PlayerBucketFillEvent e) {
-				BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
+				final BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
 				s.setTypeId(0);
 				s.setRawData((byte) 0);
 				return new BlockStateBlock(s);
@@ -282,7 +282,7 @@ public final class BukkitEventValues {
 		Skript.registerEventValue(PlayerBucketEvent.class, Block.class, new Getter<Block, PlayerBucketEvent>() {
 			@Override
 			public Block get(final PlayerBucketEvent e) {
-				BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
+				final BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
 				s.setType(e.getBucket() == Material.WATER_BUCKET ? Material.STATIONARY_WATER : Material.STATIONARY_LAVA);
 				s.setRawData((byte) 0);
 				return new BlockStateBlock(s);

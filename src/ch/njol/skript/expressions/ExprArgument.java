@@ -21,14 +21,10 @@
 
 package ch.njol.skript.expressions;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.intern.ConvertedExpression;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.command.SkriptCommandEvent;
@@ -70,7 +66,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 			break;
 			case 1:
 			case 2:
-				int i = Integer.parseInt(parser.regexes.get(0).group(1));
+				final int i = Integer.parseInt(parser.regexes.get(0).group(1));
 				if (i > Commands.currentArguments.size()) {
 					Skript.error("the command doesn't have a " + StringUtils.fancyOrderNumber(i) + " argument");
 					return false;
@@ -123,7 +119,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "the "+ StringUtils.fancyOrderNumber(arg.getIndex() + 1) + " argument";
+			return "the " + StringUtils.fancyOrderNumber(arg.getIndex() + 1) + " argument";
 		return Skript.getDebugMessage(getArray(e));
 	}
 	

@@ -22,6 +22,8 @@
 package ch.njol.skript.util;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Parser;
@@ -29,6 +31,7 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.util.Pair;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -117,7 +120,7 @@ public class Timespan {
 					
 					@Override
 					public String toString(final Timespan t) {
-						return Math.floor(t.ticks / 1000) + ":" + Math.floor(t.ticks % 1000 * 60 / 1000);
+						return t.toString();
 					}
 				}).serializer(new Serializer<Timespan>() {
 					@Override
@@ -144,6 +147,36 @@ public class Timespan {
 	
 	public int getTicks() {
 		return ticks;
+	}
+	
+	@Override
+	public String toString() {
+		return toString(ticks);
+	}
+
+	@SuppressWarnings("unchecked")
+	final static Pair<String, Integer>[] simpleValues = (Pair<String, Integer>[]) new Pair<?,?>[] {
+		new Pair<String, Integer>("day", 20 * 60 * 60 * 24),
+		new Pair<String, Integer>("hour", 20 * 60 * 60),
+		new Pair<String, Integer>("minute", 20 * 60),
+		new Pair<String, Integer>("second", 20)
+	};
+	
+	public static String toString(int ticks) {
+		for (int i = 0; i < simpleValues.length; i++) {
+			if (ticks >= simpleValues[i].second) {
+				if (i < simpleValues.length - 1 && ticks % simpleValues[i].second != 0) {
+					return toString(Math.floor(1.*ticks/simpleValues[i].second), simpleValues[i]) + " and " + toString(1.*(ticks % simpleValues[i].second)/simpleValues[i+1].second, simpleValues[i+1]);
+				} else {
+					return toString(1.*ticks/simpleValues[i].second, simpleValues[i]);
+				}
+			}
+		}
+		return ticks + " ticks";
+	}
+	
+	private static String toString(double amount, Pair<String, Integer> p) {
+		return StringUtils.toString(amount, Skript.NUMBERACCURACY) + " "+ Utils.toPlural(p.first, amount != 1);
 	}
 	
 }

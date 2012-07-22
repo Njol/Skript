@@ -29,7 +29,6 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.entity.EntityData;
-import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Checker;

@@ -91,6 +91,11 @@ public abstract class Commands {
 		assert a;
 		
 		final String command = m.group(1);
+		if (Skript.commandExists(command)) {
+			Skript.error("A command with the name /" + command + " is already defined");
+			return false;
+		}
+		
 		final String arguments = m.group(3) == null ? "" : m.group(3);
 		final StringBuilder pattern = new StringBuilder();
 		
@@ -159,10 +164,10 @@ public abstract class Commands {
 		final String permission = node.get("permission", null);
 		final String permissionMessage = node.get("permission message", null);
 		final SectionNode trigger = (SectionNode) node.get("trigger");
-		final String[] by = node.get("executable by", "console,players").split("\\s*,\\s*|\\s+and\\s+");
+		final String[] by = node.get("executable by", "console,players").split("\\s*,\\s*|\\s+(and|or)\\s+");
 		int executableBy = 0;
 		for (final String b : by) {
-			if (b.equalsIgnoreCase("console")) {
+			if (b.equalsIgnoreCase("console") || b.equalsIgnoreCase("the console")) {
 				executableBy |= SkriptCommand.CONSOLE;
 			} else if (b.equalsIgnoreCase("players") || b.equalsIgnoreCase("player")) {
 				executableBy |= SkriptCommand.PLAYERS;

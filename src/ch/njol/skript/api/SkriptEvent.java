@@ -24,6 +24,8 @@ package ch.njol.skript.api;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.events.EvtClick;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -47,14 +49,17 @@ public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 		
 		public Class<? extends Event>[] events;
 		
-		public SkriptEventInfo(final String[] patterns, final Class<E> c, final Class<? extends Event>[] events) {
+		public final boolean fire;
+		
+		public SkriptEventInfo(final String[] patterns, final Class<E> c, final Class<? extends Event>[] events, final boolean fire) {
 			super(patterns, c);
 			this.events = events;
+			this.fire = fire;
 		}
 	}
 	
 	@Override
-	public boolean init(final ch.njol.skript.lang.Expression<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
+	public final boolean init(final ch.njol.skript.lang.Expression<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -74,5 +79,13 @@ public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 	 * @return true in most cases.
 	 */
 	public abstract boolean check(Event e);
+	
+	/**
+	 * This method is called after the whole trigger is loaded for events that fire themselves
+	 */
+	@SuppressWarnings("static-method")
+	public void register(@SuppressWarnings("unused") final Trigger t) {
+		throw new SkriptAPIException("events that fire themselves must override register(Trigger)");
+	}
 	
 }

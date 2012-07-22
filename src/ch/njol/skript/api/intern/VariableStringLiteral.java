@@ -38,6 +38,7 @@ import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
+import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
@@ -105,6 +106,11 @@ public class VariableStringLiteral implements Literal<String> {
 		}
 		b.append("]");
 		return b.toString();
+	}
+	
+	public void setMode(final StringMode mode) {
+		for (final VariableString s : strings)
+			s.setMode(mode);
 	}
 	
 	@Override

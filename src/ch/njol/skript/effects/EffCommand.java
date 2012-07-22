@@ -27,8 +27,10 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Effect;
+import ch.njol.skript.api.intern.VariableStringLiteral;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.StringMode;
 
 /**
  * 
@@ -56,6 +58,9 @@ public class EffCommand extends Effect {
 		} else {
 			commands = (Expression<String>) vars[0];
 			senders = (Expression<CommandSender>) vars[1];
+		}
+		if (commands instanceof VariableStringLiteral) {
+			((VariableStringLiteral) commands).setMode(StringMode.COMMAND);
 		}
 		return true;
 	}

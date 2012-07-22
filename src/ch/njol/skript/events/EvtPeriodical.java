@@ -26,31 +26,34 @@ import org.bukkit.World;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptEventHandler;
 import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.ScheduledEvent;
+import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
 
 public class EvtPeriodical extends SkriptEvent {
 	
 	static {
-		Skript.registerEvent(EvtPeriodical.class, ScheduledEvent.class, "every %timespan% [in [world[s]] %worlds%]");
+		Skript.registerEvent(EvtPeriodical.class, ScheduledEvent.class, false, "every %timespan% [in [world[s]] %worlds%]");
 	}
 	
 	private int period;
+	
+	private Trigger t;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		period = ((Literal<Timespan>) args[0]).getSingle().getTicks();
 		final World[] worlds = args[1] == null ? null : ((Literal<World>) args[1]).getArray();
-		final EvtPeriodical evt = this;
 		if (worlds == null) {
 			Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
 				@Override
 				public void run() {
-					Bukkit.getPluginManager().callEvent(new ScheduledEvent(null, evt));
+					execute(null);
 				}
 			}, period, period);
 		} else {
@@ -58,7 +61,7 @@ public class EvtPeriodical extends SkriptEvent {
 				Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
 					@Override
 					public void run() {
-						Bukkit.getPluginManager().callEvent(new ScheduledEvent(w, evt));
+						execute(w);
 					}
 				}, period - (w.getFullTime() % period), period);
 			}
@@ -66,14 +69,28 @@ public class EvtPeriodical extends SkriptEvent {
 		return true;
 	}
 	
+	private void execute(final World w) {
+		final ScheduledEvent e = new ScheduledEvent(w);
+		SkriptEventHandler.logEventStart(e);
+		SkriptEventHandler.logTriggerStart(t);
+		t.run(e);
+		SkriptEventHandler.logTriggerEnd(t);
+		SkriptEventHandler.logEventEnd();
+	}
+	
+	@Override
+	public void register(final Trigger t) {
+		this.t = t;
+	}
+	
 	@Override
 	public boolean check(final Event e) {
-		return ((ScheduledEvent) e).getSkriptEvent() == this;
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "periodical " + period;
+		return "every " + Timespan.toString(period);
 	}
 	
 }
