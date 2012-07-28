@@ -288,6 +288,8 @@ public class BukkitClasses {
 				.parser(new Parser<World>() {
 					@Override
 					public World parse(final String s, final ParseContext context) {
+						if (context == ParseContext.COMMAND)
+							return Bukkit.getWorld(s);
 						if (!s.matches("\".+\""))
 							return null;
 						return Bukkit.getWorld(s.substring(1, s.length() - 1));
@@ -385,9 +387,12 @@ public class BukkitClasses {
 		
 		Skript.registerClass(new ClassInfo<OfflinePlayer>(OfflinePlayer.class, "offlineplayer", "player")
 				.defaultExpression(new EventValueExpression<OfflinePlayer>(OfflinePlayer.class))
+				.user("offline ?players?")
 				.parser(new Parser<OfflinePlayer>() {
 					@Override
 					public OfflinePlayer parse(final String s, final ParseContext context) {
+						if (context == ParseContext.COMMAND)
+							return Bukkit.getOfflinePlayer(s);
 //						if (s.matches("\"\\S+\""))
 //							return Bukkit.getOfflinePlayer(s.substring(1, s.length() - 1));
 						return null;

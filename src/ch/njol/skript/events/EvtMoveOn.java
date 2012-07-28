@@ -207,4 +207,10 @@ public class EvtMoveOn extends SkriptEvent {
 		registerListener();
 	}
 	
+	@Override
+	public void unregister() {
+		blockTriggers.clear();
+		itemTypeTriggers.clear();
+	}
+	
 }

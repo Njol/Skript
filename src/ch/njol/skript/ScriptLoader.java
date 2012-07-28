@@ -22,6 +22,7 @@
 package ch.njol.skript;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,8 @@ final public class ScriptLoader {
 	static int loadedTriggers = 0, loadedCommands = 0;
 	
 	private static String indentation = "";
+	
+	final static Collection<Trigger> selfRegisteredTriggers = new ArrayList<Trigger>();
 	
 	private final static String replaceOptions(final String s) {
 		return StringUtils.replaceAll(s, "\\{@(.+?)\\}", new Callback<String, Matcher>() {
@@ -278,6 +281,7 @@ final public class ScriptLoader {
 				SkriptEventHandler.addTrigger(parsedEvent.first.events, trigger);
 			} else {
 				parsedEvent.second.register(trigger);
+				selfRegisteredTriggers.add(trigger);
 			}
 			
 			numTriggers++;

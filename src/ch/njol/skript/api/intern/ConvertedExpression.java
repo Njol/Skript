@@ -237,4 +237,9 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 		};
 	}
 	
+	@Override
+	public Expression<?> getSource() {
+		return source;
+	}
+	
 }

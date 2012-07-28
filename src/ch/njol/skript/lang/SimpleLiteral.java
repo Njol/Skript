@@ -33,6 +33,7 @@ import ch.njol.skript.api.Converter.ConverterUtils;
 import ch.njol.skript.api.DefaultExpression;
 import ch.njol.skript.api.intern.ConvertedLiteral;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Validate;
@@ -52,6 +53,8 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	private final boolean isDefault;
 	private final boolean and;
 	
+	private UnparsedLiteral source = null;
+	
 	public SimpleLiteral(final T[] data, final Class<T> c, final boolean and) {
 		Validate.notNullOrEmpty(data, "data");
 		Validate.notNull(c, "c");
@@ -68,6 +71,11 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		c = (Class<T>) data.getClass();
 		and = true;
 		this.isDefault = isDefault;
+	}
+	
+	public SimpleLiteral(final T[] data, final Class<T> to, final boolean and, final UnparsedLiteral source) {
+		this(data, to, and);
+		this.source = source;
 	}
 	
 	@Override
@@ -130,7 +138,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (debug)
-			return "[" + Skript.toString(data, getAnd()) + "]";
+			return "[" + Skript.toString(data, getAnd(), StringMode.DEBUG, false) + "]";
 		return Skript.toString(data, getAnd());
 	}
 	
@@ -216,6 +224,11 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	@Override
 	public boolean canLoop() {
 		return !isSingle();
+	}
+	
+	@Override
+	public Expression<?> getSource() {
+		return source == null ? this : source;
 	}
 	
 }

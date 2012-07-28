@@ -31,7 +31,6 @@ import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
 
 public class EvtPeriodical extends SkriptEvent {
@@ -44,21 +43,25 @@ public class EvtPeriodical extends SkriptEvent {
 	
 	private Trigger t;
 	
+	private int[] taskIDs;
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		period = ((Literal<Timespan>) args[0]).getSingle().getTicks();
 		final World[] worlds = args[1] == null ? null : ((Literal<World>) args[1]).getArray();
 		if (worlds == null) {
-			Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
+			taskIDs = new int[] {Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
 				@Override
 				public void run() {
 					execute(null);
 				}
-			}, period, period);
+			}, period, period)};
 		} else {
-			for (final World w : worlds) {
-				Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
+			taskIDs = new int[worlds.length];
+			for (int i = 0; i < worlds.length; i++) {
+				final World w = worlds[i];
+				taskIDs[i] = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
 					@Override
 					public void run() {
 						execute(w);
@@ -81,6 +84,12 @@ public class EvtPeriodical extends SkriptEvent {
 	@Override
 	public void register(final Trigger t) {
 		this.t = t;
+	}
+	
+	@Override
+	public void unregister() {
+		for (final int taskID : taskIDs)
+			Bukkit.getScheduler().cancelTask(taskID);
 	}
 	
 	@Override

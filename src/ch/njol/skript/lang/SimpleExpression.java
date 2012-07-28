@@ -155,29 +155,22 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	private final boolean check(final Event e, final Checker<? super T> c, final boolean invert) throws ClassCastException {
-		return check(getAll(e), c, invert, getAnd());
+		return check(get(e), c, invert, getAnd());
 	}
 	
-	public final static <T> boolean check(final T[] all, final Checker<? super T> c, final boolean invert, final boolean and) throws ClassCastException {
+	public final static <T> boolean check(final T[] all, final Checker<? super T> c, final boolean invert, final boolean and) {
+		if (all == null)
+			return false;
 		boolean hasElement = false;
-		if (all != null) {
-			for (final T t : all) {
-				if (t == null)
-					continue;
-				hasElement = true;
-				final boolean b = c.check(t);
-				if (invert) {
-					if (and && b)
-						return false;
-					if (!and && !b)
-						return true;
-				} else {
-					if (and && !b)
-						return false;
-					if (!and && b)
-						return true;
-				}
-			}
+		for (final T t : all) {
+			if (t == null)
+				continue;
+			hasElement = true;
+			final boolean b = invert ^ c.check(t);
+			if (and && !b)
+				return false;
+			if (!and && b)
+				return true;
 		}
 		if (!hasElement)
 			return false;
@@ -190,9 +183,9 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 * 
 	 * @param to The desired return type of the returned expression
 	 * @return Expression with the desired return type or null if it can't be converted to the given type
+	 * @see Expression#getConvertedExpression(Class)
 	 * @see ConvertedExpression#newInstance(Expression, Class)
 	 * @see Converter
-	 * @see SimpleExpression#getConvertedExpression(Class)
 	 */
 	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R> to) {
 		if (to.isAssignableFrom(getReturnType())) {
@@ -285,6 +278,11 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	@Override
 	public String toString() {
 		return toString(null, false);
+	}
+	
+	@Override
+	public Expression<?> getSource() {
+		return this;
 	}
 	
 }

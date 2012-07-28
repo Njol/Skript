@@ -50,29 +50,54 @@ import ch.njol.util.iterator.ArrayIterator;
  */
 public class VariableStringLiteral implements Literal<String> {
 	
+	private final UnparsedLiteral source;
 	private final VariableString[] strings;
 	private final String[] temp;
 	private final boolean and;
 	
-	private VariableStringLiteral(final VariableString[] strings, final boolean and) {
+	private VariableStringLiteral(final VariableString[] strings, final boolean and, final UnparsedLiteral source) {
 		this.and = and;
 		this.strings = strings;
 		temp = new String[strings.length];
+		this.source = source;
 	}
 	
-	private final static Pattern splitPattern = Pattern.compile("(?<!\")(?<=\")(\\s*,\\s*|\\s*,?\\s+(and|or)\\s+)(?=\")(?!\")");
+	private final static Pattern splitPattern = Pattern.compile("\\s*,\\s*|\\s*,?\\s+(and|n?or)\\s+", Pattern.CASE_INSENSITIVE);
 	
 	public static VariableStringLiteral newInstance(final UnparsedLiteral source) {
-		if (!source.getData().startsWith("\"") || !source.getData().endsWith("\""))
+		final String s = source.getData();
+		if (!s.startsWith("\"") || !s.endsWith("\""))
 			return null;
+		
+		final ArrayList<VariableString> strings = new ArrayList<VariableString>();
 		int end = 0;
-		final Matcher m = splitPattern.matcher(source.getData());
-		final ArrayList<String> data = new ArrayList<String>();
+		int start = 0;
 		boolean and = true;
 		boolean isAndSet = false;
-		while (m.find()) {
-			data.add(source.getData().substring(end, m.start()));
-			end = m.end();
+		while (true) {
+			end = s.indexOf("\"", start + 1);
+			if (end == -1)
+				return null;
+			while (end + 1 < s.length() && s.charAt(end + 1) == '"') {
+				end = s.indexOf("\"", end + 2);
+				if (end == -1)
+					return null;
+			}
+			
+			final VariableString vs = VariableString.newInstance(s.substring(start + 1, end).replace("\"\"", "\""));
+			if (vs == null)
+				return null;
+			strings.add(vs);
+			
+			if (end == s.length() - 1)
+				break;
+			
+			final Matcher m = splitPattern.matcher(s).region(end + 1, s.length());
+			if (!m.lookingAt())
+				return null;
+			start = m.end();
+			if (start >= s.length() || s.charAt(start) != '"')
+				return null;
 			if (!m.group().matches("\\s*,\\s*")) {
 				if (isAndSet) {
 					if (and != m.group().toLowerCase().contains("and")) {
@@ -85,11 +110,11 @@ public class VariableStringLiteral implements Literal<String> {
 				}
 			}
 		}
-		data.add(source.getData().substring(end, source.getData().length()));
-		final VariableString[] strings = VariableString.makeStringsFromQuoted(data);
-		if (strings == null)
-			return null;
-		return new VariableStringLiteral(strings, and);
+		
+		if (!isAndSet && strings.size() > 1) {
+			Skript.warning("list is missing 'and' or 'or', will default to 'and'");
+		}
+		return new VariableStringLiteral(strings.toArray(new VariableString[strings.size()]), and, source);
 	}
 	
 	@Override
@@ -162,12 +187,12 @@ public class VariableStringLiteral implements Literal<String> {
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super String> c) {
-		return SimpleExpression.check(getArray(e), c, false, getAnd());
+		return SimpleExpression.check(getAll(e), c, false, getAnd());
 	}
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super String> c, final Condition cond) {
-		return SimpleExpression.check(getArray(e), c, cond.isNegated(), getAnd());
+		return SimpleExpression.check(getAll(e), c, cond.isNegated(), getAnd());
 	}
 	
 	@Override
@@ -233,6 +258,11 @@ public class VariableStringLiteral implements Literal<String> {
 	@Override
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to) {
 		return null;
+	}
+	
+	@Override
+	public Expression<?> getSource() {
+		return source;
 	}
 	
 }

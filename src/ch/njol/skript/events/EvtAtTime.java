@@ -70,13 +70,12 @@ public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
 		return true;
 	}
 	
-	private static boolean registeredListener = false;
+	private static int taskID = -1;
 	
 	private static void registerListener() {
-		if (registeredListener)
+		if (taskID != -1)
 			return;
-		registeredListener = true;
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
+		taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
 			@Override
 			public void run() {
 				for (final Entry<World, EvtAtInfo> e : triggers.entrySet()) {
@@ -84,18 +83,18 @@ public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
 					final int tick = (int) e.getKey().getTime();
 					if (i.lastTick == tick) // stupid Bukkit scheduler
 						continue;
-					if (i.lastTick + CHECKPERIOD*2 < tick || i.lastTick > tick && i.lastTick - 24000 + CHECKPERIOD*2 < tick) { // time changed
+					if (i.lastTick + CHECKPERIOD * 2 < tick || i.lastTick > tick && i.lastTick - 24000 + CHECKPERIOD * 2 < tick) { // time changed
 						i.lastTick = tick - CHECKPERIOD;
 						if (i.lastTick < 0)
 							i.lastTick += 24000;
 					}
-					boolean midnight = i.lastTick > tick;
+					final boolean midnight = i.lastTick > tick;
 					if (midnight)
 						i.lastTick -= 24000;
-					int lastIndex = i.currentIndex;
+					final int lastIndex = i.currentIndex;
 					while (true) {
 						final EvtAtTime next = i.list.get(i.currentIndex);
-						int nextTick = midnight && next.tick > 12000 ? next.tick - 24000 : next.tick;
+						final int nextTick = midnight && next.tick > 12000 ? next.tick - 24000 : next.tick;
 						if (i.lastTick < nextTick && nextTick <= tick) {
 							next.execute(e.getKey());
 							i.currentIndex++;
@@ -135,6 +134,14 @@ public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
 			Collections.sort(i.list);
 		}
 		registerListener();
+	}
+	
+	@Override
+	public void unregister() {
+		if (taskID != -1)
+			Bukkit.getScheduler().cancelTask(taskID);
+		taskID = -1;
+		triggers.clear();
 	}
 	
 	@Override

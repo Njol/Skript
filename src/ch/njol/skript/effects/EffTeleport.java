@@ -63,6 +63,8 @@ public class EffTeleport extends Effect {
 	@Override
 	protected void execute(final Event e) {
 		final Location to = location.getSingle(e);
+		if (to == null)
+			return;
 		final Block on = to.getBlock().getRelative(BlockFace.DOWN);
 		if (Math.abs(to.getX() - to.getBlockX() - 0.5) < Skript.EPSILON && Math.abs(to.getZ() - to.getBlockZ() - 0.5) < Skript.EPSILON && on.getType() != Material.AIR)
 			to.setY(on.getY() + Utils.getBlockHeight(on.getType()));

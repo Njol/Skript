@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>Skript</groupId>
   <artifactId>Skript</artifactId>
-  <version>1.3.4</version>
+  <version>1.3.5</version>
   <name>Skript</name>
   <dependencies>
   	<dependency>
@@ -29,7 +29,7 @@
   		<dependency>
   			<groupId>org.bukkit</groupId>
   			<artifactId>bukkit</artifactId>
-  			<version>1.2.5-R3.0</version>
+  			<version>1.2.5-R5.0</version>
   		</dependency>
   		<dependency>
   			<groupId>org.bukkit</groupId>
@@ -39,7 +39,7 @@
   		<dependency>
   			<groupId>org.bukkit</groupId>
   			<artifactId>craftbukkit</artifactId>
-  			<version>1.2.5-R3.0</version>
+  			<version>1.2.5-R5.0</version>
   		</dependency>
   	</dependencies>
   </dependencyManagement>

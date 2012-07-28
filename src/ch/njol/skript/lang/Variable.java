@@ -50,7 +50,9 @@ public class Variable<T> implements Expression<T> {
 	private final Class<T> type;
 	private final T[] zero, one;
 	
-	public Variable(final VariableString name, final Class<T> type) {
+	private final Variable<?> source;
+	
+	private Variable(final VariableString name, final Class<T> type, final Variable<?> source) {
 		Validate.notNull(name, type);
 		if (name.getMode() != StringMode.VARIABLE_NAME) // not setMode as angle brackets are not allowed in variable names
 			throw new IllegalArgumentException("'name' must be a VARIABLE_NAME string");
@@ -58,6 +60,12 @@ public class Variable<T> implements Expression<T> {
 		this.type = type;
 		zero = (T[]) Array.newInstance(type, 0);
 		one = (T[]) Array.newInstance(type, 1);
+		
+		this.source = source;
+	}
+	
+	public Variable(final VariableString name, final Class<T> type) {
+		this(name, type, null);
 	}
 	
 	@Override
@@ -87,7 +95,7 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
-		return new Variable<R>(name, to);
+		return new Variable<R>(name, to, this);
 	}
 	
 	protected T get(final Event e) {
@@ -203,6 +211,11 @@ public class Variable<T> implements Expression<T> {
 	@Override
 	public boolean isLoopOf(final String s) {
 		return false;
+	}
+	
+	@Override
+	public Expression<?> getSource() {
+		return source == null ? this : source;
 	}
 	
 }

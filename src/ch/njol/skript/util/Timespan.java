@@ -22,8 +22,6 @@
 package ch.njol.skript.util;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.api.Parser;
@@ -153,30 +151,30 @@ public class Timespan {
 	public String toString() {
 		return toString(ticks);
 	}
-
+	
 	@SuppressWarnings("unchecked")
-	final static Pair<String, Integer>[] simpleValues = (Pair<String, Integer>[]) new Pair<?,?>[] {
-		new Pair<String, Integer>("day", 20 * 60 * 60 * 24),
-		new Pair<String, Integer>("hour", 20 * 60 * 60),
-		new Pair<String, Integer>("minute", 20 * 60),
-		new Pair<String, Integer>("second", 20)
+	final static Pair<String, Integer>[] simpleValues = (Pair<String, Integer>[]) new Pair<?, ?>[] {
+			new Pair<String, Integer>("day", 20 * 60 * 60 * 24),
+			new Pair<String, Integer>("hour", 20 * 60 * 60),
+			new Pair<String, Integer>("minute", 20 * 60),
+			new Pair<String, Integer>("second", 20)
 	};
 	
-	public static String toString(int ticks) {
+	public static String toString(final int ticks) {
 		for (int i = 0; i < simpleValues.length; i++) {
 			if (ticks >= simpleValues[i].second) {
 				if (i < simpleValues.length - 1 && ticks % simpleValues[i].second != 0) {
-					return toString(Math.floor(1.*ticks/simpleValues[i].second), simpleValues[i]) + " and " + toString(1.*(ticks % simpleValues[i].second)/simpleValues[i+1].second, simpleValues[i+1]);
+					return toString(Math.floor(1. * ticks / simpleValues[i].second), simpleValues[i]) + " and " + toString(1. * (ticks % simpleValues[i].second) / simpleValues[i + 1].second, simpleValues[i + 1]);
 				} else {
-					return toString(1.*ticks/simpleValues[i].second, simpleValues[i]);
+					return toString(1. * ticks / simpleValues[i].second, simpleValues[i]);
 				}
 			}
 		}
 		return ticks + " ticks";
 	}
 	
-	private static String toString(double amount, Pair<String, Integer> p) {
-		return StringUtils.toString(amount, Skript.NUMBERACCURACY) + " "+ Utils.toPlural(p.first, amount != 1);
+	private static String toString(final double amount, final Pair<String, Integer> p) {
+		return StringUtils.toString(amount, Skript.NUMBERACCURACY) + " " + Utils.toPlural(p.first, amount != 1);
 	}
 	
 }

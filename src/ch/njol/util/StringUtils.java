@@ -140,7 +140,8 @@ public abstract class StringUtils {
 				c++;
 			if (c == s.length)
 				return new String(s);
-			s[c] = Character.toUpperCase(s[c]);
+			if (c == 0 || s[c - 1] != '.') // don't capitalize directly after a dot - fixes URLs
+				s[c] = Character.toUpperCase(s[c]);
 			c = indexOf(s, '.', c + 1);
 		}
 		return new String(s);

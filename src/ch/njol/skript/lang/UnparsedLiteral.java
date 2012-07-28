@@ -79,10 +79,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	@SuppressWarnings("unchecked")
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to, final ParseContext context) {
 		if (to == String.class && context == ParseContext.DEFAULT) {
-			final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
-			if (vsl == null)
-				return null;
-			return (Literal<? extends R>) vsl;
+			return (Literal<? extends R>) VariableStringLiteral.newInstance(this);
 		} else if (to == Object.class) {
 			final SubLog log = SkriptLogger.startSubLog();
 			for (final ClassInfo<?> ci : Skript.getClassInfos()) {
@@ -159,7 +156,7 @@ public class UnparsedLiteral implements Literal<Object> {
 			log.stop();
 			if (t != null) {
 				ts.addFirst(t);
-				return new SimpleLiteral<T>(ts.toArray((T[]) Array.newInstance(to, ts.size())), to, and);
+				return new SimpleLiteral<T>(ts.toArray((T[]) Array.newInstance(to, ts.size())), to, and, this);
 			}
 		}
 		log.stop();
@@ -175,6 +172,11 @@ public class UnparsedLiteral implements Literal<Object> {
 	@Override
 	public String toString() {
 		return toString(null, false);
+	}
+	
+	@Override
+	public Expression<?> getSource() {
+		return this;
 	}
 	
 	private final static SkriptAPIException invalidAccessException() {

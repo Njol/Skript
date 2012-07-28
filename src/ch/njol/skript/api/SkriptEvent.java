@@ -88,4 +88,13 @@ public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 		throw new SkriptAPIException("events that fire themselves must override register(Trigger)");
 	}
 	
+	/**
+	 * This method unregisters this event registered through {@link #register(Trigger)}. It is used when all scripts are reloaded, thus it's possible to unregister all events at
+	 * once if it's faster.
+	 */
+	@SuppressWarnings("static-method")
+	public void unregister() {
+		throw new SkriptAPIException("events that fire themselves must override registerAll(Trigger)");
+	}
+	
 }

@@ -80,6 +80,7 @@ import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.api.intern.ChainedConverter;
 import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.api.intern.Statement;
+import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.classes.BukkitClasses;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.DefaultClasses;
@@ -232,6 +233,12 @@ public final class Skript extends JavaPlugin implements Listener {
 		configs.clear();
 		
 		Aliases.clear();
+		
+		for (final Trigger t : ScriptLoader.selfRegisteredTriggers)
+			t.getEvent().unregister();
+		ScriptLoader.selfRegisteredTriggers.clear();
+		ScriptLoader.loadedTriggers = 0;
+		ScriptLoader.loadedCommands = 0;
 		
 		SkriptEventHandler.triggers.clear();
 		clearCommands();
@@ -690,14 +697,14 @@ public final class Skript extends JavaPlugin implements Listener {
 		checkAcceptRegistrations();
 		events.add(new SkriptEventInfo<E>(patterns, c, array(event), true));
 	}
-
+	
 	public static <E extends SkriptEvent> void registerEvent(final Class<E> c, final Class<? extends Event>[] events, final String... patterns) {
 		checkAcceptRegistrations();
 		Skript.events.add(new SkriptEventInfo<E>(patterns, c, events, true));
 	}
-
+	
 	@SuppressWarnings("unchecked")
-	public static <E extends SkriptEvent> void registerEvent(final Class<E> c, final Class<? extends Event> event, boolean fire, final String... patterns) {
+	public static <E extends SkriptEvent> void registerEvent(final Class<E> c, final Class<? extends Event> event, final boolean fire, final String... patterns) {
 		checkAcceptRegistrations();
 		Skript.events.add(new SkriptEventInfo<E>(patterns, c, array(event), fire));
 	}

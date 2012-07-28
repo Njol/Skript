@@ -210,4 +210,12 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 */
 	public boolean isLoopOf(String s);
 	
+	/**
+	 * Returns the original expression that was parsed, i.e. without any conversions done.
+	 * 
+	 * @return
+	 */
+	// TODO think of a better name for this method
+	public Expression<?> getSource();
+	
 }

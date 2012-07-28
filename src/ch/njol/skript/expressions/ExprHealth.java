@@ -60,7 +60,7 @@ public class ExprHealth extends PropertyExpression<Float> {
 	
 	@Override
 	protected Float[] get(final Event e) {
-		if (e instanceof EntityDamageEvent && getTime() >= 0 && entities.isDefault()) {
+		if (e instanceof EntityDamageEvent && getTime() > 0 && entities.getSource() instanceof ExprAttacked) {
 			return entities.getArray(e, Float.class, new Getter<Float, LivingEntity>() {
 				@Override
 				public Float get(final LivingEntity entity) {
@@ -86,10 +86,6 @@ public class ExprHealth extends PropertyExpression<Float> {
 		int s = 0;
 		if (mode != ChangeMode.CLEAR)
 			s = Math.round(((Float) delta).floatValue() * 2);
-		if (mode == ChangeMode.SET && e instanceof EntityDamageEvent && getTime() >= 0 && entities.isDefault()) {
-			((EntityDamageEvent) e).setDamage(((LivingEntity) ((EntityDamageEvent) e).getEntity()).getHealth() - s);
-			return;
-		}
 		switch (mode) {
 			case CLEAR:
 			case SET:
@@ -117,6 +113,6 @@ public class ExprHealth extends PropertyExpression<Float> {
 	
 	@Override
 	public boolean setTime(final int time) {
-		return super.setTime(time, EntityDamageEvent.class, entities);
+		return entities.getSource() instanceof ExprAttacked && super.setTime(time, EntityDamageEvent.class);
 	}
 }
