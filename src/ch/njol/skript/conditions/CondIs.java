@@ -35,6 +35,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Patterns;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
@@ -132,6 +133,8 @@ public class CondIs extends Condition {
 		final Class<?> f = first.getReturnType(), s = second.getReturnType(), t = third == null ? null : third.getReturnType();
 		final int[] zeroOne = {0, 1};
 		
+		// perfect match:
+		
 		for (final ComparatorInfo<?, ?> info : Skript.getComparators()) {
 			if (info.c1.isAssignableFrom(f) && info.c2.isAssignableFrom(s) && (third == null || info.c2.isAssignableFrom(t))
 					|| info.c1.isAssignableFrom(s) && (third == null || info.c1.isAssignableFrom(t)) && info.c2.isAssignableFrom(f)) {
@@ -141,13 +144,58 @@ public class CondIs extends Condition {
 			}
 		}
 		
+		// same type but no comparator:
+		
 		if (f != Object.class && s != Object.class && (f.isAssignableFrom(s) || s.isAssignableFrom(f)) && t == null) {
 			comp = Comparator.equalsComparator;
 			reverseOrder = f.isAssignableFrom(s);
 			return true;
 		}
 		
+		// special cases for variables:
+		
+		if ((first instanceof Variable || second instanceof Variable) && relation.isEqualOrInverse() && third == null) {
+			if (first instanceof UnparsedLiteral) {
+				final Expression<?> v1 = first.getConvertedExpression(Object.class);
+				if (v1 == null)
+					return false;
+				first = v1;
+			} else if (second instanceof UnparsedLiteral) {
+				final Expression<?> v2 = second.getConvertedExpression(Object.class);
+				if (v2 == null)
+					return false;
+				second = v2;
+			}
+			comp = Comparator.equalsComparator;
+			return true;
+		}
+		
+		// variables, but numbers as well:
+		
 		final SubLog log = SkriptLogger.startSubLog();
+		
+		final Expression<?> n1 = first instanceof Variable ? first : first.getConvertedExpression(Double.class);
+		final Expression<?> n2 = second instanceof Variable ? second : second.getConvertedExpression(Double.class);
+		final Expression<?> n3 = third == null ? null : third instanceof Variable ? third : third.getConvertedExpression(Double.class);
+		log.clear();
+		
+		if (n1 != null && n2 != null && (third == null || n3 != null)) {
+			comp = new Comparator<Object, Object>() {
+				@Override
+				public Relation compare(final Object o1, final Object o2) {
+					return Relation.get((o1 instanceof Number ? ((Number) o1).doubleValue() : 0) - (o2 instanceof Number ? ((Number) o2).doubleValue() : 0));
+				}
+				
+				@Override
+				public boolean supportsOrdering() {
+					return true;
+				}
+			};
+			log.stop();
+			return true;
+		}
+		
+		// and finally tons of trying to convert to match any comparator:
 		
 		for (final ComparatorInfo<?, ?> info : Skript.getComparators()) {
 			for (final int c : zeroOne) {

@@ -281,6 +281,8 @@ public class DefaultClasses {
 					public String parse(final String s, final ParseContext context) {
 						if (context == ParseContext.COMMAND && !s.isEmpty())
 							return s;
+						else if (context == ParseContext.CONFIG && s.startsWith("\"") && s.endsWith("\""))
+							return s.substring(1, s.length() - 1);
 						return null;
 					}
 					

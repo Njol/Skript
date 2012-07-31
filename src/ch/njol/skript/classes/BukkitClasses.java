@@ -391,8 +391,11 @@ public class BukkitClasses {
 				.parser(new Parser<OfflinePlayer>() {
 					@Override
 					public OfflinePlayer parse(final String s, final ParseContext context) {
-						if (context == ParseContext.COMMAND)
+						if (context == ParseContext.COMMAND) {
+							if (!s.matches("\\S+")) // TODO valid characters for player names?
+								return null;
 							return Bukkit.getOfflinePlayer(s);
+						}
 //						if (s.matches("\"\\S+\""))
 //							return Bukkit.getOfflinePlayer(s.substring(1, s.length() - 1));
 						return null;

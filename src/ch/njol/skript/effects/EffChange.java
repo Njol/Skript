@@ -45,6 +45,7 @@ public class EffChange extends Effect {
 	private static Patterns<ChangeMode> patterns = new Patterns<ChangeMode>(new Object[][] {
 			
 			{"(add|give) %objects% to %objects%", ChangeMode.ADD},
+			{"increase %objects% by %objects%", ChangeMode.ADD},
 			{"give %objects% %objects%", ChangeMode.ADD},
 			// TODO give items/xp to player
 			
@@ -80,8 +81,8 @@ public class EffChange extends Effect {
 					changer = vars[0];
 					changed = vars[1];
 				} else {
-					changer = vars[1];
 					changed = vars[0];
+					changer = vars[1];
 				}
 			break;
 			case SET:

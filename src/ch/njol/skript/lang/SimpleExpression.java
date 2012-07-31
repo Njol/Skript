@@ -227,15 +227,15 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	protected final boolean setTime(final int time, final Class<? extends Event> applicableEvent, final Expression<?>... mustbeDefaultVars) {
-		if (Utils.contains(ScriptLoader.currentEvents, applicableEvent)) {
-			for (final Expression<?> var : mustbeDefaultVars) {
-				if (var.isDefault()) {
-					this.time = time;
-					return true;
-				}
+		if (!Utils.contains(ScriptLoader.currentEvents, applicableEvent))
+			return false;
+		for (final Expression<?> var : mustbeDefaultVars) {
+			if (!var.isDefault()) {
+				return false;
 			}
 		}
-		return false;
+		this.time = time;
+		return true;
 	}
 	
 	protected final boolean setTime(final int time, final Expression<?> mustbeDefaultVar, final Class<? extends Event>... applicableEvents) {

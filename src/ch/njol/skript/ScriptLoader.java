@@ -49,6 +49,7 @@ import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.SimpleNode;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Callback;
@@ -214,10 +215,29 @@ final public class ScriptLoader {
 					String name = ((EntryNode) n).getKey();
 					if (name.startsWith("{") && name.endsWith("}"))
 						name = name.substring(1, name.length() - 1);
+					final String var = name;
+					name = StringUtils.replaceAll(name, "%(.+)?%", new Callback<String, Matcher>() {
+						@Override
+						public String run(final Matcher m) {
+							if (m.group(1).contains("{") || m.group(1).contains("}") || m.group(1).contains("%")) {
+								Skript.error("'" + var + "' is not a valid name for a default variable");
+								return null;
+							}
+							final ClassInfo<?> ci = Skript.getClassInfoFromUserInput(m.group(1));
+							if (ci == null) {
+								Skript.error("Can't understand the type '" + m.group(1) + "'");
+								return null;
+							}
+							return "<" + ci.getCodeName() + ">";
+						}
+					});
+					if (name == null || name.contains("%")) {
+						continue;
+					}
 					if (Skript.getVariable(name) != null)
 						continue;
 					final SubLog log = SkriptLogger.startSubLog();
-					Object o = Skript.parseSimple(((EntryNode) n).getValue(), Object.class);
+					Object o = Skript.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.CONFIG);
 					SkriptLogger.stopSubLog(log);
 					if (o == null) {
 						log.printErrors("Can't understand the value '" + ((EntryNode) n).getValue() + "'");

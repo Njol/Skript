@@ -85,6 +85,8 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
+		if (e != null)
+			return Skript.toString(get(e));
 		return "{" + StringUtils.substring(name.toString(e, debug), 1, -1) + "}" + (debug ? "(as " + type.getName() + ")" : "");
 	}
 	
@@ -113,27 +115,32 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		if (mode == ChangeMode.CLEAR) {
-			set(e, null);
-		} else if (mode == ChangeMode.SET) {
-			final ClassInfo<?> ci = Skript.getSuperClassInfo(delta.getClass());
-			if (ci != null && ci.getSerializeAs() != null) {
-				set(e, Skript.convert(delta, ci.getSerializeAs()));
-			} else {
-				set(e, delta);
-			}
-		} else {
-			final Object o = one[0] = get(e);
-			if (o == null)
-				return;
-			final ClassInfo<?> ci = Skript.getSuperClassInfo(o.getClass());
-			if (ci.getChanger() != null && ci.getChanger().acceptChange(mode) != null && ci.getChanger().acceptChange(mode).isAssignableFrom(delta.getClass())) {
-				ChangerUtils.change(ci.getChanger(), one, delta, mode);
-			}
-			if (o instanceof Number && delta instanceof Number) {
-				final int i = mode == ChangeMode.ADD ? 1 : -1;
-				set(e, ((Number) o).doubleValue() + i * ((Number) delta).doubleValue());
-			}
+		switch (mode) {
+			case CLEAR:
+				set(e, null);
+			break;
+			case SET:
+				ClassInfo<?> ci = Skript.getSuperClassInfo(delta.getClass());
+				if (ci != null && ci.getSerializeAs() != null) {
+					set(e, Skript.convert(delta, ci.getSerializeAs()));
+				} else {
+					set(e, delta);
+				}
+			break;
+			case ADD:
+			case REMOVE:
+				final T o = get(e);
+				if ((o == null || o instanceof Number) && delta instanceof Number) {
+					final int i = mode == ChangeMode.ADD ? 1 : -1;
+					set(e, (o == null ? 0 : ((Number) o).doubleValue()) + i * ((Number) delta).doubleValue());
+				} else if (o != null) {
+					ci = Skript.getSuperClassInfo(o.getClass());
+					if (ci.getChanger() != null && ci.getChanger().acceptChange(mode) != null && ci.getChanger().acceptChange(mode).isAssignableFrom(delta.getClass())) {
+						one[0] = o;
+						ChangerUtils.change(ci.getChanger(), one, delta, mode);
+					}
+				}
+			break;
 		}
 	}
 	

@@ -60,4 +60,15 @@ public abstract class Math2 {
 		return max;
 	}
 	
+	/**
+	 * Fits a number into the given interval
+	 * 
+	 * @param min
+	 * @param x
+	 * @param max
+	 * @return
+	 */
+	public static final int fit(final int min, final int x, final int max) {
+		return x <= min ? min : x >= max ? max : x;
+	}
 }

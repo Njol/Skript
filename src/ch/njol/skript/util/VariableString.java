@@ -156,7 +156,7 @@ public class VariableString implements Debuggable {
 		final StringBuilder b = new StringBuilder();
 		for (int i = 0; i < string.size(); i++) {
 			final Object o = string.get(i);
-			if (o instanceof Expression<?>) {
+			if (o instanceof Expression) {
 				boolean plural = false;
 				if (mode == StringMode.MESSAGE && i + 1 < string.size()) {
 					if (string.get(i + 1) instanceof String) {

@@ -633,6 +633,7 @@ public abstract class Utils {
 				return m.group();
 			}
 		});
+		message = ChatColor.translateAlternateColorCodes('&', message);
 		message = StringUtils.fixCapitalization(message);
 		return message;
 	}

@@ -87,7 +87,6 @@ public abstract class SkriptLogger {
 			}
 			if (!hasError && def != null)
 				recipient.sendMessage(def);
-			log.clear();
 			return hasError;
 		}
 		
@@ -147,7 +146,7 @@ public abstract class SkriptLogger {
 	 * // do something with the logged messages
 	 * </pre>
 	 * 
-	 * @return
+	 * @return a newly created sublog
 	 */
 	public final static SubLog startSubLog() {
 		final SubLog subLog = new SubLog();
@@ -193,12 +192,8 @@ public abstract class SkriptLogger {
 	 */
 	public static void log(final Level level, final String message) {
 		if (node != null && level.intValue() >= Level.WARNING.intValue()) {
-			if (node.getParent() != null)
-				logDirect(level, message +
-						" (" + node.getConfig().getFileName() + ", line " + node.getLine() + (node.getOrig() == null ? "" : ": '" + node.getOrig().trim() + "')"));
-			else
-				logDirect(level, message +
-						" (" + node.getConfig().getFileName() + " [unknown line])");
+			logDirect(level, message +
+					" (" + node.getConfig().getFileName() + ", line " + node.getLine() + (node.getOrig() == null ? "" : ": '" + node.getOrig().trim() + "')"));
 		} else {
 			logDirect(level, message);
 		}
@@ -228,7 +223,7 @@ public abstract class SkriptLogger {
 		}
 	}
 	
-	public static void logDirect(final Pair<Level, String> message) {
+	private static void logDirect(final Pair<Level, String> message) {
 		if (!subLogs.isEmpty()) {
 			subLogs.getLast().log.add(message);
 		} else {

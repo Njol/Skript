@@ -25,7 +25,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 
-import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.api.Changer.ChangeMode;
@@ -33,7 +32,7 @@ import ch.njol.skript.api.Getter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.Math2;
 
 /**
  * FIXME range 0-10 (with step 0.5), not 0-20
@@ -41,10 +40,10 @@ import ch.njol.skript.util.Utils;
  * @author Peter Güttinger
  * 
  */
-public class ExprFoodLevel extends PropertyExpression<Integer> {
+public class ExprFoodLevel extends PropertyExpression<Float> {
 	
 	static {
-		Skript.registerExpression(ExprFoodLevel.class, Integer.class, ExpressionType.PROPERTY, "[the] food[[ ](level|meter)] [of %player%]", "%player%'[s] food[[ ](level|meter)]");
+		Skript.registerExpression(ExprFoodLevel.class, Float.class, ExpressionType.PROPERTY, "[the] food[[ ](level|meter)] [of %player%]", "%player%'[s] food[[ ](level|meter)]");
 	}
 	
 	private Expression<Player> players;
@@ -63,79 +62,67 @@ public class ExprFoodLevel extends PropertyExpression<Integer> {
 	}
 	
 	@Override
-	protected Integer[] get(final Event e) {
-		if (getTime() >= 0 && players.isDefault()) {
-			return new Integer[] {((FoodLevelChangeEvent) e).getFoodLevel()};
+	protected Float[] get(final Event e) {
+		if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
+			return new Float[] {0.5f * ((FoodLevelChangeEvent) e).getFoodLevel()};
 		}
-		return players.getArray(e, Integer.class, new Getter<Integer, Player>() {
+		return players.getArray(e, Float.class, new Getter<Float, Player>() {
 			@Override
-			public Integer get(final Player p) {
-				return Integer.valueOf(p.getFoodLevel());
+			public Float get(final Player p) {
+				return 0.5f * p.getFoodLevel();
 			}
 		});
 	}
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
-		return Integer.class;
+		return Float.class;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		int s = 0;
 		if (mode != ChangeMode.CLEAR)
-			s = ((Integer) delta).intValue();
+			s = Math.round(((Float) delta).floatValue() * 2);
 		switch (mode) {
 			case SET:
 			case CLEAR:
 				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
-					((FoodLevelChangeEvent) e).setFoodLevel(s);
+					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, s, 20));
 					return;
 				}
 				for (final Player player : players.getArray(e)) {
-					player.setFoodLevel(s);
+					player.setFoodLevel(Math2.fit(0, s, 20));
 				}
 				return;
 			case ADD:
 				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
-					((FoodLevelChangeEvent) e).setFoodLevel(((FoodLevelChangeEvent) e).getFoodLevel() + s);
+					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, ((FoodLevelChangeEvent) e).getFoodLevel() + s, 20));
 					return;
 				}
 				for (final Player player : players.getArray(e)) {
-					player.setFoodLevel(player.getFoodLevel() + s);
+					player.setFoodLevel(Math2.fit(0, player.getFoodLevel() + s, 20));
 				}
 				return;
 			case REMOVE:
 				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
-					((FoodLevelChangeEvent) e).setFoodLevel(Math.max(((FoodLevelChangeEvent) e).getFoodLevel() - s, 0));
+					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, ((FoodLevelChangeEvent) e).getFoodLevel() - s, 20));
 					return;
 				}
 				for (final Player player : players.getArray(e)) {
-					player.setFoodLevel(Math.max(player.getFoodLevel() - s, 0));
+					player.setFoodLevel(Math2.fit(0, player.getFoodLevel() - s, 20));
 				}
 				return;
 		}
 	}
 	
 	@Override
-	public Class<? extends Integer> getReturnType() {
-		return Integer.class;
+	public Class<? extends Float> getReturnType() {
+		return Float.class;
 	}
-	
-	private int time = 0;
 	
 	@Override
 	public boolean setTime(final int time) {
-		if (Utils.contains(ScriptLoader.currentEvents, FoodLevelChangeEvent.class) && players.isDefault()) {
-			this.time = time;
-			return true;
-		}
-		return false;
+		return super.setTime(time, FoodLevelChangeEvent.class, players);
 	}
-	
-	@Override
-	public int getTime() {
-		return time;
-	}
-	
 }

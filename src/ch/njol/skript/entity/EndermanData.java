@@ -35,7 +35,7 @@ import ch.njol.util.Checker;
 public class EndermanData extends EntityData<Enderman> {
 	
 	static {
-		EntityData.register(EndermanData.class, "enderman", Enderman.class, "enderm(a|e)n [(carrying|holding) %itemtypes%]");
+		EntityData.register(EndermanData.class, "enderman", Enderman.class, "enderm(a|e)n [(carrying|holding) %-itemtypes%]");
 	}
 	
 	private Literal<ItemType> hand = null;

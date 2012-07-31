@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,9 +71,13 @@ public class SkriptParser {
 	}
 	
 	private final void setBestError(final ErrorQuality quality, final String error) {
-		if (bestErrorQuality < quality.quality()) {
+		setBestError(quality.quality(), error);
+	}
+	
+	private final void setBestError(final int quality, final String error) {
+		if (bestErrorQuality < quality) {
 			bestError = error;
-			bestErrorQuality = quality.quality();
+			bestErrorQuality = quality;
 		}
 	}
 	
@@ -113,7 +118,7 @@ public class SkriptParser {
 		private static final long serialVersionUID = -2479399963189481643L;
 		
 		public MalformedPatternException(final String pattern, final String message) {
-			super("\"" + pattern + "\": " + message);
+			super(message + " [pattern: " + pattern + "]");
 		}
 		
 	}
@@ -139,6 +144,7 @@ public class SkriptParser {
 		if (var != null) {
 			if (parseVariable)
 				return var;
+			Skript.error(defaultError);
 			return null;
 		}
 		final SubLog log = SkriptLogger.startSubLog();
@@ -204,11 +210,11 @@ public class SkriptParser {
 									final VarInfo vi = getVarInfo(name);
 									final DefaultExpression<?> var = Skript.getDefaultExpression(vi.name);
 									if (var == null)
-										throw new SkriptAPIException("The class '" + vi.name + "' does not provide a default expression. Either allow null (with %-" + vi.name + "%) or make it mandatory");
+										throw new SkriptAPIException("The class '" + vi.name + "' does not provide a default expression. Either allow null (with %-" + vi.name + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
 									if (!vi.isPlural && !var.isSingle())
-										throw new SkriptAPIException("The default expression of '" + vi.name + "' is not a single-element expression. Change your pattern to allow multiple elements or make the expression mandatory");
+										throw new SkriptAPIException("The default expression of '" + vi.name + "' is not a single-element expression. Change your pattern to allow multiple elements or make the expression mandatory [pattern: " + info.patterns[i] + "]");
 									if (vi.time != 0 && !var.setTime(vi.time))
-										throw new SkriptAPIException("The default expression of '" + vi.name + "' does not have distinct time states. Either allow null (with %-" + vi.name + "%) or make it mandatory");
+										throw new SkriptAPIException("The default expression of '" + vi.name + "' does not have distinct time states. Either allow null (with %-" + vi.name + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
 									var.init();
 									res.vars[j] = var;
 								}
@@ -241,16 +247,16 @@ public class SkriptParser {
 				}
 			}
 		}
-		if (bestError != null) {
-			Skript.error(bestError);
-		}
+		if (bestError != null)
+			SkriptLogger.logDirect(Level.SEVERE, bestError);
 		return null;
 	}
 	
-	private final static Pattern varPattern = Pattern.compile("^(?i)((the )?var(iable)? )?\\{.+\\}$");
+	private final static Pattern varPattern = Pattern.compile("^(?i)((the )?var(iable)? )?\\{([^{}]|%\\{|\\}%)+\\}$");
 	
 	private final static <T> Variable<T> parseVariable(final String expr, final Class<T> returnType) {
 		if (varPattern.matcher(expr).matches()) {
+			
 			final VariableString vs = VariableString.newInstance(expr.substring(expr.indexOf('{') + 1, expr.lastIndexOf('}')), StringMode.VARIABLE_NAME);
 			if (vs == null)
 				return null;
@@ -284,10 +290,7 @@ public class SkriptParser {
 					setBestError(ErrorQuality.EXPRESSION_OF_WRONG_TYPE, v.toString() + " " + (v.isSingle() ? "is" : "are") + " not " + Utils.a(Skript.getExactClassName(returnType)));
 				return w;
 			} else {
-				if (parser.bestErrorQuality > bestErrorQuality) {
-					bestError = parser.bestError;
-					bestErrorQuality = parser.bestErrorQuality;
-				}
+				setBestError(parser.bestErrorQuality, parser.bestError);
 			}
 		}
 		final UnparsedLiteral l = new UnparsedLiteral(expr);
@@ -327,7 +330,7 @@ public class SkriptParser {
 		final ParseResult res = parser.parse_i(command.getPattern(), 0, 0);
 		if (res == null) {
 			if (parser.bestError != null)
-				Skript.error(parser.bestError);
+				SkriptLogger.logDirect(Level.SEVERE, parser.bestError);
 			return false;
 		}
 		
@@ -364,9 +367,8 @@ public class SkriptParser {
 				}
 			}
 		}
-		if (bestError != null) {
-			Skript.error(bestError);
-		}
+		if (bestError != null)
+			SkriptLogger.logDirect(Level.SEVERE, bestError);
 		return null;
 	}
 	

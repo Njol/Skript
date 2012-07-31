@@ -23,6 +23,7 @@ package ch.njol.skript.data;
 
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
@@ -145,6 +146,19 @@ public class DefaultComparators {
 			@Override
 			public Relation compare(final Time t, final Timeperiod p) {
 				return Relation.get(p.contains(t));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+		
+		// Player - String
+		Skript.registerComparator(Player.class, String.class, new Comparator<Player, String>() {
+			@Override
+			public Relation compare(final Player p, final String name) {
+				return Relation.get(p.getName().equalsIgnoreCase(name));
 			}
 			
 			@Override

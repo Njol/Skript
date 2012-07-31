@@ -24,7 +24,6 @@ package ch.njol.skript.api.intern;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.bukkit.event.Event;
 
@@ -62,8 +61,6 @@ public class VariableStringLiteral implements Literal<String> {
 		this.source = source;
 	}
 	
-	private final static Pattern splitPattern = Pattern.compile("\\s*,\\s*|\\s*,?\\s+(and|n?or)\\s+", Pattern.CASE_INSENSITIVE);
-	
 	public static VariableStringLiteral newInstance(final UnparsedLiteral source) {
 		final String s = source.getData();
 		if (!s.startsWith("\"") || !s.endsWith("\""))
@@ -92,7 +89,7 @@ public class VariableStringLiteral implements Literal<String> {
 			if (end == s.length() - 1)
 				break;
 			
-			final Matcher m = splitPattern.matcher(s).region(end + 1, s.length());
+			final Matcher m = UnparsedLiteral.literalSplitPattern.matcher(s).region(end + 1, s.length());
 			if (!m.lookingAt())
 				return null;
 			start = m.end();

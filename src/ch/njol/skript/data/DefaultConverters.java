@@ -105,7 +105,7 @@ public class DefaultConverters {
 				return null;
 			}
 		});
-		// Entity - CommandSender
+		// Entity - CommandSender/Inventory
 		// TODO: improve handling of interfaces
 		Skript.registerConverter(Entity.class, CommandSender.class, new Converter<Entity, CommandSender>() {
 			@Override

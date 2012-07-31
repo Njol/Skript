@@ -33,10 +33,6 @@ public class BlockSphereIterator extends CheckedIterator<Block> {
 	public BlockSphereIterator(final Location center, final float radius) {
 		super(new AABB(center, radius + 0.5001, radius + 0.5001, radius + 0.5001).iterator(), new Checker<Block>() {
 			private final double rSquared = radius * radius * Skript.EPSILON_MULT;
-			{
-				System.out.println("center: " + center.toVector());
-				System.out.println("r^2: " + rSquared);
-			}
 			
 			@Override
 			public boolean check(final Block b) {

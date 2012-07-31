@@ -43,14 +43,32 @@ public interface Comparator<T1, T2> {
 	public static enum Relation {
 		EQUAL, NOT_EQUAL, GREATER, GREATER_OR_EQUAL, SMALLER, SMALLER_OR_EQUAL;
 		
+		/**
+		 * Returns EQUAL for true or NOT_EQUAL for false
+		 * 
+		 * @param b
+		 * @return <tt>b ? Relation.EQUAL : Relation.NOT_EQUAL</tt>
+		 */
 		public static Relation get(final boolean b) {
 			return b ? Relation.EQUAL : Relation.NOT_EQUAL;
 		}
 		
+		/**
+		 * Gets a Relation from a difference: If i is 0, EQUAL is returned, if i is greather than 0, GREATER is returned, otherwise SMALLER.
+		 * 
+		 * @param i
+		 * @return <tt>i == 0 ? Relation.EQUAL : i > 0 ? Relation.GREATER : Relation.SMALLER</tt>
+		 */
 		public static Relation get(final int i) {
 			return i == 0 ? Relation.EQUAL : i > 0 ? Relation.GREATER : Relation.SMALLER;
 		}
 		
+		/**
+		 * Gets a Relation from a difference: If d is 0, EQUAL is returned, if d is greather than 0, GREATER is returned, otherwise SMALLER.
+		 * 
+		 * @param d
+		 * @return <tt>d == 0 ? Relation.EQUAL : d > 0 ? Relation.GREATER : Relation.SMALLER</tt>
+		 */
 		public static Relation get(final double d) {
 			return d == 0 ? Relation.EQUAL : d > 0 ? Relation.GREATER : Relation.SMALLER;
 		}
@@ -78,6 +96,7 @@ public interface Comparator<T1, T2> {
 				case SMALLER_OR_EQUAL:
 					return other == EQUAL || other == SMALLER;
 			}
+			assert false;
 			return false;
 		}
 		
@@ -192,17 +211,17 @@ public interface Comparator<T1, T2> {
 	};
 	
 	/**
-	 * Compares the given objects which may not be null.
+	 * Compares the given objects which may not be null. Returning GREATER/SMALLER means that the first parameter is greater/smaller.
 	 * 
 	 * @param o1
 	 * @param o2
-	 * @return the relation of the obects. GREATER/SMALLER means the first parameter is greater/smaller. NOT_EQUAL is used for values which can't be compared by value.
+	 * @return the relation of the obects.
 	 */
 	public Relation compare(T1 o1, T2 o2);
 	
 	/**
 	 * 
-	 * @return whether this comparator supports ordering of elements or not
+	 * @return whether this comparator supports ordering of elements or not.
 	 */
 	public boolean supportsOrdering();
 	

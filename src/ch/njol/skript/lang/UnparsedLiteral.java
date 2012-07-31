@@ -81,6 +81,11 @@ public class UnparsedLiteral implements Literal<Object> {
 		if (to == String.class && context == ParseContext.DEFAULT) {
 			return (Literal<? extends R>) VariableStringLiteral.newInstance(this);
 		} else if (to == Object.class) {
+			if (context == ParseContext.DEFAULT) {
+				final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
+				if (vsl != null)
+					return (Literal<? extends R>) vsl;
+			}
 			final SubLog log = SkriptLogger.startSubLog();
 			for (final ClassInfo<?> ci : Skript.getClassInfos()) {
 				if (ci.getParser() != null) {
@@ -102,7 +107,7 @@ public class UnparsedLiteral implements Literal<Object> {
 		return convert(to, p, context);
 	}
 	
-	private final static Pattern literalSplitPattern = Pattern.compile("\\s*,\\s*|\\s*,?\\s+and\\s+|\\s*,?\\s+n?or\\s+", Pattern.CASE_INSENSITIVE);
+	public final static Pattern literalSplitPattern = Pattern.compile("\\s*,?\\s+(and|n?or)\\s+|\\s*,\\s*", Pattern.CASE_INSENSITIVE);
 	
 	private <T> Literal<T> convert(final Class<T> to, final Parser<?> parser, final ParseContext context) {
 		final SubLog log = SkriptLogger.startSubLog();

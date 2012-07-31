@@ -28,6 +28,8 @@ import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityEvent;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -54,8 +56,8 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		if (!Utils.containsAny(ScriptLoader.currentEvents, EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class)) {
-			Skript.error("Cannot use 'damaged'/'victim' outside of a damage event");
+		if (!Utils.containsAny(ScriptLoader.currentEvents, EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class, EntityDeathEvent.class)) {
+			Skript.error("Cannot use 'damaged'/'victim' outside of a damage or death event");
 			return false;
 		}
 		final String type = parser.regexes.size() == 0 ? null : parser.regexes.get(0).group();
@@ -74,7 +76,7 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 	
 	@Override
 	protected Entity[] get(final Event e) {
-		final Entity entity = ((EntityDamageEvent) e).getEntity();
+		final Entity entity = ((EntityEvent) e).getEntity();
 		if (type.isInstance(entity)) {
 			one[0] = entity;
 			return one;

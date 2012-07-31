@@ -436,9 +436,14 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 	}
 	
+	private static final Pattern defaultVariableNameReplacePattern = Pattern.compile("<([^<>]+?):[^<>]+?>");
+	
 	public static final Object getVariable(final String name) {
 		synchronized (variables) {
-			return variables.get(name);
+			final Object v = variables.get(name);
+			if (v != null)
+				return v;
+			return variables.get(defaultVariableNameReplacePattern.matcher(name).replaceAll("<$1>"));
 		}
 	}
 	
@@ -757,6 +762,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @return
 	 */
 	public final static boolean converterExists(final Class<?> from, final Class<?> to) {
+		Validate.notNull(from, to);
 		for (final ConverterInfo<?, ?> conv : converters) {
 			if (conv.from.isAssignableFrom(from) && to.isAssignableFrom(conv.to))
 				return true;
@@ -774,6 +780,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <F, T> T convert(final F o, final Class<T> to) {
+		Validate.notNull(to, "to");
 		if (o == null)
 			return null;
 		if (to.isInstance(o))
@@ -792,6 +799,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @return the converter or null if none exist
 	 */
 	public final static <F, T> Converter<? super F, ? extends T> getConverter(final Class<F> from, final Class<T> to) {
+		Validate.notNull(from, to);
 		final ConverterInfo<? super F, ? extends T> ci = getConverterInfo(from, to);
 		if (ci != null)
 			return ci.converter;
@@ -1001,13 +1009,13 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param c
 	 * @return
 	 */
-	public static <T> T parseSimple(final String s, final Class<T> c) {
+	public static <T> T parseSimple(final String s, final Class<T> c, final ParseContext context) {
 		final SubLog log = SkriptLogger.startSubLog();
 		for (final ClassInfo<?> info : classInfos) {
 			if (info.getParser() == null || !c.isAssignableFrom(info.getC()))
 				continue;
 			log.clear();
-			final T t = (T) info.getParser().parse(s, null);
+			final T t = (T) info.getParser().parse(s, context);
 			if (t != null) {
 				SkriptLogger.stopSubLog(log);
 				log.printLog();
@@ -1027,15 +1035,15 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param c The desired type. The returned value will be of this type or a subclass if it.
 	 * @return The parsed object.
 	 */
-	public static <T> T parse(final String s, final Class<T> c) {
-		T t = parseSimple(s, c);
+	public static <T> T parse(final String s, final Class<T> c, final ParseContext context) {
+		T t = parseSimple(s, c, context);
 		if (t != null)
 			return t;
 		final SubLog log = SkriptLogger.startSubLog();
 		for (final ConverterInfo<?, ?> conv : converters) {
 			if (c.isAssignableFrom(conv.to)) {
 				log.clear();
-				final Object o = parseSimple(s, conv.from);
+				final Object o = parseSimple(s, conv.from, context);
 				if (o != null) {
 					t = (T) ConverterUtils.convert(conv, o);
 					if (t != null) {
@@ -1814,6 +1822,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	private final static Set<Class<? extends Event>> registeredEvents = new HashSet<Class<? extends Event>>();
 	
 	private static void loadScripts() {
+		
 		boolean successful = true;
 		int numFiles = 0;
 		
@@ -1851,6 +1860,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		if (renamed > 0)
 			Skript.info("[1.3] Renamed " + renamed + " scripts to match the new format");
 		
+		final SubLog log = SkriptLogger.startSubLog();
+		
 		try {
 			for (final File f : scriptsFolder.listFiles(new FilenameFilter() {
 				@Override
@@ -1870,14 +1881,15 @@ public final class Skript extends JavaPlugin implements Listener {
 			successful = false;
 		}
 		
-		if (successful && log(Verbosity.NORMAL))
+		log.stop();
+		log.printLog();
+		if (!log.hasErrors())
+			info("All scripts loaded without errors!");
+		
+		if (successful && logNormal())
 			info("loaded " + numFiles + " script" + (numFiles == 1 ? "" : "s")
 					+ " with a total of " + ScriptLoader.loadedTriggers + " trigger" + (ScriptLoader.loadedTriggers == 1 ? "" : "s")
 					+ " and " + ScriptLoader.loadedCommands + " command" + (ScriptLoader.loadedCommands == 1 ? "" : "s"));
-		
-		// TODO error count
-//		if (successful && session.getErrorCount() == 0)
-//			info("No errors detected in any loaded trigger files");
 		
 		for (final Class<? extends Event> e : SkriptEventHandler.triggers.keySet()) {
 			if (!registeredEvents.contains(e)) {

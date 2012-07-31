@@ -35,7 +35,7 @@ import ch.njol.util.Checker;
 public class SheepData extends EntityData<Sheep> {
 	
 	static {
-		EntityData.register(SheepData.class, "sheep", Sheep.class, "(un|non[-])sheared [%colors%] sheep[s]", "[%colors%] sheep[s]", "sheared [%colors%] sheep[s]");
+		EntityData.register(SheepData.class, "sheep", Sheep.class, "(un|non[-])sheared [%-colors%] sheep[s]", "[%-colors%] sheep[s]", "sheared [%-colors%] sheep[s]");
 	}
 	
 	private Literal<Color> colors = null;
