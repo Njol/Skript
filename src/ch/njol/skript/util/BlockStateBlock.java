@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -38,6 +39,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
+import ch.njol.skript.Skript;
+
 /**
  * 
  * 
@@ -47,9 +50,16 @@ import org.bukkit.plugin.Plugin;
 public class BlockStateBlock implements Block {
 	
 	private final BlockState state;
+	private final boolean delayChanges;
 	
 	public BlockStateBlock(final BlockState state) {
 		this.state = state;
+		delayChanges = false;
+	}
+	
+	public BlockStateBlock(final BlockState state, final boolean delayChanges) {
+		this.state = state;
+		this.delayChanges = delayChanges;
 	}
 	
 	@Override
@@ -149,32 +159,97 @@ public class BlockStateBlock implements Block {
 	
 	@Override
 	public void setData(final byte data) {
-		throw new UnsupportedOperationException();
+		if (delayChanges) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					state.getBlock().setData(data);
+				}
+			});
+		} else {
+			state.setRawData(data);
+		}
 	}
 	
 	@Override
 	public void setData(final byte data, final boolean applyPhysics) {
-		throw new UnsupportedOperationException();
+		if (delayChanges) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					state.getBlock().setData(data, applyPhysics);
+				}
+			});
+		} else {
+			state.setRawData(data);
+		}
 	}
 	
 	@Override
 	public void setType(final Material type) {
-		throw new UnsupportedOperationException();
+		if (delayChanges) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					state.getBlock().setType(type);
+				}
+			});
+		} else {
+			state.setType(type);
+		}
 	}
 	
 	@Override
 	public boolean setTypeId(final int type) {
-		throw new UnsupportedOperationException();
+		if (delayChanges) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					state.getBlock().setTypeId(type);
+				}
+			});
+			return true;
+		} else {
+			final int id = getTypeId();
+			state.setTypeId(type);
+			return id != type;
+		}
 	}
 	
 	@Override
 	public boolean setTypeId(final int type, final boolean applyPhysics) {
-		throw new UnsupportedOperationException();
+		if (delayChanges) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					state.getBlock().setTypeId(type, applyPhysics);
+				}
+			});
+			return true;
+		} else {
+			final int id = getTypeId();
+			state.setTypeId(type);
+			return id != type;
+		}
 	}
 	
 	@Override
 	public boolean setTypeIdAndData(final int type, final byte data, final boolean applyPhysics) {
-		throw new UnsupportedOperationException();
+		if (delayChanges) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					state.getBlock().setTypeIdAndData(type, data, applyPhysics);
+				}
+			});
+			return true;
+		} else {
+			final int id = getTypeId();
+			final byte d = getData();
+			state.setTypeId(type);
+			state.setRawData(data);
+			return id != type || d != data;
+		}
 	}
 	
 	@Override
@@ -254,12 +329,32 @@ public class BlockStateBlock implements Block {
 	
 	@Override
 	public boolean breakNaturally() {
-		throw new UnsupportedOperationException();
+		if (delayChanges) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					state.getBlock().breakNaturally();
+				}
+			});
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	@Override
 	public boolean breakNaturally(final ItemStack tool) {
-		throw new UnsupportedOperationException();
+		if (delayChanges) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					state.getBlock().breakNaturally(tool);
+				}
+			});
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	@Override

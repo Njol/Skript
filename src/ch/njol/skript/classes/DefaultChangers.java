@@ -22,8 +22,11 @@
 package ch.njol.skript.classes;
 
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
@@ -114,6 +117,45 @@ public class DefaultChangers {
 				}
 				if (invi instanceof PlayerInventory) {
 					((Player) invi.getHolder()).updateInventory();
+				}
+			}
+		}
+	};
+	
+	public final static Changer<Block, Object> blockChanger = new Changer<Block, Object>() {
+		@Override
+		public Class<?> acceptChange(final ChangeMode mode) {
+			if (mode == ChangeMode.SET)
+				return ItemType.class;
+			return ItemType[].class;
+		}
+		
+		@Override
+		public void change(final Block[] blocks, final Object delta, final ChangeMode mode) {
+			for (final Block block : blocks) {
+				switch (mode) {
+					case SET:
+						((ItemType) delta).setBlock(block, true);
+					break;
+					case CLEAR:
+						block.setTypeId(0, true);
+					break;
+					case ADD:
+					case REMOVE:
+						final BlockState state = block.getState();
+						if (!(state instanceof InventoryHolder))
+							break;
+						if (mode == ChangeMode.ADD) {
+							for (final ItemType type : (ItemType[]) delta) {
+								type.addTo(((InventoryHolder) state).getInventory());
+							}
+						} else {
+							for (final ItemType type : (ItemType[]) delta) {
+								type.removeFrom(((InventoryHolder) state).getInventory());
+							}
+						}
+						state.update();
+					break;
 				}
 			}
 		}

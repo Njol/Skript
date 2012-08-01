@@ -23,6 +23,8 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.World;
 import org.bukkit.event.Event;
+import org.bukkit.event.weather.ThunderChangeEvent;
+import org.bukkit.event.weather.WeatherChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
@@ -60,6 +62,17 @@ public class ExprWeather extends PropertyExpression<WeatherType> {
 	
 	@Override
 	protected WeatherType[] get(final Event e) {
+		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault()) {
+			if (e instanceof WeatherChangeEvent) {
+				if (!((WeatherChangeEvent) e).toWeatherState())
+					return new WeatherType[] {WeatherType.CLEAR};
+				return new WeatherType[] {((WeatherChangeEvent) e).getWorld().isThundering() ? WeatherType.THUNDER : WeatherType.RAIN};
+			} else {
+				if (((ThunderChangeEvent) e).toThunderState())
+					return new WeatherType[] {WeatherType.THUNDER};
+				return new WeatherType[] {((ThunderChangeEvent) e).getWorld().hasStorm() ? WeatherType.RAIN : WeatherType.CLEAR};
+			}
+		}
 		return worlds.getArray(e, WeatherType.class, new Getter<WeatherType, World>() {
 			@Override
 			public WeatherType get(final World w) {
@@ -75,28 +88,37 @@ public class ExprWeather extends PropertyExpression<WeatherType> {
 		return null;
 	}
 	
-	@SuppressWarnings("incomplete-switch")
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		switch (mode) {
-			case CLEAR:
-				for (final World w : worlds.getArray(e)) {
-					w.setStorm(false);
-					w.setThundering(false);
-				}
-			break;
-			case SET:
-				final WeatherType t = (WeatherType) delta;
-				for (final World w : worlds.getArray(e)) {
-					t.setWeather(w);
-				}
-			break;
+		final WeatherType t = mode == ChangeMode.CLEAR ? WeatherType.CLEAR : (WeatherType) delta;
+		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault()) {
+			if (e instanceof WeatherChangeEvent) {
+				if (((WeatherChangeEvent) e).toWeatherState() && t == WeatherType.CLEAR)
+					((WeatherChangeEvent) e).setCancelled(true);
+				if (((WeatherChangeEvent) e).getWorld().isThundering() != (t == WeatherType.THUNDER))
+					((WeatherChangeEvent) e).getWorld().setThundering(t == WeatherType.THUNDER);
+			} else {
+				if (((ThunderChangeEvent) e).toThunderState() && t != WeatherType.THUNDER)
+					((ThunderChangeEvent) e).setCancelled(true);
+				if (((ThunderChangeEvent) e).getWorld().hasStorm() != (t != WeatherType.CLEAR))
+					((ThunderChangeEvent) e).getWorld().setStorm(t != WeatherType.CLEAR);
+			}
+		} else {
+			for (final World w : worlds.getArray(e)) {
+				t.setWeather(w);
+			}
 		}
 	}
 	
 	@Override
 	public Class<? extends WeatherType> getReturnType() {
 		return WeatherType.class;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, worlds, WeatherChangeEvent.class, ThunderChangeEvent.class);
 	}
 	
 }

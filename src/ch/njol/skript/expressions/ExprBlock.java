@@ -26,6 +26,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.classes.DefaultChangers;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
@@ -44,7 +46,7 @@ public class ExprBlock extends SimpleExpression<Block> {
 	}
 	
 	private Expression<Offset> offset = null;
-	private Expression<Block> block = null;
+	private Expression<Block> block;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -97,8 +99,26 @@ public class ExprBlock extends SimpleExpression<Block> {
 	}
 	
 	@Override
+	public int getTime() {
+		return block.getTime();
+	}
+	
+	@Override
 	public boolean getAnd() {
-		return block == null || block.getAnd();
+		return block.getAnd();
+	}
+	
+	@Override
+	public Class<?> acceptChange(final ChangeMode mode) {
+		return DefaultChangers.blockChanger.acceptChange(mode);
+	}
+	
+	@Override
+	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+		if (getTime() >= 0 && offset == null) {
+			
+		}
+		DefaultChangers.blockChanger.change(getArray(e), delta, mode);
 	}
 	
 }

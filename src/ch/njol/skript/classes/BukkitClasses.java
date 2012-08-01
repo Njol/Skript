@@ -33,19 +33,18 @@ import org.bukkit.TreeType;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Changer;
 import ch.njol.skript.api.Converter;
 import ch.njol.skript.api.Parser;
 import ch.njol.skript.entity.EntityData;
@@ -130,10 +129,28 @@ public class BukkitClasses {
 					public String toString(final Entity e) {
 						return EntityData.toString(e);
 					}
-				}));
+				}).changer(new ConvertedChanger<Entity, ItemType[]>(new Converter<Entity, Inventory>() {
+					@Override
+					public Inventory convert(final Entity e) {
+						if (e instanceof Player)
+							return ((Player) e).getInventory();
+						return null;
+					}
+				}, Inventory.class, DefaultChangers.inventoryChanger)));
 		
 		Skript.registerClass(new ClassInfo<LivingEntity>(LivingEntity.class, "livingentity", "living entity")
-				.defaultExpression(new EventValueExpression<LivingEntity>(LivingEntity.class)));
+				.defaultExpression(new EventValueExpression<LivingEntity>(LivingEntity.class))
+				.changer(new ConvertedChanger<LivingEntity, ItemType[]>(new Converter<LivingEntity, Inventory>() {
+					@Override
+					public Inventory convert(final LivingEntity e) {
+						if (e instanceof Player)
+							return ((Player) e).getInventory();
+						return null;
+					}
+				}, Inventory.class, DefaultChangers.inventoryChanger)));
+		
+		Skript.registerClass(new ClassInfo<Projectile>(Projectile.class, "projectile", "projectile")
+				.defaultExpression(new EventValueExpression<Projectile>(Projectile.class)));
 		
 		Skript.registerClass(new ClassInfo<Block>(Block.class, "block", "block")
 				.user("block")
@@ -163,44 +180,9 @@ public class BukkitClasses {
 					public String getDebugMessage(final Block b) {
 						return toString(b) + " block (" + b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ() + ")";
 					}
-				}).changer(new Changer<Block, Object>() {
-					@Override
-					public Class<?> acceptChange(final ChangeMode mode) {
-						if (mode == ChangeMode.SET)
-							return ItemType.class;
-						return ItemType[].class;
-					}
-					
-					@Override
-					public void change(final Block[] blocks, final Object delta, final ChangeMode mode) {
-						for (final Block block : blocks) {
-							switch (mode) {
-								case SET:
-									((ItemType) delta).setBlock(block, true);
-								break;
-								case CLEAR:
-									block.setTypeId(0, true);
-								break;
-								case ADD:
-								case REMOVE:
-									final BlockState state = block.getState();
-									if (!(state instanceof InventoryHolder))
-										break;
-									if (mode == ChangeMode.ADD) {
-										for (final ItemType type : (ItemType[]) delta) {
-											type.addTo(((InventoryHolder) state).getInventory());
-										}
-									} else {
-										for (final ItemType type : (ItemType[]) delta) {
-											type.removeFrom(((InventoryHolder) state).getInventory());
-										}
-									}
-									state.update();
-								break;
-							}
-						}
-					}
-				}).serializer(new Serializer<Block>() {
+				})
+				.changer(DefaultChangers.blockChanger)
+				.serializer(new Serializer<Block>() {
 					@Override
 					public String serialize(final Block b) {
 						return b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ();

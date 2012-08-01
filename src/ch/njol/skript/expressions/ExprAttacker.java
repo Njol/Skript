@@ -22,23 +22,18 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
-import org.bukkit.inventory.Inventory;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.classes.DefaultChangers;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.ItemType;
 
 /**
  * 
@@ -99,19 +94,6 @@ public class ExprAttacker extends SimpleExpression<Entity> {
 	@Override
 	public boolean getAnd() {
 		return true;
-	}
-	
-	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-		return DefaultChangers.inventoryChanger.acceptChange(mode);
-	}
-	
-	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		final Entity a = getAttacker(e);
-		if (a == null || !(a instanceof Player))
-			return;
-		DefaultChangers.inventoryChanger.change(new Inventory[] {((Player) a).getInventory()}, (ItemType[]) delta, mode);
 	}
 	
 }

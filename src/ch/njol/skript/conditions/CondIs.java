@@ -191,6 +191,9 @@ public class CondIs extends Condition {
 					return true;
 				}
 			};
+			first = n1;
+			second = n2;
+			third = n3;
 			log.stop();
 			return true;
 		}

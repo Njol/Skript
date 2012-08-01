@@ -21,6 +21,7 @@
 
 package ch.njol.skript.data;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -56,7 +57,6 @@ import org.bukkit.event.painting.PaintingPlaceEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.event.player.PlayerBucketEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerEvent;
@@ -73,6 +73,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.api.Getter;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.util.BlockStateBlock;
+import ch.njol.skript.util.DelayedChangeBlock;
 
 /**
  * @author Peter Güttinger
@@ -108,6 +109,13 @@ public final class BukkitEventValues {
 				return e.getBlock();
 			}
 		}, 0);
+		// TODO workaround of the event's location being at the entity in block events that have an entity event value
+		Skript.registerEventValue(BlockEvent.class, Location.class, new Getter<Location, BlockEvent>() {
+			@Override
+			public Location get(final BlockEvent e) {
+				return e.getBlock().getLocation().add(0.5, 0.5, 0.5);
+			}
+		}, 0);
 		// BlockPlaceEvent
 		Skript.registerEventValue(BlockPlaceEvent.class, Player.class, new Getter<Player, BlockPlaceEvent>() {
 			@Override
@@ -122,6 +130,18 @@ public final class BukkitEventValues {
 			}
 		}, -1);
 		// BlockFadeEvent
+		Skript.registerEventValue(BlockFadeEvent.class, Block.class, new Getter<Block, BlockFadeEvent>() {
+			@Override
+			public Block get(final BlockFadeEvent e) {
+				return e.getBlock();
+			}
+		}, -1);
+		Skript.registerEventValue(BlockFadeEvent.class, Block.class, new Getter<Block, BlockFadeEvent>() {
+			@Override
+			public Block get(final BlockFadeEvent e) {
+				return new DelayedChangeBlock(e.getBlock(), e.getNewState());
+			}
+		}, 0);
 		Skript.registerEventValue(BlockFadeEvent.class, Block.class, new Getter<Block, BlockFadeEvent>() {
 			@Override
 			public Block get(final BlockFadeEvent e) {
@@ -160,9 +180,21 @@ public final class BukkitEventValues {
 		Skript.registerEventValue(BlockBreakEvent.class, Block.class, new Getter<Block, BlockBreakEvent>() {
 			@Override
 			public Block get(final BlockBreakEvent e) {
+				return e.getBlock();
+			}
+		}, -1);
+		Skript.registerEventValue(BlockBreakEvent.class, Block.class, new Getter<Block, BlockBreakEvent>() {
+			@Override
+			public Block get(final BlockBreakEvent e) {
+				return new DelayedChangeBlock(e.getBlock());
+			}
+		}, 0);
+		Skript.registerEventValue(BlockBreakEvent.class, Block.class, new Getter<Block, BlockBreakEvent>() {
+			@Override
+			public Block get(final BlockBreakEvent e) {
 				final BlockState s = e.getBlock().getState();
 				s.setType(s.getType() == Material.ICE ? Material.STATIONARY_WATER : Material.AIR);
-				return new BlockStateBlock(s);
+				return new BlockStateBlock(s, true);
 			}
 		}, 1);
 		// BlockIgniteEvent
@@ -222,10 +254,25 @@ public final class BukkitEventValues {
 				return null;
 			}
 		}, 0);
-		// ProjectileHitEvent
-		Skript.registerEventValue(ProjectileHitEvent.class, LivingEntity.class, new Getter<LivingEntity, ProjectileHitEvent>() {
+		// EntityDeathEvent
+		Skript.registerEventValue(EntityDeathEvent.class, Projectile.class, new Getter<Projectile, EntityDeathEvent>() {
 			@Override
-			public LivingEntity get(final ProjectileHitEvent e) {
+			public Projectile get(final EntityDeathEvent e) {
+				if (e.getEntity().getLastDamageCause() instanceof EntityDamageByEntityEvent && ((EntityDamageByEntityEvent) e.getEntity().getLastDamageCause()).getDamager() instanceof Projectile)
+					return (Projectile) ((EntityDamageByEntityEvent) e.getEntity().getLastDamageCause()).getDamager();
+				return null;
+			}
+		}, 0);
+		Skript.registerEventValue(EntityDeathEvent.class, DamageCause.class, new Getter<DamageCause, EntityDeathEvent>() {
+			@Override
+			public DamageCause get(final EntityDeathEvent e) {
+				return e.getEntity().getLastDamageCause().getCause();
+			}
+		}, 0);
+		// ProjectileHitEvent
+		Skript.registerEventValue(ProjectileHitEvent.class, Entity.class, new Getter<Entity, ProjectileHitEvent>() {
+			@Override
+			public Entity get(final ProjectileHitEvent e) {
 				return e.getEntity().getShooter();
 			}
 		}, 0);
@@ -270,7 +317,7 @@ public final class BukkitEventValues {
 				final BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
 				s.setTypeId(0);
 				s.setRawData((byte) 0);
-				return new BlockStateBlock(s);
+				return new BlockStateBlock(s, true);
 			}
 		}, 1);
 		Skript.registerEventValue(PlayerBucketEmptyEvent.class, Block.class, new Getter<Block, PlayerBucketEmptyEvent>() {
@@ -279,13 +326,13 @@ public final class BukkitEventValues {
 				return e.getBlockClicked().getRelative(e.getBlockFace());
 			}
 		}, -1);
-		Skript.registerEventValue(PlayerBucketEvent.class, Block.class, new Getter<Block, PlayerBucketEvent>() {
+		Skript.registerEventValue(PlayerBucketEmptyEvent.class, Block.class, new Getter<Block, PlayerBucketEmptyEvent>() {
 			@Override
-			public Block get(final PlayerBucketEvent e) {
+			public Block get(final PlayerBucketEmptyEvent e) {
 				final BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
 				s.setType(e.getBucket() == Material.WATER_BUCKET ? Material.STATIONARY_WATER : Material.STATIONARY_LAVA);
 				s.setRawData((byte) 0);
-				return new BlockStateBlock(s);
+				return new BlockStateBlock(s, true);
 			}
 		}, 0);
 		// PlayerDropItemEvent

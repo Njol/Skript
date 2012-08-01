@@ -19,50 +19,53 @@
  * 
  */
 
-package ch.njol.skript.effects;
+package ch.njol.skript.expressions;
 
-import org.bukkit.event.Cancellable;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
 
-import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
+import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.api.Converter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
- * 
  * @author Peter Güttinger
  * 
  */
-public class EffCancelEvent extends Effect {
+public class ExprShooter extends PropertyExpression<LivingEntity> {
 	
 	static {
-		Skript.registerEffect(EffCancelEvent.class, "cancel [the] event");//, "uncancel event");
-	}
-	
-	private boolean cancel;
-	
-	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		cancel = matchedPattern == 0;
-		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
-			if (Cancellable.class.isAssignableFrom(e))
-				return true;
-		}
-		Skript.error("This event can't be cancelled");
-		return false;
+		Skript.registerExpression(ExprShooter.class, LivingEntity.class, ExpressionType.SIMPLE, "[the] shooter [of %projectile%]");
 	}
 	
 	@Override
-	public void execute(final Event e) {
-		if (e instanceof Cancellable)
-			((Cancellable) e).setCancelled(cancel);
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+		setExpr(exprs[0]);
+		return true;
+	}
+	
+	@Override
+	protected LivingEntity[] get(final Event e) {
+		return getExpr().getArray(e, LivingEntity.class, new Converter<Object, LivingEntity>() {
+			@Override
+			public LivingEntity convert(final Object o) {
+				return ((Projectile) o).getShooter();
+			}
+		});
+	}
+	
+	@Override
+	public Class<? extends LivingEntity> getReturnType() {
+		return LivingEntity.class;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return (cancel ? "" : "un") + "cancel event";
+		return "the shooter" + (getExpr().isDefault() ? "" : " of " + getExpr().toString(e, debug));
 	}
 	
 }

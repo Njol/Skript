@@ -198,7 +198,7 @@ public final class Skript extends JavaPlugin implements Listener {
 			@Override
 			public void run() {
 				
-//				Economy.load(); // causes an exception at least with iConomy 6
+//				Economy.load();
 				
 				Skript.stopAcceptingRegistrations();
 				

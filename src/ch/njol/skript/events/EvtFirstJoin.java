@@ -19,50 +19,39 @@
  * 
  */
 
-package ch.njol.skript.effects;
+package ch.njol.skript.events;
 
-import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerJoinEvent;
 
-import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
-import ch.njol.skript.lang.Expression;
+import ch.njol.skript.api.SkriptEvent;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
- * 
  * @author Peter Güttinger
  * 
  */
-public class EffCancelEvent extends Effect {
+public class EvtFirstJoin extends SkriptEvent {
 	
 	static {
-		Skript.registerEffect(EffCancelEvent.class, "cancel [the] event");//, "uncancel event");
-	}
-	
-	private boolean cancel;
-	
-	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		cancel = matchedPattern == 0;
-		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
-			if (Cancellable.class.isAssignableFrom(e))
-				return true;
-		}
-		Skript.error("This event can't be cancelled");
-		return false;
+		Skript.registerEvent(EvtFirstJoin.class, PlayerJoinEvent.class, "first (join|login)");
 	}
 	
 	@Override
-	public void execute(final Event e) {
-		if (e instanceof Cancellable)
-			((Cancellable) e).setCancelled(cancel);
+	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		return true;
+	}
+	
+	@Override
+	public boolean check(final Event e) {
+		return !((PlayerJoinEvent) e).getPlayer().hasPlayedBefore();
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return (cancel ? "" : "un") + "cancel event";
+		return "first join";
 	}
 	
 }

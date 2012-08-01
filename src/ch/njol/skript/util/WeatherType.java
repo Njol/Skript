@@ -24,6 +24,7 @@ package ch.njol.skript.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.Validate;
 import org.bukkit.World;
 
 /**
@@ -33,7 +34,7 @@ import org.bukkit.World;
  */
 public enum WeatherType {
 	
-	CLEAR("clear", "sun", "sunny"), RAIN("rain", "rainy", "raining"), THUNDER("thunder", "thundering");
+	CLEAR("clear", "sun", "sunny"), RAIN("rain", "rainy", "raining"), THUNDER("thunder", "thundering", "thunderstorm");
 	
 	private final String[] names;
 	
@@ -56,8 +57,7 @@ public enum WeatherType {
 	}
 	
 	public static WeatherType fromWorld(final World world) {
-		if (world == null)
-			return null;
+		Validate.notNull(world, "world");
 		if (world.isThundering())
 			return THUNDER;
 		if (world.hasStorm())
@@ -79,7 +79,8 @@ public enum WeatherType {
 			case THUNDER:
 				return "thundering";
 		}
-		throw new IllegalStateException();
+		assert false;
+		return null;
 	}
 	
 	public boolean isWeather(final World w) {
@@ -94,14 +95,16 @@ public enum WeatherType {
 				return !thunder && rain;
 			case THUNDER:
 				return thunder && rain;
-			default:
-				throw new RuntimeException();
 		}
+		assert false;
+		return false;
 	}
 	
 	public void setWeather(final World w) {
-		w.setStorm(this == RAIN || this == THUNDER);
-		w.setThundering(this == THUNDER);
+		if (w.isThundering() != (this == THUNDER))
+			w.setThundering(this == THUNDER);
+		if (w.hasStorm() != (this != CLEAR))
+			w.setStorm(this != CLEAR);
 	}
 	
 }

@@ -98,7 +98,8 @@ public abstract class StringUtils {
 	 * @return
 	 */
 	public static final String toString(final double d, final int accuracy) {
-		final String s = "" + d;
+		final double a = Math.pow(10, accuracy);
+		final String s = "" + (1. * Math.round(d * a) / a);
 		final int c = s.indexOf('.');
 		if (c == -1)
 			return s;
