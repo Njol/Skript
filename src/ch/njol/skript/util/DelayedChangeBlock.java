@@ -41,6 +41,8 @@ import org.bukkit.plugin.Plugin;
 import ch.njol.skript.Skript;
 
 /**
+ * A block that either delays any changes by 1 tick of reflects them on a given BlockState depending on the constructor that is used.
+ * 
  * @author Peter Güttinger
  * 
  */

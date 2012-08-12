@@ -26,7 +26,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Converter;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -37,7 +37,7 @@ import ch.njol.util.StringUtils;
  * @author Peter Güttinger
  * 
  */
-public class ExprLightLevel extends PropertyExpression<Byte> {
+public class ExprLightLevel extends PropertyExpression<Block, Byte> {
 	
 	static {
 		Skript.registerExpression(ExprLightLevel.class, Byte.class, ExpressionType.PROPERTY, "[(sky|block)[ ]]light[]level (of|%offset%) %block%");
@@ -50,7 +50,7 @@ public class ExprLightLevel extends PropertyExpression<Byte> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		offset = (Expression<Offset>) exprs[0];
 		blocks = (Expression<Block>) exprs[1];
 		if (StringUtils.startsWithIgnoreCase(parseResult.expr, "sky"))
@@ -61,7 +61,7 @@ public class ExprLightLevel extends PropertyExpression<Byte> {
 	}
 	
 	@Override
-	public Class<? extends Byte> getReturnType() {
+	public Class<Byte> getReturnType() {
 		return Byte.class;
 	}
 	
@@ -71,11 +71,11 @@ public class ExprLightLevel extends PropertyExpression<Byte> {
 	}
 	
 	@Override
-	protected Byte[] get(final Event e) {
+	protected Byte[] get(final Event e, final Block[] source) {
 		final Offset o = offset.getSingle(e);
 		if (o == null)
 			return null;
-		return blocks.getArray(e, Byte.class, new Converter<Block, Byte>() {
+		return get(source, new Converter<Block, Byte>() {
 			@Override
 			public Byte convert(final Block b) {
 				return whatLight == ANY ? o.getRelative(b).getLightLevel() : whatLight == BLOCK ? o.getRelative(b).getLightFromBlocks() : o.getRelative(b).getLightFromSky();

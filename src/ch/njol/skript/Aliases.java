@@ -348,7 +348,7 @@ public abstract class Aliases {
 			}
 		}
 		if (type.isEmpty()) {
-			t.add(data);
+			t.add(data == null ? new ItemData() : data);
 			return t;
 		} else if (type.matches("\\d+")) {
 			ItemData d = new ItemData(Integer.parseInt(type));

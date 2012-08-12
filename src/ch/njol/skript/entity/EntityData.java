@@ -34,8 +34,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Parser;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.ParseContext;
@@ -64,6 +64,11 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 					@Override
 					public EntityData parse(final String s, final ParseContext context) {
 						return EntityData.parse(s);
+					}
+					
+					@Override
+					public String toCodeString(final EntityData o) {
+						return "entitydata:" + o.toString();
 					}
 				})/*.serializer(new Serializer<EntityData>() {
 					@SuppressWarnings("unchecked")
@@ -119,7 +124,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		return init(Arrays.copyOf(exprs, exprs.length, Literal[].class), matchedPattern, parseResult);
 	}
 	

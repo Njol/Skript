@@ -30,21 +30,22 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
-import ch.njol.skript.api.DefaultExpression;
-import ch.njol.skript.api.SkriptEvent;
-import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
-import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.SkriptCommand;
 import ch.njol.skript.command.SkriptCommandEvent;
+import ch.njol.skript.lang.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
+import ch.njol.util.Validate;
 
 /**
  * Used for parsing my custom patterns.<br>
@@ -92,6 +93,7 @@ public class SkriptParser {
 	}
 	
 	private SkriptParser(final String expr, final boolean parseStatic, final ParseContext context) {
+		Validate.notNull(expr, "expr");
 		this.expr = expr;
 		this.parseStatic = parseStatic;
 		this.context = context;
@@ -139,7 +141,12 @@ public class SkriptParser {
 	 * @param defaultError
 	 * @return
 	 */
-	public static final SyntaxElement parse(final String expr, final Iterator<? extends SyntaxElementInfo<?>> source, final boolean parseLiteral, final boolean parseVariable, final String defaultError) {
+	public static final SyntaxElement parse(String expr, final Iterator<? extends SyntaxElementInfo<?>> source, final boolean parseLiteral, final boolean parseVariable, final String defaultError) {
+		expr = expr.trim();
+		if (expr.isEmpty()) {
+			Skript.error(defaultError);
+			return null;
+		}
 		final Variable<?> var = parseVariable(expr, Object.class);
 		if (var != null) {
 			if (parseVariable)
@@ -170,7 +177,12 @@ public class SkriptParser {
 	 * @param defaultError
 	 * @return
 	 */
-	public static final <T extends SyntaxElement> T parse(final String expr, final Iterator<? extends SyntaxElementInfo<T>> source, final String defaultError) {
+	public static final <T extends SyntaxElement> T parse(String expr, final Iterator<? extends SyntaxElementInfo<T>> source, final String defaultError) {
+		expr = expr.trim();
+		if (expr.isEmpty()) {
+			Skript.error(defaultError);
+			return null;
+		}
 		final SubLog log = SkriptLogger.startSubLog();
 		final T e = new SkriptParser(expr).parse(source);
 		SkriptLogger.stopSubLog(log);
@@ -182,7 +194,12 @@ public class SkriptParser {
 		return null;
 	}
 	
-	public static final <T extends SyntaxElement> T parseStatic(final String expr, final Iterator<? extends SyntaxElementInfo<T>> source, final String defaultError) {
+	public static final <T extends SyntaxElement> T parseStatic(String expr, final Iterator<? extends SyntaxElementInfo<T>> source, final String defaultError) {
+		expr = expr.trim();
+		if (expr.isEmpty()) {
+			Skript.error(defaultError);
+			return null;
+		}
 		final SubLog log = SkriptLogger.startSubLog();
 		final T e = new SkriptParser(expr, true).parse(source);
 		SkriptLogger.stopSubLog(log);
@@ -208,13 +225,13 @@ public class SkriptParser {
 								final String name = info.patterns[i].substring(x + 1, x2);
 								if (!name.startsWith("-")) {
 									final VarInfo vi = getVarInfo(name);
-									final DefaultExpression<?> var = Skript.getDefaultExpression(vi.name);
+									final DefaultExpression<?> var = vi.classes[0].getDefaultExpression();
 									if (var == null)
-										throw new SkriptAPIException("The class '" + vi.name + "' does not provide a default expression. Either allow null (with %-" + vi.name + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
-									if (!vi.isPlural && !var.isSingle())
-										throw new SkriptAPIException("The default expression of '" + vi.name + "' is not a single-element expression. Change your pattern to allow multiple elements or make the expression mandatory [pattern: " + info.patterns[i] + "]");
+										throw new SkriptAPIException("The class '" + vi.classes[0].getName() + "' does not provide a default expression. Either allow null (with %-" + vi.classes[0].getCodeName() + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
+									if (!vi.isPlural[0] && !var.isSingle())
+										throw new SkriptAPIException("The default expression of '" + vi.classes[0].getName() + "' is not a single-element expression. Change your pattern to allow multiple elements or make the expression mandatory [pattern: " + info.patterns[i] + "]");
 									if (vi.time != 0 && !var.setTime(vi.time))
-										throw new SkriptAPIException("The default expression of '" + vi.name + "' does not have distinct time states. Either allow null (with %-" + vi.name + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
+										throw new SkriptAPIException("The default expression of '" + vi.classes[0].getName() + "' does not have distinct time states. Either allow null (with %-" + vi.classes[0].getCodeName() + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
 									var.init();
 									res.vars[j] = var;
 								}
@@ -223,7 +240,7 @@ public class SkriptParser {
 						}
 						final T e = info.c.newInstance();
 						final SubLog log = SkriptLogger.startSubLog();
-						if (!e.init(res.vars, i, res)) {
+						if (!e.init(res.vars, i, ScriptLoader.hasDelayBefore, res)) {
 							SkriptLogger.stopSubLog(log);
 							if (!log.hasErrors())
 								continue;
@@ -275,6 +292,8 @@ public class SkriptParser {
 	 */
 	@SuppressWarnings("unchecked")
 	private final <T> Expression<? extends T> parseExpr(final Class<T> returnType, final String expr, final boolean literalOnly) {
+		if (expr.isEmpty())
+			return null;
 		if (!literalOnly) {
 			final Variable<T> var = parseVariable(expr, returnType);
 			if (var != null)
@@ -464,12 +483,8 @@ public class SkriptParser {
 					end = next(pattern, '%', j + 1);
 					if (end == -1)
 						throw new MalformedPatternException(pattern, "odd number of '%'");
-					String name = pattern.substring(j + 1, end);
-					if (name.startsWith("-"))
-						name = name.substring(1);
+					final String name = pattern.substring(j + 1, end);
 					final VarInfo vi = getVarInfo(name);
-					name = vi.name;
-					final Class<?> returnType = Skript.getClass(name);
 					if (end == pattern.length() - 1) {
 						i2 = expr.length();
 					} else if (expr.charAt(i) == '"') {
@@ -497,27 +512,50 @@ public class SkriptParser {
 						}
 						res = parse_i(pattern, i2, end + 1);
 						if (res != null) {
-							final Expression<?> var = parseExpr(returnType, expr.substring(i, i2), parseStatic);
-							if (var != null) {
-								if (!vi.isPlural && !(var instanceof UnparsedLiteral) && !var.isSingle()) {
-									if (context == ParseContext.COMMAND)
-										setBestError(ErrorQuality.SEMANTIC_ERROR, "this command can only accept a single " + Skript.getExactClassName(returnType) + "!");
-									else
-										setBestError(ErrorQuality.SEMANTIC_ERROR, "this expression can only accept a single " + Skript.getExactClassName(returnType) + ", but multiple are given.");
-									return null;
-								}
-								if (vi.time != 0) {
-									if (var instanceof UnparsedLiteral)
-										return null;
-									if (!var.setTime(vi.time)) {
-										setBestError(ErrorQuality.SEMANTIC_ERROR, " does not have a " + (vi.time == -1 ? "past" : "future") + " state");
+							for (int k = 0; k < vi.classes.length; k++) {
+								final Expression<?> var = parseExpr(vi.classes[k].getC(), expr.substring(i, i2), parseStatic);
+								if (var != null) {
+									if (!vi.isPlural[k] && !(var instanceof UnparsedLiteral) && !var.isSingle()) {
+										if (context == ParseContext.COMMAND)
+											setBestError(ErrorQuality.SEMANTIC_ERROR, "this command can only accept a single " + vi.classes[k].getName() + "!");
+										else
+											setBestError(ErrorQuality.SEMANTIC_ERROR, "this expression can only accept a single " + vi.classes[k].getName() + ", but multiple are given.");
 										return null;
 									}
+									if (vi.time != 0) {
+										if (var instanceof UnparsedLiteral)
+											return null;
+										if (ScriptLoader.hasDelayBefore) {
+											setBestError(ErrorQuality.SEMANTIC_ERROR, "Cannot use time states after the event has already passed");
+											return null;
+										}
+										if (!var.setTime(vi.time)) {
+											setBestError(ErrorQuality.SEMANTIC_ERROR, var + " does not have a " + (vi.time == -1 ? "past" : "future") + " state");
+											return null;
+										}
+									}
+									res.vars[StringUtils.count(pattern, '%', 0, j - 1) / 2] = var;
+									return res;
 								}
-								res.vars[StringUtils.count(pattern, '%', 0, j - 1) / 2] = var;
-								return res;
-							} else if (res.matchedChars + matchedChars >= 5) {
-								setBestError(ErrorQuality.NOT_AN_EXPRESSION, "'" + expr.substring(i, i2) + "' is not " + Utils.a(Skript.getExactClassName(returnType)));
+							}
+							if (res.matchedChars + matchedChars >= 5) {
+								final String types;
+								if (vi.classes.length == 1) {
+									types = Utils.a(vi.classes[0].getName());
+								} else {
+									final StringBuilder b = new StringBuilder("neither ");
+									for (int k = 0; k < vi.classes.length; k++) {
+										if (k != 0) {
+											if (k != vi.classes.length - 1)
+												b.append(", ");
+											else
+												b.append(" nor ");
+										}
+										b.append(Utils.a(vi.classes[i].getName()));
+									}
+									types = b.toString();
+								}
+								setBestError(ErrorQuality.NOT_AN_EXPRESSION, "'" + expr.substring(i, i2) + "' is not " + types);
 							}
 						}
 					}
@@ -574,23 +612,32 @@ public class SkriptParser {
 	}
 	
 	private final static class VarInfo {
-		String name;
-		boolean isPlural;
+		ClassInfo<?>[] classes;
+		boolean isOptional;
+		boolean[] isPlural;
 		int time = 0;
 	}
 	
-	private static VarInfo getVarInfo(final String s) {
-		final String[] a = s.split("@", 2);
+	private static VarInfo getVarInfo(String s) throws MalformedPatternException {
 		final VarInfo r = new VarInfo();
-		if (a.length == 1) {
-			r.name = s;
-		} else {
-			r.name = a[0];
-			r.time = Integer.parseInt(a[1]);
+		r.isOptional = s.startsWith("-");
+		if (r.isOptional)
+			s = s.substring(1);
+		final int a = s.indexOf("@");
+		if (a != -1) {
+			r.time = Integer.parseInt(s.substring(a + 1));
+			s = s.substring(0, a);
 		}
-		final Pair<String, Boolean> p = Utils.getPlural(r.name);
-		r.name = p.first;
-		r.isPlural = p.second;
+		final String[] classes = s.split("/");
+		r.classes = new ClassInfo<?>[classes.length];
+		r.isPlural = new boolean[classes.length];
+		for (int i = 0; i < classes.length; i++) {
+			final Pair<String, Boolean> p = Utils.getPlural(classes[i]);
+			r.classes[i] = Skript.getClassInfo(p.first);
+			r.isPlural[i] = p.second;
+			if (r.classes[i] == null)
+				throw new MalformedPatternException(s, "invalid class '" + p.first + "'");
+		}
 		return r;
 	}
 	

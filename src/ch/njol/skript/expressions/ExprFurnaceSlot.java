@@ -33,17 +33,17 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Getter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Slot;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprFurnaceSlot extends PropertyExpression<Slot> {
+public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	
 	private final static int ORE = 0, FUEL = 1, RESULT = 2;
 	private final static String[] slotNames = {"ore", "fuel", "result"};
@@ -57,13 +57,15 @@ public class ExprFurnaceSlot extends PropertyExpression<Slot> {
 	
 	private Expression<Block> blocks;
 	private int slot;
+	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		blocks = (Expression<Block>) vars[0];
 		setExpr(blocks);
 		slot = matchedPattern / 2;
+		delayed = isDelayed;
 		return true;
 	}
 	
@@ -151,14 +153,14 @@ public class ExprFurnaceSlot extends PropertyExpression<Slot> {
 	}
 	
 	@Override
-	protected Slot[] get(final Event e) {
-		if (blocks.isDefault() && (e instanceof FurnaceSmeltEvent || e instanceof FurnaceBurnEvent)) {
+	protected Slot[] get(final Event e, final Block[] source) {
+		if (!delayed && blocks.isDefault() && (e instanceof FurnaceSmeltEvent || e instanceof FurnaceBurnEvent)) {
 			final Block b = blocks.getSingle(e);
 			if (b.getType() != Material.FURNACE && b.getType() != Material.BURNING_FURNACE)
 				return null;
 			return new Slot[] {new FurnaceEventSlot(e, ((Furnace) b.getState()).getInventory())};
 		}
-		return blocks.getArray(e, Slot.class, new Getter<Slot, Block>() {
+		return get(source, new Getter<Slot, Block>() {
 			@Override
 			public Slot get(final Block b) {
 				if (b.getType() != Material.FURNACE && b.getType() != Material.BURNING_FURNACE)
@@ -169,7 +171,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Slot> {
 	}
 	
 	@Override
-	public Class<? extends Slot> getReturnType() {
+	public Class<Slot> getReturnType() {
 		return Slot.class;
 	}
 	

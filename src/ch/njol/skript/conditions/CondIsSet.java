@@ -24,7 +24,7 @@ package ch.njol.skript.conditions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Condition;
+import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
@@ -44,7 +44,7 @@ public class CondIsSet extends Condition {
 	private Expression<?> expr;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		expr = exprs[0];
 		if (expr instanceof UnparsedLiteral)
 			return false;

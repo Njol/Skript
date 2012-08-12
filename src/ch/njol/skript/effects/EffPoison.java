@@ -27,7 +27,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Timespan;
@@ -53,7 +53,7 @@ public class EffPoison extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		entites = (Expression<LivingEntity>) exprs[0];
 		if (matchedPattern == 0)
 			duration = (Expression<Timespan>) exprs[1];
@@ -70,7 +70,14 @@ public class EffPoison extends Effect {
 	protected void execute(final Event e) {
 		for (final LivingEntity le : entites.getArray(e)) {
 			if (!cure) {
-				final int d = duration == null || duration.getSingle(e) == null ? DEFAULT_DURATION : duration.getSingle(e).getTicks();
+				int d = duration == null || duration.getSingle(e) == null ? DEFAULT_DURATION : duration.getSingle(e).getTicks();
+				if (le.hasPotionEffect(PotionEffectType.POISON)) {
+					for (final PotionEffect pe : le.getActivePotionEffects()) {
+						if (pe.getType() != PotionEffectType.POISON)
+							continue;
+						d += pe.getDuration();
+					}
+				}
 				le.addPotionEffect(new PotionEffect(PotionEffectType.POISON, d, 0), true);
 			} else {
 				le.removePotionEffect(PotionEffectType.POISON);

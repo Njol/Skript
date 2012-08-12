@@ -26,13 +26,13 @@ import java.lang.reflect.Array;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.Changer.ChangerUtils;
-import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.Converter.ConverterUtils;
+import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
@@ -47,6 +47,9 @@ import ch.njol.util.iterator.NonNullIterator;
 public class Variable<T> implements Expression<T> {
 	
 	private final VariableString name;
+	
+	private final boolean local;
+	
 	private final Class<T> type;
 	private final T[] zero, one;
 	
@@ -56,6 +59,7 @@ public class Variable<T> implements Expression<T> {
 		Validate.notNull(name, type);
 		if (name.getMode() != StringMode.VARIABLE_NAME) // not setMode as angle brackets are not allowed in variable names
 			throw new IllegalArgumentException("'name' must be a VARIABLE_NAME string");
+		local = name.toString(null, false).startsWith("*");
 		this.name = name;
 		this.type = type;
 		zero = (T[]) Array.newInstance(type, 0);
@@ -69,7 +73,7 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -101,11 +105,17 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	protected T get(final Event e) {
-		return Skript.convert(Skript.getVariable(name.toString(e).toLowerCase()), type);
+		Object val = local ? Skript.getLocalVariable(name.toString(e).toLowerCase(), e) : Skript.getVariable(name.toString(e).toLowerCase());
+		if (val == null && !local)
+			val = Skript.getVariable(name.getDefaultVariableName().toLowerCase());
+		return Skript.convert(val, type);
 	}
 	
 	private final void set(final Event e, final Object value) {
-		Skript.setVariable(name.toString(e).toLowerCase(), value);
+		if (local)
+			Skript.setLocalVariable(name.toString(e).toLowerCase(), e, value);
+		else
+			Skript.setVariable(name.toString(e).toLowerCase(), value);
 	}
 	
 	@Override
@@ -120,7 +130,7 @@ public class Variable<T> implements Expression<T> {
 				set(e, null);
 			break;
 			case SET:
-				ClassInfo<?> ci = Skript.getSuperClassInfo(delta.getClass());
+				ClassInfo<?> ci = delta == null ? null : Skript.getSuperClassInfo(delta.getClass());
 				if (ci != null && ci.getSerializeAs() != null) {
 					set(e, Skript.convert(delta, ci.getSerializeAs()));
 				} else {
@@ -129,6 +139,8 @@ public class Variable<T> implements Expression<T> {
 			break;
 			case ADD:
 			case REMOVE:
+				if (delta == null)
+					break;
 				final T o = get(e);
 				if ((o == null || o instanceof Number) && delta instanceof Number) {
 					final int i = mode == ChangeMode.ADD ? 1 : -1;
@@ -172,7 +184,7 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		return ConverterUtils.convert(getArray(e), converter, to);
+		return ConverterUtils.convert(getArray(e), to, converter);
 	}
 	
 	@Override

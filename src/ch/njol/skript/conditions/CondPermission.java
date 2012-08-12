@@ -25,7 +25,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Condition;
+import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Checker;
@@ -47,7 +47,7 @@ public class CondPermission extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		senders = (Expression<CommandSender>) vars[0];
 		permissions = (Expression<String>) vars[1];
 		setNegated(matchedPattern == 0);
@@ -66,7 +66,7 @@ public class CondPermission extends Condition {
 							return true;
 						// player has perm skript.foo.bar if he has skript.foo.* or skript.*, but not for other plugin's permissions since they can define their own *
 						if (perm.startsWith("skript.")) {
-							for (int i = perm.lastIndexOf('.'); i > 0; i = perm.lastIndexOf('.', i - 1)) {
+							for (int i = perm.lastIndexOf('.'); i != -1; i = perm.lastIndexOf('.', i - 1)) {
 								if (s.hasPermission(perm.substring(0, i + 1) + "*"))
 									return true;
 							}

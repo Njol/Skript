@@ -26,8 +26,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
 import ch.njol.skript.entity.EntityType;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Offset;
@@ -54,7 +54,7 @@ public class EffSpawn extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		amount = matchedPattern == 0 ? null : (Expression<Integer>) (exprs[0]);
 		types = (Expression<EntityType>) exprs[matchedPattern];
 		offsets = (Expression<Offset>) exprs[1 + matchedPattern];

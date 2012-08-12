@@ -21,45 +21,59 @@
 
 package ch.njol.skript.expressions;
 
+import java.util.Random;
+
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprRandom extends SimpleExpression<Double> {
+public class ExprRandom extends SimpleExpression<Number> {
 	
 	static {
-		Skript.registerExpression(ExprRandom.class, Double.class, ExpressionType.NORMAL, "[a] random number between %double% and %double%");
+		Skript.registerExpression(ExprRandom.class, Number.class, ExpressionType.NORMAL, "[a] random number between %double% and %double%", "[a] random integer between %double% and %double%");
 	}
 	
 	private Expression<Double> lower, upper;
 	
+	private final Random rand = new Random();
+	
+	private boolean integer;
+	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		lower = (Expression<Double>) vars[0];
 		upper = (Expression<Double>) vars[1];
+		integer = matchedPattern == 1;
 		return true;
 	}
 	
 	@Override
-	protected Double[] get(final Event e) {
-		final double l = lower.getSingle(e);
-		final double u = upper.getSingle(e);
+	protected Number[] get(final Event e) {
+		final Double l = lower.getSingle(e);
+		final Double u = upper.getSingle(e);
 		
-		return new Double[] {l + Math.random() * (u - l)};
+		if (u == null || l == null)
+			return null;
+		
+		if (integer) {
+			return new Integer[] {(int) (Math.ceil(l) + rand.nextInt((int) (Math.floor(u) - Math.ceil(l) + 1)))};
+		} else {
+			return new Double[] {l + rand.nextDouble() * (u - l)};
+		}
 	}
 	
 	@Override
-	public Class<Double> getReturnType() {
-		return Double.class;
+	public Class<? extends Number> getReturnType() {
+		return integer ? Integer.class : Double.class;
 	}
 	
 	@Override

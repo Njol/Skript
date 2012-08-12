@@ -24,8 +24,9 @@ package ch.njol.skript.util;
 import java.util.HashMap;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Parser;
+import ch.njol.skript.classes.Arithmetic;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.util.Pair;
@@ -73,20 +74,25 @@ public class Timespan {
 									continue;
 								}
 								
-								float amount = 1f;
-								if (sub.matches("^\\d+(.\\d+)?$")) {
-									if (i == subs.length)
+								float amount = 1;
+								if (sub.equalsIgnoreCase("a") || sub.equalsIgnoreCase("an")) {
+									if (i == subs.length - 1)
+										return null;
+									amount = 1;
+									sub = subs[++i];
+								} else if (sub.matches("^\\d+(.\\d+)?$")) {
+									if (i == subs.length - 1)
 										return null;
 									amount = Float.parseFloat(sub);
 									sub = subs[++i];
 								}
 								
 								if (sub.equals("real") || sub.equals("rl") || sub.equals("irl")) {
-									if (i == subs.length || isMinecraftTimeSet && minecraftTime)
+									if (i == subs.length - 1 || isMinecraftTimeSet && minecraftTime)
 										return null;
 									sub = subs[++i];
 								} else if (sub.equals("mc") || sub.equals("minecraft")) {
-									if (i == subs.length || isMinecraftTimeSet && !minecraftTime)
+									if (i == subs.length - 1 || isMinecraftTimeSet && !minecraftTime)
 										return null;
 									minecraftTime = true;
 									sub = subs[++i];
@@ -120,6 +126,11 @@ public class Timespan {
 					public String toString(final Timespan t) {
 						return t.toString();
 					}
+					
+					@Override
+					public String toCodeString(final Timespan o) {
+						return "timespan:" + o.ticks;
+					}
 				}).serializer(new Serializer<Timespan>() {
 					@Override
 					public String serialize(final Timespan t) {
@@ -134,12 +145,20 @@ public class Timespan {
 							return null;
 						}
 					}
+				})
+				.math(Timespan.class, new Arithmetic<Timespan, Timespan>() {
+					@Override
+					public Timespan difference(final Timespan t1, final Timespan t2) {
+						return new Timespan(Math.abs(t1.getTicks() - t2.getTicks()));
+					}
 				}));
 	}
 	
 	private final int ticks;
 	
 	public Timespan(final int ticks) {
+		if (ticks < 0)
+			throw new IllegalArgumentException("ticks must be >= 0");
 		this.ticks = ticks;
 	}
 	
@@ -161,16 +180,16 @@ public class Timespan {
 	};
 	
 	public static String toString(final int ticks) {
-		for (int i = 0; i < simpleValues.length; i++) {
+		for (int i = 0; i < simpleValues.length - 1; i++) {
 			if (ticks >= simpleValues[i].second) {
-				if (i < simpleValues.length - 1 && ticks % simpleValues[i].second != 0) {
+				if (ticks % simpleValues[i].second != 0) {
 					return toString(Math.floor(1. * ticks / simpleValues[i].second), simpleValues[i]) + " and " + toString(1. * (ticks % simpleValues[i].second) / simpleValues[i + 1].second, simpleValues[i + 1]);
 				} else {
 					return toString(1. * ticks / simpleValues[i].second, simpleValues[i]);
 				}
 			}
 		}
-		return ticks + " ticks";
+		return toString(1. * ticks / simpleValues[simpleValues.length - 1].second, simpleValues[simpleValues.length - 1]);
 	}
 	
 	private static String toString(final double amount, final Pair<String, Integer> p) {

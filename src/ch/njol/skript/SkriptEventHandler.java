@@ -34,7 +34,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.EventExecutor;
 
-import ch.njol.skript.api.intern.Trigger;
+import ch.njol.skript.lang.Trigger;
 
 /**
  * @author Peter Güttinger

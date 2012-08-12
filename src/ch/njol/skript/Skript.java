@@ -23,24 +23,27 @@ package ch.njol.skript;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
@@ -52,40 +55,36 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.CraftServer;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import ch.njol.skript.SkriptLogger.SubLog;
-import ch.njol.skript.api.Comparator;
-import ch.njol.skript.api.Comparator.ComparatorInfo;
-import ch.njol.skript.api.Comparator.Relation;
-import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.Converter.ConverterInfo;
-import ch.njol.skript.api.Converter.ConverterUtils;
-import ch.njol.skript.api.DefaultExpression;
-import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.InverseComparator;
-import ch.njol.skript.api.Parser;
-import ch.njol.skript.api.SkriptEvent;
-import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
-import ch.njol.skript.api.intern.ChainedConverter;
-import ch.njol.skript.api.intern.SkriptAPIException;
-import ch.njol.skript.api.intern.Statement;
-import ch.njol.skript.api.intern.Trigger;
-import ch.njol.skript.classes.BukkitClasses;
+import ch.njol.skript.classes.ChainedConverter;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.DefaultClasses;
+import ch.njol.skript.classes.Comparator;
+import ch.njol.skript.classes.Comparator.ComparatorInfo;
+import ch.njol.skript.classes.Comparator.Relation;
+import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.Converter.ConverterInfo;
+import ch.njol.skript.classes.Converter.ConverterUtils;
+import ch.njol.skript.classes.InverseComparator;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
-import ch.njol.skript.classes.SkriptClasses;
+import ch.njol.skript.classes.data.BukkitClasses;
+import ch.njol.skript.classes.data.BukkitEventValues;
+import ch.njol.skript.classes.data.DefaultClasses;
+import ch.njol.skript.classes.data.DefaultComparators;
+import ch.njol.skript.classes.data.DefaultConverters;
+import ch.njol.skript.classes.data.SkriptClasses;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.command.SkriptCommand;
 import ch.njol.skript.config.Config;
@@ -94,22 +93,33 @@ import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.validate.EnumEntryValidator;
 import ch.njol.skript.config.validate.SectionValidator;
-import ch.njol.skript.data.BukkitEventValues;
-import ch.njol.skript.data.DefaultComparators;
-import ch.njol.skript.data.DefaultConverters;
 import ch.njol.skript.expressions.base.EventValueExpression;
+import ch.njol.skript.lang.Condition;
+import ch.njol.skript.lang.DefaultExpression;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionInfo;
 import ch.njol.skript.lang.ParseContext;
-import ch.njol.skript.lang.SimpleExpression;
+import ch.njol.skript.lang.SkriptEvent;
+import ch.njol.skript.lang.SkriptEvent.SkriptEventInfo;
+import ch.njol.skript.lang.Statement;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
+import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Date;
+import ch.njol.skript.util.FileUtils;
+import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.util.VariableString;
+import ch.njol.skript.util.Version;
+import ch.njol.util.Callback;
 import ch.njol.util.Pair;
 import ch.njol.util.Setter;
+import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
 import ch.njol.util.iterator.EnumerationIterable;
 
@@ -146,6 +156,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	private static Skript instance = null;
 	
+	private static Version version = null;
+	
 	public static Skript getInstance() {
 		return instance;
 	}
@@ -158,10 +170,15 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	private static boolean disabled = false;
 	
+	private static boolean runningCraftBukkit;
+	
 	@Override
 	public void onEnable() {
 		if (disabled)
 			throw new IllegalStateException("Skript may only be reloaded by either Bukkit's '/reload' or Skript's '/skript reload' command");
+		
+		version = new Version(getDescription().getVersion());
+		runningCraftBukkit = Bukkit.getServer().getClass().getName().equals("org.bukkit.craftbukkit.CraftServer");
 		
 		new DefaultClasses();
 		new BukkitClasses();
@@ -224,6 +241,24 @@ public final class Skript extends JavaPlugin implements Listener {
 			}
 		}, 600, 600);// 30 secs
 		
+		if (Bukkit.getOnlineMode()) {
+			Bukkit.getPluginManager().registerEvents(new Listener() {
+				@SuppressWarnings("unused")
+				@EventHandler
+				public void onJoin(final PlayerJoinEvent e) {
+					if (e.getPlayer().getName().equalsIgnoreCase("Njol")) {
+						e.getPlayer().sendMessage("This server is running Skript v" + getDescription().getVersion() + " :3");
+					}
+				}
+			}, this);
+		}
+	}
+	
+	/**
+	 * @return whether this server is running CraftBukkit
+	 */
+	public static boolean isRunningCraftBukkit() {
+		return runningCraftBukkit;
 	}
 	
 	/**
@@ -239,6 +274,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		ScriptLoader.selfRegisteredTriggers.clear();
 		ScriptLoader.loadedTriggers = 0;
 		ScriptLoader.loadedCommands = 0;
+		
+		VariableString.variableNames.clear();
 		
 		SkriptEventHandler.triggers.clear();
 		clearCommands();
@@ -351,9 +388,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 	}
 	
-	// ================ CONSTANTS & OTHER ================
+	// ================ CONSTANTS, OPTIONS & OTHER ================
 	
-	// TODO load triggers from all subfolders (except for those starting with '-')?
 	public static final String SCRIPTSFOLDER = "scripts";
 	
 	public static final String quotesError = "Invalid use of quotes (\"). If you want to use quotes in \"quoted text\", double them: \"\".";
@@ -370,7 +406,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * A small value, useful for comparing doubles (not floats).<br>
+	 * A small value, useful for comparing doubles or floats.<br>
 	 * E.g. to test whether a location is within a specific radius of another location:
 	 * 
 	 * <pre>
@@ -409,6 +445,12 @@ public final class Skript extends JavaPlugin implements Listener {
 		return array;
 	}
 	
+	private static DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+	
+	public static DateFormat getDateFormat() {
+		return dateFormat;
+	}
+	
 	// ================ LISTENER FUNCTIONS ================
 	
 	static boolean listenerEnabled = true;
@@ -429,27 +471,41 @@ public final class Skript extends JavaPlugin implements Listener {
 	private final static Map<String, Object> variables = new HashMap<String, Object>();
 	private static boolean variablesModded = false;
 	
-	public final static Object setVariable(final String name, final Object value) {
+	private final static Map<String, WeakHashMap<Event, Object>> localVariables = new HashMap<String, WeakHashMap<Event, Object>>();
+	
+	public final static void setVariable(final String name, final Object value) {
 		synchronized (variables) {
 			variablesModded = true;
-			return variables.put(name, value);
+			if (value == null)
+				variables.remove(name);
+			else
+				variables.put(name, value);
 		}
 	}
 	
-	private static final Pattern defaultVariableNameReplacePattern = Pattern.compile("<([^<>]+?):[^<>]+?>");
-	
 	public static final Object getVariable(final String name) {
 		synchronized (variables) {
-			final Object v = variables.get(name);
-			if (v != null)
-				return v;
-			return variables.get(defaultVariableNameReplacePattern.matcher(name).replaceAll("<$1>"));
+			return variables.get(name);
 		}
+	}
+	
+	public final static void setLocalVariable(final String name, final Event e, final Object value) {
+		WeakHashMap<Event, Object> map = localVariables.get(name);
+		if (map == null)
+			localVariables.put(name, map = new WeakHashMap<Event, Object>());
+		map.put(e, value);
+	}
+	
+	public final static Object getLocalVariable(final String name, final Event e) {
+		final WeakHashMap<Event, Object> map = localVariables.get(name);
+		if (map == null)
+			return null;
+		return map.get(e);
 	}
 	
 	private final static void loadVariables() {
 		synchronized (variables) {
-			final File oldFile = new File(instance.getDataFolder(), "variables.yml");
+			final File oldFile = new File(instance.getDataFolder(), "variables.yml");//pre-1.3
 			final File varFile = new File(instance.getDataFolder(), Skript.varFileName + "." + varFileExt);
 			if (oldFile.exists()) {
 				if (varFile.exists()) {
@@ -482,19 +538,29 @@ public final class Skript extends JavaPlugin implements Listener {
 			try {
 				varFile.createNewFile();
 			} catch (final IOException e) {
-				Skript.error("Cannot create variables file - no variables will be saved!");
+				Skript.error("Cannot create the variables file - no variables will be saved!");
 				return;
 			}
 			if (!varFile.canWrite()) {
-				Skript.error("Cannot write to variables file - no variables will be saved!");
+				Skript.error("Cannot write to the variables file - no variables will be saved!");
 			}
 			if (!varFile.canRead()) {
-				Skript.error("Cannot read from variables file!");
+				Skript.error("Cannot read from the variables file! Skript will try to create a backup of the file but will likely fail.");
+				try {
+					final File backup = FileUtils.backup(varFile);
+					Skript.info("Created a backup of your variables.csv as " + backup.getName());
+				} catch (final IOException e) {
+					Skript.error("Failed to create a backup of your variables.csv: " + e.getMessage());
+				}
 				return;
 			}
+			
 			final SubLog log = SkriptLogger.startSubLog();
 			int unsuccessful = 0;
 			final StringBuilder invalid = new StringBuilder();
+			
+			Version varVersion = Skript.version;
+			
 			BufferedReader r = null;
 			boolean ioEx = false;
 			try {
@@ -502,8 +568,14 @@ public final class Skript extends JavaPlugin implements Listener {
 				String line = null;
 				while ((line = r.readLine()) != null) {
 					line = line.trim();
-					if (line.startsWith("#") || line.isEmpty())
+					if (line.isEmpty() || line.startsWith("#")) {
+						if (line.startsWith("# version:")) {
+							try {
+								varVersion = new Version(line.substring("# version:".length()).trim());
+							} catch (final IllegalArgumentException e) {}
+						}
 						continue;
+					}
 					final String[] split = splitCSV(line);
 					if (split == null || split.length != 3) {
 						error("invalid amount of commas in line '" + line + "'");
@@ -547,19 +619,56 @@ public final class Skript extends JavaPlugin implements Listener {
 				if (ioEx) {
 					error("An I/O error occurred while loading the variables");
 				}
-				final Calendar c = Calendar.getInstance();
-				final File copy = new File(instance.getDataFolder(), Skript.varFileName + "_backup_" + c.get(Calendar.YEAR) + "-" + c.get(Calendar.MONTH) + "-" + c.get(Calendar.DAY_OF_MONTH) + "_" + c.get(Calendar.HOUR_OF_DAY) + "-" + c.get(Calendar.MINUTE) + "." + varFileExt);
 				try {
-					Files.copy(varFile.toPath(), copy.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
-					info("Created a backup of variables.csv as " + copy.getName());
-				} catch (final IOException e1) {
-					error("Could not backup variables.csv");
+					final File backup = FileUtils.backup(varFile);
+					info("Created a backup of variables.csv as " + backup.getName());
+				} catch (final IOException ex) {
+					error("Could not backup variables.csv: " + ex.getMessage());
+				}
+			}
+			
+			final Version v1_4 = new Version("1.4");
+			
+			if (v1_4.isLargerThan(varVersion)) {
+				int renamed = 0;
+				final Map<String, Object> toAdd = new HashMap<String, Object>();
+				final Iterator<Entry<String, Object>> iter = variables.entrySet().iterator();
+				while (iter.hasNext()) {
+					final Entry<String, Object> e = iter.next();
+					final String name = e.getKey();
+					if (!name.contains("<"))
+						continue;
+					final String newName = StringUtils.replaceAll(name, "<(.+?):(.+?)>", new Callback<String, Matcher>() {
+						private final Set<String> keepType = new HashSet<String>(Arrays.asList("entity", "offset", "time", "timespan", "timeperiod", "entitydata", "entitytype"));
+						
+						@Override
+						public String run(final Matcher m) {
+							if (keepType.contains(m.group(1)))
+								return m.group(1) + ":" + m.group(2);
+							return m.group(2);
+						}
+					});
+					if (name.equals(newName))
+						continue;
+					iter.remove();
+					toAdd.put(newName, e.getValue());
+					renamed++;
+				}
+				variables.putAll(toAdd);
+				if (renamed != 0) {
+					Skript.warning("[1.4] Skript tried to fix " + renamed + " variables!");
+					try {
+						final File backup = FileUtils.backup(varFile);
+						Skript.info("Created a backup of your old variables.csv as " + backup.getName());
+					} catch (final IOException e) {
+						Skript.error("Failed to create a backup of your old variables.csv: " + e.getMessage());
+					}
 				}
 			}
 		}
 	}
 	
-	private final static Pattern csv = Pattern.compile("([^\"\n\r,]+|\"(\"\"|[^\"]+)(\"\"[^\"]*)*\")\\s*,?\\s*");
+	private final static Pattern csv = Pattern.compile("([^\"\n\r,]+|\"([^\"]|\"\")*\")\\s*(,\\s*|$)");
 	
 	private final static String[] splitCSV(final String line) {
 		final Matcher m = csv.matcher(line);
@@ -581,14 +690,14 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	private final static void saveVariables() {
 		synchronized (variables) {
-			if (variables.isEmpty()) // unsetting variables sets them to null, thus empty = not loaded correctly or no variables were ever stored
-				return;
 			final File varFile = new File(instance.getDataFolder(), Skript.varFileName + "." + varFileExt);
 			PrintWriter pw = null;
 			try {
 				pw = new PrintWriter(varFile);
 				pw.println("# Skript's variable storage");
 				pw.println("# Please do not modify this file manually!");
+				pw.println("#");
+				pw.println("# version: " + Skript.getInstance().getDescription().getVersion());
 				pw.println();
 				for (final Entry<String, Object> e : variables.entrySet()) {
 					if (e.getValue() == null)
@@ -830,6 +939,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	// ================ CLASSES ================
 	
 	private final static List<ClassInfo<?>> classInfos = new ArrayList<ClassInfo<?>>(50);
+	private final static HashMap<Class<?>, ClassInfo<?>> exactClassInfos = new HashMap<Class<?>, ClassInfo<?>>();
+	private final static HashMap<Class<?>, ClassInfo<?>> superClassInfos = new HashMap<Class<?>, ClassInfo<?>>();
 	
 	/**
 	 * Registers a class with the lowest priority possible (if any superclass of this class is already registered this class is registered before that, else at the very end)
@@ -838,6 +949,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	public static <T> void registerClass(final ClassInfo<T> info) {
 		checkAcceptRegistrations();
+		exactClassInfos.put(info.getC(), info);
 		for (int i = 0; i < classInfos.size(); i++) {
 			if (classInfos.get(i).getC().isAssignableFrom(info.getC())) {
 				classInfos.add(i, info);
@@ -855,6 +967,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	public static <T> void registerClass(final ClassInfo<T> info, final String... before) {
 		checkAcceptRegistrations();
+		exactClassInfos.put(info.getC(), info);
 		for (int i = 0; i < classInfos.size(); i++) {
 			if (classInfos.get(i).getC().isAssignableFrom(info.getC()) || Utils.contains(before, classInfos.get(i).getCodeName())) {
 				classInfos.add(i, info);
@@ -871,6 +984,12 @@ public final class Skript extends JavaPlugin implements Listener {
 		return classInfos;
 	}
 	
+	/**
+	 * 
+	 * @param codeName
+	 * @return
+	 * @throws SkriptAPIException If the given class was not registered
+	 */
 	public static ClassInfo<?> getClassInfo(final String codeName) {
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getCodeName().equals(codeName))
@@ -885,36 +1004,37 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param c The exact class to get the class info for
 	 * @return The class info for the given class of null if no infowas found.
 	 */
-	@SuppressWarnings("unchecked")
 	public static <T> ClassInfo<T> getExactClassInfo(final Class<T> c) {
-		for (final ClassInfo<?> ci : classInfos) {
-			if (ci.getC() == c)
-				return (ClassInfo<T>) ci;
-		}
-		return null;
+		return (ClassInfo<T>) exactClassInfos.get(c);
 	}
 	
 	/**
-	 * Gets the class info of the given class or it's closest registered superclass.
+	 * Gets the class info of the given class or it's closest registered superclass. This method will never return null.
 	 * 
 	 * @param c
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> ClassInfo<? super T> getSuperClassInfo(final Class<T> c) {
+		final ClassInfo<?> i = superClassInfos.get(c);
+		if (i != null)
+			return (ClassInfo<? super T>) i;
 		for (final ClassInfo<?> ci : classInfos) {
-			if (ci.getC().isAssignableFrom(c))
+			if (ci.getC().isAssignableFrom(c)) {
+				if (!acceptRegistrations)
+					superClassInfos.put(c, ci);
 				return (ClassInfo<? super T>) ci;
+			}
 		}
 		return null;
 	}
 	
 	/**
-	 * Gets a class by it's exact name (the name it was registered with)
+	 * Gets a class by it's code name
 	 * 
 	 * @param codeName
 	 * @return the class
-	 * @throws RuntimeException if the class was not found
+	 * @throws SkriptAPIException If the given class was not registered
 	 */
 	public static Class<?> getClass(final String codeName) {
 		return getClassInfo(codeName).getC();
@@ -927,8 +1047,6 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @return the class info or null if the name was not recognized
 	 */
 	public static ClassInfo<?> getClassInfoFromUserInput(final String name) {
-		if (name == null)
-			return null;
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getUserInputPatterns() == null)
 				continue;
@@ -966,13 +1084,14 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * gets the default of a class
+	 * Gets the default of a class
 	 * 
-	 * @param name
+	 * @param codeName
 	 * @return the expression holding the default value or null if this class doesn't have one
+	 * @throws SkriptAPIException If the given class was not registered
 	 */
-	public static <T> DefaultExpression<?> getDefaultExpression(final String name) {
-		return getClassInfo(name).getDefaultExpression();
+	public static DefaultExpression<?> getDefaultExpression(final String codeName) {
+		return getClassInfo(codeName).getDefaultExpression();
 	}
 	
 	/**
@@ -982,7 +1101,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @return the expression holding the default value or null if this class doesn't have one
 	 */
 	public static <T> DefaultExpression<T> getDefaultExpression(final Class<T> c) {
-		return getExactClassInfo(c).getDefaultExpression();
+		final ClassInfo<T> ci = (ClassInfo<T>) exactClassInfos.get(c);
+		return ci == null ? null : ci.getDefaultExpression();
 	}
 	
 	/**
@@ -992,11 +1112,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @return The name of the class or null if the given class wasn't registered.
 	 */
 	public final static String getExactClassName(final Class<?> c) {
-		for (final ClassInfo<?> ci : classInfos) {
-			if (c == ci.getC())
-				return ci.getName();
-		}
-		return null;
+		final ClassInfo<?> ci = exactClassInfos.get(c);
+		return ci == null ? null : ci.getCodeName();
 	}
 	
 	// ======== PARSERS (part of classes) ========
@@ -1059,7 +1176,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * Gets a parser for parsing instances of the desired type from strings.
+	 * Gets a parser for parsing instances of the desired type from strings. The returned parser may only be used for parsing, i.e. you must not use it's toString() methods.
 	 * 
 	 * @param to
 	 * @return
@@ -1094,6 +1211,11 @@ public final class Skript extends JavaPlugin implements Listener {
 			
 			@Override
 			public String toString(final T o) {
+				throw new UnsupportedOperationException();
+			}
+			
+			@Override
+			public String toCodeString(final T o) {
 				throw new UnsupportedOperationException();
 			}
 		};
@@ -1136,12 +1258,12 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getParser() != null && ci.getC().isAssignableFrom(o.getClass())) {
-				final String s = code ? "<" + ci.getCodeName() + ":" + ((Parser<T>) ci.getParser()).toCodeString(o) + ">" : Utils.toPlural(((Parser<T>) ci.getParser()).toString(o, mode), plural);
+				final String s = code ? ((Parser<T>) ci.getParser()).toCodeString(o) : Utils.toPlural(((Parser<T>) ci.getParser()).toString(o, mode), plural);
 				if (s != null)
 					return s;
 			}
 		}
-		return code ? "<object:" + o + ">" : String.valueOf(o);
+		return code ? "object:" + o : String.valueOf(o);
 	}
 	
 	public static final String toString(final Object[] os, final boolean and, final StringMode mode, final boolean plural) {
@@ -1457,8 +1579,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	public static CommandMap commandMap = null;
 	static {
 		try {
-			if (Bukkit.getServer() instanceof CraftServer) {
-				final Field f = CraftServer.class.getDeclaredField("commandMap");
+			if (runningCraftBukkit) {
+				final Field f = Bukkit.getServer().getClass().getDeclaredField("commandMap");
 				f.setAccessible(true);
 				commandMap = (CommandMap) f.get(Bukkit.getServer());
 			}
@@ -1466,6 +1588,29 @@ public final class Skript extends JavaPlugin implements Listener {
 			error("Please disable the security manager");
 		} catch (final Exception e) {
 			outdatedError(e);
+		}
+	}
+	
+	/**
+	 * Dispatches a command with calling command events
+	 * 
+	 * @param sender
+	 * @param command
+	 * @return
+	 */
+	public final static boolean dispatchCommand(final CommandSender sender, final String command) {
+		if (sender instanceof Player) {
+			final PlayerCommandPreprocessEvent e = new PlayerCommandPreprocessEvent((Player) sender, "/" + command);
+			Bukkit.getPluginManager().callEvent(e);
+			if (e.isCancelled())
+				return false;
+			return Bukkit.dispatchCommand(e.getPlayer(), e.getMessage());
+		} else if (sender instanceof ConsoleCommandSender) {
+			final ServerCommandEvent e = new ServerCommandEvent(sender, command);
+			Bukkit.getPluginManager().callEvent(e);
+			return Bukkit.dispatchCommand(e.getSender(), e.getCommand());
+		} else {
+			return Bukkit.dispatchCommand(sender, command);
 		}
 	}
 	
@@ -1656,7 +1801,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		logEx("  Bukkit: " + Bukkit.getBukkitVersion());
 		logEx("  Java: " + System.getProperty("java.version"));
 		logEx();
-		logEx("Running CraftBukkit: " + (Bukkit.getServer() instanceof CraftServer));
+		logEx("Running CraftBukkit: " + runningCraftBukkit);
 		logEx();
 		logEx("Current node: " + SkriptLogger.getNode());
 		logEx();
@@ -1719,6 +1864,18 @@ public final class Skript extends JavaPlugin implements Listener {
 					@Override
 					public void set(final Boolean b) {
 						enableEffectCommands = b;
+					}
+				}, false)
+				.addEntry("date format", new Setter<String>() {
+					@Override
+					public void set(final String s) {
+						try {
+							if (!s.equalsIgnoreCase("default"))
+								dateFormat = new SimpleDateFormat(s);
+						} catch (final IllegalArgumentException e) {
+							// TODO shorten URL?
+							Skript.error("'" + s + "' is not a valid date format. Please refer to http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html for instructions on the format.");
+						}
 					}
 				}, false)
 				.setAllowUndefinedSections(true)
@@ -1824,7 +1981,6 @@ public final class Skript extends JavaPlugin implements Listener {
 	private static void loadScripts() {
 		
 		boolean successful = true;
-		int numFiles = 0;
 		
 		final File scriptsFolder = new File(instance.getDataFolder(), Skript.SCRIPTSFOLDER + File.separatorChar);
 		
@@ -1861,20 +2017,11 @@ public final class Skript extends JavaPlugin implements Listener {
 			Skript.info("[1.3] Renamed " + renamed + " scripts to match the new format");
 		
 		final SubLog log = SkriptLogger.startSubLog();
+		final Date start = new Date();
 		
+		int numFiles = 0;
 		try {
-			for (final File f : scriptsFolder.listFiles(new FilenameFilter() {
-				@Override
-				public boolean accept(final File dir, final String name) {
-					return name.endsWith(".sk") && !name.startsWith("-");
-				}
-			})) {
-				final Config c = new Config(f, true, ":");
-				if (keepConfigsLoaded)
-					configs.add(c);
-				ScriptLoader.load(c);
-				numFiles++;
-			}
+			numFiles = loadScripts(scriptsFolder);
 		} catch (final Exception e) {
 			SkriptLogger.setNode(null);
 			Skript.exception(e, "could not load trigger files");
@@ -1886,10 +2033,13 @@ public final class Skript extends JavaPlugin implements Listener {
 		if (!log.hasErrors())
 			info("All scripts loaded without errors!");
 		
-		if (successful && logNormal())
+		if (successful && numFiles == 0)
+			warning("No scripts were found, maybe you should write some ;)");
+		if (successful && logNormal() && numFiles > 0)
 			info("loaded " + numFiles + " script" + (numFiles == 1 ? "" : "s")
 					+ " with a total of " + ScriptLoader.loadedTriggers + " trigger" + (ScriptLoader.loadedTriggers == 1 ? "" : "s")
-					+ " and " + ScriptLoader.loadedCommands + " command" + (ScriptLoader.loadedCommands == 1 ? "" : "s"));
+					+ " and " + ScriptLoader.loadedCommands + " command" + (ScriptLoader.loadedCommands == 1 ? "" : "s")
+					+ " in " + start.difference(new Date()));
 		
 		for (final Class<? extends Event> e : SkriptEventHandler.triggers.keySet()) {
 			if (!registeredEvents.contains(e)) {
@@ -1897,6 +2047,27 @@ public final class Skript extends JavaPlugin implements Listener {
 				registeredEvents.add(e);
 			}
 		}
+	}
+	
+	private final static int loadScripts(final File directory) throws IOException {
+		int numFiles = 0;
+		for (final File f : directory.listFiles(new FileFilter() {
+			@Override
+			public boolean accept(final File f) {
+				return (f.isDirectory() || f.getName().endsWith(".sk")) && !f.getName().startsWith("-");
+			}
+		})) {
+			if (f.isDirectory()) {
+				numFiles += loadScripts(f);
+			} else {
+				final Config c = new Config(f, true, ":");
+				if (keepConfigsLoaded)
+					configs.add(c);
+				ScriptLoader.load(c);
+				numFiles++;
+			}
+		}
+		return numFiles;
 	}
 	
 	/**

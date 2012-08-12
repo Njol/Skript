@@ -26,11 +26,10 @@ import java.util.Iterator;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.Debuggable;
-import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Converter;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Checker;
 
 /**
@@ -46,7 +45,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	/**
 	 * Get the single value of this expression.<br/>
 	 * Do not use this in conditions, use {@link #check(Event, Checker, Condition)} instead.<br/>
-	 * This method must only return null if it always returns null for the given event.
+	 * This method may only return null if it always returns null for the given event.
 	 * 
 	 * @param e
 	 * @return The value or null if this expression doesn't have any value for the event
@@ -56,7 +55,8 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	
 	/**
 	 * Get all the values of this expression. The returned array is empty if this expression doesn't have any values for the given event.<br/>
-	 * Do not use this in conditions, use {@link #check(Event, Checker, Condition)} instead.
+	 * Do not use this in conditions, use {@link #check(Event, Checker, Condition)} instead.<br/>
+	 * The returned array must not contain any null valuse.
 	 * 
 	 * @param e
 	 * @return An array of values of this expression. Does not contain nulls.
@@ -157,7 +157,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	
 	/**
 	 * Returns true if this expression returns all possible values, false if it only returns one.<br>
-	 * This must only return false if the expression randomly chooses one value out of a set or similar.<br>
 	 * This method heavily influences {@link #check(Event, Checker)} and {@link #check(Event, Checker, Condition)} and thus breaks conditions that use this expression if it returns
 	 * a wrong value.
 	 * 
@@ -215,7 +214,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * 
 	 * @return
 	 */
-	// TODO think of a better name for this method
 	public Expression<?> getSource();
 	
 }

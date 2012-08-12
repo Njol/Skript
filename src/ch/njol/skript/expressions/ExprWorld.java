@@ -34,15 +34,16 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  * 
  */
-public class ExprWorld extends PropertyExpression<World> {
+public class ExprWorld extends PropertyExpression<World, World> {
 	
 	static {
 		Skript.registerExpression(ExprWorld.class, World.class, ExpressionType.PROPERTY, "[the] world [of %world%]", "%world%'[s] world");
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parser) {
-		setExpr(exprs[0]);
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+		setExpr((Expression<? extends World>) exprs[0]);
 		return true;
 	}
 	
@@ -52,13 +53,13 @@ public class ExprWorld extends PropertyExpression<World> {
 	}
 	
 	@Override
-	public Class<? extends World> getReturnType() {
+	public Class<World> getReturnType() {
 		return World.class;
 	}
 	
 	@Override
-	protected World[] get(final Event e) {
-		return ((Expression<World>) getExpr()).getArray(e);
+	protected World[] get(final Event e, final World[] source) {
+		return source;
 	}
 	
 }

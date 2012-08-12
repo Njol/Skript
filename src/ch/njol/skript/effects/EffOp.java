@@ -21,11 +21,11 @@
 
 package ch.njol.skript.effects;
 
-import org.bukkit.entity.Player;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
@@ -36,16 +36,16 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class EffOp extends Effect {
 	
 	static {
-		Skript.registerEffect(EffOp.class, "[de[-]]op %players%");
+		Skript.registerEffect(EffOp.class, "[de[-]]op %offlineplayers%");
 	}
 	
-	private Expression<Player> players;
+	private Expression<OfflinePlayer> players;
 	private boolean op;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
-		players = (Expression<Player>) exprs[0];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+		players = (Expression<OfflinePlayer>) exprs[0];
 		op = !parseResult.expr.substring(0, 2).equalsIgnoreCase("de");
 		return true;
 	}
@@ -57,7 +57,7 @@ public class EffOp extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
-		for (final Player p : players.getArray(e)) {
+		for (final OfflinePlayer p : players.getArray(e)) {
 			p.setOp(op);
 		}
 	}

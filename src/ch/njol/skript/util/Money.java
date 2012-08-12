@@ -23,8 +23,8 @@ package ch.njol.skript.util;
 
 import ch.njol.skript.Economy;
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Parser;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.ParseContext;
 
 /**
@@ -46,6 +46,11 @@ public class Money {
 						@Override
 						public String toString(final Money m) {
 							return m.toString();
+						}
+						
+						@Override
+						public String toCodeString(final Money o) {
+							return "money:" + o.amount;
 						}
 					}));
 		}

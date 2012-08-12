@@ -28,8 +28,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.api.intern.SkriptAPIException;
 import ch.njol.skript.config.validate.SectionValidator;
 
 public class SectionNode extends Node implements Iterable<Node> {
@@ -120,7 +120,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 				}
 			}
 			if (!line.matches("\\s*") && !line.matches("^(" + config.getIndentation() + "){" + config.level + "}\\S.*")) {
-				if (line.matches("^(" + config.getIndentation() + "){" + config.level + "}\\s.*")) {
+				if (line.matches("^(" + config.getIndentation() + "){" + config.level + "}\\s.*") || !line.matches("^(" + config.getIndentation() + ")*\\S.*")) {
 					final String s = line.replaceFirst("\\S.*$", "");
 					String found;
 					if (s.matches(" +") || s.matches("\t+")) {
@@ -128,10 +128,13 @@ public class SectionNode extends Node implements Iterable<Node> {
 					} else {
 						found = readableWhitespace(s);
 					}
-					Skript.error("indentation error, expected " + config.level * config.getIndentation().length() + " " + config.getIndentationName() + ", found " + found);
+					Skript.error("indentation error, expected " + config.level * config.getIndentation().length() + " " + config.getIndentationName() + (config.level * config.getIndentation().length() == 1 ? "" : "s") + ", found " + found);
 					nodes.add(new InvalidNode(this, r));
 					continue;
 				} else {
+					if (nodes.isEmpty()) {
+						Skript.warning("Empty configuration section! You might want to indent one or more of the subsequent lines to make them belong to this section.");
+					}
 					r.reset();
 					return this;
 				}

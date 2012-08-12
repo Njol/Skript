@@ -30,7 +30,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
@@ -41,7 +41,7 @@ import ch.njol.skript.util.Utils;
  * @author Peter Güttinger
  * 
  */
-public class ExprTarget extends PropertyExpression<Entity> {
+public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	
 	static {
 		Skript.registerExpression(ExprTarget.class, Entity.class, ExpressionType.NORMAL, "[the] target[[ed] %entitydatas%] [of %livingentities%]", "%livingentities%'[s] target[[ed] %entitydatas%]");
@@ -52,7 +52,7 @@ public class ExprTarget extends PropertyExpression<Entity> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		types = (Expression<EntityData<?>>) vars[matchedPattern];
 		entities = (Expression<LivingEntity>) vars[1 - matchedPattern];
 		setExpr(entities);
@@ -60,10 +60,10 @@ public class ExprTarget extends PropertyExpression<Entity> {
 	}
 	
 	@Override
-	protected Entity[] get(final Event evt) {
+	protected Entity[] get(final Event evt, final LivingEntity[] source) {
 		final ArrayList<Entity> targets = new ArrayList<Entity>();
-		final EntityData<?>[] types = this.types.getArray(evt);
-		for (final LivingEntity e : entities.getArray(evt)) {
+		final EntityData<?>[] types = this.types.getAll(evt);
+		for (final LivingEntity e : source) {
 			for (final EntityData<?> type : types) {
 				final Entity t = Utils.getTargetEntity(e, type.getType());
 				if (t != null)

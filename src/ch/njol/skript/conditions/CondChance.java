@@ -24,7 +24,7 @@ package ch.njol.skript.conditions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Condition;
+import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
@@ -35,25 +35,29 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class CondChance extends Condition {
 	
 	static {
-		Skript.registerCondition(CondChance.class, "chance of <\\d+(.\\d+)?>\\%");
+		Skript.registerCondition(CondChance.class, "chance of %double%\\%");
 	}
 	
-	private double chance;
+	private Expression<Double> chance;
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		chance = Double.parseDouble(parser.regexes.get(0).group()) / 100;
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+		chance = (Expression<Double>) exprs[0];
 		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
-		return Math.random() < chance;
+		final Double c = chance.getSingle(e);
+		if (c == null)
+			return false;
+		return Math.random() * 100 < c;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "chance of " + chance * 100 + "%";
+		return "chance of " + chance.toString(e, debug) + "%";
 	}
 	
 }

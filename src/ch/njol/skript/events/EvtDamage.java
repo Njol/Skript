@@ -30,8 +30,8 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**

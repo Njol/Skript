@@ -25,9 +25,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.regex.Matcher;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Creature;
@@ -53,6 +56,8 @@ public abstract class Utils {
 	
 	private Utils() {}
 	
+	private final static Random random = new Random();
+	
 	/**
 	 * Finds an object in an array using {@link Object#equals(Object)}.
 	 * 
@@ -60,10 +65,14 @@ public abstract class Utils {
 	 * @param o the object to search for
 	 * @return the index of the first occurrence of the given object or -1 if not found
 	 */
-	public static <T> int indexOf(final T[] array, final T o) {
+	public static <T> int indexOf(final T[] array, final T t) {
+		return indexOf(array, t, 0, array.length);
+	}
+	
+	public static <T> int indexOf(final T[] array, final T t, final int start, final int end) {
 		Validate.notNull(array, "array");
-		for (int i = 0; i < array.length; i++) {
-			if (array[i].equals(o))
+		for (int i = start; i < end; i++) {
+			if (array[i] == null ? t == null : array[i].equals(t))
 				return i;
 		}
 		return -1;
@@ -636,6 +645,72 @@ public abstract class Utils {
 		message = ChatColor.translateAlternateColorCodes('&', message);
 		message = StringUtils.fixCapitalization(message);
 		return message;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static final <E extends Entity> E validate(final E e) {
+		if (e == null)
+			return null;
+		if (e instanceof Player) {// FIXME improve this
+			final Player p = Bukkit.getPlayerExact(((Player) e).getName());
+			return p == null ? e : (E) p;
+		}
+		if (!e.isValid()) {
+			return null;
+		}
+		return e;
+	}
+	
+	private final static double sqrt2i = 1. / Math.sqrt(2);
+	
+	public static final BlockFace getFacing(final Location loc, final boolean horizontal) {
+		final Vector dir = loc.getDirection();
+		if (!horizontal) {
+			if (dir.getY() > sqrt2i)
+				return BlockFace.UP;
+			if (dir.getY() < sqrt2i)
+				return BlockFace.DOWN;
+		}
+		for (final BlockFace f : new BlockFace[] {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST}) {
+			if (f.getModX() * dir.getX() + f.getModZ() * dir.getZ() >= sqrt2i - Skript.EPSILON)
+				return f;
+		}
+		assert false;
+		return null;
+	}
+	
+	/**
+	 * Creates a permutation of the all integers in the interval [start, end)
+	 * 
+	 * @param start The lowest number which will be included in the permutation
+	 * @param end The highest number which will just not be included in the permutation
+	 * @return an array of length end - start + 1
+	 */
+	public static final int[] permutation(final int start, final int end) {
+		final int length = end - start + 1;
+		final int[] r = new int[length];
+		for (int i = 0; i < length; i++)
+			r[i] = start + i;
+		for (int i = 0; i < length; i++) {
+			final int j = random.nextInt(length);
+			final int b = r[i];
+			r[i] = r[j];
+			r[j] = b;
+		}
+		return r;
+	}
+	
+	/**
+	 * Gets a random value between the first value (inclusive) and the second value (exclusive)
+	 * 
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public static int random(final int start, final int end) {
+		if (end <= start)
+			throw new IllegalArgumentException("end (" + end + ") must be greater than start (" + start + ")");
+		return start + random.nextInt(end - start);
 	}
 	
 }

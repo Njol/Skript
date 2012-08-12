@@ -26,16 +26,16 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
-import ch.njol.skript.api.Comparator;
-import ch.njol.skript.api.Comparator.ComparatorInfo;
-import ch.njol.skript.api.Comparator.Relation;
-import ch.njol.skript.api.Condition;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Comparator;
+import ch.njol.skript.classes.Comparator.ComparatorInfo;
+import ch.njol.skript.classes.Comparator.Relation;
+import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.Patterns;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
@@ -88,7 +88,7 @@ public class CondIs extends Condition {
 	private boolean reverseOrder = false;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		first = vars[0];
 		second = vars[1];
 		if (vars.length == 3)
@@ -117,7 +117,7 @@ public class CondIs extends Condition {
 		return true;
 	}
 	
-	private final static String f(final Expression<?> e) {
+	public final static String f(final Expression<?> e) {
 		final ClassInfo<?> ci = Skript.getSuperClassInfo(e.getReturnType());
 		if (ci.getC() == Object.class)
 			return "'" + e + "'";

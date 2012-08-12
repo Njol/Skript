@@ -33,8 +33,9 @@ import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.effects.EffSpawn;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
@@ -50,7 +51,7 @@ public class ExprLastSpawnedEntity extends SimpleExpression<Entity> {
 	private Entity[] one;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		final SubLog log = SkriptLogger.startSubLog();
 		type = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
 		log.stop();
@@ -63,9 +64,12 @@ public class ExprLastSpawnedEntity extends SimpleExpression<Entity> {
 	
 	@Override
 	protected Entity[] get(final Event e) {
-		if (!type.isInstance(EffSpawn.lastSpawned))
+		final Entity en = Utils.validate(EffSpawn.lastSpawned);
+		if (en == null)
 			return null;
-		one[0] = EffSpawn.lastSpawned;
+		if (!type.isInstance(en))
+			return null;
+		one[0] = en;
 		return one;
 	}
 	

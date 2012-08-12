@@ -26,160 +26,176 @@ import java.util.Arrays;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.material.Attachable;
-import org.bukkit.material.Bed;
-import org.bukkit.material.Button;
-import org.bukkit.material.Door;
-import org.bukkit.material.Ladder;
-import org.bukkit.material.Lever;
-import org.bukkit.material.MaterialData;
-import org.bukkit.material.Torch;
-import org.bukkit.material.TrapDoor;
-import org.bukkit.material.Vine;
+
+import ch.njol.skript.Skript;
 
 /**
- * TODO: maybe use NMS instead of coding everything myself?
- * 
  * @author Peter Güttinger
- * 
  */
 public abstract class BlockUtils {
+	
+	private final static BlockFace[] torch = new BlockFace[] {
+			null, BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.DOWN
+	};
+	
+	private final static BlockFace[] button = new BlockFace[] {
+			null, BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH, null, null, null,
+			null, BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH
+	};
+	
+	private final static BlockFace[] ladder = new BlockFace[] {
+			null, null, BlockFace.SOUTH, BlockFace.NORTH, BlockFace.EAST, BlockFace.WEST
+	}, wallSign = ladder;
+	
+	private final static BlockFace[] trapdoor = new BlockFace[] {
+			BlockFace.SOUTH, BlockFace.NORTH, BlockFace.EAST, BlockFace.WEST
+	};
+	
+	private final static BlockFace[] lever = new BlockFace[] {
+			BlockFace.UP, BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.DOWN, BlockFace.DOWN, BlockFace.UP,
+			BlockFace.UP, BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.DOWN, BlockFace.DOWN, BlockFace.UP
+	};
+	
+	private final static BlockFace[] cocoa = new BlockFace[] {
+			BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST
+	};
+	
+	private final static BlockFace[] tripwireHook = new BlockFace[] {
+			BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST,
+			BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST
+	};
+	
+	private final static BlockFace[][] attached = new BlockFace[Skript.MAXBLOCKID + 1][];
+	static {
+		attached[Material.TORCH.getId()] = torch;
+		attached[Material.STONE_BUTTON.getId()] = button;
+		attached[Material.LADDER.getId()] = ladder;
+		attached[Material.WALL_SIGN.getId()] = wallSign;
+		attached[Material.TRAP_DOOR.getId()] = trapdoor;
+		attached[Material.LEVER.getId()] = lever;
+		attached[Material.COCOA.getId()] = cocoa;
+		attached[Material.TRIPWIRE_HOOK.getId()] = tripwireHook;
+	}
+	
+	private final static BlockFace[] bed = new BlockFace[] {
+			BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST
+	};
 	
 	/**
 	 * 
 	 * @param b
-	 * @param mat
-	 * @param data The data, can be -1
+	 * @param type
+	 * @param dataMin The miminum data value from 0 to 15, can be -1
+	 * @param dataMax The maximum data value from 0 to 15, can be -1
 	 * @param applyPhysics
 	 * @return Whether the block could be set successfully
 	 */
-	public static boolean set(final Block b, final Material mat, final byte data, final boolean applyPhysics) {
-		if (!mat.isBlock())
-			return false;
-		Block other;
-		Attachable a = null;
-		switch (mat) {
-			case BED_BLOCK:
-				if (data == -1) {
-					for (final BlockFace f : getFaces()) {
-						other = b.getRelative(f);
-						if (other.getTypeId() == 0) {
-							final Bed bed = new Bed(mat);
-							bed.setFacingDirection(f);
-							b.setTypeIdAndData(mat.getId(), bed.getData(), applyPhysics);
-							bed.setHeadOfBed(!bed.isHeadOfBed());
-							other.setTypeIdAndData(mat.getId(), bed.getData(), applyPhysics);
-							return true;
-						}
-					}
-					return false;
-				}
-				final Bed bed = new Bed(mat, data);
-				other = b.getRelative(bed.isHeadOfBed() ? bed.getFacing().getOppositeFace() : bed.getFacing());
-				b.setTypeIdAndData(mat.getId(), data, applyPhysics);
-				bed.setHeadOfBed(!bed.isHeadOfBed());
-				other.setTypeIdAndData(mat.getId(), bed.getData(), applyPhysics);
-			break;
-			case WOODEN_DOOR:
-			case IRON_DOOR_BLOCK:
-				if (data == -1) {
-					final Door door = new Door(mat);
-					door.setTopHalf(false);
-					other = b.getRelative(BlockFace.UP);
-					if (other.getTypeId() != 0) {
-						other = b.getRelative(BlockFace.DOWN);
-						if (other.getTypeId() != 0)
-							return false;
-						door.setTopHalf(true);
-					}
-					if (!isSolid(b.getRelative(BlockFace.DOWN, door.isTopHalf() ? 2 : 1).getType()))
-						return false;
-					b.setTypeIdAndData(mat.getId(), door.getData(), applyPhysics);
-					door.setTopHalf(!door.isTopHalf());
-					other.setTypeIdAndData(mat.getId(), door.getData(), applyPhysics);
+	public static boolean set(final Block b, final int type, byte dataMin, byte dataMax, final boolean applyPhysics) {
+		final boolean any = dataMin == -1 && dataMax == -1;
+		if (dataMin == -1)
+			dataMin = 0;
+		if (dataMax == -1)
+			dataMax = 15;
+		if (type < 0 || type > Skript.MAXBLOCKID)
+			throw new IllegalArgumentException("Invalid block type id " + type);
+		if (dataMin < 0 || dataMin > dataMax || dataMax > 15)
+			throw new IllegalArgumentException("Invalid data range " + dataMin + " to " + dataMax);
+		
+		// ATTACHABLES
+		final BlockFace[] attach = attached[type];
+		if (attach != null) {
+			if (dataMin >= attach.length)
+				return false;
+			dataMax = (byte) Math.min(dataMax, attach.length - 1);
+			byte down; // TODO randomize preferred face?
+			if ((down = (byte) Utils.indexOf(attach, BlockFace.DOWN, dataMin, dataMax)) != -1) {
+				if (isSolid(b.getRelative(BlockFace.DOWN).getTypeId())) {
+					b.setTypeIdAndData(type, down, applyPhysics);
 					return true;
 				}
-				final Door door = new Door(mat, data);
-				if (!isSolid(b.getRelative(BlockFace.DOWN, door.isTopHalf() ? 2 : 1).getType()))
-					return false;
-				other = b.getRelative(door.isTopHalf() ? BlockFace.DOWN : BlockFace.UP);
-				b.setTypeIdAndData(mat.getId(), data, applyPhysics);
-				door.setTopHalf(!door.isTopHalf());
-				other.setTypeIdAndData(mat.getId(), door.getData(), applyPhysics);
-			break;
-			case TORCH:
-			case REDSTONE_LAMP_ON:
-			case REDSTONE_LAMP_OFF:
-				a = new Torch(mat, data == -1 ? 0 : data);
-				//$FALL-THROUGH$
-			case LADDER:
-				if (a == null)
-					a = new Ladder(mat, data == -1 ? 0 : data);
-				//$FALL-THROUGH$
-			case STONE_BUTTON:
-				if (a == null)
-					a = new Button(mat, data == -1 ? 0 : data);
-				//$FALL-THROUGH$
-			case LEVER:
-				if (a == null)
-					a = new Lever(mat, data == -1 ? 0 : data);
-				//$FALL-THROUGH$
-			case TRAP_DOOR:
-				if (a == null)
-					a = new TrapDoor(mat, data == -1 ? 0 : data);
-				if (data == -1) {
-					for (final BlockFace f : getFaces()) {
-						other = b.getRelative(f);
-						if (isSolid(other.getType())) {
-							a.setFacingDirection(f.getOppositeFace());
-							b.setTypeIdAndData(mat.getId(), ((MaterialData) a).getData(), applyPhysics);
-							return true;
-						}
-					}
-					return false;
+			}
+			for (final int data : Utils.permutation(dataMin, dataMax + 1)) {
+				final BlockFace f = attach[data];
+				if (f == null)
+					continue;
+				if (isSolid(b.getRelative(f).getTypeId())) {
+					b.setTypeIdAndData(type, (byte) data, applyPhysics);
+					return true;
 				}
-				other = b.getRelative(a.getAttachedFace());
-				if (!isSolid(other.getType()))
-					return false;
-				b.setTypeIdAndData(mat.getId(), data, applyPhysics);
-			break;
-			case VINE:
-				if (data == -1) {
-					final Vine vine = new Vine();
-					for (final BlockFace f : getFaces()) {
-						if (isSolid(b.getRelative(f).getType())) {
-							b.setTypeIdAndData(mat.getId(), (byte) 15, applyPhysics);
-							return true;
-						}
-					}
-					if (isSolid(b.getRelative(BlockFace.UP).getType())) {
-						b.setTypeIdAndData(mat.getId(), (byte) 0, applyPhysics);
-						return true;
-					}
-					if (b.getRelative(BlockFace.UP).getType() == Material.VINE) {
-						data &= b.getRelative(BlockFace.UP).getData();
-						if (data == 0)
-							return false;
-						b.setTypeIdAndData(mat.getId(), data, applyPhysics);
-					}
-					return false;
-				}
-				final Vine vine = new Vine(data);
-			// TODO has multiple faces
-			break;
-			case WALL_SIGN:
-			case SIGN_POST:
-				
-			case RAILS:
-				
-			default:
-				b.setTypeIdAndData(mat.getId(), data, applyPhysics);
+			}
+			return false;
 		}
+		
+		// DOORS
+		if (type == Material.IRON_DOOR_BLOCK.getId() || type == Material.WOODEN_DOOR.getId()) {
+			final int up = b.getRelative(BlockFace.UP).getTypeId();
+			final int down = b.getRelative(BlockFace.DOWN).getTypeId();
+			if (up == 0 || up == type && b.getRelative(BlockFace.UP).getData() >= 0x8) {
+				if (dataMin >= 0x8) // top half
+					return false;
+				if (!isSolid(down))
+					return false;
+				dataMax = (byte) Math.min(dataMax, 0x8);
+				final byte data = (byte) Utils.random(dataMin, dataMax + 1);
+				if (up != type)
+					b.getRelative(BlockFace.UP).setTypeIdAndData(type, (byte) 0x8, false);
+				b.setTypeIdAndData(type, data, applyPhysics);
+				return true;
+			} else if (down == 0 || down == type && b.getRelative(BlockFace.DOWN).getData() < 0x8) {
+				if (dataMax < 0x8) // bottom half
+					return false;
+				if (!isSolid(b.getRelative(BlockFace.DOWN, 2).getTypeId()))
+					return false;
+				dataMin = (byte) Math.max(dataMin, 0x8);
+				final byte data = (byte) Utils.random(dataMin, dataMax + 1);
+				if (down != type)
+					b.getRelative(BlockFace.DOWN).setTypeIdAndData(type, (byte) 0x0, false);
+				b.setTypeIdAndData(type, data, applyPhysics);
+				return true;
+			}
+			return false;
+		}
+		
+		// BED
+		if (type == Material.BED_BLOCK.getId()) {
+			for (final int data : Utils.permutation(dataMin, dataMax + 1)) {
+				final boolean head = (data & 0x8) == 0x8;
+				final BlockFace f = bed[data & 0x3];
+				if (head) {
+					if (b.getRelative(f, -1).getTypeId() != 0)
+						continue;
+					b.getRelative(f, -1).setTypeIdAndData(type, (byte) (data & ~0x8), false);
+					b.setTypeIdAndData(type, (byte) data, applyPhysics);
+					return true;
+				} else {
+					if (b.getRelative(f).getTypeId() != 0)
+						continue;
+					b.getRelative(f).setTypeIdAndData(type, (byte) (data | 0x8), false);
+					b.setTypeIdAndData(type, (byte) data, applyPhysics);
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		// TODO rails, fence gates?
+		
+		// DEFAULT
+		b.setTypeIdAndData(type, any ? 0 : (byte) Utils.random(dataMin, dataMax + 1), applyPhysics);
 		return true;
 	}
 	
-	public static final boolean isSolid(final Material mat) {
-		return true;
+	private final static int[] solid = {1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29, 33, 35, 41, 42, 43, 45, 46, 47, 48, 49, 52, 54, 56, 57, 58, 60, 61, 62, 73, 74, 79, 80, 82, 84, 86, 87, 88, 89, 91, 95, 97, 98, 99, 100, 103, 110, 112, 120, 121, 123, 124, 125, 129, 130, 133};
+	private final static boolean[] isSolid = new boolean[Skript.MAXBLOCKID + 1];
+	static {
+		for (final int i : solid)
+			isSolid[i] = true;
+	}
+	
+	public static final boolean isSolid(final int type) {
+		if (type < 0 || type > Skript.MAXBLOCKID)
+			throw new IllegalArgumentException(type + " is not a block id");
+		return isSolid[type];
 	}
 	
 	public static Iterable<Block> getBlocksAround(final Block b) {

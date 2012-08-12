@@ -32,8 +32,9 @@ import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Utils;
 
 /**
  * 
@@ -47,13 +48,13 @@ public class ExprAttacker extends SimpleExpression<Entity> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		return true;
 	}
 	
 	@Override
 	protected Entity[] get(final Event e) {
-		return new Entity[] {getAttacker(e)};
+		return new Entity[] {Utils.validate(getAttacker(e))};
 	}
 	
 	private static Entity getAttacker(final Event e) {

@@ -26,6 +26,9 @@ import java.util.Map;
 
 import org.apache.commons.lang.Validate;
 import org.bukkit.World;
+import org.bukkit.event.weather.ThunderChangeEvent;
+import org.bukkit.event.weather.WeatherChangeEvent;
+import org.bukkit.event.weather.WeatherEvent;
 
 /**
  * 
@@ -61,6 +64,33 @@ public enum WeatherType {
 		if (world.isThundering())
 			return THUNDER;
 		if (world.hasStorm())
+			return RAIN;
+		return CLEAR;
+	}
+	
+	public static WeatherType fromEvent(final WeatherEvent e) {
+		if (e instanceof WeatherChangeEvent)
+			return fromEvent((WeatherChangeEvent) e);
+		if (e instanceof ThunderChangeEvent)
+			return fromEvent((ThunderChangeEvent) e);
+		assert false;
+		return null;
+	}
+	
+	public static WeatherType fromEvent(final WeatherChangeEvent e) {
+		Validate.notNull(e, "e");
+		if (!e.toWeatherState())
+			return CLEAR;
+		if (e.getWorld().isThundering())
+			return THUNDER;
+		return RAIN;
+	}
+	
+	public static WeatherType fromEvent(final ThunderChangeEvent e) {
+		Validate.notNull(e, "e");
+		if (e.toThunderState())
+			return THUNDER;
+		if (e.getWorld().hasStorm())
 			return RAIN;
 		return CLEAR;
 	}

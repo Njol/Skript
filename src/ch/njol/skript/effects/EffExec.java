@@ -46,7 +46,7 @@ public class EffExec extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, boolean isDelayed, final ParseResult parser) {
 		input = (Expression<String>) vars[0];
 		return true;
 	}

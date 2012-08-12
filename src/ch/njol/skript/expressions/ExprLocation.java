@@ -34,15 +34,16 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  * 
  */
-public class ExprLocation extends PropertyExpression<Location> {
+public class ExprLocation extends PropertyExpression<Location, Location> {
 	
 	static {
 		Skript.registerExpression(ExprLocation.class, Location.class, ExpressionType.PROPERTY, "location of %location%", "%location%'[s] location");
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
-		setExpr(vars[0]);
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+		setExpr((Expression<? extends Location>) vars[0]);
 		return true;
 	}
 	
@@ -52,13 +53,13 @@ public class ExprLocation extends PropertyExpression<Location> {
 	}
 	
 	@Override
-	public Class<? extends Location> getReturnType() {
+	public Class<Location> getReturnType() {
 		return Location.class;
 	}
 	
 	@Override
-	protected Location[] get(final Event e) {
-		return ((Expression<Location>) getExpr()).getArray(e);
+	protected Location[] get(final Event e, final Location[] source) {
+		return source;
 	}
 	
 }

@@ -35,7 +35,7 @@ public enum Color {
 	
 	BLACK(DyeColor.BLACK, ChatColor.BLACK, "black"),
 	DARK_GREY(DyeColor.GRAY, ChatColor.DARK_GRAY, "dark grey", "dark gray"),
-	LIGHT_GREY(DyeColor.SILVER, ChatColor.GRAY, "grey", "light grey", "light gray", "gray", "silver"),
+	LIGHT_GREY(DyeColor.SILVER, ChatColor.GRAY, "grey", "light grey", "gray", "light gray", "silver"),
 	WHITE(DyeColor.WHITE, ChatColor.WHITE, "white"),
 	
 	DARK_BLUE(DyeColor.BLUE, ChatColor.DARK_BLUE, "blue", "dark blue"),

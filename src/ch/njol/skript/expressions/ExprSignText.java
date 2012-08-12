@@ -25,13 +25,14 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.event.Event;
+import org.bukkit.event.block.SignChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * @author Peter Güttinger
@@ -41,17 +42,19 @@ public class ExprSignText extends SimpleExpression<String> {
 	
 	static {
 		Skript.registerExpression(ExprSignText.class, String.class, ExpressionType.PROPERTY,
-				"line <[1-4]>[ of %block%]");
+				"[the] line <[1-4]> [of %block%]");//, "[the] (1st|2nd|3rd|4th) line [of %block%]");
 	}
 	
 	private int line;
 	private Expression<Block> block;
+	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		line = Integer.parseInt(parseResult.regexes.get(0).group());
 		block = (Expression<Block>) exprs[0];
+		delayed = isDelayed;
 		return true;
 	}
 	
@@ -72,6 +75,9 @@ public class ExprSignText extends SimpleExpression<String> {
 	
 	@Override
 	protected String[] get(final Event e) {
+		if (!delayed && getTime() >= 0 && block.isDefault() && e instanceof SignChangeEvent) {
+			return new String[] {((SignChangeEvent) e).getLine(line - 1)};
+		}
 		final Block b = block.getSingle(e);
 		if (b == null)
 			return null;
@@ -90,6 +96,12 @@ public class ExprSignText extends SimpleExpression<String> {
 	@SuppressWarnings("incomplete-switch")
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+		if (!delayed && getTime() >= 0 && block.isDefault() && e instanceof SignChangeEvent) {
+			switch (mode) {
+				case CLEAR:
+					((SignChangeEvent) e).setLine(line - 1, "");
+			}
+		}
 		switch (mode) {
 			case CLEAR:
 				final Block b = block.getSingle(e);
@@ -104,6 +116,11 @@ public class ExprSignText extends SimpleExpression<String> {
 	@Override
 	public boolean getAnd() {
 		return true;
+	}
+	
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, SignChangeEvent.class, block);
 	}
 	
 }

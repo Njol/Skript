@@ -25,10 +25,10 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.TriggerSection;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.TriggerSection;
 
 /**
  * @author Peter Güttinger
@@ -47,22 +47,20 @@ public class EffExit extends Effect {
 	private int breakLevels;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 				breakLevels = ScriptLoader.currentSections.size() + 1;
 			break;
 			case 1:
-				breakLevels = 1;
-			break;
 			case 2:
-				breakLevels = Integer.parseInt(parser.regexes.get(0).group());
+				breakLevels = matchedPattern == 1 ? 1 : Integer.parseInt(parser.regexes.get(0).group());
 				if (breakLevels > ScriptLoader.currentSections.size()) {
 					if (ScriptLoader.currentSections.isEmpty()) {
-						Skript.error("you can't exit any sections as there are no sections present");
+						Skript.error("can't exit any sections as there are no sections present");
 						return false;
 					} else {
-						Skript.error("you can't exit as there are only " + ScriptLoader.currentSections.size() + " sections present");
+						Skript.error("can't exit " + breakLevels + " sections as there are only " + ScriptLoader.currentSections.size() + " sections present");
 						return false;
 					}
 				}

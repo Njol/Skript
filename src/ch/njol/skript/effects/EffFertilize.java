@@ -28,7 +28,7 @@ import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Color;
@@ -48,15 +48,19 @@ public class EffFertilize extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		blocks = (Expression<Block>) vars[0];
+		if (!Skript.isRunningCraftBukkit()) {
+			Skript.error("The fertilize effect can only be used with CraftBukkit");
+			return false;
+		}
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
 		for (final Block b : blocks.getArray(e)) {
-			Item.INK_SACK.interactWith(new net.minecraft.server.ItemStack(Item.INK_SACK, Color.WHITE.getDye(), 1), null, ((CraftWorld) b.getWorld()).getHandle(), b.getX(), b.getY(), b.getZ(), 0);
+			Item.INK_SACK.interactWith(new net.minecraft.server.ItemStack(Item.INK_SACK, Color.WHITE.getDye(), 1), null, ((CraftWorld) b.getWorld()).getHandle(), b.getX(), b.getY(), b.getZ(), 0, 0, 0, 0);
 		}
 	}
 	

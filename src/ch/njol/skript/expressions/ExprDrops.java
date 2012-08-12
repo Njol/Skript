@@ -30,10 +30,10 @@ import org.bukkit.inventory.ItemStack;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 
@@ -47,12 +47,15 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 		Skript.registerExpression(ExprDrops.class, ItemStack.class, ExpressionType.SIMPLE, "[the] drops");
 	}
 	
+	private boolean delayed;
+	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		if (Utils.indexOf(ScriptLoader.currentEvents, EntityDeathEvent.class) == -1) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+		if (!Utils.contains(ScriptLoader.currentEvents, EntityDeathEvent.class)) {
 			Skript.error("'drops' can only be used in death events");
 			return false;
 		}
+		delayed = isDelayed;
 		return true;
 	}
 	
@@ -65,6 +68,11 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
+		if (delayed) {
+			// TODO allow acceptChange to print errors
+//			Skript.error("Can't change the drops anymore after the event has already passed");
+			return null;
+		}
 		return ItemType[].class;
 	}
 	

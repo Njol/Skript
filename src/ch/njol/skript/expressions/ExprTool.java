@@ -31,10 +31,10 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Getter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Slot;
 
 /**
@@ -42,28 +42,30 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  * 
  */
-public class ExprTool extends PropertyExpression<Slot> {
+public class ExprTool extends PropertyExpression<Player, Slot> {
 	
 	static {
 		Skript.registerExpression(ExprTool.class, Slot.class, ExpressionType.PROPERTY, "[the] (tool|held item) [of %players%]", "%player%'[s] (tool|held item)");
 	}
 	
 	private Expression<Player> players;
+	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
 		setExpr(players);
+		delayed = isDelayed;
 		return true;
 	}
 	
 	@Override
-	protected Slot[] get(final Event e) {
-		if (e instanceof PlayerItemHeldEvent && players.isDefault()) {
+	protected Slot[] get(final Event e, final Player[] source) {
+		if (!delayed && e instanceof PlayerItemHeldEvent && players.isDefault()) {
 			return new Slot[] {new Slot(((PlayerItemHeldEvent) e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot())};
 		}
-		if (e instanceof PlayerBucketEvent && players.isDefault()) {
+		if (!delayed && e instanceof PlayerBucketEvent && players.isDefault()) {
 			return new Slot[] {
 					new Slot(((PlayerBucketEvent) e).getPlayer().getInventory(), ((PlayerBucketEvent) e).getPlayer().getInventory().getHeldItemSlot()) {
 						@Override
@@ -82,7 +84,7 @@ public class ExprTool extends PropertyExpression<Slot> {
 					}
 			};
 		}
-		return players.getArray(e, Slot.class, new Getter<Slot, Player>() {
+		return get(source, new Getter<Slot, Player>() {
 			@Override
 			public Slot get(final Player p) {
 				return new Slot(p.getInventory(), p.getInventory().getHeldItemSlot()) {

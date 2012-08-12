@@ -21,64 +21,54 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
+import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.entity.EntityData;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.EntityType;
 
 /**
  * @author Peter Güttinger
- *
+ * 
  */
-public class ExprTypeOf extends SimpleExpression<String> {
-
+public class ExprTypeOf extends PropertyExpression<Object, Object> {
+	
 	static {
-		Skript.registerExpression(ExprTypeOf.class, String.class, "[the] type of %entitydata|itemtype%");
+		Skript.registerExpression(ExprTypeOf.class, Object.class, ExpressionType.PROPERTY, "[the] type of %entitydata/itemstack%");
 	}
 	
-	private Expression<?> expr;
+	@Override
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+		setExpr(exprs[0]);
+		return true;
+	}
 	
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, ParseResult parseResult) {
-		expr = exprs[0];
-		return true;
+	public Class<? extends Object> getReturnType() {
+		return EntityData.class.isAssignableFrom(getExpr().getReturnType()) ? EntityData.class : ItemStack.class;
 	}
-
+	
 	@Override
-	public boolean isSingle() {
-		return true;
-	}
-
-	@Override
-	public Class<? extends String> getReturnType() {
-		return String.class;
-	}
-
-	@Override
-	public String getDebugMessage(Event e) {
-		return "type of "+expr.toString(e, debug);
-	}
-
-	@Override
-	protected String[] get(Event e) {
-		Object o = expr.getSingle(e);
-		if (o instanceof Entity) {
-			return new String[] {EntityType.toString((Entity) o)};
-		} else if (o instanceof EntityType) {
-			return new String[] {EntityType.toString(((EntityType) o).c)};
-		} else if (o instanceof ItemType) {
-			
+	protected Object[] get(final Event e, final Object[] source) {
+		final Object o = getExpr().getSingle(e);
+		if (o == null)
+			return null;
+		if (o instanceof EntityData) {
+			return new EntityData[] {(EntityData<?>) o};
+		} else if (o instanceof ItemStack) {
+			return new ItemStack[] {new ItemStack(((ItemStack) o).getTypeId(), 1, ((ItemStack) o).getDurability())};
 		}
+		assert false;
 		return null;
 	}
-
+	
 	@Override
-	public String toString(Event e, boolean debug) {
-		return "the type of "+expr;
+	public String toString(final Event e, final boolean debug) {
+		return "the type of " + getExpr().toString(e, debug);
 	}
 	
 }

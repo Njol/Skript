@@ -29,8 +29,8 @@ import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.command.SkriptCommandEvent;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.StringUtils;
 
 /**
@@ -51,13 +51,13 @@ public class ExprArgument extends SimpleExpression<Object> {
 	private Argument<?> arg;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		if (Commands.currentArguments == null) {
-			Skript.error("the expression 'argument' can only be used within a command");
+			Skript.error("The expression 'argument' can only be used within a command");
 			return false;
 		}
 		if (Commands.currentArguments.size() == 0) {
-			Skript.error("the command doesn't allow any arguments");
+			Skript.error("This command doesn't allow any arguments");
 			return false;
 		}
 		switch (matchedPattern) {

@@ -30,17 +30,19 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
-import ch.njol.skript.api.Changer;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.Changer.ChangerUtils;
-import ch.njol.skript.api.DefaultExpression;
-import ch.njol.skript.api.Getter;
-import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.classes.Changer;
+import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
+import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Validator;
+import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Getter;
 import ch.njol.util.Validate;
 
 /**
@@ -64,6 +66,8 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	private final Changer<? super T, ?> changer;
 	private final Map<Class<? extends Event>, Getter<? extends T, ?>> getters = new HashMap<Class<? extends Event>, Getter<? extends T, ?>>();
 	
+	private final Validator<T> validator;
+	
 	public EventValueExpression(final Class<? extends T> c) {
 		this(c, null);
 	}
@@ -71,6 +75,8 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	public EventValueExpression(final Class<? extends T> c, final Changer<? super T, ?> changer) {
 		Validate.notNull(c, "c");
 		this.c = c;
+		final ClassInfo<?> ci = Skript.getSuperClassInfo(c);
+		validator = ci == null ? null : (Validator<T>) (ci.getValidator());
 		one = (T[]) Array.newInstance(c, 1);
 		this.changer = changer;
 	}
@@ -85,12 +91,12 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	private <E extends Event> T getValue(final E e) {
 		final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getters.get(e.getClass());
 		if (g != null)
-			return g.get(e);
+			return validator != null ? validator.validate(g.get(e)) : g.get(e);
 		
 		for (final Entry<Class<? extends Event>, Getter<? extends T, ?>> p : getters.entrySet()) {
 			if (p.getKey().isAssignableFrom(e.getClass())) {
 				getters.put(e.getClass(), p.getValue());
-				return ((Getter<? extends T, ? super E>) p.getValue()).get(e);
+				return validator != null ? validator.validate(((Getter<? extends T, ? super E>) p.getValue()).get(e)) : ((Getter<? extends T, ? super E>) p.getValue()).get(e);
 			}
 		}
 		
@@ -98,7 +104,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		if (exprs.length != 0)
 			throw new SkriptAPIException(this.getClass().getName() + " has expressions in it's pattern but does not override init(...)");
 		return init();

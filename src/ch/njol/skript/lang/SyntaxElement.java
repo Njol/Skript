@@ -21,7 +21,6 @@
 
 package ch.njol.skript.lang;
 
-import ch.njol.skript.api.intern.Statement;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
@@ -38,12 +37,12 @@ public interface SyntaxElement {
 	 * @param exprs all %var%s included in the matching pattern in the order they appear in the pattern. If an optional value was left out it will still be included in this list
 	 *            holding the default value of the desired type which usually depends on the event.
 	 * @param matchedPattern the index of the pattern which matched
+	 * @param isDelayed whether this expression is used after a delay or not (i.e. if the event has already passed when this expression will be called)
 	 * @param parseResult The parser osed to parse this expression. Might hold useful information in the future.
-	 * 
 	 * @return Whether this expression was sucessfully initialized.
 	 *         If this returns false, an error should be logged stating what went wrong,
 	 *         but if no error is logged the effect is the same as if no pattern matched for this expression.
 	 */
-	public boolean init(Expression<?>[] exprs, int matchedPattern, ParseResult parseResult);
+	public boolean init(Expression<?>[] exprs, int matchedPattern, boolean isDelayed, ParseResult parseResult);
 	
 }

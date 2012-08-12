@@ -30,18 +30,18 @@ import java.util.regex.Pattern;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.Parser;
-import ch.njol.skript.api.intern.SkriptAPIException;
-import ch.njol.skript.api.intern.VariableStringLiteral;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.Validate;
 import ch.njol.util.iterator.NonNullIterator;
 
 /**
@@ -55,10 +55,11 @@ public class UnparsedLiteral implements Literal<Object> {
 	private final String data;
 	
 	/**
-	 * @param data trim()med Strings
+	 * @param data non-null, non-empty & trimmed string
 	 * @param and
 	 */
 	public UnparsedLiteral(final String data) {
+		Validate.notNullOrEmpty(data, "data");
 		this.data = data;
 	}
 	
@@ -289,7 +290,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		throw invalidAccessException();
 	}
 	

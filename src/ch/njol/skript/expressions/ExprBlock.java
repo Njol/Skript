@@ -26,12 +26,12 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.classes.DefaultChangers;
+import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.data.DefaultChangers;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.Offset;
 
 /**
@@ -50,13 +50,14 @@ public class ExprBlock extends SimpleExpression<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		if (exprs.length > 0) {
 			offset = (Expression<Offset>) exprs[0];
 			block = (Expression<Block>) exprs[1];
 		} else {
 			block = new EventValueExpression<Block>(Block.class);
-			((EventValueExpression<Block>) block).init();
+			if (!((EventValueExpression<Block>) block).init())
+				return false;
 		}
 		return true;
 	}

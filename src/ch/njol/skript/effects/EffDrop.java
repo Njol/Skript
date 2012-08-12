@@ -28,7 +28,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
@@ -50,22 +50,25 @@ public class EffDrop extends Effect {
 	private Expression<Offset> offsets;
 	private Expression<Location> locations;
 	
+	private boolean delayed;
+	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		if (matchedPattern == 0)
 			xp = Integer.parseInt(parser.regexes.get(0).group());
 		else
 			items = (Expression<ItemType>) vars[0];
 		offsets = (Expression<Offset>) vars[1];
 		locations = (Expression<Location>) vars[2];
+		delayed = isDelayed;
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
 		final ItemType[] types = items == null ? null : items.getArray(e);
-		if (locations.isDefault() && e instanceof EntityDeathEvent) {
+		if (!delayed && locations.isDefault() && e instanceof EntityDeathEvent) {
 			if (xp != -1) {
 				((EntityDeathEvent) e).setDroppedExp(((EntityDeathEvent) e).getDroppedExp() + xp);
 				return;

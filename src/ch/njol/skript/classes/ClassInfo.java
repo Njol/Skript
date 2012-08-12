@@ -23,11 +23,9 @@ package ch.njol.skript.classes;
 
 import java.util.regex.Pattern;
 
-import ch.njol.skript.api.Changer;
-import ch.njol.skript.api.DefaultExpression;
-import ch.njol.skript.api.Parser;
 import ch.njol.skript.expressions.base.EventValueExpression;
-import ch.njol.skript.lang.SimpleLiteral;
+import ch.njol.skript.lang.DefaultExpression;
+import ch.njol.skript.lang.util.SimpleLiteral;
 
 public class ClassInfo<T> {
 	
@@ -45,6 +43,11 @@ public class ClassInfo<T> {
 	
 	private Serializer<T> serializer = null;
 	private Class<?> serializeAs = null;
+	
+	private Arithmetic<T, ?> math = null;
+	private Class<?> mathRelativeType = null;
+	
+	private Validator<? super T> validator = null;
 	
 	/**
 	 * @param c The class
@@ -107,6 +110,17 @@ public class ClassInfo<T> {
 		return this;
 	}
 	
+	public <R> ClassInfo<T> math(final Class<R> relativeType, final Arithmetic<T, R> math) {
+		this.math = math;
+		mathRelativeType = relativeType;
+		return this;
+	}
+	
+	public ClassInfo<T> validator(final Validator<? super T> validator) {
+		this.validator = validator;
+		return this;
+	}
+	
 	public Class<T> getC() {
 		return c;
 	}
@@ -141,6 +155,18 @@ public class ClassInfo<T> {
 	
 	public Class<?> getSerializeAs() {
 		return serializeAs;
+	}
+	
+	public Arithmetic<T, ?> getMath() {
+		return math;
+	}
+	
+	public Class<?> getMathRelativeType() {
+		return mathRelativeType;
+	}
+	
+	public Validator<? super T> getValidator() {
+		return validator;
 	}
 	
 }

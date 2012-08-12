@@ -22,8 +22,8 @@
 package ch.njol.skript.config.validate;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Parser;
-import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
 import ch.njol.util.Setter;

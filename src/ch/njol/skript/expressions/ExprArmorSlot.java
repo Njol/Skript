@@ -27,7 +27,7 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Converter;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -38,7 +38,7 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  * 
  */
-public class ExprArmorSlot extends PropertyExpression<Slot> {
+public class ExprArmorSlot extends PropertyExpression<Player, Slot> {
 	
 	static {
 		Skript.registerExpression(ExprArmorSlot.class, Slot.class, ExpressionType.PROPERTY,
@@ -55,7 +55,7 @@ public class ExprArmorSlot extends PropertyExpression<Slot> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
 		setExpr(players);
 		slot = matchedPattern / 2;
@@ -68,8 +68,8 @@ public class ExprArmorSlot extends PropertyExpression<Slot> {
 	}
 	
 	@Override
-	protected Slot[] get(final Event e) {
-		return players.getArray(e, Slot.class, new Converter<Player, Slot>() {
+	protected Slot[] get(final Event e, final Player[] source) {
+		return get(source, new Converter<Player, Slot>() {
 			@Override
 			public Slot convert(final Player p) {
 				return new PlayerSlot(p.getInventory()) {
@@ -95,7 +95,7 @@ public class ExprArmorSlot extends PropertyExpression<Slot> {
 	}
 	
 	@Override
-	public Class<? extends Slot> getReturnType() {
+	public Class<Slot> getReturnType() {
 		return Slot.class;
 	}
 	

@@ -21,9 +21,7 @@
 
 package ch.njol.skript.classes;
 
-import ch.njol.skript.api.Changer;
-import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.Converter.ConverterUtils;
+import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.util.Validate;
 
 /**
@@ -45,7 +43,7 @@ public class ConvertedChanger<T1, T2> implements Changer<T1, T2> {
 	
 	@Override
 	public void change(final T1[] what, final T2 delta, final ChangeMode mode) {
-		ChangerUtils.change(changer, ConverterUtils.convertUnsafe(what, converter, mid), delta, mode);
+		ChangerUtils.change(changer, ConverterUtils.convertUnsafe(what, mid, converter), delta, mode);
 	}
 	
 	@Override

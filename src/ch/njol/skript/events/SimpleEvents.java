@@ -21,13 +21,10 @@
 
 package ch.njol.skript.events;
 
-import org.bukkit.event.Event;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
-import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
@@ -38,7 +35,6 @@ import org.bukkit.event.entity.CreeperPowerEvent;
 import org.bukkit.event.entity.EntityBreakDoorEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.EntityInteractEvent;
 import org.bukkit.event.entity.EntityPortalEnterEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityTameEvent;
@@ -52,10 +48,8 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
-import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerEggThrowEvent;
 import org.bukkit.event.player.PlayerFishEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
@@ -83,7 +77,7 @@ import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.SimpleEvent;
+import ch.njol.skript.lang.util.SimpleEvent;
 
 /**
  * @author Peter Güttinger
@@ -97,7 +91,7 @@ public class SimpleEvents {
 		Skript.registerEvent(SimpleEvent.class, BlockDamageEvent.class, "block damage");
 		Skript.registerEvent(SimpleEvent.class, BlockFromToEvent.class, "flow[ing]");
 		Skript.registerEvent(SimpleEvent.class, BlockIgniteEvent.class, "ignit(e|ion)");
-		Skript.registerEvent(SimpleEvent.class, BlockPhysicsEvent.class, "physics");
+//		Skript.registerEvent(SimpleEvent.class, BlockPhysicsEvent.class, "physics");
 		Skript.registerEvent(SimpleEvent.class, BlockPistonExtendEvent.class, "piston extend");
 		Skript.registerEvent(SimpleEvent.class, BlockPistonRetractEvent.class, "piston retract");
 		Skript.registerEvent(SimpleEvent.class, BlockSpreadEvent.class, "spread(ing)?");
@@ -107,8 +101,8 @@ public class SimpleEvents {
 		Skript.registerEvent(SimpleEvent.class, CreeperPowerEvent.class, "creeper power");
 		Skript.registerEvent(SimpleEvent.class, EntityBreakDoorEvent.class, "zombie break[ing] [a] [wood[en]] door");
 		Skript.registerEvent(SimpleEvent.class, EntityCombustEvent.class, "combust[ing]");
-		Skript.registerEvent(SimpleEvent.class, EntityExplodeEvent.class, "explo(de|sion)");
-		Skript.registerEvent(SimpleEvent.class, EntityInteractEvent.class, "interact");// = entity interacts with block, e.g. endermen?; player -> PlayerInteractEvent
+		Skript.registerEvent(SimpleEvent.class, EntityExplodeEvent.class, "explo(d(e|ing)|sion)");
+//		Skript.registerEvent(SimpleEvent.class, EntityInteractEvent.class, "interact");// = entity interacts with block, e.g. endermen?; player -> PlayerInteractEvent
 		Skript.registerEvent(SimpleEvent.class, EntityPortalEnterEvent.class, "portal enter", "entering [a] portal");
 		Skript.registerEvent(SimpleEvent.class, EntityRegainHealthEvent.class, "heal[ing]");
 		Skript.registerEvent(SimpleEvent.class, EntityTameEvent.class, "tame");
@@ -123,22 +117,15 @@ public class SimpleEvents {
 		Skript.registerEvent(SimpleEvent.class, PlayerBedLeaveEvent.class, "bed leave", "leaving bed");
 		Skript.registerEvent(SimpleEvent.class, PlayerBucketEmptyEvent.class, "bucket empty");//, "emptying bucket [of %itemtype%]", "emptying %itemtype% bucket"); -> place of water/lava
 		Skript.registerEvent(SimpleEvent.class, PlayerBucketFillEvent.class, "bucket fill");//, "filling bucket [(with|of) %itemtype%]", "filling %itemtype% bucket");
-		Skript.registerEvent(SimpleEvent.class, PlayerChatEvent.class, "chat[ting]");
+//		Skript.registerEvent(SimpleEvent.class, PlayerChatEvent.class, "chat[ting]"); // async = bad ^^
 		Skript.registerEvent(SimpleEvent.class, PlayerEggThrowEvent.class, "throw[ing] [of [an] egg]");
 		Skript.registerEvent(SimpleEvent.class, PlayerFishEvent.class, "fish[ing]");
-		final class EvtPressurePlate extends SimpleEvent {
-			@Override
-			public boolean check(final Event e) {
-				return ((PlayerInteractEvent) e).getAction() == Action.PHYSICAL;
-			}
-		}
-		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class, "[step[ping] on] [a] [pressure] plate");
 		Skript.registerEvent(SimpleEvent.class, PlayerItemHeldEvent.class, "item held change");
-		Skript.registerEvent(SimpleEvent.class, PlayerJoinEvent.class, "(login|logging in|join[ing])");
+		Skript.registerEvent(SimpleEvent.class, PlayerJoinEvent.class, "(login|logging in|join[ing]|connect[ing])");
 		Skript.registerEvent(SimpleEvent.class, PlayerKickEvent.class, "(kick|being kicked)");
 		Skript.registerEvent(SimpleEvent.class, PlayerPickupItemEvent.class, "(pickup|picking up)");
 		Skript.registerEvent(SimpleEvent.class, PlayerPortalEvent.class, "portal");
-		Skript.registerEvent(SimpleEvent.class, PlayerQuitEvent.class, "quit[ting]");
+		Skript.registerEvent(SimpleEvent.class, PlayerQuitEvent.class, "(quit[ting]|disconnect[ing]|logout|logging out)");
 		Skript.registerEvent(SimpleEvent.class, PlayerRespawnEvent.class, "respawn[ing]");
 		Skript.registerEvent(SimpleEvent.class, PlayerTeleportEvent.class, "teleport[ing]");
 		Skript.registerEvent(SimpleEvent.class, PlayerToggleSneakEvent.class, "toggl(e|ing) sneak", "skeak toggle");

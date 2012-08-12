@@ -26,7 +26,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
@@ -44,7 +44,11 @@ public class EffCancelEvent extends Effect {
 	private boolean cancel;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+		if (isDelayed) {
+			Skript.error("Can't cancel an event anymore after is has already passed");
+			return false;
+		}
 		cancel = matchedPattern == 0;
 		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
 			if (Cancellable.class.isAssignableFrom(e))

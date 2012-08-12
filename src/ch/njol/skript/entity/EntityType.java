@@ -24,10 +24,10 @@ package ch.njol.skript.entity;
 import org.bukkit.entity.Entity;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Parser;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.ParseContext;
-import ch.njol.skript.lang.SimpleLiteral;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Validate;
 
@@ -50,6 +50,11 @@ public class EntityType {
 					@Override
 					public String toString(final EntityType t) {
 						return t.toString();
+					}
+					
+					@Override
+					public String toCodeString(final EntityType t) {
+						return "entitytype:" + t.toString();
 					}
 				})/*.serializer(new Serializer<EntityType>() {
 					@Override

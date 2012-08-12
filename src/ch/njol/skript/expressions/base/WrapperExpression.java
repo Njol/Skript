@@ -24,25 +24,25 @@ package ch.njol.skript.expressions.base;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.Converter;
-import ch.njol.skript.api.intern.ConvertedExpression;
+import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.ConvertedExpression;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Validate;
 import ch.njol.util.iterator.NonNullIterator;
 
 /**
  * Represents an expression which is a wrapper of another one. Remember to set the wrapped expression in the constructor ({@link #WrapperExpression(SimpleExpression)})
- * or with {@link #setExpr(Expression)} in {@link #init(Expression[], int, ParseResult)}.<br/>
+ * or with {@link #setExpr(Expression)} in {@link #init(Expression[], int, boolean, ParseResult)}.<br/>
  * If you override {@link #get(Event)} you must override {@link #iterator(Event)} as well.
  * 
  * @author Peter Güttinger
  */
 public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	
-	protected Expression<? extends T> expr;
+	private Expression<? extends T> expr;
 	
 	protected WrapperExpression() {}
 	

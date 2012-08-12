@@ -259,14 +259,14 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	 * 
 	 * @param block The block to set
 	 * @param applyPhysics Whether to run a physics check just after setting the block
-	 * @return Whether the block was successfully set, i.e. whether this ItemType contains an ItemData which represents a block
+	 * @return Whether the block was successfully set
 	 */
 	public boolean setBlock(final Block block, final boolean applyPhysics) {
-		for (final ItemStack i : getBlock().getAll()) {
-			if (i.getTypeId() > Skript.MAXBLOCKID)
+		for (final ItemData d : types) {
+			if (d.typeid > Skript.MAXBLOCKID)
 				continue;
-			block.setTypeIdAndData(i.getTypeId(), (byte) (i.getData() == null ? 0 : i.getDurability()), applyPhysics);
-			return true;
+			if (BlockUtils.set(block, d.typeid, (byte) d.dataMin, (byte) d.dataMax, applyPhysics))
+				return true;
 		}
 		return false;
 	}

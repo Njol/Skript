@@ -28,30 +28,32 @@ import org.bukkit.event.weather.WeatherChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.Getter;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.WeatherType;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprWeather extends PropertyExpression<WeatherType> {
+public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	
 	static {
 		Skript.registerExpression(ExprWeather.class, WeatherType.class, ExpressionType.PROPERTY, "[the] weather [(in|of) %worlds%]");
 	}
 	
 	private Expression<World> worlds;
+	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		worlds = (Expression<World>) vars[0];
 		setExpr(worlds);
+		delayed = isDelayed;
 		return true;
 	}
 	
@@ -61,8 +63,8 @@ public class ExprWeather extends PropertyExpression<WeatherType> {
 	}
 	
 	@Override
-	protected WeatherType[] get(final Event e) {
-		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault()) {
+	protected WeatherType[] get(final Event e, final World[] source) {
+		if (!delayed && getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault()) {
 			if (e instanceof WeatherChangeEvent) {
 				if (!((WeatherChangeEvent) e).toWeatherState())
 					return new WeatherType[] {WeatherType.CLEAR};
@@ -73,7 +75,7 @@ public class ExprWeather extends PropertyExpression<WeatherType> {
 				return new WeatherType[] {((ThunderChangeEvent) e).getWorld().hasStorm() ? WeatherType.RAIN : WeatherType.CLEAR};
 			}
 		}
-		return worlds.getArray(e, WeatherType.class, new Getter<WeatherType, World>() {
+		return get(source, new Getter<WeatherType, World>() {
 			@Override
 			public WeatherType get(final World w) {
 				return WeatherType.fromWorld(w);
@@ -91,7 +93,7 @@ public class ExprWeather extends PropertyExpression<WeatherType> {
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		final WeatherType t = mode == ChangeMode.CLEAR ? WeatherType.CLEAR : (WeatherType) delta;
-		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault()) {
+		if (!delayed && getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault()) {
 			if (e instanceof WeatherChangeEvent) {
 				if (((WeatherChangeEvent) e).toWeatherState() && t == WeatherType.CLEAR)
 					((WeatherChangeEvent) e).setCancelled(true);
@@ -111,7 +113,7 @@ public class ExprWeather extends PropertyExpression<WeatherType> {
 	}
 	
 	@Override
-	public Class<? extends WeatherType> getReturnType() {
+	public Class<WeatherType> getReturnType() {
 		return WeatherType.class;
 	}
 	

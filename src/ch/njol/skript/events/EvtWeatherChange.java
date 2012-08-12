@@ -26,8 +26,8 @@ import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.WeatherType;
 import ch.njol.util.Checker;

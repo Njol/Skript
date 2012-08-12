@@ -26,10 +26,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Effect;
-import ch.njol.skript.api.intern.VariableStringLiteral;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.VariableStringLiteral;
 import ch.njol.skript.util.StringMode;
 
 /**
@@ -41,9 +41,9 @@ public class EffCommand extends Effect {
 	
 	static {
 		Skript.registerEffect(EffCommand.class,
-				"[execute] command %strings% [by %-commandsenders%]",
-				"[execute] %commandsenders% command %strings%",
-				"(let|make) %commandsenders% execute [command] %strings%");
+				"[execute] [the] command %strings% [by %-commandsenders%]",
+				"[execute] [the] %commandsenders% command %strings%",
+				"(let|make) %commandsenders% execute [[the] command] %strings%");
 	}
 	
 	private Expression<CommandSender> senders;
@@ -51,13 +51,13 @@ public class EffCommand extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
-		if (matchedPattern > 0) {
-			senders = (Expression<CommandSender>) vars[0];
-			commands = (Expression<String>) vars[1];
-		} else {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+		if (matchedPattern == 0) {
 			commands = (Expression<String>) vars[0];
 			senders = (Expression<CommandSender>) vars[1];
+		} else {
+			senders = (Expression<CommandSender>) vars[0];
+			commands = (Expression<String>) vars[1];
 		}
 		if (commands instanceof VariableStringLiteral) {
 			((VariableStringLiteral) commands).setMode(StringMode.COMMAND);
@@ -71,10 +71,10 @@ public class EffCommand extends Effect {
 			if (command.startsWith("/"))
 				command = command.substring(1);
 			if (senders == null) {
-				Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
+				Skript.dispatchCommand(Bukkit.getConsoleSender(), command);
 			} else {
 				for (final CommandSender sender : senders.getArray(e)) {
-					Bukkit.getServer().dispatchCommand(sender, command);
+					Skript.dispatchCommand(sender, command);
 				}
 			}
 		}

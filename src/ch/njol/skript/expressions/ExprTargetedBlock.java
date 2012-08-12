@@ -23,13 +23,14 @@ package ch.njol.skript.expressions;
 
 import java.util.WeakHashMap;
 
+import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Converter;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -38,22 +39,27 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  * 
  */
-public class ExprTargetedBlock extends PropertyExpression<Block> {
+public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 	
 	static {
-		Skript.registerExpression(ExprTargetedBlock.class, Block.class, ExpressionType.NORMAL, "[the] target[ed] block[s] [of %players%]", "%players%'[s] target[ed] block[s]");
+		Skript.registerExpression(ExprTargetedBlock.class, Block.class, ExpressionType.NORMAL,
+				"[the] target[ed] block[s] [of %players%]", "%players%'[s] target[ed] block[s]",
+				"[the] actual[ly] target[ed] block[s] [of %players%]", "%players%'[s] actual[ly] target[ed] block[s]");
 	}
 	
 	private Expression<Player> players;
+	private boolean actualTargetedBlock;
 	
 	private static Event last = null;
 	private final static WeakHashMap<Player, Block> targetedBlocks = new WeakHashMap<Player, Block>();
+	private static long blocksValidForTick = 0;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
 		setExpr(players);
+		actualTargetedBlock = matchedPattern >= 2;
 		return true;
 	}
 	
@@ -67,10 +73,13 @@ public class ExprTargetedBlock extends PropertyExpression<Block> {
 	private Block getTargetedBlock(final Player p, final Event e) {
 		if (p == null)
 			return null;
-		if (last != e)
+		final long time = Bukkit.getWorlds().get(0).getFullTime();
+		if (last != e || time != blocksValidForTick) {
 			targetedBlocks.clear();
-		last = e;
-		if (getTime() <= 0 && targetedBlocks.containsKey(p))
+			blocksValidForTick = time;
+			last = e;
+		}
+		if (!actualTargetedBlock && getTime() <= 0 && targetedBlocks.containsKey(p))
 			return targetedBlocks.get(p);
 //		if (e instanceof PlayerInteractEvent && p == ((PlayerInteractEvent) e).getPlayer() && (((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_BLOCK || ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_BLOCK)) {
 //			targetedBlocks.put(((PlayerInteractEvent) e).getPlayer(), ((PlayerInteractEvent) e).getClickedBlock());
@@ -84,8 +93,8 @@ public class ExprTargetedBlock extends PropertyExpression<Block> {
 	}
 	
 	@Override
-	protected Block[] get(final Event e) {
-		return players.getArray(e, Block.class, new Converter<Player, Block>() {
+	protected Block[] get(final Event e, final Player[] source) {
+		return get(source, new Converter<Player, Block>() {
 			@Override
 			public Block convert(final Player p) {
 				return getTargetedBlock(p, e);
@@ -94,7 +103,7 @@ public class ExprTargetedBlock extends PropertyExpression<Block> {
 	}
 	
 	@Override
-	public Class<? extends Block> getReturnType() {
+	public Class<Block> getReturnType() {
 		return Block.class;
 	}
 	

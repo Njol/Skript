@@ -38,7 +38,7 @@ import ch.njol.skript.util.ItemType;
  * @author Peter Güttinger
  * 
  */
-public class ExprIdOf extends PropertyExpression<Integer> {
+public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 	
 	static {
 		Skript.registerExpression(ExprIdOf.class, Integer.class, ExpressionType.PROPERTY, "[the] id[<s>] of %itemtype%", "%itemtype%'[s] id[<s>]");
@@ -50,7 +50,7 @@ public class ExprIdOf extends PropertyExpression<Integer> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		types = (Expression<ItemType>) vars[0];
 		setExpr(types);
 		if (parser.regexes.isEmpty()) {
@@ -69,7 +69,7 @@ public class ExprIdOf extends PropertyExpression<Integer> {
 	}
 	
 	@Override
-	protected Integer[] get(final Event e) {
+	protected Integer[] get(final Event e, final ItemType[] source) {
 		if (single) {
 			final ItemType t = types.getSingle(e);
 			if (t == null)
@@ -77,7 +77,7 @@ public class ExprIdOf extends PropertyExpression<Integer> {
 			return new Integer[] {t.getTypes().get(0).getId()};
 		}
 		final ArrayList<Integer> r = new ArrayList<Integer>();
-		for (final ItemType t : types.getArray(e)) {
+		for (final ItemType t : source) {
 			for (final ItemData d : t) {
 				r.add(Integer.valueOf(d.getId()));
 			}
@@ -86,7 +86,7 @@ public class ExprIdOf extends PropertyExpression<Integer> {
 	}
 	
 	@Override
-	public Class<? extends Integer> getReturnType() {
+	public Class<Integer> getReturnType() {
 		return Integer.class;
 	}
 	

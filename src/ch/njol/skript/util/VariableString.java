@@ -23,12 +23,17 @@ package ch.njol.skript.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Debuggable;
+import ch.njol.skript.lang.Debuggable;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.StringUtils;
@@ -69,48 +74,75 @@ public class VariableString implements Debuggable {
 		return newInstance(s, StringMode.MESSAGE);
 	}
 	
+	public final static Map<String, Pattern> variableNames = new HashMap<String, Pattern>();
+	
 	public static VariableString newInstance(final String s, final StringMode mode) {
-		if (mode == StringMode.VARIABLE_NAME && (s.contains("<") || s.contains(">"))) {
-			Skript.error("A variable's name must not contain <angle brackets>");
-			return null;
-		}
+//		if (mode == StringMode.VARIABLE_NAME && (s.contains("<") || s.contains(">"))) {
+//			Skript.error("A variable's name must not contain <angle brackets>");
+//			return null;
+//		}
 		final ArrayList<Object> string = new ArrayList<Object>();
 		int c = s.indexOf('%');
-		if (c == -1) {
-			return new VariableString(s, mode);
-		}
-		string.add(s.substring(0, c));
-		while (c != s.length()) {
-			int c2 = s.indexOf('%', c + 1);
-			int a = c, b;
-			while (c2 != -1 && (b = s.indexOf('{', a + 1)) != -1 && b < c2) {
-				final int b2 = s.indexOf('}', b + 1);
-				if (b2 == -1) {
-					Skript.error("Missing closing bracket '}' to end variable");
+		if (c != -1) {
+			string.add(s.substring(0, c));
+			while (c != s.length()) {
+				int c2 = s.indexOf('%', c + 1);
+				int a = c, b;
+				while (c2 != -1 && (b = s.indexOf('{', a + 1)) != -1 && b < c2) {
+					final int b2 = s.indexOf('}', b + 1);
+					if (b2 == -1) {
+						Skript.error("Missing closing bracket '}' to end variable");
+						return null;
+					}
+					c2 = s.indexOf('%', b2 + 1);
+					a = b2;
+				}
+				if (c2 == -1) {
+					Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a %, type it twice: %%.");
 					return null;
 				}
-				c2 = s.indexOf('%', b2 + 1);
-				a = b2;
-			}
-			if (c2 == -1) {
-				Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a %, type it twice: %%.");
-				return null;
-			}
-			if (c + 1 == c2) {
-				string.add("%");
-			} else {
-				final Expression<?> expr = (Expression<?>) SkriptParser.parse(s.substring(c + 1, c2), Skript.getExpressions().iterator(), false, true, "can't understand the expression %" + s.substring(c + 1, c2) + "%");
-				if (expr == null) {
-					return null;
+				if (c + 1 == c2) {
+					string.add("%");
 				} else {
-					string.add(expr);
+					final Expression<?> expr = (Expression<?>) SkriptParser.parse(s.substring(c + 1, c2), Skript.getExpressions().iterator(), false, true, "can't understand the expression %" + s.substring(c + 1, c2) + "%");
+					if (expr == null) {
+						return null;
+					} else {
+						string.add(expr);
+					}
+				}
+				c = s.indexOf('%', c2 + 1);
+				if (c == -1)
+					c = s.length();
+				string.add(s.substring(c2 + 1, c));
+			}
+		} else {
+			string.add(s);
+		}
+		
+		if (mode == StringMode.VARIABLE_NAME && !variableNames.containsKey(s)) {
+			if (s.startsWith("%") && Skript.logNormal()) // inside the if to only print this message once per variable
+				Skript.warning("Starting a variable's name with an expression is discouraged ({" + s + "}). You could prefix it with the script's name: {" + StringUtils.substring(ScriptLoader.currentScript.getFileName(), 0, -3) + "." + s + "}");
+			
+			final StringBuilder p = new StringBuilder();
+			for (final Object o : string) {
+				if (o instanceof Expression)
+					p.append("[^%](.*[^%])?");
+				else
+					p.append(Pattern.quote(o.toString()));
+			}
+			final Pattern pattern = Pattern.compile(p.toString());
+			for (final Entry<String, Pattern> e : variableNames.entrySet()) {
+				if (e.getValue().matcher(s).matches() || pattern.matcher(e.getKey()).matches()) {
+					Skript.warning("Possible name conflict of variables {" + s + "} and {" + e.getKey() + "} (there might be more conflicts).");
+					break;
 				}
 			}
-			c = s.indexOf('%', c2 + 1);
-			if (c == -1)
-				c = s.length();
-			string.add(s.substring(c2 + 1, c));
+			variableNames.put(s, pattern);
 		}
+		
+		if (c == -1)
+			return new VariableString(s, mode);
 		return new VariableString(string, mode);
 	}
 	
@@ -195,6 +227,20 @@ public class VariableString implements Debuggable {
 			}
 		}
 		b.append('"');
+		return b.toString();
+	}
+	
+	public String getDefaultVariableName() {
+		if (isSimple)
+			return simple;
+		final StringBuilder b = new StringBuilder();
+		for (final Object o : string) {
+			if (o instanceof Expression) {
+				b.append("<" + Skript.getSuperClassInfo(((Expression<?>) o).getReturnType()).getCodeName() + ">");
+			} else {
+				b.append(o);
+			}
+		}
 		return b.toString();
 	}
 	

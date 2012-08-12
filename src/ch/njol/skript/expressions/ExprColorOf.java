@@ -27,8 +27,8 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.Converter;
+import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -39,7 +39,7 @@ import ch.njol.skript.util.ItemType;
  * @author Peter Güttinger
  * 
  */
-public class ExprColorOf extends PropertyExpression<Color> {
+public class ExprColorOf extends PropertyExpression<ItemStack, Color> {
 	
 	static {
 		Skript.registerExpression(ExprColorOf.class, Color.class, ExpressionType.PROPERTY, "colo[u]r[s] of %itemstacks%", "%itemstacks%'[s] colo[u]r[s]");
@@ -49,14 +49,14 @@ public class ExprColorOf extends PropertyExpression<Color> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		types = (Expression<ItemStack>) exprs[0];
 		setExpr(types);
 		return true;
 	}
 	
 	@Override
-	public Class<? extends Color> getReturnType() {
+	public Class<Color> getReturnType() {
 		return Color.class;
 	}
 	
@@ -66,8 +66,8 @@ public class ExprColorOf extends PropertyExpression<Color> {
 	}
 	
 	@Override
-	protected Color[] get(final Event e) {
-		return types.getArray(e, Color.class, new Converter<ItemStack, Color>() {
+	protected Color[] get(final Event e, final ItemStack[] source) {
+		return get(source, new Converter<ItemStack, Color>() {
 			@Override
 			public Color convert(final ItemStack is) {
 				if (is == null)

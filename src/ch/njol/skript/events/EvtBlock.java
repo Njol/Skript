@@ -37,8 +37,8 @@ import org.bukkit.event.player.PlayerBucketEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.SkriptEvent;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;

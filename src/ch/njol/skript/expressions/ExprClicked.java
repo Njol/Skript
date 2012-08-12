@@ -39,8 +39,8 @@ import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 
@@ -64,7 +64,7 @@ public class ExprClicked extends SimpleExpression<Object> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		final String s = parseResult.regexes.get(0).group();
 		final SubLog log = SkriptLogger.startSubLog();
 		entityType = EntityData.parse(s);
@@ -80,7 +80,7 @@ public class ExprClicked extends SimpleExpression<Object> {
 			}
 			log.stop();
 			log.printLog();
-			if (!Utils.containsAny(ScriptLoader.currentEvents, PlayerInteractEvent.class)) {
+			if (!Utils.contains(ScriptLoader.currentEvents, PlayerInteractEvent.class)) {
 				Skript.error("The expression 'clicked block' can only be used in a click event");
 				return false;
 			}
@@ -119,15 +119,18 @@ public class ExprClicked extends SimpleExpression<Object> {
 		} else {
 			if (entityType == null)
 				return null;
+			final Entity en;
 			if (e instanceof PlayerInteractEntityEvent) {
-				one[0] = ((PlayerInteractEntityEvent) e).getRightClicked();
+				en = Utils.validate(((PlayerInteractEntityEvent) e).getRightClicked());
 			} else {
 				if (!(((EntityDamageByEntityEvent) e).getDamager() instanceof Player))
 					return null;
-				one[0] = ((EntityDamageByEntityEvent) e).getEntity();
+				en = Utils.validate(((EntityDamageByEntityEvent) e).getEntity());
 			}
-			if (entityType.isInstance((Entity) one[0]))
+			if (entityType.isInstance(en)) {
+				one[0] = en;
 				return one;
+			}
 			return null;
 		}
 	}

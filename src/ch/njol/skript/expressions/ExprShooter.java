@@ -27,7 +27,7 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Converter;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -36,30 +36,31 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  * 
  */
-public class ExprShooter extends PropertyExpression<LivingEntity> {
+public class ExprShooter extends PropertyExpression<Projectile, LivingEntity> {
 	
 	static {
 		Skript.registerExpression(ExprShooter.class, LivingEntity.class, ExpressionType.SIMPLE, "[the] shooter [of %projectile%]");
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
-		setExpr(exprs[0]);
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+		setExpr((Expression<? extends Projectile>) exprs[0]);
 		return true;
 	}
 	
 	@Override
-	protected LivingEntity[] get(final Event e) {
-		return getExpr().getArray(e, LivingEntity.class, new Converter<Object, LivingEntity>() {
+	protected LivingEntity[] get(final Event e, final Projectile[] source) {
+		return get(source, new Converter<Projectile, LivingEntity>() {
 			@Override
-			public LivingEntity convert(final Object o) {
-				return ((Projectile) o).getShooter();
+			public LivingEntity convert(final Projectile o) {
+				return o.getShooter();
 			}
 		});
 	}
 	
 	@Override
-	public Class<? extends LivingEntity> getReturnType() {
+	public Class<LivingEntity> getReturnType() {
 		return LivingEntity.class;
 	}
 	

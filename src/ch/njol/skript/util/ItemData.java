@@ -30,7 +30,7 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.intern.SkriptAPIException;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**

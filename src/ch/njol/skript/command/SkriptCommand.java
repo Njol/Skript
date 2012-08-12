@@ -31,10 +31,10 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.Verbosity;
-import ch.njol.skript.api.SimpleEvent;
-import ch.njol.skript.api.intern.Trigger;
-import ch.njol.skript.api.intern.TriggerItem;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.Trigger;
+import ch.njol.skript.lang.TriggerItem;
+import ch.njol.skript.lang.util.SimpleEvent;
 import ch.njol.util.Validate;
 
 /**

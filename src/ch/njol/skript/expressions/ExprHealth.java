@@ -27,29 +27,32 @@ import org.bukkit.event.entity.EntityDamageEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.api.Changer.ChangeMode;
-import ch.njol.skript.api.Getter;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Getter;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class ExprHealth extends PropertyExpression<Float> {
+public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 	
 	static {
 		Skript.registerExpression(ExprHealth.class, Float.class, ExpressionType.PROPERTY, "[the] health [of %livingentities%]", "%livingentities%'[s] health");
 	}
 	
 	private Expression<LivingEntity> entities;
+	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
 		entities = (Expression<LivingEntity>) vars[0];
 		setExpr(entities);
+		delayed = isDelayed;
 		return true;
 	}
 	
@@ -59,8 +62,8 @@ public class ExprHealth extends PropertyExpression<Float> {
 	}
 	
 	@Override
-	protected Float[] get(final Event e) {
-		if (e instanceof EntityDamageEvent && getTime() > 0 && entities.getSource() instanceof ExprAttacked) {
+	protected Float[] get(final Event e, final LivingEntity[] source) {
+		if (!delayed && e instanceof EntityDamageEvent && getTime() > 0 && entities.getSource() instanceof ExprAttacked) {
 			return entities.getArray(e, Float.class, new Getter<Float, LivingEntity>() {
 				@Override
 				public Float get(final LivingEntity entity) {
@@ -68,7 +71,7 @@ public class ExprHealth extends PropertyExpression<Float> {
 				}
 			});
 		}
-		return entities.getArray(e, Float.class, new Getter<Float, LivingEntity>() {
+		return get(source, new Getter<Float, LivingEntity>() {
 			@Override
 			public Float get(final LivingEntity entity) {
 				return Float.valueOf(0.5f * entity.getHealth());
@@ -85,34 +88,37 @@ public class ExprHealth extends PropertyExpression<Float> {
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		int s = 0;
 		if (mode != ChangeMode.CLEAR)
-			s = Math.round(((Float) delta).floatValue() * 2);
+			s = Math.round((Float) delta * 2);
 		switch (mode) {
 			case CLEAR:
 			case SET:
 				for (final LivingEntity entity : entities.getArray(e)) {
-					entity.setHealth(Math.max(0, Math.min(entity.getMaxHealth(), s)));
+					entity.setHealth(Math2.fit(0, s, entity.getMaxHealth()));
 				}
 			break;
 			case ADD:
 				for (final LivingEntity entity : entities.getArray(e)) {
-					entity.setHealth(Math.max(0, Math.min(entity.getMaxHealth(), entity.getHealth() + s)));
+					entity.setHealth(Math2.fit(0, entity.getHealth() + s, entity.getMaxHealth()));
 				}
 			break;
 			case REMOVE:
 				for (final LivingEntity entity : entities.getArray(e)) {
-					entity.setHealth(Math.max(0, Math.min(entity.getMaxHealth(), entity.getHealth() - s)));
+					entity.setHealth(Math2.fit(0, entity.getHealth() - s, entity.getMaxHealth()));
 				}
 			break;
 		}
 	}
 	
 	@Override
-	public Class<? extends Float> getReturnType() {
+	public Class<Float> getReturnType() {
 		return Float.class;
 	}
 	
 	@Override
 	public boolean setTime(final int time) {
+		if (time > 0 && !delayed && entities.getSource() instanceof ExprAttacked) {
+			Skript.warning("The future state of 'health of victim' likely returns an invalid value. If you're interested in the actual health you should add a delay of 1 tick even though the entity might be dead by then.");
+		}
 		return entities.getSource() instanceof ExprAttacked && super.setTime(time, EntityDamageEvent.class);
 	}
 }

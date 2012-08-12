@@ -28,7 +28,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.api.Debuggable;
+import ch.njol.skript.lang.Debuggable;
 
 /**
  * @author Peter Güttinger

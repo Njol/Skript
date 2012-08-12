@@ -21,27 +21,61 @@
 
 package ch.njol.skript.expressions.base;
 
+import org.bukkit.event.Event;
+
+import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * Represents an expression which represents a property of another one. Remember to set the expression with {@link #setExpr(Expression)} in
- * {@link #init(Expression[], int, ParseResult)}.
+ * {@link #init(Expression[], int, boolean, ParseResult)}.
  * 
  * @author Peter Güttinger
  * 
  */
-public abstract class PropertyExpression<T> extends SimpleExpression<T> {
+public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	
-	private Expression<?> expr;
+	private Expression<? extends F> expr;
 	
-	protected void setExpr(final Expression<?> expr) {
+	protected void setExpr(final Expression<? extends F> expr) {
 		this.expr = expr;
 	}
 	
-	public Expression<?> getExpr() {
+	public Expression<? extends F> getExpr() {
 		return expr;
+	}
+	
+	@Override
+	protected final T[] get(final Event e) {
+		return get(e, expr.getArray(e));
+	}
+	
+	@Override
+	public final T[] getAll(final Event e) {
+		return get(e, expr.getAll(e));
+	}
+	
+	/**
+	 * 
+	 * @param e
+	 * @param source
+	 * @return
+	 * @see ConverterUtils#convert(Object[], Class, Converter)
+	 */
+	protected abstract T[] get(Event e, F[] source);
+	
+	/**
+	 * 
+	 * @param source
+	 * @param converter must return instances of {@link #getReturnType()}
+	 * @return
+	 * @throws ArrayStoreException if the converter returned invalid values
+	 */
+	protected T[] get(final F[] source, final Converter<? super F, ? extends T> converter) {
+		return ConverterUtils.convertUnsafe(source, getReturnType(), converter);
 	}
 	
 	@Override

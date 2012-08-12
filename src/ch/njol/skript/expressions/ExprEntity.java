@@ -32,9 +32,10 @@ import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SimpleExpression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.ItemType;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -43,7 +44,7 @@ import ch.njol.skript.util.ItemType;
 public class ExprEntity extends SimpleExpression<Entity> {
 	
 	static {
-		Skript.registerExpression(ExprEntity.class, Entity.class, ExpressionType.SIMPLE, "[the] <.+>");
+		Skript.registerExpression(ExprEntity.class, Entity.class, ExpressionType.SIMPLE, "[the] [event-]<.+>");
 	}
 	
 	private EntityData<?> type;
@@ -51,21 +52,20 @@ public class ExprEntity extends SimpleExpression<Entity> {
 	private EventValueExpression<Entity> entity;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		final SubLog log = SkriptLogger.startSubLog();
 		final ItemType item = Aliases.parseItemType(parseResult.regexes.get(0).group());
-		log.clear();
-		if (item == null)
-			type = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
-		SkriptLogger.stopSubLog(log);
-		if (!parseResult.expr.toLowerCase().startsWith("the ") && item != null)
+		if (item != null && !StringUtils.startsWithIgnoreCase(parseResult.expr, "the ")) {
+			log.stop();
 			return false;
+		}
+		type = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
+		log.stop();
 		if (type == null)
 			return false;
-		log.printLog();
+//		log.printLog();
 		entity = new EventValueExpression<Entity>(type.getType());
-		entity.init();
-		return true;
+		return entity.init();
 	}
 	
 	@Override

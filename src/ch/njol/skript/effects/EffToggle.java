@@ -21,31 +21,33 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.event.Event;
 
-import ch.njol.skript.api.Effect;
+import ch.njol.skript.Skript;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
- * TODO
- * 
  * @author Peter Güttinger
- * 
  */
 public class EffToggle extends Effect {
 	
 	static {
-//		Skript.registerEffect(EffToggle.class, "toggle %blocks%");
+		Skript.registerEffect(EffToggle.class, "(close|turn off|de[-]activate) %blocks%", "(toggle|switch) [[the] state of] %blocks%", "(open|turn on|activate) %blocks%");
 	}
 	
 	private Expression<Block> blocks;
+	private int toggle;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
 		blocks = (Expression<Block>) vars[0];
+		toggle = matchedPattern - 1;
 		return true;
 	}
 	
@@ -54,15 +56,35 @@ public class EffToggle extends Effect {
 		return "toggle " + blocks.toString(e, debug);
 	}
 	
+	private final static byte[] bitFlags = new byte[Skript.MAXBLOCKID + 1];
+	static {
+		bitFlags[Material.DETECTOR_RAIL.getId()] = 0x8;
+		bitFlags[Material.WOODEN_DOOR.getId()] = 0x4;
+		bitFlags[Material.IRON_DOOR_BLOCK.getId()] = 0x4;
+		bitFlags[Material.LEVER.getId()] = 0x8;
+		bitFlags[Material.STONE_PLATE.getId()] = 0x1;
+		bitFlags[Material.WOOD_PLATE.getId()] = 0x1;
+		bitFlags[Material.STONE_BUTTON.getId()] = 0x8;
+		bitFlags[Material.TRAP_DOOR.getId()] = 0x4;
+		bitFlags[Material.FENCE_GATE.getId()] = 0x4;
+	}
+	
 	@Override
 	protected void execute(final Event e) {
-		for (final Block b : blocks.getArray(e)) {
-			switch (b.getType()) {
-				case LEVER:
-					
-				default:
+		for (Block b : blocks.getArray(e)) {
+			if ((b.getType() == Material.WOODEN_DOOR || b.getType() == Material.IRON_DOOR_BLOCK) && (b.getData() & 0x8) == 0x8) {
+				b = b.getRelative(BlockFace.DOWN);
+				if (b.getType() != Material.WOODEN_DOOR && b.getType() != Material.IRON_DOOR_BLOCK)
 					continue;
 			}
+			final int type = b.getTypeId();
+			final byte data = b.getData();
+			if (toggle == -1)
+				b.setData((byte) (data & ~bitFlags[type]));
+			else if (toggle == 0)
+				b.setData((byte) (data ^ bitFlags[type]));
+			else
+				b.setData((byte) (data | bitFlags[type]));
 		}
 	}
 	

@@ -24,10 +24,10 @@ package ch.njol.skript.events;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import ch.njol.skript.api.SkriptEvent;
-import ch.njol.skript.api.intern.Trigger;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Trigger;
 
 /**
  * @author Peter Güttinger

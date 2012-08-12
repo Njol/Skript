@@ -31,15 +31,6 @@ import java.util.regex.Matcher;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.SkriptLogger.SubLog;
-import ch.njol.skript.api.Condition;
-import ch.njol.skript.api.SkriptEvent;
-import ch.njol.skript.api.SkriptEvent.SkriptEventInfo;
-import ch.njol.skript.api.intern.Conditional;
-import ch.njol.skript.api.intern.Loop;
-import ch.njol.skript.api.intern.Statement;
-import ch.njol.skript.api.intern.Trigger;
-import ch.njol.skript.api.intern.TriggerItem;
-import ch.njol.skript.api.intern.TriggerSection;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.command.Commands;
@@ -48,9 +39,19 @@ import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.SimpleNode;
+import ch.njol.skript.effects.EffDelay;
+import ch.njol.skript.lang.Condition;
+import ch.njol.skript.lang.Conditional;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Loop;
 import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.lang.SkriptEvent;
+import ch.njol.skript.lang.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.Statement;
+import ch.njol.skript.lang.Trigger;
+import ch.njol.skript.lang.TriggerItem;
+import ch.njol.skript.lang.TriggerSection;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
@@ -63,6 +64,8 @@ import ch.njol.util.StringUtils;
  */
 final public class ScriptLoader {
 	private ScriptLoader() {}
+	
+	public static Config currentScript = null;
 	
 	public static SkriptEvent currentEvent = null;
 	public static Class<? extends Event>[] currentEvents = null;
@@ -92,6 +95,8 @@ final public class ScriptLoader {
 		});
 	}
 	
+	public static boolean hasDelayBefore = false;
+	
 	public static ArrayList<TriggerItem> loadItems(final SectionNode node) {
 		
 		if (Skript.debug())
@@ -106,13 +111,14 @@ final public class ScriptLoader {
 				final String ex = replaceOptions(e.getName());
 				if (ex == null)
 					continue;
-				final Statement expr = Statement.parse(ex, "can't understand this condition/effect: '" + ex + "'");
-				if (expr == null) {
+				final Statement stmt = Statement.parse(ex, "can't understand this condition/effect: '" + ex + "'");
+				if (stmt == null)
 					continue;
-				}
 				if (Skript.debug())
-					Skript.info(indentation + expr.toString(null, true));
-				items.add(expr);
+					Skript.info(indentation + stmt.toString(null, true));
+				items.add(stmt);
+				if (stmt instanceof EffDelay)
+					hasDelayBefore = true;
 			} else if (n instanceof SectionNode) {
 				if (n.getName().startsWith("loop ")) {
 					final String l = replaceOptions(n.getName().substring("loop ".length()));
@@ -173,9 +179,11 @@ final public class ScriptLoader {
 		currentAliases.clear();
 		currentOptions.clear();
 		
+		currentScript = config;
+		
 		for (final Node cnode : config.getMainNode()) {
 			if (!(cnode instanceof SectionNode)) {
-				Skript.error("invalid line in trigger file");
+				Skript.error("invalid line - all code has to be put into triggers");
 				continue;
 			}
 			
@@ -266,6 +274,8 @@ final public class ScriptLoader {
 				continue;
 			}
 			
+			hasDelayBefore = false;
+			
 			if (event.toLowerCase().startsWith("command ")) {
 				currentEvent = null;
 				currentEvents = Skript.array(CommandEvent.class);
@@ -312,6 +322,9 @@ final public class ScriptLoader {
 		
 		loadedCommands += numCommands;
 		loadedTriggers += numTriggers;
+		
+		currentScript = null;
+		
 	}
 	
 	/**
