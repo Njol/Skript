@@ -32,9 +32,10 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
-import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventException;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.plugin.EventExecutor;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
@@ -90,52 +91,46 @@ public class EvtMoveOn extends SkriptEvent {
 	private World world;
 	private int x, y, z;
 	
-	private static boolean registeredListener = false;
-	
-	private static void registerListener() {
-		if (registeredListener)
-			return;
-		registeredListener = true;
-		Bukkit.getPluginManager().registerEvent(PlayerMoveEvent.class, new Listener() {
-			@SuppressWarnings("unused")
-			@EventHandler
-			public void onPlayerMove(final PlayerMoveEvent e) {
-				final Location from = e.getFrom(), to = e.getTo();
-				if (from.getWorld() == to.getWorld() && from.getBlockX() == to.getBlockX() && from.getBlockY() == to.getBlockY() && from.getBlockZ() == to.getBlockZ())
-					return;
-				SkriptEventHandler.logEventStart(e);
-				if (!blockTriggers.isEmpty()) {
-					final List<Trigger> ts = blockTriggers.get(new BlockLocation(to.getWorld(), to.getBlockX(), to.getBlockY(), to.getBlockZ()));
-					if (ts != null) {
-						for (final Trigger t : ts) {
-							SkriptEventHandler.logTriggerStart(t);
-							t.run(e);
-							SkriptEventHandler.logTriggerEnd(t);
-						}
+	private static boolean registeredExecutor = false;
+	private final static EventExecutor executor = new EventExecutor() {
+		@Override
+		public void execute(final Listener l, final Event event) throws EventException {
+			final PlayerMoveEvent e = (PlayerMoveEvent) event;
+			final Location from = e.getFrom(), to = e.getTo();
+			if (from.getWorld() == to.getWorld() && from.getBlockX() == to.getBlockX() && from.getBlockY() == to.getBlockY() && from.getBlockZ() == to.getBlockZ())
+				return;
+			SkriptEventHandler.logEventStart(e);
+			if (!blockTriggers.isEmpty()) {
+				final List<Trigger> ts = blockTriggers.get(new BlockLocation(to.getWorld(), to.getBlockX(), to.getBlockY(), to.getBlockZ()));
+				if (ts != null) {
+					for (final Trigger t : ts) {
+						SkriptEventHandler.logTriggerStart(t);
+						t.run(e);
+						SkriptEventHandler.logTriggerEnd(t);
 					}
 				}
-				if (!itemTypeTriggers.isEmpty()) {
-					final int id = to.getWorld().getBlockTypeIdAt(to.getBlockX(), to.getBlockY(), to.getBlockZ());
-					final List<Trigger> ts = itemTypeTriggers.get(id);
-					if (ts != null) {
-						final byte data = to.getBlock().getData();
-						triggersLoop: for (final Trigger t : ts) {
-							final EvtMoveOn se = (EvtMoveOn) t.getEvent();
-							for (final ItemType i : se.types) {
-								if (i.isOfType(id, data)) {
-									SkriptEventHandler.logTriggerStart(t);
-									t.run(e);
-									SkriptEventHandler.logTriggerEnd(t);
-									continue triggersLoop;
-								}
+			}
+			if (!itemTypeTriggers.isEmpty()) {
+				final int id = to.getWorld().getBlockTypeIdAt(to.getBlockX(), to.getBlockY(), to.getBlockZ());
+				final List<Trigger> ts = itemTypeTriggers.get(id);
+				if (ts != null) {
+					final byte data = to.getBlock().getData();
+					triggersLoop: for (final Trigger t : ts) {
+						final EvtMoveOn se = (EvtMoveOn) t.getEvent();
+						for (final ItemType i : se.types) {
+							if (i.isOfType(id, data)) {
+								SkriptEventHandler.logTriggerStart(t);
+								t.run(e);
+								SkriptEventHandler.logTriggerEnd(t);
+								continue triggersLoop;
 							}
 						}
 					}
 				}
-				SkriptEventHandler.logEventEnd();
 			}
-		}, Skript.getPriority(), null, Skript.getInstance(), true);
-	}
+			SkriptEventHandler.logEventEnd();
+		}
+	};
 	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
@@ -204,7 +199,10 @@ public class EvtMoveOn extends SkriptEvent {
 				}
 			}
 		}
-		registerListener();
+		if (!registeredExecutor) {
+			Bukkit.getPluginManager().registerEvent(PlayerMoveEvent.class, new Listener() {}, Skript.getPriority(), executor, Skript.getInstance(), true);
+			registeredExecutor = true;
+		}
 	}
 	
 	@Override

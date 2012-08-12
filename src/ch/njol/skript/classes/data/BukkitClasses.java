@@ -402,7 +402,7 @@ public class BukkitClasses {
 		
 		Skript.registerClass(new ClassInfo<OfflinePlayer>(OfflinePlayer.class, "offlineplayer", "player")
 				.defaultExpression(new EventValueExpression<OfflinePlayer>(OfflinePlayer.class))
-				.user("players?")
+				.user("offline ?players?")
 				.parser(new Parser<OfflinePlayer>() {
 					@Override
 					public OfflinePlayer parse(final String s, final ParseContext context) {

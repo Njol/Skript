@@ -41,7 +41,7 @@ import ch.njol.skript.util.Color;
 public class EffFertilize extends Effect {
 	
 	static {
-		Skript.registerEffect(EffFertilize.class, "fertili(z|s)e [%blocks%]");
+		Skript.registerEffect(EffFertilize.class, "fertili(z|s)e %blocks%");
 	}
 	
 	private Expression<Block> blocks;

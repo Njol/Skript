@@ -39,6 +39,12 @@ import ch.njol.util.Validate;
  */
 public interface Converter<F, T> {
 	
+	public final static class ConverterOptions {
+		public final static int NO_LEFT_CHAINING = 1;
+		public final static int NO_RIGHT_CHAINING = 2;
+		public final static int NO_CHAINING = 3;
+	}
+	
 	/**
 	 * holds information about a converter
 	 * 
@@ -49,14 +55,16 @@ public interface Converter<F, T> {
 	 */
 	public static final class ConverterInfo<F, T> {
 		
-		public Class<F> from;
-		public Class<T> to;
-		public Converter<F, T> converter;
+		public final Class<F> from;
+		public final Class<T> to;
+		public final Converter<F, T> converter;
+		public final int options;
 		
-		public ConverterInfo(final Class<F> from, final Class<T> to, final Converter<F, T> converter) {
+		public ConverterInfo(final Class<F> from, final Class<T> to, final Converter<F, T> converter, final int options) {
 			this.from = from;
 			this.to = to;
 			this.converter = converter;
+			this.options = options;
 		}
 		
 	}

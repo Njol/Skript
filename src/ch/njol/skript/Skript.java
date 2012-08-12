@@ -75,6 +75,7 @@ import ch.njol.skript.classes.Comparator.ComparatorInfo;
 import ch.njol.skript.classes.Comparator.Relation;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.Converter.ConverterInfo;
+import ch.njol.skript.classes.Converter.ConverterOptions;
 import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.classes.InverseComparator;
 import ch.njol.skript.classes.Parser;
@@ -839,8 +840,12 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param converter
 	 */
 	public static <F, T> void registerConverter(final Class<F> from, final Class<T> to, final Converter<F, T> converter) {
+		registerConverter(from, to, converter, 0);
+	}
+	
+	public static <F, T> void registerConverter(final Class<F> from, final Class<T> to, final Converter<F, T> converter, final int options) {
 		checkAcceptRegistrations();
-		converters.add(new ConverterInfo<F, T>(from, to, converter));
+		converters.add(new ConverterInfo<F, T>(from, to, converter, options));
 	}
 	
 	// TODO how to manage overriding of converters?
@@ -849,9 +854,11 @@ public final class Skript extends JavaPlugin implements Listener {
 			final ConverterInfo<?, ?> info = converters.get(i);
 			for (int j = 0; j < converters.size(); j++) {// not from j = i+1 since new converters get added during the loops
 				final ConverterInfo<?, ?> info2 = converters.get(j);
-				if (info2.from.isAssignableFrom(info.to) && !converterExists(info.from, info2.to)) {
+				if ((info.options & ConverterOptions.NO_RIGHT_CHAINING) == 0 && (info2.options & ConverterOptions.NO_LEFT_CHAINING) == 0
+						&& info2.from.isAssignableFrom(info.to) && !converterExists(info.from, info2.to)) {
 					converters.add(createChainedConverter(info, info2));
-				} else if (info.from.isAssignableFrom(info2.to) && !converterExists(info2.from, info.to)) {
+				} else if ((info.options & ConverterOptions.NO_LEFT_CHAINING) == 0 && (info2.options & ConverterOptions.NO_RIGHT_CHAINING) == 0
+						&& info.from.isAssignableFrom(info2.to) && !converterExists(info2.from, info.to)) {
 					converters.add(createChainedConverter(info2, info));
 				}
 			}
@@ -860,7 +867,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	@SuppressWarnings("unchecked")
 	private static <F, M, T> ConverterInfo<F, T> createChainedConverter(final ConverterInfo<?, ?> first, final ConverterInfo<?, ?> second) {
-		return new ConverterInfo<F, T>((Class<F>) first.from, (Class<T>) second.to, new ChainedConverter<F, M, T>((Converter<F, M>) first.converter, (Converter<M, T>) second.converter));
+		return new ConverterInfo<F, T>((Class<F>) first.from, (Class<T>) second.to, new ChainedConverter<F, M, T>((Converter<F, M>) first.converter, (Converter<M, T>) second.converter), first.options | second.options);
 	}
 	
 	/**

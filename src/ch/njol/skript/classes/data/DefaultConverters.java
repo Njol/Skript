@@ -36,6 +36,7 @@ import org.bukkit.inventory.PlayerInventory;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.Converter.ConverterOptions;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.util.ItemType;
@@ -124,6 +125,14 @@ public class DefaultConverters {
 				return null;
 			}
 		});
+		
+		// Block - ItemStack
+		Skript.registerConverter(Block.class, ItemStack.class, new Converter<Block, ItemStack>() {
+			@Override
+			public ItemStack convert(final Block b) {
+				return new ItemStack(b.getTypeId(), 1, b.getData());
+			}
+		}, ConverterOptions.NO_LEFT_CHAINING);
 		
 		// Location - Block
 		Skript.registerConverter(Location.class, Block.class, new Converter<Location, Block>() {

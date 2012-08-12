@@ -43,7 +43,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
 public class ExprDifference extends SimpleExpression<Object> {
 	
 	static {
-		Skript.registerExpression(ExprDifference.class, Object.class, ExpressionType.COMBINED, "(difference|distance) (between|of) %object% and %object%");
+		Skript.registerExpression(ExprDifference.class, Object.class, ExpressionType.COMBINED, "difference (between|of) %object% and %object%");
 	}
 	
 	private Expression<?> first, second;
