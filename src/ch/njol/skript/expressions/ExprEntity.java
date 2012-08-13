@@ -59,11 +59,12 @@ public class ExprEntity extends SimpleExpression<Entity> {
 			log.stop();
 			return false;
 		}
+		log.clear();
 		type = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
 		log.stop();
-		if (type == null)
+		if (type == null || type.isPlural())
 			return false;
-//		log.printLog();
+		log.printLog();
 		entity = new EventValueExpression<Entity>(type.getType());
 		return entity.init();
 	}

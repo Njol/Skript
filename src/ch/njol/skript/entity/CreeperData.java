@@ -38,9 +38,12 @@ public class CreeperData extends EntityData<Creeper> {
 	
 	private int powered = 0;
 	
+	private boolean plural;
+	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		powered = matchedPattern - 1;
+		plural = parseResult.expr.endsWith("s");
 		return true;
 	}
 	
@@ -65,4 +68,8 @@ public class CreeperData extends EntityData<Creeper> {
 		return (powered == 1 ? "powered " : powered == -1 ? "unpowered " : "") + "creeper";
 	}
 	
+	@Override
+	public boolean isPlural() {
+		return plural;
+	}
 }

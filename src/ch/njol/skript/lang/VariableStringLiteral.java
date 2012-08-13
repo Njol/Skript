@@ -30,8 +30,6 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.StringMode;
@@ -158,11 +156,6 @@ public class VariableStringLiteral implements Literal<String> {
 	}
 	
 	@Override
-	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super String, ? extends V> converter) {
-		return ConverterUtils.convert(getArray(e), to, converter);
-	}
-	
-	@Override
 	public String getSingle() {
 		throw new SkriptAPIException("Can't use string literals like normal literals");
 	}
@@ -172,11 +165,6 @@ public class VariableStringLiteral implements Literal<String> {
 		if (getAnd() && strings.length > 1)
 			throw new SkriptAPIException("Call to getSingle on a non-single expression");
 		return Utils.getRandom(strings).toString(e);
-	}
-	
-	@Override
-	public <V> V getSingle(final Event e, final Converter<? super String, ? extends V> converter) {
-		return converter.convert(getSingle(e));
 	}
 	
 	@Override

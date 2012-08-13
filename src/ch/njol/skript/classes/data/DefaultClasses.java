@@ -41,6 +41,31 @@ public class DefaultClasses {
 	static {
 		Skript.registerClass(new ClassInfo<Object>(Object.class, "object", "object"));
 		
+		Skript.registerClass(new ClassInfo<Number>(Number.class, "number", "number")
+				.parser(new Parser<Number>() {
+					@Override
+					public Number parse(final String s, final ParseContext context) {
+						try {
+							return Integer.valueOf(s);
+						} catch (final NumberFormatException e) {}
+						try {
+							return Double.valueOf(s);
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
+					
+					@Override
+					public String toString(final Number n) {
+						return StringUtils.toString(n.doubleValue(), Skript.NUMBERACCURACY);
+					}
+					
+					@Override
+					public String toCodeString(final Number n) {
+						return n.toString();
+					}
+				}));
+		
 		Skript.registerClass(new ClassInfo<Integer>(Integer.class, "integer", "integer")
 				.user("integers?")
 				.defaultExpression(new SimpleLiteral<Integer>(1, true))
@@ -87,9 +112,6 @@ public class DefaultClasses {
 					@Override
 					public Double parse(final String s, final ParseContext context) {
 						try {
-							if (s.endsWith("%")) {
-								return Double.valueOf(Double.parseDouble(s.substring(0, s.length() - 1)) / 100);
-							}
 							return Double.valueOf(s);
 						} catch (final NumberFormatException e) {
 							return null;
@@ -128,9 +150,6 @@ public class DefaultClasses {
 					@Override
 					public Float parse(final String s, final ParseContext context) {
 						try {
-							if (s.endsWith("%")) {
-								return Float.valueOf(Float.parseFloat(s.substring(0, s.length() - 1)) / 100);
-							}
 							return Float.valueOf(s);
 						} catch (final NumberFormatException e) {
 							return null;

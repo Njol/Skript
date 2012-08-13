@@ -39,15 +39,18 @@ public class VillagerData extends EntityData<Villager> {
 		// professions in order!
 		// FARMER(0), LIBRARIAN(1), PRIEST(2), BLACKSMITH(3), BUTCHER(4);
 		register(VillagerData.class, "villager", Villager.class,
-				"villager", "farmer", "librarian", "priest", "[black]smith", "butcher");
+				"villager[s]", "farmer[s]", "librarian[s]", "priest[s]", "[black]smith[s]", "butcher[s]");
 	}
 	
 	private Profession profession = null;
+	
+	private boolean plural;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (matchedPattern > 0)
 			profession = Profession.getProfession(matchedPattern - 1);
+		plural = parseResult.expr.endsWith("s");
 		return true;
 	}
 	
@@ -78,6 +81,11 @@ public class VillagerData extends EntityData<Villager> {
 	@Override
 	public String toString() {
 		return profession == null ? "villager" : profession.toString().toLowerCase();
+	}
+	
+	@Override
+	public boolean isPlural() {
+		return plural;
 	}
 	
 }

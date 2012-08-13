@@ -25,8 +25,6 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
-import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.util.Utils;
@@ -74,11 +72,6 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	}
 	
 	@Override
-	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		return ConverterUtils.convert(data, to, converter);
-	}
-	
-	@Override
 	public T getSingle() {
 		if (getAnd() && data.length > 1)
 			throw new SkriptAPIException("Call to getSingle on a non-single expression");
@@ -88,11 +81,6 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	@Override
 	public T getSingle(final Event e) {
 		return getSingle();
-	}
-	
-	@Override
-	public <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter) {
-		return converter.convert(getSingle());
 	}
 	
 	@Override

@@ -41,11 +41,14 @@ public class SheepData extends EntityData<Sheep> {
 	private Literal<Color> colors = null;
 	private int sheared = 0;
 	
+	private boolean plural;
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		sheared = matchedPattern - 1;
 		colors = (Literal<Color>) exprs[0];
+		plural = parseResult.expr.endsWith("s");
 		return true;
 	}
 	
@@ -78,4 +81,8 @@ public class SheepData extends EntityData<Sheep> {
 		return colors.toString() + " sheep";
 	}
 	
+	@Override
+	public boolean isPlural() {
+		return plural;
+	}
 }

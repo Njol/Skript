@@ -137,9 +137,9 @@ public class EffChange extends Effect {
 			
 			if (!changer.isSingle() && single) {
 				if (mode == ChangeMode.SET)
-					Skript.error(changed + " can only be set to one " + Skript.getExactClassName(r) + ", but multiple are given");
+					Skript.error(changed + " can only be set to one " + Skript.getSuperClassInfo(r).getName() + ", but multiple are given");
 				else
-					Skript.error("only one " + Skript.getExactClassName(r) + " can be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed + ", but multiple are given");
+					Skript.error("only one " + Skript.getSuperClassInfo(r).getName() + " can be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed + ", but multiple are given");
 				return false;
 			}
 		}

@@ -98,15 +98,13 @@ public abstract class StringUtils {
 	 * @return
 	 */
 	public static final String toString(final double d, final int accuracy) {
-		final double a = Math.pow(10, accuracy);
-		final String s = "" + (1. * Math.round(d * a) / a);
-		final int c = s.indexOf('.');
-		if (c == -1)
-			return s;
-		int i = Math.min(c + accuracy, s.length() - 1);
-		while (i >= c && (s.charAt(i) == '0' || s.charAt(i) == '.'))
-			i--;
-		return s.substring(0, i + 1);
+		final String s = String.format("%." + accuracy + "f", d);
+		int c = s.length() - 1;
+		while (s.charAt(c) == '0')
+			c--;
+		if (s.charAt(c) == '.')
+			c--;
+		return s.substring(0, c + 1);
 	}
 	
 	public static final String firstToUpper(final String s) {

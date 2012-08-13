@@ -162,7 +162,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		if (changer == null)
 			throw new UnsupportedOperationException();
-		ChangerUtils.change(changer, this.getArray(e), delta, mode);
+		ChangerUtils.change(changer, getArray(e), delta, mode);
 	}
 	
 	@Override

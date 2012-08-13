@@ -551,7 +551,7 @@ public class SkriptParser {
 											else
 												b.append(" nor ");
 										}
-										b.append(Utils.a(vi.classes[i].getName()));
+										b.append(Utils.a(vi.classes[k].getName()));
 									}
 									types = b.toString();
 								}

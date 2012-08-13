@@ -246,6 +246,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	@Override
 	public abstract String toString();
 	
+	public abstract boolean isPlural();
+	
 //	/**
 //	 * Serializes this entity data.
 //	 * 

@@ -40,10 +40,13 @@ public class EndermanData extends EntityData<Enderman> {
 	
 	private Literal<ItemType> hand = null;
 	
+	private boolean plural;
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		hand = (Literal<ItemType>) exprs[0];
+		plural = parseResult.expr.startsWith("endermen");
 		return true;
 	}
 	
@@ -71,6 +74,11 @@ public class EndermanData extends EntityData<Enderman> {
 	@Override
 	public String toString() {
 		return "enderman carrying " + hand;
+	}
+	
+	@Override
+	public boolean isPlural() {
+		return plural;
 	}
 	
 }

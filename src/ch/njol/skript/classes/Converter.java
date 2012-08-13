@@ -165,7 +165,7 @@ public interface Converter<F, T> {
 		}
 		
 		public final static <F, T> T[] convert(final F[] from, final Class<T> to, final Converter<? super F, ? extends T> conv) {
-			Validate.notNull(from, conv, to);
+			Validate.notNull(from, to, conv);
 			final T[] ts = (T[]) Array.newInstance(to, from.length);
 			int j = 0;
 			for (int i = 0; i < from.length; i++) {

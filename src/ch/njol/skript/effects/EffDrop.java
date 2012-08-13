@@ -85,8 +85,10 @@ public class EffDrop extends Effect {
 				continue;
 			}
 			for (final ItemType type : types) {
-				for (final ItemStack is : type.getItem().getAll())
-					l.getWorld().dropItemNaturally(l, is);
+				for (final ItemStack is : type.getItem().getAll()) {
+					if (is.getTypeId() != 0)
+						l.getWorld().dropItemNaturally(l, is);
+				}
 			}
 		}
 	}

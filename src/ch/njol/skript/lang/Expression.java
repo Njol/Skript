@@ -73,25 +73,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public T[] getAll(final Event e);
 	
 	/**
-	 * Gets a/the single value of this expression converted with the given converter.
-	 * 
-	 * @param e
-	 * @param converter
-	 * @return The converted value or null if the unconverted value was null or the converter returned null for the value.
-	 */
-	public <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter);
-	
-	/**
-	 * Gets all values of this expression converted to the desired class using the given converter.
-	 * 
-	 * @param e
-	 * @param to
-	 * @param converter
-	 * @return An array which hold the converted values. Does not contain nulls.
-	 */
-	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter);
-	
-	/**
 	 * 
 	 * @return true if this expression will ever only return one value at most, false if it can return multiple values
 	 */

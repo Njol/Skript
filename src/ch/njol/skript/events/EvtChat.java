@@ -55,19 +55,28 @@ public class EvtChat extends SkriptEvent {
 	
 	private static boolean registeredExecutor = false;
 	private final static EventExecutor executor = new EventExecutor() {
+		
+		private final void execute(final Event e) {
+			SkriptEventHandler.logEventStart(e);
+			for (final Trigger t : triggers) {
+				SkriptEventHandler.logTriggerStart(t);
+				t.run(e);
+				SkriptEventHandler.logTriggerEnd(t);
+			}
+			SkriptEventHandler.logEventEnd();
+		}
+		
 		@Override
 		public void execute(final Listener l, final Event e) throws EventException {
 			if (!triggers.isEmpty()) {
+				if (!e.isAsynchronous()) {
+					execute(e);
+					return;
+				}
 				final Future<?> f = Bukkit.getScheduler().callSyncMethod(Skript.getInstance(), new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
-						SkriptEventHandler.logEventStart(e);
-						for (final Trigger t : triggers) {
-							SkriptEventHandler.logTriggerStart(t);
-							t.run(e);
-							SkriptEventHandler.logTriggerEnd(t);
-						}
-						SkriptEventHandler.logEventEnd();
+						execute(e);
 						return null;
 					}
 				});

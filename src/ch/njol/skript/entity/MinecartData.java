@@ -66,9 +66,12 @@ public class MinecartData extends EntityData<Minecart> {
 	
 	private MinecartType type = MinecartType.ANY;
 	
+	private boolean plural;
+	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		type = MinecartType.byPattern[matchedPattern];
+		plural = parseResult.expr.endsWith("s");
 		return true;
 	}
 	
@@ -92,4 +95,8 @@ public class MinecartData extends EntityData<Minecart> {
 		return type.name;
 	}
 	
+	@Override
+	public boolean isPlural() {
+		return plural;
+	}
 }

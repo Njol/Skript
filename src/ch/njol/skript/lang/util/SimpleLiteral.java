@@ -160,16 +160,6 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	@Override
-	public <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter) {
-		return converter.convert(getSingle());
-	}
-	
-	@Override
-	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		return ConverterUtils.convert(data, to, converter);
-	}
-	
-	@Override
 	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
 		return SimpleExpression.check(data, c, cond.isNegated(), getAnd());
 	}

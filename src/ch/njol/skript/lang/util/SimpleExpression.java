@@ -31,7 +31,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.util.Utils;
@@ -120,19 +119,6 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 			if (t != null)
 				r[i++] = t;
 		return r;
-	}
-	
-	@Override
-	public final <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter) {
-		final T t = getSingle(e);
-		if (t == null)
-			return null;
-		return converter.convert(t);
-	}
-	
-	@Override
-	public final <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		return ConverterUtils.convert(getArray(e), to, converter);
 	}
 	
 	/**

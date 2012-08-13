@@ -28,6 +28,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -64,7 +65,7 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 	@Override
 	protected Float[] get(final Event e, final LivingEntity[] source) {
 		if (!delayed && e instanceof EntityDamageEvent && getTime() > 0 && entities.getSource() instanceof ExprAttacked) {
-			return entities.getArray(e, Float.class, new Getter<Float, LivingEntity>() {
+			return ConverterUtils.convert(entities.getArray(e), Float.class, new Getter<Float, LivingEntity>() {
 				@Override
 				public Float get(final LivingEntity entity) {
 					return Float.valueOf(0.5f * (entity.getHealth() - ((EntityDamageEvent) e).getDamage()));// FIXME this is not the actual damage taken!

@@ -33,14 +33,17 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class OcelotData extends EntityData<Ocelot> {
 	
 	static {
-		EntityData.register(OcelotData.class, "ocelot", Ocelot.class, "(wild|untamed) ocelot", "ocelot", "(cat|tamed) ocelot");
+		EntityData.register(OcelotData.class, "ocelot", Ocelot.class, "(wild|untamed) ocelot[s]", "ocelot[s]", "(cat|tamed ocelot)[s]");
 	}
 	
 	int tamed = 0;
 	
+	private boolean plural;
+	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		tamed = matchedPattern - 1;
+		plural = parseResult.expr.endsWith("s");
 		return true;
 	}
 	
@@ -63,6 +66,11 @@ public class OcelotData extends EntityData<Ocelot> {
 	@Override
 	public String toString() {
 		return tamed == -1 ? "wild ocelot" : tamed == 1 ? "cat" : "ocelot";
+	}
+	
+	@Override
+	public boolean isPlural() {
+		return plural;
 	}
 	
 }

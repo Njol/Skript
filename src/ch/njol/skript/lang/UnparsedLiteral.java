@@ -35,7 +35,6 @@ import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
@@ -220,22 +219,12 @@ public class UnparsedLiteral implements Literal<Object> {
 	}
 	
 	@Override
-	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super Object, ? extends V> converter) {
-		throw invalidAccessException();
-	}
-	
-	@Override
 	public Object getSingle() {
 		throw invalidAccessException();
 	}
 	
 	@Override
 	public Object getSingle(final Event e) {
-		throw invalidAccessException();
-	}
-	
-	@Override
-	public <V> V getSingle(final Event e, final Converter<? super Object, ? extends V> converter) {
 		throw invalidAccessException();
 	}
 	

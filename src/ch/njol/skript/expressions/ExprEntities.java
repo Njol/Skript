@@ -36,10 +36,9 @@ import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.ParseContext;
-import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.iterator.NonNullIterator;
 
@@ -50,7 +49,7 @@ import ch.njol.util.iterator.NonNullIterator;
 public class ExprEntities extends SimpleExpression<Entity> {
 	
 	static {
-		Skript.registerExpression(ExprEntities.class, Entity.class, ExpressionType.NORMAL, "all <.+> [(in|of) [world[s]] %-worlds%]", "[all] entities of type[s] %entitydatas% [(in|of) [world[s]] %-worlds%]");
+		Skript.registerExpression(ExprEntities.class, Entity.class, ExpressionType.NORMAL, "[all] <.+> [(in|of) [world[s]] %-worlds%]", "[all] entities of type[s] %entitydatas% [(in|of) [world[s]] %-worlds%]");
 	}
 	
 	private Expression<? extends EntityData<?>> types;
@@ -66,10 +65,11 @@ public class ExprEntities extends SimpleExpression<Entity> {
 		this.matchedPattern = matchedPattern;
 		if (matchedPattern == 0) {
 			final SubLog log = SkriptLogger.startSubLog();
-			types = (Expression<? extends EntityData<?>>) SkriptParser.parseLiteral(parseResult.regexes.get(0).group(), EntityData.class, ParseContext.DEFAULT);
-			SkriptLogger.stopSubLog(log);
-			if (types == null)
+			final EntityData<?> d = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
+			log.stop();
+			if (d == null || !d.isPlural())
 				return false;
+			types = new SimpleLiteral<EntityData<?>>(d, false);
 			log.printLog();
 		} else {
 			types = (Expression<? extends EntityData<?>>) exprs[0];

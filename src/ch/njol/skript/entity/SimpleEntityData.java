@@ -65,6 +65,7 @@ import org.bukkit.entity.Zombie;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Pair;
 import ch.njol.util.Validate;
 
 /**
@@ -142,10 +143,14 @@ public class SimpleEntityData extends EntityData<Entity> {
 	
 	private Class<? extends Entity> c = Entity.class;
 	
+	private boolean plural;
+	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
-		final String s = Utils.getPlural(parseResult.expr.toLowerCase()).first;
+		final Pair<String, Boolean> p = Utils.getPlural(parseResult.expr.toLowerCase());
+		final String s = p.first;
 		c = names.get(s);
+		plural = p.second;
 		return c != null;
 	}
 	
@@ -175,6 +180,11 @@ public class SimpleEntityData extends EntityData<Entity> {
 			assert false;
 		}
 		return name;
+	}
+	
+	@Override
+	public boolean isPlural() {
+		return plural;
 	}
 	
 }

@@ -119,6 +119,7 @@ import ch.njol.skript.util.VariableString;
 import ch.njol.skript.util.Version;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
+import ch.njol.util.ReversedListView;
 import ch.njol.util.Setter;
 import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
@@ -791,7 +792,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param returnType
 	 * @param patterns
 	 */
-	public static <E extends SimpleExpression<T>, T> void registerExpression(final Class<E> c, final Class<T> returnType, final ExpressionType type, final String... patterns) {
+	public static <E extends Expression<T>, T> void registerExpression(final Class<E> c, final Class<T> returnType, final ExpressionType type, final String... patterns) {
 		checkAcceptRegistrations();
 		for (int i = type.ordinal() + 1; i < ExpressionType.values().length; i++) {
 			expressionTypesStartIndices[i]++;
@@ -1190,13 +1191,13 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	@SuppressWarnings("unchecked")
 	public static final <T> Parser<? extends T> getParser(final Class<T> to) {
-		for (final ClassInfo<?> ci : classInfos) {
+		for (final ClassInfo<?> ci : new ReversedListView<ClassInfo<?>>(classInfos)) {
 			if (to.isAssignableFrom(ci.getC()) && ci.getParser() != null)
 				return (Parser<? extends T>) ci.getParser();
 		}
 		for (final ConverterInfo<?, ?> conv : converters) {
 			if (to.isAssignableFrom(conv.to)) {
-				for (final ClassInfo<?> ci : classInfos) {
+				for (final ClassInfo<?> ci : new ReversedListView<ClassInfo<?>>(classInfos)) {
 					if (conv.from.isAssignableFrom(ci.getC()) && ci.getParser() != null)
 						return createConvertedParser(ci.getParser(), (Converter<?, ? extends T>) conv.converter);
 				}
@@ -1574,7 +1575,10 @@ public final class Skript extends JavaPlugin implements Listener {
 		return new Getter<T, E>() {
 			@Override
 			public T get(final E e) {
-				return c.convert(i.getter.get(e));
+				final F f = i.getter.get(e);
+				if (f == null)
+					return null;
+				return c.convert(f);
 			}
 		};
 	}
@@ -1609,9 +1613,9 @@ public final class Skript extends JavaPlugin implements Listener {
 		if (sender instanceof Player) {
 			final PlayerCommandPreprocessEvent e = new PlayerCommandPreprocessEvent((Player) sender, "/" + command);
 			Bukkit.getPluginManager().callEvent(e);
-			if (e.isCancelled())
+			if (e.isCancelled() || !e.getMessage().startsWith("/"))
 				return false;
-			return Bukkit.dispatchCommand(e.getPlayer(), e.getMessage());
+			return Bukkit.dispatchCommand(e.getPlayer(), e.getMessage().substring(1));
 		} else if (sender instanceof ConsoleCommandSender) {
 			final ServerCommandEvent e = new ServerCommandEvent(sender, command);
 			Bukkit.getPluginManager().callEvent(e);

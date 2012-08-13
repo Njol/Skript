@@ -36,10 +36,12 @@ public class WolfData extends EntityData<Wolf> {
 //	private String owner = null;
 	private int tamed = 0;
 	
+	private boolean plural;
+	
 	static {
 		EntityData.register(WolfData.class, "wolf", Wolf.class,
 				"angry wol(f|ves)", "wol(f|ves)", "(peaceful|non-angry) wol(f|ves)",
-				"(wild|untamed) wol(f|ves)", "tamed wol(f|ves)");
+				"(wild|untamed|unowned) wol(f|ves)", "(tamed|owned) wol(f|ves)");
 	}
 	
 	@Override
@@ -48,6 +50,7 @@ public class WolfData extends EntityData<Wolf> {
 			angry = matchedPattern - 1;
 		else
 			tamed = matchedPattern == 3 ? -1 : 1;
+		plural = parseResult.expr.endsWith("ves");
 		return true;
 	}
 	
@@ -81,4 +84,8 @@ public class WolfData extends EntityData<Wolf> {
 		return (angry == 1 ? "angry " : angry == -1 ? "non-angry " : "") + (tamed == 1 ? "tamed " : tamed == -1 ? "untamed " : "") + "wolf";
 	}
 	
+	@Override
+	public boolean isPlural() {
+		return plural;
+	}
 }

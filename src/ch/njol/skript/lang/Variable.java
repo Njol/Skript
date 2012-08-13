@@ -22,6 +22,7 @@
 package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 
 import org.bukkit.event.Event;
 
@@ -29,11 +30,10 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.StringMode;
+import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
@@ -49,6 +49,8 @@ public class Variable<T> implements Expression<T> {
 	private final VariableString name;
 	
 	private final boolean local;
+	
+	private final boolean isArray = false;
 	
 	private final Class<T> type;
 	private final T[] zero, one;
@@ -79,7 +81,7 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public boolean isSingle() {
-		return true;
+		return !isArray;
 	}
 	
 	@Override
@@ -104,11 +106,11 @@ public class Variable<T> implements Expression<T> {
 		return new Variable<R>(name, to, this);
 	}
 	
-	protected T get(final Event e) {
+	protected Object get(final Event e) {
 		Object val = local ? Skript.getLocalVariable(name.toString(e).toLowerCase(), e) : Skript.getVariable(name.toString(e).toLowerCase());
 		if (val == null && !local)
 			val = Skript.getVariable(name.getDefaultVariableName().toLowerCase());
-		return Skript.convert(val, type);
+		return val;
 	}
 	
 	private final void set(final Event e, final Object value) {
@@ -120,6 +122,11 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
+		if (isArray) {
+			if (mode == ChangeMode.SET)
+				return Object[].class;
+			return Object.class;
+		}
 		return Object.class;
 	}
 	
@@ -130,26 +137,75 @@ public class Variable<T> implements Expression<T> {
 				set(e, null);
 			break;
 			case SET:
-				ClassInfo<?> ci = delta == null ? null : Skript.getSuperClassInfo(delta.getClass());
-				if (ci != null && ci.getSerializeAs() != null) {
-					set(e, Skript.convert(delta, ci.getSerializeAs()));
+				if (isArray) {
+					final ClassInfo<?> ci = delta == null ? null : Skript.getSuperClassInfo(delta.getClass().getComponentType());
+					if (ci != null && ci.getSerializeAs() != null) {
+						final Object[] newDelta = (Object[]) Array.newInstance(ci.getSerializeAs(), ((Object[]) delta).length);
+						for (int i = 0; i < newDelta.length; i++) {
+							newDelta[i] = Skript.convert(((Object[]) delta)[i], ci.getSerializeAs());
+						}
+						set(e, newDelta);
+					} else {
+						set(e, delta);
+					}
 				} else {
-					set(e, delta);
+					final ClassInfo<?> ci = delta == null ? null : Skript.getSuperClassInfo(delta.getClass());
+					if (ci != null && ci.getSerializeAs() != null) {
+						set(e, Skript.convert(delta, ci.getSerializeAs()));
+					} else {
+						set(e, delta);
+					}
 				}
 			break;
 			case ADD:
 			case REMOVE:
 				if (delta == null)
 					break;
-				final T o = get(e);
-				if ((o == null || o instanceof Number) && delta instanceof Number) {
-					final int i = mode == ChangeMode.ADD ? 1 : -1;
-					set(e, (o == null ? 0 : ((Number) o).doubleValue()) + i * ((Number) delta).doubleValue());
-				} else if (o != null) {
-					ci = Skript.getSuperClassInfo(o.getClass());
-					if (ci.getChanger() != null && ci.getChanger().acceptChange(mode) != null && ci.getChanger().acceptChange(mode).isAssignableFrom(delta.getClass())) {
-						one[0] = o;
-						ChangerUtils.change(ci.getChanger(), one, delta, mode);
+				if (isArray) {
+					final Object o = get(e);
+					if (!(o instanceof Object[]))
+						return;
+					Object[] os = (Object[]) o;
+					if (mode == ChangeMode.ADD) {
+						final int newLength = os == null ? 1 : os.length + 1;
+						os = os == null ? new Object[1] : Arrays.copyOf(os, newLength);
+						os[os.length - 1] = delta;
+						set(e, os);
+					} else {
+						if (os == null)
+							return;
+						final int i = Utils.indexOf(os, delta);
+						if (i == -1)
+							return;
+						if (os.length == 1) {
+							set(e, null);
+							return;
+						}
+						final Object[] newOs = new Object[os.length - 1];
+						System.arraycopy(os, 0, newOs, 0, i);
+						if (i != os.length - 1)
+							System.arraycopy(os, i + 1, newOs, i, os.length - 1 - i);
+						set(e, newOs);
+					}
+				} else {
+					final Object o = get(e);
+					if ((o == null || o instanceof Number) && delta instanceof Number) {
+						final int i = mode == ChangeMode.ADD ? 1 : -1;
+						set(e, (o == null ? 0 : ((Number) o).doubleValue()) + i * ((Number) delta).doubleValue());
+					} else if (o != null) {
+						final ClassInfo<?> ci = Skript.getSuperClassInfo(o.getClass());
+						if (ci.getChanger() != null && ci.getChanger().acceptChange(mode) != null) {
+							final Class<?> c = ci.getChanger().acceptChange(mode);
+							final Object[] one = (Object[]) Array.newInstance(o.getClass(), 1);
+							one[0] = o;
+							if (c.isAssignableFrom(delta.getClass())) {
+								ChangerUtils.change(ci.getChanger(), one, delta, mode);
+							} else if (c.isArray() && c.getComponentType().isAssignableFrom(delta.getClass())) {
+								final Object[] deltas = (Object[]) Array.newInstance(c.getComponentType(), 1);
+								deltas[0] = delta;
+								ChangerUtils.change(ci.getChanger(), one, deltas, mode);
+							}
+						}
 					}
 				}
 			break;
@@ -158,7 +214,7 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public T getSingle(final Event e) {
-		return get(e);
+		return Skript.convert(get(e), type);
 	}
 	
 	@Override
@@ -168,23 +224,10 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public T[] getAll(final Event e) {
-		one[0] = get(e);
+		one[0] = Skript.convert(get(e), type);
 		if (one[0] == null)
 			return zero;
 		return one;
-	}
-	
-	@Override
-	public <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter) {
-		final T t = get(e);
-		if (t == null)
-			return null;
-		return converter.convert(t);
-	}
-	
-	@Override
-	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		return ConverterUtils.convert(getArray(e), to, converter);
 	}
 	
 	@Override

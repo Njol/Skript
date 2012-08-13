@@ -34,15 +34,18 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class XpOrbData extends EntityData<ExperienceOrb> {
 	
 	static {
-		register(XpOrbData.class, "xporb", ExperienceOrb.class, "([e]xp|experience)( |-)orb", "<\\d+> ([e]xp|experience)");
+		register(XpOrbData.class, "xporb", ExperienceOrb.class, "([e]xp|experience)( |-)orb[s]", "<\\d+> ([e]xp|experience)");
 	}
 	
 	private int xp = -1;
+	
+	private boolean plural;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (matchedPattern == 1)
 			xp = Integer.parseInt(parseResult.regexes.get(0).group());
+		plural = parseResult.expr.endsWith("s");
 		return true;
 	}
 	
@@ -73,5 +76,10 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 		if (xp == -1)
 			orb.setExperience(1);
 		return orb;
+	}
+	
+	@Override
+	public boolean isPlural() {
+		return plural;
 	}
 }

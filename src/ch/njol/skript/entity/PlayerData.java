@@ -39,9 +39,12 @@ public class PlayerData extends EntityData<Player> {
 	
 	private int op = 0;
 	
+	private boolean plural;
+	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		op = matchedPattern - 1;
+		plural = parseResult.expr.endsWith("s");
 		return true;
 	}
 	
@@ -69,6 +72,11 @@ public class PlayerData extends EntityData<Player> {
 	@Override
 	public Player spawn(final Location loc) {
 		return null;
+	}
+	
+	@Override
+	public boolean isPlural() {
+		return plural;
 	}
 	
 }

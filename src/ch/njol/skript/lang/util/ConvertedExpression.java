@@ -26,7 +26,6 @@ import java.util.Iterator;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.ChainedConverter;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.Converter.ConverterUtils;
@@ -138,25 +137,12 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	
 	@Override
 	public T[] getArray(final Event e) {
-		return source.getArray(e, to, conv);
+		return ConverterUtils.convert(source.getArray(e), to, conv);
 	}
 	
 	@Override
 	public T[] getAll(final Event e) {
 		return ConverterUtils.convert(source.getAll(e), to, conv);
-	}
-	
-	@Override
-	public <V> V getSingle(final Event e, final Converter<? super T, ? extends V> converter) {
-		final T t = getSingle(e);
-		if (t == null)
-			return null;
-		return converter.convert(t);
-	}
-	
-	@Override
-	public <V> V[] getArray(final Event e, final Class<V> to, final Converter<? super T, ? extends V> converter) {
-		return source.getArray(e, to, new ChainedConverter<F, T, V>(conv, converter));
 	}
 	
 	@Override
