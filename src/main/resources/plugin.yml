@@ -1,0 +1,40 @@
+
+name: Skript
+
+description: Modify how Minecraft behaves without having to write a single line of code
+
+author: Njol
+website: http://njol.ch/projects/skript
+
+main: ch.njol.skript.Skript
+
+#load: startup # not needed for addons, as they should add [soft-]depend: [Skript] to their plugin.yml
+# must be uncommented to ever be able to have 'on world load' triggers that also execute when the server starts
+
+version: ${project.version}
+
+commands:
+    skript:
+        description: Skript's main command. Type '/skript help' for more information.
+#        aliases: [sk, s]
+        permission: skript.admin
+        usage: /skript help
+
+soft-depend: [Vault]
+
+permissions:
+    skript.*:
+        default: false
+        children:
+            skript.effectcommands: true
+            skript.admin: true
+            #skript.config: true
+    skript.effectcommands:
+        default: false
+        description: Allows to use effects as commands, e.g. '/set health to 20'
+    skript.admin:
+        default: op
+        description: Allows to use administrative commands
+#    skript.config:
+#        description: allows to modify the configuration files via commands
+#        default: false
