@@ -114,8 +114,8 @@ public class SectionNode extends Node implements Iterable<Node> {
 				if (s.matches(" +") || s.matches("\t+")) {
 					config.setIndentation(s);
 				} else {
-					Skript.error("indentation error: indent must only consist of spaces or tabs, but not mixed (found " + readableWhitespace(s) + ")");
 					nodes.add(new InvalidNode(this, r));
+					Skript.error("indentation error: indent must only consist of spaces or tabs, but not mixed (found " + readableWhitespace(s) + ")");
 					continue;
 				}
 			}
@@ -128,12 +128,13 @@ public class SectionNode extends Node implements Iterable<Node> {
 					} else {
 						found = readableWhitespace(s);
 					}
-					Skript.error("indentation error, expected " + config.level * config.getIndentation().length() + " " + config.getIndentationName() + (config.level * config.getIndentation().length() == 1 ? "" : "s") + ", found " + found);
 					nodes.add(new InvalidNode(this, r));
+					Skript.error("indentation error, expected " + config.level * config.getIndentation().length() + " " + config.getIndentationName() + (config.level * config.getIndentation().length() == 1 ? "" : "s") + ", found " + found);
 					continue;
 				} else {
 					if (nodes.isEmpty()) {
-						Skript.warning("Empty configuration section! You might want to indent one or more of the subsequent lines to make them belong to this section.");
+						Skript.warning("Empty configuration section! You might want to indent one or more of the subsequent lines to make them belong to this section" +
+								" or remove the colon at the end of the line if you don't want this line to start a section.");
 					}
 					r.reset();
 					return this;
@@ -151,17 +152,19 @@ public class SectionNode extends Node implements Iterable<Node> {
 				final String option = line.substring(1, line.indexOf('['));
 				final String value = line.substring(line.indexOf('[') + 1, line.length() - 1);
 				if (value.isEmpty()) {
-					Skript.error("parse options must not be empty");
 					nodes.add(new InvalidNode(this, r));
+					Skript.error("parse options must not be empty");
 					continue;
 				} else if (option.equalsIgnoreCase("separator")) {
 					if (config.simple) {
-						Skript.warning("trigger files don't have a separator");
+						Skript.warning("scripts don't have a separator");
 						continue;
 					}
 					config.separator = value;
 				} else {
-					nodes.add(new InvalidNode(this, r));
+					final Node n = new InvalidNode(this, r);
+					SkriptLogger.setNode(n);
+					nodes.add(n);
 					Skript.error("unknown parse option '" + option + "'");
 					continue;
 				}

@@ -192,11 +192,18 @@ public abstract class SkriptLogger {
 	 */
 	public static void log(final Level level, final String message) {
 		if (node != null && level.intValue() >= Level.WARNING.intValue()) {
-			logDirect(level, message +
-					" (" + node.getConfig().getFileName() + ", line " + node.getLine() + (node.getOrig() == null ? "" : ": '" + node.getOrig().trim() + "')"));
+			logDirect(level, message + getCurrentNodeSuffix());
 		} else {
 			logDirect(level, message);
 		}
+	}
+	
+	/**
+	 * 
+	 * @return a string that is appended to log messages of levels warning and above if a current node is set
+	 */
+	public final static String getCurrentNodeSuffix() {
+		return node == null ? "" : " (" + node.getConfig().getFileName() + ", line " + node.getLine() + (node.getOrig() == null ? "" : ": '" + node.getOrig().trim() + "')");
 	}
 	
 	public static void setNode(final Node node) {

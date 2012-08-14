@@ -23,8 +23,6 @@ package ch.njol.skript.config;
 
 import java.io.PrintWriter;
 
-import ch.njol.skript.SkriptLogger;
-
 /**
  * 
  * an empty line, usually a comment.<br/>
@@ -38,13 +36,11 @@ public class VoidNode extends Node {
 	VoidNode(final SectionNode parent, final String line, final int lineNum) {
 		super(parent.getConfig(), line, line, lineNum);
 		this.parent = parent;
-		SkriptLogger.setNode(this);
 	}
 	
 	VoidNode(final SectionNode parent, final ConfigReader r) {
 		super(parent.getConfig(), r.getLine(), r.getLine(), r.getLineNum());
 		this.parent = parent;
-		SkriptLogger.setNode(this);
 	}
 	
 	public void set(final String s) {

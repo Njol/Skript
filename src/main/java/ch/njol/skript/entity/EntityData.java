@@ -24,7 +24,6 @@ package ch.njol.skript.entity;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import org.bukkit.Bukkit;
@@ -52,6 +51,8 @@ import ch.njol.util.Validate;
  */
 @SuppressWarnings("rawtypes")
 public abstract class EntityData<E extends Entity> implements SyntaxElement {
+	
+	private static final List<EntityDataInfo<?>> infos = new ArrayList<EntityDataInfo<?>>();
 	
 	static {
 		Skript.registerClass(new ClassInfo<EntityData>(EntityData.class, "entitydata", "entity type")
@@ -112,8 +113,6 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 		}
 	}
 	
-	private static List<EntityDataInfo<?>> infos = new ArrayList<EntityDataInfo<?>>();
-	
 	static <E extends Entity, T extends EntityData<E>> void register(final Class<T> dataClass, final String name, final Class<E> entityClass, final String... patterns) {
 		final EntityDataInfo<T> info = new EntityDataInfo<T>(dataClass, name, entityClass, patterns);
 		for (int i = 0; i < infos.size(); i++) {
@@ -153,7 +152,6 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	 * @param s
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	public final static EntityData<?> parseWithoutAnOrAny(final String s) {
 		return SkriptParser.parseStatic(s, infos.iterator(), s);
 	}

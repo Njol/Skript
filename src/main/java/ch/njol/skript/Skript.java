@@ -453,6 +453,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		return dateFormat;
 	}
 	
+	public static boolean disableVariableConflictWarnings;
+	
 	// ================ LISTENER FUNCTIONS ================
 	
 	static boolean listenerEnabled = true;
@@ -540,7 +542,7 @@ public final class Skript extends JavaPlugin implements Listener {
 			try {
 				varFile.createNewFile();
 			} catch (final IOException e) {
-				Skript.error("Cannot create the variables file - no variables will be saved!");
+				Skript.error("Cannot create the variables file: " + e.getLocalizedMessage());
 				return;
 			}
 			if (!varFile.canWrite()) {
@@ -667,6 +669,15 @@ public final class Skript extends JavaPlugin implements Listener {
 					}
 				}
 			}
+			
+			if (variables.isEmpty() && varFile.length() != 0) {
+				Skript.warning("Could not load variables! Skript will try to create a backup of the file.");
+				try {
+					FileUtils.backup(varFile);
+				} catch (final IOException e) {
+					Skript.error("Could not backup the variables file: " + e.getLocalizedMessage());
+				}
+			}
 		}
 	}
 	
@@ -711,7 +722,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				}
 				pw.flush();
 			} catch (final IOException e) {
-				Skript.error("Unable to save variables - all changes are lost!");
+				Skript.error("Unable to save variables: " + e.getLocalizedMessage());
 			} finally {
 				if (pw != null)
 					pw.close();
@@ -1838,7 +1849,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	static Config mainConfig;
 	static final ArrayList<Config> configs = new ArrayList<Config>();
 	
-	private static boolean keepConfigsLoaded = true;
+	private static boolean keepConfigsLoaded = false; //true;
 	private static boolean enableEffectCommands = false;
 	
 	private static final void parseMainConfig() {
@@ -1870,7 +1881,7 @@ public final class Skript extends JavaPlugin implements Listener {
 					public void set(final Boolean b) {
 						keepConfigsLoaded = b;
 					}
-				}, false)
+				}, true)
 				.addEntry("enable effect commands", Boolean.class, new Setter<Boolean>() {
 					@Override
 					public void set(final Boolean b) {
@@ -1888,7 +1899,13 @@ public final class Skript extends JavaPlugin implements Listener {
 							Skript.error("'" + s + "' is not a valid date format. Please refer to http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html for instructions on the format.");
 						}
 					}
-				}, false)
+				}, true)
+				.addEntry("disable variable conflict warnings", Boolean.class, new Setter<Boolean>() {
+					@Override
+					public void set(final Boolean b) {
+						disableVariableConflictWarnings = b;
+					}
+				}, true)
 				.setAllowUndefinedSections(true)
 				.validate(mainConfig.getMainNode());
 		

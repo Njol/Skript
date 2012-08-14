@@ -21,9 +21,8 @@
 
 package ch.njol.skript;
 
-import static org.junit.Assert.*;
-import static org.hamcrest.core.Is.*;
 import static org.easymock.EasyMock.*;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 
@@ -31,11 +30,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.junit.Test;
 
 import ch.njol.skript.config.Config;
-import ch.njol.skript.config.ConfigReader;
-import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.lang.Trigger;
 
@@ -49,7 +45,7 @@ public class SkriptTest {
 	static {
 		
 	}
-
+	
 //	@Test
 	public static void main() {
 		new Thread(new Runnable() {
@@ -61,7 +57,7 @@ public class SkriptTest {
 		while (Bukkit.getServer() == null) {
 			try {
 				Thread.sleep(10);
-			} catch (InterruptedException e) {}
+			} catch (final InterruptedException e) {}
 		}
 		Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
 			@Override
@@ -74,16 +70,15 @@ public class SkriptTest {
 	
 	private final static void test() {
 		
-		Trigger t = ScriptLoader.loadTrigger(nodeFromString("on rightclick on air:\n kill player"));
+		final Trigger t = ScriptLoader.loadTrigger(nodeFromString("on rightclick on air:\n kill player"));
 		t.run(new PlayerInteractEvent(njol, Action.LEFT_CLICK_AIR, null, null, null));
-		
 		
 	}
 	
-	private final static SectionNode nodeFromString(String s) {
+	private final static SectionNode nodeFromString(final String s) {
 		try {
 			return (SectionNode) new Config(s, "test.sk", true, ":").getMainNode().getNodeList().get(0);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 			return null;
 		}

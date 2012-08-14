@@ -81,8 +81,8 @@ public class Config {
 		r.close();
 	}
 	
-	public Config(String s, String fileName, final boolean simple, final String defaultSeparator) throws IOException {
-		this.file = new File(fileName);
+	public Config(final String s, final String fileName, final boolean simple, final String defaultSeparator) throws IOException {
+		file = new File(fileName);
 		this.simple = simple;
 		this.defaultSeparator = defaultSeparator;
 		separator = defaultSeparator;

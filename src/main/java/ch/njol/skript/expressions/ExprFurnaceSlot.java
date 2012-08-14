@@ -178,7 +178,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return (getTime() == -1 ? "past " : getTime() == 1 ? "future " : "") + slotNames[slot] + " slot of " + blocks.toString(e, debug);
+			return "the " + (getTime() == -1 ? "past " : getTime() == 1 ? "future " : "") + slotNames[slot] + " slot of " + blocks.toString(e, debug);
 		return Skript.getDebugMessage(getSingle(e));
 	}
 	

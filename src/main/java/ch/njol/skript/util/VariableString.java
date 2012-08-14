@@ -121,7 +121,7 @@ public class VariableString implements Debuggable {
 		}
 		
 		if (mode == StringMode.VARIABLE_NAME && !variableNames.containsKey(s)) {
-			if (s.startsWith("%") && Skript.logNormal()) // inside the if to only print this message once per variable
+			if (s.startsWith("%") && !Skript.disableVariableConflictWarnings) // inside the if to only print this message once per variable
 				Skript.warning("Starting a variable's name with an expression is discouraged ({" + s + "}). You could prefix it with the script's name: {" + StringUtils.substring(ScriptLoader.currentScript.getFileName(), 0, -3) + "." + s + "}");
 			
 			final StringBuilder p = new StringBuilder();

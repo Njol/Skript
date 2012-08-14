@@ -35,11 +35,11 @@ public class ConfigReader extends BufferedReader {
 	private int ln = 0;
 	
 	private boolean hasNonEmptyLine = false;
-
+	
 	public ConfigReader(final File file) throws FileNotFoundException {
 		super(new FileReader(file));
 	}
-
+	
 	public ConfigReader(final String s) {
 		super(new StringReader(s));
 	}

@@ -71,14 +71,17 @@ public class SkriptParser {
 		}
 	}
 	
-	private final void setBestError(final ErrorQuality quality, final String error) {
-		setBestError(quality.quality(), error);
+	private final void setBestError(final ErrorQuality quality, final String error, final boolean appendCurrentNodeSuffix) {
+		if (bestErrorQuality < quality.quality()) {
+			bestError = appendCurrentNodeSuffix ? error + SkriptLogger.getCurrentNodeSuffix() : error;
+			bestErrorQuality = quality.quality();
+		}
 	}
 	
-	private final void setBestError(final int quality, final String error) {
-		if (bestErrorQuality < quality) {
-			bestError = error;
-			bestErrorQuality = quality;
+	private final void setBestError(final SkriptParser other) {
+		if (bestErrorQuality < other.bestErrorQuality) {
+			bestError = other.bestError;
+			bestErrorQuality = other.bestErrorQuality;
 		}
 	}
 	
@@ -244,7 +247,7 @@ public class SkriptParser {
 							SkriptLogger.stopSubLog(log);
 							if (!log.hasErrors())
 								continue;
-							setBestError(ErrorQuality.SEMANTIC_ERROR, log.getLastError());
+							setBestError(ErrorQuality.SEMANTIC_ERROR, log.getLastError(), false);
 //							Skript.error(bestError);
 //							return null;
 							continue;
@@ -305,10 +308,10 @@ public class SkriptParser {
 			if (v != null) {
 				final Expression<? extends T> w = v.getConvertedExpression(returnType);
 				if (w == null)
-					setBestError(ErrorQuality.EXPRESSION_OF_WRONG_TYPE, v.toString() + " " + (v.isSingle() ? "is" : "are") + " not " + Utils.a(Skript.getExactClassName(returnType)));
+					setBestError(ErrorQuality.EXPRESSION_OF_WRONG_TYPE, v.toString() + " " + (v.isSingle() ? "is" : "are") + " not " + Utils.a(Skript.getExactClassName(returnType)), true);
 				return w;
 			} else {
-				setBestError(parser.bestErrorQuality, parser.bestError);
+				setBestError(parser);
 			}
 		}
 		final UnparsedLiteral l = new UnparsedLiteral(expr);
@@ -318,7 +321,7 @@ public class SkriptParser {
 		final Literal<? extends T> p = l.getConvertedExpression(returnType, context);
 		SkriptLogger.stopSubLog(log);
 		if (p == null)
-			setBestError(ErrorQuality.NOT_AN_EXPRESSION, log.getLastError() == null ? "'" + expr + "' is not " + Utils.a(Skript.getExactClassName(returnType)) : log.getLastError());
+			setBestError(ErrorQuality.NOT_AN_EXPRESSION, log.getLastError() == null ? "'" + expr + "' is not " + Utils.a(Skript.getExactClassName(returnType)) : log.getLastError(), log.getLastError() == null);
 		return p;
 	}
 	
@@ -516,20 +519,20 @@ public class SkriptParser {
 								if (var != null) {
 									if (!vi.isPlural[k] && !(var instanceof UnparsedLiteral) && !var.isSingle()) {
 										if (context == ParseContext.COMMAND)
-											setBestError(ErrorQuality.SEMANTIC_ERROR, "this command can only accept a single " + vi.classes[k].getName() + "!");
+											setBestError(ErrorQuality.SEMANTIC_ERROR, "this command can only accept a single " + vi.classes[k].getName() + "!", false);
 										else
-											setBestError(ErrorQuality.SEMANTIC_ERROR, "this expression can only accept a single " + vi.classes[k].getName() + ", but multiple are given.");
+											setBestError(ErrorQuality.SEMANTIC_ERROR, "this expression can only accept a single " + vi.classes[k].getName() + ", but multiple are given.", true);
 										return null;
 									}
 									if (vi.time != 0) {
 										if (var instanceof UnparsedLiteral)
 											return null;
 										if (ScriptLoader.hasDelayBefore) {
-											setBestError(ErrorQuality.SEMANTIC_ERROR, "Cannot use time states after the event has already passed");
+											setBestError(ErrorQuality.SEMANTIC_ERROR, "Cannot use time states after the event has already passed", true);
 											return null;
 										}
 										if (!var.setTime(vi.time)) {
-											setBestError(ErrorQuality.SEMANTIC_ERROR, var + " does not have a " + (vi.time == -1 ? "past" : "future") + " state");
+											setBestError(ErrorQuality.SEMANTIC_ERROR, var + " does not have a " + (vi.time == -1 ? "past" : "future") + " state", true);
 											return null;
 										}
 									}
@@ -554,7 +557,7 @@ public class SkriptParser {
 									}
 									types = b.toString();
 								}
-								setBestError(ErrorQuality.NOT_AN_EXPRESSION, "'" + expr.substring(i, i2) + "' is not " + types);
+								setBestError(ErrorQuality.NOT_AN_EXPRESSION, "'" + expr.substring(i, i2) + "' is not " + types, true);
 							}
 						}
 					}

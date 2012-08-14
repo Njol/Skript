@@ -153,9 +153,11 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	
 	@Override
 	protected Number[] get(final Event e) {
-		final Number n1 = first.getSingle(e), n2 = second.getSingle(e);
-		if (n1 == null || n2 == null)
-			return null;
+		Number n1 = first.getSingle(e), n2 = second.getSingle(e);
+		if (n1 == null)
+			n1 = Integer.valueOf(0);
+		if (n2 == null)
+			n2 = Integer.valueOf(0);
 		one[0] = op.calculate(n1, n2, integer);
 		return one;
 	}

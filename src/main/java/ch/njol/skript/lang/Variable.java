@@ -61,9 +61,12 @@ public class Variable<T> implements Expression<T> {
 		Validate.notNull(name, type);
 		if (name.getMode() != StringMode.VARIABLE_NAME) // not setMode as angle brackets are not allowed in variable names
 			throw new IllegalArgumentException("'name' must be a VARIABLE_NAME string");
-		local = name.toString(null, false).startsWith("*");
+		
+		local = name.getDefaultVariableName().startsWith("*");
+		
 		this.name = name;
 		this.type = type;
+		
 		zero = (T[]) Array.newInstance(type, 0);
 		one = (T[]) Array.newInstance(type, 1);
 		
@@ -106,11 +109,15 @@ public class Variable<T> implements Expression<T> {
 		return new Variable<R>(name, to, this);
 	}
 	
-	protected Object get(final Event e) {
+	private Object get(final Event e) {
 		Object val = local ? Skript.getLocalVariable(name.toString(e).toLowerCase(), e) : Skript.getVariable(name.toString(e).toLowerCase());
 		if (val == null && !local)
 			val = Skript.getVariable(name.getDefaultVariableName().toLowerCase());
 		return val;
+	}
+	
+	private T getConverted(final Event e) {
+		return Skript.convert(get(e), type);
 	}
 	
 	private final void set(final Event e, final Object value) {
@@ -214,7 +221,7 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public T getSingle(final Event e) {
-		return Skript.convert(get(e), type);
+		return getConverted(e);
 	}
 	
 	@Override
@@ -224,7 +231,7 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public T[] getAll(final Event e) {
-		one[0] = Skript.convert(get(e), type);
+		one[0] = getConverted(e);
 		if (one[0] == null)
 			return zero;
 		return one;
@@ -232,12 +239,12 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
-		return SimpleExpression.check(getArray(e), c, cond.isNegated(), getAnd());
+		return SimpleExpression.check(getAll(e), c, cond.isNegated(), getAnd());
 	}
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super T> c) {
-		return SimpleExpression.check(getArray(e), c, false, getAnd());
+		return SimpleExpression.check(getAll(e), c, false, getAnd());
 	}
 	
 	@Override

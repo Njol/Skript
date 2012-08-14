@@ -45,7 +45,7 @@ public abstract class FileUtils {
 			name = name.substring(0, c);
 		final File backup = new File(f.getParentFile(), name + "_backup_" + backupFormat.format(System.currentTimeMillis()) + (ext == null ? "" : "." + ext));
 		if (backup.exists())
-			throw new IOException("backup file does already exist");
+			throw new IOException("backup file " + backup.getName() + " does already exist");
 		Files.copy(f.toPath(), backup.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 		return backup;
 	}
