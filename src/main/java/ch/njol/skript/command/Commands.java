@@ -27,6 +27,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.Validate;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.help.HelpMap;
+import org.bukkit.help.HelpTopic;
+
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
@@ -182,6 +188,48 @@ public abstract class Commands {
 			Skript.info("registered command " + desc);
 		currentArguments = null;
 		return true;
+	}
+	
+	/**
+	 * copied from CraftBukkit
+	 */
+	public final static class CommandAliasHelpTopic extends HelpTopic {
+		
+		private final String aliasFor;
+		private final HelpMap helpMap;
+		
+		public CommandAliasHelpTopic(final String alias, final String aliasFor, final HelpMap helpMap) {
+			this.aliasFor = aliasFor.startsWith("/") ? aliasFor : "/" + aliasFor;
+			this.helpMap = helpMap;
+			name = alias.startsWith("/") ? alias : "/" + alias;
+			Validate.isTrue(!name.equals(this.aliasFor), "Command " + name + " cannot be alias for itself");
+			shortText = ChatColor.YELLOW + "Alias for " + ChatColor.WHITE + this.aliasFor;
+		}
+		
+		@Override
+		public String getFullText(final CommandSender forWho) {
+			final StringBuilder sb = new StringBuilder(shortText);
+			final HelpTopic aliasForTopic = helpMap.getHelpTopic(aliasFor);
+			if (aliasForTopic != null) {
+				sb.append("\n");
+				sb.append(aliasForTopic.getFullText(forWho));
+			}
+			return sb.toString();
+		}
+		
+		@Override
+		public boolean canSee(final CommandSender commandSender) {
+			if (amendedPermission == null) {
+				final HelpTopic aliasForTopic = helpMap.getHelpTopic(aliasFor);
+				if (aliasForTopic != null) {
+					return aliasForTopic.canSee(commandSender);
+				} else {
+					return false;
+				}
+			} else {
+				return commandSender.hasPermission(amendedPermission);
+			}
+		}
 	}
 	
 }
