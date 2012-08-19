@@ -55,7 +55,7 @@ public class VillagerData extends EntityData<Villager> {
 	}
 	
 	@Override
-	protected void set(final Villager entity) {
+	public void set(final Villager entity) {
 		if (profession != null)
 			entity.setProfession(profession);
 	}

@@ -69,7 +69,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	private final Validator<T> validator;
 	
 	public EventValueExpression(final Class<? extends T> c) {
-		this(c, null);
+		this(c, (Changer<? super T, ?>) Skript.getSuperClassInfo(c).getChanger());
 	}
 	
 	public EventValueExpression(final Class<? extends T> c, final Changer<? super T, ?> changer) {
@@ -147,7 +147,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (!debug || e == null)
-			return "event-" + Skript.getExactClassName(c);
+			return "event-" + Skript.getSuperClassInfo(c).getName();
 		return Skript.getDebugMessage(getValue(e));
 	}
 	

@@ -49,7 +49,7 @@ public class PlayerData extends EntityData<Player> {
 	}
 	
 	@Override
-	protected void set(final Player entity) {
+	public void set(final Player entity) {
 		if (op != 0)
 			entity.setOp(op == 1);
 	}

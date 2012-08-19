@@ -56,7 +56,7 @@ public class CondIsWearing extends Condition {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return players.toString(e, debug) + (players.isSingle() ? " is" : " are") + " wearing " + types;
+		return players.toString(e, debug) + (players.isSingle() ? " is" : " are") + (isNegated() ? "not " : "") + " wearing " + types;
 	}
 	
 	@Override

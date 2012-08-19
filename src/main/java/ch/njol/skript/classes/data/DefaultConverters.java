@@ -25,6 +25,7 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -40,6 +41,7 @@ import ch.njol.skript.classes.Converter.ConverterOptions;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.Offset;
 import ch.njol.skript.util.Slot;
 
 /**
@@ -274,6 +276,14 @@ public class DefaultConverters {
 //				return new Time((int) w.getTime());
 //			}
 //		});
+		
+		// Blockface - Offset
+		Skript.registerConverter(BlockFace.class, Offset.class, new Converter<BlockFace, Offset>() {
+			@Override
+			public Offset convert(final BlockFace f) {
+				return new Offset(f.getModX(), f.getModY(), f.getModZ());
+			}
+		});
 		
 	}
 }

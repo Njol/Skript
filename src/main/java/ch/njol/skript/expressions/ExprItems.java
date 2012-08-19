@@ -152,7 +152,7 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return (blocks ? "blocks" : "items") + " of type" + (types.isSingle() ? "" : "s") + " " + types.toString(e, debug);
+		return (blocks ? "blocks" : "items") + (types == null ? "" : " of type" + (types.isSingle() ? "" : "s") + " " + types.toString(e, debug));
 	}
 	
 	@Override

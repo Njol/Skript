@@ -42,16 +42,19 @@ public class Argument<T> {
 	private final boolean single;
 	private final int index;
 	
+	private final boolean optional;
+	
 	private T[] current;
 	
-	public Argument(final Expression<? extends T> def, final Class<T> type, final boolean single, final int index) {
+	public Argument(final Expression<? extends T> def, final Class<T> type, final boolean single, final int index, final boolean optional) {
 		this.def = def;
 		this.type = type;
 		this.single = single;
 		this.index = index;
+		this.optional = optional;
 	}
 	
-	public static <T> Argument<T> newInstance(final Class<T> type, final String def, final int index, final boolean single) {
+	public static <T> Argument<T> newInstance(final Class<T> type, final String def, final int index, final boolean single, final boolean forceOptional) {
 		Expression<? extends T> d = null;
 		if (def != null) {
 			if (def.startsWith("%") && def.endsWith("%")) {
@@ -75,21 +78,23 @@ public class Argument<T> {
 				}
 			}
 		}
-		return new Argument<T>(d, type, single, index);
+		return new Argument<T>(d, type, single, index, def != null || forceOptional);
 	}
 	
 	@Override
 	public String toString() {
-		return "<" + Skript.getExactClassName(type) + (single ? "" : "s") + (def == null ? "" : " = " + def.toString()) + ">";
+		return "<" + Utils.toPlural(Skript.getExactClassName(type), !single) + (def == null ? "" : " = " + def.toString()) + ">";
 	}
 	
 	public boolean isOptional() {
-		return def != null;
+		return optional;
 	}
 	
 	public void setToDefault(final SkriptCommandEvent event) {
-		assert def != null;
-		current = def.getArray(event);
+		if (def == null)
+			current = null;
+		else
+			current = def.getArray(event);
 	}
 	
 	@SuppressWarnings("unchecked")

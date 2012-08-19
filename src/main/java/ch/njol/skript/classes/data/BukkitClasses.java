@@ -31,6 +31,7 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.TreeType;
 import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
@@ -48,6 +49,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.ConvertedChanger;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.EnumParser;
 import ch.njol.skript.classes.EnumSerializer;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
@@ -609,5 +611,11 @@ public class BukkitClasses {
 						}
 					}
 				}));
+		
+		Skript.registerClass(new ClassInfo<Biome>(Biome.class, "biome", "biome")
+				.user("biomes?")
+				.parser(new EnumParser<Biome>(Biome.class))
+				.serializer(new EnumSerializer<Biome>(Biome.class)));
+		
 	}
 }

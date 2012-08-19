@@ -19,66 +19,56 @@
  * 
  */
 
-package ch.njol.skript.conditions;
+package ch.njol.skript.conditions.base;
 
-import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
-import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class CondIsOfType extends Condition {
+public class PropertyCondition<T> extends Condition {
 	
-	static {
-		Skript.registerCondition(CondIsOfType.class,
-				"%itemstacks% (is|are) of type[s] %itemtypes%", "%itemstacks% (isn't|is not|aren't|are not) of type[s] %itemtypes%",
-				"%entities% (is|are) of type[s] %entitydatas%", "%entities% (isn't|is not|aren't|are not) of type[s] %entitydatas%");
+	private final Checker<? super T> checker;
+	private Expression<? extends T> expr;
+	private final String property;
+	
+	protected PropertyCondition(final String property, final Checker<? super T> checker) {
+		this.property = property;
+		this.checker = checker;
 	}
 	
-	private Expression<?> what, types;
-	private boolean item;
+	/**
+	 * @param c
+	 * @param property
+	 * @param type must be plural
+	 */
+	protected static void register(final Class<? extends PropertyCondition<?>> c, final String property, final String type) {
+		Skript.registerCondition(c, "%" + type + "% (is|are) " + property, "%" + type + "% (isn't|is not|aren't|are not) " + property);
+	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
-		what = exprs[0];
-		types = exprs[1];
-		item = matchedPattern <= 1;
-		setNegated(matchedPattern % 2 == 1);
+		expr = (Expression<? extends T>) exprs[0];
+		setNegated(matchedPattern == 1);
 		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
-		return what.check(e, new Checker<Object>() {
-			@Override
-			public boolean check(final Object o1) {
-				return types.check(e, new Checker<Object>() {
-					@Override
-					public boolean check(final Object o2) {
-						if (item) {
-							return ((ItemType) o2).isOfType((ItemStack) o1);
-						} else {
-							return ((EntityData<?>) o2).isInstance((Entity) o1);
-						}
-					}
-				});
-			}
-		}, this);
+		return expr.check(e, checker, this);
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return what.toString(e, debug) + (what.isSingle() ? " is " : " are ") + (isNegated() ? "not " : "") + "of type " + types.toString(e, debug);
+		return expr.toString(e, debug) + (expr.isSingle() ? " is " : " are ") + (isNegated() ? "not " : "") + property;
 	}
 	
 }

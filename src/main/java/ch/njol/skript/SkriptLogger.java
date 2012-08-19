@@ -142,8 +142,8 @@ public abstract class SkriptLogger {
 	 * <pre>
 	 * SubLog log = SkriptLogger.startSubLog();
 	 * doSomethingThatLogsMessages();
-	 * SkriptLogger.stopSubLog(log);
-	 * // do something with the logged messages
+	 * log.stop();
+	 * // do something with the logged messages or ignore them
 	 * </pre>
 	 * 
 	 * @return a newly created sublog
@@ -161,7 +161,7 @@ public abstract class SkriptLogger {
 			int i = 1;
 			while (subLogs.removeLast() != log)
 				i++;
-			throw new IllegalStateException(i + " sub log(s) was/were not stopped properly!");
+			logDirect(Level.SEVERE, i + " sub log(s) was/were not stopped properly!");
 		}
 	}
 	

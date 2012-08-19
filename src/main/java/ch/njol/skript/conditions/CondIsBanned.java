@@ -85,8 +85,7 @@ public class CondIsBanned extends Condition {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		// TODO Auto-generated method stub
-		return null;
+		return players.toString(e, debug) + (players.isSingle() ? " is " : " are ") + (isNegated() ? "not " : "") + "banned";
 	}
 	
 }

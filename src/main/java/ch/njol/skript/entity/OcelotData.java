@@ -48,7 +48,7 @@ public class OcelotData extends EntityData<Ocelot> {
 	}
 	
 	@Override
-	protected void set(final Ocelot entity) {
+	public void set(final Ocelot entity) {
 		if (tamed != 0)
 			entity.setTamed(tamed == 1);
 	}

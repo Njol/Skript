@@ -423,7 +423,7 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * equal to {@link #getPlural(String)}, but prints a warning if the found plural is not <code>expectPlural</code>.
+	 * equal to {@link #getPlural(String)}, <del>but prints a warning if the found plural is not <code>expectPlural</code></del>.
 	 * 
 	 * @param s
 	 * @param expectPlural
@@ -479,7 +479,9 @@ public abstract class Utils {
 	 * @return Pair of singular string + boolean whether it was plural
 	 */
 	public static final Pair<String, Boolean> getPlural(final String s) {
-		Validate.notNullOrEmpty(s, "s");
+		Validate.notNull(s, "s");
+		if (s.isEmpty())
+			return new Pair<String, Boolean>("", Boolean.FALSE);
 		for (final String[] p : plurals) {
 			if (s.endsWith(p[1]))
 				return new Pair<String, Boolean>(s.substring(0, s.length() - p[1].length()) + p[0], Boolean.TRUE);
@@ -612,6 +614,7 @@ public abstract class Utils {
 		chat.put("bold", ChatColor.BOLD.toString());
 		chat.put("b", ChatColor.BOLD.toString());
 		
+		chat.put("italics", ChatColor.ITALIC.toString());
 		chat.put("italic", ChatColor.ITALIC.toString());
 		chat.put("i", ChatColor.ITALIC.toString());
 		
@@ -626,11 +629,12 @@ public abstract class Utils {
 		chat.put("magic", ChatColor.MAGIC.toString());
 		
 		chat.put("reset", ChatColor.RESET.toString());
+		chat.put("<none>", ChatColor.RESET.toString());
 	}
 	
 	public static final String prepareMessage(String message) {
 		Validate.notNull(message, "message");
-		message = StringUtils.replaceAll(message, "<([a-zA-Z ]+?)>", new Callback<String, Matcher>() {
+		message = StringUtils.replaceAll(message, "<([a-zA-Z ]+?|<none>)>", new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
 				final Color c = Color.byName(m.group(1));
@@ -647,6 +651,9 @@ public abstract class Utils {
 		return message;
 	}
 	
+	/*
+	 * Validating = find out whether a new reference is needed - it breaks several things otherwise.
+	 */
 	@SuppressWarnings("unchecked")
 	public static final <E extends Entity> E validate(final E e) {
 		if (e == null)
@@ -654,9 +661,6 @@ public abstract class Utils {
 		if (e instanceof Player) {// FIXME improve this
 			final Player p = Bukkit.getPlayerExact(((Player) e).getName());
 			return p == null ? e : (E) p;
-		}
-		if (!e.isValid()) {
-			return null;
 		}
 		return e;
 	}

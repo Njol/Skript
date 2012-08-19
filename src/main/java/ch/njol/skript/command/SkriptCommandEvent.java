@@ -33,7 +33,7 @@ public class SkriptCommandEvent extends CommandEvent {
 	private final SkriptCommand skriptCommand;
 	
 	public SkriptCommandEvent(final SkriptCommand command, final CommandSender sender) {
-		super(sender, command.name, null);
+		super(sender, command.getLabel(), null);
 		skriptCommand = command;
 	}
 	

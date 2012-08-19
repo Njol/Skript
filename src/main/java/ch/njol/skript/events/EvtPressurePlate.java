@@ -38,23 +38,28 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class EvtPressurePlate extends SkriptEvent {
 	
 	static {
-		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class, "[step[ping] on] [a] [pressure] plate");
+		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class,
+				"[step[ping] on] [a] [pressure] plate",
+				"(trip|[step[ping] on] [a] tripwire)");
 	}
+	
+	private boolean tripwire;
 	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		tripwire = matchedPattern == 1;
 		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
 		return ((PlayerInteractEvent) e).getAction() == Action.PHYSICAL &&
-				(((PlayerInteractEvent) e).getClickedBlock().getType() == Material.WOOD_PLATE || ((PlayerInteractEvent) e).getClickedBlock().getType() == Material.STONE_PLATE);
+				(tripwire ? ((PlayerInteractEvent) e).getClickedBlock().getType() == Material.TRIPWIRE : (((PlayerInteractEvent) e).getClickedBlock().getType() == Material.WOOD_PLATE || ((PlayerInteractEvent) e).getClickedBlock().getType() == Material.STONE_PLATE));
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "pressure plate";
+		return tripwire ? "trip" : "stepping on a pressure plate";
 	}
 	
 }

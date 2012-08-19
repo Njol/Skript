@@ -22,38 +22,43 @@
 package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Iterator;
 
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.StringMode;
+import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
+import ch.njol.util.iterator.ArrayIterator;
 import ch.njol.util.iterator.NonNullIterator;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class Variable<T> implements Expression<T> {
+public class ArrayVariable<T> implements Expression<T> {
 	
 	private final VariableString name;
 	
 	private final boolean local;
 	
 	private final Class<T> type;
-	private final T[] zero, one;
 	
-	private final Variable<?> source;
+	private final ArrayVariable<?> source;
 	
-	private Variable(final VariableString name, final Class<T> type, final Variable<?> source) {
+	private ArrayVariable(final VariableString name, final Class<T> type, final ArrayVariable<?> source) {
 		Validate.notNull(name, type);
 		if (name.getMode() != StringMode.VARIABLE_NAME) // not setMode as angle brackets are not allowed in variable names
 			throw new IllegalArgumentException("'name' must be a VARIABLE_NAME string");
@@ -63,13 +68,10 @@ public class Variable<T> implements Expression<T> {
 		this.name = name;
 		this.type = type;
 		
-		zero = (T[]) Array.newInstance(type, 0);
-		one = (T[]) Array.newInstance(type, 1);
-		
 		this.source = source;
 	}
 	
-	public Variable(final VariableString name, final Class<T> type) {
+	public ArrayVariable(final VariableString name, final Class<T> type) {
 		this(name, type, null);
 	}
 	
@@ -80,7 +82,7 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public boolean isSingle() {
-		return true;
+		return false;
 	}
 	
 	@Override
@@ -102,21 +104,17 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
-		return new Variable<R>(name, to, this);
+		return new ArrayVariable<R>(name, to, this);
 	}
 	
-	private Object get(final Event e) {
+	private Object[] get(final Event e) {
 		Object val = local ? Skript.getLocalVariable(name.toString(e).toLowerCase(), e) : Skript.getVariable(name.toString(e).toLowerCase());
 		if (val == null && !local)
 			val = Skript.getVariable(name.getDefaultVariableName().toLowerCase());
-		return val;
+		return val instanceof Object[] ? (Object[]) val : null;
 	}
 	
-	private T getConverted(final Event e) {
-		return Skript.convert(get(e), type);
-	}
-	
-	private final void set(final Event e, final Object value) {
+	private final void set(final Event e, final Object[] value) {
 		if (local)
 			Skript.setLocalVariable(name.toString(e).toLowerCase(), e, value);
 		else
@@ -125,6 +123,8 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.SET)
+			return Object[].class;
 		return Object.class;
 	}
 	
@@ -135,11 +135,15 @@ public class Variable<T> implements Expression<T> {
 				set(e, null);
 			break;
 			case SET:
-				ClassInfo<?> ci = delta == null ? null : Skript.getSuperClassInfo(delta.getClass());
+				final ClassInfo<?> ci = delta == null ? null : Skript.getSuperClassInfo(delta.getClass().getComponentType());
 				if (ci != null && ci.getSerializeAs() != null) {
-					set(e, Skript.convert(delta, ci.getSerializeAs()));
+					final Object[] newDelta = (Object[]) Array.newInstance(ci.getSerializeAs(), ((Object[]) delta).length);
+					for (int i = 0; i < newDelta.length; i++) {
+						newDelta[i] = Skript.convert(((Object[]) delta)[i], ci.getSerializeAs());
+					}
+					set(e, newDelta);
 				} else {
-					set(e, delta);
+					set(e, (Object[]) delta);
 				}
 			break;
 			case ADD:
@@ -147,31 +151,46 @@ public class Variable<T> implements Expression<T> {
 				if (delta == null)
 					break;
 				final Object o = get(e);
-				if ((o == null || o instanceof Number) && delta instanceof Number) {
-					final int i = mode == ChangeMode.ADD ? 1 : -1;
-					set(e, (o == null ? 0 : ((Number) o).doubleValue()) + i * ((Number) delta).doubleValue());
-				} else if (o != null) {
-					ci = Skript.getSuperClassInfo(o.getClass());
-					if (ci.getChanger() != null && ci.getChanger().acceptChange(mode) != null) {
-						final Class<?> c = ci.getChanger().acceptChange(mode);
-						final Object[] one = (Object[]) Array.newInstance(o.getClass(), 1);
-						one[0] = o;
-						if (c.isAssignableFrom(delta.getClass())) {
-							ChangerUtils.change(ci.getChanger(), one, delta, mode);
-						} else if (c.isArray() && c.getComponentType().isAssignableFrom(delta.getClass())) {
-							final Object[] deltas = (Object[]) Array.newInstance(c.getComponentType(), 1);
-							deltas[0] = delta;
-							ChangerUtils.change(ci.getChanger(), one, deltas, mode);
-						}
+				if (!(o == null || o instanceof Object[]))
+					return;
+				Object[] os = (Object[]) o;
+				if (mode == ChangeMode.ADD) {
+					final int newLength = os == null ? 1 : os.length + 1;
+					os = os == null ? new Object[1] : Arrays.copyOf(os, newLength);
+					os[os.length - 1] = delta;
+					set(e, os);
+				} else {
+					if (os == null)
+						return;
+					final int i = Utils.indexOf(os, delta);
+					if (i == -1)
+						return;
+					if (os.length == 1) {
+						set(e, null);
+						return;
 					}
+					final Object[] newOs = new Object[os.length - 1];
+					System.arraycopy(os, 0, newOs, 0, i);
+					if (i != os.length - 1)
+						System.arraycopy(os, i + 1, newOs, i, os.length - 1 - i);
+					set(e, newOs);
 				}
 			break;
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public T getSingle(final Event e) {
-		return getConverted(e);
+	public T[] getAll(final Event e) {
+		Object[] val = get(e);
+		if (val == null || type == Object.class)
+			return (T[]) val;
+		return ConverterUtils.convert(val, type, new Converter<Object, T>() {
+			@Override
+			public T convert(Object o) {
+				return Skript.convert(o, type);
+			}
+		});
 	}
 	
 	@Override
@@ -180,11 +199,8 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
-	public T[] getAll(final Event e) {
-		one[0] = getConverted(e);
-		if (one[0] == null)
-			return zero;
-		return one;
+	public Iterator<T> iterator(final Event e) {
+		return new ArrayIterator<T>(getArray(e));
 	}
 	
 	@Override
@@ -198,8 +214,13 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
+	public T getSingle(final Event e) {
+		throw new SkriptAPIException("Call to getSingle on a non-single expression");
+	}
+	
+	@Override
 	public boolean getAnd() {
-		return false;
+		return true;
 	}
 	
 	@Override
@@ -219,17 +240,12 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public boolean canLoop() {
-		return false;
-	}
-	
-	@Override
-	public NonNullIterator<T> iterator(final Event e) {
-		return null;
+		return true;
 	}
 	
 	@Override
 	public boolean isLoopOf(final String s) {
-		return false;
+		return s.equalsIgnoreCase("var") || s.equalsIgnoreCase("variable");
 	}
 	
 	@Override

@@ -56,12 +56,12 @@ public class EnumParser<E extends Enum<E>> extends Parser<E> {
 	
 	@Override
 	public String toString(final E o) {
-		return "" + o;
+		return o.toString().toLowerCase().replace('_', ' ');
 	}
 	
 	@Override
 	public String toCodeString(final E o) {
-		return codeType == null ? "" + o : "<" + codeType + ":" + o + ">";
+		return codeType == null ? o.toString().toLowerCase().replace('_', ' ') : codeType + ":" + o.toString().toLowerCase().replace('_', ' ');
 	}
 	
 }

@@ -53,6 +53,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Silverfish;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Slime;
+import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.Snowball;
 import org.bukkit.entity.Snowman;
 import org.bukkit.entity.Spider;
@@ -87,6 +88,9 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("ender dragon", EnderDragon.class);
 		names.put("ender pearl", EnderPearl.class);
 		names.put("fireball", Fireball.class);
+		names.put("ghast fireball", Fireball.class);
+		names.put("small fireball", SmallFireball.class);
+		names.put("blaze fireball", SmallFireball.class);
 		names.put("fish", Fish.class);
 		names.put("ghast", Ghast.class);
 		names.put("giant", Giant.class);
@@ -97,6 +101,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("mooshroom", MushroomCow.class);
 		names.put("painting", Painting.class);
 		names.put("pig", Pig.class);
+		names.put("zombie pigman", PigZombie.class);
 		names.put("pig zombie", PigZombie.class);
 		names.put("pigzombie", PigZombie.class);
 		names.put("player", Player.class);

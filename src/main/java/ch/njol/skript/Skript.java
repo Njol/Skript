@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -53,10 +54,11 @@ import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.craftbukkit.help.CommandAliasHelpTopic;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -65,6 +67,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerCommandEvent;
+import org.bukkit.help.GenericCommandHelpTopic;
+import org.bukkit.help.HelpMap;
+import org.bukkit.help.HelpTopic;
+import org.bukkit.help.HelpTopicComparator;
+import org.bukkit.help.IndexHelpTopic;
+import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import ch.njol.skript.SkriptLogger.SubLog;
@@ -225,13 +233,15 @@ public final class Skript extends JavaPlugin implements Listener {
 				
 				loadScripts();
 				
+				finishRegisteringCommands();
+				
 				Skript.info("Skript finished loading!");
 			}
 		});
 		
 		Bukkit.getPluginManager().registerEvents(commandListener, this);
 		
-		Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
+		variableFileSaveTask = Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
 			@Override
 			public void run() {
 				synchronized (variables) {
@@ -254,6 +264,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				}
 			}, this);
 		}
+		
 	}
 	
 	/**
@@ -297,6 +308,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	public void onDisable() {
 		disabled = true;
 		
+		Bukkit.getScheduler().cancelTask(variableFileSaveTask); // async tasks aren't stopped with cancelTasks(Plugin)?
 		Bukkit.getScheduler().cancelTasks(this);
 		
 		saveVariables();
@@ -343,7 +355,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	private final static String[][] help = {
-			{"reload", "reloads all configurations"},
+			{"reload", "reloads the configuration and all scripts"},
 			{"help", "prints this help message"}
 	};
 	
@@ -365,12 +377,18 @@ public final class Skript extends JavaPlugin implements Listener {
 				return true;
 			}
 		}
+		
 		if (args.length == 0 || args[0].equalsIgnoreCase("help") || args[0].equals("?"))
-			sender.sendMessage("Usage: " + ChatColor.BLACK + "/" + ChatColor.BLUE + "skript " + ChatColor.DARK_GREEN + "...");
+			sender.sendMessage("Usage: " + ChatColor.GRAY + "/" + ChatColor.GOLD + "skript " + ChatColor.DARK_AQUA + "...");
 		else
-			sender.sendMessage(ChatColor.RED + "Invalid argument '" + args[0] + "', valid arguments for this command are:");
+			sender.sendMessage(ChatColor.RED + "Invalid argument " + ChatColor.GRAY + "'" + ChatColor.DARK_AQUA + args[0] + ChatColor.GRAY + "'" + ChatColor.RESET + ", valid arguments for this command are:");
+		int longest = 0;
 		for (final String[] l : help) {
-			sender.sendMessage("  " + ChatColor.DARK_GREEN + l[0] + ChatColor.RESET + " - " + l[1]);
+			if (longest < l[0].length())
+				longest = l[0].length();
+		}
+		for (final String[] l : help) {
+			sender.sendMessage("  " + ChatColor.DARK_AQUA + l[0] + StringUtils.multiply(' ', longest - l[0].length()) + ChatColor.DARK_GRAY + " - " + ChatColor.RESET + l[1]);
 		}
 		return true;
 	}
@@ -471,6 +489,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	private final static String varFileName = "variables";
 	private final static String varFileExt = "csv";
+	
+	private int variableFileSaveTask;
 	
 	private final static Map<String, Object> variables = new HashMap<String, Object>();
 	private static boolean variablesModded = false;
@@ -1502,10 +1522,10 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @see #registerEventValue(Class, Class, Getter, int)
 	 */
 	public static <T, E extends Event> T getEventValue(final E e, final Class<T> c, final int time) {
-		final Converter<? super E, ? extends T> g = getEventValueGetter((Class<E>) e.getClass(), c, time);
+		final Getter<? extends T, ? super E> g = getEventValueGetter((Class<E>) e.getClass(), c, time);
 		if (g == null)
 			return null;
-		return g.convert(e);
+		return g.get(e);
 	}
 	
 	/**
@@ -1575,10 +1595,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		return true;
 	}
 	
-	public static final boolean doesEventValueHaveTimeStates(final Class<? extends Event> e, final Class<?> c) {
-		return getEventValueGetter(e, c, -1, false) != null || getEventValueGetter(e, c, 1, false) != null;
-	}
-	
 	private final static <E extends Event, F, T> Getter<? extends T, ? super E> getConvertedGetter(final EventValueInfo<E, F> i, final Class<T> to) {
 		final Converter<? super F, ? extends T> c = getConverter(i.c, to);
 		if (c == null)
@@ -1594,22 +1610,38 @@ public final class Skript extends JavaPlugin implements Listener {
 		};
 	}
 	
+	public static final boolean doesEventValueHaveTimeStates(final Class<? extends Event> e, final Class<?> c) {
+		return getEventValueGetter(e, c, -1, false) != null || getEventValueGetter(e, c, 1, false) != null;
+	}
+	
 	// ================ COMMANDS ================
 	
 	private static final Map<String, SkriptCommand> commands = new HashMap<String, SkriptCommand>();
 	
-	public static CommandMap commandMap = null;
+	public static SimpleCommandMap commandMap = null;
+	private static Map<String, Command> cmKnownCommands;
+	private static Set<String> cmAliases;
 	static {
 		try {
-			if (Bukkit.getServer().getClass().getName().equals("org.bukkit.craftbukkit.CraftServer")) {
-				final Field f = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-				f.setAccessible(true);
-				commandMap = (CommandMap) f.get(Bukkit.getServer());
+			if (Bukkit.getPluginManager() instanceof SimplePluginManager) {
+				final Field commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
+				commandMapField.setAccessible(true);
+				commandMap = (SimpleCommandMap) commandMapField.get(Bukkit.getPluginManager());
+				
+				final Field knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
+				knownCommandsField.setAccessible(true);
+				cmKnownCommands = (Map<String, Command>) knownCommandsField.get(commandMap);
+				
+				final Field aliasesField = SimpleCommandMap.class.getDeclaredField("aliases");
+				aliasesField.setAccessible(true);
+				cmAliases = (Set<String>) aliasesField.get(commandMap);
 			}
 		} catch (final SecurityException e) {
 			error("Please disable the security manager");
+			commandMap = null;
 		} catch (final Exception e) {
 			outdatedError(e);
+			commandMap = null;
 		}
 	}
 	
@@ -1641,20 +1673,59 @@ public final class Skript extends JavaPlugin implements Listener {
 		return c != null && c.getName().equals(command);
 	}
 	
+	private static boolean acceptingCommandRegistrations = true;
+	
 	public static void registerCommand(final SkriptCommand command) {
+		if (!acceptingCommandRegistrations)
+			throw new SkriptAPIException("Registering commands is disabled afer all scripts have been loaded!");
 		commands.put(command.getName().toLowerCase(), command);
 		for (final String alias : command.getAliases()) {
 			commands.put(alias.toLowerCase(), command);
 		}
+		if (commandMap != null) {
+			command.register(commandMap, cmKnownCommands, cmAliases);
+		}
 	}
 	
-	// TODO if commands will ever be registered in command maps or as PluginCommands this has to be undone here
+	private final static void finishRegisteringCommands() {
+		acceptingCommandRegistrations = false;
+		try {
+			final HelpMap help = Bukkit.getServer().getHelpMap();
+			final Iterator<HelpTopic> iter = help.getHelpTopics().iterator();
+			while (iter.hasNext()) {
+				if (iter.next().getName().equals("Skript")) {
+					iter.remove();
+					break;
+				}
+			}
+			final Set<HelpTopic> topics = new TreeSet<HelpTopic>(HelpTopicComparator.helpTopicComparatorInstance());
+			for (final SkriptCommand command : commands.values()) {
+				final HelpTopic t = new GenericCommandHelpTopic(command.getBukkitCommand());
+				help.addTopic(t);
+				topics.add(t);
+				for (final String alias : command.getActiveAliases()) {
+					final HelpTopic at = new CommandAliasHelpTopic("/" + alias, "/" + command.getLabel(), help);
+					help.addTopic(at);
+					topics.add(at);
+				}
+			}
+			help.addTopic(new IndexHelpTopic("Skript", "All commands created with Skript", null, topics, "Below is a list of all commands created with Skript:"));
+		} catch (final Exception e) {
+			Skript.exception(e, "Could not register the custom commands in Bukkit's help map");
+		}
+	}
+	
 	private final static void clearCommands() {
+		if (commandMap != null) {
+			for (final SkriptCommand c : commands.values())
+				c.unregister(commandMap, cmKnownCommands, cmAliases);
+		}
 		commands.clear();
+		acceptingCommandRegistrations = true;
 	}
 	
 	public static void outdatedError() {
-		error("Skript " + instance.getDescription().getVersion() + " is not fully compatible with Bukkit " + Bukkit.getVersion() + ". Please download the newest version of Skript or use an older version of Bukkit.");
+		error("Skript v" + instance.getDescription().getVersion() + " is not fully compatible with CraftBukkit " + Bukkit.getVersion() + ". Some feature(s) will be broken until you update Skript.");
 	}
 	
 	public static void outdatedError(final Exception e) {

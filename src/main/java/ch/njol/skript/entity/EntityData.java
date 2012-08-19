@@ -236,7 +236,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	
 	protected abstract boolean init(Literal<?>[] exprs, int matchedPattern, ParseResult parseResult);
 	
-	protected abstract void set(E entity);
+	public abstract void set(E entity);
 	
 	protected abstract boolean match(E entity);
 	

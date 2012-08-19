@@ -124,31 +124,25 @@ public abstract class Commands {
 				return false;
 			}
 			
-			final Argument<?> arg = Argument.newInstance(c.getC(), m.group(3), i, !p.second);
+			final Argument<?> arg = Argument.newInstance(c.getC(), m.group(3), i, !p.second, optionals > 0);
 			if (arg == null)
 				return false;
 			currentArguments.add(arg);
 			
-			if (!arg.isOptional() && optionals > 0) {
-				Skript.error("can't put an argument into [optional brackets] if no default value is given");
-				return false;
-			}
-			
-			if (arg.isOptional() && optionals == 0)
+			if (arg.isOptional() && optionals == 0) {
 				pattern.append('[');
+				optionals++;
+			}
 			pattern.append("%" + (arg.isOptional() ? "-" : "") + Utils.toPlural(c.getCodeName(), p.second) + "%");
-			if (arg.isOptional() && optionals == 0)
-				pattern.append(']');
 		}
 		
 		pattern.append(escape(arguments.substring(lastEnd)));
 		optionals += StringUtils.count(arguments, '[', lastEnd);
 		optionals -= StringUtils.count(arguments, ']', lastEnd);
-		
-		assert optionals == 0;
+		for (int i = 0; i < optionals; i++)
+			pattern.append("]");
 		
 		node.convertToEntries(0);
-		
 		commandStructure.validate(node);
 		if (!(node.get("trigger") instanceof SectionNode))
 			return false;

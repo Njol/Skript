@@ -118,7 +118,7 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 	@Override
 	public boolean setTime(final int time) {
 		if (time > 0 && !delayed && entities.getSource() instanceof ExprAttacked) {
-			Skript.warning("The future state of 'health of victim' likely returns an invalid value. If you're interested in the actual health you should add a delay of 1 tick even though the entity might be dead by then.");
+			Skript.warning("The future state of 'health of victim' likely returns an invalid value. If you're interested in the actual health you should add a delay of 1 tick though the entity might be dead by then.");
 		}
 		return entities.getSource() instanceof ExprAttacked && super.setTime(time, EntityDamageEvent.class);
 	}

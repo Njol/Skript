@@ -16,7 +16,7 @@ version: ${project.version}
 commands:
     skript:
         description: Skript's main command. Type '/skript help' for more information.
-#        aliases: [sk, s]
+        aliases: [sk]
         permission: skript.admin
         usage: /skript help
 

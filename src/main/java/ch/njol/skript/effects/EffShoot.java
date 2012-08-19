@@ -68,6 +68,7 @@ public class EffShoot extends Effect {
 			for (final EntityData<?> d : types.getArray(e)) {
 				if (Projectile.class.isAssignableFrom(d.getType())) {
 					final Projectile projectile = shooter.launchProjectile((Class<? extends Projectile>) d.getType());
+					set(projectile, d);
 					if (velocity != null)
 						projectile.setVelocity(projectile.getVelocity().normalize().multiply(v));
 				} else {
@@ -76,6 +77,11 @@ public class EffShoot extends Effect {
 				}
 			}
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private final static <E extends Entity> void set(final Entity e, final EntityData<E> d) {
+		d.set((E) e);
 	}
 	
 	@Override

@@ -278,7 +278,7 @@ public final class BukkitEventValues {
 			public Entity get(final ProjectileHitEvent e) {
 				return e.getEntity().getShooter();
 			}
-		}, 0);
+		}, 0, "Use 'projectile' and/or 'shooter' in projectile hit events", ProjectileHitEvent.class);
 		Skript.registerEventValue(ProjectileHitEvent.class, Projectile.class, new Getter<Projectile, ProjectileHitEvent>() {
 			@Override
 			public Projectile get(final ProjectileHitEvent e) {
