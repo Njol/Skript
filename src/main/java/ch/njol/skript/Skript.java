@@ -41,6 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -186,6 +187,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	public void onEnable() {
 		if (disabled)
 			throw new IllegalStateException("Skript may only be reloaded by either Bukkit's '/reload' or Skript's '/skript reload' command");
+		
+		Language.loadDefault();
 		
 		version = new Version(getDescription().getVersion());
 		runningCraftBukkit = Bukkit.getServer().getClass().getName().equals("org.bukkit.craftbukkit.CraftServer");
@@ -1975,6 +1978,14 @@ public final class Skript extends JavaPlugin implements Listener {
 					@Override
 					public void set(final Boolean b) {
 						disableVariableConflictWarnings = b;
+					}
+				}, true)
+				.addEntry("language", new Setter<String>() {
+					@Override
+					public void set(final String s) {
+						if (!Language.load(s)) {
+							Skript.error("No language file found for '"+s+"'!");
+						}
 					}
 				}, true)
 				.setAllowUndefinedSections(true)

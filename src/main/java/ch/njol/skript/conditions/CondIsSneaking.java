@@ -36,7 +36,7 @@ public class CondIsSneaking extends PropertyCondition<Player> {
 		register(CondIsSneaking.class, "sneaking", "players");
 	}
 	
-	protected CondIsSneaking() {
+	public CondIsSneaking() {
 		super("sneaking", new Checker<Player>() {
 			@Override
 			public boolean check(final Player p) {

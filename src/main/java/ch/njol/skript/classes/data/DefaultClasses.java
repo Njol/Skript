@@ -38,6 +38,8 @@ public class DefaultClasses {
 	
 	public DefaultClasses() {}
 	
+	public final static int VARIABLENAME_NUMBERACCURACY = 8;
+	
 	static {
 		Skript.registerClass(new ClassInfo<Object>(Object.class, "object", "object"));
 		
@@ -62,7 +64,7 @@ public class DefaultClasses {
 					
 					@Override
 					public String toCodeString(final Number n) {
-						return n.toString();
+						return StringUtils.toString(n.doubleValue(), VARIABLENAME_NUMBERACCURACY);
 					}
 				}));
 		
@@ -80,13 +82,13 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Integer o) {
-						return o.toString();
+					public String toString(final Integer i) {
+						return "" + i;
 					}
 					
 					@Override
-					public String toCodeString(final Integer o) {
-						return "" + o;
+					public String toCodeString(final Integer i) {
+						return "" + i;
 					}
 				}).serializer(new Serializer<Integer>() {
 					
@@ -124,8 +126,8 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toCodeString(final Double o) {
-						return "" + o;
+					public String toCodeString(final Double d) {
+						return StringUtils.toString(d.doubleValue(), VARIABLENAME_NUMBERACCURACY);
 					}
 				}).serializer(new Serializer<Double>() {
 					
@@ -162,8 +164,8 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toCodeString(final Float o) {
-						return "" + o;
+					public String toCodeString(final Float f) {
+						return StringUtils.toString(f.doubleValue(), VARIABLENAME_NUMBERACCURACY);
 					}
 				}).serializer(new Serializer<Float>() {
 					@Override
@@ -193,13 +195,13 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Boolean o) {
-						return o.toString();
+					public String toString(final Boolean b) {
+						return b.toString();
 					}
 					
 					@Override
-					public String toCodeString(final Boolean o) {
-						return "" + o;
+					public String toCodeString(final Boolean b) {
+						return "" + b;
 					}
 				}).serializer(new Serializer<Boolean>() {
 					@Override
@@ -230,13 +232,13 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Byte o) {
-						return o.toString();
+					public String toString(final Byte b) {
+						return "" + b;
 					}
 					
 					@Override
-					public String toCodeString(final Byte o) {
-						return "" + o;
+					public String toCodeString(final Byte b) {
+						return "" + b;
 					}
 				}).serializer(new Serializer<Byte>() {
 					
@@ -268,13 +270,13 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Short o) {
-						return o.toString();
+					public String toString(final Short s) {
+						return "" + s;
 					}
 					
 					@Override
-					public String toCodeString(final Short o) {
-						return "" + o;
+					public String toCodeString(final Short s) {
+						return "" + s;
 					}
 				}).serializer(new Serializer<Short>() {
 					
@@ -306,13 +308,13 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Long o) {
-						return o.toString();
+					public String toString(final Long l) {
+						return "" + l;
 					}
 					
 					@Override
-					public String toCodeString(final Long o) {
-						return "" + o;
+					public String toCodeString(final Long l) {
+						return "" + l;
 					}
 				}).serializer(new Serializer<Long>() {
 					

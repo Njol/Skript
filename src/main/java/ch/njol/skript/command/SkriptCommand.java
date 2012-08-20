@@ -36,6 +36,7 @@ import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import ch.njol.skript.Language;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
@@ -90,7 +91,7 @@ public class SkriptCommand implements CommandExecutor {
 		this.name = name;
 		label = name.toLowerCase();
 		this.permission = permission;
-		this.permissionMessage = permissionMessage == null ? "You don't have the required permission to use this command" : permissionMessage;// TODO l10n
+		this.permissionMessage = permissionMessage == null ? Language.getString("command.no_permission_message") : permissionMessage;
 		
 		this.aliases = aliases;
 		activeAliases = new ArrayList<String>(aliases);

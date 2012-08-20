@@ -36,7 +36,7 @@ public class CondIsBurning extends PropertyCondition<Entity> {
 		register(CondIsBurning.class, "(burning|ignited|on fire)", "entities");
 	}
 	
-	protected CondIsBurning() {
+	public CondIsBurning() {
 		super("burning", new Checker<Entity>() {
 			@Override
 			public boolean check(final Entity e) {

@@ -33,13 +33,13 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  * 
  */
-public class PropertyCondition<T> extends Condition {
+public abstract class PropertyCondition<T> extends Condition {
 	
 	private final Checker<? super T> checker;
 	private Expression<? extends T> expr;
 	private final String property;
 	
-	protected PropertyCondition(final String property, final Checker<? super T> checker) {
+	public PropertyCondition(final String property, final Checker<? super T> checker) {
 		this.property = property;
 		this.checker = checker;
 	}

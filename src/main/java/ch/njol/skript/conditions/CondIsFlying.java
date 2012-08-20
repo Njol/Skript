@@ -36,7 +36,7 @@ public class CondIsFlying extends PropertyCondition<Player> {
 		register(CondIsFlying.class, "flying", "players");
 	}
 	
-	protected CondIsFlying() {
+	public CondIsFlying() {
 		super("flying", new Checker<Player>() {
 			@Override
 			public boolean check(final Player p) {

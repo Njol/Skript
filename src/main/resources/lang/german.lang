@@ -1,0 +1,33 @@
+# Which version of Skript this language file was written for
+version = 1.4.4
+
+# -- General --
+and = und
+or = oder
+
+# -- Commands --
+command.no_permission_message = Du hast nicht die Erlaubnis dieses Kommando zu benützen
+
+# -- Enchantments --
+ench.format = %s %s
+ench.names.protection_environmental = des Schutzes
+ench.names.protection_fire = des Feuerschutzes
+ench.names.protection_fall = des Federfalls
+ench.names.protection_explosions = des Explosionsschutzes
+ench.names.protection_projectile = der Schusssicherheit
+ench.names.oxygen = der Atmung
+ench.names.water_worker = der Wasseraffinität
+ench.names.damage_all = der Schärfe
+ench.names.damage_undead = des Banns
+ench.names.damage_arthropods = der Nemesis der Gliederfüsser
+ench.names.knockback = des Rückstosses
+ench.names.fire_aspect = der Verbrennung
+ench.names.loot_bonus_mobs = der Plünderung
+ench.names.dig_speed = der Effizienz
+ench.names.silk_touch = der Behutsamkeit
+ench.names.durability = der Haltbarkeit
+ench.names.loot_bonus_blocks = des Glücks
+ench.names.arrow_damage = der Stärke
+ench.names.arrow_knockback = des Schlags
+ench.names.arrow_fire = des Feuers
+ench.names.arrow_infinite = der Unendlichkeit

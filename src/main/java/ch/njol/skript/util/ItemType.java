@@ -25,13 +25,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -52,6 +57,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	
 	private int amount = -1;
 	
+	private Map<Enchantment, Integer> enchantments = null;
 	private boolean hasPreferred = false;
 	
 	/**
@@ -80,6 +86,8 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	public ItemType(final ItemStack i) {
 		amount = i.getAmount();
 		add(new ItemData(i));
+		if (!i.getEnchantments().isEmpty())
+			enchantments = new HashMap<Enchantment, Integer>(i.getEnchantments());
 	}
 	
 	public ItemType(final Block block) {
@@ -92,6 +100,8 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		hasPreferred = i.hasPreferred;
 		for (final ItemData d : i)
 			add(d.clone());
+		if (i.enchantments != null)
+			this.enchantments = new HashMap<Enchantment, Integer>(i.enchantments);
 	}
 	
 	public void modified() {
@@ -130,11 +140,13 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	public boolean isOfType(final ItemStack item) {
 		if (item == null)
 			return isOfType(0, (short) 0);
+		if (enchantments != null && !item.getEnchantments().equals(enchantments))
+			return false;
 		return isOfType(item.getTypeId(), item.getDurability());
 	}
 	
 	public boolean isOfType(final Block block) {
-		if (block == null)
+		if (block == null || enchantments != null)
 			return false;
 		return isOfType(block.getTypeId(), block.getData());
 	}
@@ -174,7 +186,11 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 			final String p = types.get(i).toString(debug);
 			b.append(amount > 1 ? Utils.toPlural(p) : p);
 		}
-		return b.toString();
+//		if (enchantments == null)
+			return b.toString();
+//		for (Entry<Enchantment, Integer> e : enchantments.entrySet()) {
+//			
+//		}
 	}
 	
 	public static String toString(final ItemStack i) {

@@ -234,7 +234,7 @@ public abstract class Aliases {
 	}
 	
 	/**
-	 * @return how many ids are missing an alias
+	 * @return how many ids are missing an alias, including the 'any id' (-1)
 	 */
 	final static int addMissingMaterialNames() {
 		int r = 0;

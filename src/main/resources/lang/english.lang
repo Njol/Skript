@@ -1,0 +1,57 @@
+# Which version of Skript this language file was written for
+version = 1.4.4
+
+# -- General --
+and = and
+or = or
+
+# -- Commands --
+command.no_permission_message = You don't have the required permission to use this command
+
+# -- Aliases --
+aliases.invalid_item_data = '%s' is no a valid item data
+aliases.invalid_block_data = Blocks only have data values from 0 to 15
+aliases.invalid_id = There doesn't exist a material with id %i!
+aliases.invalid_item_type = '%s' is not an item type
+aliases.invalid_range = The first number of a data range must be smaller than the second
+
+aliases.format.every = every %s
+aliases.format.every_with_amount = %i of every %s
+aliases.format.any = any %s
+aliases.format.any-with_amount = %i of any %s
+
+# -- Enchantments --
+ench.format = %s of %s
+ench.names.protection_environmental = Protection
+ench.names.protection_fire = Fire Protection
+ench.names.protection_fall = Feather Falling
+ench.names.protection_explosions = Blast Protection
+ench.names.protection_projectile = Projectile Protection
+ench.names.oxygen = Respiration
+ench.names.water_worker = Aqua Affinity
+ench.names.damage_all = Sharpness
+ench.names.damage_undead = Smite
+ench.names.damage_arthropods = Bane of Arthropods
+ench.names.knockback = Knockback
+ench.names.fire_aspect = Fire Aspect
+ench.names.loot_bonus_mobs = Looting
+ench.names.dig_speed = Efficiency
+ench.names.silk_touch = Silk Touch
+ench.names.durability = Unbreaking
+ench.names.loot_bonus_blocks = Fortune
+ench.names.arrow_damage = Power
+ench.names.arrow_knockback = Punch
+ench.names.arrow_fire = Flame
+ench.names.arrow_infinite = Infinity
+
+# -- Weather --
+weather.sun = clear, sun, sunny
+weather.rain = rain, rainy, raining
+weather.thunder = thunder, thundering, thunderstorm
+
+# -- Time --
+time.tick = tick
+time.second = second
+time.minute = minute
+time.hour = hour
+time.day = day

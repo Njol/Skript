@@ -36,7 +36,7 @@ public class CondIsSleeping extends PropertyCondition<Player> {
 		register(CondIsSleeping.class, "sleeping", "players");
 	}
 	
-	protected CondIsSleeping() {
+	public CondIsSleeping() {
 		super("sleeping", new Checker<Player>() {
 			@Override
 			public boolean check(final Player p) {

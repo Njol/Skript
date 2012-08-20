@@ -37,7 +37,7 @@ public class CondIsPoisoned extends PropertyCondition<LivingEntity> {
 		register(CondIsPoisoned.class, "poisoned", "livingentities");
 	}
 	
-	protected CondIsPoisoned() {
+	public CondIsPoisoned() {
 		super("poisoned", new Checker<LivingEntity>() {
 			@Override
 			public boolean check(final LivingEntity e) {
