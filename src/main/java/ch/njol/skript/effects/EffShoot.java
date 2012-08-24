@@ -73,8 +73,8 @@ public class EffShoot extends Effect {
 					if (velocity != null)
 						projectile.setVelocity(projectile.getVelocity().normalize().multiply(v));
 				} else {
-					Location loc = shooter.getLocation();
-					loc.setY(loc.getY() + shooter.getEyeHeight()/2);
+					final Location loc = shooter.getLocation();
+					loc.setY(loc.getY() + shooter.getEyeHeight() / 2);
 					final Entity projectile = d.spawn(loc);
 					if (projectile != null)
 						projectile.setVelocity(shooter.getLocation().getDirection().multiply(v));

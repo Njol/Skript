@@ -64,6 +64,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -256,6 +257,19 @@ public final class Skript extends JavaPlugin implements Listener {
 				}
 			}, this);
 		}
+		
+		Bukkit.getPluginManager().registerEvents(new Listener() {
+			@SuppressWarnings("unused")
+			@EventHandler
+			public void onClick(final PlayerInteractEvent e) {
+				Skript.info("action: " + e.getAction());
+				Skript.info("cancelled?: " + e.isCancelled());
+				Skript.info("has item: " + e.hasItem());
+				Skript.info("use item: " + e.useItemInHand());
+				Skript.info("has block: " + e.hasBlock());
+				Skript.info("use block: " + e.useInteractedBlock());
+			}
+		}, this);
 		
 	}
 	
@@ -1272,7 +1286,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param name
 	 * @return the class info or null if the name was not recognized
 	 */
-	public static ClassInfo<?> getClassInfoFromUserInput(final String name) {
+	public static ClassInfo<?> getClassInfoFromUserInput(String name) {
+		name = name.toLowerCase();
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getUserInputPatterns() == null)
 				continue;
