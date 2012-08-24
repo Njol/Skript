@@ -28,11 +28,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -476,7 +471,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				}
 				
 				try {
-					Files.move(f.toPath(), new File(f.getParentFile(), f.getName().substring(1)).toPath());
+					FileUtils.move(f, new File(f.getParentFile(), f.getName().substring(1)));
 				} catch (final IOException e) {
 					message(sender, "Could not enable <gold>" + f.getName().substring(1) + "<reset>: " + e.getLocalizedMessage());
 					return true;
@@ -515,7 +510,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				ScriptLoader.unloadScript(f);
 				
 				try {
-					Files.move(f.toPath(), new File(f.getParentFile(), "-" + f.getName()).toPath());
+					FileUtils.move(f, new File(f.getParentFile(), "-" + f.getName()));
 				} catch (final IOException e) {
 					message(sender, "Could not rename <gold>" + f.getName() + "<reset>, it will be enabled again when you restart the server: " + e.getLocalizedMessage());
 					return true;
@@ -550,34 +545,14 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	private final static Collection<File> toggleScripts(final boolean enable) throws IOException {
-		final Collection<File> changed = new ArrayList<File>();
-		Files.walkFileTree(new File(Skript.getInstance().getDataFolder(), SCRIPTSFOLDER).toPath(), new FileVisitor<Path>() {
+		return FileUtils.renameAll(new File(Skript.getInstance().getDataFolder(), SCRIPTSFOLDER), new Converter<String, String>() {
 			@Override
-			public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
-				return FileVisitResult.CONTINUE;
-			}
-			
-			@Override
-			public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
-				final String name = file.getFileName().toString();
-				if (name.startsWith("-") == enable) {
-					Files.move(file, file.resolveSibling(enable ? name.substring(1) : "-" + name));
-					changed.add((enable ? file.resolveSibling(name.substring(1)) : file).toFile());
-				}
-				return FileVisitResult.CONTINUE;
-			}
-			
-			@Override
-			public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
-				return FileVisitResult.CONTINUE;
-			}
-			
-			@Override
-			public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
-				return FileVisitResult.CONTINUE;
+			public String convert(final String name) {
+				if (name.startsWith("-") == enable)
+					return enable ? name.substring(1) : "-" + name;
+				return null;
 			}
 		});
-		return changed;
 	}
 	
 	private static void loadClasses(final String packageName, final boolean loadSubPackages) throws IOException {

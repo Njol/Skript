@@ -83,4 +83,8 @@ public class Version implements Comparable<Version> {
 	public String toString() {
 		return version[0] + "." + version[1] + (version[2] == 0 ? "" : "." + version[2]);
 	}
+	
+	public final static int compare(final String v1, final String v2) {
+		return new Version(v1).compareTo(new Version(v2));
+	}
 }

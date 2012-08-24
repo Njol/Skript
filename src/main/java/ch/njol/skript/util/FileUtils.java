@@ -22,16 +22,22 @@
 package ch.njol.skript.util;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import ch.njol.skript.classes.Converter;
 
 /**
  * @author Peter Güttinger
  * 
  */
 public abstract class FileUtils {
+	
+	private final static boolean RUNNINGJAVA7 = !System.getProperty("java.version").startsWith("1.6");
 	
 	private FileUtils() {}
 	
@@ -46,8 +52,70 @@ public abstract class FileUtils {
 		final File backup = new File(f.getParentFile(), name + "_backup_" + backupFormat.format(System.currentTimeMillis()) + (ext == null ? "" : "." + ext));
 		if (backup.exists())
 			throw new IOException("backup file " + backup.getName() + " does already exist");
-		Files.copy(f.toPath(), backup.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+		copy(f, backup);
 		return backup;
+	}
+	
+	public final static void move(final File from, final File to) throws IOException {
+		if (RUNNINGJAVA7) {
+			Java7FileUtils.move(from, to);
+		} else {
+			if (!from.renameTo(to))
+				throw new IOException("Can't rename " + from.getName() + " to " + to.getName());
+		}
+	}
+	
+	public final static void copy(final File from, final File to) throws IOException {
+		if (RUNNINGJAVA7) {
+			Java7FileUtils.copy(from, to);
+		} else {
+			if (!to.createNewFile())
+				throw new IOException("Can't copy " + from.getName() + " to " + to.getName() + ": Can't create new file");
+			FileInputStream in = null;
+			FileOutputStream out = null;
+			try {
+				in = new FileInputStream(from);
+				out = new FileOutputStream(to);
+				final byte[] buffer = new byte[4096];
+				int bytesRead;
+				while ((bytesRead = in.read(buffer)) != -1)
+					out.write(buffer, 0, bytesRead);
+			} finally {
+				if (in != null) {
+					try {
+						in.close();
+					} catch (final IOException e) {}
+				}
+				if (out != null) {
+					try {
+						out.close();
+					} catch (final IOException e) {}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * @param directory
+	 * @param renamer Renames files. Return null to leave a file as-is.
+	 * @return A collection of all changed files (with their new names)
+	 * @throws IOException
+	 */
+	public final static Collection<File> renameAll(final File directory, final Converter<String, String> renamer) throws IOException {
+		final Collection<File> changed = new ArrayList<File>();
+		for (final File f : directory.listFiles()) {
+			if (f.isDirectory()) {
+				changed.addAll(renameAll(f, renamer));
+			} else {
+				final String newName = renamer.convert(f.getName());
+				if (newName == null)
+					continue;
+				final File newFile = new File(f.getParent(), newName);
+				move(f, newFile);
+				changed.add(newFile);
+			}
+		}
+		return changed;
 	}
 	
 }
