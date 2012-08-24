@@ -86,7 +86,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		((AsyncPlayerChatEvent) e).setMessage((String) delta);
+		((AsyncPlayerChatEvent) e).setMessage(Utils.replaceChatStyles((String) delta));
 	}
 	
 }

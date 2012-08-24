@@ -50,7 +50,7 @@ public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<
 	private final String propertyName;
 	private final Converter<? super F, ? extends T> converter;
 	
-	protected SimplePropertyExpression(final Class<T> returnType, final String propertyName, final Converter<? super F, ? extends T> converter) {
+	public SimplePropertyExpression(final Class<T> returnType, final String propertyName, final Converter<? super F, ? extends T> converter) {
 		this.returnType = returnType;
 		this.propertyName = propertyName;
 		this.converter = converter;

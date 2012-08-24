@@ -620,6 +620,12 @@ public abstract class Utils {
 	
 	public static final String prepareMessage(String message) {
 		Validate.notNull(message, "message");
+		message = replaceChatStyles(message);
+		message = StringUtils.fixCapitalization(message);
+		return message;
+	}
+	
+	public final static String replaceChatStyles(String message) {
 		message = StringUtils.replaceAll(message, "<([^<>]+|<none>)>", new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
@@ -633,7 +639,6 @@ public abstract class Utils {
 			}
 		});
 		message = ChatColor.translateAlternateColorCodes('&', message);
-		message = StringUtils.fixCapitalization(message);
 		return message;
 	}
 	

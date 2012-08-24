@@ -41,7 +41,7 @@ public class ExprName extends SimplePropertyExpression<Player, String> {
 	 * @param propertyName
 	 * @param converter
 	 */
-	protected ExprName() {
+	public ExprName() {
 		super(String.class, "name", new Converter<Player, String>() {
 			@Override
 			public String convert(final Player p) {

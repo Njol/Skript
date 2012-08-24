@@ -27,6 +27,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
@@ -43,7 +44,7 @@ public class ExprDisplayName extends SimplePropertyExpression<Player, String> {
 	 * @param propertyName
 	 * @param converter
 	 */
-	protected ExprDisplayName() {
+	public ExprDisplayName() {
 		super(String.class, "display name", new Converter<Player, String>() {
 			@Override
 			public String convert(final Player p) {
@@ -62,7 +63,7 @@ public class ExprDisplayName extends SimplePropertyExpression<Player, String> {
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		for (final Player p : getExpr().getArray(e)) {
-			p.setDisplayName((String) delta);
+			p.setDisplayName(Utils.replaceChatStyles((String) delta));
 		}
 	}
 	
