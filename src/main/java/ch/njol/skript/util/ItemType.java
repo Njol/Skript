@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -41,6 +40,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
+import ch.njol.skript.Language;
 import ch.njol.skript.Skript;
 import ch.njol.skript.util.Container.ContainerType;
 import ch.njol.util.iterator.SingleItemIterator;
@@ -57,7 +57,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	
 	private int amount = -1;
 	
-	private Map<Enchantment, Integer> enchantments = null;
+	Map<Enchantment, Integer> enchantments = null;
 	private boolean hasPreferred = false;
 	
 	/**
@@ -98,10 +98,11 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		all = i.all;
 		amount = i.amount;
 		hasPreferred = i.hasPreferred;
-		for (final ItemData d : i)
-			add(d.clone());
+		for (final ItemData d : i) {
+			types.add(d.clone());
+		}
 		if (i.enchantments != null)
-			this.enchantments = new HashMap<Enchantment, Integer>(i.enchantments);
+			enchantments = new HashMap<Enchantment, Integer>(i.enchantments);
 	}
 	
 	public void modified() {
@@ -140,7 +141,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	public boolean isOfType(final ItemStack item) {
 		if (item == null)
 			return isOfType(0, (short) 0);
-		if (enchantments != null && !item.getEnchantments().equals(enchantments))
+		if (enchantments != null && !enchantments.equals(item.getEnchantments()))
 			return false;
 		return isOfType(item.getTypeId(), item.getDurability());
 	}
@@ -186,11 +187,19 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 			final String p = types.get(i).toString(debug);
 			b.append(amount > 1 ? Utils.toPlural(p) : p);
 		}
-//		if (enchantments == null)
+		if (enchantments == null)
 			return b.toString();
-//		for (Entry<Enchantment, Integer> e : enchantments.entrySet()) {
-//			
-//		}
+		b.append(Language.getSpaced("ench.of"));
+		boolean first = true;
+		for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
+			if (!first)
+				b.append(", "); // TODO use 'and' if last
+			first = false;
+			b.append(Language.get("ench.names." + e.getKey().getName()));
+			b.append(" ");
+			b.append(e.getValue());
+		}
+		return b.toString();
 	}
 	
 	public static String toString(final ItemStack i) {
@@ -297,6 +306,8 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	 * @return a new item type which is the intersection of the two item types or null if the intersection is empty.
 	 */
 	public ItemType intersection(final ItemType other) {
+		if (amount != -1 || other.amount != -1 || enchantments != null || other.enchantments != null)
+			throw new IllegalStateException("ItemType.intersection(ItemType) must only be used to instersect aliases");
 		final ItemType r = new ItemType();
 		for (final ItemData d1 : types) {
 			for (final ItemData d2 : other.types) {
@@ -310,7 +321,6 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	
 	public void add(final ItemData type) {
 		if (type != null) {
-			type.setParent(this);
 			types.add(type);
 			modified();
 		}
@@ -318,10 +328,8 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	
 	public void addAll(final Collection<ItemData> types) {
 		for (final ItemData type : types) {
-			if (type != null) {
-				type.setParent(this);
+			if (type != null)
 				this.types.add(type);
-			}
 		}
 		modified();
 	}
@@ -331,9 +339,47 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		modified();
 	}
 	
+	public void addEnchantments(final Map<Enchantment, Integer> enchantments) {
+		if (this.enchantments == null)
+			this.enchantments = new HashMap<Enchantment, Integer>(enchantments);
+		else
+			this.enchantments.putAll(enchantments);
+	}
+	
+	public Map<Enchantment, Integer> getEnchantments() {
+		return enchantments;
+	}
+	
 	@Override
 	public Iterator<ItemStack> containerIterator() {
-		return getAll().iterator();
+		return new Iterator<ItemStack>() {
+			Iterator<ItemData> iter = types.iterator();
+			Iterator<ItemStack> currentDataIter;
+			
+			@Override
+			public boolean hasNext() {
+				while (iter.hasNext() && (currentDataIter == null || !currentDataIter.hasNext())) {
+					currentDataIter = iter.next().getAll();
+				}
+				return currentDataIter != null && currentDataIter.hasNext();
+			}
+			
+			@Override
+			public ItemStack next() {
+				if (!hasNext())
+					throw new NoSuchElementException();
+				final ItemStack is = currentDataIter.next();
+				is.setAmount(getAmount());
+				if (enchantments != null)
+					is.addUnsafeEnchantments(enchantments);
+				return is;
+			}
+			
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 	
 	/**
@@ -354,30 +400,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		return new Iterable<ItemStack>() {
 			@Override
 			public Iterator<ItemStack> iterator() {
-				return new Iterator<ItemStack>() {
-					
-					Iterator<ItemData> iter = types.iterator();
-					Iterator<ItemStack> currentDataIter;
-					
-					@Override
-					public boolean hasNext() {
-						while (iter.hasNext() && (currentDataIter == null || !currentDataIter.hasNext())) {
-							currentDataIter = iter.next().getAll();
-						}
-						return iter.hasNext() || currentDataIter.hasNext();
-					}
-					
-					@Override
-					public ItemStack next() {
-						if (!hasNext())
-							throw new NoSuchElementException();
-						return currentDataIter.next();
-					}
-					
-					@Override
-					public void remove() {}
-					
-				};
+				return containerIterator();
 			}
 		};
 	}
@@ -391,6 +414,8 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	public ItemStack removeFrom(final ItemStack item) {
 		if (item == null)
 			return null;
+		if (enchantments != null && !enchantments.equals(item.getEnchantments()))
+			return item;
 		for (final ItemData type : types) {
 			if (type.isOfType(item)) {
 				item.setAmount(Math.max(item.getAmount() - getAmount(), 0));
@@ -409,9 +434,11 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	public ItemStack addTo(final ItemStack item) {
 		if (item == null || item.getTypeId() == 0)
 			return getRandom();
+		if (enchantments != null && !enchantments.equals(item.getEnchantments()))
+			return item;
 		for (final ItemData type : types) {
 			if (type.isOfType(item)) {
-				item.setAmount(Math.max(item.getAmount() + getAmount(), 0));
+				item.setAmount(Math.min(item.getAmount() + getAmount(), item.getMaxStackSize()));
 				return item;
 			}
 		}
@@ -434,7 +461,11 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	 * @see #removeFrom(List...)
 	 */
 	public ItemStack getRandom() {
-		return Utils.getRandom(types).getRandom();
+		final ItemStack is = Utils.getRandom(types).getRandom();
+		is.setAmount(getAmount());
+		if (enchantments != null)
+			is.addUnsafeEnchantments(enchantments);
+		return is;
 	}
 	
 	/**
@@ -487,7 +518,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		for (final ItemData d : types) {
 			int found = 0;
 			for (final ItemStack i : list) {
-				if (d.isOfType(i)) {
+				if (d.isOfType(i) && (enchantments == null || enchantments.equals(i.getEnchantments()))) {
 					found += i == null ? 1 : i.getAmount();
 					if (found >= getAmount()) {
 						if (!all)
@@ -539,7 +570,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 					continue;
 				for (int i = 0; i < list.size(); i++) {
 					final ItemStack is = list.get(i);
-					if (is != null && d.isOfType(is)) {
+					if (is != null && d.isOfType(is) && (enchantments == null || enchantments.equals(is.getEnchantments()))) {
 						if (all && amount == -1) {
 							list.set(i, null);
 							removed = 1;

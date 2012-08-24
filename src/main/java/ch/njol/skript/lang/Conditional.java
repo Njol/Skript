@@ -39,17 +39,20 @@ public class Conditional extends TriggerSection {
 	private TriggerSection elseClause = null;
 	
 	public Conditional(final Condition cond, final SectionNode node) {
-		super(node, true);
+		super(node);
 		this.cond = cond;
 	}
 	
 	@Override
-	public boolean run(final Event e) {
-		final boolean b = cond.run(e);
-		super.run(e, b);
-		if (elseClause != null)
-			elseClause.run(e, !b);
-		return true;
+	protected TriggerItem walk(final Event e) {
+		if (cond.run(e)) {
+			return walk(e, true);
+		} else {
+			debug(e, false);
+			if (elseClause != null)
+				return elseClause;
+			return getNext();
+		}
 	}
 	
 	@Override
@@ -58,20 +61,21 @@ public class Conditional extends TriggerSection {
 	}
 	
 	public void loadElseClause(final SectionNode node) {
-		elseClause = new TriggerSection(node, true) {
+		elseClause = new TriggerSection(node) {
+			@Override
+			public TriggerItem walk(final Event e) {
+				debug(e, false);
+				return getNext();
+			}
 			
 			@Override
 			public String toString(final Event e, final boolean debug) {
 				return "else";
 			}
-			
-			@Override
-			public boolean run(final Event e) {
-				throw new RuntimeException();
-			}
-			
 		};
 		elseClause.setParent(getParent());
+		elseClause.setNext(getNext());
+		setNext(elseClause);
 	}
 	
 }

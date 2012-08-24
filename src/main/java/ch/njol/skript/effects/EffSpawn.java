@@ -54,7 +54,7 @@ public class EffSpawn extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		amount = matchedPattern == 0 ? null : (Expression<Integer>) (exprs[0]);
 		types = (Expression<EntityType>) exprs[matchedPattern];
 		offsets = (Expression<Offset>) exprs[1 + matchedPattern];

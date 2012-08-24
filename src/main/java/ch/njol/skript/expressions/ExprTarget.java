@@ -52,7 +52,7 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		types = (Expression<EntityData<?>>) vars[matchedPattern];
 		entities = (Expression<LivingEntity>) vars[1 - matchedPattern];
 		setExpr(entities);

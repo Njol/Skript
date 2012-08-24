@@ -26,6 +26,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.weather.WeatherEvent;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.effects.Delay;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -44,20 +45,18 @@ public class CondWeather extends Condition {
 	
 	private Expression<WeatherType> weathers;
 	private Expression<World> worlds;
-	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		weathers = (Expression<WeatherType>) vars[0];
 		worlds = (Expression<World>) vars[1];
-		delayed = isDelayed;
 		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
-		if (!delayed && worlds.isDefault() && e instanceof WeatherEvent) {
+		if (worlds.isDefault() && e instanceof WeatherEvent && !Delay.isDelayed(e)) {
 			return weathers.check(e, new Checker<WeatherType>() {
 				@Override
 				public boolean check(final WeatherType t) {

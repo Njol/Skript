@@ -21,6 +21,7 @@
 
 package ch.njol.skript.command;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -86,12 +87,12 @@ public class SkriptCommand implements CommandExecutor {
 	 * @param permissionMessage message to display if the player doesn't have the given permission
 	 * @param items trigger to execute
 	 */
-	public SkriptCommand(final String name, final String pattern, final List<Argument<?>> arguments, final String description, final String usage, final List<String> aliases, final String permission, final String permissionMessage, final int executableBy, final List<TriggerItem> items) {
+	public SkriptCommand(final File script, final String name, final String pattern, final List<Argument<?>> arguments, final String description, final String usage, final List<String> aliases, final String permission, final String permissionMessage, final int executableBy, final List<TriggerItem> items) {
 		Validate.notNull(name, pattern, arguments, description, usage, aliases, items);
 		this.name = name;
 		label = name.toLowerCase();
 		this.permission = permission;
-		this.permissionMessage = permissionMessage == null ? Language.getString("command.no_permission_message") : permissionMessage;
+		this.permissionMessage = permissionMessage == null ? Language.get("command.no_permission_message") : permissionMessage;
 		
 		this.aliases = aliases;
 		activeAliases = new ArrayList<String>(aliases);
@@ -104,7 +105,7 @@ public class SkriptCommand implements CommandExecutor {
 		this.pattern = pattern;
 		this.arguments = arguments;
 		
-		trigger = new Trigger("command /" + name, new SimpleEvent(), items);
+		trigger = new Trigger(script, "command /" + name, new SimpleEvent(), items);
 		
 		try {
 			final Constructor<PluginCommand> c = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
@@ -128,7 +129,7 @@ public class SkriptCommand implements CommandExecutor {
 		return true;
 	}
 	
-	public boolean execute(final CommandSender sender, @SuppressWarnings("unused") final String commandLabel, final String rest) {
+	public boolean execute(final CommandSender sender, final String commandLabel, final String rest) {
 		if (sender instanceof Player) {
 			if ((executableBy & PLAYERS) == 0) {
 				sender.sendMessage("This command can only be used by the console");
@@ -160,7 +161,7 @@ public class SkriptCommand implements CommandExecutor {
 		if (Skript.log(Verbosity.VERY_HIGH))
 			Skript.info("# /" + name + " " + rest);
 		final long startTrigger = System.nanoTime();
-		trigger.run(event);
+		trigger.start(event);
 		if (Skript.log(Verbosity.VERY_HIGH))
 			Skript.info("# " + name + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 		
@@ -231,6 +232,10 @@ public class SkriptCommand implements CommandExecutor {
 	
 	public PluginCommand getBukkitCommand() {
 		return bukkitCommand;
+	}
+	
+	public File getScript() {
+		return trigger.getScript();
 	}
 	
 }

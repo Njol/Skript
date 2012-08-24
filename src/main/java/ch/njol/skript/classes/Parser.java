@@ -38,19 +38,18 @@ import ch.njol.skript.util.StringMode;
 public abstract class Parser<T> {
 	
 	/**
-	 * Parses the input. This method may print an error prior to returning null if the input couln't be parsed.
+	 * Parses the input. This method may print an error prior to returning null if the input couldn't be parsed.
 	 * 
 	 * @param s The String to parse. This string is already trim()med.
-	 * @param context Context of parsing, can be null
+	 * @param context Context of parsing, may not be null
 	 * @return The parsed input or null if the input is invalid for this parser.
 	 */
 	public abstract T parse(String s, ParseContext context);
 	
 	/**
-	 * 
 	 * @return Whether {@link #parse(String, ParseContext)} can actually return something other that null for the given context
 	 */
-	public boolean canParse(@SuppressWarnings("unused") final ParseContext context) {
+	public boolean canParse(final ParseContext context) {
 		return true;
 	}
 	

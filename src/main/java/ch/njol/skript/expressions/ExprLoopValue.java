@@ -54,14 +54,14 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	private Object[] one;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		name = parser.expr;
 		String s = parser.regexes.get(0).group();
 		int i = -1;
 		final Matcher m = Pattern.compile("^(.+)-(\\d+)$").matcher(s);
 		if (m.matches()) {
 			s = m.group(1);
-			i = Integer.parseInt(m.group(2));
+			i = Skript.parseInt(m.group(2));
 		}
 		Class<?> c = Skript.getClassByName(s);
 		if (c == null)
@@ -101,7 +101,7 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	
 	@Override
 	protected Object[] get(final Event e) {
-		one[0] = loop.getCurrent();
+		one[0] = loop.getCurrent(e);
 		return one;
 	}
 	
@@ -109,7 +109,7 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
 			return name;
-		return Skript.getDebugMessage(loop.getCurrent());
+		return Skript.getDebugMessage(loop.getCurrent(e));
 	}
 	
 	@Override

@@ -41,8 +41,6 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 		Skript.registerExpression(ExprEventCancelled.class, Boolean.class, ExpressionType.SIMPLE, "[is] event cancelled");
 	}
 	
-	private boolean delayed;
-	
 	@Override
 	protected Boolean[] get(final Event e) {
 		if (!(e instanceof Cancellable))
@@ -51,8 +49,7 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
-		delayed = isDelayed;
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		return true;
 	}
 	
@@ -68,10 +65,10 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
-		if (delayed) {
-			// TODO error
-			return null;
-		}
+//		if (delayed) {
+//			// TODO error
+//			return null;
+//		}
 		switch (mode) {
 			case CLEAR:
 			case SET:

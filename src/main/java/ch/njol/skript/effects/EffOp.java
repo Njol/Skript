@@ -44,7 +44,7 @@ public class EffOp extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		players = (Expression<OfflinePlayer>) exprs[0];
 		op = !parseResult.expr.substring(0, 2).equalsIgnoreCase("de");
 		return true;

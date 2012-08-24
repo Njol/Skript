@@ -50,7 +50,7 @@ public class CondIsBanned extends Condition {
 	boolean ipBanned;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		players = exprs[0];
 		setNegated(matchedPattern >= 2);
 		ipBanned = matchedPattern % 2 == 1;

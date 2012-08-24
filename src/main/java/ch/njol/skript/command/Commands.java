@@ -21,23 +21,45 @@
 
 package ch.njol.skript.command;
 
+import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.Validate;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.SimpleCommandMap;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.ServerCommandEvent;
+import org.bukkit.help.GenericCommandHelpTopic;
 import org.bukkit.help.HelpMap;
 import org.bukkit.help.HelpTopic;
+import org.bukkit.help.HelpTopicComparator;
+import org.bukkit.help.IndexHelpTopic;
+import org.bukkit.plugin.SimplePluginManager;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.validate.SectionValidator;
+import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.util.Utils;
@@ -49,6 +71,35 @@ import ch.njol.util.StringUtils;
  * 
  */
 public abstract class Commands {
+	
+	private final static Map<String, SkriptCommand> commands = new HashMap<String, SkriptCommand>();
+	
+	private static SimpleCommandMap commandMap = null;
+	private static Map<String, Command> cmKnownCommands;
+	private static Set<String> cmAliases;
+	static {
+		try {
+			if (Bukkit.getPluginManager() instanceof SimplePluginManager) {
+				final Field commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
+				commandMapField.setAccessible(true);
+				commandMap = (SimpleCommandMap) commandMapField.get(Bukkit.getPluginManager());
+				
+				final Field knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
+				knownCommandsField.setAccessible(true);
+				cmKnownCommands = (Map<String, Command>) knownCommandsField.get(commandMap);
+				
+				final Field aliasesField = SimpleCommandMap.class.getDeclaredField("aliases");
+				aliasesField.setAccessible(true);
+				cmAliases = (Set<String>) aliasesField.get(commandMap);
+			}
+		} catch (final SecurityException e) {
+			Skript.error("Please disable the security manager");
+			commandMap = null;
+		} catch (final Exception e) {
+			Skript.outdatedError(e);
+			commandMap = null;
+		}
+	}
 	
 	private final static SectionValidator commandStructure = new SectionValidator()
 			.addEntry("usage", true)
@@ -71,7 +122,73 @@ public abstract class Commands {
 		return s.replaceAll("\\\\([" + escape + "])", "$1");
 	}
 	
-	public final static boolean loadCommand(final SectionNode node) {
+	private final static Listener commandListener = new Listener() {
+		@SuppressWarnings("unused")
+		@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+		public void onPlayerCommand(final PlayerCommandPreprocessEvent e) {
+			if (handleCommand(e.getPlayer(), e.getMessage().substring(1)))
+				e.setCancelled(true);
+		}
+		
+		@SuppressWarnings("unused")
+		@EventHandler(priority = EventPriority.LOW)
+		public void onServerCommand(final ServerCommandEvent e) {
+			if (e.getCommand() == null || e.getCommand().isEmpty())
+				return;
+			if (handleCommand(e.getSender(), e.getCommand()))
+				e.setCommand("");
+		}
+	};
+	
+	/**
+	 * 
+	 * @param sender
+	 * @param command full command string without the slash
+	 * @return whether to cancel the event
+	 */
+	private final static boolean handleCommand(final CommandSender sender, final String command) {
+		final String[] cmd = command.split("\\s+", 2);
+		cmd[0] = cmd[0].toLowerCase();
+		if (cmd[0].endsWith("?")) {
+			final SkriptCommand c = commands.get(cmd[0].substring(0, cmd[0].length() - 1));
+			if (c != null) {
+				c.sendHelp(sender);
+				return true;
+			}
+		}
+		final SkriptCommand c = commands.get(cmd[0]);
+		if (c != null) {
+			if (cmd.length == 2 && cmd[1].equals("?")) {
+				c.sendHelp(sender);
+				return true;
+			}
+			c.execute(sender, cmd[0], cmd.length == 1 ? "" : cmd[1]);
+			return true;
+		} else if (Skript.enableEffectCommands) {
+			if (!sender.hasPermission("skript.effectcommands"))
+				return false;
+			if (commandMap != null && commandMap.getCommand(cmd[0]) != null)
+				return false;
+			
+			final SubLog log = SkriptLogger.startSubLog();
+			final Effect e = Effect.parse(command, null);
+			SkriptLogger.stopSubLog(log);
+			if (e != null) {
+				sender.sendMessage(ChatColor.GRAY + "executing '" + ChatColor.stripColor(command) + "'");
+				e.run(new CommandEvent(sender, "effectcommand", new String[0]));
+				return true;
+			} else if (log.hasErrors()) {
+				sender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + ChatColor.stripColor(command));
+				log.printErrors(sender, null);
+				sender.sendMessage("Press the up arrow key to edit the command");
+				return true;
+			}
+			return false;
+		}
+		return false;
+	}
+	
+	public final static SkriptCommand loadCommand(final SectionNode node) {
 		
 		final String s = node.getName();
 		
@@ -82,14 +199,14 @@ public abstract class Commands {
 			} else if (s.charAt(i) == ']') {
 				if (level == 0) {
 					Skript.error("Invalid placement of [optional brackets]");
-					return false;
+					return null;
 				}
 				level--;
 			}
 		}
 		if (level > 0) {
 			Skript.error("Invalid amount of [optional brackets]");
-			return false;
+			return null;
 		}
 		
 		Matcher m = Pattern.compile("(?i)^command /?(\\S+)(\\s+(.+))?$").matcher(s);
@@ -97,9 +214,9 @@ public abstract class Commands {
 		assert a;
 		
 		final String command = m.group(1);
-		if (Skript.commandExists(command)) {
+		if (commandExists(command)) {
 			Skript.error("A command with the name /" + command + " is already defined");
-			return false;
+			return null;
 		}
 		
 		final String arguments = m.group(3) == null ? "" : m.group(3);
@@ -123,16 +240,16 @@ public abstract class Commands {
 				c = Skript.getClassInfoFromUserInput(p.first);
 			if (c == null) {
 				Skript.error("unknown type '" + m.group(1) + "'");
-				return false;
+				return null;
 			}
 			if (c.getParser() == null || !c.getParser().canParse(ParseContext.COMMAND)) {
 				Skript.error("can't use " + m.group(1) + " as argument of a command");
-				return false;
+				return null;
 			}
 			
 			final Argument<?> arg = Argument.newInstance(c.getC(), m.group(3), i, !p.second, optionals > 0);
 			if (arg == null)
-				return false;
+				return null;
 			currentArguments.add(arg);
 			
 			if (arg.isOptional() && optionals == 0) {
@@ -151,7 +268,7 @@ public abstract class Commands {
 		node.convertToEntries(0);
 		commandStructure.validate(node);
 		if (!(node.get("trigger") instanceof SectionNode))
-			return false;
+			return null;
 		
 		final String desc = "/" + command + " " + unescape(pattern.toString().replaceAll("%-?(.+?)%", "<$1>"));
 		final String usage = node.get("usage", desc);
@@ -183,11 +300,82 @@ public abstract class Commands {
 		if (Skript.debug())
 			Skript.info("command " + desc + ":");
 		
-		Skript.registerCommand(new SkriptCommand(command, pattern.toString().replaceAll("[<>]", "\\\\$0"), currentArguments, description, usage, aliases, permission, permissionMessage, executableBy, ScriptLoader.loadItems(trigger)));
+		final SkriptCommand c = new SkriptCommand(node.getConfig().getFile(), command, pattern.toString().replaceAll("[<>]", "\\\\$0"), currentArguments, description, usage, aliases, permission, permissionMessage, executableBy, ScriptLoader.loadItems(trigger));
+		registerCommand(c);
+		
 		if (Skript.logVeryHigh() && !Skript.debug())
 			Skript.info("registered command " + desc);
 		currentArguments = null;
-		return true;
+		return c;
+	}
+	
+	public static boolean commandExists(final String command) {
+		final SkriptCommand c = commands.get(command);
+		return c != null && c.getName().equals(command);
+	}
+	
+	private static void registerCommand(final SkriptCommand command) {
+		commands.put(command.getName().toLowerCase(), command);
+		for (final String alias : command.getAliases()) {
+			commands.put(alias.toLowerCase(), command);
+		}
+		if (commandMap != null)
+			command.register(commandMap, cmKnownCommands, cmAliases);
+	}
+	
+	public static int unregisterCommands(final File script) {
+		int numCommands = 0;
+		final Iterator<SkriptCommand> commandsIter = Commands.commands.values().iterator();
+		while (commandsIter.hasNext()) {
+			final SkriptCommand c = commandsIter.next();
+			if (c.getScript().equals(script)) {
+				numCommands++;
+				if (commandMap != null)
+					c.unregister(commandMap, cmKnownCommands, cmAliases);
+				commandsIter.remove();
+			}
+		}
+		return numCommands;
+	}
+	
+	private static boolean registeredListener = false;
+	
+	public final static void finishRegisteringCommands() {
+		if (!registeredListener)
+			Bukkit.getPluginManager().registerEvents(commandListener, Skript.getInstance());
+		registeredListener = true;
+		try {
+			final HelpMap help = Bukkit.getServer().getHelpMap();
+			final Iterator<HelpTopic> iter = help.getHelpTopics().iterator();
+			while (iter.hasNext()) {
+				if (iter.next().getName().equals("Skript")) {
+					iter.remove();
+					break;
+				}
+			}
+			final Set<HelpTopic> topics = new TreeSet<HelpTopic>(HelpTopicComparator.helpTopicComparatorInstance());
+			for (final SkriptCommand command : commands.values()) {
+				final HelpTopic t = new GenericCommandHelpTopic(command.getBukkitCommand());
+				help.addTopic(t);
+				topics.add(t);
+				for (final String alias : command.getActiveAliases()) {
+					final HelpTopic at = new CommandAliasHelpTopic("/" + alias, "/" + command.getLabel(), help);
+					help.addTopic(at);
+					topics.add(at);
+				}
+			}
+			help.addTopic(new IndexHelpTopic("Skript", "All commands created with Skript", null, topics, "Below is a list of all commands created with Skript:"));
+		} catch (final Exception e) {
+			Skript.exception(e, "Could not register the custom commands in Bukkit's help map");
+		}
+	}
+	
+	public final static void clearCommands() {
+		if (commandMap != null) {
+			for (final SkriptCommand c : commands.values())
+				c.unregister(commandMap, cmKnownCommands, cmAliases);
+		}
+		commands.clear();
 	}
 	
 	/**

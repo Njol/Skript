@@ -22,6 +22,7 @@
 package ch.njol.skript.lang.util;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
 
@@ -60,11 +61,13 @@ public class ContanerExpression extends SimpleExpression<Object> {
 				while (iter.hasNext() && (current == null || !current.hasNext())) {
 					current = iter.next().containerIterator();
 				}
-				return current.hasNext();
+				return current != null && current.hasNext();
 			}
 			
 			@Override
 			public Object next() {
+				if (!hasNext())
+					throw new NoSuchElementException();
 				return current.next();
 			}
 			
@@ -86,7 +89,7 @@ public class ContanerExpression extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	

@@ -48,22 +48,20 @@ public class EffIgnite extends Effect {
 	private Expression<LivingEntity> entities;
 	private boolean fire;
 	private Expression<Timespan> duration = null;
-	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		entities = (Expression<LivingEntity>) exprs[0];
 		fire = exprs.length > 1;
 		if (fire)
 			duration = (Expression<Timespan>) exprs[1];
-		delayed = isDelayed;
 		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		if (!delayed && entities.isDefault() && e instanceof EntityCombustEvent) {
+		if (entities.isDefault() && e instanceof EntityCombustEvent && !Delay.isDelayed(e)) {
 			((EntityCombustEvent) e).setCancelled(true);// can't change the duration, thus simply cancel the event (and create a new one)
 		}
 		if (fire) {

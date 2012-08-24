@@ -19,7 +19,7 @@
  * 
  */
 
-package ch.njol.skript.util;
+package ch.njol.skript.lang.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +36,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Debuggable;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.util.StringMode;
 import ch.njol.util.StringUtils;
 
 /**
@@ -89,7 +90,7 @@ public class VariableString implements Debuggable {
 				int c2 = s.indexOf('%', c + 1);
 				int a = c, b;
 				while (c2 != -1 && (b = s.indexOf('{', a + 1)) != -1 && b < c2) {
-					final int b2 = s.indexOf('}', b + 1);
+					final int b2 = nextBracket(s, '}', '{', b + 1);
 					if (b2 == -1) {
 						Skript.error("Missing closing bracket '}' to end variable");
 						return null;
@@ -144,6 +145,29 @@ public class VariableString implements Debuggable {
 		if (c == -1)
 			return new VariableString(s, mode);
 		return new VariableString(string, mode);
+	}
+	
+	/**
+	 * Copied from {@link SkriptParser#nextBracket(String, char, char, int)}
+	 * 
+	 * @param s
+	 * @param closingBracket
+	 * @param openingBracket
+	 * @param start
+	 * @return
+	 */
+	private static int nextBracket(final String s, final char closingBracket, final char openingBracket, final int start) {
+		int n = 0;
+		for (int i = start; i < s.length(); i++) {
+			if (s.charAt(i) == closingBracket) {
+				if (n == 0)
+					return i;
+				n--;
+			} else if (s.charAt(i) == openingBracket) {
+				n++;
+			}
+		}
+		return -1;
 	}
 	
 	public static VariableString[] makeStrings(final String[] args) {

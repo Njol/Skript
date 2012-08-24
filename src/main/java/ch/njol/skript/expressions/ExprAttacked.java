@@ -55,7 +55,7 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (!Utils.containsAny(ScriptLoader.currentEvents, EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class, EntityDeathEvent.class)) {
 			Skript.error("Cannot use 'damaged'/'victim' outside of a damage or death event");
 			return false;

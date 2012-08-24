@@ -24,6 +24,7 @@ package ch.njol.skript.entity;
 import org.bukkit.Location;
 import org.bukkit.entity.ExperienceOrb;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
@@ -44,7 +45,7 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (matchedPattern == 1)
-			xp = Integer.parseInt(parseResult.regexes.get(0).group());
+			xp = Skript.parseInt(parseResult.regexes.get(0).group());
 		plural = parseResult.expr.endsWith("s");
 		return true;
 	}

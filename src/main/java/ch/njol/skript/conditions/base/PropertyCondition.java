@@ -55,7 +55,7 @@ public abstract class PropertyCondition<T> extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		expr = (Expression<? extends T>) exprs[0];
 		setNegated(matchedPattern == 1);
 		return true;

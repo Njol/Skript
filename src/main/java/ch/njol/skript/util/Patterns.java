@@ -56,7 +56,7 @@ public class Patterns<T> {
 	
 	/**
 	 * 
-	 * @param matchedPattern The pattern to get the data to as given in {@link SyntaxElement#init(Expression[], int, boolean, ParseResult)}
+	 * @param matchedPattern The pattern to get the data to as given in {@link SyntaxElement#init(Expression[], int, int, ParseResult)}
 	 * @return
 	 * @throws ClassCastException If the item in the source array is not of the requested type
 	 */

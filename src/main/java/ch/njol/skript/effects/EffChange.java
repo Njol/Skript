@@ -71,7 +71,7 @@ public class EffChange extends Effect {
 	private Changer<?, ?> c = null;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		
 		mode = patterns.getInfo(matchedPattern);
 		

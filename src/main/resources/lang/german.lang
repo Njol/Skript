@@ -9,7 +9,7 @@ or = oder
 command.no_permission_message = Du hast nicht die Erlaubnis dieses Kommando zu benützen
 
 # -- Enchantments --
-ench.format = %s %s
+ench.of =
 ench.names.protection_environmental = des Schutzes
 ench.names.protection_fire = des Feuerschutzes
 ench.names.protection_fall = des Federfalls

@@ -44,7 +44,7 @@ public class EffPvP extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		worlds = (Expression<World>) exprs[0];
 		enable = matchedPattern == 0;
 		return true;

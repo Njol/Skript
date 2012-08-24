@@ -27,8 +27,9 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Loop;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.TriggerSection;
+import ch.njol.skript.lang.TriggerItem;
 
 /**
  * @author Peter Güttinger
@@ -47,7 +48,7 @@ public class EffExit extends Effect {
 	private int breakLevels;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 				breakLevels = ScriptLoader.currentSections.size() + 1;
@@ -73,12 +74,21 @@ public class EffExit extends Effect {
 	}
 	
 	@Override
-	protected void execute(final Event e) {
-		TriggerSection item = getParent();
-		for (int i = 0; i < breakLevels && item != null; i++) {
-			item.stop();
-			item = item.getParent();
+	protected TriggerItem walk(final Event e) {
+		debug(e, false);
+		int i = breakLevels - 1;
+		TriggerItem n = parent;
+		while (i > 0) {
+			n = n.getParent();
+			assert n != null;
+			i--;
 		}
+		return n instanceof Loop ? ((Loop) n).getActualNext() : n.getNext();
+	}
+	
+	@Override
+	protected void execute(final Event e) {
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override

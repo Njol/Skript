@@ -47,7 +47,7 @@ public class EffExplosion extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		force = (Expression<Float>) vars[0];
 		offsets = (Expression<Offset>) vars[1];
 		locations = (Expression<Location>) vars[2];

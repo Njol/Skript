@@ -71,6 +71,14 @@ public class SectionNode extends Node implements Iterable<Node> {
 		return null;
 	}
 	
+	public boolean isEmpty() {
+		for (final Node node : nodes) {
+			if (!(node instanceof VoidNode))
+				return false;
+		}
+		return true;
+	}
+	
 	/**
 	 * void here = void (incl. invalid)
 	 * 
@@ -132,7 +140,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 					Skript.error("indentation error, expected " + config.level * config.getIndentation().length() + " " + config.getIndentationName() + (config.level * config.getIndentation().length() == 1 ? "" : "s") + ", found " + found);
 					continue;
 				} else {
-					if (nodes.isEmpty()) {
+					if (parent != null && !config.allowEmptySections && isEmpty()) {
 						Skript.warning("Empty configuration section! You might want to indent one or more of the subsequent lines to make them belong to this section" +
 								" or remove the colon at the end of the line if you don't want this line to start a section.");
 					}

@@ -60,7 +60,7 @@ public class ExprBlocks extends SimpleExpression<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		this.matchedPattern = matchedPattern;
 		switch (matchedPattern) {
 			case 0:

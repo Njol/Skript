@@ -332,7 +332,7 @@ public abstract class Utils {
 	public static boolean itemStacksEqual(final ItemStack is1, final ItemStack is2) {
 		if (is1 == null || is2 == null)
 			return is1 == is2;
-		return is1.getTypeId() == is2.getTypeId() && is1.getDurability() == is2.getDurability();
+		return is1.getTypeId() == is2.getTypeId() && is1.getDurability() == is2.getDurability() && is1.getEnchantments().equals(is2.getEnchantments());
 	}
 	
 	public static Player getTargetPlayer(final Player player) {
@@ -368,9 +368,9 @@ public abstract class Utils {
 	
 	public static final Pair<String, Integer> getAmount(final String s) {
 		if (s.matches("\\d+ of .+")) {
-			return new Pair<String, Integer>(s.split(" ", 3)[2], Integer.valueOf(s.split(" ", 2)[0]));
+			return new Pair<String, Integer>(s.split(" ", 3)[2], Skript.parseInt(s.split(" ", 2)[0]));
 		} else if (s.matches("\\d+ .+")) {
-			return new Pair<String, Integer>(s.split(" ", 2)[1], Integer.valueOf(s.split(" ", 2)[0]));
+			return new Pair<String, Integer>(s.split(" ", 2)[1], Skript.parseInt(s.split(" ", 2)[0]));
 		} else if (s.matches("an? .+")) {
 			return new Pair<String, Integer>(s.split(" ", 2)[1], 1);
 		}
@@ -409,31 +409,17 @@ public abstract class Utils {
 	
 	public static final AmountResponse getAmountWithEvery(final String s) {
 		if (s.matches("\\d+ of (all|every) .+")) {
-			return new AmountResponse(s.split(" ", 4)[3], Integer.parseInt(s.split(" ", 2)[0]), true);
+			return new AmountResponse(s.split(" ", 4)[3], Skript.parseInt(s.split(" ", 2)[0]), true);
 		} else if (s.matches("\\d+ of .+")) {
-			return new AmountResponse(s.split(" ", 3)[2], Integer.parseInt(s.split(" ", 2)[0]));
+			return new AmountResponse(s.split(" ", 3)[2], Skript.parseInt(s.split(" ", 2)[0]));
 		} else if (s.matches("\\d+ .+")) {
-			return new AmountResponse(s.split(" ", 2)[1], Integer.parseInt(s.split(" ", 2)[0]));
+			return new AmountResponse(s.split(" ", 2)[1], Skript.parseInt(s.split(" ", 2)[0]));
 		} else if (s.matches("an? .+")) {
 			return new AmountResponse(s.split(" ", 2)[1], 1);
 		} else if (s.matches("(all|every) .+")) {
 			return new AmountResponse(s.split(" ", 2)[1], true);
 		}
 		return new AmountResponse(s);
-	}
-	
-	/**
-	 * equal to {@link #getPlural(String)}, <del>but prints a warning if the found plural is not <code>expectPlural</code></del>.
-	 * 
-	 * @param s
-	 * @param expectPlural
-	 * @return
-	 */
-	public static Pair<String, Boolean> getPlural(final String s, final boolean expectPlural) {
-		final Pair<String, Boolean> p = getPlural(s);
-		if (p.second != expectPlural)
-			Skript.pluralWarning(s);
-		return p;
 	}
 	
 	private final static String[][] plurals = {
@@ -634,7 +620,7 @@ public abstract class Utils {
 	
 	public static final String prepareMessage(String message) {
 		Validate.notNull(message, "message");
-		message = StringUtils.replaceAll(message, "<([a-zA-Z ]+?|<none>)>", new Callback<String, Matcher>() {
+		message = StringUtils.replaceAll(message, "<([^<>]+|<none>)>", new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
 				final Color c = Color.byName(m.group(1));

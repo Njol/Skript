@@ -46,7 +46,7 @@ public class CondIsInWorld extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		entities = (Expression<Entity>) exprs[0];
 		worlds = (Expression<World>) exprs[1];
 		setNegated(matchedPattern == 1);

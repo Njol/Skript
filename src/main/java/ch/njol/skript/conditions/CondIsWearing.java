@@ -47,7 +47,7 @@ public class CondIsWearing extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		players = (Expression<Player>) vars[0];
 		types = (Expression<ItemType>) vars[1];
 		setNegated(matchedPattern == 1);

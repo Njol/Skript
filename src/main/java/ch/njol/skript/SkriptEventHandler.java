@@ -89,7 +89,7 @@ public abstract class SkriptEventHandler {
 			if (!t.getEvent().check(e))
 				continue;
 			logTriggerStart(t);
-			t.run(e);
+			t.start(e);
 			logTriggerEnd(t);
 		}
 		

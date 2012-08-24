@@ -25,6 +25,7 @@ import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
@@ -84,6 +85,7 @@ import ch.njol.skript.lang.util.SimpleEvent;
  * @author Peter Güttinger
  * 
  */
+@SuppressWarnings("unchecked")
 public class SimpleEvents {
 	
 	static {
@@ -92,7 +94,7 @@ public class SimpleEvents {
 		Skript.registerEvent(SimpleEvent.class, BlockDamageEvent.class, "block damage");
 		Skript.registerEvent(SimpleEvent.class, BlockFromToEvent.class, "flow[ing]");
 		Skript.registerEvent(SimpleEvent.class, BlockIgniteEvent.class, "ignit(e|ion)");
-//		Skript.registerEvent(SimpleEvent.class, BlockPhysicsEvent.class, "physics");
+		Skript.registerEvent(SimpleEvent.class, BlockPhysicsEvent.class, "[block] physics");
 		Skript.registerEvent(SimpleEvent.class, BlockPistonExtendEvent.class, "piston extend");
 		Skript.registerEvent(SimpleEvent.class, BlockPistonRetractEvent.class, "piston retract");
 		Skript.registerEvent(SimpleEvent.class, BlockRedstoneEvent.class, "redstone");
@@ -104,14 +106,14 @@ public class SimpleEvents {
 		Skript.registerEvent(SimpleEvent.class, EntityBreakDoorEvent.class, "zombie break[ing] [a] [wood[en]] door");
 		Skript.registerEvent(SimpleEvent.class, EntityCombustEvent.class, "combust[ing]");
 		Skript.registerEvent(SimpleEvent.class, EntityExplodeEvent.class, "explo(d(e|ing)|sion)");
-//		Skript.registerEvent(SimpleEvent.class, EntityInteractEvent.class, "interact");// = entity interacts with block, e.g. endermen?; player -> PlayerInteractEvent
+//		Skript.registerEvent(SimpleEvent.class, EntityInteractEvent.class, "interact");// = entity interacts with block, e.g. endermen?; player -> PlayerInteractEvent // likely tripwires, pressure plates, etc.
 		Skript.registerEvent(SimpleEvent.class, EntityPortalEnterEvent.class, "portal enter", "entering [a] portal");
 		Skript.registerEvent(SimpleEvent.class, EntityRegainHealthEvent.class, "heal[ing]");
 		Skript.registerEvent(SimpleEvent.class, EntityTameEvent.class, "tame");
 		Skript.registerEvent(SimpleEvent.class, EntityTargetEvent.class, "[entity] target");
 		Skript.registerEvent(SimpleEvent.class, ExplosionPrimeEvent.class, "explosion prime");
 		Skript.registerEvent(SimpleEvent.class, FoodLevelChangeEvent.class, "food (level|meter|bar) change");
-		Skript.registerEvent(SimpleEvent.class, FurnaceBurnEvent.class, "fuel burn", "burn[ing] of fuel");
+		Skript.registerEvent(SimpleEvent.class, FurnaceBurnEvent.class, "fuel burn");
 		Skript.registerEvent(SimpleEvent.class, FurnaceSmeltEvent.class, "[ore] smelt[ing]", "smelt[ing] of ore");//"smelt[ing] of %itemtype%"
 		Skript.registerEvent(SimpleEvent.class, LeavesDecayEvent.class, "leaves decay");
 		Skript.registerEvent(SimpleEvent.class, LightningStrikeEvent.class, "lightning strike");
@@ -127,20 +129,20 @@ public class SimpleEvents {
 		Skript.registerEvent(SimpleEvent.class, PlayerKickEvent.class, "(kick|being kicked)");
 		Skript.registerEvent(SimpleEvent.class, PlayerPickupItemEvent.class, "(pickup|picking up)");
 		Skript.registerEvent(SimpleEvent.class, PlayerPortalEvent.class, "portal");
-		Skript.registerEvent(SimpleEvent.class, PlayerQuitEvent.class, "(quit[ting]|disconnect[ing]|logout|logging out)");
+		Skript.registerEvent(SimpleEvent.class, PlayerQuitEvent.class, "(quit[ting]|disconnect[ing]|log[ ]out|logging out)");
 		Skript.registerEvent(SimpleEvent.class, PlayerRespawnEvent.class, "respawn[ing]");
-		Skript.registerEvent(SimpleEvent.class, PlayerTeleportEvent.class, "teleport[ing]");
+		Skript.registerEvent(SimpleEvent.class, Skript.array(PlayerPortalEvent.class, PlayerTeleportEvent.class), "teleport[ing]");
 		Skript.registerEvent(SimpleEvent.class, PlayerToggleSneakEvent.class, "toggl(e|ing) sneak", "sneak toggle");
 		Skript.registerEvent(SimpleEvent.class, PlayerToggleSprintEvent.class, "sprint toggle", "toggl(e|ing) sprint");
 		Skript.registerEvent(SimpleEvent.class, PortalCreateEvent.class, "portal create");
 		Skript.registerEvent(SimpleEvent.class, ProjectileHitEvent.class, "projectile hit");
 		Skript.registerEvent(SimpleEvent.class, SignChangeEvent.class, "sign change");
 		Skript.registerEvent(SimpleEvent.class, SpawnChangeEvent.class, "spawn change");
-		Skript.registerEvent(SimpleEvent.class, VehicleCreateEvent.class, "vehicle create");
-		Skript.registerEvent(SimpleEvent.class, VehicleDamageEvent.class, "vehicle damage");
-		Skript.registerEvent(SimpleEvent.class, VehicleDestroyEvent.class, "vehicle destroy");
-		Skript.registerEvent(SimpleEvent.class, VehicleEnterEvent.class, "vehicle enter");
-		Skript.registerEvent(SimpleEvent.class, VehicleExitEvent.class, "vehicle exit");
+		Skript.registerEvent(SimpleEvent.class, VehicleCreateEvent.class, "vehicle create", "creat(e|ing) [a] vehicle");
+		Skript.registerEvent(SimpleEvent.class, VehicleDamageEvent.class, "vehicle damage", "damag(e|ing) [a] vehicle");
+		Skript.registerEvent(SimpleEvent.class, VehicleDestroyEvent.class, "vehicle destroy", "destr(oy[ing]|uction of) [a] vehicle");
+		Skript.registerEvent(SimpleEvent.class, VehicleEnterEvent.class, "vehicle enter", "enter[ing] [a] vehicle");
+		Skript.registerEvent(SimpleEvent.class, VehicleExitEvent.class, "vehicle exit", "exit[ing] [a] vehicle");
 		Skript.registerEvent(SimpleEvent.class, WorldInitEvent.class, "world init");
 		Skript.registerEvent(SimpleEvent.class, WorldLoadEvent.class, "world load[ing]");
 		Skript.registerEvent(SimpleEvent.class, WorldSaveEvent.class, "world sav(e|ing)");

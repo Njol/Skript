@@ -44,7 +44,7 @@ public class EffKill extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		entities = (Expression<Entity>) vars[0];
 		return true;
 	}
@@ -53,7 +53,7 @@ public class EffKill extends Effect {
 	protected void execute(final Event e) {
 		for (final Entity entity : entities.getArray(e)) {
 			if (entity instanceof LivingEntity)
-				((LivingEntity) entity).setHealth(0);
+				((LivingEntity) entity).damage(((LivingEntity) entity).getMaxHealth() * 100); // just to make sure that it really dies >:)
 		}
 	}
 	

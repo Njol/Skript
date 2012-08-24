@@ -60,7 +60,7 @@ public class EvtChat extends SkriptEvent {
 			SkriptEventHandler.logEventStart(e);
 			for (final Trigger t : triggers) {
 				SkriptEventHandler.logTriggerStart(t);
-				t.run(e);
+				t.start(e);
 				SkriptEventHandler.logTriggerEnd(t);
 			}
 			SkriptEventHandler.logEventEnd();
@@ -118,7 +118,12 @@ public class EvtChat extends SkriptEvent {
 	}
 	
 	@Override
-	public void unregister() {
+	public void unregister(final Trigger t) {
+		triggers.remove(t);
+	}
+	
+	@Override
+	public void unregisterAll() {
 		triggers.clear();
 	}
 	

@@ -24,6 +24,7 @@ package ch.njol.skript.events;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
@@ -116,7 +117,7 @@ public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
 		final ScheduledEvent e = new ScheduledEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerEnd(t);
-		t.run(e);
+		t.start(e);
 		SkriptEventHandler.logTriggerEnd(t);
 		SkriptEventHandler.logEventEnd();
 	}
@@ -137,7 +138,20 @@ public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
 	}
 	
 	@Override
-	public void unregister() {
+	public void unregister(final Trigger t) {
+		final Iterator<EvtAtInfo> iter = triggers.values().iterator();
+		while (iter.hasNext()) {
+			final EvtAtInfo i = iter.next();
+			i.list.remove(this);
+			if (i.list.isEmpty())
+				iter.remove();
+		}
+		if (triggers.isEmpty())
+			unregisterAll();
+	}
+	
+	@Override
+	public void unregisterAll() {
 		if (taskID != -1)
 			Bukkit.getScheduler().cancelTask(taskID);
 		taskID = -1;

@@ -31,6 +31,7 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -49,40 +50,39 @@ public class ExprTool extends PropertyExpression<Player, Slot> {
 	}
 	
 	private Expression<Player> players;
-	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
 		setExpr(players);
-		delayed = isDelayed;
 		return true;
 	}
 	
 	@Override
 	protected Slot[] get(final Event e, final Player[] source) {
-		if (!delayed && e instanceof PlayerItemHeldEvent && players.isDefault()) {
-			return new Slot[] {new Slot(((PlayerItemHeldEvent) e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot())};
-		}
-		if (!delayed && e instanceof PlayerBucketEvent && players.isDefault()) {
-			return new Slot[] {
-					new Slot(((PlayerBucketEvent) e).getPlayer().getInventory(), ((PlayerBucketEvent) e).getPlayer().getInventory().getHeldItemSlot()) {
-						@Override
-						public ItemStack getItem() {
-							return getTime() <= 0 ? super.getItem() : ((PlayerBucketEvent) e).getItemStack();
-						}
-						
-						@Override
-						public void setItem(final ItemStack item) {
-							if (getTime() >= 0) {
-								((PlayerBucketEvent) e).setItemStack(item);
-							} else {
-								super.setItem(item);
+		if (players.isDefault() && !Delay.isDelayed(e)) {
+			if (e instanceof PlayerItemHeldEvent) {
+				return new Slot[] {new Slot(((PlayerItemHeldEvent) e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot())};
+			} else if (e instanceof PlayerBucketEvent) {
+				return new Slot[] {
+						new Slot(((PlayerBucketEvent) e).getPlayer().getInventory(), ((PlayerBucketEvent) e).getPlayer().getInventory().getHeldItemSlot()) {
+							@Override
+							public ItemStack getItem() {
+								return getTime() <= 0 ? super.getItem() : ((PlayerBucketEvent) e).getItemStack();
+							}
+							
+							@Override
+							public void setItem(final ItemStack item) {
+								if (getTime() >= 0) {
+									((PlayerBucketEvent) e).setItemStack(item);
+								} else {
+									super.setItem(item);
+								}
 							}
 						}
-					}
-			};
+				};
+			}
 		}
 		return get(source, new Getter<Slot, Player>() {
 			@Override

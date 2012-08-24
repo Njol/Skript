@@ -44,6 +44,7 @@ public class DefaultClasses {
 		Skript.registerClass(new ClassInfo<Object>(Object.class, "object", "object"));
 		
 		Skript.registerClass(new ClassInfo<Number>(Number.class, "number", "number")
+				.user("num(ber)?s?")
 				.parser(new Parser<Number>() {
 					@Override
 					public Number parse(final String s, final ParseContext context) {
@@ -69,7 +70,7 @@ public class DefaultClasses {
 				}));
 		
 		Skript.registerClass(new ClassInfo<Integer>(Integer.class, "integer", "integer")
-				.user("integers?")
+				.user("int(eger)?s?")
 				.defaultExpression(new SimpleLiteral<Integer>(1, true))
 				.parser(new Parser<Integer>() {
 					@Override
@@ -108,7 +109,6 @@ public class DefaultClasses {
 				}).math(Double.class, new NumberArithmetic<Integer>()));
 		
 		Skript.registerClass(new ClassInfo<Double>(Double.class, "double", "number")
-				.user("numbers?")
 				.defaultExpression(new SimpleLiteral<Double>(1., true))
 				.parser(new Parser<Double>() {
 					@Override
@@ -184,12 +184,13 @@ public class DefaultClasses {
 				}).math(Double.class, new NumberArithmetic<Float>()));
 		
 		Skript.registerClass(new ClassInfo<Boolean>(Boolean.class, "boolean", "boolean")
+				.user("booleans?")
 				.parser(new Parser<Boolean>() {
 					@Override
 					public Boolean parse(final String s, final ParseContext context) {
-						if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("yes"))
+						if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("yes") || s.equalsIgnoreCase("on"))
 							return Boolean.TRUE;
-						if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("no"))
+						if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("no") || s.equalsIgnoreCase("off"))
 							return Boolean.FALSE;
 						return null;
 					}

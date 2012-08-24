@@ -52,7 +52,7 @@ public class ExprEntity extends SimpleExpression<Entity> {
 	private EventValueExpression<Entity> entity;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		final SubLog log = SkriptLogger.startSubLog();
 		final ItemType item = Aliases.parseItemType(parseResult.regexes.get(0).group());
 		if (item != null && !StringUtils.startsWithIgnoreCase(parseResult.expr, "the ")) {

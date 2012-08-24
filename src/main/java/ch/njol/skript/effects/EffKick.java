@@ -44,7 +44,7 @@ public class EffKick extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		players = (Expression<Player>) exprs[0];
 		reason = (Expression<String>) exprs[1];
 		return true;

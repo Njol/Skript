@@ -50,7 +50,7 @@ public class ExprBlock extends SimpleExpression<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (exprs.length > 0) {
 			offset = (Expression<Offset>) exprs[0];
 			block = (Expression<Block>) exprs[1];
@@ -116,9 +116,6 @@ public class ExprBlock extends SimpleExpression<Block> {
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		if (getTime() >= 0 && offset == null) {
-			
-		}
 		DefaultChangers.blockChanger.change(getArray(e), delta, mode);
 	}
 	

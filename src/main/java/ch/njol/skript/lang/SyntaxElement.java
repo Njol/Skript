@@ -43,6 +43,6 @@ public interface SyntaxElement {
 	 *         If this returns false, an error should be logged stating what went wrong,
 	 *         but if no error is logged the effect is the same as if no pattern matched for this expression.
 	 */
-	public boolean init(Expression<?>[] exprs, int matchedPattern, boolean isDelayed, ParseResult parseResult);
+	public boolean init(Expression<?>[] exprs, int matchedPattern, int isDelayed, ParseResult parseResult);
 	
 }

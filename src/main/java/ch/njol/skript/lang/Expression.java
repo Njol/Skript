@@ -122,7 +122,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * @param e
 	 * @param delta the amount to vary this expression by or null for {@link ChangeMode#CLEAR}
 	 * @param mode
-	 * 
 	 * @throws UnsupportedOperationException (optional) if this method was called on an unsupported ChangeMode.
 	 */
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException;
@@ -176,7 +175,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	/**
 	 * 
 	 * @param e the event
-	 * @return An iterator to iterate over all values of this expression which may be empty and/or null.
+	 * @return An iterator to iterate over all values of this expression which may be empty and/or null, but must not contain null elements.
 	 */
 	public Iterator<T> iterator(Event e);
 	

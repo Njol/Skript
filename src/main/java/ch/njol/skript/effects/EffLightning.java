@@ -47,7 +47,7 @@ public class EffLightning extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		offsets = (Expression<Offset>) exprs[0];
 		locations = (Expression<Location>) exprs[1];
 		effectOnly = matchedPattern == 1;

@@ -4,7 +4,7 @@
   <groupId>ch.njol</groupId>
   <artifactId>Skript</artifactId>
   <name>Skript</name>
-  <version>1.4.4</version>
+  <version>1.4.6</version>
   <url>http://njol.ch/projects/skript</url>
   <build>
     <resources>

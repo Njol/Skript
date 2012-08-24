@@ -31,8 +31,8 @@ import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.VariableString;
 import ch.njol.skript.util.StringMode;
-import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
@@ -74,7 +74,7 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	

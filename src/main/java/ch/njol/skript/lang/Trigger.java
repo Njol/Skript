@@ -21,12 +21,10 @@
 
 package ch.njol.skript.lang;
 
+import java.io.File;
 import java.util.List;
 
 import org.bukkit.event.Event;
-
-import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptAPIException;
 
 /**
  * 
@@ -37,26 +35,27 @@ public class Trigger extends TriggerSection {
 	private final String name;
 	private final SkriptEvent event;
 	
-	public Trigger(final String name, final SkriptEvent event, final List<TriggerItem> items) {
-		super(items, false);
+	private final File script;
+	
+	public Trigger(final File script, final String name, final SkriptEvent event, final List<TriggerItem> items) {
+		super(items);
+		this.script = script;
 		this.name = name;
 		this.event = event;
 	}
 	
+	public void start(final Event e) {
+		TriggerItem.walk(this, e);
+	}
+	
 	@Override
-	public boolean run(final Event e) {
-		try {
-			super.run(e, true);// checked in SkriptEventHandler
-		} catch (final Exception ex) {
-			if (ex.getStackTrace().length != 0)// empty exceptions have already been printed
-				Skript.exception(ex);
-		}
-		return true;
+	protected TriggerItem walk(final Event e) {
+		return walk(e, true);
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		throw new SkriptAPIException("a trigger's debug message should not be used");
+		return name + " (" + event.toString(e, debug) + ")";
 	}
 	
 	public String getName() {
@@ -65,6 +64,10 @@ public class Trigger extends TriggerSection {
 	
 	public SkriptEvent getEvent() {
 		return event;
+	}
+	
+	public File getScript() {
+		return script;
 	}
 	
 }

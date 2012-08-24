@@ -46,11 +46,11 @@ public class ExprXOfItem extends SimpleExpression<ItemStack> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		items = (Expression<ItemStack>) exprs[0];
 		if (items instanceof Literal)// "x of y" is also an ItemType syntax
 			return false;
-		amount = Integer.parseInt(parseResult.regexes.get(0).group());
+		amount = Skript.parseInt(parseResult.regexes.get(0).group());
 		return true;
 	}
 	

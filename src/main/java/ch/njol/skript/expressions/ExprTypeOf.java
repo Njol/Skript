@@ -42,7 +42,7 @@ public class ExprTypeOf extends PropertyExpression<Object, Object> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		setExpr(exprs[0]);
 		return true;
 	}

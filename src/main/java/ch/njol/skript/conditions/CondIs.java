@@ -88,7 +88,7 @@ public class CondIs extends Condition {
 	private boolean reverseOrder = false;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		first = vars[0];
 		second = vars[1];
 		if (vars.length == 3)

@@ -21,20 +21,21 @@
 
 package ch.njol.skript;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Properties;
 
 /**
  * @author Peter Güttinger
- *
+ * 
  */
 public class Language {
 	
 	private static String name = "english";
-
+	
 	private static Properties defaults = new Properties();
 	private static Properties strings = new Properties(defaults);
 	
@@ -42,31 +43,77 @@ public class Language {
 		return name;
 	}
 	
-	public static String getString(String key) {
-		return strings.getProperty(key);
+	public static String get(final String key) {
+		return strings.getProperty(key.toLowerCase());
+	}
+	
+	public static String getDefault(final String key) {
+		return defaults.getProperty(key.toLowerCase());
+	}
+	
+	public static String format(final String key, final Object... args) {
+		return String.format(get(key), args);
+	}
+	
+	/**
+	 * Gets a localized string surrounded by spaces, or a space if the string is empty
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public static String getSpaced(final String key) {
+		final String s = strings.getProperty(key.toLowerCase());
+		if (s.isEmpty())
+			return " ";
+		return " " + s + " ";
 	}
 	
 	static void loadDefault() {
-		InputStream din = Skript.getInstance().getResource("lang/english.lang");
+		final InputStream din = Skript.getInstance().getResource("lang/english.lang");
 		if (din == null)
 			throw new IllegalStateException("Skript.jar is missing the required english.lang file!");
 		try {
 			defaults.load(new InputStreamReader(din, "UTF-8"));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw Skript.exception(e, "Could not load the default language file!");
 		}
+		for (final LanguageChangeListener l : listeners)
+			l.onLanguageChange();
 	}
 	
-	static boolean load(String name) {
-		InputStream in = Skript.getInstance().getResource("lang/"+name+".lang");
+	static boolean load(final String name) {
+		final InputStream in = Skript.getInstance().getResource("lang/" + name + ".lang");
 		if (in == null)
 			return false;
-		Language.name = name;
 		try {
 			strings.load(new InputStreamReader(in, "UTF-8"));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw Skript.exception(e, "Could not load the language file!");
 		}
+		Language.name = name;
+		for (final LanguageChangeListener l : listeners)
+			l.onLanguageChange();
 		return true;
 	}
+	
+	static void clear() {
+		strings.clear();
+	}
+	
+	private final static Collection<LanguageChangeListener> listeners = new HashSet<LanguageChangeListener>();
+	
+	public static interface LanguageChangeListener {
+		public void onLanguageChange();
+	}
+	
+	public static void addListener(final LanguageChangeListener l) {
+		listeners.add(l);
+		if (!defaults.isEmpty())
+			l.onLanguageChange();
+	}
+	
+	public static void removeListener(final LanguageChangeListener l) {
+		listeners.remove(l);
+	}
+	
 }

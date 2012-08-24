@@ -23,7 +23,9 @@ package ch.njol.skript.events;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -105,7 +107,7 @@ public class EvtMoveOn extends SkriptEvent {
 				if (ts != null) {
 					for (final Trigger t : ts) {
 						SkriptEventHandler.logTriggerStart(t);
-						t.run(e);
+						t.start(e);
 						SkriptEventHandler.logTriggerEnd(t);
 					}
 				}
@@ -120,7 +122,7 @@ public class EvtMoveOn extends SkriptEvent {
 						for (final ItemType i : se.types) {
 							if (i.isOfType(id, data)) {
 								SkriptEventHandler.logTriggerStart(t);
-								t.run(e);
+								t.start(e);
 								SkriptEventHandler.logTriggerEnd(t);
 								continue triggersLoop;
 							}
@@ -206,9 +208,26 @@ public class EvtMoveOn extends SkriptEvent {
 	}
 	
 	@Override
-	public void unregister() {
+	public void unregister(final Trigger t) {
+		final Iterator<Entry<BlockLocation, List<Trigger>>> i = blockTriggers.entrySet().iterator();
+		while (i.hasNext()) {
+			final List<Trigger> ts = i.next().getValue();
+			ts.remove(t);
+			if (ts.isEmpty())
+				i.remove();
+		}
+		final Iterator<Entry<Integer, List<Trigger>>> i2 = itemTypeTriggers.entrySet().iterator();
+		while (i2.hasNext()) {
+			final List<Trigger> ts = i2.next().getValue();
+			ts.remove(t);
+			if (ts.isEmpty())
+				i2.remove();
+		}
+	}
+	
+	@Override
+	public void unregisterAll() {
 		blockTriggers.clear();
 		itemTypeTriggers.clear();
 	}
-	
 }

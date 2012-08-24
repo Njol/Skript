@@ -45,7 +45,7 @@ public class EffToggle extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		blocks = (Expression<Block>) vars[0];
 		toggle = matchedPattern - 1;
 		return true;

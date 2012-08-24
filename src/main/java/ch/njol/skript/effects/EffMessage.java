@@ -46,7 +46,7 @@ public class EffMessage extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (matchedPattern == 0) {
 			messages = (Expression<String>) vars[0];
 			recipients = (Expression<CommandSender>) vars[1];

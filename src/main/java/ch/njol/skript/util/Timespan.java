@@ -61,7 +61,7 @@ public class Timespan {
 							final String[] ss = s.split(":");
 							final int[] times = {20 * 60, 20};
 							for (int i = 0; i < ss.length; i++) {
-								t += times[i] * Integer.parseInt(ss[i]);
+								t += times[i] * Skript.parseInt(ss[i]);
 							}
 						} else {
 							final String[] subs = s.toLowerCase().split("\\s+");
@@ -104,7 +104,7 @@ public class Timespan {
 								if (sub.endsWith(","))
 									sub = sub.substring(0, sub.length() - 1);
 								
-								final Pair<String, Boolean> p = Utils.getPlural(sub, amount != 1);
+								final Pair<String, Boolean> p = Utils.getPlural(sub);
 								sub = p.first;
 								
 								if (!simpleValues.containsKey(sub))

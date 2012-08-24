@@ -45,7 +45,7 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends World>) exprs[0]);
 		return true;
 	}

@@ -83,7 +83,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	@Override
-	public final boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult matcher) {
+	public final boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult matcher) {
 		throw new UnsupportedOperationException();
 	}
 	

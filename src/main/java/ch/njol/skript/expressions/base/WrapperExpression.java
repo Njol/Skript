@@ -35,7 +35,7 @@ import ch.njol.util.iterator.NonNullIterator;
 
 /**
  * Represents an expression which is a wrapper of another one. Remember to set the wrapped expression in the constructor ({@link #WrapperExpression(SimpleExpression)})
- * or with {@link #setExpr(Expression)} in {@link #init(Expression[], int, boolean, ParseResult)}.<br/>
+ * or with {@link #setExpr(Expression)} in {@link #init(Expression[], int, int, ParseResult)}.<br/>
  * If you override {@link #get(Event)} you must override {@link #iterator(Event)} as well.
  * 
  * @author Peter Güttinger

@@ -31,7 +31,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * Represents an expression which represents a property of another one. Remember to set the expression with {@link #setExpr(Expression)} in
- * {@link #init(Expression[], int, boolean, ParseResult)}.
+ * {@link #init(Expression[], int, int, ParseResult)}.
  * 
  * @author Peter Güttinger
  * 

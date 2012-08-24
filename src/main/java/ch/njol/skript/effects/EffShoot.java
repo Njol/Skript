@@ -21,6 +21,7 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Projectile;
@@ -52,10 +53,10 @@ public class EffShoot extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		types = (Expression<EntityData<?>>) exprs[matchedPattern];
 		shooters = (Expression<LivingEntity>) exprs[1 - matchedPattern];
-		velocity = (Expression<Double>) exprs[2 - matchedPattern];
+		velocity = (Expression<Double>) exprs[2];
 		return true;
 	}
 	
@@ -72,8 +73,11 @@ public class EffShoot extends Effect {
 					if (velocity != null)
 						projectile.setVelocity(projectile.getVelocity().normalize().multiply(v));
 				} else {
-					final Entity projectile = d.spawn(shooter.getEyeLocation());
-					projectile.setVelocity(shooter.getLocation().getDirection().multiply(v));
+					Location loc = shooter.getLocation();
+					loc.setY(loc.getY() + shooter.getEyeHeight()/2);
+					final Entity projectile = d.spawn(loc);
+					if (projectile != null)
+						projectile.setVelocity(shooter.getLocation().getDirection().multiply(v));
 				}
 			}
 		}

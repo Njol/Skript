@@ -30,7 +30,6 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptAPIException;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**
@@ -46,8 +45,6 @@ public class ItemData implements Cloneable {
 	int typeid = -1;
 	public short dataMin = -1;
 	public short dataMax = -1;
-	
-	private ItemType parent = null;
 	
 	public ItemData(final int typeid) {
 		this.typeid = typeid;
@@ -89,24 +86,8 @@ public class ItemData implements Cloneable {
 		dataMin = other.dataMin;
 	}
 	
-	public void modified() {
-		if (parent != null)
-			parent.modified();
-	}
-	
-	public void setParent(final ItemType parent) {
-		if (this.parent != null)
-			throw new SkriptAPIException("Can't set the parent of an ItemData if is is already set");
-		this.parent = parent;
-	}
-	
 	public int getId() {
 		return typeid;
-	}
-	
-	public void setId(final int typeid) {
-		this.typeid = typeid;
-		modified();
 	}
 	
 	/**
@@ -171,17 +152,16 @@ public class ItemData implements Cloneable {
 	}
 	
 	public ItemStack getRandom() {
-		final int amount = parent == null ? 1 : parent.getAmount();
 		if (dataMin == -1 && dataMax == -1) {
-			return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid, amount);
+			return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid, 1);
+		} else {
+			return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid,
+					1,
+					(short) (Skript.random.nextInt(dataMax - dataMin + 1) + dataMin));
 		}
-		return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid,
-				amount,
-				(short) (Skript.random.nextInt(dataMax - dataMin + 1) + dataMin));
 	}
 	
 	public Iterator<ItemStack> getAll() {
-		final int amount = parent == null ? 1 : parent.getAmount();
 		if (typeid == -1) {
 			return new Iterator<ItemStack>() {
 				
@@ -194,7 +174,7 @@ public class ItemData implements Cloneable {
 				
 				@Override
 				public ItemStack next() {
-					return new ItemStack(iter.next(), amount);
+					return new ItemStack(iter.next(), 1);
 				}
 				
 				@Override
@@ -208,19 +188,18 @@ public class ItemData implements Cloneable {
 			return new SingleItemIterator<ItemStack>(new ItemStack(typeid, 1, dataMin == -1 ? 0 : dataMin));
 		return new Iterator<ItemStack>() {
 			
-			private short data = (short) (dataMin - 1);
+			private short data = dataMin;
 			
 			@Override
 			public boolean hasNext() {
-				return data < dataMax;
+				return data <= dataMax;
 			}
 			
 			@Override
 			public ItemStack next() {
-				if (data >= dataMax)
+				if (!hasNext())
 					throw new NoSuchElementException();
-				data++;
-				return new ItemStack(typeid, amount, data);
+				return new ItemStack(typeid, 1, data++);
 			}
 			
 			@Override

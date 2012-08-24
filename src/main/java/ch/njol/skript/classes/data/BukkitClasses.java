@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -47,8 +48,6 @@ import org.bukkit.inventory.ItemStack;
 import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.ConvertedChanger;
-import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.EnumParser;
 import ch.njol.skript.classes.EnumSerializer;
 import ch.njol.skript.classes.Parser;
@@ -150,30 +149,18 @@ public class BukkitClasses {
 					public String toString(final Entity e) {
 						return EntityData.toString(e);
 					}
-				}).changer(new ConvertedChanger<Entity, ItemType[]>(new Converter<Entity, Inventory>() {
-					@Override
-					public Inventory convert(final Entity e) {
-						if (e instanceof Player)
-							return ((Player) e).getInventory();
-						return null;
-					}
-				}, Inventory.class, DefaultChangers.inventoryChanger))
+				})
+				.changer(DefaultChangers.entityChanger)
 				.validator((Validator<Entity>) entityValidator));
 		
 		Skript.registerClass(new ClassInfo<LivingEntity>(LivingEntity.class, "livingentity", "living entity")
 				.defaultExpression(new EventValueExpression<LivingEntity>(LivingEntity.class))
-				.changer(new ConvertedChanger<LivingEntity, ItemType[]>(new Converter<LivingEntity, Inventory>() {
-					@Override
-					public Inventory convert(final LivingEntity e) {
-						if (e instanceof Player)
-							return ((Player) e).getInventory();
-						return null;
-					}
-				}, Inventory.class, DefaultChangers.inventoryChanger))
+				.changer(DefaultChangers.entityChanger)
 				.validator((Validator<LivingEntity>) entityValidator));
 		
 		Skript.registerClass(new ClassInfo<Projectile>(Projectile.class, "projectile", "projectile")
 				.defaultExpression(new EventValueExpression<Projectile>(Projectile.class))
+				.changer(DefaultChangers.nonLivingEntityChanger)
 				.validator((Validator<Projectile>) entityValidator));
 		
 		Skript.registerClass(new ClassInfo<Block>(Block.class, "block", "block")
@@ -376,7 +363,7 @@ public class BukkitClasses {
 					
 					@Override
 					public String toString(final Player p) {
-						return p.getDisplayName();
+						return p.getDisplayName() + ChatColor.RESET;
 					}
 					
 					@Override
@@ -393,12 +380,8 @@ public class BukkitClasses {
 					public String getDebugMessage(final Player p) {
 						return p.getName() + " " + Skript.getDebugMessage(p.getLocation());
 					}
-				}).changer(new ConvertedChanger<Player, ItemType[]>(new Converter<Player, Inventory>() {
-					@Override
-					public Inventory convert(final Player p) {
-						return p.getInventory();
-					}
-				}, Inventory.class, DefaultChangers.inventoryChanger))
+				})
+				.changer(DefaultChangers.playerChanger)
 				.serializeAs(OfflinePlayer.class)
 				.validator((Validator<Player>) entityValidator));
 		
@@ -426,7 +409,7 @@ public class BukkitClasses {
 					@Override
 					public String toString(final OfflinePlayer p) {
 						if (p.isOnline())
-							return p.getPlayer().getDisplayName();
+							return p.getPlayer().getDisplayName() + ChatColor.RESET;
 						return p.getName();
 					}
 					

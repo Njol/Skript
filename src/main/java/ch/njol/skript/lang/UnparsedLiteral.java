@@ -279,7 +279,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		throw invalidAccessException();
 	}
 	

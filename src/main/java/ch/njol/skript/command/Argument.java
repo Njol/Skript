@@ -21,6 +21,11 @@
 
 package ch.njol.skript.command;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
+import org.bukkit.event.Event;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.SkriptLogger.SubLog;
@@ -44,7 +49,7 @@ public class Argument<T> {
 	
 	private final boolean optional;
 	
-	private T[] current;
+	private final Map<Event, T[]> current = new WeakHashMap<Event, T[]>();
 	
 	public Argument(final Expression<? extends T> def, final Class<T> type, final boolean single, final int index, final boolean optional) {
 		this.def = def;
@@ -91,21 +96,19 @@ public class Argument<T> {
 	}
 	
 	public void setToDefault(final SkriptCommandEvent event) {
-		if (def == null)
-			current = null;
-		else
-			current = def.getArray(event);
+		if (def != null)
+			current.put(event, def.getArray(event));
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void set(final Object[] o) {
+	public void set(final SkriptCommandEvent e, final Object[] o) {
 		if (o == null || !(type.isAssignableFrom(o.getClass().getComponentType())))
 			throw new IllegalArgumentException();
-		current = (T[]) o;
+		current.put(e, (T[]) o);
 	}
 	
-	public T[] getCurrent() {
-		return current;
+	public T[] getCurrent(final Event e) {
+		return current.get(e);
 	}
 	
 	public Class<T> getType() {

@@ -23,13 +23,16 @@ package ch.njol.skript;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileReader;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -41,10 +44,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -53,11 +54,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -67,12 +66,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerCommandEvent;
-import org.bukkit.help.GenericCommandHelpTopic;
-import org.bukkit.help.HelpMap;
-import org.bukkit.help.HelpTopic;
-import org.bukkit.help.HelpTopicComparator;
-import org.bukkit.help.IndexHelpTopic;
-import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import ch.njol.skript.SkriptLogger.SubLog;
@@ -94,9 +87,7 @@ import ch.njol.skript.classes.data.DefaultClasses;
 import ch.njol.skript.classes.data.DefaultComparators;
 import ch.njol.skript.classes.data.DefaultConverters;
 import ch.njol.skript.classes.data.SkriptClasses;
-import ch.njol.skript.command.CommandEvent;
-import ch.njol.skript.command.Commands.CommandAliasHelpTopic;
-import ch.njol.skript.command.SkriptCommand;
+import ch.njol.skript.command.Commands;
 import ch.njol.skript.config.Config;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
@@ -118,13 +109,13 @@ import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.util.Date;
+import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.util.CommandHelp;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
-import ch.njol.skript.util.VariableString;
 import ch.njol.skript.util.Version;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
@@ -234,15 +225,13 @@ public final class Skript extends JavaPlugin implements Listener {
 				
 				loadVariables();
 				
-				loadScripts();
+				ScriptLoader.loadScripts();
 				
-				finishRegisteringCommands();
+				Commands.finishRegisteringCommands();
 				
 				Skript.info("Skript finished loading!");
 			}
 		});
-		
-		Bukkit.getPluginManager().registerEvents(commandListener, this);
 		
 		variableFileSaveTask = Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
 			@Override
@@ -280,31 +269,43 @@ public final class Skript extends JavaPlugin implements Listener {
 	/**
 	 * Clears configs, aliases, commands, triggers, etc. but does not disable the plugin
 	 */
-	private final static void disable() {
+	private final static void disableScripts() {
 		configs.clear();
 		
-		Aliases.clear();
-		
 		for (final Trigger t : ScriptLoader.selfRegisteredTriggers)
-			t.getEvent().unregister();
+			t.getEvent().unregisterAll();
 		ScriptLoader.selfRegisteredTriggers.clear();
-		ScriptLoader.loadedTriggers = 0;
-		ScriptLoader.loadedCommands = 0;
 		
 		VariableString.variableNames.clear();
 		
 		SkriptEventHandler.triggers.clear();
-		clearCommands();
+		Commands.clearCommands();
 	}
 	
 	/**
 	 * Prints errors from reloading the config & scripts
 	 */
 	private final static void reload() {
-		disable();
-		
+		disableScripts();
+		reloadMainConfig();
+		ScriptLoader.loadScripts();
+	}
+	
+	/**
+	 * Prints errors
+	 */
+	private final static void reloadScripts() {
+		disableScripts();
+		ScriptLoader.loadScripts();
+	}
+	
+	/**
+	 * Prints errors
+	 */
+	private final static void reloadMainConfig() {
+		Aliases.clear();
+		Language.clear();
 		Skript.getInstance().loadMainConfig();
-		loadScripts();
 	}
 	
 	@Override
@@ -316,7 +317,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		saveVariables();
 		
-		disable();
+		disableScripts();
 		
 		// unset static fields to prevent memory leaks as Bukkit reloads the classes with a different classloader on reload
 		// async to not slow down server reload, delayed to not slow down server shutdown
@@ -357,43 +358,212 @@ public final class Skript extends JavaPlugin implements Listener {
 		}).start();
 	}
 	
-	private final static String[][] help = {
-			{"reload", "reloads the configuration and all scripts"},
-			{"help", "prints this help message"}
-	};
+	private final static CommandHelp skriptCommandHelp = new CommandHelp("<gray>/<gold>skript", "Skript's main command", "cyan")
+			.add(new CommandHelp("reload", "Reloads the config, all scripts, everything, or a specific script", "red")
+					.add("all", "Reloads the config and all scripts")
+					.add("config", "Reloads the config")
+					.add("scripts", "Reloads all scripts")
+					.add("<script>", "Reloads a specific script")
+			).add(new CommandHelp("enable", "Enables all scripts or a specific one", "red")
+					.add("all", "Enables all scripts")
+					.add("<script>", "Enables a specific script")
+			).add(new CommandHelp("disable", "Disables all scripts or a specific one", "red")
+					.add("all", "Disables all scripts")
+					.add("<script>", "Disables a specific script")
+			//			).add(new CommandHelp("variable", "Commands for modifying variables", "red")
+//					.add("set", "Creates a new variable or changes an existing one")
+//					.add("delete", "Deletes a variable")
+//					.add("find", "Find variables")
+			).add("help", "Prints this help message");
+	
+	private final static void message(final CommandSender recipient, final String message) {
+		recipient.sendMessage(Utils.prepareMessage("<grey>[<gold>Skript<grey>]<reset> " + message));
+	}
 	
 	@Override
 	public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
-		if (args.length > 0) {
-			if (args[0].equalsIgnoreCase("reload")) {
+		if (!skriptCommandHelp.test(sender, args))
+			return true;
+		if (args[0].equalsIgnoreCase("reload")) {
+			if (args[1].equalsIgnoreCase("all")) {
 				final SubLog log = SkriptLogger.startSubLog();
-				
 				reload();
-				
 				log.stop();
 				if (log.hasErrors()) {
-					sender.sendMessage("Error(s) while reloading configs:");
+					message(sender, "Error(s) while reloading the config and all scripts:");
 					log.printErrors(sender, null);
 				} else {
-					sender.sendMessage("Successfully reloaded all configs");
+					message(sender, "Successfully reloaded the config and all scripts");
+				}
+				return true;
+			} else if (args[1].equalsIgnoreCase("scripts")) {
+				final SubLog log = SkriptLogger.startSubLog();
+				reloadScripts();
+				log.stop();
+				if (log.hasErrors()) {
+					message(sender, "Error(s) while reloading all scripts:");
+					log.printErrors(sender, null);
+				} else {
+					message(sender, "Successfully reloaded all scripts");
+				}
+			} else if (args[1].equalsIgnoreCase("config")) {
+				final SubLog log = SkriptLogger.startSubLog();
+				reloadMainConfig();
+				log.stop();
+				if (log.hasErrors()) {
+					message(sender, "Error(s) while reloading the main config:");
+					log.printErrors(sender, null);
+				} else {
+					message(sender, "Successfully reloaded the main config");
+				}
+			} else {
+				final File f = getScriptFromArgs(sender, args, 1);
+				if (f == null)
+					return true;
+				if (f.getName().startsWith("-")) {
+					message(sender, "This script is currently disabled. Use <gray>/<gold>skript <cyan>enable <red>" + f.getName().substring(1, f.getName().length() - 3) + "<reset> to enable it.");
+					return true;
+				}
+				ScriptLoader.unloadScript(f);
+				final SubLog log = SkriptLogger.startSubLog();
+				ScriptLoader.loadScript(f);
+				log.stop();
+				if (log.hasErrors()) {
+					message(sender, "Error(s) while reloading <gold>" + f.getName() + "<reset>:");
+					log.printErrors(sender, null);
+				} else {
+					message(sender, "Successfully reloaded <gold>" + f.getName() + "<reset>!");
 				}
 				return true;
 			}
-		}
-		
-		if (args.length == 0 || args[0].equalsIgnoreCase("help") || args[0].equals("?"))
-			sender.sendMessage("Usage: " + ChatColor.GRAY + "/" + ChatColor.GOLD + "skript " + ChatColor.DARK_AQUA + "...");
-		else
-			sender.sendMessage(ChatColor.RED + "Invalid argument " + ChatColor.GRAY + "'" + ChatColor.DARK_AQUA + args[0] + ChatColor.GRAY + "'" + ChatColor.RESET + ", valid arguments for this command are:");
-		int longest = 0;
-		for (final String[] l : help) {
-			if (longest < l[0].length())
-				longest = l[0].length();
-		}
-		for (final String[] l : help) {
-			sender.sendMessage("  " + ChatColor.DARK_AQUA + l[0] + StringUtils.multiply(' ', longest - l[0].length()) + ChatColor.DARK_GRAY + " - " + ChatColor.RESET + l[1]);
+		} else if (args[0].equalsIgnoreCase("enable")) {
+			if (args[1].equals("all")) {
+				try {
+					final Collection<File> files = toggleScripts(true);
+					final SubLog log = SkriptLogger.startSubLog();
+					ScriptLoader.loadScripts(files);
+					log.stop();
+					if (log.hasErrors()) {
+						message(sender, "Error(s) while loading disabled scripts:");
+						log.printErrors(sender, null);
+					} else {
+						message(sender, "Successfully loaded & enabled all previously disabled scripts!");
+					}
+				} catch (final IOException e) {
+					message(sender, "Could not enable any scripts (some scripts might however have been renamed already): " + e.getLocalizedMessage());
+				}
+			} else {
+				File f = getScriptFromArgs(sender, args, 1);
+				if (f == null)
+					return true;
+				if (!f.getName().startsWith("-")) {
+					message(sender, "<gold>" + f.getName() + "<reset> is already enabled!");
+					return true;
+				}
+				
+				try {
+					Files.move(f.toPath(), new File(f.getParentFile(), f.getName().substring(1)).toPath());
+				} catch (final IOException e) {
+					message(sender, "Could not enable <gold>" + f.getName().substring(1) + "<reset>: " + e.getLocalizedMessage());
+					return true;
+				}
+				f = new File(f.getParentFile(), f.getName().substring(1));
+				
+				final SubLog log = SkriptLogger.startSubLog();
+				ScriptLoader.loadScript(f);
+				log.stop();
+				if (log.hasErrors()) {
+					message(sender, "Error(s) while enabling <gold>" + f.getName() + "<reset>:");
+					log.printErrors(sender, null);
+				} else {
+					message(sender, "Successfully enabled <gold>" + f.getName() + "<reset>!");
+				}
+				return true;
+			}
+		} else if (args[0].equalsIgnoreCase("disable")) {
+			if (args[1].equals("all")) {
+				disableScripts();
+				try {
+					toggleScripts(false);
+					message(sender, "Successfully disabled all scripts!");
+				} catch (final IOException e) {
+					message(sender, "Could not rename all scripts - some scripts will be enabled again when you restart the server: " + e.getLocalizedMessage());
+				}
+			} else {
+				final File f = getScriptFromArgs(sender, args, 1);
+				if (f == null)
+					return true;
+				if (f.getName().startsWith("-")) {
+					message(sender, "<gold>" + f.getName().substring(1) + "<reset> is already disabled!");
+					return true;
+				}
+				
+				ScriptLoader.unloadScript(f);
+				
+				try {
+					Files.move(f.toPath(), new File(f.getParentFile(), "-" + f.getName()).toPath());
+				} catch (final IOException e) {
+					message(sender, "Could not rename <gold>" + f.getName() + "<reset>, it will be enabled again when you restart the server: " + e.getLocalizedMessage());
+					return true;
+				}
+				message(sender, "Successfully disabled <gold>" + f.getName() + "<reset>!");
+				return true;
+			}
+		} else if (args[0].equalsIgnoreCase("help")) {
+			skriptCommandHelp.showHelp(sender);
 		}
 		return true;
+	}
+	
+	private File getScriptFromArgs(final CommandSender sender, final String[] args, final int start) {
+		final StringBuilder b = new StringBuilder();
+		for (int i = 1; i < args.length; i++)
+			b.append(" " + args[i]);
+		String script = b.toString().trim();
+		if (!script.endsWith(".sk"))
+			script = script + ".sk";
+		if (script.startsWith("-"))
+			script = script.substring(1);
+		File f = new File(getDataFolder(), SCRIPTSFOLDER + File.separator + script);
+		if (!f.exists()) {
+			f = new File(getDataFolder(), SCRIPTSFOLDER + File.separator + "-" + script);
+			if (!f.exists()) {
+				message(sender, "Can't find the script <grey>'<gold>" + script + "<grey>'<reset> in the scripts folder!");
+				return null;
+			}
+		}
+		return f;
+	}
+	
+	private final static Collection<File> toggleScripts(final boolean enable) throws IOException {
+		final Collection<File> changed = new ArrayList<File>();
+		Files.walkFileTree(new File(Skript.getInstance().getDataFolder(), SCRIPTSFOLDER).toPath(), new FileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+				return FileVisitResult.CONTINUE;
+			}
+			
+			@Override
+			public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+				final String name = file.getFileName().toString();
+				if (name.startsWith("-") == enable) {
+					Files.move(file, file.resolveSibling(enable ? name.substring(1) : "-" + name));
+					changed.add((enable ? file.resolveSibling(name.substring(1)) : file).toFile());
+				}
+				return FileVisitResult.CONTINUE;
+			}
+			
+			@Override
+			public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
+				return FileVisitResult.CONTINUE;
+			}
+			
+			@Override
+			public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+				return FileVisitResult.CONTINUE;
+			}
+		});
+		return changed;
 	}
 	
 	private static void loadClasses(final String packageName, final boolean loadSubPackages) throws IOException {
@@ -417,15 +587,13 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static final String quotesError = "Invalid use of quotes (\"). If you want to use quotes in \"quoted text\", double them: \"\".";
 	
-	/**
-	 * Doesn't do anything<br>
-	 * <del>Prints "Possible invalid plural detected in '" + s + "'"</del>
-	 * 
-	 * @param s
-	 */
-	public static final void pluralWarning(final String s) {
-		s.length();// stupid 'unused' warning workaround
-//		Skript.warning("Possible invalid plural detected in '" + s + "'");
+	public static void outdatedError() {
+		error("Skript v" + instance.getDescription().getVersion() + " is not fully compatible with CraftBukkit " + Bukkit.getVersion() + ". Some feature(s) will be broken until you update Skript.");
+	}
+	
+	public static void outdatedError(final Exception e) {
+		outdatedError();
+		e.printStackTrace();
 	}
 	
 	/**
@@ -458,7 +626,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static final Random random = new Random();
 	
-	private static EventPriority priority = EventPriority.NORMAL;
+	static EventPriority priority = EventPriority.NORMAL;
 	
 	public static EventPriority getPriority() {
 		return priority;
@@ -475,6 +643,22 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	public static boolean disableVariableConflictWarnings;
+	
+	/**
+	 * Parses a number that was validated to be an integer but might still result in a {@link NumberFormatException} when parsed with {@link Integer#parseInt(String)} due to
+	 * overflow.
+	 * This method will return {@link Integer#MIN_VALUE} or {@link Integer#MAX_VALUE} respectively if that happens.
+	 * 
+	 * @param s
+	 * @return
+	 */
+	public final static int parseInt(final String s) {
+		try {
+			return Integer.parseInt(s);
+		} catch (final NumberFormatException e) {
+			return s.startsWith("-") ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+		}
+	}
 	
 	// ================ LISTENER FUNCTIONS ================
 	
@@ -1619,35 +1803,6 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ COMMANDS ================
 	
-	private static final Map<String, SkriptCommand> commands = new HashMap<String, SkriptCommand>();
-	
-	public static SimpleCommandMap commandMap = null;
-	private static Map<String, Command> cmKnownCommands;
-	private static Set<String> cmAliases;
-	static {
-		try {
-			if (Bukkit.getPluginManager() instanceof SimplePluginManager) {
-				final Field commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
-				commandMapField.setAccessible(true);
-				commandMap = (SimpleCommandMap) commandMapField.get(Bukkit.getPluginManager());
-				
-				final Field knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
-				knownCommandsField.setAccessible(true);
-				cmKnownCommands = (Map<String, Command>) knownCommandsField.get(commandMap);
-				
-				final Field aliasesField = SimpleCommandMap.class.getDeclaredField("aliases");
-				aliasesField.setAccessible(true);
-				cmAliases = (Set<String>) aliasesField.get(commandMap);
-			}
-		} catch (final SecurityException e) {
-			error("Please disable the security manager");
-			commandMap = null;
-		} catch (final Exception e) {
-			outdatedError(e);
-			commandMap = null;
-		}
-	}
-	
 	/**
 	 * Dispatches a command with calling command events
 	 * 
@@ -1669,137 +1824,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		} else {
 			return Bukkit.dispatchCommand(sender, command);
 		}
-	}
-	
-	public static boolean commandExists(final String command) {
-		final SkriptCommand c = commands.get(command);
-		return c != null && c.getName().equals(command);
-	}
-	
-	private static boolean acceptingCommandRegistrations = true;
-	
-	public static void registerCommand(final SkriptCommand command) {
-		if (!acceptingCommandRegistrations)
-			throw new SkriptAPIException("Registering commands is disabled afer all scripts have been loaded!");
-		commands.put(command.getName().toLowerCase(), command);
-		for (final String alias : command.getAliases()) {
-			commands.put(alias.toLowerCase(), command);
-		}
-		if (commandMap != null) {
-			command.register(commandMap, cmKnownCommands, cmAliases);
-		}
-	}
-	
-	private final static void finishRegisteringCommands() {
-		acceptingCommandRegistrations = false;
-		try {
-			final HelpMap help = Bukkit.getServer().getHelpMap();
-			final Iterator<HelpTopic> iter = help.getHelpTopics().iterator();
-			while (iter.hasNext()) {
-				if (iter.next().getName().equals("Skript")) {
-					iter.remove();
-					break;
-				}
-			}
-			final Set<HelpTopic> topics = new TreeSet<HelpTopic>(HelpTopicComparator.helpTopicComparatorInstance());
-			for (final SkriptCommand command : commands.values()) {
-				final HelpTopic t = new GenericCommandHelpTopic(command.getBukkitCommand());
-				help.addTopic(t);
-				topics.add(t);
-				for (final String alias : command.getActiveAliases()) {
-					final HelpTopic at = new CommandAliasHelpTopic("/" + alias, "/" + command.getLabel(), help);
-					help.addTopic(at);
-					topics.add(at);
-				}
-			}
-			help.addTopic(new IndexHelpTopic("Skript", "All commands created with Skript", null, topics, "Below is a list of all commands created with Skript:"));
-		} catch (final Exception e) {
-			Skript.exception(e, "Could not register the custom commands in Bukkit's help map");
-		}
-	}
-	
-	private final static void clearCommands() {
-		if (commandMap != null) {
-			for (final SkriptCommand c : commands.values())
-				c.unregister(commandMap, cmKnownCommands, cmAliases);
-		}
-		commands.clear();
-		acceptingCommandRegistrations = true;
-	}
-	
-	public static void outdatedError() {
-		error("Skript v" + instance.getDescription().getVersion() + " is not fully compatible with CraftBukkit " + Bukkit.getVersion() + ". Some feature(s) will be broken until you update Skript.");
-	}
-	
-	public static void outdatedError(final Exception e) {
-		outdatedError();
-		e.printStackTrace();
-	}
-	
-	private final static Listener commandListener = new Listener() {
-		@SuppressWarnings("unused")
-		@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-		public void onPlayerCommand(final PlayerCommandPreprocessEvent e) {
-			if (handleCommand(e.getPlayer(), e.getMessage().substring(1)))
-				e.setCancelled(true);
-		}
-		
-		@SuppressWarnings("unused")
-		@EventHandler(priority = EventPriority.LOW)
-		public void onServerCommand(final ServerCommandEvent e) {
-			if (e.getCommand() == null || e.getCommand().isEmpty())
-				return;
-			if (handleCommand(e.getSender(), e.getCommand()))
-				e.setCommand("");
-		}
-	};
-	
-	/**
-	 * 
-	 * @param sender
-	 * @param command full command string without the slash
-	 * @return whether to cancel the event
-	 */
-	private final static boolean handleCommand(final CommandSender sender, final String command) {
-		final String[] cmd = command.split("\\s+", 2);
-		cmd[0] = cmd[0].toLowerCase();
-		if (cmd[0].endsWith("?")) {
-			final SkriptCommand c = commands.get(cmd[0].substring(0, cmd[0].length() - 1));
-			if (c != null) {
-				c.sendHelp(sender);
-				return true;
-			}
-		}
-		final SkriptCommand c = commands.get(cmd[0]);
-		if (c != null) {
-			if (cmd.length == 2 && cmd[1].equals("?")) {
-				c.sendHelp(sender);
-				return true;
-			}
-			c.execute(sender, cmd[0], cmd.length == 1 ? "" : cmd[1]);
-			return true;
-		} else if (enableEffectCommands) {
-			if (!sender.hasPermission("skript.effectcommands"))
-				return false;
-			if (commandMap != null && commandMap.getCommand(cmd[0]) != null)
-				return false;
-			
-			final SubLog log = SkriptLogger.startSubLog();
-			final Effect e = Effect.parse(command, null);
-			SkriptLogger.stopSubLog(log);
-			if (e != null) {
-				sender.sendMessage(ChatColor.GRAY + "executing '" + ChatColor.stripColor(command) + "'");
-				e.run(new CommandEvent(sender, "effectcommand", new String[0]));
-				return true;
-			} else if (log.hasErrors()) {
-				sender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + ChatColor.stripColor(command));
-				log.printErrors(sender, null);
-				sender.sendMessage("Press the up arrow key to edit the command");
-				return true;
-			}
-			return false;
-		}
-		return false;
 	}
 	
 	// ================ LOGGING ================
@@ -1923,8 +1947,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	static Config mainConfig;
 	static final ArrayList<Config> configs = new ArrayList<Config>();
 	
-	private static boolean keepConfigsLoaded = false; //true;
-	private static boolean enableEffectCommands = false;
+	static boolean keepConfigsLoaded = false; //true;
+	public static boolean enableEffectCommands = false;
 	
 	private static final void parseMainConfig() {
 		
@@ -1984,7 +2008,7 @@ public final class Skript extends JavaPlugin implements Listener {
 					@Override
 					public void set(final String s) {
 						if (!Language.load(s)) {
-							Skript.error("No language file found for '"+s+"'!");
+							Skript.error("No language file found for '" + s + "'!");
 						}
 					}
 				}, true)
@@ -2072,7 +2096,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				error("Config file 'config.sk' cannot be read!");
 				return;
 			}
-			mainConfig = new Config(config, false, "=");
+			mainConfig = new Config(config, false, true, "=");
 			parseMainConfig();
 			
 //			if (logNormal())
@@ -2081,103 +2105,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		} catch (final Exception e) {
 			exception(e, "error loading config");
 		}
-	}
-	
-	/**
-	 * As it's impossible to unregister events with Bukkit this set is used to prevent that any event will ever be registered more than once when reloading.
-	 */
-	private final static Set<Class<? extends Event>> registeredEvents = new HashSet<Class<? extends Event>>();
-	
-	private static void loadScripts() {
-		
-		boolean successful = true;
-		
-		final File scriptsFolder = new File(instance.getDataFolder(), Skript.SCRIPTSFOLDER + File.separatorChar);
-		
-		final File oldFolder = new File(instance.getDataFolder(), "triggers" + File.separatorChar);
-		if (oldFolder.isDirectory()) {
-			if (!scriptsFolder.isDirectory()) {
-				oldFolder.renameTo(scriptsFolder);
-				Skript.info("[1.3] Renamed your 'triggers' folder to 'scripts' to match the new format");
-			} else {
-				Skript.error("Found both a 'triggers' and a 'scripts' folder, ignoring the 'triggers' folder");
-			}
-		}
-		
-		if (!scriptsFolder.isDirectory())
-			scriptsFolder.mkdirs();
-		
-		int renamed = 0;
-		for (final File f : scriptsFolder.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(final File dir, final String name) {
-				return name.endsWith(".cfg");
-			}
-		})) {
-			final String name = f.getName().substring(0, f.getName().length() - ".cfg".length());
-			final File n = new File(scriptsFolder, name + ".sk");
-			if (!n.exists()) {
-				f.renameTo(n);
-				renamed++;
-			} else {
-				Skript.error("Found both an old and a new script named '" + name + "', ignoring the old one");
-			}
-		}
-		if (renamed > 0)
-			Skript.info("[1.3] Renamed " + renamed + " scripts to match the new format");
-		
-		final SubLog log = SkriptLogger.startSubLog();
-		final Date start = new Date();
-		
-		int numFiles = 0;
-		try {
-			numFiles = loadScripts(scriptsFolder);
-		} catch (final Exception e) {
-			SkriptLogger.setNode(null);
-			Skript.exception(e, "could not load trigger files");
-			successful = false;
-		}
-		
-		log.stop();
-		log.printLog();
-		if (!log.hasErrors())
-			info("All scripts loaded without errors!");
-		
-		if (successful && numFiles == 0)
-			warning("No scripts were found, maybe you should write some ;)");
-		if (successful && logNormal() && numFiles > 0)
-			info("loaded " + numFiles + " script" + (numFiles == 1 ? "" : "s")
-					+ " with a total of " + ScriptLoader.loadedTriggers + " trigger" + (ScriptLoader.loadedTriggers == 1 ? "" : "s")
-					+ " and " + ScriptLoader.loadedCommands + " command" + (ScriptLoader.loadedCommands == 1 ? "" : "s")
-					+ " in " + start.difference(new Date()));
-		
-		for (final Class<? extends Event> e : SkriptEventHandler.triggers.keySet()) {
-			if (!registeredEvents.contains(e)) {
-				Bukkit.getPluginManager().registerEvent(e, new Listener() {}, priority, SkriptEventHandler.ee, instance);
-				registeredEvents.add(e);
-			}
-		}
-	}
-	
-	private final static int loadScripts(final File directory) throws IOException {
-		int numFiles = 0;
-		for (final File f : directory.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(final File f) {
-				return (f.isDirectory() || f.getName().endsWith(".sk")) && !f.getName().startsWith("-");
-			}
-		})) {
-			if (f.isDirectory()) {
-				numFiles += loadScripts(f);
-			} else {
-				final Config c = new Config(f, true, ":");
-				if (keepConfigsLoaded)
-					configs.add(c);
-				ScriptLoader.load(c);
-				numFiles++;
-			}
-		}
-		return numFiles;
 	}
 	
 	/**

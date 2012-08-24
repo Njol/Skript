@@ -44,7 +44,7 @@ public class ExprInventory extends PropertyExpression<InventoryHolder, Inventory
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		setExpr((Expression<InventoryHolder>) vars[0]);
 		return true;
 	}

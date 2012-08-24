@@ -76,7 +76,7 @@ public class EvtPeriodical extends SkriptEvent {
 		final ScheduledEvent e = new ScheduledEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerStart(t);
-		t.run(e);
+		t.start(e);
 		SkriptEventHandler.logTriggerEnd(t);
 		SkriptEventHandler.logEventEnd();
 	}
@@ -87,7 +87,13 @@ public class EvtPeriodical extends SkriptEvent {
 	}
 	
 	@Override
-	public void unregister() {
+	public void unregister(final Trigger t) {
+		for (final int taskID : taskIDs)
+			Bukkit.getScheduler().cancelTask(taskID);
+	}
+	
+	@Override
+	public void unregisterAll() {
 		for (final int taskID : taskIDs)
 			Bukkit.getScheduler().cancelTask(taskID);
 	}

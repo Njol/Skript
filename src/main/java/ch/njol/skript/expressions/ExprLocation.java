@@ -42,7 +42,7 @@ public class ExprLocation extends PropertyExpression<Location, Location> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends Location>) vars[0]);
 		return true;
 	}

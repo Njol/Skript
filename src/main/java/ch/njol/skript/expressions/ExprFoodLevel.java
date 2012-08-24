@@ -28,6 +28,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -44,14 +45,12 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 	}
 	
 	private Expression<Player> players;
-	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
 		setExpr(players);
-		delayed = isDelayed;
 		return true;
 	}
 	
@@ -62,7 +61,7 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 	
 	@Override
 	protected Float[] get(final Event e, final Player[] source) {
-		if (!delayed && getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
+		if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
 			return new Float[] {0.5f * ((FoodLevelChangeEvent) e).getFoodLevel()};
 		}
 		return get(source, new Getter<Float, Player>() {
@@ -86,7 +85,7 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 		switch (mode) {
 			case SET:
 			case CLEAR:
-				if (!delayed && getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
+				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
 					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, s, 20));
 					return;
 				}
@@ -95,7 +94,7 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 				}
 				return;
 			case ADD:
-				if (!delayed && getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
+				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
 					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, ((FoodLevelChangeEvent) e).getFoodLevel() + s, 20));
 					return;
 				}
@@ -104,7 +103,7 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 				}
 				return;
 			case REMOVE:
-				if (!delayed && getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent) {
+				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
 					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, ((FoodLevelChangeEvent) e).getFoodLevel() - s, 20));
 					return;
 				}

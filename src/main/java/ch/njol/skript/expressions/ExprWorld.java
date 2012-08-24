@@ -23,9 +23,12 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.World;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -42,7 +45,7 @@ public class ExprWorld extends PropertyExpression<World, World> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		setExpr((Expression<? extends World>) exprs[0]);
 		return true;
 	}
@@ -59,7 +62,16 @@ public class ExprWorld extends PropertyExpression<World, World> {
 	
 	@Override
 	protected World[] get(final Event e, final World[] source) {
+		if (getExpr().isDefault() && e instanceof PlayerTeleportEvent && getTime() > 0 && !Delay.isDelayed(e)) {
+			return new World[] {((PlayerTeleportEvent) e).getTo().getWorld()};
+		}
 		return source;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, getExpr(), PlayerTeleportEvent.class, PlayerPortalEvent.class);
 	}
 	
 }

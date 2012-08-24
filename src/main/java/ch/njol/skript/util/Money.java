@@ -74,16 +74,12 @@ public class Money {
 		if (!Economy.plural.isEmpty() && s.toLowerCase().endsWith(Economy.pluralLower)) {
 			try {
 				final double d = Double.parseDouble(s.substring(0, s.length() - Economy.plural.length()).trim());
-				if (d == 1 && !Economy.singular.equals(Economy.plural))
-					Skript.pluralWarning(s);
 				return new Money(d);
 			} catch (final NumberFormatException e) {}
 		}
 		if (!Economy.singular.isEmpty() && s.toLowerCase().endsWith(Economy.singularLower)) {
 			try {
 				final double d = Double.parseDouble(s.substring(0, s.length() - Economy.singular.length()).trim());
-				if (d != 1)
-					Skript.pluralWarning(s);
 				return new Money(d);
 			} catch (final NumberFormatException e) {}
 		}

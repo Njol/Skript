@@ -44,7 +44,7 @@ public class ExprDistance extends SimpleExpression<Double> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		loc1 = (Expression<Location>) vars[0];
 		loc2 = (Expression<Location>) vars[1];
 		return true;

@@ -183,7 +183,7 @@ public class Offset {
 	}
 	
 	private final static Pattern offsetPattern = Pattern.compile(
-			"( (\\d+(\\.\\d+)?( (block|meter)s?)? )?((to the )?((south|north)(-?(east|west))?|east|west)(ward(s|ly)?|er(n|ly))?( of)?|above|over|below|under(neath)?|beneath))+");
+			"( (\\d+(\\.\\d+)?( (block|meter)s?)? )?((to the )?((south|north)(-?(east|west))?|east|west)(ward(s|ly)?|er(n|ly))?( of)?|above|over|up(ward(s|ly)?)?|below|under(neath)?|beneath|down(ward(s|ly)?)?))+");
 	
 	private final static BlockFace scanForFace(final String s, final int i) {
 		if (s.startsWith("east", i))
@@ -204,9 +204,9 @@ public class Offset {
 				return BlockFace.NORTH_WEST;
 			return BlockFace.NORTH;
 		}
-		if (s.startsWith("above", i) || s.startsWith("over", i))
+		if (s.startsWith("up", i) || s.startsWith("above", i) || s.startsWith("over", i))
 			return BlockFace.UP;
-		if (s.startsWith("below", i) || s.startsWith("under", i) || s.startsWith("beneath", i))
+		if (s.startsWith("down", i) || s.startsWith("below", i) || s.startsWith("under", i) || s.startsWith("beneath", i))
 			return BlockFace.DOWN;
 		return null;
 	}

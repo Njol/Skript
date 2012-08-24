@@ -47,15 +47,12 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 		Skript.registerExpression(ExprDrops.class, ItemStack.class, ExpressionType.SIMPLE, "[the] drops");
 	}
 	
-	private boolean delayed;
-	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (!Utils.contains(ScriptLoader.currentEvents, EntityDeathEvent.class)) {
 			Skript.error("'drops' can only be used in death events");
 			return false;
 		}
-		delayed = isDelayed;
 		return true;
 	}
 	
@@ -68,11 +65,11 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
-		if (delayed) {
-			// TODO allow acceptChange to print errors
+//		if (delayed) {
+//			// TODO allow acceptChange to print errors
 //			Skript.error("Can't change the drops anymore after the event has already passed");
-			return null;
-		}
+//			return null;
+//		}
 		return ItemType[].class;
 	}
 	

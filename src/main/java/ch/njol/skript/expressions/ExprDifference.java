@@ -54,7 +54,7 @@ public class ExprDifference extends SimpleExpression<Object> {
 	private Object[] one;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		first = exprs[0];
 		second = exprs[1];
 		final ClassInfo<?> ci;

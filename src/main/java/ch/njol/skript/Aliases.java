@@ -22,12 +22,16 @@
 package ch.njol.skript;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 
+import ch.njol.skript.Language.LanguageChangeListener;
+import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.util.ItemData;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
@@ -282,6 +286,18 @@ public abstract class Aliases {
 		return t;
 	}
 	
+	private final static Map<String, Enchantment> enchantmentNames = new HashMap<String, Enchantment>();
+	static {
+		Language.addListener(new LanguageChangeListener() {
+			@Override
+			public void onLanguageChange() {
+				enchantmentNames.clear();
+				for (final Enchantment e : Enchantment.values())
+					enchantmentNames.put(Language.get("ench.names." + e.getName()).toLowerCase(), e);
+			}
+		});
+	}
+	
 	/**
 	 * Parses an ItemType.<br>
 	 * Prints errors.
@@ -292,29 +308,61 @@ public abstract class Aliases {
 	public static ItemType parseItemType(String s) {
 		if (s == null || s.isEmpty())
 			return null;
+		s = s.trim();
 		final String lc = s.toLowerCase();
-//		if (s.contains(",") || lc.contains(" and ") || lc.contains(" or "))
-//			return null;
-//			throw new SkriptAPIException("Invalid method call");
 		
 		final ItemType t = new ItemType();
 		
 		if (lc.matches("\\d+ of (all|every) .+")) {
-			t.setAmount(Integer.parseInt(s.split(" ", 2)[0]));
+			t.setAmount(Skript.parseInt(s.split(" ", 2)[0]));
 			t.setAll(true);
 			s = s.split(" ", 4)[3];
 		} else if (lc.matches("\\d+ (of )?.+")) {
-			t.setAmount(Integer.parseInt(s.split(" ", 2)[0]));
+			t.setAmount(Skript.parseInt(s.split(" ", 2)[0]));
 			if (s.matches("\\d+ of .+"))
 				s = s.split(" ", 3)[2];
 			else
 				s = s.split(" ", 2)[1];
-		} else if (lc.matches("an? .+")) {
+		} else if (lc.startsWith("a ") || lc.startsWith("an ")) {
 			t.setAmount(1);
 			s = s.split(" ", 2)[1];
-		} else if (lc.matches("(all|every) .+")) {
+		} else if (lc.startsWith("all ") || lc.startsWith("every ")) {
 			t.setAll(true);
 			s = s.split(" ", 2)[1];
+		}
+		
+		final String of = Language.getSpaced("ench.of");
+		int c = lc.indexOf(of);
+		if (c != -1) {
+			outer: do {
+				final ItemType t2 = t.clone();
+				final SubLog log = SkriptLogger.startSubLog();
+				if (parseType(s.substring(0, c), t2) == null) {
+					log.stop();
+					continue;
+				}
+				log.stop();
+				if (t2.numTypes() == 0)
+					continue;
+				final Map<Enchantment, Integer> enchantments = new HashMap<Enchantment, Integer>();
+				final String[] enchs = lc.substring(c + of.length(), s.length()).split("\\s*(,|" + Language.get("and") + ")\\s*");
+				for (final String ench : enchs) {
+					Enchantment e = enchantmentNames.get(ench);
+					if (e != null) {
+						enchantments.put(e, 1);
+						continue;
+					}
+					if (!ench.matches(".* \\d+"))
+						continue outer;
+					e = enchantmentNames.get(ench.substring(0, ench.lastIndexOf(' ')));
+					if (e == null)
+						continue outer;
+					final int level = Skript.parseInt(ench.substring(ench.lastIndexOf(' ') + 1));
+					enchantments.put(e, level);
+				}
+				t2.addEnchantments(enchantments);
+				return t2;
+			} while ((c = lc.indexOf(of, c + 1)) != -1);
 		}
 		
 		if (parseType(s, t) == null)
@@ -351,7 +399,7 @@ public abstract class Aliases {
 			t.add(data == null ? new ItemData() : data);
 			return t;
 		} else if (type.matches("\\d+")) {
-			ItemData d = new ItemData(Integer.parseInt(type));
+			ItemData d = new ItemData(Skript.parseInt(type));
 			if (Material.getMaterial(d.getId()) == null) {
 				Skript.error("There doesn't exist a material with id " + d.getId() + "!");
 				return null;
@@ -365,7 +413,7 @@ public abstract class Aliases {
 			}
 			t.add(d);
 			return t;
-		} else if ((i = getAlias(type, t.getAmount() == 1, t.isAll())) != null) {
+		} else if ((i = getAlias(type, t.getAmount() == 1)) != null) {
 			for (ItemData d : i) {
 				if (data != null) {
 					if (d.getId() <= Skript.MAXBLOCKID && (data.dataMax > 15 || data.dataMin > 15)) {
@@ -392,21 +440,19 @@ public abstract class Aliases {
 	 * @param ignorePluralCheck Prevents warnings about invalid plural.
 	 * @return The ItemType represented by the given alias or null if no such alias exists.
 	 */
-	private final static ItemType getAlias(String s, final boolean singular, final boolean ignorePluralCheck) {
+	private final static ItemType getAlias(String s, final boolean singular) {
 		ItemType i;
 		String lc = s.toLowerCase();
 		if ((i = getAlias(lc)) != null)
 			return i.clone();
 		if (lc.startsWith("any ")) {
-			return getAlias(s.substring("any ".length()), true, true);
+			return getAlias(s.substring("any ".length()), true);
 		}
 		final Pair<String, Boolean> p = Utils.getPlural(s);
-		if (!ignorePluralCheck && !(p.second ^ singular))
-			Skript.pluralWarning(s);
 		s = p.first;
 		lc = s.toLowerCase();
 		if (lc.endsWith(" block")) {
-			if ((i = getAlias(s.substring(0, s.length() - " block".length()), true, ignorePluralCheck)) != null) {
+			if ((i = getAlias(s.substring(0, s.length() - " block".length()), true)) != null) {
 				for (int j = 0; j < i.numTypes(); j++) {
 					final ItemData d = i.getTypes().get(j);
 					if (d.getId() > Skript.MAXBLOCKID) {
@@ -419,7 +465,7 @@ public abstract class Aliases {
 				return i;
 			}
 		} else if (lc.endsWith(" item")) {
-			if ((i = getAlias(s.substring(0, s.length() - " item".length()), true, ignorePluralCheck)) != null) {
+			if ((i = getAlias(s.substring(0, s.length() - " item".length()), true)) != null) {
 				for (int j = 0; j < i.numTypes(); j++) {
 					final ItemData d = i.getTypes().get(j);
 					if (d.getId() != -1 && d.getId() <= Skript.MAXBLOCKID) {
@@ -450,10 +496,15 @@ public abstract class Aliases {
 		int i = s.indexOf('-');
 		if (i == -1)
 			i = s.length();
-		t.dataMin = Short.parseShort(s.substring(0, i));
-		t.dataMax = (i == s.length() ? t.dataMin : Short.parseShort(s.substring(i + 1, s.length())));
+		try {
+			t.dataMin = Short.parseShort(s.substring(0, i));
+			t.dataMax = (i == s.length() ? t.dataMin : Short.parseShort(s.substring(i + 1, s.length())));
+		} catch (final NumberFormatException e) { // overflow
+			Skript.error("Item datas must be between 0 and " + Short.MAX_VALUE + " (inclusive)");
+			return null;
+		}
 		if (t.dataMax < t.dataMin) {
-			Skript.error("the first number of a data range must be smaller than the second");
+			Skript.error("The first number of a data range must be smaller than the second");
 			return null;
 		}
 		return t;

@@ -53,7 +53,7 @@ public class ExprBlockSphere extends SimpleExpression<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		radius = (Expression<Float>) exprs[matchedPattern];
 		center = (Expression<Location>) exprs[1 - matchedPattern];
 		return true;

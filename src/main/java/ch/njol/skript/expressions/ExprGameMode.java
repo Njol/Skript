@@ -30,6 +30,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -45,14 +46,12 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 	}
 	
 	private Expression<Player> players;
-	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
 		setExpr(players);
-		delayed = isDelayed;
 		return true;
 	}
 	
@@ -63,7 +62,7 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 	
 	@Override
 	protected GameMode[] get(final Event e, final Player[] source) {
-		if (!delayed && e instanceof PlayerGameModeChangeEvent && getTime() >= 0 && players.isDefault()) {
+		if (e instanceof PlayerGameModeChangeEvent && getTime() >= 0 && players.isDefault() && !Delay.isDelayed(e)) {
 			return new GameMode[] {((PlayerGameModeChangeEvent) e).getNewGameMode()};
 		}
 		return get(source, new Converter<Player, GameMode>() {

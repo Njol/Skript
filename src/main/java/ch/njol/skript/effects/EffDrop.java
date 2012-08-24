@@ -42,35 +42,34 @@ import ch.njol.skript.util.Offset;
 public class EffDrop extends Effect {
 	
 	static {
-		Skript.registerEffect(EffDrop.class, "drop <\\d+> ([e]xp|experience) [orb[s]] [%offsets% %locations%]", "drop %itemtypes% [%offsets% %locations%]");
+		Skript.registerEffect(EffDrop.class, "drop %integer% ([e]xp|experience) [orb[s]] [%offsets% %locations%]", "drop %itemtypes% [%offsets% %locations%]");
 	}
 	
-	private int xp = -1;
-	private Expression<ItemType> items;
+	private Expression<Integer> xp = null;
+	private Expression<ItemType> items = null;
 	private Expression<Offset> offsets;
 	private Expression<Location> locations;
 	
-	private boolean delayed;
-	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (matchedPattern == 0)
-			xp = Integer.parseInt(parser.regexes.get(0).group());
+			xp = (Expression<Integer>) vars[0];
 		else
 			items = (Expression<ItemType>) vars[0];
 		offsets = (Expression<Offset>) vars[1];
 		locations = (Expression<Location>) vars[2];
-		delayed = isDelayed;
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
 		final ItemType[] types = items == null ? null : items.getArray(e);
-		if (!delayed && locations.isDefault() && e instanceof EntityDeathEvent) {
-			if (xp != -1) {
-				((EntityDeathEvent) e).setDroppedExp(((EntityDeathEvent) e).getDroppedExp() + xp);
+		if (locations.isDefault() && e instanceof EntityDeathEvent && !Delay.isDelayed(e)) {
+			if (xp != null) {
+				final Integer exp = xp.getSingle(e);
+				if (exp != null)
+					((EntityDeathEvent) e).setDroppedExp(((EntityDeathEvent) e).getDroppedExp() + exp);
 				return;
 			}
 			for (final ItemType type : types) {
@@ -79,9 +78,12 @@ public class EffDrop extends Effect {
 			return;
 		}
 		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
-			if (xp != -1) {
-				final ExperienceOrb orb = l.getWorld().spawn(l, ExperienceOrb.class);
-				orb.setExperience(xp);
+			if (xp != null) {
+				final Integer exp = xp.getSingle(e);
+				if (exp != null) {
+					final ExperienceOrb orb = l.getWorld().spawn(l, ExperienceOrb.class);
+					orb.setExperience(exp);
+				}
 				continue;
 			}
 			for (final ItemType type : types) {

@@ -46,7 +46,7 @@ public class CondPlayedBefore extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		player = (Expression<OfflinePlayer>) exprs[0];
 		setNegated(matchedPattern == 1);
 		return true;

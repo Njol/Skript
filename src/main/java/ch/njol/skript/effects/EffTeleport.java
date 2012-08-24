@@ -47,14 +47,12 @@ public class EffTeleport extends Effect {
 	
 	private Expression<Entity> entities;
 	private Expression<Location> location;
-	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		entities = (Expression<Entity>) vars[0];
 		location = (Expression<Location>) vars[1];
-		delayed = isDelayed;
 		return true;
 	}
 	
@@ -71,7 +69,7 @@ public class EffTeleport extends Effect {
 		final Block on = to.getBlock().getRelative(BlockFace.DOWN);
 		if (Math.abs(to.getX() - to.getBlockX() - 0.5) < Skript.EPSILON && Math.abs(to.getZ() - to.getBlockZ() - 0.5) < Skript.EPSILON && on.getType() != Material.AIR)
 			to.setY(on.getY() + Utils.getBlockHeight(on.getType()));
-		if (!delayed && e instanceof PlayerRespawnEvent && entities.isDefault()) {
+		if (e instanceof PlayerRespawnEvent && entities.isDefault() && !Delay.isDelayed(e)) {
 			((PlayerRespawnEvent) e).setRespawnLocation(to);
 			return;
 		}

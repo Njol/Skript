@@ -22,6 +22,8 @@
 package ch.njol.skript.lang;
 
 import java.util.Iterator;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import org.bukkit.event.Event;
 
@@ -43,10 +45,12 @@ public class Loop extends TriggerSection {
 	
 	private final Expression<?> expr;
 	
-	private Object current = null;
+	private final Map<Event, Object> current = new WeakHashMap<Event, Object>();
+	private final Map<Event, Iterator<?>> currentIter = new WeakHashMap<Event, Iterator<?>>();
+	
+	private TriggerItem actualNext;
 	
 	public <T> Loop(final Expression<?> expr, final SectionNode node) {
-		super(false);
 		Validate.notNull(expr, node);
 		if (Container.class.isAssignableFrom(expr.getReturnType())) {
 			final ContainerType type = expr.getReturnType().getAnnotation(ContainerType.class);
@@ -59,22 +63,24 @@ public class Loop extends TriggerSection {
 		ScriptLoader.currentLoops.add(this);
 		setTriggerItems(ScriptLoader.loadItems(node));
 		ScriptLoader.currentLoops.remove(ScriptLoader.currentLoops.size() - 1);
+		super.setNext(this);
 	}
 	
 	@Override
-	public boolean run(final Event e) {
-		final Iterator<?> iter = expr.iterator(e);
+	protected TriggerItem walk(final Event e) {
+		Iterator<?> iter = currentIter.get(e);
+		if (iter == null) {
+			iter = expr.iterator(e);
+			if (iter != null && iter.hasNext())
+				currentIter.put(e, iter);
+		}
 		if (iter == null || !iter.hasNext()) {
-			super.run(e, false);
-			return true;
+			debug(e, false);
+			return actualNext;
+		} else {
+			current.put(e, iter.next());
+			return walk(e, true);
 		}
-		while (iter.hasNext()) {
-			current = iter.next();
-			super.run(e, true);
-			if (isStopped())
-				break;
-		}
-		return true;
 	}
 	
 	@Override
@@ -82,12 +88,21 @@ public class Loop extends TriggerSection {
 		return "loop " + expr.toString(e, debug);
 	}
 	
-	public Object getCurrent() {
-		return current;
+	public Object getCurrent(final Event e) {
+		return current.get(e);
 	}
 	
 	public Expression<?> getLoopedExpression() {
 		return expr;
+	}
+	
+	@Override
+	public void setNext(final TriggerItem next) {
+		actualNext = next;
+	}
+	
+	public TriggerItem getActualNext() {
+		return actualNext;
 	}
 	
 }

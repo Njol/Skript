@@ -125,7 +125,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		return init(Arrays.copyOf(exprs, exprs.length, Literal[].class), matchedPattern, parseResult);
 	}
 	

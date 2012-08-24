@@ -49,7 +49,7 @@ public class ExprRandom extends SimpleExpression<Number> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		lower = (Expression<Double>) vars[0];
 		upper = (Expression<Double>) vars[1];
 		integer = matchedPattern == 1;

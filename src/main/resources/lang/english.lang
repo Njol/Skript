@@ -1,5 +1,5 @@
 # Which version of Skript this language file was written for
-version = 1.4.4
+version = 1.4.6
 
 # -- General --
 and = and
@@ -21,7 +21,7 @@ aliases.format.any = any %s
 aliases.format.any-with_amount = %i of any %s
 
 # -- Enchantments --
-ench.format = %s of %s
+ench.of = of
 ench.names.protection_environmental = Protection
 ench.names.protection_fire = Fire Protection
 ench.names.protection_fall = Feather Falling

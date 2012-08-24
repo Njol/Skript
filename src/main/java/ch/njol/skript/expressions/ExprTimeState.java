@@ -43,11 +43,11 @@ public class ExprTimeState extends WrapperExpression<Object> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		final Expression<?> expr = vars[0];
 		if (expr instanceof UnparsedLiteral)
 			return false;
-		if (isDelayed) {
+		if (isDelayed == 1) {
 			Skript.error("Cannot use time states after the event has already passed");
 			return false;
 		}

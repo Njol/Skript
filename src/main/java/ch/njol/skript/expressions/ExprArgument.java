@@ -51,7 +51,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 	private Argument<?> arg;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (Commands.currentArguments == null) {
 			Skript.error("The expression 'argument' can only be used within a command");
 			return false;
@@ -66,7 +66,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 			break;
 			case 1:
 			case 2:
-				final int i = Integer.parseInt(parser.regexes.get(0).group(1));
+				final int i = Skript.parseInt(parser.regexes.get(0).group(1));
 				if (i > Commands.currentArguments.size()) {
 					Skript.error("the command doesn't have a " + StringUtils.fancyOrderNumber(i) + " argument");
 					return false;
@@ -108,7 +108,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 	protected Object[] get(final Event e) {
 		if (!(e instanceof SkriptCommandEvent))
 			return null;
-		return arg.getCurrent();
+		return arg.getCurrent(e);
 	}
 	
 	@Override

@@ -53,10 +53,13 @@ public class Config {
 	boolean modified = false;
 	int errors = 0;
 	
-	public Config(final File file, final boolean simple, final String defaultSeparator) throws IOException {
+	final boolean allowEmptySections;
+	
+	public Config(final File file, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
 		
 		this.file = file;
 		this.simple = simple;
+		this.allowEmptySections = allowEmptySections;
 		this.defaultSeparator = defaultSeparator;
 		separator = defaultSeparator;
 		
@@ -81,9 +84,20 @@ public class Config {
 		r.close();
 	}
 	
-	public Config(final String s, final String fileName, final boolean simple, final String defaultSeparator) throws IOException {
+	/**
+	 * For testing
+	 * 
+	 * @param s
+	 * @param fileName
+	 * @param simple
+	 * @param allowEmptySections
+	 * @param defaultSeparator
+	 * @throws IOException
+	 */
+	public Config(final String s, final String fileName, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
 		file = new File(fileName);
 		this.simple = simple;
+		this.allowEmptySections = allowEmptySections;
 		this.defaultSeparator = defaultSeparator;
 		separator = defaultSeparator;
 		

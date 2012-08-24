@@ -81,7 +81,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	

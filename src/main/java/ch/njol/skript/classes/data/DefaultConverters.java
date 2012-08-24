@@ -26,6 +26,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -56,28 +57,28 @@ public class DefaultConverters {
 	static {
 		
 		//Numbers
-		Skript.registerConverter(Integer.class, Float.class, new Converter<Integer, Float>() {
+		Skript.registerConverter(Number.class, Double.class, new Converter<Number, Double>() {
 			@Override
-			public Float convert(final Integer i) {
-				return i.floatValue();
+			public Double convert(final Number n) {
+				return n.doubleValue();
 			}
 		});
-		Skript.registerConverter(Integer.class, Double.class, new Converter<Integer, Double>() {
+		Skript.registerConverter(Number.class, Float.class, new Converter<Number, Float>() {
 			@Override
-			public Double convert(final Integer i) {
-				return i.doubleValue();
+			public Float convert(final Number n) {
+				return n.floatValue();
 			}
 		});
-		Skript.registerConverter(Float.class, Double.class, new Converter<Float, Double>() {
+		Skript.registerConverter(Short.class, Integer.class, new Converter<Short, Integer>() {
 			@Override
-			public Double convert(final Float f) {
-				return f.doubleValue();
+			public Integer convert(final Short s) {
+				return s.intValue();
 			}
 		});
-		Skript.registerConverter(Double.class, Float.class, new Converter<Double, Float>() {
+		Skript.registerConverter(Byte.class, Integer.class, new Converter<Byte, Integer>() {
 			@Override
-			public Float convert(final Double d) {
-				return d.floatValue();
+			public Integer convert(final Byte b) {
+				return b.intValue();
 			}
 		});
 		
@@ -245,17 +246,17 @@ public class DefaultConverters {
 		});
 		
 		// Block - InventoryHolder
-//		Skript.registerConverter(Block.class, InventoryHolder.class, new Converter<Block, InventoryHolder>() {
-//			@Override
-//			public InventoryHolder convert(final Block b) {
-//				if (b == null || b.getState() == null)
-//					return null;
-//				final BlockState s = b.getState();
-//				if (s instanceof InventoryHolder)
-//					return (InventoryHolder) s;
-//				return null;
-//			}
-//		});
+		Skript.registerConverter(Block.class, InventoryHolder.class, new Converter<Block, InventoryHolder>() {
+			@Override
+			public InventoryHolder convert(final Block b) {
+				if (b == null || b.getState() == null)
+					return null;
+				final BlockState s = b.getState();
+				if (s instanceof InventoryHolder)
+					return (InventoryHolder) s;
+				return null;
+			}
+		});
 //		Skript.registerConverter(InventoryHolder.class, Block.class, new Converter<InventoryHolder, Block>() {
 //			@Override
 //			public Block convert(final InventoryHolder h) {

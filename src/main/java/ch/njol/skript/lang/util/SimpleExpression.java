@@ -208,7 +208,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 */
 	@Override
 	public boolean setTime(final int time) {
-		if (ScriptLoader.hasDelayBefore && time != 0) {
+		if (ScriptLoader.hasDelayBefore == 1 && time != 0) {
 			Skript.error("Can't use time states after the event has already passed");
 			return false;
 		}
@@ -217,7 +217,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	protected final boolean setTime(final int time, final Class<? extends Event> applicableEvent, final Expression<?>... mustbeDefaultVars) {
-		if (ScriptLoader.hasDelayBefore && time != 0) {
+		if (ScriptLoader.hasDelayBefore == 1 && time != 0) {
 			Skript.error("Can't use time states after the event has already passed");
 			return false;
 		}
@@ -233,7 +233,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	protected final boolean setTime(final int time, final Expression<?> mustbeDefaultVar, final Class<? extends Event>... applicableEvents) {
-		if (ScriptLoader.hasDelayBefore && time != 0) {
+		if (ScriptLoader.hasDelayBefore == 1 && time != 0) {
 			Skript.error("Can't use time states after the event has already passed");
 			return false;
 		}

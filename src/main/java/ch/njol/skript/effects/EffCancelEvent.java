@@ -44,8 +44,8 @@ public class EffCancelEvent extends Effect {
 	private boolean cancel;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
-		if (isDelayed) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+		if (isDelayed == 1) {
 			Skript.error("Can't cancel an event anymore after is has already passed");
 			return false;
 		}

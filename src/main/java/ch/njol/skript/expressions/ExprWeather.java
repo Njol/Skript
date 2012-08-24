@@ -29,6 +29,7 @@ import org.bukkit.event.weather.WeatherChangeEvent;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -46,14 +47,12 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	}
 	
 	private Expression<World> worlds;
-	private boolean delayed;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		worlds = (Expression<World>) vars[0];
 		setExpr(worlds);
-		delayed = isDelayed;
 		return true;
 	}
 	
@@ -64,7 +63,7 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	
 	@Override
 	protected WeatherType[] get(final Event e, final World[] source) {
-		if (!delayed && getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault()) {
+		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault() && !Delay.isDelayed(e)) {
 			if (e instanceof WeatherChangeEvent) {
 				if (!((WeatherChangeEvent) e).toWeatherState())
 					return new WeatherType[] {WeatherType.CLEAR};
@@ -93,7 +92,7 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		final WeatherType t = mode == ChangeMode.CLEAR ? WeatherType.CLEAR : (WeatherType) delta;
-		if (!delayed && getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault()) {
+		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault() && !Delay.isDelayed(e)) {
 			if (e instanceof WeatherChangeEvent) {
 				if (((WeatherChangeEvent) e).toWeatherState() && t == WeatherType.CLEAR)
 					((WeatherChangeEvent) e).setCancelled(true);

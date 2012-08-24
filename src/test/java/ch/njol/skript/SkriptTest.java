@@ -71,13 +71,13 @@ public class SkriptTest {
 	private final static void test() {
 		
 		final Trigger t = ScriptLoader.loadTrigger(nodeFromString("on rightclick on air:\n kill player"));
-		t.run(new PlayerInteractEvent(njol, Action.LEFT_CLICK_AIR, null, null, null));
+		t.start(new PlayerInteractEvent(njol, Action.LEFT_CLICK_AIR, null, null, null));
 		
 	}
 	
 	private final static SectionNode nodeFromString(final String s) {
 		try {
-			return (SectionNode) new Config(s, "test.sk", true, ":").getMainNode().getNodeList().get(0);
+			return (SectionNode) new Config(s, "test.sk", true, false, ":").getMainNode().getNodeList().get(0);
 		} catch (final IOException e) {
 			e.printStackTrace();
 			return null;

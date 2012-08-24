@@ -40,9 +40,9 @@ import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.SkriptCommand;
 import ch.njol.skript.command.SkriptCommandEvent;
 import ch.njol.skript.lang.SkriptEvent.SkriptEventInfo;
+import ch.njol.skript.lang.util.VariableString;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
-import ch.njol.skript.util.VariableString;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
@@ -362,7 +362,7 @@ public class SkriptParser {
 			if (res.vars[i] == null)
 				as.get(i).setToDefault(event);
 			else
-				as.get(i).set(res.vars[i].getArray(null));
+				as.get(i).set(event, res.vars[i].getArray(event));
 		}
 		return true;
 	}
@@ -527,7 +527,7 @@ public class SkriptParser {
 									if (vi.time != 0) {
 										if (var instanceof UnparsedLiteral)
 											return null;
-										if (ScriptLoader.hasDelayBefore) {
+										if (ScriptLoader.hasDelayBefore == 1) {
 											setBestError(ErrorQuality.SEMANTIC_ERROR, "Cannot use time states after the event has already passed", true);
 											return null;
 										}

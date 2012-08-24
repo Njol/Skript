@@ -57,7 +57,7 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (vars.length > 0)
 			types = (Expression<ItemType>) vars[0];
 		blocks = matchedPattern >= 2;
@@ -157,7 +157,7 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 	
 	@Override
 	public boolean canLoop() {
-		return true;
+		return types == null || !types.isSingle() || types instanceof Literal && types.getSingle(null).numTypes() > 1;
 	}
 	
 	@Override

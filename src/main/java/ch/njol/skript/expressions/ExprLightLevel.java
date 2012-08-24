@@ -50,7 +50,7 @@ public class ExprLightLevel extends PropertyExpression<Block, Byte> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		offset = (Expression<Offset>) exprs[0];
 		blocks = (Expression<Block>) exprs[1];
 		if (StringUtils.startsWithIgnoreCase(parseResult.expr, "sky"))

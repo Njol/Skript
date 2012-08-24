@@ -47,7 +47,7 @@ public class ExprCoordinate extends PropertyExpression<Location, Double> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends Location>) exprs[0]);
 		axis = parseResult.regexes.get(0).group().charAt(0) - 'x';
 		return true;

@@ -32,9 +32,9 @@ import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.VariableString;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
-import ch.njol.skript.util.VariableString;
 import ch.njol.util.Checker;
 import ch.njol.util.iterator.ArrayIterator;
 
@@ -233,7 +233,7 @@ public class VariableStringLiteral implements Literal<String> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	

@@ -48,7 +48,7 @@ public class EffBroadcast extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		messages = (Expression<String>) vars[0];
 		worlds = (Expression<World>) vars[1];
 		return true;

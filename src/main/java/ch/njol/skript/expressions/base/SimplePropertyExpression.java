@@ -35,6 +35,13 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> {
 	
+	/**
+	 * 
+	 * @param c
+	 * @param type
+	 * @param property
+	 * @param fromType Should be plural but doesn't have to be
+	 */
 	protected static <T> void register(final Class<? extends SimplePropertyExpression<?, T>> c, final Class<T> type, final String property, final String fromType) {
 		Skript.registerExpression(c, type, ExpressionType.PROPERTY, "[the] " + property + " of %" + fromType + "%", "%" + fromType + "%'[s] " + property);
 	}
@@ -51,7 +58,7 @@ public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends F>) exprs[0]);
 		return true;
 	}

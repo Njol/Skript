@@ -42,7 +42,7 @@ public class ExprAmount extends SimpleExpression<Integer> {
 	private Expression<?> expr;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		expr = exprs[0];
 		return true;
 	}

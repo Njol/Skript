@@ -52,7 +52,7 @@ public class EffHealth extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		damageables = vars[0];
 		damage = (Expression<Number>) vars[1];
 		heal = (matchedPattern >= 2);
@@ -83,8 +83,12 @@ public class EffHealth extends Effect {
 				if (this.damage == null) {
 					((LivingEntity) damageable).setHealth(((LivingEntity) damageable).getMaxHealth());
 				} else {
-					((LivingEntity) damageable).setHealth(Math.max(0, Math.min(((LivingEntity) damageable).getMaxHealth(),
-							((LivingEntity) damageable).getHealth() + (int) Math.round(2. * (heal ? damage : -damage)))));
+					if (!heal) {
+						((LivingEntity) damageable).damage((int) Math.round(2. * damage));
+					} else {
+						((LivingEntity) damageable).setHealth(Math.max(0, Math.min(((LivingEntity) damageable).getMaxHealth(),
+								((LivingEntity) damageable).getHealth() + (int) Math.round(2. * damage))));
+					}
 				}
 			}
 		}

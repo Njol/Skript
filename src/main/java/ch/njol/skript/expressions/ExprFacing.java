@@ -52,7 +52,7 @@ public class ExprFacing extends PropertyExpression<Object, BlockFace> {
 	private boolean horizontal;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		setExpr(exprs[0]);
 		horizontal = matchedPattern >= 2;
 		return true;

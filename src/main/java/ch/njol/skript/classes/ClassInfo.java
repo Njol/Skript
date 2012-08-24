@@ -39,7 +39,7 @@ public class ClassInfo<T> {
 	
 	private Pattern[] userInputPatterns = null;
 	
-	private Changer<T, ?> changer = null;
+	private Changer<? super T, ?> changer = null;
 	
 	private Serializer<T> serializer = null;
 	private Class<?> serializeAs = null;
@@ -105,7 +105,7 @@ public class ClassInfo<T> {
 		return this;
 	}
 	
-	public ClassInfo<T> changer(final Changer<T, ?> changer) {
+	public ClassInfo<T> changer(final Changer<? super T, ?> changer) {
 		this.changer = changer;
 		return this;
 	}
@@ -145,7 +145,7 @@ public class ClassInfo<T> {
 		return userInputPatterns;
 	}
 	
-	public Changer<T, ?> getChanger() {
+	public Changer<? super T, ?> getChanger() {
 		return changer;
 	}
 	

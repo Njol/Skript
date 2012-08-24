@@ -33,7 +33,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class OcelotData extends EntityData<Ocelot> {
 	
 	static {
-		EntityData.register(OcelotData.class, "ocelot", Ocelot.class, "(wild|untamed) ocelot[s]", "ocelot[s]", "(cat|tamed ocelot)[s]");
+		EntityData.register(OcelotData.class, "ocelot", Ocelot.class,
+				"(wild|untamed|unowned) ocelot[s]", "ocelot[s]", "([(tamed|owned)] cat|(tamed|owned) ocelot)[s]");
 	}
 	
 	int tamed = 0;

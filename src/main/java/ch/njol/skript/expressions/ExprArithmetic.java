@@ -127,7 +127,7 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		first = (Expression<? extends Number>) exprs[0];
 		second = (Expression<? extends Number>) exprs[1];
 		op = patterns.getInfo(matchedPattern);

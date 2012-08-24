@@ -104,7 +104,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (exprs.length != 0)
 			throw new SkriptAPIException(this.getClass().getName() + " has expressions in it's pattern but does not override init(...)");
 		return init();
@@ -127,7 +127,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 		}
 		log.stop();
 		if (!hasValue) {
-			log.printErrors("There's no " + Skript.getExactClassName(c) + " in this event");
+			log.printErrors("There's no " + Skript.getSuperClassInfo(c).getName() + " in this event");
 			return false;
 		}
 		log.printLog();

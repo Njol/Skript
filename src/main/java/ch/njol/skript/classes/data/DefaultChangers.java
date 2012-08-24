@@ -24,6 +24,7 @@ package ch.njol.skript.classes.data;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -84,13 +85,86 @@ public class DefaultChangers {
 		}
 	};
 	
+	public final static Changer<Entity, ItemType[]> entityChanger = new Changer<Entity, ItemType[]>() {
+		@Override
+		public Class<? extends ItemType[]> acceptChange(final ChangeMode mode) {
+			if (mode == ChangeMode.SET)
+				return null;
+			return ItemType[].class;
+		}
+		
+		@SuppressWarnings("deprecation")
+		@Override
+		public void change(final Entity[] entities, final ItemType[] delta, final ChangeMode mode) {
+			for (final Entity e : entities) {
+				if (!(e instanceof Player)) {
+					if (mode == ChangeMode.CLEAR)
+						e.remove();
+					continue;
+				}
+				if (mode == ChangeMode.CLEAR)
+					continue;
+				final PlayerInventory invi = ((Player) e).getInventory();
+				for (final ItemType type : delta) {
+					if (mode == ChangeMode.ADD)
+						type.addTo(invi);
+					else
+						type.removeFrom(invi);
+				}
+				((Player) e).updateInventory();
+			}
+		}
+	};
+	
+	public final static Changer<Entity, Void> nonLivingEntityChanger = new Changer<Entity, Void>() {
+		@Override
+		public Class<Void> acceptChange(final ChangeMode mode) {
+			if (mode == ChangeMode.CLEAR)
+				return Void.class;
+			return null;
+		}
+		
+		@Override
+		public void change(final Entity[] entities, final Void delta, final ChangeMode mode) {
+			for (final Entity e : entities) {
+				if (e instanceof Player)
+					continue;
+				e.remove();
+			}
+		}
+	};
+	
+	public final static Changer<Player, ItemType[]> playerChanger = new Changer<Player, ItemType[]>() {
+		@Override
+		public Class<? extends ItemType[]> acceptChange(final ChangeMode mode) {
+			if (mode == ChangeMode.SET || mode == ChangeMode.CLEAR)
+				return null;
+			return ItemType[].class;
+		}
+		
+		@SuppressWarnings("deprecation")
+		@Override
+		public void change(final Player[] players, final ItemType[] delta, final ChangeMode mode) {
+			for (final Player p : players) {
+				final PlayerInventory invi = p.getInventory();
+				for (final ItemType type : delta) {
+					if (mode == ChangeMode.ADD)
+						type.addTo(invi);
+					else
+						type.removeFrom(invi);
+				}
+				p.updateInventory();
+			}
+		}
+	};
+	
 	public final static Changer<Inventory, ItemType[]> inventoryChanger = new Changer<Inventory, ItemType[]>() {
 		@Override
 		public Class<ItemType[]> acceptChange(final ChangeMode mode) {
 			return ItemType[].class;
 		}
 		
-		@SuppressWarnings({"deprecation"})
+		@SuppressWarnings("deprecation")
 		@Override
 		public void change(final Inventory[] invis, final ItemType[] delta, final ChangeMode mode) {
 			for (final Inventory invi : invis) {

@@ -21,52 +21,72 @@
 
 package ch.njol.skript.effects;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
+
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.util.Timespan;
 
 /**
  * @author Peter Güttinger
  * 
  */
-public class EffDelay extends Effect {
+public class Delay extends Effect {
 	
 	static {
-		Skript.registerEffect(EffDelay.class, "(wait|halt) [for] %timespan%");
+		Skript.registerEffect(Delay.class, "(wait|halt) [for] %timespan%");
 	}
 	
 	private Expression<Timespan> duration;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		duration = (Expression<Timespan>) exprs[0];
 		return true;
 	}
 	
-	/**
-	 * Gets this delay's delay in ticks for the given event
-	 * 
-	 * @param e
-	 * @return the delay or -1 if not applicable
-	 */
-	public int getDelay(final Event e) {
-		final Timespan d = duration.getSingle(e);
-		return d == null ? -1 : d.getTicks();
+	@Override
+	protected TriggerItem walk(final Event e) {
+		debug(e, true);
+		final long start = System.nanoTime();
+		if (getNext() != null) {
+			delayed.add(e);
+			final Timespan d = duration.getSingle(e);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					if (Skript.debug())
+						Skript.info(getIndentation() + "... continuing after " + (System.nanoTime() - start) / 1000000000. + "s");
+					TriggerItem.walk(getNext(), e);
+				}
+			}, d == null ? 0 : d.getTicks());
+		}
+		return null;
 	}
 	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "wait for " + duration.toString(e, debug);
+	private final static Set<Event> delayed = Collections.newSetFromMap(new WeakHashMap<Event, Boolean>());
+	
+	public final static boolean isDelayed(final Event e) {
+		return delayed.contains(e);
 	}
 	
 	@Override
 	protected void execute(final Event e) {
 		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public String toString(final Event e, final boolean debug) {
+		return "wait for " + duration.toString(e, debug) + "...";
 	}
 	
 }

@@ -55,7 +55,7 @@ public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 	}
 	
 	@Override
-	public final boolean init(final ch.njol.skript.lang.Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public final boolean init(final ch.njol.skript.lang.Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -78,17 +78,28 @@ public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 	
 	/**
 	 * This method is called after the whole trigger is loaded for events that fire themselves
+	 * 
+	 * @param t the trigger to register to this event
 	 */
-	public void register(@SuppressWarnings("unused") final Trigger t) {
+	public void register(final Trigger t) {
 		throw new SkriptAPIException("events that fire themselves must override register(Trigger)");
 	}
 	
 	/**
-	 * This method unregisters this event registered through {@link #register(Trigger)}. It is used when all scripts are reloaded, thus it's possible to unregister all events at
-	 * once if it's faster.
+	 * This method is called to unregister this event registered through {@link #register(Trigger)}.
+	 * 
+	 * @param t the same trigger which was registered for this event
 	 */
-	public void unregister() {
+	public void unregister(final Trigger t) {
 		throw new SkriptAPIException("events that fire themselves must override unregister(Trigger)");
+	}
+	
+	/**
+	 * This method is called to unregister all events registered through {@link #register(Trigger)}. This is called on all registered events, thus it can also only unregister the
+	 * event it is called on.
+	 */
+	public void unregisterAll() {
+		throw new SkriptAPIException("events that fire themselves must override unregisterAll(Trigger)");
 	}
 	
 }

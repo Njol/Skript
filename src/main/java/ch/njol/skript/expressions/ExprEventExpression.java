@@ -43,7 +43,7 @@ public class ExprEventExpression extends WrapperExpression<Object> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final boolean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		ClassInfo<?> ci = Skript.getClassInfoFromUserInput(parser.regexes.get(0).group());
 		if (ci == null) {
 			final Class<?> c = Skript.getClassByName(parser.regexes.get(0).group());

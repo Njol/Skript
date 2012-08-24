@@ -125,7 +125,7 @@ public class EntityType {
 		Validate.notNullOrEmpty(s, "s");
 		int amount = -1;
 		if (s.matches("\\d+ .+")) {
-			amount = Integer.parseInt(s.split(" ", 2)[0]);
+			amount = Skript.parseInt(s.split(" ", 2)[0]);
 			s = s.split(" ", 2)[1];
 		} else if (s.matches("(?i)an? .+")) {
 			s = s.split(" ", 2)[1];

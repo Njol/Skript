@@ -64,7 +64,7 @@ public class ExprClicked extends SimpleExpression<Object> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		final String s = parseResult.regexes.get(0).group();
 		final SubLog log = SkriptLogger.startSubLog();
 		entityType = EntityData.parse(s);

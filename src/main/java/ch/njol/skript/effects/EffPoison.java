@@ -53,7 +53,7 @@ public class EffPoison extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		entites = (Expression<LivingEntity>) exprs[0];
 		if (matchedPattern == 0)
 			duration = (Expression<Timespan>) exprs[1];

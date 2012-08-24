@@ -45,16 +45,13 @@ public class ExprDamage extends SimpleExpression<Float> {
 		Skript.registerExpression(ExprDamage.class, Float.class, ExpressionType.SIMPLE, "[the] damage");
 	}
 	
-	private boolean delayed;
-	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		if (!Utils.containsAny(ScriptLoader.currentEvents, EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class)) {
 			Skript.error("'damage' can only be used in damage events");
 			return false;
 		}
-		delayed = isDelayed;
 		return true;
 	}
 	
@@ -67,10 +64,10 @@ public class ExprDamage extends SimpleExpression<Float> {
 	
 	@Override
 	public Class<?> acceptChange(final ChangeMode mode) {
-		if (delayed) {
-			// TODO error
-			return null;
-		}
+//		if (isDelayed) {
+//			// TODO error
+//			return null;
+//		}
 		return Float.class;
 	}
 	

@@ -49,7 +49,7 @@ public class CondIsOfType extends Condition {
 	private boolean item;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final boolean isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		what = exprs[0];
 		types = exprs[1];
 		item = matchedPattern <= 1;
