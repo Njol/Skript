@@ -64,8 +64,7 @@ public class Conditional extends TriggerSection {
 		elseClause = new TriggerSection(node) {
 			@Override
 			public TriggerItem walk(final Event e) {
-				debug(e, false);
-				return getNext();
+				return walk(e, true);
 			}
 			
 			@Override
@@ -75,7 +74,6 @@ public class Conditional extends TriggerSection {
 		};
 		elseClause.setParent(getParent());
 		elseClause.setNext(getNext());
-		setNext(elseClause);
 	}
 	
 }

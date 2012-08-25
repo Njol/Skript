@@ -21,6 +21,7 @@
 
 package ch.njol.skript.expressions;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
@@ -63,7 +64,7 @@ public class ExprDisplayName extends SimplePropertyExpression<Player, String> {
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		for (final Player p : getExpr().getArray(e)) {
-			p.setDisplayName(Utils.replaceChatStyles((String) delta));
+			p.setDisplayName(Utils.replaceChatStyles((String) delta) + ChatColor.RESET);
 		}
 	}
 	

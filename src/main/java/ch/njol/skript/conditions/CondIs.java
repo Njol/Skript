@@ -152,24 +152,6 @@ public class CondIs extends Condition {
 			return true;
 		}
 		
-		// special cases for variables:
-		
-		if ((first instanceof Variable || second instanceof Variable) && relation.isEqualOrInverse() && third == null) {
-			if (first instanceof UnparsedLiteral) {
-				final Expression<?> v1 = first.getConvertedExpression(Object.class);
-				if (v1 == null)
-					return false;
-				first = v1;
-			} else if (second instanceof UnparsedLiteral) {
-				final Expression<?> v2 = second.getConvertedExpression(Object.class);
-				if (v2 == null)
-					return false;
-				second = v2;
-			}
-			comp = Comparator.equalsComparator;
-			return true;
-		}
-		
 		// variables, but numbers as well:
 		
 		final SubLog log = SkriptLogger.startSubLog();
@@ -183,7 +165,10 @@ public class CondIs extends Condition {
 			comp = new Comparator<Object, Object>() {
 				@Override
 				public Relation compare(final Object o1, final Object o2) {
-					return Relation.get((o1 instanceof Number ? ((Number) o1).doubleValue() : 0) - (o2 instanceof Number ? ((Number) o2).doubleValue() : 0));
+					final double diff = (o1 instanceof Number ? ((Number) o1).doubleValue() : 0) - (o2 instanceof Number ? ((Number) o2).doubleValue() : 0);
+					if (Math.abs(diff) < Skript.EPSILON)
+						return Relation.EQUAL;
+					return Relation.get(diff);
 				}
 				
 				@Override
@@ -195,6 +180,25 @@ public class CondIs extends Condition {
 			second = n2;
 			third = n3;
 			log.stop();
+			return true;
+		}
+		
+		// special cases for variables:
+		
+		if ((first instanceof Variable || second instanceof Variable) && relation.isEqualOrInverse() && third == null) {
+			log.stop();
+			if (first instanceof UnparsedLiteral) {
+				final Expression<?> v1 = first.getConvertedExpression(Object.class);
+				if (v1 == null)
+					return false;
+				first = v1;
+			} else if (second instanceof UnparsedLiteral) {
+				final Expression<?> v2 = second.getConvertedExpression(Object.class);
+				if (v2 == null)
+					return false;
+				second = v2;
+			}
+			comp = Comparator.equalsComparator;
 			return true;
 		}
 		

@@ -59,7 +59,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -252,19 +251,6 @@ public final class Skript extends JavaPlugin implements Listener {
 				}
 			}, this);
 		}
-		
-		Bukkit.getPluginManager().registerEvents(new Listener() {
-			@SuppressWarnings("unused")
-			@EventHandler
-			public void onClick(final PlayerInteractEvent e) {
-				Skript.info("action: " + e.getAction());
-				Skript.info("cancelled?: " + e.isCancelled());
-				Skript.info("has item: " + e.hasItem());
-				Skript.info("use item: " + e.useItemInHand());
-				Skript.info("has block: " + e.hasBlock());
-				Skript.info("use block: " + e.useInteractedBlock());
-			}
-		}, this);
 		
 	}
 	
@@ -866,14 +852,14 @@ public final class Skript extends JavaPlugin implements Listener {
 				}
 			}
 			
-			if (variables.isEmpty() && varFile.length() != 0) {
-				Skript.warning("Could not load variables! Skript will try to create a backup of the file.");
-				try {
-					FileUtils.backup(varFile);
-				} catch (final IOException e) {
-					Skript.error("Could not backup the variables file: " + e.getLocalizedMessage());
-				}
-			}
+//			if (variables.isEmpty() && varFile.length() != 0) {
+//				Skript.warning("Could not load variables! Skript will try to create a backup of the file.");
+//				try {
+//					FileUtils.backup(varFile);
+//				} catch (final IOException e) {
+//					Skript.error("Could not backup the variables file: " + e.getLocalizedMessage());
+//				}
+//			}
 		}
 	}
 	

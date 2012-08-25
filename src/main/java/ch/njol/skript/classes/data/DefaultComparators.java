@@ -49,14 +49,13 @@ public class DefaultComparators {
 		// IMPORTANT!! No Object - Object comparator
 		//  why?
 		
-		// Double - Double
-		// Number - Number doesn't work...
-		Skript.registerComparator(Double.class, Double.class, new Comparator<Double, Double>() {
+		// Number - Number
+		Skript.registerComparator(Number.class, Number.class, new Comparator<Number, Number>() {
 			@Override
-			public Relation compare(final Double d1, final Double d2) {
-				if (Math.abs(d1.doubleValue() - d2.doubleValue()) < Skript.EPSILON)
+			public Relation compare(final Number n1, final Number n2) {
+				if (Math.abs(n1.doubleValue() - n2.doubleValue()) < Skript.EPSILON)
 					return Relation.EQUAL;
-				return Relation.get(d1.doubleValue() - d2.doubleValue());
+				return Relation.get(n1.doubleValue() - n2.doubleValue());
 			}
 			
 			@Override

@@ -29,6 +29,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
@@ -40,12 +41,12 @@ public final class EvtGameMode extends SkriptEvent {
 		Skript.registerEvent(EvtGameMode.class, PlayerGameModeChangeEvent.class, "gamemode change [to %gamemode%]");
 	}
 	
-	private GameMode mode;
+	private Literal<GameMode> mode;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		mode = ((Literal<GameMode>) args[0]).getSingle();
+		mode = (Literal<GameMode>) args[0];
 		return true;
 	}
 	
@@ -53,7 +54,12 @@ public final class EvtGameMode extends SkriptEvent {
 	public boolean check(final Event e) {
 		if (mode == null)
 			return true;
-		return ((PlayerGameModeChangeEvent) e).getNewGameMode().equals(mode);
+		return mode.check(e, new Checker<GameMode>() {
+			@Override
+			public boolean check(final GameMode m) {
+				return ((PlayerGameModeChangeEvent) e).getNewGameMode().equals(m);
+			}
+		});
 	}
 	
 	@Override
