@@ -27,18 +27,17 @@ import java.util.WeakHashMap;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.Utils;
 
 /**
  * Represents an argument of a command
  * 
  * @author Peter Güttinger
- * 
  */
 public class Argument<T> {
 	

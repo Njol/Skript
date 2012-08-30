@@ -37,7 +37,6 @@ import ch.njol.skript.util.Time;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class ExprTime extends PropertyExpression<World, Time> {
 	

@@ -27,14 +27,13 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * Represents a general part of the syntax. Implementing classes/interfaces are {@link Expression} and {@link Statement}.
  * 
  * @author Peter Güttinger
- * 
  */
 public interface SyntaxElement {
 	
 	/**
 	 * called just after the constructor.
 	 * 
-	 * @param exprs all %var%s included in the matching pattern in the order they appear in the pattern. If an optional value was left out it will still be included in this list
+	 * @param exprs all %expr%s included in the matching pattern in the order they appear in the pattern. If an optional value was left out it will still be included in this list
 	 *            holding the default value of the desired type which usually depends on the event.
 	 * @param matchedPattern the index of the pattern which matched
 	 * @param isDelayed whether this expression is used after a delay or not (i.e. if the event has already passed when this expression will be called)

@@ -35,7 +35,6 @@ import ch.njol.skript.util.StringMode;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class EffCommand extends Effect {
 	

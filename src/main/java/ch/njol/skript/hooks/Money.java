@@ -19,9 +19,8 @@
  * 
  */
 
-package ch.njol.skript.util;
+package ch.njol.skript.hooks;
 
-import ch.njol.skript.Economy;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
@@ -29,7 +28,6 @@ import ch.njol.skript.lang.ParseContext;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class Money {
 	

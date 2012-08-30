@@ -45,7 +45,6 @@ import ch.njol.skript.Skript;
  * A block that gets all data from a BlockState, and either reflects changes on the BlockState or delays them to the real block by 1 tick depending on which constructor is used.
  * 
  * @author Peter Güttinger
- * 
  */
 public class BlockStateBlock implements Block {
 	

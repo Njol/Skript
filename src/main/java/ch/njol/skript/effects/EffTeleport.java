@@ -37,7 +37,6 @@ import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EffTeleport extends Effect {
 	

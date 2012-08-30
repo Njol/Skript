@@ -21,38 +21,25 @@
 
 package ch.njol.skript;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -63,7 +50,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.classes.ChainedConverter;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
@@ -105,6 +91,9 @@ import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
+import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.util.CommandHelp;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Getter;
@@ -112,11 +101,9 @@ import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
-import ch.njol.util.Callback;
 import ch.njol.util.Pair;
 import ch.njol.util.ReversedListView;
 import ch.njol.util.Setter;
-import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
 import ch.njol.util.iterator.EnumerationIterable;
 
@@ -157,6 +144,10 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static Skript getInstance() {
 		return instance;
+	}
+	
+	public static Version getVersion() {
+		return version;
 	}
 	
 	public Skript() throws IllegalAccessException {
@@ -207,6 +198,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		loadMainConfig();
 		
+		Commands.registerListener();
+		
 		if (logNormal())
 			info(" ~ created by & © Peter Güttinger aka Njol ~");
 		
@@ -218,27 +211,15 @@ public final class Skript extends JavaPlugin implements Listener {
 				
 				Skript.stopAcceptingRegistrations();
 				
-				loadVariables();
+				Variables.loadVariables();
 				
 				ScriptLoader.loadScripts();
-				
-				Commands.finishRegisteringCommands();
 				
 				Skript.info("Skript finished loading!");
 			}
 		});
 		
-		variableFileSaveTask = Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, new Runnable() {
-			@Override
-			public void run() {
-				synchronized (variables) {
-					if (variablesModded) {
-						saveVariables();
-						variablesModded = false;
-					}
-				}
-			}
-		}, 600, 600);// 30 secs
+		Variables.scheduleSaveTask();
 		
 		if (Bukkit.getOnlineMode()) {
 			Bukkit.getPluginManager().registerEvents(new Listener() {
@@ -307,10 +288,10 @@ public final class Skript extends JavaPlugin implements Listener {
 	public void onDisable() {
 		disabled = true;
 		
-		Bukkit.getScheduler().cancelTask(variableFileSaveTask); // async tasks aren't stopped with cancelTasks(Plugin)?
+		Variables.cancelSaveTask(); // async tasks aren't stopped with cancelTasks(Plugin)?
 		Bukkit.getScheduler().cancelTasks(this);
 		
-		saveVariables();
+		Variables.saveVariables();
 		
 		disableScripts();
 		
@@ -601,10 +582,10 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static final Random random = new Random();
 	
-	static EventPriority priority = EventPriority.NORMAL;
+	static EventPriority defaultEventPriority = EventPriority.NORMAL;
 	
-	public static EventPriority getPriority() {
-		return priority;
+	public static EventPriority getDefaultEventPriority() {
+		return defaultEventPriority;
 	}
 	
 	public static <T> T[] array(final T... array) {
@@ -645,271 +626,6 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static void enableListener() {
 		listenerEnabled = true;
-	}
-	
-	// ================ VARIABLES ================
-	
-	private final static String varFileName = "variables";
-	private final static String varFileExt = "csv";
-	
-	private int variableFileSaveTask;
-	
-	private final static Map<String, Object> variables = new HashMap<String, Object>();
-	private static boolean variablesModded = false;
-	
-	private final static Map<String, WeakHashMap<Event, Object>> localVariables = new HashMap<String, WeakHashMap<Event, Object>>();
-	
-	public final static void setVariable(final String name, final Object value) {
-		synchronized (variables) {
-			variablesModded = true;
-			if (value == null)
-				variables.remove(name);
-			else
-				variables.put(name, value);
-		}
-	}
-	
-	public static final Object getVariable(final String name) {
-		synchronized (variables) {
-			return variables.get(name);
-		}
-	}
-	
-	public final static void setLocalVariable(final String name, final Event e, final Object value) {
-		WeakHashMap<Event, Object> map = localVariables.get(name);
-		if (map == null)
-			localVariables.put(name, map = new WeakHashMap<Event, Object>());
-		map.put(e, value);
-	}
-	
-	public final static Object getLocalVariable(final String name, final Event e) {
-		final WeakHashMap<Event, Object> map = localVariables.get(name);
-		if (map == null)
-			return null;
-		return map.get(e);
-	}
-	
-	private final static void loadVariables() {
-		synchronized (variables) {
-			final File oldFile = new File(instance.getDataFolder(), "variables.yml");//pre-1.3
-			final File varFile = new File(instance.getDataFolder(), Skript.varFileName + "." + varFileExt);
-			if (oldFile.exists()) {
-				if (varFile.exists()) {
-					Skript.error("Found both a new and an old variable file, ignoring the old one");
-				} else {
-					PrintWriter pw = null;
-					try {
-						pw = new PrintWriter(varFile);
-						final YamlConfiguration varConfig = YamlConfiguration.loadConfiguration(oldFile);
-						for (final Entry<String, Object> e : varConfig.getValues(true).entrySet()) {
-							if (!(e.getValue() instanceof String)) {// not an entry
-								continue;
-							}
-							final String v = (String) e.getValue();
-							final String type = v.substring(v.indexOf('<') + 1, v.indexOf('>'));
-							final String value = v.substring(v.indexOf('>') + 1);
-							pw.println(e.getKey() + ", " + type + ", \"" + value.replace("\"", "\"\"") + "\"");
-						}
-						pw.flush();
-						oldFile.delete();
-						Skript.info("[1.3] Converted your variables.yml to the new format and renamed it to variables.csv");
-					} catch (final IOException e) {
-						Skript.error("Error while vonverting the variables to the new format");
-					} finally {
-						if (pw != null)
-							pw.close();
-					}
-				}
-			}
-			try {
-				varFile.createNewFile();
-			} catch (final IOException e) {
-				Skript.error("Cannot create the variables file: " + e.getLocalizedMessage());
-				return;
-			}
-			if (!varFile.canWrite()) {
-				Skript.error("Cannot write to the variables file - no variables will be saved!");
-			}
-			if (!varFile.canRead()) {
-				Skript.error("Cannot read from the variables file! Skript will try to create a backup of the file but will likely fail.");
-				try {
-					final File backup = FileUtils.backup(varFile);
-					Skript.info("Created a backup of your variables.csv as " + backup.getName());
-				} catch (final IOException e) {
-					Skript.error("Failed to create a backup of your variables.csv: " + e.getMessage());
-				}
-				return;
-			}
-			
-			final SubLog log = SkriptLogger.startSubLog();
-			int unsuccessful = 0;
-			final StringBuilder invalid = new StringBuilder();
-			
-			Version varVersion = Skript.version;
-			
-			BufferedReader r = null;
-			boolean ioEx = false;
-			try {
-				r = new BufferedReader(new FileReader(varFile));
-				String line = null;
-				while ((line = r.readLine()) != null) {
-					line = line.trim();
-					if (line.isEmpty() || line.startsWith("#")) {
-						if (line.startsWith("# version:")) {
-							try {
-								varVersion = new Version(line.substring("# version:".length()).trim());
-							} catch (final IllegalArgumentException e) {}
-						}
-						continue;
-					}
-					final String[] split = splitCSV(line);
-					if (split == null || split.length != 3) {
-						error("invalid amount of commas in line '" + line + "'");
-						if (invalid.length() != 0)
-							invalid.append(", ");
-						invalid.append(split == null ? "<unknown>" : split[0]);
-						unsuccessful++;
-						continue;
-					}
-					final Object d = Skript.deserialize(split[1], split[2]);
-					if (d == null) {
-						if (invalid.length() != 0)
-							invalid.append(", ");
-						invalid.append(split[0]);
-						unsuccessful++;
-						continue;
-					}
-					variables.put(split[0], d);
-				}
-			} catch (final IOException e) {
-				ioEx = true;
-			} finally {
-				if (r != null) {
-					try {
-						r.close();
-					} catch (final IOException e) {
-						ioEx = true;
-					}
-				}
-			}
-			SkriptLogger.stopSubLog(log);
-			if (ioEx || unsuccessful > 0) {
-				if (unsuccessful > 0) {
-					error(unsuccessful + " variable" + (unsuccessful == 1 ? "" : "s") + " could not be loaded!");
-					error("Affected variables: " + invalid.toString());
-					if (log.hasErrors()) {
-						error("further information:");
-						log.printErrors(null);
-					}
-				}
-				if (ioEx) {
-					error("An I/O error occurred while loading the variables");
-				}
-				try {
-					final File backup = FileUtils.backup(varFile);
-					info("Created a backup of variables.csv as " + backup.getName());
-				} catch (final IOException ex) {
-					error("Could not backup variables.csv: " + ex.getMessage());
-				}
-			}
-			
-			final Version v1_4 = new Version("1.4");
-			
-			if (v1_4.isLargerThan(varVersion)) {
-				int renamed = 0;
-				final Map<String, Object> toAdd = new HashMap<String, Object>();
-				final Iterator<Entry<String, Object>> iter = variables.entrySet().iterator();
-				while (iter.hasNext()) {
-					final Entry<String, Object> e = iter.next();
-					final String name = e.getKey();
-					if (!name.contains("<"))
-						continue;
-					final String newName = StringUtils.replaceAll(name, "<(.+?):(.+?)>", new Callback<String, Matcher>() {
-						private final Set<String> keepType = new HashSet<String>(Arrays.asList("entity", "offset", "time", "timespan", "timeperiod", "entitydata", "entitytype"));
-						
-						@Override
-						public String run(final Matcher m) {
-							if (keepType.contains(m.group(1)))
-								return m.group(1) + ":" + m.group(2);
-							return m.group(2);
-						}
-					});
-					if (name.equals(newName))
-						continue;
-					iter.remove();
-					toAdd.put(newName, e.getValue());
-					renamed++;
-				}
-				variables.putAll(toAdd);
-				if (renamed != 0) {
-					Skript.warning("[1.4] Skript tried to fix " + renamed + " variables!");
-					try {
-						final File backup = FileUtils.backup(varFile);
-						Skript.info("Created a backup of your old variables.csv as " + backup.getName());
-					} catch (final IOException e) {
-						Skript.error("Failed to create a backup of your old variables.csv: " + e.getMessage());
-					}
-				}
-			}
-			
-//			if (variables.isEmpty() && varFile.length() != 0) {
-//				Skript.warning("Could not load variables! Skript will try to create a backup of the file.");
-//				try {
-//					FileUtils.backup(varFile);
-//				} catch (final IOException e) {
-//					Skript.error("Could not backup the variables file: " + e.getLocalizedMessage());
-//				}
-//			}
-		}
-	}
-	
-	private final static Pattern csv = Pattern.compile("([^\"\n\r,]+|\"([^\"]|\"\")*\")\\s*(,\\s*|$)");
-	
-	private final static String[] splitCSV(final String line) {
-		final Matcher m = csv.matcher(line);
-		int lastEnd = 0;
-		final ArrayList<String> r = new ArrayList<String>();
-		while (m.find()) {
-			if (lastEnd != m.start())
-				return null;
-			if (m.group(1).startsWith("\""))
-				r.add(m.group(1).substring(1, m.group(1).length() - 1).replace("\"\"", "\""));
-			else
-				r.add(m.group(1));
-			lastEnd = m.end();
-		}
-		if (lastEnd != line.length())
-			return null;
-		return r.toArray(new String[r.size()]);
-	}
-	
-	private final static void saveVariables() {
-		synchronized (variables) {
-			final File varFile = new File(instance.getDataFolder(), Skript.varFileName + "." + varFileExt);
-			PrintWriter pw = null;
-			try {
-				pw = new PrintWriter(varFile);
-				pw.println("# Skript's variable storage");
-				pw.println("# Please do not modify this file manually!");
-				pw.println("#");
-				pw.println("# version: " + Skript.getInstance().getDescription().getVersion());
-				pw.println();
-				for (final Entry<String, Object> e : variables.entrySet()) {
-					if (e.getValue() == null)
-						continue;
-					final Pair<String, String> s = serialize(e.getValue());
-					if (s == null)
-						continue;
-					pw.println(e.getKey() + ", " + s.first + ", " + s.second);
-				}
-				pw.flush();
-			} catch (final IOException e) {
-				Skript.error("Unable to save variables: " + e.getLocalizedMessage());
-			} finally {
-				if (pw != null)
-					pw.close();
-			}
-		}
 	}
 	
 	// ================ REGISTRATIONS ================
@@ -1793,12 +1509,12 @@ public final class Skript extends JavaPlugin implements Listener {
 			if (e.isCancelled() || !e.getMessage().startsWith("/"))
 				return false;
 			return Bukkit.dispatchCommand(e.getPlayer(), e.getMessage().substring(1));
-		} else if (sender instanceof ConsoleCommandSender) {
+		} else {
 			final ServerCommandEvent e = new ServerCommandEvent(sender, command);
 			Bukkit.getPluginManager().callEvent(e);
+			if (e.getCommand() == null || e.getCommand().isEmpty())
+				return false;
 			return Bukkit.dispatchCommand(e.getSender(), e.getCommand());
-		} else {
-			return Bukkit.dispatchCommand(sender, command);
 		}
 	}
 	
@@ -1817,7 +1533,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	public static final boolean debug() {
-		return SkriptLogger.debug;
+		return SkriptLogger.debug();
 	}
 	
 	public static final boolean log(final Verbosity minVerb) {
@@ -1868,7 +1584,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param info Description of the error and additional information
 	 * @return an empty RuntimeException to throw if code execution should terminate.
 	 */
-	public final static RuntimeException exception(Exception cause, final String... info) {
+	public final static RuntimeException exception(Throwable cause, final String... info) {
 		
 		logEx();
 		logEx("Severe Error:");
@@ -1922,138 +1638,13 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	static Config mainConfig;
 	static final ArrayList<Config> configs = new ArrayList<Config>();
+	static boolean keepConfigsLoaded = false;
 	
-	static boolean keepConfigsLoaded = false; //true;
 	public static boolean enableEffectCommands = false;
-	
-	private static final void parseMainConfig() {
-		
-		final ArrayList<String> aliasNodes = new ArrayList<String>();
-		
-		new SectionValidator()
-				.addNode("verbosity", new EnumEntryValidator<Verbosity>(Verbosity.class, new Setter<Verbosity>() {
-					@Override
-					public void set(final Verbosity v) {
-						SkriptLogger.setVerbosity(v);
-					}
-				}), false)
-				.addNode("plugin priority", new EnumEntryValidator<EventPriority>(EventPriority.class, new Setter<EventPriority>() {
-					@Override
-					public void set(final EventPriority p) {
-						Skript.priority = p;
-					}
-				}, "lowest, low, normal, high, highest"), false)
-				.addEntry("aliases", new Setter<String>() {
-					@Override
-					public void set(final String s) {
-						for (final String n : s.split(","))
-							aliasNodes.add(n.trim());
-					}
-				}, false)
-				.addEntry("keep configs loaded", Boolean.class, new Setter<Boolean>() {
-					@Override
-					public void set(final Boolean b) {
-						keepConfigsLoaded = b;
-					}
-				}, true)
-				.addEntry("enable effect commands", Boolean.class, new Setter<Boolean>() {
-					@Override
-					public void set(final Boolean b) {
-						enableEffectCommands = b;
-					}
-				}, false)
-				.addEntry("date format", new Setter<String>() {
-					@Override
-					public void set(final String s) {
-						try {
-							if (!s.equalsIgnoreCase("default"))
-								dateFormat = new SimpleDateFormat(s);
-						} catch (final IllegalArgumentException e) {
-							// TODO shorten URL?
-							Skript.error("'" + s + "' is not a valid date format. Please refer to http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html for instructions on the format.");
-						}
-					}
-				}, true)
-				.addEntry("disable variable conflict warnings", Boolean.class, new Setter<Boolean>() {
-					@Override
-					public void set(final Boolean b) {
-						disableVariableConflictWarnings = b;
-					}
-				}, true)
-				.addEntry("language", new Setter<String>() {
-					@Override
-					public void set(final String s) {
-						if (!Language.load(s)) {
-							Skript.error("No language file found for '" + s + "'!");
-						}
-					}
-				}, true)
-				.setAllowUndefinedSections(true)
-				.validate(mainConfig.getMainNode());
-		
-		for (final Node node : mainConfig.getMainNode()) {
-			if (node instanceof SectionNode) {
-				if (!aliasNodes.contains(node.getName())) {
-					Skript.error("Invalid section '" + node.getName() + "'. If this is an alias section add it to 'aliases' so it will be loaded.");
-				}
-			}
-		}
-		
-		final HashMap<String, HashMap<String, ItemType>> variations = new HashMap<String, HashMap<String, ItemType>>();
-		int num = 0;
-		for (final String an : aliasNodes) {
-			final Node node = mainConfig.getMainNode().get(an);
-			SkriptLogger.setNode(node);
-			if (node == null) {
-				error("alias section '" + an + "' not found!");
-				continue;
-			}
-			if (!(node instanceof SectionNode)) {
-				error("aliases have to be in sections, but '" + an + "' is not a section!");
-				continue;
-			}
-			int i = 0;
-			for (final Node n : (SectionNode) node) {
-				if (n instanceof EntryNode) {
-					i += Aliases.addAliases(((EntryNode) n).getKey(), ((EntryNode) n).getValue(), variations);
-				} else if (n instanceof SectionNode) {
-					if (!(n.getName().startsWith("{") && n.getName().endsWith("}"))) {
-						Skript.error("unexpected non-variation section");
-						continue;
-					}
-					final HashMap<String, ItemType> vs = new HashMap<String, ItemType>();
-					for (final Node a : (SectionNode) n) {
-						if (a instanceof SectionNode) {
-							Skript.error("unexpected section");
-							continue;
-						}
-						final ItemType t = Aliases.parseAlias(((EntryNode) a).getValue());
-						if (t != null)
-							vs.put(((EntryNode) a).getKey(), t);
-					}
-					variations.put(n.getName().substring(1, n.getName().length() - 1), vs);
-				}
-			}
-			if (logHigh())
-				info("loaded " + i + " alias" + (i == 1 ? "" : "es") + " from " + node.getName());
-			num += i;
-		}
-		SkriptLogger.setNode(null);
-		
-		if (!keepConfigsLoaded)
-			mainConfig = null;
-		
-		if (log(Verbosity.NORMAL))
-			info("loaded a total of " + num + " aliases");
-		
-		Aliases.addMissingMaterialNames();
-		
-	}
+	public static String effectCommandToken = "!";
 	
 	private void loadMainConfig() {
-//		info("loading main config...");
 		try {
-			
 			final File oldConfig = new File(getDataFolder(), "config.cfg");
 			final File config = new File(getDataFolder(), "config.sk");
 			if (oldConfig.exists()) {
@@ -2065,28 +1656,151 @@ public final class Skript extends JavaPlugin implements Listener {
 				}
 			}
 			if (!config.exists()) {
-				error("Config file 'config.sk' does not exist!");
+				error("Config file 'config.sk' does not exist! Please make sure that you downloaded the .zip file (and not the .jar) from Skript's BukkitDev page and extracted it correctly.");
 				return;
 			}
 			if (!config.canRead()) {
 				error("Config file 'config.sk' cannot be read!");
 				return;
 			}
-			mainConfig = new Config(config, false, true, "=");
-			parseMainConfig();
 			
-//			if (logNormal())
-//				info("main config loaded successfully.");
+			mainConfig = new Config(config, false, true, "=");
+			
+			final ArrayList<String> aliasNodes = new ArrayList<String>();
+			
+			new SectionValidator()
+					.addNode("verbosity", new EnumEntryValidator<Verbosity>(Verbosity.class, new Setter<Verbosity>() {
+						@Override
+						public void set(final Verbosity v) {
+							SkriptLogger.setVerbosity(v);
+						}
+					}), false)
+					.addNode("plugin priority", new EnumEntryValidator<EventPriority>(EventPriority.class, new Setter<EventPriority>() {
+						@Override
+						public void set(final EventPriority p) {
+							Skript.defaultEventPriority = p;
+						}
+					}, "lowest, low, normal, high, highest"), false)
+					.addEntry("aliases", new Setter<String>() {
+						@Override
+						public void set(final String s) {
+							for (final String n : s.split(","))
+								aliasNodes.add(n.trim());
+						}
+					}, false)
+					.addEntry("keep configs loaded", Boolean.class, new Setter<Boolean>() {
+						@Override
+						public void set(final Boolean b) {
+							keepConfigsLoaded = b;
+						}
+					}, true)
+					.addEntry("enable effect commands", Boolean.class, new Setter<Boolean>() {
+						@Override
+						public void set(final Boolean b) {
+							enableEffectCommands = b;
+						}
+					}, false)
+					.addEntry("effect command token", new Setter<String>() {
+						@Override
+						public void set(final String s) {
+							if (s.startsWith("/")) {
+								Skript.error("Cannot use a token that starts with a slash because it can conflict with commands");
+							} else {
+								effectCommandToken = s;
+							}
+						}
+					}, false)
+					.addEntry("date format", new Setter<String>() {
+						@Override
+						public void set(final String s) {
+							try {
+								if (!s.equalsIgnoreCase("default"))
+									dateFormat = new SimpleDateFormat(s);
+							} catch (final IllegalArgumentException e) {
+								// TODO shorten URL?
+								Skript.error("'" + s + "' is not a valid date format. Please refer to http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html for instructions on the format.");
+							}
+						}
+					}, true)
+					.addEntry("disable variable conflict warnings", Boolean.class, new Setter<Boolean>() {
+						@Override
+						public void set(final Boolean b) {
+							disableVariableConflictWarnings = b;
+						}
+					}, true)
+					.addEntry("language", new Setter<String>() {
+						@Override
+						public void set(final String s) {
+							if (!Language.load(s)) {
+								Skript.error("No language file found for '" + s + "'!");
+							}
+						}
+					}, true)
+					.setAllowUndefinedSections(true)
+					.validate(mainConfig.getMainNode());
+			
+			for (final Node node : mainConfig.getMainNode()) {
+				if (node instanceof SectionNode) {
+					if (!aliasNodes.contains(node.getName())) {
+						Skript.error("Invalid section '" + node.getName() + "'. If this is an alias section add it to 'aliases' so it will be loaded.");
+					}
+				}
+			}
+			
+			final HashMap<String, HashMap<String, ItemType>> variations = new HashMap<String, HashMap<String, ItemType>>();
+			int num = 0;
+			for (final String an : aliasNodes) {
+				final Node node = mainConfig.getMainNode().get(an);
+				SkriptLogger.setNode(node);
+				if (node == null) {
+					error("alias section '" + an + "' not found!");
+					continue;
+				}
+				if (!(node instanceof SectionNode)) {
+					error("aliases have to be in sections, but '" + an + "' is not a section!");
+					continue;
+				}
+				int i = 0;
+				for (final Node n : (SectionNode) node) {
+					if (n instanceof EntryNode) {
+						i += Aliases.addAliases(((EntryNode) n).getKey(), ((EntryNode) n).getValue(), variations);
+					} else if (n instanceof SectionNode) {
+						if (!(n.getName().startsWith("{") && n.getName().endsWith("}"))) {
+							Skript.error("unexpected non-variation section");
+							continue;
+						}
+						final HashMap<String, ItemType> vs = new HashMap<String, ItemType>();
+						for (final Node a : (SectionNode) n) {
+							if (a instanceof SectionNode) {
+								Skript.error("unexpected section");
+								continue;
+							}
+							final ItemType t = Aliases.parseAlias(((EntryNode) a).getValue());
+							if (t != null)
+								vs.put(((EntryNode) a).getKey(), t);
+						}
+						variations.put(n.getName().substring(1, n.getName().length() - 1), vs);
+					}
+				}
+				if (logHigh())
+					info("loaded " + i + " alias" + (i == 1 ? "" : "es") + " from " + node.getName());
+				num += i;
+			}
+			SkriptLogger.setNode(null);
+			
+			if (!keepConfigsLoaded)
+				mainConfig = null;
+			
+			if (log(Verbosity.NORMAL))
+				info("loaded a total of " + num + " aliases");
+			
+			Aliases.addMissingMaterialNames();
 			
 		} catch (final Exception e) {
 			exception(e, "error loading config");
 		}
 	}
 	
-	/**
-	 * @param c
-	 * @return
-	 */
 	public static String getSyntaxElementName(final Class<? extends SyntaxElement> c) {
 		if (Condition.class.isAssignableFrom(c)) {
 			return "condition";

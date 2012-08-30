@@ -37,7 +37,6 @@ import ch.njol.skript.util.Timespan;
 
 /**
  * @author Peter Güttinger
- * 
  */
 @SuppressWarnings("rawtypes")
 public class DefaultComparators {

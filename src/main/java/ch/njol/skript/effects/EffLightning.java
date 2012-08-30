@@ -32,7 +32,6 @@ import ch.njol.skript.util.Offset;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EffLightning extends Effect {
 	

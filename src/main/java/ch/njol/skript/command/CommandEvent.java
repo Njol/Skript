@@ -27,7 +27,6 @@ import org.bukkit.event.HandlerList;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class CommandEvent extends Event {
 	

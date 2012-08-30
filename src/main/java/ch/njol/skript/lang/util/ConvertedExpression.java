@@ -42,7 +42,6 @@ import ch.njol.util.Checker;
  * </ol>
  * 
  * @author Peter Güttinger
- * 
  */
 public class ConvertedExpression<F, T> implements Expression<T> {
 	

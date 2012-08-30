@@ -23,6 +23,7 @@ package ch.njol.skript.effects;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
@@ -35,7 +36,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EffShoot extends Effect {
 	
@@ -67,7 +67,11 @@ public class EffShoot extends Effect {
 			return;
 		for (final LivingEntity shooter : shooters.getArray(e)) {
 			for (final EntityData<?> d : types.getArray(e)) {
-				if (Projectile.class.isAssignableFrom(d.getType())) {
+				if (Fireball.class.isAssignableFrom(d.getType())) {// otherwise fireballs explode in the shooter's face
+					final Fireball projectile = (Fireball) shooter.getWorld().spawn(shooter.getEyeLocation().add(shooter.getLocation().getDirection().multiply(0.5)), d.getType());
+					projectile.setShooter(shooter);
+					projectile.setVelocity(shooter.getLocation().getDirection().multiply(v));
+				} else if (Projectile.class.isAssignableFrom(d.getType())) {
 					final Projectile projectile = shooter.launchProjectile((Class<? extends Projectile>) d.getType());
 					set(projectile, d);
 					if (velocity != null)

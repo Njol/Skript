@@ -83,7 +83,6 @@ import ch.njol.skript.lang.util.SimpleEvent;
 
 /**
  * @author Peter Güttinger
- * 
  */
 @SuppressWarnings("unchecked")
 public class SimpleEvents {

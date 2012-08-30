@@ -35,18 +35,17 @@ import ch.njol.skript.Aliases;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprClicked extends SimpleExpression<Object> {
 	
@@ -59,8 +58,6 @@ public class ExprClicked extends SimpleExpression<Object> {
 	 * null for any block
 	 */
 	private ItemType itemType = null;
-	
-	private Object[] one;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -84,7 +81,6 @@ public class ExprClicked extends SimpleExpression<Object> {
 				Skript.error("The expression 'clicked block' can only be used in a click event");
 				return false;
 			}
-			one = new Block[1];
 		} else {
 			log.stop();
 			log.printLog();
@@ -92,7 +88,6 @@ public class ExprClicked extends SimpleExpression<Object> {
 				Skript.error("The expression '" + parseResult.expr + "' can only be used in a click event");
 				return false;
 			}
-			one = (Entity[]) Array.newInstance(entityType.getType(), 1);
 		}
 		return true;
 	}
@@ -112,9 +107,9 @@ public class ExprClicked extends SimpleExpression<Object> {
 		if (e instanceof PlayerInteractEvent) {
 			if (entityType != null)
 				return null;
-			one[0] = ((PlayerInteractEvent) e).getClickedBlock();
-			if (itemType == null || itemType.isOfType((Block) one[0]))
-				return one;
+			final Block b = ((PlayerInteractEvent) e).getClickedBlock();
+			if (itemType == null || itemType.isOfType(b))
+				return new Block[] {b};
 			return null;
 		} else {
 			if (entityType == null)
@@ -128,6 +123,7 @@ public class ExprClicked extends SimpleExpression<Object> {
 				en = Utils.validate(((EntityDamageByEntityEvent) e).getEntity());
 			}
 			if (entityType.isInstance(en)) {
+				final Entity[] one = (Entity[]) Array.newInstance(entityType.getType(), 1);
 				one[0] = en;
 				return one;
 			}

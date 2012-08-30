@@ -26,7 +26,6 @@ package ch.njol.skript.classes;
  * @param <R> the type of the relative value
  * 
  * @author Peter Güttinger
- * 
  */
 public interface Arithmetic<A, R> {
 	

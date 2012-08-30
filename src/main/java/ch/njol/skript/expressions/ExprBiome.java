@@ -34,7 +34,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprBiome extends PropertyExpression<Location, Biome> {
 	

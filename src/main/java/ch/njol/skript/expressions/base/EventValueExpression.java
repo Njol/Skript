@@ -31,8 +31,6 @@ import org.bukkit.event.Event;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
@@ -42,6 +40,8 @@ import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.Getter;
 import ch.njol.util.Validate;
 
@@ -62,7 +62,6 @@ import ch.njol.util.Validate;
 public class EventValueExpression<T> extends SimpleExpression<T> implements DefaultExpression<T> {
 	
 	private final Class<? extends T> c;
-	private final T[] one;
 	private final Changer<? super T, ?> changer;
 	private final Map<Class<? extends Event>, Getter<? extends T, ?>> getters = new HashMap<Class<? extends Event>, Getter<? extends T, ?>>();
 	
@@ -77,14 +76,16 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 		this.c = c;
 		final ClassInfo<?> ci = Skript.getSuperClassInfo(c);
 		validator = ci == null ? null : (Validator<T>) (ci.getValidator());
-		one = (T[]) Array.newInstance(c, 1);
 		this.changer = changer;
 	}
 	
 	@Override
 	protected T[] get(final Event e) {
-		if ((one[0] = getValue(e)) == null)
+		final T o = getValue(e);
+		if (o == null)
 			return null;
+		final T[] one = (T[]) Array.newInstance(c, 1);
+		one[0] = o;
 		return one;
 	}
 	

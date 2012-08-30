@@ -24,8 +24,6 @@ package ch.njol.skript.conditions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.classes.Comparator.ComparatorInfo;
@@ -36,13 +34,14 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.Patterns;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class CondIs extends Condition {
 	

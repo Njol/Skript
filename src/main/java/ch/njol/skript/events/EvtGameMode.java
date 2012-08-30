@@ -33,7 +33,6 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public final class EvtGameMode extends SkriptEvent {
 	

@@ -31,7 +31,6 @@ import ch.njol.util.iterator.StoppableIterator;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class BlockLineIterator extends StoppableIterator<Block> {
 	

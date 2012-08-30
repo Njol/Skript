@@ -25,7 +25,6 @@ import java.util.Arrays;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class Version implements Comparable<Version> {
 	

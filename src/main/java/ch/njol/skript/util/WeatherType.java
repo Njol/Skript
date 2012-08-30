@@ -33,7 +33,6 @@ import org.bukkit.event.weather.WeatherEvent;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public enum WeatherType {
 	

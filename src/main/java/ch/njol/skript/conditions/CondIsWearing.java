@@ -34,7 +34,6 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class CondIsWearing extends Condition {
 	

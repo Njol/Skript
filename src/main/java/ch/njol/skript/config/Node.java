@@ -26,8 +26,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.log.SkriptLogger;
 
+/**
+ * @author Peter Güttinger
+ */
 public abstract class Node {
 	
 	protected String name;

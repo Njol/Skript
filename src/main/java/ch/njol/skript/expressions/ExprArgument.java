@@ -36,7 +36,6 @@ import ch.njol.util.StringUtils;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class ExprArgument extends SimpleExpression<Object> {
 	

@@ -40,7 +40,6 @@ import ch.njol.util.iterator.IteratorIterable;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class ExprBlocks extends SimpleExpression<Block> {
 	

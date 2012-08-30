@@ -21,6 +21,9 @@
 
 package ch.njol.skript.lang;
 
+/**
+ * @author Peter Güttinger
+ */
 public enum ParseContext {
 	/**
 	 * Default parse mode

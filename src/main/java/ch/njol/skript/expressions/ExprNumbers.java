@@ -35,7 +35,6 @@ import ch.njol.skript.lang.util.SimpleLiteral;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprNumbers extends SimpleExpression<Integer> {
 	

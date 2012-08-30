@@ -33,11 +33,10 @@ import ch.njol.skript.classes.Converter;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class FileUtils {
 	
-	private final static boolean RUNNINGJAVA7 = !System.getProperty("java.version").startsWith("1.6");
+	private final static boolean RUNNINGJAVA6 = !System.getProperty("java.version").startsWith("1.6");
 	
 	private FileUtils() {}
 	
@@ -57,7 +56,7 @@ public abstract class FileUtils {
 	}
 	
 	public final static void move(final File from, final File to) throws IOException {
-		if (RUNNINGJAVA7) {
+		if (!RUNNINGJAVA6) {
 			Java7FileUtils.move(from, to);
 		} else {
 			if (!from.renameTo(to))
@@ -66,11 +65,9 @@ public abstract class FileUtils {
 	}
 	
 	public final static void copy(final File from, final File to) throws IOException {
-		if (RUNNINGJAVA7) {
+		if (!RUNNINGJAVA6) {
 			Java7FileUtils.copy(from, to);
 		} else {
-			if (!to.createNewFile())
-				throw new IOException("Can't copy " + from.getName() + " to " + to.getName() + ": Can't create new file");
 			FileInputStream in = null;
 			FileOutputStream out = null;
 			try {
@@ -80,6 +77,8 @@ public abstract class FileUtils {
 				int bytesRead;
 				while ((bytesRead = in.read(buffer)) != -1)
 					out.write(buffer, 0, bytesRead);
+			} catch (final Exception e) {
+				throw new IOException("Can't copy " + from.getName() + " to " + to.getName() + ": " + e.getLocalizedMessage(), e);
 			} finally {
 				if (in != null) {
 					try {

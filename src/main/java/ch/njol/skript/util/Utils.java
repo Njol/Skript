@@ -42,6 +42,7 @@ import org.bukkit.util.Vector;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.effects.EffTeleport;
+import ch.njol.skript.entity.EntityData;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
@@ -335,29 +336,22 @@ public abstract class Utils {
 		return is1.getTypeId() == is2.getTypeId() && is1.getDurability() == is2.getDurability() && is1.getEnchantments().equals(is2.getEnchantments());
 	}
 	
-	public static Player getTargetPlayer(final Player player) {
-		return getTarget(player, player.getWorld().getPlayers());
-	}
-	
-	public static Entity getTargetEntity(final LivingEntity entity, final Class<? extends Entity> type) {
-		if (entity instanceof Creature)
-			return ((Creature) entity).getTarget();
-		return getTarget(entity, entity.getWorld().getEntitiesByClass(type));
-	}
-	
-	public static <T extends Entity> T getTarget(final LivingEntity entity, final Iterable<T> entities) {
-		Validate.notNull(entity, entities);
+	public static <T extends Entity> T getTarget(final LivingEntity entity, final EntityData<T> type) {
+		Validate.notNull(entity, "entity");
+		if (entity instanceof Creature) {
+			return type.isInstance(((Creature) entity).getTarget()) ? (T) ((Creature) entity).getTarget() : null;
+		}
 		T target = null;
-		double targetDistanceSquared = Double.MAX_VALUE;
+		double targetDistanceSquared = 0;
 		final double radiusSquared = 1;
 		final Vector l = entity.getEyeLocation().toVector(), n = entity.getLocation().getDirection().normalize();
-		final double cos = Math.cos(Math.PI / 4);
-		for (final T other : entities) {
-			if (other == entity)
+		final double cos45 = Math.cos(Math.PI / 4);
+		for (final T other : entity.getWorld().getEntitiesByClass(type.getType())) {
+			if (other == entity || !type.isInstance(other))
 				continue;
 			if (target == null || targetDistanceSquared > other.getLocation().distanceSquared(entity.getLocation())) {
-				final Vector t = other.getLocation().toVector().subtract(l);
-				if (n.clone().crossProduct(t).lengthSquared() < radiusSquared && t.normalize().dot(n) >= cos) {
+				final Vector t = other.getLocation().add(0, 1, 0).toVector().subtract(l);
+				if (n.clone().crossProduct(t).lengthSquared() < radiusSquared && t.normalize().dot(n) >= cos45) {
 					target = other;
 					targetDistanceSquared = target.getLocation().distanceSquared(entity.getLocation());
 				}
@@ -615,7 +609,8 @@ public abstract class Utils {
 		chat.put("magic", ChatColor.MAGIC.toString());
 		
 		chat.put("reset", ChatColor.RESET.toString());
-		chat.put("<none>", ChatColor.RESET.toString());
+		
+		chat.put("<none>", "");
 	}
 	
 	public static final String prepareMessage(String message) {
@@ -626,6 +621,8 @@ public abstract class Utils {
 	}
 	
 	public final static String replaceChatStyles(String message) {
+		if (message == null || message.isEmpty())
+			return message;
 		message = StringUtils.replaceAll(message, "<([^<>]+|<none>)>", new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
@@ -675,10 +672,10 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * Creates a permutation of the all integers in the interval [start, end)
+	 * Creates a permutation of all integers in the interval [start, end]
 	 * 
 	 * @param start The lowest number which will be included in the permutation
-	 * @param end The highest number which will just not be included in the permutation
+	 * @param end The highest number which will be included in the permutation
 	 * @return an array of length end - start + 1
 	 */
 	public static final int[] permutation(final int start, final int end) {
@@ -703,9 +700,9 @@ public abstract class Utils {
 	 * @return
 	 */
 	public static int random(final int start, final int end) {
-		if (end <= start)
-			throw new IllegalArgumentException("end (" + end + ") must be greater than start (" + start + ")");
-		return start + random.nextInt(end - start);
+		if (end < start)
+			throw new IllegalArgumentException("end (" + end + ") must be >= start (" + start + ")");
+		return start + random.nextInt(end - start + 1);
 	}
 	
 }

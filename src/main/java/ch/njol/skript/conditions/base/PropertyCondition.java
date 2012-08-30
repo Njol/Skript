@@ -31,7 +31,6 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class PropertyCondition<T> extends Condition {
 	

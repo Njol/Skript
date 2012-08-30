@@ -38,7 +38,6 @@ import ch.njol.skript.util.Timespan;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class DefaultChangers {
 	

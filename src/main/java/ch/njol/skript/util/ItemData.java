@@ -29,18 +29,16 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Aliases;
-import ch.njol.skript.Skript;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class ItemData implements Cloneable {
 	
 	/**
-	 * Only ItemType may set this directly, other classes must use {@link #setId(int)} to set this.
+	 * Only ItemType may set this directly.
 	 */
 	int typeid = -1;
 	public short dataMin = -1;
@@ -157,7 +155,7 @@ public class ItemData implements Cloneable {
 		} else {
 			return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid,
 					1,
-					(short) (Skript.random.nextInt(dataMax - dataMin + 1) + dataMin));
+					(short) (Utils.random(dataMin, dataMax + 1)));
 		}
 	}
 	
@@ -217,6 +215,10 @@ public class ItemData implements Cloneable {
 	
 	public boolean hasDataRange() {
 		return dataMin != dataMax;
+	}
+	
+	public int numItems() {
+		return dataMax - dataMin + 1;
 	}
 	
 }

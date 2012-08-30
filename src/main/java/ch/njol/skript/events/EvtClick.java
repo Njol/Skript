@@ -30,19 +30,18 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 @SuppressWarnings("unchecked")
 public class EvtClick extends SkriptEvent {

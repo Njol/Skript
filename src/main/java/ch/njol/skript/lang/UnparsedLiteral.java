@@ -31,13 +31,14 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.log.LogEntry;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Validate;
@@ -112,7 +113,8 @@ public class UnparsedLiteral implements Literal<Object> {
 	private <T> Literal<T> convert(final Class<T> to, final Parser<?> parser, final ParseContext context) {
 		final SubLog log = SkriptLogger.startSubLog();
 		
-		String last = data, lastError = null;
+		String last = data;
+		LogEntry lastError = null;
 		
 		final T r = (T) parser.parse(data, context);
 		if (r != null) {
@@ -165,7 +167,10 @@ public class UnparsedLiteral implements Literal<Object> {
 			}
 		}
 		log.stop();
-		Skript.error(lastError != null ? lastError : "'" + last + "' is not " + Utils.a(Skript.getSuperClassInfo(to).getName()));
+		if (lastError != null)
+			SkriptLogger.log(lastError);
+		else
+			Skript.error("'" + last + "' is not " + Utils.a(Skript.getSuperClassInfo(to).getName()));
 		return null;
 	}
 	

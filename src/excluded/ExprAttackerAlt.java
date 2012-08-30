@@ -51,7 +51,6 @@ import ch.njol.skript.util.ItemType;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class ExprAttackerAlt extends SimpleExpression<Attacker> {
 	

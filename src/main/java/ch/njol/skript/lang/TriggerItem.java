@@ -96,9 +96,14 @@ public abstract class TriggerItem implements Debuggable {
 		Skript.info(getIndentation() + (run ? "" : "-") + toString(e, true));
 	}
 	
+	@Override
+	public String toString() {
+		return toString(null, false);
+	}
+	
 	protected abstract boolean run(Event e);
 	
-	final public void setParent(final TriggerSection parent) {
+	public void setParent(final TriggerSection parent) {
 		this.parent = parent;
 	}
 	

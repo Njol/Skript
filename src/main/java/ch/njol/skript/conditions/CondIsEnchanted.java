@@ -27,7 +27,6 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class CondIsEnchanted extends PropertyCondition<ItemType> {
 	

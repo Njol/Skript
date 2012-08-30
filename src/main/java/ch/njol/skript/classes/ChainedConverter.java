@@ -25,7 +25,7 @@ import ch.njol.skript.Skript;
 import ch.njol.util.Validate;
 
 /**
- * Used to chain convertes to build a single converted. This is automatically created when a new converter is added.
+ * Used to chain convertes to build a single converter. This is automatically created when a new converter is added.
  * 
  * @author Peter Güttinger
  * 

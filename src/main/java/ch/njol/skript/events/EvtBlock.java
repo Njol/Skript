@@ -45,7 +45,6 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 @SuppressWarnings("unchecked")
 public class EvtBlock extends SkriptEvent {

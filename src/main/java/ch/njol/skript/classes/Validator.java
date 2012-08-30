@@ -23,7 +23,6 @@ package ch.njol.skript.classes;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public interface Validator<T> {
 	

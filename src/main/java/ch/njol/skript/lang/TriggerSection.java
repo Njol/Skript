@@ -96,47 +96,4 @@ public abstract class TriggerSection extends TriggerItem {
 		}
 	}
 	
-//	private final void runItems(final Event e, final int start) {
-//		stopped = false;
-//		if (start == 0 && Skript.debug() && !(this instanceof Trigger))
-//			incIndentation();
-//		for (int j = start; j < items.size(); j++) {
-//			final TriggerItem i = items.get(j);
-//			final boolean ok;
-//			if (i instanceof EffDelay) {
-//				final int d = ((EffDelay) i).getDelay(e);
-//				ok = d != -1;
-//				if (ok) {
-//					final int newStart = j + 1;
-//					Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
-//						@Override
-//						public void run() {
-//							TriggerSection.this.runItems(e, newStart);
-//						}
-//					}, d);
-//					return;
-//				}
-//			} else {
-//				if (i instanceof TriggerSection) {
-//					((TriggerSection) i).run(e, j + 1);
-//					return;
-//				} else {
-//					ok = i.run(e);
-//				}
-//			}
-//			if (Skript.debug() && !(i instanceof TriggerSection)) {
-//				if (!stopped)
-//					Skript.info(indentation + (ok ? "" : "-") + i.toString(e, true));
-//				else
-//					Skript.info(indentation + "#" + i.toString(e, true));
-//			}
-//			if (!ok && stopParentOnFalseCondition)
-//				getParent().stop();
-//			if (stopped || !ok || i instanceof EffDelay)
-//				break;
-//		}
-//		if (Skript.debug() && !(this instanceof Trigger))
-//			decIndentation();
-//	}
-	
 }

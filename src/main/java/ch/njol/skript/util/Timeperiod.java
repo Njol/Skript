@@ -24,7 +24,6 @@ package ch.njol.skript.util;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class Timeperiod {
 	

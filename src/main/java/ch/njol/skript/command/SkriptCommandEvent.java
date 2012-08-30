@@ -26,7 +26,6 @@ import org.bukkit.event.HandlerList;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class SkriptCommandEvent extends CommandEvent {
 	

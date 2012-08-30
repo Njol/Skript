@@ -29,7 +29,6 @@ import org.bukkit.DyeColor;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public enum Color {
 	

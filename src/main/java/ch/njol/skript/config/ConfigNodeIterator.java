@@ -21,10 +21,13 @@
 
 package ch.njol.skript.config;
 
-import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Checker;
 import ch.njol.util.iterator.CheckedIterator;
 
+/**
+ * @author Peter Güttinger
+ */
 public class ConfigNodeIterator extends CheckedIterator<Node> {
 	
 	private final SectionNode node;

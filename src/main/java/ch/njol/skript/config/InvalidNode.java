@@ -21,6 +21,9 @@
 
 package ch.njol.skript.config;
 
+/**
+ * @author Peter Güttinger
+ */
 public class InvalidNode extends VoidNode {
 	
 	public InvalidNode(final SectionNode parent, final ConfigReader r) {

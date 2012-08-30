@@ -26,7 +26,6 @@ import java.util.Iterator;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class VariableList extends HashMap<String, Object> implements Iterable<Object> {
 	

@@ -33,12 +33,11 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class CondIsInWorld extends Condition {
 	
 	static {
-		Skript.registerCondition(CondIsInWorld.class, "%entities% (is|are) in [[the] world] %worlds%", "%entities% (is not|isn't|are not|aren't) in [[the] world] %worlds%");
+		Skript.registerCondition(CondIsInWorld.class, "%entities% (is|are) in [[the] world[s]] %worlds%", "%entities% (is not|isn't|are not|aren't) in [[the] world[s]] %worlds%");
 	}
 	
 	private Expression<Entity> entities;

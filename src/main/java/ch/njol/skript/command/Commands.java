@@ -30,7 +30,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,32 +45,29 @@ import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
-import org.bukkit.help.GenericCommandHelpTopic;
 import org.bukkit.help.HelpMap;
 import org.bukkit.help.HelpTopic;
-import org.bukkit.help.HelpTopicComparator;
-import org.bukkit.help.IndexHelpTopic;
 import org.bukkit.plugin.SimplePluginManager;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.validate.SectionValidator;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class Commands {
 	
@@ -131,10 +130,44 @@ public abstract class Commands {
 		}
 		
 		@SuppressWarnings("unused")
+		@EventHandler(priority = EventPriority.LOWEST)
+		public void onPlayerChat(final AsyncPlayerChatEvent e) {
+			if (!Skript.enableEffectCommands || !e.getMessage().startsWith(Skript.effectCommandToken))
+				return;
+			if (!e.isAsynchronous()) {
+				if (handleEffectCommand(e.getPlayer(), e.getMessage()))
+					e.setCancelled(true);
+			} else {
+				final Future<Boolean> f = Bukkit.getScheduler().callSyncMethod(Skript.getInstance(), new Callable<Boolean>() {
+					@Override
+					public Boolean call() throws Exception {
+						return handleEffectCommand(e.getPlayer(), e.getMessage());
+					}
+				});
+				try {
+					while (true) {
+						try {
+							if (f.get())
+								e.setCancelled(true);
+							break;
+						} catch (final InterruptedException e1) {}
+					}
+				} catch (final ExecutionException e1) {
+					Skript.exception(e1);
+				}
+			}
+		}
+		
+		@SuppressWarnings("unused")
 		@EventHandler(priority = EventPriority.LOW)
 		public void onServerCommand(final ServerCommandEvent e) {
 			if (e.getCommand() == null || e.getCommand().isEmpty())
 				return;
+			if (Skript.enableEffectCommands && e.getCommand().startsWith(Skript.effectCommandToken)) {
+				if (handleEffectCommand(e.getSender(), e.getCommand()))
+					e.setCommand("");
+				return;
+			}
 			if (handleCommand(e.getSender(), e.getCommand()))
 				e.setCommand("");
 		}
@@ -164,28 +197,32 @@ public abstract class Commands {
 			}
 			c.execute(sender, cmd[0], cmd.length == 1 ? "" : cmd[1]);
 			return true;
-		} else if (Skript.enableEffectCommands) {
-			if (!sender.hasPermission("skript.effectcommands"))
-				return false;
-			if (commandMap != null && commandMap.getCommand(cmd[0]) != null)
-				return false;
-			
+		}
+		return false;
+	}
+	
+	private final static boolean handleEffectCommand(final CommandSender sender, String command) {
+		if (!sender.hasPermission("skript.effectcommands"))
+			return false;
+		try {
+			command = command.substring(Skript.effectCommandToken.length());
 			final SubLog log = SkriptLogger.startSubLog();
 			final Effect e = Effect.parse(command, null);
 			SkriptLogger.stopSubLog(log);
 			if (e != null) {
 				sender.sendMessage(ChatColor.GRAY + "executing '" + ChatColor.stripColor(command) + "'");
 				e.run(new CommandEvent(sender, "effectcommand", new String[0]));
-				return true;
-			} else if (log.hasErrors()) {
+			} else {
 				sender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + ChatColor.stripColor(command));
-				log.printErrors(sender, null);
+				log.printErrors(sender, "Can't understand the effect");
 				sender.sendMessage("Press the up arrow key to edit the command");
-				return true;
 			}
-			return false;
+			return true;
+		} catch (final Exception e) {
+			Skript.exception(e, "Error while executing effect command '" + command + "' by '" + sender + "'");
+			sender.sendMessage(ChatColor.RED + "An internal error occurred while attempting to execute this effect");
+			return true;
 		}
-		return false;
 	}
 	
 	public final static SkriptCommand loadCommand(final SectionNode node) {
@@ -214,7 +251,7 @@ public abstract class Commands {
 		assert a;
 		
 		final String command = m.group(1);
-		if (commandExists(command)) {
+		if (skriptCommandExists(command)) {
 			Skript.error("A command with the name /" + command + " is already defined");
 			return null;
 		}
@@ -309,27 +346,29 @@ public abstract class Commands {
 		return c;
 	}
 	
-	public static boolean commandExists(final String command) {
+	public static boolean skriptCommandExists(final String command) {
 		final SkriptCommand c = commands.get(command);
 		return c != null && c.getName().equals(command);
 	}
 	
 	private static void registerCommand(final SkriptCommand command) {
-		commands.put(command.getName().toLowerCase(), command);
-		for (final String alias : command.getAliases()) {
-			commands.put(alias.toLowerCase(), command);
-		}
 		if (commandMap != null)
 			command.register(commandMap, cmKnownCommands, cmAliases);
+		commands.put(command.getName().toLowerCase(), command);
+		for (final String alias : command.getActiveAliases()) {
+			commands.put(alias.toLowerCase(), command);
+		}
+		command.registerHelp();
 	}
 	
 	public static int unregisterCommands(final File script) {
 		int numCommands = 0;
-		final Iterator<SkriptCommand> commandsIter = Commands.commands.values().iterator();
+		final Iterator<SkriptCommand> commandsIter = commands.values().iterator();
 		while (commandsIter.hasNext()) {
 			final SkriptCommand c = commandsIter.next();
 			if (c.getScript().equals(script)) {
 				numCommands++;
+				c.unregisterHelp();
 				if (commandMap != null)
 					c.unregister(commandMap, cmKnownCommands, cmAliases);
 				commandsIter.remove();
@@ -340,33 +379,10 @@ public abstract class Commands {
 	
 	private static boolean registeredListener = false;
 	
-	public final static void finishRegisteringCommands() {
-		if (!registeredListener)
+	public final static void registerListener() {
+		if (!registeredListener) {
 			Bukkit.getPluginManager().registerEvents(commandListener, Skript.getInstance());
-		registeredListener = true;
-		try {
-			final HelpMap help = Bukkit.getServer().getHelpMap();
-			final Iterator<HelpTopic> iter = help.getHelpTopics().iterator();
-			while (iter.hasNext()) {
-				if (iter.next().getName().equals("Skript")) {
-					iter.remove();
-					break;
-				}
-			}
-			final Set<HelpTopic> topics = new TreeSet<HelpTopic>(HelpTopicComparator.helpTopicComparatorInstance());
-			for (final SkriptCommand command : commands.values()) {
-				final HelpTopic t = new GenericCommandHelpTopic(command.getBukkitCommand());
-				help.addTopic(t);
-				topics.add(t);
-				for (final String alias : command.getActiveAliases()) {
-					final HelpTopic at = new CommandAliasHelpTopic("/" + alias, "/" + command.getLabel(), help);
-					help.addTopic(at);
-					topics.add(at);
-				}
-			}
-			help.addTopic(new IndexHelpTopic("Skript", "All commands created with Skript", null, topics, "Below is a list of all commands created with Skript:"));
-		} catch (final Exception e) {
-			Skript.exception(e, "Could not register the custom commands in Bukkit's help map");
+			registeredListener = true;
 		}
 	}
 	
@@ -374,6 +390,9 @@ public abstract class Commands {
 		if (commandMap != null) {
 			for (final SkriptCommand c : commands.values())
 				c.unregister(commandMap, cmKnownCommands, cmAliases);
+		}
+		for (final SkriptCommand c : commands.values()) {
+			c.unregisterHelp();
 		}
 		commands.clear();
 	}

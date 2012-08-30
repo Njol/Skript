@@ -35,7 +35,6 @@ import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprMessage extends SimpleExpression<String> {
 	
@@ -46,7 +45,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		if (!Utils.contains(ScriptLoader.currentEvents, AsyncPlayerChatEvent.class)) {
-			Skript.error("The 'message' expression can only be used in the chat event");
+			Skript.error("The message can only be used in a chat event");
 			return false;
 		}
 		return true;

@@ -34,7 +34,6 @@ import ch.njol.skript.util.Getter;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprInventory extends PropertyExpression<InventoryHolder, Inventory> {
 	

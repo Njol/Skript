@@ -35,7 +35,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
- * 
  */
 @SuppressWarnings("unchecked")
 public final class EvtEntity extends SkriptEvent {

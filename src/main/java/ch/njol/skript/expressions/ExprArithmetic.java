@@ -34,7 +34,6 @@ import ch.njol.skript.util.Patterns;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprArithmetic extends SimpleExpression<Number> {
 	
@@ -123,7 +122,6 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	
 	private Class<? extends Number> returnType;
 	private boolean integer;
-	private Number[] one;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -147,12 +145,12 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 				returnType = Double.class;
 		}
 		integer = returnType == Integer.class;
-		one = (Number[]) Array.newInstance(returnType, 1);
 		return true;
 	}
 	
 	@Override
 	protected Number[] get(final Event e) {
+		final Number[] one = (Number[]) Array.newInstance(returnType, 1);
 		Number n1 = first.getSingle(e), n2 = second.getSingle(e);
 		if (n1 == null)
 			n1 = Integer.valueOf(0);

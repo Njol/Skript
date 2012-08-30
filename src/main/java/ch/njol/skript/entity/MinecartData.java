@@ -30,7 +30,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class MinecartData extends EntityData<Minecart> {
 	

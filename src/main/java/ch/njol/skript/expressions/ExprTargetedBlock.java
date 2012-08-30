@@ -37,7 +37,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 	

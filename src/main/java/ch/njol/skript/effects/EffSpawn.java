@@ -35,7 +35,6 @@ import ch.njol.skript.util.Offset;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class EffSpawn extends Effect {
 	

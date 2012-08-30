@@ -35,16 +35,15 @@ import ch.njol.util.Checker;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class CondInventoryContains extends Condition {
 	
 	static {
 		Skript.registerCondition(CondInventoryContains.class,
-				"[%inventories%] ha(s|ve) %itemtypes% [in inventory]",
-				"[%inventories%] contain[s] %itemtypes%",
-				"[%inventories%] (ha(s|ve) not|do[es]n't have) %itemtypes% [in inventory]",
-				"[%inventories%] do[es](n't| not) contain %itemtypes%");
+				"%inventories% ha(s|ve) %itemtypes% [in [(the[ir]|his|her|its)] inventory]",
+				"%inventories% contain[s] %itemtypes%",
+				"%inventories% do[es](n't| not) have %itemtypes% [in [(the[ir]|his|her|its)] inventory]",
+				"%inventories% do[es](n't| not) contain %itemtypes%");
 	}
 	
 	private Expression<Inventory> invis;

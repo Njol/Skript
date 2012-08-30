@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Blaze;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.CaveSpider;
 import org.bukkit.entity.Chicken;
@@ -71,7 +72,6 @@ import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class SimpleEntityData extends EntityData<Entity> {
 	
@@ -79,6 +79,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 	static {
 		names.put("arrow", Arrow.class);
 		names.put("boat", Boat.class);
+		names.put("blaze", Blaze.class);
 		names.put("chicken", Chicken.class);
 		names.put("cow", Cow.class);
 		names.put("cave spider", CaveSpider.class);

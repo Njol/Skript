@@ -25,7 +25,6 @@ package ch.njol.skript.lang;
  * Represents an expression that can be used as the default value of a certain type and event.
  * 
  * @author Peter Güttinger
- * 
  */
 public interface DefaultExpression<T> extends Expression<T> {
 	

@@ -114,7 +114,7 @@ public abstract class BlockUtils {
 					return true;
 				}
 			}
-			for (final int data : Utils.permutation(dataMin, dataMax + 1)) {
+			for (final int data : Utils.permutation(dataMin, dataMax)) {
 				final BlockFace f = attach[data];
 				if (f == null)
 					continue;
@@ -158,7 +158,7 @@ public abstract class BlockUtils {
 		
 		// BED
 		if (type == Material.BED_BLOCK.getId()) {
-			for (final int data : Utils.permutation(dataMin, dataMax + 1)) {
+			for (final int data : Utils.permutation(dataMin, dataMax)) {
 				final boolean head = (data & 0x8) == 0x8;
 				final BlockFace f = bed[data & 0x3];
 				if (head) {
@@ -185,7 +185,7 @@ public abstract class BlockUtils {
 		return true;
 	}
 	
-	private final static int[] solid = {1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29, 33, 35, 41, 42, 43, 45, 46, 47, 48, 49, 52, 54, 56, 57, 58, 60, 61, 62, 73, 74, 79, 80, 82, 84, 86, 87, 88, 89, 91, 95, 97, 98, 99, 100, 103, 110, 112, 120, 121, 123, 124, 125, 129, 130, 133};
+	private final static int[] solid = {1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29, 33, 35, 41, 42, 43, 45, 46, 47, 48, 49, 52, 54, 56, 57, 58, 60, 61, 62, 73, 74, 79, 80, 82, 84, 86, 87, 88, 89, 91, 95, 97, 98, 99, 100, 103, 110, 112, 120, 121, 123, 124, 125, 129, 130, 133, 137, 138};
 	private final static boolean[] isSolid = new boolean[Skript.MAXBLOCKID + 1];
 	static {
 		for (final int i : solid)

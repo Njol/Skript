@@ -37,7 +37,6 @@ import ch.njol.skript.util.Offset;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class EffDrop extends Effect {
 	

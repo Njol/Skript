@@ -30,7 +30,6 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EndermanData extends EntityData<Enderman> {
 	

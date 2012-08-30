@@ -44,7 +44,6 @@ import ch.njol.util.StringUtils;
  * represents a string that may contain expressions.
  * 
  * @author Peter Güttinger
- * 
  */
 public class VariableString implements Debuggable {
 	private final ArrayList<Object> string;

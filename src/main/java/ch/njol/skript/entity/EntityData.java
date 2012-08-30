@@ -47,7 +47,6 @@ import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
- * 
  */
 @SuppressWarnings("rawtypes")
 public abstract class EntityData<E extends Entity> implements SyntaxElement {

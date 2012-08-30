@@ -25,7 +25,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class SimpleNode extends Node {
 	

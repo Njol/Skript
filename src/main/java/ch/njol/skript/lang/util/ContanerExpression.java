@@ -32,7 +32,6 @@ import ch.njol.skript.util.Container;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ContanerExpression extends SimpleExpression<Object> {
 	

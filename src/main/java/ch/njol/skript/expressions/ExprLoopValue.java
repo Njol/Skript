@@ -39,7 +39,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * used to access a loop's current value.
  * 
  * @author Peter Güttinger
- * 
  */
 public class ExprLoopValue extends SimpleExpression<Object> {
 	
@@ -50,8 +49,6 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	private String name;
 	
 	private Loop loop;
-	
-	private Object[] one;
 	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
@@ -85,7 +82,6 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 			Skript.error("there's no loop that matches 'loop-" + s + "'");
 			return false;
 		}
-		one = (Object[]) Array.newInstance(loop.getLoopedExpression().getReturnType(), 1);
 		return true;
 	}
 	
@@ -101,6 +97,7 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	
 	@Override
 	protected Object[] get(final Event e) {
+		final Object[] one = (Object[]) Array.newInstance(loop.getLoopedExpression().getReturnType(), 1);
 		one[0] = loop.getCurrent(e);
 		return one;
 	}

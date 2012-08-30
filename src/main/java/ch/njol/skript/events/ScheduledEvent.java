@@ -31,7 +31,6 @@ import ch.njol.skript.util.Getter;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class ScheduledEvent extends Event {
 	

@@ -24,28 +24,37 @@ package ch.njol.skript.command;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
+import org.bukkit.help.GenericCommandHelpTopic;
+import org.bukkit.help.HelpMap;
+import org.bukkit.help.HelpTopic;
 import org.bukkit.plugin.Plugin;
 
 import ch.njol.skript.Language;
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
-import ch.njol.skript.Verbosity;
+import ch.njol.skript.command.Commands.CommandAliasHelpTopic;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SimpleEvent;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
+import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Validate;
 
@@ -53,7 +62,6 @@ import ch.njol.util.Validate;
  * This class is used for user-defined commands.
  * 
  * @author Peter Güttinger
- * 
  */
 public class SkriptCommand implements CommandExecutor {
 	
@@ -97,8 +105,8 @@ public class SkriptCommand implements CommandExecutor {
 		this.aliases = aliases;
 		activeAliases = new ArrayList<String>(aliases);
 		
-		this.description = description;
-		this.usage = usage;
+		this.description = Utils.replaceChatStyles(description);
+		this.usage = Utils.replaceChatStyles(usage);
 		
 		this.executableBy = executableBy;
 		
@@ -171,7 +179,7 @@ public class SkriptCommand implements CommandExecutor {
 	public void sendHelp(final CommandSender sender) {
 		if (!description.isEmpty())
 			sender.sendMessage(description);
-		sender.sendMessage("Usage: " + usage);
+		sender.sendMessage(ChatColor.GOLD + "Usage" + ChatColor.RESET + ": " + usage);
 	}
 	
 	/**
@@ -187,31 +195,68 @@ public class SkriptCommand implements CommandExecutor {
 		return pattern;
 	}
 	
+	private Command overriden = null;
+	private final Map<String, Command> overridenAliases = new HashMap<String, Command>();
+	
 	public void register(final SimpleCommandMap commandMap, final Map<String, Command> knownCommands, final Set<String> aliases) {
 		synchronized (commandMap) {
-			knownCommands.put(label, bukkitCommand);
+			overriden = knownCommands.put(label, bukkitCommand);
 			aliases.remove(label);
 			final Iterator<String> as = activeAliases.iterator();
 			while (as.hasNext()) {
 				final String lowerAlias = as.next().toLowerCase();
-				if (knownCommands.containsKey(lowerAlias)) {
+				if (knownCommands.containsKey(lowerAlias) && !aliases.contains(lowerAlias)) {
 					as.remove();
 					continue;
 				}
-				knownCommands.put(lowerAlias, bukkitCommand);
+				overridenAliases.put(lowerAlias, knownCommands.put(lowerAlias, bukkitCommand));
 				aliases.add(lowerAlias);
 			}
+			bukkitCommand.setAliases(activeAliases);
+			bukkitCommand.register(commandMap);
 		}
-		bukkitCommand.setAliases(activeAliases);
-		bukkitCommand.register(commandMap);
 	}
 	
 	public void unregister(final SimpleCommandMap commandMap, final Map<String, Command> knownCommands, final Set<String> aliases) {
-		knownCommands.remove(label);
-		aliases.removeAll(activeAliases);
-		activeAliases = new ArrayList<String>(aliases);
-		bukkitCommand.unregister(commandMap);
-		bukkitCommand.setAliases(this.aliases);
+		synchronized (commandMap) {
+			knownCommands.remove(label);
+			aliases.removeAll(activeAliases);
+			for (final String alias : activeAliases)
+				knownCommands.remove(alias);
+			activeAliases = new ArrayList<String>(aliases);
+			bukkitCommand.unregister(commandMap);
+			bukkitCommand.setAliases(this.aliases);
+			if (overriden != null) {
+				knownCommands.put(label, overriden);
+				overriden = null;
+			}
+			for (final Entry<String, Command> e : overridenAliases.entrySet()) {
+				if (e.getValue() == null)
+					continue;
+				knownCommands.put(e.getKey(), e.getValue());
+				aliases.add(e.getKey());
+			}
+			overridenAliases.clear();
+		}
+	}
+	
+	private final Collection<HelpTopic> helps = new ArrayList<HelpTopic>();
+	
+	public void registerHelp() {
+		final HelpMap help = Bukkit.getHelpMap();
+		final HelpTopic t = new GenericCommandHelpTopic(bukkitCommand);
+		help.addTopic(t);
+		helps.add(t);
+		for (final String alias : activeAliases) {
+			final HelpTopic at = new CommandAliasHelpTopic("/" + alias, "/" + getLabel(), help);
+			help.addTopic(at);
+			helps.add(at);
+		}
+	}
+	
+	public void unregisterHelp() {
+		Bukkit.getHelpMap().getHelpTopics().removeAll(helps);
+		helps.clear();
 	}
 	
 	public String getName() {

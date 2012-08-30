@@ -39,7 +39,7 @@ public class SkriptAPIException extends RuntimeException {
 	}
 	
 	public final static void inaccessibleConstructor(final Class<?> c, final IllegalAccessException e) throws SkriptAPIException {
-		throw new SkriptAPIException("the constructor of " + c.getName() + " and/or the class itself is/are not public", e);
+		throw new SkriptAPIException("The constructor of " + c.getName() + " and/or the class itself is/are not public", e);
 	}
 	
 	public final static void instantiationException(final Class<?> c, final InstantiationException e) throws SkriptAPIException {

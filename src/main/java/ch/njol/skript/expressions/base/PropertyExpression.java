@@ -34,7 +34,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * {@link #init(Expression[], int, int, ParseResult)}.
  * 
  * @author Peter Güttinger
- * 
  */
 public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	

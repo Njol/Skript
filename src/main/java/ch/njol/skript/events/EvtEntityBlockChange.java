@@ -35,7 +35,6 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EvtEntityBlockChange extends SkriptEvent {
 	
@@ -62,6 +61,7 @@ public class EvtEntityBlockChange extends SkriptEvent {
 				return e.getEntity() instanceof Sheep;
 			}
 		});
+		// TODO silverfishes
 		
 		private final String pattern;
 		final Checker<EntityChangeBlockEvent> checker;

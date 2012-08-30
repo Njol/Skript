@@ -24,6 +24,9 @@ package ch.njol.skript.config;
 import java.io.PrintWriter;
 import java.util.Map.Entry;
 
+/**
+ * @author Peter Güttinger
+ */
 public class EntryNode extends Node implements Entry<String, String> {
 	
 	private String value;

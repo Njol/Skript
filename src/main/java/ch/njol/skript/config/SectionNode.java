@@ -29,9 +29,13 @@ import java.util.List;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
-import ch.njol.skript.SkriptLogger;
+import ch.njol.skript.config.validate.EntryValidator;
 import ch.njol.skript.config.validate.SectionValidator;
+import ch.njol.skript.log.SkriptLogger;
 
+/**
+ * @author Peter Güttinger
+ */
 public class SectionNode extends Node implements Iterable<Node> {
 	
 	private final ArrayList<Node> nodes = new ArrayList<Node>();
@@ -205,7 +209,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 		final int x = line.indexOf(separator);
 		if (x == -1) {
 			final InvalidNode n = new InvalidNode(this, line, lineNum);
-			Skript.error("missing separator '" + separator + "'");
+			EntryValidator.notAnEntryError(n);
 			SkriptLogger.setNode(this);
 			return n;
 		}

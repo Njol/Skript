@@ -28,7 +28,6 @@ import java.nio.file.StandardCopyOption;
 
 /**
  * @author Peter Güttinger
- * 
  */
 abstract class Java7FileUtils {
 	

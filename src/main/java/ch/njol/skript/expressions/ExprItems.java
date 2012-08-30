@@ -42,7 +42,6 @@ import ch.njol.util.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprItems extends SimpleExpression<ItemStack> {
 	

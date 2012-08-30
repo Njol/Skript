@@ -52,7 +52,6 @@ import ch.njol.skript.util.ItemType;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EvtMoveOn extends SkriptEvent {
 	

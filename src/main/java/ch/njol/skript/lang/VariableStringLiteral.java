@@ -40,7 +40,6 @@ import ch.njol.util.iterator.ArrayIterator;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class VariableStringLiteral implements Literal<String> {
 	

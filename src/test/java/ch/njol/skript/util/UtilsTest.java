@@ -27,7 +27,6 @@ import org.junit.Test;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class UtilsTest {
 	

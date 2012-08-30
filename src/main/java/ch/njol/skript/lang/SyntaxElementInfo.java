@@ -21,6 +21,11 @@
 
 package ch.njol.skript.lang;
 
+/**
+ * @author Peter Güttinger
+ * 
+ * @param <E> the syntax element this info is for
+ */
 public class SyntaxElementInfo<E extends SyntaxElement> {
 	
 	public final Class<E> c;

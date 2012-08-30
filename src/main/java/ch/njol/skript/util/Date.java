@@ -25,11 +25,10 @@ import ch.njol.skript.Skript;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class Date implements Comparable<Date> {
 	
-	public final long timestamp;
+	private long timestamp;
 	
 	public Date() {
 		timestamp = System.currentTimeMillis();
@@ -51,6 +50,18 @@ public class Date implements Comparable<Date> {
 	@Override
 	public String toString() {
 		return Skript.getDateFormat().format(timestamp);
+	}
+	
+	public long getTimestamp() {
+		return timestamp;
+	}
+	
+	public void add(final Timespan span) {
+		timestamp += span.getTicks() * 50;
+	}
+	
+	public void subtract(final Timespan span) {
+		timestamp -= span.getTicks() * 50;
 	}
 	
 }

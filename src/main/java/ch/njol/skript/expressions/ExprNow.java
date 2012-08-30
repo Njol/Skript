@@ -32,7 +32,6 @@ import ch.njol.skript.util.Date;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprNow extends SimpleExpression<Date> {
 	

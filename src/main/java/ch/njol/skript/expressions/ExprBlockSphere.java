@@ -38,7 +38,6 @@ import ch.njol.util.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprBlockSphere extends SimpleExpression<Block> {
 	

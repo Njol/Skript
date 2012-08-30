@@ -31,7 +31,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprAmount extends SimpleExpression<Integer> {
 	

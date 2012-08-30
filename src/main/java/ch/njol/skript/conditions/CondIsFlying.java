@@ -28,7 +28,6 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class CondIsFlying extends PropertyCondition<Player> {
 	

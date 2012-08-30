@@ -27,6 +27,11 @@ import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.util.SimpleLiteral;
 
+/**
+ * @author Peter Güttinger
+ * 
+ * @param <T> The class this info is for
+ */
 public class ClassInfo<T> {
 	
 	private final Class<T> c;

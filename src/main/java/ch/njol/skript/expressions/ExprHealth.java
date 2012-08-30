@@ -38,7 +38,6 @@ import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 	

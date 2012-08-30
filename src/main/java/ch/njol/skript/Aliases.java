@@ -31,7 +31,8 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 
 import ch.njol.skript.Language.LanguageChangeListener;
-import ch.njol.skript.SkriptLogger.SubLog;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.ItemData;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
@@ -39,7 +40,6 @@ import ch.njol.util.Pair;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class Aliases {
 	
@@ -331,38 +331,36 @@ public abstract class Aliases {
 			s = s.split(" ", 2)[1];
 		}
 		
-		final String of = Language.getSpaced("ench.of");
-		int c = lc.indexOf(of);
-		if (c != -1) {
-			outer: do {
-				final ItemType t2 = t.clone();
-				final SubLog log = SkriptLogger.startSubLog();
-				if (parseType(s.substring(0, c), t2) == null) {
-					log.stop();
-					continue;
-				}
+		final String of = Language.getSpaced("ench.of").toLowerCase();
+		int c = -1;
+		outer: while ((c = lc.indexOf(of, c + 1)) != -1) {
+			final ItemType t2 = t.clone();
+			final SubLog log = SkriptLogger.startSubLog();
+			if (parseType(s.substring(0, c), t2) == null) {
 				log.stop();
-				if (t2.numTypes() == 0)
+				continue;
+			}
+			log.stop();
+			if (t2.numTypes() == 0)
+				continue;
+			final Map<Enchantment, Integer> enchantments = new HashMap<Enchantment, Integer>();
+			final String[] enchs = lc.substring(c + of.length(), lc.length()).split("\\s*(,|" + Language.get("and") + ")\\s*");
+			for (final String ench : enchs) {
+				Enchantment e = enchantmentNames.get(ench);
+				if (e != null) {
+					enchantments.put(e, 1);
 					continue;
-				final Map<Enchantment, Integer> enchantments = new HashMap<Enchantment, Integer>();
-				final String[] enchs = lc.substring(c + of.length(), s.length()).split("\\s*(,|" + Language.get("and") + ")\\s*");
-				for (final String ench : enchs) {
-					Enchantment e = enchantmentNames.get(ench);
-					if (e != null) {
-						enchantments.put(e, 1);
-						continue;
-					}
-					if (!ench.matches(".* \\d+"))
-						continue outer;
-					e = enchantmentNames.get(ench.substring(0, ench.lastIndexOf(' ')));
-					if (e == null)
-						continue outer;
-					final int level = Skript.parseInt(ench.substring(ench.lastIndexOf(' ') + 1));
-					enchantments.put(e, level);
 				}
-				t2.addEnchantments(enchantments);
-				return t2;
-			} while ((c = lc.indexOf(of, c + 1)) != -1);
+				if (!ench.matches(".* \\d+"))
+					continue outer;
+				e = enchantmentNames.get(ench.substring(0, ench.lastIndexOf(' ')));
+				if (e == null)
+					continue outer;
+				final int level = Skript.parseInt(ench.substring(ench.lastIndexOf(' ') + 1));
+				enchantments.put(e, level);
+			}
+			t2.addEnchantments(enchantments);
+			return t2;
 		}
 		
 		if (parseType(s, t) == null)

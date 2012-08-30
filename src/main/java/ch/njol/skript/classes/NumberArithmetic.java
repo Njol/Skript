@@ -23,7 +23,6 @@ package ch.njol.skript.classes;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class NumberArithmetic<T extends Number> implements Arithmetic<T, Double> {
 	

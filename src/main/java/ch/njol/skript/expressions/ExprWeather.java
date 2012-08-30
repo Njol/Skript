@@ -38,7 +38,6 @@ import ch.njol.skript.util.WeatherType;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	

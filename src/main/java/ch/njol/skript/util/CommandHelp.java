@@ -29,7 +29,6 @@ import org.bukkit.command.CommandSender;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class CommandHelp {
 	

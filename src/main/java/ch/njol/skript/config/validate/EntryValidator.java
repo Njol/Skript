@@ -24,11 +24,11 @@ package ch.njol.skript.config.validate;
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Setter;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EntryValidator implements NodeValidator {
 	
@@ -52,6 +52,7 @@ public class EntryValidator implements NodeValidator {
 	}
 	
 	public static final void notAnEntryError(final Node node) {
+		SkriptLogger.setNode(node);
 		Skript.error("'" + node.getName() + "' is not an entry (like 'blah " + node.getConfig().getSeparator() + " value')");
 	}
 	

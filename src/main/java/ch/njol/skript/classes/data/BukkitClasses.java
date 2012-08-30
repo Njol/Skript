@@ -64,7 +64,6 @@ import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 @SuppressWarnings("unchecked")
 public class BukkitClasses {
@@ -392,7 +391,7 @@ public class BukkitClasses {
 					@Override
 					public OfflinePlayer parse(final String s, final ParseContext context) {
 						if (context == ParseContext.COMMAND) {
-							if (!s.matches("\\S+")) // TODO valid characters for player names?
+							if (!s.matches("\\S+"))
 								return null;
 							return Bukkit.getOfflinePlayer(s);
 						}

@@ -36,7 +36,6 @@ import ch.njol.skript.util.ItemType;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 	

@@ -27,7 +27,6 @@ import org.bukkit.event.Event;
  * Effects which can be tested implement this interface.
  * 
  * @author Peter Güttinger
- * 
  */
 public interface Testable {
 	

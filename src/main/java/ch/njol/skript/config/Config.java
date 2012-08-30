@@ -32,7 +32,6 @@ import ch.njol.skript.Skript;
  * Represents a config file.
  * 
  * @author Peter Güttinger
- * 
  */
 public class Config {
 	
@@ -108,7 +107,7 @@ public class Config {
 	
 	void setIndentation(final String indent) {
 		indentation = indent;
-		indentationName = (indent.charAt(0) == ' ' ? "space" : "tab") + (indent.length() == 1 ? "" : "s");
+		indentationName = (indent.charAt(0) == ' ' ? "space" : "tab");
 	}
 	
 	String getIndentation() {

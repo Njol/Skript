@@ -28,6 +28,9 @@ import ch.njol.skript.Skript;
 import ch.njol.util.Checker;
 import ch.njol.util.iterator.CheckedIterator;
 
+/**
+ * @author Peter Güttinger
+ */
 public class BlockSphereIterator extends CheckedIterator<Block> {
 	
 	public BlockSphereIterator(final Location center, final float radius) {
@@ -40,5 +43,4 @@ public class BlockSphereIterator extends CheckedIterator<Block> {
 			}
 		});
 	}
-	
 }

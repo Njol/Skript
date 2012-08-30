@@ -33,7 +33,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprTypeOf extends PropertyExpression<Object, Object> {
 	

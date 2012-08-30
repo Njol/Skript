@@ -32,7 +32,6 @@ import ch.njol.skript.lang.Debuggable;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class Slot implements Debuggable {
 	

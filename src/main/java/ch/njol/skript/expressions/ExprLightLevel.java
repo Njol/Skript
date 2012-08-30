@@ -35,7 +35,6 @@ import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprLightLevel extends PropertyExpression<Block, Byte> {
 	

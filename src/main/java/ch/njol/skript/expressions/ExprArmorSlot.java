@@ -36,7 +36,6 @@ import ch.njol.skript.util.Slot;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprArmorSlot extends PropertyExpression<Player, Slot> {
 	

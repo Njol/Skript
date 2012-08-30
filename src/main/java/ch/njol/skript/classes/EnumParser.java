@@ -26,7 +26,6 @@ import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EnumParser<E extends Enum<E>> extends Parser<E> {
 	

@@ -33,14 +33,13 @@ import ch.njol.skript.lang.TriggerItem;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EffExit extends Effect {
 	
 	static {
 		Skript.registerEffect(EffExit.class,
 				"(exit|stop) [trigger]",
-				"(exit|stop) [1] section",
+				"(exit|stop) [(1|a|the|this)] section",
 				"(exit|stop) <\\d+> sections",
 				"(exit|stop) all sections");
 	}
@@ -48,7 +47,7 @@ public class EffExit extends Effect {
 	private int breakLevels;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 				breakLevels = ScriptLoader.currentSections.size() + 1;
@@ -76,12 +75,10 @@ public class EffExit extends Effect {
 	@Override
 	protected TriggerItem walk(final Event e) {
 		debug(e, false);
-		int i = breakLevels - 1;
 		TriggerItem n = parent;
-		while (i > 0) {
+		for (int i = breakLevels - 1; i > 0; i--) {
 			n = n.getParent();
 			assert n != null;
-			i--;
 		}
 		return n instanceof Loop ? ((Loop) n).getActualNext() : n.getNext();
 	}

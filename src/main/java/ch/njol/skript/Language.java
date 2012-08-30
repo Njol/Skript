@@ -30,7 +30,6 @@ import java.util.Properties;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class Language {
 	

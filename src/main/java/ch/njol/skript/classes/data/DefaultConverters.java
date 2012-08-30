@@ -47,7 +47,6 @@ import ch.njol.skript.util.Slot;
 
 /**
  * @author Peter Güttinger
- * 
  */
 @SuppressWarnings("rawtypes")
 public class DefaultConverters {

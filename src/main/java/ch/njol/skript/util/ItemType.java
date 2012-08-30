@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.RandomAccess;
 
 import org.bukkit.Material;
@@ -59,6 +60,11 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	
 	Map<Enchantment, Integer> enchantments = null;
 	private boolean hasPreferred = false;
+	
+	/**
+	 * How many different items this item type represents
+	 */
+	private int numItems = 0;
 	
 	/**
 	 * list of pairs {item/block, block... to replace if possible}
@@ -98,6 +104,9 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		all = i.all;
 		amount = i.amount;
 		hasPreferred = i.hasPreferred;
+		numItems = i.numItems;
+		block = i.block == null ? null : i.block.clone();
+		item = i.item == null ? null : i.item.clone();
 		for (final ItemData d : i) {
 			types.add(d.clone());
 		}
@@ -190,14 +199,18 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		if (enchantments == null)
 			return b.toString();
 		b.append(Language.getSpaced("ench.of"));
-		boolean first = true;
+		int i = 0;
 		for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
-			if (!first)
-				b.append(", "); // TODO use 'and' if last
-			first = false;
+			if (i != 0) {
+				if (i != enchantments.size() - 1)
+					b.append(", ");
+				else
+					b.append(Language.getSpaced("and"));
+			}
 			b.append(Language.get("ench.names." + e.getKey().getName()));
 			b.append(" ");
 			b.append(e.getValue());
+			i++;
 		}
 		return b.toString();
 	}
@@ -224,8 +237,10 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 				if (Utils.indexOf(p, d.typeid, 1) != -1) {
 					final ItemData c = d.clone();
 					c.typeid = p[0];
-					if (item.types.contains(c))
+					if (item.types.contains(c)) {
+						item.numItems -= d.numItems();
 						item.types.remove(i--);
+					}
 					break;
 				}
 			}
@@ -246,14 +261,18 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 				if (p[0] <= Skript.MAXBLOCKID && Utils.indexOf(p, d.typeid, 1) != -1) {
 					final ItemData c = d.clone();
 					c.typeid = p[0];
-					if (block.types.contains(c))
+					if (block.types.contains(c)) {
+						block.numItems -= d.numItems();
 						block.types.remove(i--);
+					}
 					break;
 				} else if (d.typeid == p[0]) {
 					final ItemData c = d.clone();
 					c.typeid = p[1];
-					if (block.types.contains(c))
+					if (block.types.contains(c)) {
+						block.numItems -= d.numItems();
 						block.types.remove(i--);
+					}
 					break;
 				}
 			}
@@ -322,21 +341,26 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	public void add(final ItemData type) {
 		if (type != null) {
 			types.add(type);
+			numItems += type.numItems();
 			modified();
 		}
 	}
 	
 	public void addAll(final Collection<ItemData> types) {
 		for (final ItemData type : types) {
-			if (type != null)
+			if (type != null) {
 				this.types.add(type);
+				numItems += type.numItems();
+			}
 		}
 		modified();
 	}
 	
-	public void remove(final ItemData d) {
-		types.remove(d);
-		modified();
+	public void remove(final ItemData type) {
+		if (types.remove(type)) {
+			numItems -= type.numItems();
+			modified();
+		}
 	}
 	
 	public void addEnchantments(final Map<Enchantment, Integer> enchantments) {
@@ -450,6 +474,8 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		return new ItemType(this);
 	}
 	
+	private final static Random random = new Random();
+	
 	/**
 	 * @return One random ItemStack. If you have a List or an Inventory, use {@link #addTo(Inventory)} or {@link #addTo(List)} respectively.
 	 * @see #addTo(Inventory)
@@ -461,7 +487,13 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	 * @see #removeFrom(List...)
 	 */
 	public ItemStack getRandom() {
-		final ItemStack is = Utils.getRandom(types).getRandom();
+		if (numItems == 0)
+			return null;
+		int item = random.nextInt(numItems);
+		int i = -1;
+		while (item >= 0)
+			item -= types.get(++i).numItems();
+		final ItemStack is = types.get(i).getRandom();
 		is.setAmount(getAmount());
 		if (enchantments != null)
 			is.addUnsafeEnchantments(enchantments);
@@ -503,6 +535,13 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	
 	public int numTypes() {
 		return types.size();
+	}
+	
+	/**
+	 * @return How many different items this item type represents
+	 */
+	public int numItems() {
+		return numItems;
 	}
 	
 	@Override

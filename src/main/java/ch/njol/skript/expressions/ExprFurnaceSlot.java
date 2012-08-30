@@ -42,7 +42,6 @@ import ch.njol.skript.util.Slot;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	

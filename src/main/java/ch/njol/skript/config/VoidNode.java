@@ -24,12 +24,10 @@ package ch.njol.skript.config;
 import java.io.PrintWriter;
 
 /**
+ * An empty line or a comment.<br/>
+ * The subclass {@link InvalidNode} is for invalid non-empty nodes, i.e. where a parsing error ocurred.
  * 
- * an empty line, usually a comment.<br/>
- * the subclass {@link InvalidNode} is for invalid non-empty nodes, i.e. where a parsing error ocurred.
- * 
- * @author unicode21B9
- * 
+ * @author Peter Güttinger
  */
 public class VoidNode extends Node {
 	

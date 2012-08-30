@@ -28,7 +28,6 @@ import ch.njol.skript.Skript;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class Time {
 	

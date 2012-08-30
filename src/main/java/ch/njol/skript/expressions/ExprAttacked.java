@@ -42,7 +42,6 @@ import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprAttacked extends SimpleExpression<Entity> {
 	
@@ -51,7 +50,6 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 	}
 	
 	private EntityData<?> type;
-	private Entity[] one;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -70,12 +68,12 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 				return false;
 			}
 		}
-		one = (Entity[]) Array.newInstance(this.type.getType(), 1);
 		return true;
 	}
 	
 	@Override
 	protected Entity[] get(final Event e) {
+		final Entity[] one = (Entity[]) Array.newInstance(type.getType(), 1);
 		final Entity entity = Utils.validate(((EntityEvent) e).getEntity());
 		if (type.isInstance(entity)) {
 			one[0] = entity;

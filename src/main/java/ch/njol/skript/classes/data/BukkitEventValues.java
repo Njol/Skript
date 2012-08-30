@@ -80,7 +80,6 @@ import ch.njol.skript.util.Getter;
 
 /**
  * @author Peter Güttinger
- * 
  */
 @SuppressWarnings("unchecked")
 public final class BukkitEventValues {

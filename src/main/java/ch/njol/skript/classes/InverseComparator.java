@@ -23,7 +23,6 @@ package ch.njol.skript.classes;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class InverseComparator<T1, T2> implements Comparator<T1, T2> {
 	

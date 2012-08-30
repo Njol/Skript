@@ -31,6 +31,9 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Offset;
 
+/**
+ * @author Peter Güttinger
+ */
 public class EffTree extends Effect {
 	
 	static {

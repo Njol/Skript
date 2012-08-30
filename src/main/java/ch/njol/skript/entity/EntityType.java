@@ -34,7 +34,6 @@ import ch.njol.util.Validate;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class EntityType {
 	

@@ -39,7 +39,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
 
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.command.Commands;
@@ -61,6 +60,8 @@ import ch.njol.skript.lang.Statement;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.TriggerSection;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Callback;
@@ -68,9 +69,7 @@ import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
 /**
- * 
  * @author Peter Güttinger
- * 
  */
 final public class ScriptLoader {
 	private ScriptLoader() {}
@@ -149,12 +148,10 @@ final public class ScriptLoader {
 		if (renamed > 0)
 			Skript.info("[1.3] Renamed " + renamed + " scripts to match the new format");
 		
-		final SubLog log = SkriptLogger.startSubLog(); // TODO improve this - it's only used to find out whether there were any errors or not
+		final int startErrors = SkriptLogger.getNumErrors();
 		final Date start = new Date();
 		final ScriptInfo i = loadScripts(scriptsFolder);
-		log.stop();
-		log.printLog();
-		if (!log.hasErrors())
+		if (startErrors == SkriptLogger.getNumErrors())
 			Skript.info("All scripts loaded without errors!");
 		
 		if (i.files == 0)
@@ -215,7 +212,7 @@ final public class ScriptLoader {
 	private final static void registerBukkitEvents() {
 		for (final Class<? extends Event> e : SkriptEventHandler.triggers.keySet()) {
 			if (!registeredEvents.contains(e)) {
-				Bukkit.getPluginManager().registerEvent(e, new Listener() {}, Skript.priority, SkriptEventHandler.ee, Skript.getInstance());
+				Bukkit.getPluginManager().registerEvent(e, new Listener() {}, Skript.defaultEventPriority, SkriptEventHandler.ee, Skript.getInstance());
 				registeredEvents.add(e);
 			}
 		}
@@ -293,7 +290,7 @@ final public class ScriptLoader {
 					final String l = replaceOptions(n.getName().substring("loop ".length()));
 					if (l == null)
 						continue;
-					final Expression<?> loopedExpr = (Expression<?>) SkriptParser.parse(l, Skript.getExpressions().iterator(), false, false, "can't understand this expression: '" + n.getName() + "'");
+					final Expression<?> loopedExpr = (Expression<?>) SkriptParser.parse(l, Skript.getExpressions().iterator(), false, false, "can't understand this loop: '" + n.getName() + "'");
 					if (loopedExpr == null)
 						continue;
 					if (!loopedExpr.canLoop()) {
@@ -328,12 +325,11 @@ final public class ScriptLoader {
 					}
 				} else {
 					String name = n.getName();
-					if (name.startsWith("if "))
+					if (StringUtils.startsWithIgnoreCase(name, "if "))
 						name = name.substring(3);
 					final Condition cond = Condition.parse(name, "can't understand this condition: '" + name + "'");
-					if (cond == null) {
+					if (cond == null)
 						continue;
-					}
 					if (Skript.debug())
 						Skript.info(indentation + cond.toString(null, true) + ":");
 					final int hadDelayBefore = hasDelayBefore;
@@ -432,7 +428,7 @@ final public class ScriptLoader {
 					if (name == null || name.contains("%")) {
 						continue;
 					}
-					if (Skript.getVariable(name) != null)
+					if (Variables.getVariable(name) != null)
 						continue;
 					final SubLog log = SkriptLogger.startSubLog();
 					Object o = Skript.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.CONFIG);
@@ -454,7 +450,7 @@ final public class ScriptLoader {
 							continue;
 						}
 					}
-					Skript.setVariable(name, o);
+					Variables.setVariable(name, o);
 				}
 				continue;
 			}

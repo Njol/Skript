@@ -23,6 +23,9 @@ package ch.njol.skript.config;
 
 import java.io.PrintWriter;
 
+/**
+ * @author Peter Güttinger
+ */
 public class ParseOptionNode extends Node {
 	
 	ParseOptionNode(final String name, final SectionNode parent, final ConfigReader r) {

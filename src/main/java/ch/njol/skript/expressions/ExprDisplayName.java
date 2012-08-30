@@ -32,12 +32,11 @@ import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprDisplayName extends SimplePropertyExpression<Player, String> {
 	
 	static {
-		register(ExprDisplayName.class, String.class, "display name", "players");
+		register(ExprDisplayName.class, String.class, "(display|nick)[ ]name", "players");
 	}
 	
 	/**

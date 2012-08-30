@@ -26,7 +26,6 @@ import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ConvertedChanger<T1, T2> implements Changer<T1, T2> {
 	

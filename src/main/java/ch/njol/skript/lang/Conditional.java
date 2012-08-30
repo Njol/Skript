@@ -76,4 +76,18 @@ public class Conditional extends TriggerSection {
 		elseClause.setNext(getNext());
 	}
 	
+	@Override
+	public void setNext(final TriggerItem next) {
+		super.setNext(next);
+		if (elseClause != null)
+			elseClause.setNext(next);
+	}
+	
+	@Override
+	public void setParent(final TriggerSection parent) {
+		super.setParent(parent);
+		if (elseClause != null)
+			elseClause.setParent(parent);
+	}
+	
 }

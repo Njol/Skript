@@ -34,7 +34,6 @@ import ch.njol.skript.util.ItemType;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EffEquip extends Effect implements Testable {
 	

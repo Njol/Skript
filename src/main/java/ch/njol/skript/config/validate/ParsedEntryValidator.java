@@ -30,7 +30,6 @@ import ch.njol.util.Setter;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ParsedEntryValidator<T> extends EntryValidator {
 	

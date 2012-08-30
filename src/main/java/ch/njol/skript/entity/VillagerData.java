@@ -31,7 +31,6 @@ import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class VillagerData extends EntityData<Villager> {
 	

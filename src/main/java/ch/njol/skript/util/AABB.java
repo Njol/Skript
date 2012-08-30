@@ -33,7 +33,6 @@ import ch.njol.skript.Skript;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class AABB implements Iterable<Block> {
 	

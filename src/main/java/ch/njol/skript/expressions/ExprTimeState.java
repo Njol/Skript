@@ -32,7 +32,6 @@ import ch.njol.skript.lang.UnparsedLiteral;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprTimeState extends WrapperExpression<Object> {
 	

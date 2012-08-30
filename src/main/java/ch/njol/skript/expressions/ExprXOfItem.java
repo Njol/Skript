@@ -33,7 +33,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprXOfItem extends SimpleExpression<ItemStack> {
 	

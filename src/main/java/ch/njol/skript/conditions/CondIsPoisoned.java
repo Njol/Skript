@@ -29,7 +29,6 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class CondIsPoisoned extends PropertyCondition<LivingEntity> {
 	

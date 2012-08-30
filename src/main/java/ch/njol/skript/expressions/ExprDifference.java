@@ -38,7 +38,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprDifference extends SimpleExpression<Object> {
 	
@@ -50,8 +49,6 @@ public class ExprDifference extends SimpleExpression<Object> {
 	
 	private Arithmetic<?, ?> math;
 	private Class<?> relativeType;
-	
-	private Object[] one;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
@@ -91,7 +88,6 @@ public class ExprDifference extends SimpleExpression<Object> {
 		}
 		math = ci.getMath();
 		relativeType = ci.getMathRelativeType();
-		one = (Object[]) Array.newInstance(relativeType, 1);
 		return true;
 	}
 	
@@ -100,6 +96,7 @@ public class ExprDifference extends SimpleExpression<Object> {
 		final Object f = first.getSingle(e), s = second.getSingle(e);
 		if (s == null || f == null)
 			return null;
+		final Object[] one = (Object[]) Array.newInstance(relativeType, 1);
 		one[0] = diff(math, f, s);
 		return one;
 	}

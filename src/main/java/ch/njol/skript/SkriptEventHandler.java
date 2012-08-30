@@ -38,7 +38,6 @@ import ch.njol.skript.lang.Trigger;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class SkriptEventHandler {
 	private SkriptEventHandler() {}

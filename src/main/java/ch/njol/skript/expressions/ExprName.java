@@ -28,7 +28,6 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprName extends SimplePropertyExpression<Player, String> {
 	

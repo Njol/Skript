@@ -29,7 +29,6 @@ import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EnumEntryValidator<E extends Enum<E>> extends EntryValidator {
 	

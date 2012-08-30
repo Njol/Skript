@@ -33,14 +33,15 @@ import java.util.regex.Pattern;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.SkriptCommand;
 import ch.njol.skript.command.SkriptCommandEvent;
 import ch.njol.skript.lang.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.log.LogEntry;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
@@ -53,7 +54,6 @@ import ch.njol.util.Validate;
  * Note: All parse methods print one error at most xor any amount of warnings and lower level log messages. If the given string doesn't match any pattern nothing is printed.
  * 
  * @author Peter Güttinger
- * 
  */
 public class SkriptParser {
 	
@@ -61,8 +61,9 @@ public class SkriptParser {
 	
 	private final boolean parseStatic;
 	
-	private String bestError = null;
+	private LogEntry bestError = null;
 	private int bestErrorQuality = 0;
+	private int matchedCharsForError = 0;
 	
 	private static enum ErrorQuality {
 		NONE, NOT_AN_EXPRESSION, EXPRESSION_OF_WRONG_TYPE, SEMANTIC_ERROR;
@@ -71,17 +72,27 @@ public class SkriptParser {
 		}
 	}
 	
-	private final void setBestError(final ErrorQuality quality, final String error, final boolean appendCurrentNodeSuffix) {
-		if (bestErrorQuality < quality.quality()) {
-			bestError = appendCurrentNodeSuffix ? error + SkriptLogger.getCurrentNodeSuffix() : error;
+	private final void setBestError(final ErrorQuality quality, final int matchedCharsForError, final String error) {
+		if (quality.quality() > bestErrorQuality || bestErrorQuality == quality.quality() && matchedCharsForError > this.matchedCharsForError) {
+			bestError = new LogEntry(Level.SEVERE, error);
 			bestErrorQuality = quality.quality();
+			this.matchedCharsForError = matchedCharsForError;
+		}
+	}
+	
+	private final void setBestError(final ErrorQuality quality, final int matchedCharsForError, final LogEntry error) {
+		if (quality.quality() > bestErrorQuality || bestErrorQuality == quality.quality() && matchedCharsForError > this.matchedCharsForError) {
+			bestError = error;
+			bestErrorQuality = quality.quality();
+			this.matchedCharsForError = matchedCharsForError;
 		}
 	}
 	
 	private final void setBestError(final SkriptParser other) {
-		if (bestErrorQuality < other.bestErrorQuality) {
+		if (other.bestErrorQuality > bestErrorQuality || other.bestErrorQuality == bestErrorQuality && other.matchedCharsForError > matchedCharsForError) {
 			bestError = other.bestError;
 			bestErrorQuality = other.bestErrorQuality;
+			matchedCharsForError = other.matchedCharsForError;
 		}
 	}
 	
@@ -217,7 +228,7 @@ public class SkriptParser {
 	private final <T extends SyntaxElement> T parse(final Iterator<? extends SyntaxElementInfo<? extends T>> source) {
 		while (source.hasNext()) {
 			final SyntaxElementInfo<? extends T> info = source.next();
-			for (int i = 0; i < info.patterns.length; i++) {
+			patternsLoop: for (int i = 0; i < info.patterns.length; i++) {
 				try {
 					final ParseResult res = parse_i(info.patterns[i], 0, 0);
 					if (res != null) {
@@ -235,7 +246,14 @@ public class SkriptParser {
 										throw new SkriptAPIException("The default expression of '" + vi.classes[0].getName() + "' is not a single-element expression. Change your pattern to allow multiple elements or make the expression mandatory [pattern: " + info.patterns[i] + "]");
 									if (vi.time != 0 && !var.setTime(vi.time))
 										throw new SkriptAPIException("The default expression of '" + vi.classes[0].getName() + "' does not have distinct time states. Either allow null (with %-" + vi.classes[0].getCodeName() + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
-									var.init();
+									final SubLog log = SkriptLogger.startSubLog();
+									if (!var.init()) {
+										log.stop();
+										if (log.hasErrors())
+											setBestError(ErrorQuality.SEMANTIC_ERROR, res.matchedChars, log.getLastError());
+										continue patternsLoop;
+									}
+									log.stop();
 									res.vars[j] = var;
 								}
 							}
@@ -245,21 +263,14 @@ public class SkriptParser {
 						final SubLog log = SkriptLogger.startSubLog();
 						if (!e.init(res.vars, i, ScriptLoader.hasDelayBefore, res)) {
 							SkriptLogger.stopSubLog(log);
-							if (!log.hasErrors())
-								continue;
-							setBestError(ErrorQuality.SEMANTIC_ERROR, log.getLastError(), false);
-//							Skript.error(bestError);
-//							return null;
+							if (log.hasErrors())
+								setBestError(ErrorQuality.SEMANTIC_ERROR, res.matchedChars, log.getLastError());
 							continue;
 						}
 						SkriptLogger.stopSubLog(log);
 						log.printLog();
 						return e;
 					}
-//					if (bestErrorQuality == ErrorQuality.SEMANTIC_ERROR.quality()) {
-//						Skript.error(bestError);
-//						return null;
-//					}
 				} catch (final InstantiationException e) {
 					SkriptAPIException.instantiationException("the " + Skript.getSyntaxElementName(info.c), info.c, e);
 				} catch (final IllegalAccessException e) {
@@ -268,7 +279,7 @@ public class SkriptParser {
 			}
 		}
 		if (bestError != null)
-			SkriptLogger.logDirect(Level.SEVERE, bestError);
+			SkriptLogger.log(bestError);
 		return null;
 	}
 	
@@ -308,7 +319,7 @@ public class SkriptParser {
 			if (v != null) {
 				final Expression<? extends T> w = v.getConvertedExpression(returnType);
 				if (w == null)
-					setBestError(ErrorQuality.EXPRESSION_OF_WRONG_TYPE, v.toString() + " " + (v.isSingle() ? "is" : "are") + " not " + Utils.a(Skript.getExactClassName(returnType)), true);
+					setBestError(ErrorQuality.EXPRESSION_OF_WRONG_TYPE, expr.length(), v.toString() + " " + (v.isSingle() ? "is" : "are") + " not " + Utils.a(Skript.getExactClassName(returnType)));
 				return w;
 			} else {
 				setBestError(parser);
@@ -321,7 +332,7 @@ public class SkriptParser {
 		final Literal<? extends T> p = l.getConvertedExpression(returnType, context);
 		SkriptLogger.stopSubLog(log);
 		if (p == null)
-			setBestError(ErrorQuality.NOT_AN_EXPRESSION, log.getLastError() == null ? "'" + expr + "' is not " + Utils.a(Skript.getExactClassName(returnType)) : log.getLastError(), log.getLastError() == null);
+			setBestError(ErrorQuality.NOT_AN_EXPRESSION, 0, log.getLastError() == null ? new LogEntry(Level.SEVERE, "'" + expr + "' is not " + Utils.a(Skript.getExactClassName(returnType))) : log.getLastError());
 		return p;
 	}
 	
@@ -351,7 +362,7 @@ public class SkriptParser {
 		final ParseResult res = parser.parse_i(command.getPattern(), 0, 0);
 		if (res == null) {
 			if (parser.bestError != null)
-				SkriptLogger.logDirect(Level.SEVERE, parser.bestError);
+				SkriptLogger.log(parser.bestError);
 			return false;
 		}
 		
@@ -389,7 +400,7 @@ public class SkriptParser {
 			}
 		}
 		if (bestError != null)
-			SkriptLogger.logDirect(Level.SEVERE, bestError);
+			SkriptLogger.log(bestError);
 		return null;
 	}
 	
@@ -519,20 +530,20 @@ public class SkriptParser {
 								if (var != null) {
 									if (!vi.isPlural[k] && !(var instanceof UnparsedLiteral) && !var.isSingle()) {
 										if (context == ParseContext.COMMAND)
-											setBestError(ErrorQuality.SEMANTIC_ERROR, "this command can only accept a single " + vi.classes[k].getName() + "!", false);
+											setBestError(ErrorQuality.SEMANTIC_ERROR, res.matchedChars + matchedChars, "this command can only accept a single " + vi.classes[k].getName() + "!");
 										else
-											setBestError(ErrorQuality.SEMANTIC_ERROR, "this expression can only accept a single " + vi.classes[k].getName() + ", but multiple are given.", true);
+											setBestError(ErrorQuality.SEMANTIC_ERROR, res.matchedChars + matchedChars, "this expression can only accept a single " + vi.classes[k].getName() + ", but multiple are given.");
 										return null;
 									}
 									if (vi.time != 0) {
 										if (var instanceof UnparsedLiteral)
 											return null;
 										if (ScriptLoader.hasDelayBefore == 1) {
-											setBestError(ErrorQuality.SEMANTIC_ERROR, "Cannot use time states after the event has already passed", true);
+											setBestError(ErrorQuality.SEMANTIC_ERROR, res.matchedChars + matchedChars, "Cannot use time states after the event has already passed");
 											return null;
 										}
 										if (!var.setTime(vi.time)) {
-											setBestError(ErrorQuality.SEMANTIC_ERROR, var + " does not have a " + (vi.time == -1 ? "past" : "future") + " state", true);
+											setBestError(ErrorQuality.SEMANTIC_ERROR, res.matchedChars + matchedChars, var + " does not have a " + (vi.time == -1 ? "past" : "future") + " state");
 											return null;
 										}
 									}
@@ -557,7 +568,7 @@ public class SkriptParser {
 									}
 									types = b.toString();
 								}
-								setBestError(ErrorQuality.NOT_AN_EXPRESSION, "'" + expr.substring(i, i2) + "' is not " + types, true);
+								setBestError(ErrorQuality.NOT_AN_EXPRESSION, res.matchedChars + matchedChars, "'" + expr.substring(i, i2) + "' is not " + types);
 							}
 						}
 					}

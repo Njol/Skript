@@ -47,7 +47,6 @@ import ch.njol.skript.util.WeatherType;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class SkriptClasses {
 	
@@ -258,7 +257,7 @@ public class SkriptClasses {
 				.serializer(new Serializer<Date>() {
 					@Override
 					public String serialize(final Date d) {
-						return "" + d.timestamp;
+						return "" + d.getTimestamp();
 					}
 					
 					@Override
@@ -269,11 +268,32 @@ public class SkriptClasses {
 							return null;
 						}
 					}
-				})
-				.math(Timespan.class, new Arithmetic<Date, Timespan>() {
+				}).math(Timespan.class, new Arithmetic<Date, Timespan>() {
 					@Override
 					public Timespan difference(final Date first, final Date second) {
 						return first.difference(second);
+					}
+				}).changer(new Changer<Date, Timespan>() {
+					@SuppressWarnings("incomplete-switch")
+					@Override
+					public void change(final Date[] what, final Timespan delta, final ChangeMode mode) {
+						switch (mode) {
+							case ADD:
+								for (final Date d : what)
+									d.add(delta);
+							break;
+							case REMOVE:
+								for (final Date d : what)
+									d.subtract(delta);
+							break;
+						}
+					}
+					
+					@Override
+					public Class<? extends Timespan> acceptChange(final ChangeMode mode) {
+						if (mode == ChangeMode.CLEAR || mode == ChangeMode.SET)
+							return null;
+						return Timespan.class;
 					}
 				}));
 		

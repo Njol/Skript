@@ -33,6 +33,9 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.util.Timespan;
 
+/**
+ * @author Peter Güttinger
+ */
 public class EvtPeriodical extends SkriptEvent {
 	
 	static {

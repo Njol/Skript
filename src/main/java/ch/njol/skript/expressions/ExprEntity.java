@@ -27,19 +27,18 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.SkriptLogger;
-import ch.njol.skript.SkriptLogger.SubLog;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprEntity extends SimpleExpression<Entity> {
 	

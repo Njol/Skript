@@ -32,7 +32,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprDistance extends SimpleExpression<Double> {
 	

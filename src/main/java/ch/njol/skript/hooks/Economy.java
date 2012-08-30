@@ -19,16 +19,13 @@
  * 
  */
 
-package ch.njol.skript;
+package ch.njol.skript.hooks;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
-import ch.njol.skript.util.Money;
-
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class Economy {
 	

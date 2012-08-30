@@ -27,7 +27,6 @@ import org.bukkit.inventory.PlayerInventory;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class PlayerSlot extends Slot {
 	

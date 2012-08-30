@@ -26,6 +26,7 @@ import java.lang.reflect.Array;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.Variables;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.ClassInfo;
@@ -40,7 +41,6 @@ import ch.njol.util.iterator.NonNullIterator;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class Variable<T> implements Expression<T> {
 	
@@ -49,7 +49,6 @@ public class Variable<T> implements Expression<T> {
 	private final boolean local;
 	
 	private final Class<T> type;
-	private final T[] zero, one;
 	
 	private final Variable<?> source;
 	
@@ -62,9 +61,6 @@ public class Variable<T> implements Expression<T> {
 		
 		this.name = name;
 		this.type = type;
-		
-		zero = (T[]) Array.newInstance(type, 0);
-		one = (T[]) Array.newInstance(type, 1);
 		
 		this.source = source;
 	}
@@ -106,9 +102,11 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	private Object get(final Event e) {
-		Object val = local ? Skript.getLocalVariable(name.toString(e).toLowerCase(), e) : Skript.getVariable(name.toString(e).toLowerCase());
-		if (val == null && !local)
-			val = Skript.getVariable(name.getDefaultVariableName().toLowerCase());
+		if (local)
+			return Variables.getLocalVariable(name.toString(e).toLowerCase(), e);
+		final Object val = Variables.getVariable(name.toString(e).toLowerCase());
+		if (val == null)
+			return Variables.getVariable(name.getDefaultVariableName().toLowerCase());
 		return val;
 	}
 	
@@ -118,9 +116,9 @@ public class Variable<T> implements Expression<T> {
 	
 	private final void set(final Event e, final Object value) {
 		if (local)
-			Skript.setLocalVariable(name.toString(e).toLowerCase(), e, value);
+			Variables.setLocalVariable(name.toString(e).toLowerCase(), e, value);
 		else
-			Skript.setVariable(name.toString(e).toLowerCase(), value);
+			Variables.setVariable(name.toString(e).toLowerCase(), value);
 	}
 	
 	@Override
@@ -181,9 +179,11 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public T[] getAll(final Event e) {
-		one[0] = getConverted(e);
-		if (one[0] == null)
-			return zero;
+		final T o = getConverted(e);
+		if (o == null)
+			return (T[]) Array.newInstance(type, 0);
+		final T[] one = (T[]) Array.newInstance(type, 1);
+		one[0] = o;
 		return one;
 	}
 	

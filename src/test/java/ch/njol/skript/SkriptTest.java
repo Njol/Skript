@@ -37,7 +37,6 @@ import ch.njol.skript.lang.Trigger;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class SkriptTest {
 	

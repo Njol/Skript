@@ -31,7 +31,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> {
 	

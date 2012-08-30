@@ -21,8 +21,6 @@
 
 package ch.njol.skript.expressions;
 
-import java.util.ArrayList;
-
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -31,6 +29,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
@@ -39,49 +38,44 @@ import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	
 	static {
-		Skript.registerExpression(ExprTarget.class, Entity.class, ExpressionType.NORMAL, "[the] target[[ed] %entitydatas%] [of %livingentities%]", "%livingentities%'[s] target[[ed] %entitydatas%]");
+		Skript.registerExpression(ExprTarget.class, Entity.class, ExpressionType.NORMAL, "[the] target[[ed] <.+>] [of %livingentities%]", "%livingentities%'[s] target[[ed] <.+>]");
 	}
 	
-	private Expression<EntityData<?>> types;
-	private Expression<LivingEntity> entities;
+	private EntityData<?> type;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		types = (Expression<EntityData<?>>) vars[matchedPattern];
-		entities = (Expression<LivingEntity>) vars[1 - matchedPattern];
-		setExpr(entities);
+		type = EntityData.parseWithoutAnOrAny(parser.regexes.get(0).group());
+		if (type == null)
+			return false;
+		setExpr((Expression<? extends LivingEntity>) vars[0]);
 		return true;
 	}
 	
 	@Override
 	protected Entity[] get(final Event evt, final LivingEntity[] source) {
-		final ArrayList<Entity> targets = new ArrayList<Entity>();
-		final EntityData<?>[] types = this.types.getAll(evt);
-		for (final LivingEntity e : source) {
-			for (final EntityData<?> type : types) {
-				final Entity t = Utils.getTargetEntity(e, type.getType());
-				if (t != null)
-					targets.add(t);
+		return get(source, new Converter<LivingEntity, Entity>() {
+			@Override
+			public Entity convert(final LivingEntity e) {
+				return Utils.getTarget(e, type);
 			}
-		}
-		return targets.toArray(new Entity[0]);
+		});
 	}
 	
 	@Override
-	public Class<Entity> getReturnType() {
-		return Entity.class;
+	public Class<? extends Entity> getReturnType() {
+		return type.getType();
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "the targeted " + types.toString(e, debug) + " of " + entities.toString(e, debug);
+			return "the targeted " + type + " of " + getExpr().toString(e, debug);
 		return Skript.getDebugMessage(getAll(e));
 	}
 	
@@ -95,7 +89,7 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		final LivingEntity target = (LivingEntity) delta;
-		for (final LivingEntity entity : entities.getArray(e)) {
+		for (final LivingEntity entity : getExpr().getArray(e)) {
 			if (!(entity instanceof Creature))
 				continue;
 			((Creature) entity).setTarget(target);

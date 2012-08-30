@@ -43,7 +43,6 @@ import ch.njol.skript.lang.Trigger;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EvtChat extends SkriptEvent {
 	
@@ -81,9 +80,10 @@ public class EvtChat extends SkriptEvent {
 					}
 				});
 				try {
-					while (!f.isDone()) {
+					while (true) {
 						try {
 							f.get();
+							break;
 						} catch (final InterruptedException e1) {}
 					}
 				} catch (final ExecutionException e1) {
@@ -112,7 +112,7 @@ public class EvtChat extends SkriptEvent {
 	public void register(final Trigger t) {
 		triggers.add(t);
 		if (!registeredExecutor) {
-			Bukkit.getPluginManager().registerEvent(AsyncPlayerChatEvent.class, new Listener() {}, Skript.getPriority(), executor, Skript.getInstance(), true);
+			Bukkit.getPluginManager().registerEvent(AsyncPlayerChatEvent.class, new Listener() {}, Skript.getDefaultEventPriority(), executor, Skript.getInstance(), true);
 			registeredExecutor = true;
 		}
 	}

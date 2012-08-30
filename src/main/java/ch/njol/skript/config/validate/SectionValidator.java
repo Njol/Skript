@@ -25,16 +25,15 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptLogger;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Setter;
 import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class SectionValidator implements NodeValidator {
 	
@@ -113,6 +112,7 @@ public class SectionValidator implements NodeValidator {
 	}
 	
 	public static final void notASectionError(final Node node) {
+		SkriptLogger.setNode(node);
 		Skript.error("'" + node.getName() + "' is not a section (like 'blah:', followed by one or more indented lines)");
 	}
 	

@@ -34,7 +34,6 @@ import ch.njol.skript.util.Slot;
 /**
  * 
  * @author Peter Güttinger
- * 
  */
 public class EffHealth extends Effect {
 	

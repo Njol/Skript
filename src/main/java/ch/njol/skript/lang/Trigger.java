@@ -27,9 +27,7 @@ import java.util.List;
 import org.bukkit.event.Event;
 
 /**
- * 
  * @author Peter Güttinger
- * 
  */
 public class Trigger extends TriggerSection {
 	private final String name;

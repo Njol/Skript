@@ -31,7 +31,6 @@ import ch.njol.skript.lang.Trigger;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EvtServerStart extends SkriptEvent {
 	

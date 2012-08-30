@@ -32,7 +32,6 @@ import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class DefaultClasses {
 	

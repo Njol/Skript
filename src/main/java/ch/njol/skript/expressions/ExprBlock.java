@@ -36,7 +36,6 @@ import ch.njol.skript.util.Offset;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprBlock extends SimpleExpression<Block> {
 	
@@ -54,12 +53,11 @@ public class ExprBlock extends SimpleExpression<Block> {
 		if (exprs.length > 0) {
 			offset = (Expression<Offset>) exprs[0];
 			block = (Expression<Block>) exprs[1];
+			return true;
 		} else {
 			block = new EventValueExpression<Block>(Block.class);
-			if (!((EventValueExpression<Block>) block).init())
-				return false;
+			return ((EventValueExpression<Block>) block).init();
 		}
-		return true;
 	}
 	
 	@Override

@@ -41,7 +41,6 @@ import ch.njol.skript.util.Time;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
 	

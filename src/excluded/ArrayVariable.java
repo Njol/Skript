@@ -46,7 +46,6 @@ import ch.njol.util.iterator.NonNullIterator;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ArrayVariable<T> implements Expression<T> {
 	

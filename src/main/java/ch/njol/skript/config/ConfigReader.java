@@ -23,11 +23,16 @@ package ch.njol.skript.config;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 
+/**
+ * @author Peter Güttinger
+ */
 public class ConfigReader extends BufferedReader {
 	
 	private String line, lastLine;
@@ -36,8 +41,8 @@ public class ConfigReader extends BufferedReader {
 	
 	private boolean hasNonEmptyLine = false;
 	
-	public ConfigReader(final File file) throws FileNotFoundException {
-		super(new FileReader(file));
+	public ConfigReader(final File file) throws FileNotFoundException, UnsupportedEncodingException {
+		super(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 	}
 	
 	public ConfigReader(final String s) {

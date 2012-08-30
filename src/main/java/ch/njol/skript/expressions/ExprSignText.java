@@ -37,7 +37,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class ExprSignText extends SimpleExpression<String> {
 	
