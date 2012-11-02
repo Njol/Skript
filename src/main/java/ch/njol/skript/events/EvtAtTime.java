@@ -21,6 +21,8 @@
 
 package ch.njol.skript.events;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,18 +36,20 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
 import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.SkriptEvent;
+import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Time;
 
 /**
  * @author Peter Güttinger
  */
-public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
+public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<EvtAtTime> {
+	private static final long serialVersionUID = 6716577116757409844L;
 	
 	static {
-		Skript.registerEvent(EvtAtTime.class, ScheduledEvent.class, false, "at %time% [in %worlds%]");
+		Skript.registerEvent(EvtAtTime.class, ScheduledEvent.class, "at %time% [in %worlds%]");
 	}
 	
 	private final static int CHECKPERIOD = 10;
@@ -60,13 +64,22 @@ public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
 	
 	private Trigger t;
 	private int tick;
-	private World[] worlds;
+	private transient World[] worlds;
+	/**
+	 * null if all worlds
+	 */
+	private String[] worldNames = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		tick = ((Literal<Time>) args[0]).getSingle().getTicks();
 		worlds = args[1] == null ? Bukkit.getWorlds().toArray(new World[0]) : ((Literal<World>) args[1]).getAll();
+		if (args[1] != null) {
+			worldNames = new String[worlds.length];
+			for (int i = 0; i < worlds.length; i++)
+				worldNames[i] = worlds[i].getName();
+		}
 		return true;
 	}
 	
@@ -121,6 +134,19 @@ public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
 		SkriptEventHandler.logEventEnd();
 	}
 	
+	private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
+		in.defaultReadObject();
+		if (worldNames == null) {
+			worlds = Bukkit.getWorlds().toArray(new World[0]);
+		} else {
+			worlds = new World[worldNames.length];
+			for (int i = 0; i < worlds.length; i++) {
+				if ((worlds[i] = Bukkit.getWorld(worldNames[i])) == null)
+					throw new IOException();
+			}
+		}
+	}
+	
 	@Override
 	public void register(final Trigger t) {
 		this.t = t;
@@ -159,12 +185,7 @@ public class EvtAtTime extends SkriptEvent implements Comparable<EvtAtTime> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "at " + Time.toString(tick) + " in worlds " + Skript.toString(worlds, true);
-	}
-	
-	@Override
-	public boolean check(final Event e) {
-		throw new UnsupportedOperationException();
+		return "at " + Time.toString(tick) + " in worlds " + Classes.toString(worlds, true);
 	}
 	
 	@Override

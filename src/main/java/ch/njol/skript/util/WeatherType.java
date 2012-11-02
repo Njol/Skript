@@ -24,11 +24,13 @@ package ch.njol.skript.util;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang.Validate;
 import org.bukkit.World;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.weather.WeatherEvent;
+
+import ch.njol.skript.Language;
+import ch.njol.skript.Language.LanguageChangeListener;
 
 /**
  * 
@@ -36,9 +38,10 @@ import org.bukkit.event.weather.WeatherEvent;
  */
 public enum WeatherType {
 	
-	CLEAR("clear", "sun", "sunny"), RAIN("rain", "rainy", "raining"), THUNDER("thunder", "thundering", "thunderstorm");
+	CLEAR, RAIN, THUNDER;
 	
-	private final String[] names;
+	private String[] names;
+	private String adjective;
 	
 	private final static Map<String, WeatherType> byName = new HashMap<String, WeatherType>();
 	
@@ -47,11 +50,19 @@ public enum WeatherType {
 	}
 	
 	static {
-		for (final WeatherType t : values()) {
-			for (final String name : t.names) {
-				byName.put(name, t);
+		Language.addListener(new LanguageChangeListener() {
+			@Override
+			public void onLanguageChange() {
+				byName.clear();
+				for (final WeatherType t : values()) {
+					t.names = Language.getList("weather." + t.name() + ".name");
+					t.adjective = Language.get("weather." + t.name() + ".adjective");
+					for (final String name : t.names) {
+						byName.put(name, t);
+					}
+				}
 			}
-		}
+		});
 	}
 	
 	public static final WeatherType parse(final String s) {
@@ -59,7 +70,7 @@ public enum WeatherType {
 	}
 	
 	public static WeatherType fromWorld(final World world) {
-		Validate.notNull(world, "world");
+		assert world != null;
 		if (world.isThundering())
 			return THUNDER;
 		if (world.hasStorm())
@@ -77,7 +88,7 @@ public enum WeatherType {
 	}
 	
 	public static WeatherType fromEvent(final WeatherChangeEvent e) {
-		Validate.notNull(e, "e");
+		assert e != null;
 		if (!e.toWeatherState())
 			return CLEAR;
 		if (e.getWorld().isThundering())
@@ -86,7 +97,7 @@ public enum WeatherType {
 	}
 	
 	public static WeatherType fromEvent(final ThunderChangeEvent e) {
-		Validate.notNull(e, "e");
+		assert e != null;
 		if (e.toThunderState())
 			return THUNDER;
 		if (e.getWorld().hasStorm())
@@ -100,16 +111,7 @@ public enum WeatherType {
 	}
 	
 	public String adjective() {
-		switch (this) {
-			case CLEAR:
-				return "sunny";
-			case RAIN:
-				return "raining";
-			case THUNDER:
-				return "thundering";
-		}
-		assert false;
-		return null;
+		return adjective;
 	}
 	
 	public boolean isWeather(final World w) {

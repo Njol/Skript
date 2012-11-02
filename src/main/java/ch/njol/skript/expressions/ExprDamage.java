@@ -33,24 +33,29 @@ import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprDamage extends SimpleExpression<Float> {
+	private static final long serialVersionUID = 7256625021203923955L;
 	
 	static {
 		Skript.registerExpression(ExprDamage.class, Float.class, ExpressionType.SIMPLE, "[the] damage");
 	}
 	
+	private int delay;
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		if (!Utils.containsAny(ScriptLoader.currentEvents, EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class)) {
-			Skript.error("'damage' can only be used in damage events");
+			Skript.error("'damage' can only be used in damage events", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
+		delay = isDelayed;
 		return true;
 	}
 	
@@ -61,33 +66,32 @@ public class ExprDamage extends SimpleExpression<Float> {
 		return new Float[] {0.5f * ((EntityDamageEvent) e).getDamage()};
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-//		if (isDelayed) {
-//			// TODO error
-//			return null;
-//		}
-		return Float.class;
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (delay != -1) {
+			Skript.error("Can't change the damage anymore after the event has already passed");
+			return null;
+		}
+		return Skript.array(Number.class);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		if (!(e instanceof EntityDamageEvent))
 			return;
-		final int d = mode == ChangeMode.CLEAR ? 0 : Math.round(2 * (Float) delta);
+		final int d = mode == ChangeMode.CLEAR ? 0 : Math.round(2 * ((Number) delta).floatValue());
 		switch (mode) {
 			case SET:
+			case CLEAR:
 				((EntityDamageEvent) e).setDamage(d);
-			break;
+				break;
 			case ADD:
 				((EntityDamageEvent) e).setDamage(((EntityDamageEvent) e).getDamage() + d);
-			break;
+				break;
 			case REMOVE:
 				((EntityDamageEvent) e).setDamage(((EntityDamageEvent) e).getDamage() - d);
-			break;
-			case CLEAR:
-				((EntityDamageEvent) e).setDamage(0);
-			break;
+				break;
 		}
 	}
 	

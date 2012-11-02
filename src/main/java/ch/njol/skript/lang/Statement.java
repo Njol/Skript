@@ -21,6 +21,8 @@
 
 package ch.njol.skript.lang;
 
+import java.util.Iterator;
+
 import ch.njol.skript.Skript;
 
 /**
@@ -31,9 +33,11 @@ import ch.njol.skript.Skript;
  * @see Effect
  */
 public abstract class Statement extends TriggerItem implements SyntaxElement {
+	private static final long serialVersionUID = 8814775079484841441L;
 	
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static Statement parse(final String s, final String defaultError) {
-		return (Statement) SkriptParser.parse(s, Skript.getStatements().iterator(), false, false, defaultError);
+		return (Statement) SkriptParser.parse(s, (Iterator) Skript.getStatements().iterator(), defaultError);
 	}
 	
 }

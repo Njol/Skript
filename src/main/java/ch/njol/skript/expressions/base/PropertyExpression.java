@@ -23,11 +23,13 @@ package ch.njol.skript.expressions.base;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.Skript;
+import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.registrations.Converters;
 
 /**
  * Represents an expression which represents a property of another one. Remember to set the expression with {@link #setExpr(Expression)} in
@@ -36,6 +38,18 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * @author Peter Güttinger
  */
 public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
+	private static final long serialVersionUID = 8485116870998540931L;
+	
+	/**
+	 * 
+	 * @param c
+	 * @param type
+	 * @param property The name of the property
+	 * @param fromType Should be plural but doesn't have to be
+	 */
+	public static <T> void register(final Class<? extends Expression<T>> c, final Class<T> type, final String property, final String fromType) {
+		Skript.registerExpression(c, type, ExpressionType.PROPERTY, "[the] " + property + " of %" + fromType + "%", "%" + fromType + "%'[s] " + property);
+	}
 	
 	private Expression<? extends F> expr;
 	
@@ -62,7 +76,7 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	 * @param e
 	 * @param source
 	 * @return
-	 * @see ConverterUtils#convert(Object[], Class, Converter)
+	 * @see Converters#convert(Object[], Class, Converter)
 	 */
 	protected abstract T[] get(Event e, F[] source);
 	
@@ -74,7 +88,7 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	 * @throws ArrayStoreException if the converter returned invalid values
 	 */
 	protected T[] get(final F[] source, final Converter<? super F, ? extends T> converter) {
-		return ConverterUtils.convertUnsafe(source, getReturnType(), converter);
+		return Converters.convertUnsafe(source, getReturnType(), converter);
 	}
 	
 	@Override

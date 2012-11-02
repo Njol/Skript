@@ -35,6 +35,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class ExprTypeOf extends PropertyExpression<Object, Object> {
+	private static final long serialVersionUID = -7288078858273805343L;
 	
 	static {
 		Skript.registerExpression(ExprTypeOf.class, Object.class, ExpressionType.PROPERTY, "[the] type of %entitydata/itemstack%");

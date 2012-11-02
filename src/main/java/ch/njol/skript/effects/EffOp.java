@@ -34,6 +34,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 public class EffOp extends Effect {
 	
+	private static final long serialVersionUID = -5388188967675196369L;
+	
 	static {
 		Skript.registerEffect(EffOp.class, "[de[-]]op %offlineplayers%");
 	}

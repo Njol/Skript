@@ -21,6 +21,8 @@
 
 package ch.njol.skript.lang;
 
+import java.util.Iterator;
+
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -32,6 +34,8 @@ import ch.njol.skript.Skript;
  * @see Skript#registerEffect(Class, String...)
  */
 public abstract class Effect extends Statement {
+	private static final long serialVersionUID = -7476146804482313031L;
+	
 	protected Effect() {}
 	
 	/**
@@ -47,8 +51,9 @@ public abstract class Effect extends Statement {
 		return true;
 	}
 	
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static Effect parse(final String s, final String defaultError) {
-		return (Effect) SkriptParser.parse(s, Skript.getEffects().iterator(), false, false, defaultError);
+		return (Effect) SkriptParser.parse(s, (Iterator) Skript.getEffects().iterator(), defaultError);
 	}
 	
 }

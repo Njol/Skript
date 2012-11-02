@@ -24,7 +24,6 @@ package ch.njol.skript.lang;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.events.EvtClick;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
@@ -40,17 +39,15 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @see Skript#registerEvent(Class, Class[], String...)
  */
 public abstract class SkriptEvent implements SyntaxElement, Debuggable {
+	private static final long serialVersionUID = -7442359418081996529L;
 	
 	public static class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementInfo<E> {
 		
 		public Class<? extends Event>[] events;
 		
-		public final boolean fire;
-		
-		public SkriptEventInfo(final String[] patterns, final Class<E> c, final Class<? extends Event>[] events, final boolean fire) {
+		public SkriptEventInfo(final String[] patterns, final Class<E> c, final Class<? extends Event>[] events) throws IllegalArgumentException {
 			super(patterns, c);
 			this.events = events;
-			this.fire = fire;
 		}
 	}
 	
@@ -63,43 +60,16 @@ public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 	 * called just after the constructor
 	 * 
 	 * @param args
-	 * @return
 	 */
 	public abstract boolean init(final Literal<?>[] args, int matchedPattern, ParseResult parser);
 	
 	/**
-	 * Checks whether the given Event applies, e.g. the leftclick event is only part of the PlayerInteractEvent, and this checks whether the player rightclicked or not. This method
+	 * Checks whether the given Event applies, e.g. the leftclick event is only part of the PlayerInteractEvent, and this checks whether the player leftclicked or not. This method
 	 * will only be called for events this SkriptEvent is registered for.
 	 * 
 	 * @param e
-	 * @return true in most cases.
+	 * @return true if this is SkriptEvent is represented by the Bukkit Event or false if not
 	 */
 	public abstract boolean check(Event e);
-	
-	/**
-	 * This method is called after the whole trigger is loaded for events that fire themselves
-	 * 
-	 * @param t the trigger to register to this event
-	 */
-	public void register(final Trigger t) {
-		throw new SkriptAPIException("events that fire themselves must override register(Trigger)");
-	}
-	
-	/**
-	 * This method is called to unregister this event registered through {@link #register(Trigger)}.
-	 * 
-	 * @param t the same trigger which was registered for this event
-	 */
-	public void unregister(final Trigger t) {
-		throw new SkriptAPIException("events that fire themselves must override unregister(Trigger)");
-	}
-	
-	/**
-	 * This method is called to unregister all events registered through {@link #register(Trigger)}. This is called on all registered events, thus it can also only unregister the
-	 * event it is called on.
-	 */
-	public void unregisterAll() {
-		throw new SkriptAPIException("events that fire themselves must override unregisterAll(Trigger)");
-	}
 	
 }

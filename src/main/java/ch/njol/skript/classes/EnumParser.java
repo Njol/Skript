@@ -22,7 +22,6 @@
 package ch.njol.skript.classes;
 
 import ch.njol.skript.lang.ParseContext;
-import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
@@ -33,13 +32,13 @@ public class EnumParser<E extends Enum<E>> extends Parser<E> {
 	private final String codeType;
 	
 	public EnumParser(final Class<E> c) {
-		Validate.notNull(c, "c");
+		assert c != null;
 		this.c = c;
 		codeType = c.getSimpleName().toLowerCase();
 	}
 	
 	public EnumParser(final Class<E> c, final String codeType) {
-		Validate.notNull(c, "c");
+		assert c != null;
 		this.c = c;
 		this.codeType = codeType;
 	}
@@ -59,8 +58,13 @@ public class EnumParser<E extends Enum<E>> extends Parser<E> {
 	}
 	
 	@Override
-	public String toCodeString(final E o) {
+	public String toVariableNameString(final E o) {
 		return codeType == null ? o.toString().toLowerCase().replace('_', ' ') : codeType + ":" + o.toString().toLowerCase().replace('_', ' ');
+	}
+	
+	@Override
+	public String getVariableNamePattern() {
+		return "\\S+";
 	}
 	
 }

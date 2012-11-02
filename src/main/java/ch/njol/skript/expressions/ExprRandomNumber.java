@@ -35,12 +35,15 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * @author Peter Güttinger
  */
 public class ExprRandomNumber extends SimpleExpression<Number> {
+	private static final long serialVersionUID = -9204174109547211339L;
 	
 	static {
-		Skript.registerExpression(ExprRandomNumber.class, Number.class, ExpressionType.NORMAL, "[a] random number between %double% and %double%", "[a] random integer between %double% and %double%");
+		Skript.registerExpression(ExprRandomNumber.class, Number.class, ExpressionType.NORMAL,
+				"[a] random number (from|between) %number% (to|and) %number%",
+				"[a] random integer (from|between) %number% (to|and) %number%");
 	}
 	
-	private Expression<Double> lower, upper;
+	private Expression<Number> lower, upper;
 	
 	private final Random rand = new Random();
 	
@@ -49,24 +52,24 @@ public class ExprRandomNumber extends SimpleExpression<Number> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		lower = (Expression<Double>) vars[0];
-		upper = (Expression<Double>) vars[1];
+		lower = (Expression<Number>) vars[0];
+		upper = (Expression<Number>) vars[1];
 		integer = matchedPattern == 1;
 		return true;
 	}
 	
 	@Override
 	protected Number[] get(final Event e) {
-		final Double l = lower.getSingle(e);
-		final Double u = upper.getSingle(e);
+		final Number l = lower.getSingle(e);
+		final Number u = upper.getSingle(e);
 		
 		if (u == null || l == null)
 			return null;
 		
 		if (integer) {
-			return new Integer[] {(int) (Math.ceil(l) + rand.nextInt((int) (Math.floor(u) - Math.ceil(l) + 1)))};
+			return new Integer[] {(int) (Math.ceil(l.doubleValue()) + rand.nextInt((int) (Math.floor(u.doubleValue()) - Math.ceil(l.doubleValue()) + 1)))};
 		} else {
-			return new Double[] {l + rand.nextDouble() * (u - l)};
+			return new Double[] {l.doubleValue() + rand.nextDouble() * (u.doubleValue() - l.doubleValue())};
 		}
 	}
 	

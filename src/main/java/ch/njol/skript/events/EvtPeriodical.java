@@ -21,6 +21,9 @@
 
 package ch.njol.skript.events;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.Event;
@@ -28,7 +31,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
 import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.SkriptEvent;
+import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.util.Timespan;
@@ -36,41 +39,31 @@ import ch.njol.skript.util.Timespan;
 /**
  * @author Peter Güttinger
  */
-public class EvtPeriodical extends SkriptEvent {
+public class EvtPeriodical extends SelfRegisteringSkriptEvent {
+	private static final long serialVersionUID = -349465844236259126L;
 	
 	static {
-		Skript.registerEvent(EvtPeriodical.class, ScheduledEvent.class, false, "every %timespan% [in [world[s]] %worlds%]");
+		Skript.registerEvent(EvtPeriodical.class, ScheduledEvent.class, "every %timespan% [in [world[s]] %worlds%]");
 	}
 	
-	private int period;
+	private Timespan period;
 	
 	private Trigger t;
 	
 	private int[] taskIDs;
 	
+	private transient World[] worlds;
+	private String[] worldNames;
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		period = ((Literal<Timespan>) args[0]).getSingle().getTicks();
-		final World[] worlds = args[1] == null ? null : ((Literal<World>) args[1]).getArray();
-		if (worlds == null) {
-			taskIDs = new int[] {Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
-				@Override
-				public void run() {
-					execute(null);
-				}
-			}, period, period)};
-		} else {
-			taskIDs = new int[worlds.length];
-			for (int i = 0; i < worlds.length; i++) {
-				final World w = worlds[i];
-				taskIDs[i] = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
-					@Override
-					public void run() {
-						execute(w);
-					}
-				}, period - (w.getFullTime() % period), period);
-			}
+		period = ((Literal<Timespan>) args[0]).getSingle();
+		if (args[1] != null) {
+			worlds = ((Literal<World>) args[1]).getArray();
+			worldNames = new String[worlds.length];
+			for (int i = 0; i < worlds.length; i++)
+				worldNames[i] = worlds[i].getName();
 		}
 		return true;
 	}
@@ -84,9 +77,39 @@ public class EvtPeriodical extends SkriptEvent {
 		SkriptEventHandler.logEventEnd();
 	}
 	
+	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+		in.defaultReadObject();
+		if (worldNames != null) {
+			worlds = new World[worldNames.length];
+			for (int i = 0; i < worlds.length; i++) {
+				if ((worlds[i] = Bukkit.getWorld(worldNames[i])) == null)
+					throw new IOException();
+			}
+		}
+	}
+	
 	@Override
 	public void register(final Trigger t) {
 		this.t = t;
+		if (worlds == null) {
+			taskIDs = new int[] {Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
+				@Override
+				public void run() {
+					execute(null);
+				}
+			}, period.getTicks(), period.getTicks())};
+		} else {
+			taskIDs = new int[worlds.length];
+			for (int i = 0; i < worlds.length; i++) {
+				final World w = worlds[i];
+				taskIDs[i] = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
+					@Override
+					public void run() {
+						execute(w);
+					}
+				}, period.getTicks() - (w.getFullTime() % period.getTicks()), period.getTicks());
+			}
+		}
 	}
 	
 	@Override
@@ -102,13 +125,8 @@ public class EvtPeriodical extends SkriptEvent {
 	}
 	
 	@Override
-	public boolean check(final Event e) {
-		throw new UnsupportedOperationException();
-	}
-	
-	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "every " + Timespan.toString(period);
+		return "every " + period;
 	}
 	
 }

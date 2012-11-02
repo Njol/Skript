@@ -33,6 +33,9 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,11 +44,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.help.HelpMap;
@@ -54,14 +59,16 @@ import org.bukkit.plugin.SimplePluginManager;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.config.validate.SectionValidator;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
@@ -69,9 +76,10 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("deprecation")
 public abstract class Commands {
 	
-	private final static Map<String, SkriptCommand> commands = new HashMap<String, SkriptCommand>();
+	private final static Map<String, ScriptCommand> commands = new HashMap<String, ScriptCommand>();
 	
 	private static SimpleCommandMap commandMap = null;
 	private static Map<String, Command> cmKnownCommands;
@@ -122,17 +130,64 @@ public abstract class Commands {
 	}
 	
 	private final static Listener commandListener = new Listener() {
-		@SuppressWarnings("unused")
 		@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 		public void onPlayerCommand(final PlayerCommandPreprocessEvent e) {
 			if (handleCommand(e.getPlayer(), e.getMessage().substring(1)))
 				e.setCancelled(true);
 		}
 		
-		@SuppressWarnings("unused")
-		@EventHandler(priority = EventPriority.LOWEST)
+		@EventHandler(priority = EventPriority.LOW)
+		public void onServerCommand(final ServerCommandEvent e) {
+			if (e.getCommand() == null || e.getCommand().isEmpty())
+				return;
+			if (SkriptConfig.enableEffectCommands && e.getCommand().startsWith(SkriptConfig.effectCommandToken)) {
+				if (handleEffectCommand(e.getSender(), e.getCommand())) {
+					e.setCommand("");
+					suppressUnknownCommandMessage = true;
+				}
+				return;
+			}
+			if (handleCommand(e.getSender(), e.getCommand())) {
+				e.setCommand("");
+				suppressUnknownCommandMessage = true;
+			}
+		}
+	};
+	private static boolean suppressUnknownCommandMessage = false;
+	static {
+		Bukkit.getLogger().addHandler(new Handler() {
+			@Override
+			public void publish(final LogRecord lr) {
+				if (suppressUnknownCommandMessage && lr.getMessage().equalsIgnoreCase("Unknown command. Type \"help\" for help.")) {
+					lr.setLevel(Level.ALL);
+					lr.setMessage(null);
+					suppressUnknownCommandMessage = false;
+				}
+			}
+			
+			@Override
+			public void flush() {}
+			
+			@Override
+			public void close() throws SecurityException {
+				throw new SecurityException("wtf are you doing?");
+			}
+		});
+	}
+	
+	private final static Listener pre1_3chatListener = new Listener() {
+		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+		public void onPlayerChat(final PlayerChatEvent e) {
+			if (!SkriptConfig.enableEffectCommands || !e.getMessage().startsWith(SkriptConfig.effectCommandToken))
+				return;
+			if (handleEffectCommand(e.getPlayer(), e.getMessage()))
+				e.setCancelled(true);
+		}
+	};
+	private final static Listener post1_3chatListener = new Listener() {
+		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 		public void onPlayerChat(final AsyncPlayerChatEvent e) {
-			if (!Skript.enableEffectCommands || !e.getMessage().startsWith(Skript.effectCommandToken))
+			if (!SkriptConfig.enableEffectCommands || !e.getMessage().startsWith(SkriptConfig.effectCommandToken))
 				return;
 			if (!e.isAsynchronous()) {
 				if (handleEffectCommand(e.getPlayer(), e.getMessage()))
@@ -157,20 +212,6 @@ public abstract class Commands {
 				}
 			}
 		}
-		
-		@SuppressWarnings("unused")
-		@EventHandler(priority = EventPriority.LOW)
-		public void onServerCommand(final ServerCommandEvent e) {
-			if (e.getCommand() == null || e.getCommand().isEmpty())
-				return;
-			if (Skript.enableEffectCommands && e.getCommand().startsWith(Skript.effectCommandToken)) {
-				if (handleEffectCommand(e.getSender(), e.getCommand()))
-					e.setCommand("");
-				return;
-			}
-			if (handleCommand(e.getSender(), e.getCommand()))
-				e.setCommand("");
-		}
 	};
 	
 	/**
@@ -183,49 +224,55 @@ public abstract class Commands {
 		final String[] cmd = command.split("\\s+", 2);
 		cmd[0] = cmd[0].toLowerCase();
 		if (cmd[0].endsWith("?")) {
-			final SkriptCommand c = commands.get(cmd[0].substring(0, cmd[0].length() - 1));
+			final ScriptCommand c = commands.get(cmd[0].substring(0, cmd[0].length() - 1));
 			if (c != null) {
 				c.sendHelp(sender);
 				return true;
 			}
 		}
-		final SkriptCommand c = commands.get(cmd[0]);
+		final ScriptCommand c = commands.get(cmd[0]);
 		if (c != null) {
 			if (cmd.length == 2 && cmd[1].equals("?")) {
 				c.sendHelp(sender);
 				return true;
 			}
+			if (SkriptConfig.logPlayerCommands && !(sender instanceof ConsoleCommandSender))
+				Bukkit.getLogger().info(sender.getName() + ": /" + command);
 			c.execute(sender, cmd[0], cmd.length == 1 ? "" : cmd[1]);
 			return true;
 		}
 		return false;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private final static boolean handleEffectCommand(final CommandSender sender, String command) {
 		if (!sender.hasPermission("skript.effectcommands"))
 			return false;
 		try {
-			command = command.substring(Skript.effectCommandToken.length());
-			final SubLog log = SkriptLogger.startSubLog();
+			command = command.substring(SkriptConfig.effectCommandToken.length()).trim();
+			final SimpleLog log = SkriptLogger.startSubLog();
+			ScriptLoader.currentEvents = Skript.array(CommandEvent.class);
 			final Effect e = Effect.parse(command, null);
-			SkriptLogger.stopSubLog(log);
+			ScriptLoader.currentEvents = null;
+			log.stop();
 			if (e != null) {
 				sender.sendMessage(ChatColor.GRAY + "executing '" + ChatColor.stripColor(command) + "'");
+				if (SkriptConfig.logPlayerCommands && !(sender instanceof ConsoleCommandSender))
+					Skript.info(sender.getName() + " issued effect command: " + command);
 				e.run(new CommandEvent(sender, "effectcommand", new String[0]));
 			} else {
 				sender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + ChatColor.stripColor(command));
-				log.printErrors(sender, "Can't understand the effect");
-				sender.sendMessage("Press the up arrow key to edit the command");
+				log.printErrors(sender, "Can't understand this effect");
 			}
 			return true;
 		} catch (final Exception e) {
-			Skript.exception(e, "Error while executing effect command '" + command + "' by '" + sender + "'");
-			sender.sendMessage(ChatColor.RED + "An internal error occurred while attempting to execute this effect");
+			Skript.exception(e, "Unexpected error while executing effect command '" + command + "' by '" + sender + "'");
+			sender.sendMessage(ChatColor.RED + "An internal error occurred while executing this effect. See the server log for details.");
 			return true;
 		}
 	}
 	
-	public final static SkriptCommand loadCommand(final SectionNode node) {
+	public final static ScriptCommand loadCommand(final SectionNode node) {
 		
 		final String s = node.getName();
 		
@@ -271,10 +318,10 @@ public abstract class Commands {
 			lastEnd = m.end();
 			
 			ClassInfo<?> c;
-			c = Skript.getClassInfoFromUserInput(m.group(1));
+			c = Classes.getClassInfoFromUserInput(m.group(1));
 			final Pair<String, Boolean> p = Utils.getPlural(m.group(1));
 			if (c == null)
-				c = Skript.getClassInfoFromUserInput(p.first);
+				c = Classes.getClassInfoFromUserInput(p.first);
 			if (c == null) {
 				Skript.error("unknown type '" + m.group(1) + "'");
 				return null;
@@ -322,11 +369,11 @@ public abstract class Commands {
 		int executableBy = 0;
 		for (final String b : by) {
 			if (b.equalsIgnoreCase("console") || b.equalsIgnoreCase("the console")) {
-				executableBy |= SkriptCommand.CONSOLE;
+				executableBy |= ScriptCommand.CONSOLE;
 			} else if (b.equalsIgnoreCase("players") || b.equalsIgnoreCase("player")) {
-				executableBy |= SkriptCommand.PLAYERS;
+				executableBy |= ScriptCommand.PLAYERS;
 			} else {
-				Skript.error("'executable by' should be either be 'players', 'console' or both, but found '" + b + "'");
+				Skript.warning("'executable by' should be either be 'players', 'console' or both, but found '" + b + "'");
 			}
 		}
 		
@@ -337,7 +384,7 @@ public abstract class Commands {
 		if (Skript.debug())
 			Skript.info("command " + desc + ":");
 		
-		final SkriptCommand c = new SkriptCommand(node.getConfig().getFile(), command, pattern.toString().replaceAll("[<>]", "\\\\$0"), currentArguments, description, usage, aliases, permission, permissionMessage, executableBy, ScriptLoader.loadItems(trigger));
+		final ScriptCommand c = new ScriptCommand(node.getConfig().getFile(), command, pattern.toString().replaceAll("[<>]", "\\\\$0"), currentArguments, description, usage, aliases, permission, permissionMessage, executableBy, ScriptLoader.loadItems(trigger));
 		registerCommand(c);
 		
 		if (Skript.logVeryHigh() && !Skript.debug())
@@ -347,14 +394,14 @@ public abstract class Commands {
 	}
 	
 	public static boolean skriptCommandExists(final String command) {
-		final SkriptCommand c = commands.get(command);
+		final ScriptCommand c = commands.get(command);
 		return c != null && c.getName().equals(command);
 	}
 	
-	private static void registerCommand(final SkriptCommand command) {
+	public static void registerCommand(final ScriptCommand command) {
 		if (commandMap != null)
 			command.register(commandMap, cmKnownCommands, cmAliases);
-		commands.put(command.getName().toLowerCase(), command);
+		commands.put(command.getLabel(), command);
 		for (final String alias : command.getActiveAliases()) {
 			commands.put(alias.toLowerCase(), command);
 		}
@@ -363,9 +410,9 @@ public abstract class Commands {
 	
 	public static int unregisterCommands(final File script) {
 		int numCommands = 0;
-		final Iterator<SkriptCommand> commandsIter = commands.values().iterator();
+		final Iterator<ScriptCommand> commandsIter = commands.values().iterator();
 		while (commandsIter.hasNext()) {
-			final SkriptCommand c = commandsIter.next();
+			final ScriptCommand c = commandsIter.next();
 			if (c.getScript().equals(script)) {
 				numCommands++;
 				c.unregisterHelp();
@@ -382,23 +429,27 @@ public abstract class Commands {
 	public final static void registerListener() {
 		if (!registeredListener) {
 			Bukkit.getPluginManager().registerEvents(commandListener, Skript.getInstance());
+			if (Skript.isRunningBukkit1_3())
+				Bukkit.getPluginManager().registerEvents(post1_3chatListener, Skript.getInstance());
+			else
+				Bukkit.getPluginManager().registerEvents(pre1_3chatListener, Skript.getInstance());
 			registeredListener = true;
 		}
 	}
 	
 	public final static void clearCommands() {
 		if (commandMap != null) {
-			for (final SkriptCommand c : commands.values())
+			for (final ScriptCommand c : commands.values())
 				c.unregister(commandMap, cmKnownCommands, cmAliases);
 		}
-		for (final SkriptCommand c : commands.values()) {
+		for (final ScriptCommand c : commands.values()) {
 			c.unregisterHelp();
 		}
 		commands.clear();
 	}
 	
 	/**
-	 * copied from CraftBukkit
+	 * copied from CraftBukkit ({@link org.bukkit.craftbukkit.help.CommandAliasHelpTopic})
 	 */
 	public final static class CommandAliasHelpTopic extends HelpTopic {
 		

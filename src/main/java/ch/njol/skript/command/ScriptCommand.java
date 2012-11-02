@@ -22,9 +22,14 @@
 package ch.njol.skript.command;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,6 +48,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.help.GenericCommandHelpTopic;
 import org.bukkit.help.HelpMap;
 import org.bukkit.help.HelpTopic;
+import org.bukkit.help.HelpTopicComparator;
+import org.bukkit.help.IndexHelpTopic;
 import org.bukkit.plugin.Plugin;
 
 import ch.njol.skript.Language;
@@ -52,8 +59,8 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SimpleEvent;
+import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
 import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Validate;
@@ -63,7 +70,9 @@ import ch.njol.util.Validate;
  * 
  * @author Peter Güttinger
  */
-public class SkriptCommand implements CommandExecutor {
+public class ScriptCommand implements CommandExecutor, Serializable {
+	
+	private static final long serialVersionUID = -1363349456797660011L;
 	
 	private final String name, label;
 	private final List<String> aliases;
@@ -79,7 +88,7 @@ public class SkriptCommand implements CommandExecutor {
 	public final static int PLAYERS = 0x1, CONSOLE = 0x2, BOTH = PLAYERS | CONSOLE;
 	final int executableBy;
 	
-	private final PluginCommand bukkitCommand;
+	private transient PluginCommand bukkitCommand;
 	
 	/**
 	 * Creates a new SkriptCommand.<br/>
@@ -95,12 +104,12 @@ public class SkriptCommand implements CommandExecutor {
 	 * @param permissionMessage message to display if the player doesn't have the given permission
 	 * @param items trigger to execute
 	 */
-	public SkriptCommand(final File script, final String name, final String pattern, final List<Argument<?>> arguments, final String description, final String usage, final List<String> aliases, final String permission, final String permissionMessage, final int executableBy, final List<TriggerItem> items) {
+	public ScriptCommand(final File script, final String name, final String pattern, final List<Argument<?>> arguments, final String description, final String usage, final List<String> aliases, final String permission, final String permissionMessage, final int executableBy, final List<TriggerItem> items) {
 		Validate.notNull(name, pattern, arguments, description, usage, aliases, items);
 		this.name = name;
 		label = name.toLowerCase();
 		this.permission = permission;
-		this.permissionMessage = permissionMessage == null ? Language.get("command.no_permission_message") : permissionMessage;
+		this.permissionMessage = permissionMessage == null ? Language.get("commands.no_permission_message") : permissionMessage;
 		
 		this.aliases = aliases;
 		activeAliases = new ArrayList<String>(aliases);
@@ -115,6 +124,10 @@ public class SkriptCommand implements CommandExecutor {
 		
 		trigger = new Trigger(script, "command /" + name, new SimpleEvent(), items);
 		
+		setupBukkitCommand();
+	}
+	
+	private void setupBukkitCommand() {
 		try {
 			final Constructor<PluginCommand> c = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
 			c.setAccessible(true);
@@ -127,8 +140,13 @@ public class SkriptCommand implements CommandExecutor {
 			bukkitCommand.setUsage(usage);
 			bukkitCommand.setExecutor(this);
 		} catch (final Exception e) {
-			throw Skript.exception(e);
+			Skript.outdatedError(e);
 		}
+	}
+	
+	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+		in.defaultReadObject();
+		setupBukkitCommand();
 	}
 	
 	@Override
@@ -140,12 +158,12 @@ public class SkriptCommand implements CommandExecutor {
 	public boolean execute(final CommandSender sender, final String commandLabel, final String rest) {
 		if (sender instanceof Player) {
 			if ((executableBy & PLAYERS) == 0) {
-				sender.sendMessage("This command can only be used by the console");
+				sender.sendMessage(Language.get("commands.executable_by_players"));
 				return false;
 			}
 		} else {
 			if ((executableBy & CONSOLE) == 0) {
-				sender.sendMessage("This command can only be used by players");
+				sender.sendMessage(Language.get("commands.executable_by_console"));
 				return false;
 			}
 		}
@@ -155,14 +173,14 @@ public class SkriptCommand implements CommandExecutor {
 			return false;
 		}
 		
-		final SkriptCommandEvent event = new SkriptCommandEvent(this, sender);
+		final ScriptCommandEvent event = new ScriptCommandEvent(this, sender);
 		
-		final SubLog log = SkriptLogger.startSubLog();
+		final SimpleLog log = SkriptLogger.startSubLog();
 		final boolean ok = SkriptParser.parseArguments(rest, this, event);
 		SkriptLogger.stopSubLog(log);
 		if (!ok) {
 			log.printErrors(sender, null);
-			sender.sendMessage("Correct usage: " + usage);
+			sender.sendMessage(Language.format("commands.usage", usage));
 			return false;
 		}
 		
@@ -195,11 +213,12 @@ public class SkriptCommand implements CommandExecutor {
 		return pattern;
 	}
 	
-	private Command overriden = null;
-	private final Map<String, Command> overridenAliases = new HashMap<String, Command>();
+	private transient Command overriden = null;
+	private transient Map<String, Command> overridenAliases;
 	
 	public void register(final SimpleCommandMap commandMap, final Map<String, Command> knownCommands, final Set<String> aliases) {
 		synchronized (commandMap) {
+			overridenAliases = new HashMap<String, Command>();
 			overriden = knownCommands.put(label, bukkitCommand);
 			aliases.remove(label);
 			final Iterator<String> as = activeAliases.iterator();
@@ -223,7 +242,7 @@ public class SkriptCommand implements CommandExecutor {
 			aliases.removeAll(activeAliases);
 			for (final String alias : activeAliases)
 				knownCommands.remove(alias);
-			activeAliases = new ArrayList<String>(aliases);
+			activeAliases = new ArrayList<String>(this.aliases);
 			bukkitCommand.unregister(commandMap);
 			bukkitCommand.setAliases(this.aliases);
 			if (overriden != null) {
@@ -240,22 +259,48 @@ public class SkriptCommand implements CommandExecutor {
 		}
 	}
 	
-	private final Collection<HelpTopic> helps = new ArrayList<HelpTopic>();
+	private transient Collection<HelpTopic> helps;
 	
 	public void registerHelp() {
+		helps = new ArrayList<HelpTopic>();
 		final HelpMap help = Bukkit.getHelpMap();
 		final HelpTopic t = new GenericCommandHelpTopic(bukkitCommand);
 		help.addTopic(t);
 		helps.add(t);
-		for (final String alias : activeAliases) {
-			final HelpTopic at = new CommandAliasHelpTopic("/" + alias, "/" + getLabel(), help);
-			help.addTopic(at);
-			helps.add(at);
+		final HelpTopic aliases = help.getHelpTopic("Aliases");
+		if (aliases != null && aliases instanceof IndexHelpTopic) {
+			aliases.getFullText(Bukkit.getConsoleSender());// CraftBukkit has a lazy IndexHelpTopic class (org.bukkit.craftbukkit.help.CustomIndexHelpTopic) - maybe it's used for aliases as well
+			try {
+				final Field topics = IndexHelpTopic.class.getDeclaredField("allTopics");
+				topics.setAccessible(true);
+				final ArrayList<HelpTopic> as = new ArrayList<HelpTopic>((Collection<HelpTopic>) topics.get(aliases));
+				for (final String alias : activeAliases) {
+					final HelpTopic at = new CommandAliasHelpTopic("/" + alias, "/" + getLabel(), help);
+					as.add(at);
+					helps.add(at);
+				}
+				Collections.sort(as, HelpTopicComparator.helpTopicComparatorInstance());
+				topics.set(aliases, as);
+			} catch (final Exception e) {
+				Skript.exception(e, "error registering aliases for /" + getName());
+			}
 		}
 	}
 	
 	public void unregisterHelp() {
 		Bukkit.getHelpMap().getHelpTopics().removeAll(helps);
+		final HelpTopic aliases = Bukkit.getHelpMap().getHelpTopic("Aliases");
+		if (aliases != null && aliases instanceof IndexHelpTopic) {
+			try {
+				final Field topics = IndexHelpTopic.class.getDeclaredField("allTopics");
+				topics.setAccessible(true);
+				final ArrayList<HelpTopic> as = new ArrayList<HelpTopic>((Collection<HelpTopic>) topics.get(aliases));
+				as.removeAll(helps);
+				topics.set(aliases, as);
+			} catch (final Exception e) {
+				Skript.exception(e, "error unregistering aliases for /" + getName());
+			}
+		}
 		helps.clear();
 	}
 	

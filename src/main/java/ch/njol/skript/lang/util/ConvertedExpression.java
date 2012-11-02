@@ -25,13 +25,13 @@ import java.util.Iterator;
 
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.Converter.ConverterUtils;
+import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Converters;
 import ch.njol.util.Checker;
 
 /**
@@ -44,12 +44,13 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  */
 public class ConvertedExpression<F, T> implements Expression<T> {
+	private static final long serialVersionUID = -8169038485835998271L;
 	
 	protected Expression<? extends F> source;
 	protected Class<T> to;
 	private final Converter<? super F, ? extends T> conv;
 	
-	public ConvertedExpression(final Expression<? extends F> source, final Class<T> to, final Converter<? super F, ? extends T> conv) {
+	public ConvertedExpression(final Expression<? extends F> source, final Class<T> to, final SerializableConverter<? super F, ? extends T> conv) {
 		this.source = source;
 		this.to = to;
 		this.conv = conv;
@@ -64,7 +65,9 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	@SuppressWarnings("unchecked")
 	private static <F, T> ConvertedExpression<F, T> newInstance(final Expression<F> v, final Class<? extends F> from, final Class<T> to) {
 		if (from.isAssignableFrom(to)) {
-			return new ConvertedExpression<F, T>(v, to, new Converter<F, T>() {
+			return new ConvertedExpression<F, T>(v, to, new SerializableConverter<F, T>() {
+				private static final long serialVersionUID = 7203493497281269183L;
+				
 				@Override
 				public T convert(final F f) {
 					if (to.isInstance(f))
@@ -75,7 +78,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 		}
 		// casting <? super ? extends F> to <? super F> is wrong, but since the converter is only used for values returned by the expression
 		// (which are instances of "<? extends F>") this won't result in any ClassCastExceptions.
-		final Converter<? super F, ? extends T> c = (Converter<? super F, ? extends T>) Skript.getConverter(from, to);
+		final SerializableConverter<? super F, ? extends T> c = (SerializableConverter<? super F, ? extends T>) Converters.getConverter(from, to);
 		if (c == null)
 			return null;
 		return new ConvertedExpression<F, T>(v, to, c);
@@ -117,7 +120,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		return source.acceptChange(mode);
 	}
 	
@@ -136,12 +139,12 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	
 	@Override
 	public T[] getArray(final Event e) {
-		return ConverterUtils.convert(source.getArray(e), to, conv);
+		return Converters.convert(source.getArray(e), to, conv);
 	}
 	
 	@Override
 	public T[] getAll(final Event e) {
-		return ConverterUtils.convert(source.getAll(e), to, conv);
+		return Converters.convert(source.getAll(e), to, conv);
 	}
 	
 	@Override
@@ -191,13 +194,8 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	@Override
-	public boolean canLoop() {
-		return false;// A loop does not convert the variable to loop
-	}
-	
-	@Override
 	public boolean isLoopOf(final String s) {
-		return false;// same
+		return false;// A loop does not convert the variable to loop
 	}
 	
 	@Override

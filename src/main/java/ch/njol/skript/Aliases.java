@@ -21,6 +21,9 @@
 
 package ch.njol.skript;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,13 +33,19 @@ import java.util.regex.Pattern;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 
-import ch.njol.skript.Language.LanguageChangeListener;
+import ch.njol.skript.config.Config;
+import ch.njol.skript.config.EntryNode;
+import ch.njol.skript.config.Node;
+import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.config.validate.SectionValidator;
+import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
+import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.ItemData;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
+import ch.njol.util.Setter;
 
 /**
  * @author Peter Güttinger
@@ -286,18 +295,6 @@ public abstract class Aliases {
 		return t;
 	}
 	
-	private final static Map<String, Enchantment> enchantmentNames = new HashMap<String, Enchantment>();
-	static {
-		Language.addListener(new LanguageChangeListener() {
-			@Override
-			public void onLanguageChange() {
-				enchantmentNames.clear();
-				for (final Enchantment e : Enchantment.values())
-					enchantmentNames.put(Language.get("ench.names." + e.getName()).toLowerCase(), e);
-			}
-		});
-	}
-	
 	/**
 	 * Parses an ItemType.<br>
 	 * Prints errors.
@@ -309,7 +306,7 @@ public abstract class Aliases {
 		if (s == null || s.isEmpty())
 			return null;
 		s = s.trim();
-		final String lc = s.toLowerCase();
+		String lc = s.toLowerCase();
 		
 		final ItemType t = new ItemType();
 		
@@ -331,11 +328,12 @@ public abstract class Aliases {
 			s = s.split(" ", 2)[1];
 		}
 		
-		final String of = Language.getSpaced("ench.of").toLowerCase();
+		lc = s.toLowerCase();
+		final String of = Language.getSpaced("enchantments.of").toLowerCase();
 		int c = -1;
 		outer: while ((c = lc.indexOf(of, c + 1)) != -1) {
 			final ItemType t2 = t.clone();
-			final SubLog log = SkriptLogger.startSubLog();
+			final SimpleLog log = SkriptLogger.startSubLog();
 			if (parseType(s.substring(0, c), t2) == null) {
 				log.stop();
 				continue;
@@ -346,18 +344,10 @@ public abstract class Aliases {
 			final Map<Enchantment, Integer> enchantments = new HashMap<Enchantment, Integer>();
 			final String[] enchs = lc.substring(c + of.length(), lc.length()).split("\\s*(,|" + Language.get("and") + ")\\s*");
 			for (final String ench : enchs) {
-				Enchantment e = enchantmentNames.get(ench);
-				if (e != null) {
-					enchantments.put(e, 1);
-					continue;
-				}
-				if (!ench.matches(".* \\d+"))
-					continue outer;
-				e = enchantmentNames.get(ench.substring(0, ench.lastIndexOf(' ')));
+				final EnchantmentType e = EnchantmentType.parse(ench);
 				if (e == null)
 					continue outer;
-				final int level = Skript.parseInt(ench.substring(ench.lastIndexOf(' ') + 1));
-				enchantments.put(e, level);
+				enchantments.put(e.getType(), e.getLevel());
 			}
 			t2.addEnchantments(enchantments);
 			return t2;
@@ -511,6 +501,89 @@ public abstract class Aliases {
 	public static void clear() {
 		aliases.clear();
 		materialNames.clear();
+	}
+	
+	private static Config aliasConfig;
+	
+	public static void load() {
+		
+		try {
+			aliasConfig = new Config(new File(Skript.getInstance().getDataFolder(), "aliases.sk"), false, true, "=");
+		} catch (final IOException e) {
+			Skript.error("Could not load the aliases config: " + e.getLocalizedMessage());
+			return;
+		}
+		
+		final ArrayList<String> aliasNodes = new ArrayList<String>();
+		
+		new SectionValidator()
+				.addEntry("aliases", new Setter<String>() {
+					@Override
+					public void set(final String s) {
+						for (final String n : s.split(","))
+							aliasNodes.add(n.trim());
+					}
+				}, false)
+				.setAllowUndefinedSections(true)
+				.validate(aliasConfig.getMainNode());
+		
+		for (final Node node : aliasConfig.getMainNode()) {
+			if (node instanceof SectionNode) {
+				if (!aliasNodes.contains(node.getName())) {
+					Skript.error("Invalid section '" + node.getName() + "'. If this is an alias section add it to 'aliases' so it will be loaded.");
+				}
+			}
+		}
+		
+		final HashMap<String, HashMap<String, ItemType>> variations = new HashMap<String, HashMap<String, ItemType>>();
+		int num = 0;
+		for (final String an : aliasNodes) {
+			final Node node = aliasConfig.getMainNode().get(an);
+			SkriptLogger.setNode(node);
+			if (node == null) {
+				Skript.error("alias section '" + an + "' not found!");
+				continue;
+			}
+			if (!(node instanceof SectionNode)) {
+				Skript.error("aliases have to be in sections, but '" + an + "' is not a section!");
+				continue;
+			}
+			int i = 0;
+			for (final Node n : (SectionNode) node) {
+				if (n instanceof EntryNode) {
+					i += addAliases(((EntryNode) n).getKey(), ((EntryNode) n).getValue(), variations);
+				} else if (n instanceof SectionNode) {
+					if (!(n.getName().startsWith("{") && n.getName().endsWith("}"))) {
+						Skript.error("unexpected non-variation section");
+						continue;
+					}
+					final HashMap<String, ItemType> vs = new HashMap<String, ItemType>();
+					for (final Node a : (SectionNode) n) {
+						if (a instanceof SectionNode) {
+							Skript.error("unexpected section");
+							continue;
+						}
+						final ItemType t = Aliases.parseAlias(((EntryNode) a).getValue());
+						if (t != null)
+							vs.put(((EntryNode) a).getKey(), t);
+					}
+					variations.put(n.getName().substring(1, n.getName().length() - 1), vs);
+				}
+			}
+			if (Skript.logHigh())
+				Skript.info("loaded " + i + " alias" + (i == 1 ? "" : "es") + " from " + node.getName());
+			num += i;
+		}
+		SkriptLogger.setNode(null);
+		
+		if (Skript.logNormal())
+			Skript.info("loaded a total of " + num + " aliases");
+		
+		Aliases.addMissingMaterialNames();
+		
+		if (!SkriptConfig.keepConfigsLoaded)
+			aliasConfig = null;
+		
 	}
 	
 }

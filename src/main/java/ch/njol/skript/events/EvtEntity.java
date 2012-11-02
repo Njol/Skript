@@ -32,23 +32,25 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Classes;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("unchecked")
 public final class EvtEntity extends SkriptEvent {
+	private static final long serialVersionUID = -3815181540108737521L;
 	
 	static {
 		Skript.registerEvent(EvtEntity.class, Skript.array(EntityDeathEvent.class, PlayerDeathEvent.class), "death [of %entitydatas%]");
 		Skript.registerEvent(EvtEntity.class, CreatureSpawnEvent.class, "spawn[ing] [of %entitydatas%]");
 	}
 	
-	Literal<EntityData<?>> types;
+	private EntityData<?>[] types;
 	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		types = (Literal<EntityData<?>>) args[0];
+		types = args[0] == null ? null : ((Literal<EntityData<?>>) args[0]).getAll();
 		return true;
 	}
 	
@@ -57,7 +59,7 @@ public final class EvtEntity extends SkriptEvent {
 		if (types == null)
 			return true;
 		final Entity en = e instanceof EntityDeathEvent ? ((EntityDeathEvent) e).getEntity() : ((CreatureSpawnEvent) e).getEntity();
-		for (final EntityData<?> d : types.getAll()) {
+		for (final EntityData<?> d : types) {
 			if (d.isInstance(en))
 				return true;
 		}
@@ -66,7 +68,7 @@ public final class EvtEntity extends SkriptEvent {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "death/spawn" + (types == null ? "" : " of " + types.toString(e, debug));
+		return "death/spawn" + (types == null ? "" : " of " + Classes.toString(types, false));
 	}
 	
 }

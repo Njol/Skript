@@ -25,6 +25,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.registrations.Classes;
 
 /**
  * @author Peter Güttinger
@@ -33,7 +34,7 @@ public class Money {
 	
 	static {
 		if (Economy.getEconomy() != null) {
-			Skript.registerClass(new ClassInfo<Money>(Money.class, "money", "money")
+			Classes.registerClass(new ClassInfo<Money>(Money.class, "money", "money")
 					.user("money")
 					.parser(new Parser<Money>() {
 						@Override
@@ -47,8 +48,13 @@ public class Money {
 						}
 						
 						@Override
-						public String toCodeString(final Money o) {
+						public String toVariableNameString(final Money o) {
 							return "money:" + o.amount;
+						}
+						
+						@Override
+						public String getVariableNamePattern() {
+							return "money:-?\\d+(\\.\\d+)?";
 						}
 					}));
 		}

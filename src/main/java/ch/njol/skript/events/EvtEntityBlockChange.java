@@ -37,6 +37,7 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  */
 public class EvtEntityBlockChange extends SkriptEvent {
+	private static final long serialVersionUID = -734540476278000105L;
 	
 	static {
 		Skript.registerEvent(EvtEntityBlockChange.class, EntityChangeBlockEvent.class, ChangeEvent.patterns);

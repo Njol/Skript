@@ -21,8 +21,10 @@
 
 package ch.njol.skript.classes;
 
-import ch.njol.skript.Skript;
+import java.io.Serializable;
+
 import ch.njol.skript.classes.data.DefaultComparators;
+import ch.njol.skript.registrations.Comparators;
 
 /**
  * Used to compare two objects of a different or the same type.
@@ -32,10 +34,10 @@ import ch.njol.skript.classes.data.DefaultComparators;
  * @param <T1> ,
  * @param <T2> the types to compare
  * 
- * @see Skript#registerComparator(Class, Class, Comparator)
+ * @see Comparators#registerComparator(Class, Class, Comparator)
  * @see DefaultComparators
  */
-public interface Comparator<T1, T2> {
+public interface Comparator<T1, T2> extends Serializable {
 	
 	/**
 	 * represents a relation between two objects.
@@ -82,6 +84,8 @@ public interface Comparator<T1, T2> {
 		public boolean is(final Relation other) {
 			if (other == this)
 				return true;
+			if (other == null)
+				return false;
 			switch (this) {
 				case EQUAL:
 					return other == SMALLER_OR_EQUAL || other == GREATER_OR_EQUAL;
@@ -197,6 +201,8 @@ public interface Comparator<T1, T2> {
 	}
 	
 	Comparator<?, ?> equalsComparator = new Comparator<Object, Object>() {
+		private static final long serialVersionUID = -7978700549410981219L;
+		
 		@Override
 		public Relation compare(final Object o1, final Object o2) {
 			if (o1 == null || o2 == null)

@@ -28,7 +28,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Offset;
 
 /**
  * 
@@ -36,34 +35,36 @@ import ch.njol.skript.util.Offset;
  */
 public class EffExplosion extends Effect {
 	
+	private static final long serialVersionUID = -8064905811905989142L;
+	
 	static {
-		Skript.registerEffect(EffExplosion.class, "[create] explosion (of|with) (force|strength|power) %float% [%offsets% %locations%]");
+		Skript.registerEffect(EffExplosion.class, "[create] explosion (of|with) (force|strength|power) %number% [%locations%]");
 	}
 	
-	private Expression<Float> force;
-	private Expression<Offset> offsets;
+	private Expression<Number> force;
 	private Expression<Location> locations;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		force = (Expression<Float>) vars[0];
-		offsets = (Expression<Offset>) vars[1];
-		locations = (Expression<Location>) vars[2];
+		force = (Expression<Number>) vars[0];
+		locations = (Expression<Location>) vars[1];
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		final float power = force.getSingle(e);
-		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
-			l.getWorld().createExplosion(l, power);
+		final Number power = force.getSingle(e);
+		if (power == null)
+			return;
+		for (final Location l : locations.getArray(e)) {
+			l.getWorld().createExplosion(l, power.floatValue());
 		}
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "create explosion of force " + force.toString(e, debug) + " " + offsets.toString(e, debug) + " " + locations.toString(e, debug);
+		return "create explosion of force " + force.toString(e, debug) + " " + locations.toString(e, debug);
 	}
 	
 }

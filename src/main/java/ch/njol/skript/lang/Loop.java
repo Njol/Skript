@@ -21,6 +21,8 @@
 
 package ch.njol.skript.lang;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -33,7 +35,6 @@ import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.lang.util.ContanerExpression;
 import ch.njol.skript.util.Container;
 import ch.njol.skript.util.Container.ContainerType;
-import ch.njol.util.Validate;
 
 /**
  * A trigger section which represents a loop.
@@ -42,16 +43,24 @@ import ch.njol.util.Validate;
  * @see LoopExpr
  */
 public class Loop extends TriggerSection {
+	private static final long serialVersionUID = -6026515058664939972L;
 	
 	private final Expression<?> expr;
 	
-	private final Map<Event, Object> current = new WeakHashMap<Event, Object>();
-	private final Map<Event, Iterator<?>> currentIter = new WeakHashMap<Event, Iterator<?>>();
+	private transient Map<Event, Object> current = new WeakHashMap<Event, Object>();
+	private transient Map<Event, Iterator<?>> currentIter = new WeakHashMap<Event, Iterator<?>>();
+	
+	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+		in.defaultReadObject();
+		current = new WeakHashMap<Event, Object>();
+		currentIter = new WeakHashMap<Event, Iterator<?>>();
+	}
 	
 	private TriggerItem actualNext;
 	
 	public <T> Loop(final Expression<?> expr, final SectionNode node) {
-		Validate.notNull(expr, node);
+		assert expr != null;
+		assert node != null;
 		if (Container.class.isAssignableFrom(expr.getReturnType())) {
 			final ContainerType type = expr.getReturnType().getAnnotation(ContainerType.class);
 			if (type == null)
@@ -70,12 +79,19 @@ public class Loop extends TriggerSection {
 	protected TriggerItem walk(final Event e) {
 		Iterator<?> iter = currentIter.get(e);
 		if (iter == null) {
-			iter = expr.iterator(e);
-			if (iter != null && iter.hasNext())
-				currentIter.put(e, iter);
+			iter = expr instanceof Variable ? ((Variable<?>) expr).variablesIterator(e) : expr.iterator(e);
+			if (iter != null) {
+				if (iter.hasNext())
+					currentIter.put(e, iter);
+				else
+					iter = null;
+			}
 		}
 		if (iter == null || !iter.hasNext()) {
-			debug(e, false);
+			if (iter != null)
+				currentIter.remove(e); // a loop inside another loop can be called multiple times in the same event
+			else
+				debug(e, false);
 			return actualNext;
 		} else {
 			current.put(e, iter.next());

@@ -25,8 +25,8 @@ import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.util.Getter;
+import ch.njol.skript.classes.SerializableGetter;
+import ch.njol.skript.registrations.EventValues;
 
 /**
  * 
@@ -35,7 +35,9 @@ import ch.njol.skript.util.Getter;
 public class ScheduledEvent extends Event {
 	
 	static {
-		Skript.registerEventValue(ScheduledEvent.class, World.class, new Getter<World, ScheduledEvent>() {
+		EventValues.registerEventValue(ScheduledEvent.class, World.class, new SerializableGetter<World, ScheduledEvent>() {
+			private static final long serialVersionUID = -3328980352536811833L;
+			
 			@Override
 			public World get(final ScheduledEvent e) {
 				return e.getWorld();

@@ -25,7 +25,7 @@ public class ExpressionInfo<E extends Expression<T>, T> extends SyntaxElementInf
 	
 	public Class<T> returnType;
 	
-	public ExpressionInfo(final String[] patterns, final Class<T> returnType, final Class<E> c) {
+	public ExpressionInfo(final String[] patterns, final Class<T> returnType, final Class<E> c) throws IllegalArgumentException {
 		super(patterns, c);
 		this.returnType = returnType;
 	}

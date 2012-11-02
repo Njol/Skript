@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import java.lang.reflect.Array;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,10 +31,16 @@ import org.bukkit.event.Event;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Loop;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Variable;
+import ch.njol.skript.lang.util.ConvertedExpression;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.registrations.Converters;
 
 /**
  * used to access a loop's current value.
@@ -41,6 +48,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * @author Peter Güttinger
  */
 public class ExprLoopValue extends SimpleExpression<Object> {
+	private static final long serialVersionUID = -6116372561839231268L;
 	
 	static {
 		Skript.registerExpression(ExprLoopValue.class, Object.class, ExpressionType.SIMPLE, "[the] loop-<.+>");
@@ -49,6 +57,11 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	private String name;
 	
 	private Loop loop;
+	
+	// whether this loops a variable
+	boolean isVariableLoop = false;
+	// if this loops a variable and isIndex is true, return the index of the variable instead of the value
+	boolean isIndex = false;
 	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
@@ -60,27 +73,33 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 			s = m.group(1);
 			i = Skript.parseInt(m.group(2));
 		}
-		Class<?> c = Skript.getClassByName(s);
+		Class<?> c = Classes.getClassByName(s);
 		if (c == null)
-			c = Skript.getClassFromUserInput(s);
+			c = Classes.getClassFromUserInput(s);
+		int j = 1;
 		for (final Loop l : ScriptLoader.currentLoops) {
 			if (c != null && c.isAssignableFrom(l.getLoopedExpression().getReturnType()) || l.getLoopedExpression().isLoopOf(s)) {
-				if (i > 1) {
-					i--;
+				if (j < i) {
+					j++;
 					continue;
 				}
 				if (loop != null) {
-					Skript.error("there are multiple loops that match 'loop-" + s + "'");
+					Skript.error("There are multiple loops that match loop-" + s + ". Use loop-" + s + "-1/2/3/etc. to specify which loop's value you want.", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 				loop = l;
-				if (i == 1)
+				if (j == i)
 					break;
 			}
 		}
 		if (loop == null) {
-			Skript.error("there's no loop that matches 'loop-" + s + "'");
+			Skript.error("There's no loop that matches 'loop-" + s + "'", ErrorQuality.SEMANTIC_ERROR);
 			return false;
+		}
+		if (loop.getLoopedExpression() instanceof Variable) {
+			isVariableLoop = true;
+			if (((Variable<?>) loop.getLoopedExpression()).isIndexLoop(s))
+				isIndex = true;
 		}
 		return true;
 	}
@@ -91,13 +110,39 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	}
 	
 	@Override
+	protected <R> ConvertedExpression<Object, ? extends R> getConvertedExpr(final Class<R> to) {
+		if (isVariableLoop && !isIndex) {
+			return new ConvertedExpression<Object, R>(this, to, new SerializableConverter<Object, R>() {
+				private static final long serialVersionUID = 7703898357092613043L;
+				
+				@Override
+				public R convert(final Object o) {
+					return Converters.convert(o, to);
+				}
+			});
+		} else {
+			return super.getConvertedExpr(to);
+		}
+	}
+	
+	@Override
 	public Class<? extends Object> getReturnType() {
+		if (isIndex)
+			return String.class;
 		return loop.getLoopedExpression().getReturnType();
 	}
 	
 	@Override
 	protected Object[] get(final Event e) {
-		final Object[] one = (Object[]) Array.newInstance(loop.getLoopedExpression().getReturnType(), 1);
+		if (isVariableLoop) {
+			final Entry<String, Object> current = (Entry<String, Object>) loop.getCurrent(e);
+			if (isIndex)
+				return new String[] {current.getKey()};
+			final Object[] one = (Object[]) Array.newInstance(getReturnType(), 1);
+			one[0] = current.getValue();
+			return one;
+		}
+		final Object[] one = (Object[]) Array.newInstance(getReturnType(), 1);
 		one[0] = loop.getCurrent(e);
 		return one;
 	}
@@ -106,7 +151,11 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
 			return name;
-		return Skript.getDebugMessage(loop.getCurrent(e));
+		if (isVariableLoop) {
+			final Entry<String, Object> current = (Entry<String, Object>) loop.getCurrent(e);
+			return isIndex ? "\"" + current.getKey() + "\"" : Classes.getDebugMessage(current.getValue());
+		}
+		return Classes.getDebugMessage(loop.getCurrent(e));
 	}
 	
 	@Override

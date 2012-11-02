@@ -35,6 +35,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * @author Peter Güttinger
  */
 public class ExprConsole extends SimpleExpression<ConsoleCommandSender> {
+	private static final long serialVersionUID = -8525866833010434799L;
 	
 	static {
 		Skript.registerExpression(ExprConsole.class, ConsoleCommandSender.class, ExpressionType.SIMPLE, "[the] (console|server)");

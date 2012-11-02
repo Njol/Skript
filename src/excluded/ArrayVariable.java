@@ -58,7 +58,8 @@ public class ArrayVariable<T> implements Expression<T> {
 	private final ArrayVariable<?> source;
 	
 	private ArrayVariable(final VariableString name, final Class<T> type, final ArrayVariable<?> source) {
-		Validate.notNull(name, type);
+		assert name != null;
+assert type != null;
 		if (name.getMode() != StringMode.VARIABLE_NAME) // not setMode as angle brackets are not allowed in variable names
 			throw new IllegalArgumentException("'name' must be a VARIABLE_NAME string");
 		

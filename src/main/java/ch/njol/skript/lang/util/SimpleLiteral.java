@@ -21,24 +21,27 @@
 
 package ch.njol.skript.lang.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
+import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
-import ch.njol.util.Validate;
 import ch.njol.util.iterator.NonNullIterator;
 
 /**
@@ -48,8 +51,8 @@ import ch.njol.util.iterator.NonNullIterator;
  * @see UnparsedLiteral
  */
 public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
+	private static final long serialVersionUID = 8435080459332928709L;
 	
-	protected final T[] data;
 	protected final Class<T> c;
 	
 	private final boolean isDefault;
@@ -57,9 +60,33 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	private UnparsedLiteral source = null;
 	
+	protected transient T[] data;
+	
+	private void writeObject(final ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+		out.writeObject(data.getClass().getComponentType());
+		final String[][] d = new String[data.length][];
+		for (int i = 0; i < data.length; i++) {
+			if ((d[i] = Classes.serialize(data[i])) == null) {
+				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
+			}
+		}
+		out.writeObject(d);
+	}
+	
+	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+		in.defaultReadObject();
+		final Class<?> c = (Class<?>) in.readObject();
+		final String[][] d = (String[][]) in.readObject();
+		data = (T[]) Array.newInstance(c, d.length);
+		for (int i = 0; i < data.length; i++) {
+			data[i] = (T) Classes.deserialize(d[i][0], d[i][1]);
+		}
+	}
+	
 	public SimpleLiteral(final T[] data, final Class<T> c, final boolean and) {
-		Validate.notNullOrEmpty(data, "data");
-		Validate.notNull(c, "c");
+		assert data != null && data.length != 0;
+		assert c != null;
 		this.data = data;
 		this.c = c;
 		this.and = data.length == 1 || and;
@@ -67,7 +94,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	public SimpleLiteral(final T data, final boolean isDefault) {
-		Validate.notNull(data, "data");
+		assert data != null;
 		this.data = (T[]) Array.newInstance(data.getClass(), 1);
 		this.data[0] = data;
 		c = (Class<T>) data.getClass();
@@ -112,7 +139,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	@Override
 	public T getSingle() {
-		return Utils.getRandom(data);
+		return Utils.random(data);
 	}
 	
 	@Override
@@ -130,18 +157,18 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	public <R> ConvertedLiteral<T, ? extends R> getConvertedExpression(final Class<R> to) {
 		if (to.isAssignableFrom(c))
 			return new ConvertedLiteral<T, R>(this, (R[]) data, to);
-		final Converter<? super T, ? extends R> p = Skript.getConverter(c, to);
+		final Converter<? super T, ? extends R> p = Converters.getConverter(c, to);
 		if (p == null)
 			return null;
-		final R[] parsedData = ConverterUtils.convert(data, to, p);
+		final R[] parsedData = Converters.convert(data, to, p);
 		return new ConvertedLiteral<T, R>(this, parsedData, to);
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (debug)
-			return "[" + Skript.toString(data, getAnd(), StringMode.DEBUG, false) + "]";
-		return Skript.toString(data, getAnd());
+			return "[" + Classes.toString(data, getAnd(), StringMode.DEBUG, false) + "]";
+		return Classes.toString(data, getAnd());
 	}
 	
 	@Override
@@ -170,7 +197,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		return null;
 	}
 	
@@ -211,11 +238,6 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	@Override
 	public boolean isLoopOf(final String s) {
 		return false;
-	}
-	
-	@Override
-	public boolean canLoop() {
-		return !isSingle();
 	}
 	
 	@Override

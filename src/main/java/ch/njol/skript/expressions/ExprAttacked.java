@@ -38,12 +38,15 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprAttacked extends SimpleExpression<Entity> {
+	private static final long serialVersionUID = 2125171894503017326L;
 	
 	static {
 		Skript.registerExpression(ExprAttacked.class, Entity.class, ExpressionType.SIMPLE, "[the] (attacked|damaged|victim) [<(.+)>]");
@@ -55,7 +58,7 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (!Utils.containsAny(ScriptLoader.currentEvents, EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class, EntityDeathEvent.class)) {
-			Skript.error("Cannot use 'damaged'/'victim' outside of a damage or death event");
+			Skript.error("Cannot use 'damaged'/'victim' outside of a damage or death event", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
 		final String type = parser.regexes.size() == 0 ? null : parser.regexes.get(0).group();
@@ -64,7 +67,7 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 		} else {
 			this.type = EntityData.parse(type);
 			if (this.type == null) {
-				Skript.error("'" + type + "' is not an entity type");
+				Skript.error("'" + type + "' is not an entity type", ErrorQuality.NOT_AN_EXPRESSION);
 				return false;
 			}
 		}
@@ -91,7 +94,7 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
 			return "the attacked " + type;
-		return Skript.getDebugMessage(getSingle(e));
+		return Classes.getDebugMessage(getSingle(e));
 	}
 	
 	@Override

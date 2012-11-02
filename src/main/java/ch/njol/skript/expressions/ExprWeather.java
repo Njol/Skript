@@ -40,6 +40,7 @@ import ch.njol.skript.util.WeatherType;
  * @author Peter Güttinger
  */
 public class ExprWeather extends PropertyExpression<World, WeatherType> {
+	private static final long serialVersionUID = -3454589103235115715L;
 	
 	static {
 		Skript.registerExpression(ExprWeather.class, WeatherType.class, ExpressionType.PROPERTY, "[the] weather [(in|of) %worlds%]");
@@ -81,10 +82,11 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 		});
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.CLEAR || mode == ChangeMode.SET)
-			return WeatherType.class;
+			return Skript.array(WeatherType.class);
 		return null;
 	}
 	

@@ -33,8 +33,10 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
+import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.ParseContext;
@@ -43,20 +45,50 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.util.SimpleLiteral;
-import ch.njol.util.Validate;
+import ch.njol.skript.registrations.Classes;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("rawtypes")
 public abstract class EntityData<E extends Entity> implements SyntaxElement {
+	private static final long serialVersionUID = -6293365728916055466L;
 	
+	// must be here to be initialized before 'new SimpleLiteral' is called in the register block below
 	private static final List<EntityDataInfo<?>> infos = new ArrayList<EntityDataInfo<?>>();
 	
+	public static Serializer<EntityData> serializer = new Serializer<EntityData>() {
+		@Override
+		public String serialize(final EntityData d) {
+			return getInfo((Class<? extends EntityData<?>>) d.getClass()).codeName + ":" + d.serialize();
+		}
+		
+		@Override
+		public EntityData deserialize(final String s) {
+			final String[] split = s.split(":", 2);
+			if (split.length != 2)
+				return null;
+			final EntityDataInfo<?> i = getInfo(split[0]);
+			if (i == null)
+				return null;
+			EntityData<?> d;
+			try {
+				d = i.c.newInstance();
+			} catch (final Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+			if (!d.deserialize(s))
+				return null;
+			return d;
+		}
+	};
+	
 	static {
-		Skript.registerClass(new ClassInfo<EntityData>(EntityData.class, "entitydata", "entity type")
+		Classes.registerClass(new ClassInfo<EntityData>(EntityData.class, "entitydata", "entity type")
 				.user("entity ?types?", "entit(y|ies)")
 				.defaultExpression(new SimpleLiteral<EntityData>(new SimpleEntityData(Entity.class), true))
+				.before("itemtype", "entitytype")
 				.parser(new Parser<EntityData>() {
 					@Override
 					public String toString(final EntityData d) {
@@ -69,50 +101,30 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 					}
 					
 					@Override
-					public String toCodeString(final EntityData o) {
+					public String toVariableNameString(final EntityData o) {
 						return "entitydata:" + o.toString();
-					}
-				})/*.serializer(new Serializer<EntityData>() {
-					@SuppressWarnings("unchecked")
-					@Override
-					public String serialize(final EntityData d) {
-						final String s = d.serialize();
-						return classes.getKey(d.getType()) + (s == null || s.isEmpty() ? "" : ":" + s);
 					}
 					
 					@Override
-					public EntityData deserialize(final String s) {
-						final String[] split = s.split(":", 2);
-						
-						final Class<? extends Entity> c = classes.get(split[0]);
-						if (c == null)
-							return null;
-						try {
-							final EntityData d = types.get(c).newInstance();
-							if (split.length == 1)
-								return d;
-							return d.deserialize(split[1]) ? d : null;
-						} catch (final Exception e) {
-							return null;
-						}
+					public String getVariableNamePattern() {
+						return "entitydata:.+";
 					}
-					})*/);
+				}).serializer(serializer));
 	}
 	
 	private final static class EntityDataInfo<T extends EntityData<?>> extends SyntaxElementInfo<T> {
 		
-		@SuppressWarnings("unused")
 		final String codeName;
 		final Class<? extends Entity> entityClass;
 		
-		public EntityDataInfo(final Class<T> dataClass, final String codeName, final Class<? extends Entity> entityClass, final String[] patterns) {
+		public EntityDataInfo(final Class<T> dataClass, final String codeName, final Class<? extends Entity> entityClass, final String[] patterns) throws IllegalArgumentException {
 			super(patterns, dataClass);
 			this.codeName = codeName;
 			this.entityClass = entityClass;
 		}
 	}
 	
-	static <E extends Entity, T extends EntityData<E>> void register(final Class<T> dataClass, final String name, final Class<E> entityClass, final String... patterns) {
+	static <E extends Entity, T extends EntityData<E>> void register(final Class<T> dataClass, final String name, final Class<E> entityClass, final String... patterns) throws IllegalArgumentException {
 		final EntityDataInfo<T> info = new EntityDataInfo<T>(dataClass, name, entityClass, patterns);
 		for (int i = 0; i < infos.size(); i++) {
 			if (infos.get(i).entityClass.isAssignableFrom(entityClass)) {
@@ -121,6 +133,22 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 			}
 		}
 		infos.add(info);
+	}
+	
+	public final static EntityDataInfo<?> getInfo(final Class<? extends EntityData<?>> c) {
+		for (final EntityDataInfo<?> i : infos) {
+			if (i.c == c)
+				return i;
+		}
+		throw new SkriptAPIException("Unregistered EntityData class " + c.getName());
+	}
+	
+	public final static EntityDataInfo<?> getInfo(final String codeName) {
+		for (final EntityDataInfo<?> i : infos) {
+			if (i.codeName.equals(codeName))
+				return i;
+		}
+		return null;
 	}
 	
 	@Override
@@ -152,21 +180,24 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	 * @return
 	 */
 	public final static EntityData<?> parseWithoutAnOrAny(final String s) {
-		return SkriptParser.parseStatic(s, infos.iterator(), s);
+		return SkriptParser.parseStatic(s, infos.iterator(), null);
 	}
 	
 	public E spawn(final Location loc) {
-		Validate.notNull(loc, "loc");
+		assert loc != null;
 		try {
 			final E e = loc.getWorld().spawn(loc, getType());
 			set(e);
 			return e;
 		} catch (final IllegalArgumentException e) {
+			if (Skript.debug())
+				Skript.error("Can't spawn " + getType().getName());
 			return null;
 		}
 	}
 	
 	public E[] getAll(final World... worlds) {
+		assert worlds != null && worlds.length > 0 : Arrays.toString(worlds);
 		final List<E> list = new ArrayList<E>();
 		for (final World w : worlds) {
 			for (final E e : w.getEntitiesByClass(getType()))
@@ -208,7 +239,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 				try {
 					return (EntityData<E>) info.c.newInstance();
 				} catch (final Exception e) {
-					assert false;
+					Skript.exception(e);
 					return null;
 				}
 			}
@@ -233,6 +264,10 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 		return getType().isInstance(e) && match((E) e);
 	}
 	
+	public abstract String serialize();
+	
+	protected abstract boolean deserialize(final String s);
+	
 	protected abstract boolean init(Literal<?>[] exprs, int matchedPattern, ParseResult parseResult);
 	
 	public abstract void set(E entity);
@@ -246,19 +281,9 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	
 	public abstract boolean isPlural();
 	
-//	/**
-//	 * Serializes this entity data.
-//	 * 
-//	 * @return additional data to save or null if there's none.
-//	 */
-//	public abstract String serialize();
-//	
-//	/**
-//	 * Deserializes this entity data. This method is not called if {@link #serialize()} returned an empty string or null.
-//	 * 
-//	 * @param s
-//	 * @return
-//	 */
-//	public abstract boolean deserialize(String s);
+	@Override
+	public abstract boolean equals(Object obj);
 	
+	@Override
+	public abstract int hashCode();
 }

@@ -34,8 +34,9 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
@@ -47,6 +48,8 @@ import ch.njol.util.StringUtils;
 public class EvtClick extends SkriptEvent {
 	
 	// Important: a click on an entity fires both an PlayerInteractEntityEvent and a PlayerInteractEvent
+	
+	private static final long serialVersionUID = -5935656107417409014L;
 	
 	static {
 		Skript.registerEvent(EvtClick.class, Skript.array(PlayerInteractEvent.class, PlayerInteractEntityEvent.class),
@@ -68,29 +71,29 @@ public class EvtClick extends SkriptEvent {
 		else if (StringUtils.startsWithIgnoreCase(parser.expr, "left"))
 			click = LEFT;
 		if (args[matchedPattern] != null) {
-			final SubLog log = SkriptLogger.startSubLog();
+			final SimpleLog log = SkriptLogger.startSubLog();
 			entities = (Literal<? extends EntityData<?>>) args[matchedPattern].getConvertedExpression(EntityData.class);
 			if (entities == null) {
 				blocks = args[matchedPattern].getConvertedExpression(ItemType.class);
 				log.clear();
 				if (blocks == null) {
 					SkriptLogger.stopSubLog(log);
-					Skript.error("'" + args[matchedPattern] + "' is neither an entity type nor an item type");
+					Skript.error(args[matchedPattern] + " is neither an entity type nor an item type", ErrorQuality.NOT_AN_EXPRESSION);
 					return false;
 				} else if (!blocks.isSingle()) {
 					SkriptLogger.stopSubLog(log);
-					Skript.error("It's impossible to click on multiple blocks at the same time");
+					Skript.error("It's impossible to click on multiple blocks at the same time", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 			} else {
 				if (!entities.isSingle()) {
 					SkriptLogger.stopSubLog(log);
-					Skript.error("It's impossible to click on multiple entites at the same time");
+					Skript.error("It's impossible to click on multiple entites at the same time", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 				if (click == LEFT) {
 					SkriptLogger.stopSubLog(log);
-					Skript.error("A leftclick on an entity is an attack and thus not covered by the 'click' event, but the 'damage' event.");
+					Skript.error("A leftclick on an entity is an attack and thus not covered by the 'click' event, but the 'damage' event.", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				} else if (click == ANY) {
 					Skript.warning("A leftclick on an entity is an attack and thus not covered by the 'click' event, but the 'damage' event. Change this event to a rightclick to disable this warning message.");

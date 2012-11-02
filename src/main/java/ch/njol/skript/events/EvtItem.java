@@ -24,7 +24,9 @@ package ch.njol.skript.events;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
+import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
@@ -38,11 +40,14 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  */
 public class EvtItem extends SkriptEvent {
+	private static final long serialVersionUID = 4903912508088708449L;
 	
 	static {
 		Skript.registerEvent(EvtItem.class, BlockDispenseEvent.class, "dispense [[of] %itemtypes%]");
 		Skript.registerEvent(EvtItem.class, ItemSpawnEvent.class, "item spawn [[of] %itemtypes%]");
 		Skript.registerEvent(EvtItem.class, PlayerDropItemEvent.class, "drop [[of] %itemtypes%]");
+		Skript.registerEvent(EvtItem.class, CraftItemEvent.class, "craft [[of] %itemtypes%]");
+		Skript.registerEvent(EvtItem.class, PlayerPickupItemEvent.class, "(pickup|picking up) [[of] %itemtypes%]");
 	}
 	
 	private Literal<ItemType> types;
@@ -65,6 +70,10 @@ public class EvtItem extends SkriptEvent {
 			is = ((ItemSpawnEvent) e).getEntity().getItemStack();
 		} else if (e instanceof PlayerDropItemEvent) {
 			is = ((PlayerDropItemEvent) e).getItemDrop().getItemStack();
+		} else if (e instanceof CraftItemEvent) {
+			is = ((CraftItemEvent) e).getRecipe().getResult();
+		} else if (e instanceof PlayerPickupItemEvent) {
+			is = ((PlayerPickupItemEvent) e).getItem().getItemStack();
 		} else {
 			throw new IllegalStateException();
 		}
@@ -78,7 +87,7 @@ public class EvtItem extends SkriptEvent {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "dispense/spawn/drop/throw" + (types == null ? "" : " of " + types);
+		return "dispense/spawn/drop/craft/pickup" + (types == null ? "" : " of " + types);
 	}
 	
 }

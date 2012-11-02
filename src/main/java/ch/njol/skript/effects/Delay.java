@@ -40,6 +40,8 @@ import ch.njol.skript.util.Timespan;
  */
 public class Delay extends Effect {
 	
+	private static final long serialVersionUID = -6754842737504578386L;
+	
 	static {
 		Skript.registerEffect(Delay.class, "(wait|halt) [for] %timespan%");
 	}
@@ -60,6 +62,8 @@ public class Delay extends Effect {
 		if (getNext() != null) {
 			delayed.add(e);
 			final Timespan d = duration.getSingle(e);
+			if (d == null)
+				return null;
 			Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
 				@Override
 				public void run() {
@@ -67,7 +71,7 @@ public class Delay extends Effect {
 						Skript.info(getIndentation() + "... continuing after " + (System.nanoTime() - start) / 1000000000. + "s");
 					TriggerItem.walk(getNext(), e);
 				}
-			}, d == null ? 0 : d.getTicks());
+			}, d.getTicks());
 		}
 		return null;
 	}
@@ -85,7 +89,7 @@ public class Delay extends Effect {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "wait for " + duration.toString(e, debug) + "...";
+		return "wait for " + duration.toString(e, debug) + (e == null ? "" : "...");
 	}
 	
 }

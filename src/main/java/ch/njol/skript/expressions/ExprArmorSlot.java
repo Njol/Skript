@@ -38,6 +38,7 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  */
 public class ExprArmorSlot extends PropertyExpression<Player, Slot> {
+	private static final long serialVersionUID = 5373470689647573757L;
 	
 	static {
 		Skript.registerExpression(ExprArmorSlot.class, Slot.class, ExpressionType.PROPERTY,

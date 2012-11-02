@@ -35,6 +35,7 @@ import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Slot;
 
@@ -43,6 +44,7 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  */
 public class ExprTool extends PropertyExpression<Player, Slot> {
+	private static final long serialVersionUID = -4761610042940827469L;
 	
 	static {
 		Skript.registerExpression(ExprTool.class, Slot.class, ExpressionType.PROPERTY, "[the] (tool|held item) [of %players%]", "%player%'[s] (tool|held item)");
@@ -99,7 +101,7 @@ public class ExprTool extends PropertyExpression<Player, Slot> {
 					
 					@Override
 					public String toString(final Event e, final boolean debug) {
-						return (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + p.getName();
+						return "the " + (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + p.getName();
 					}
 				};
 			}
@@ -115,7 +117,7 @@ public class ExprTool extends PropertyExpression<Player, Slot> {
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
 			return "the " + (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + players.toString(e, debug);
-		return Skript.getDebugMessage(getSingle(e));
+		return Classes.getDebugMessage(getSingle(e));
 	}
 	
 	@SuppressWarnings("unchecked")

@@ -21,8 +21,14 @@
 
 package ch.njol.skript.classes;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
+import ch.njol.skript.Language;
+import ch.njol.skript.Language.LanguageChangeListener;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.util.SimpleLiteral;
@@ -36,38 +42,48 @@ public class ClassInfo<T> {
 	
 	private final Class<T> c;
 	private final String codeName;
-	private final String name;
+	private String name;
 	
 	private DefaultExpression<T> defaultExpression = null;
 	
-	private Parser<T> parser = null;
+	private Parser<? extends T> parser = null;
 	
 	private Pattern[] userInputPatterns = null;
 	
-	private Changer<? super T, ?> changer = null;
+	private SerializableChanger<? super T, ?> changer = null;
 	
-	private Serializer<T> serializer = null;
+	private Serializer<? super T> serializer = null;
 	private Class<?> serializeAs = null;
 	
 	private Arithmetic<T, ?> math = null;
 	private Class<?> mathRelativeType = null;
 	
-	private Validator<? super T> validator = null;
-	
 	/**
 	 * @param c The class
-	 * @param codeName The name used in expression patterns
+	 * @param codeName The name used in patterns
+	 * @param name This class' name as displayed to the user
 	 */
 	public ClassInfo(final Class<T> c, final String codeName, final String name) {
 		this.c = c;
+		if (!codeName.matches("[a-z0-9]+"))
+			throw new IllegalArgumentException("Code names for classes must be lowercase and only consist of latin letters and arabic numbers");
 		this.codeName = codeName;
 		this.name = name;
+		Language.addListener(new LanguageChangeListener() {
+			@Override
+			public void onLanguageChange() {
+				ClassInfo.this.name = Language.get("types." + codeName);
+			}
+		});
 	}
+	
+	// === FACTORY METHODS ===
 	
 	/**
 	 * @param parser A parser to parse values of this class or null if not applicable
 	 */
-	public ClassInfo<T> parser(final Parser<T> parser) {
+	public ClassInfo<T> parser(final Parser<? extends T> parser) {
+		assert this.parser == null;
 		this.parser = parser;
 		return this;
 	}
@@ -75,8 +91,10 @@ public class ClassInfo<T> {
 	/**
 	 * @param name The name of this class as it is displayed to players
 	 * @param userInputPatterns <u>Regex</u> patterns to match &lt;arg type&gt;s in commands. These patterns must match singular and plural.
+	 * @throws PatternSyntaxException If any of the patterns' syntaxes is invalid
 	 */
-	public ClassInfo<T> user(final String... userInputPatterns) {
+	public ClassInfo<T> user(final String... userInputPatterns) throws PatternSyntaxException {
+		assert this.userInputPatterns == null;
 		this.userInputPatterns = new Pattern[userInputPatterns.length];
 		for (int i = 0; i < userInputPatterns.length; i++) {
 			this.userInputPatterns[i] = Pattern.compile("^" + userInputPatterns[i] + "$");
@@ -85,18 +103,20 @@ public class ClassInfo<T> {
 	}
 	
 	/**
-	 * @param defaultExpression The defalut (event) value of this class or null if not applicable
+	 * @param defaultExpression The default (event) value of this class or null if not applicable
 	 * @see EventValueExpression
 	 * @see SimpleLiteral
 	 */
 	public ClassInfo<T> defaultExpression(final DefaultExpression<T> defaultExpression) {
+		assert this.defaultExpression == null;
 		if (!defaultExpression.isDefault())
 			throw new IllegalArgumentException("defaultExpression.isDefault() must return true for the default expression of a class");
 		this.defaultExpression = defaultExpression;
 		return this;
 	}
 	
-	public ClassInfo<T> serializer(final Serializer<T> serializer) {
+	public ClassInfo<T> serializer(final Serializer<? super T> serializer) {
+		assert this.serializer == null;
 		if (serializeAs != null)
 			throw new IllegalStateException("Can't set a serializer if this class is set to be serialized as another one");
 		this.serializer = serializer;
@@ -104,27 +124,27 @@ public class ClassInfo<T> {
 	}
 	
 	public ClassInfo<T> serializeAs(final Class<?> serializeAs) {
+		assert this.serializeAs == null;
 		if (serializer != null)
 			throw new IllegalStateException("Can't set this class to be serialized as another one if a serializer is already set");
 		this.serializeAs = serializeAs;
 		return this;
 	}
 	
-	public ClassInfo<T> changer(final Changer<? super T, ?> changer) {
+	public ClassInfo<T> changer(final SerializableChanger<? super T, ?> changer) {
+		assert this.changer == null;
 		this.changer = changer;
 		return this;
 	}
 	
 	public <R> ClassInfo<T> math(final Class<R> relativeType, final Arithmetic<T, R> math) {
+		assert this.math == null;
 		this.math = math;
 		mathRelativeType = relativeType;
 		return this;
 	}
 	
-	public ClassInfo<T> validator(final Validator<? super T> validator) {
-		this.validator = validator;
-		return this;
-	}
+	// === GETTERS ===
 	
 	public Class<T> getC() {
 		return c;
@@ -142,7 +162,7 @@ public class ClassInfo<T> {
 		return defaultExpression;
 	}
 	
-	public Parser<T> getParser() {
+	public Parser<? extends T> getParser() {
 		return parser;
 	}
 	
@@ -150,11 +170,11 @@ public class ClassInfo<T> {
 		return userInputPatterns;
 	}
 	
-	public Changer<? super T, ?> getChanger() {
+	public SerializableChanger<? super T, ?> getChanger() {
 		return changer;
 	}
 	
-	public Serializer<T> getSerializer() {
+	public Serializer<? super T> getSerializer() {
 		return serializer;
 	}
 	
@@ -170,8 +190,68 @@ public class ClassInfo<T> {
 		return mathRelativeType;
 	}
 	
-	public Validator<? super T> getValidator() {
-		return validator;
+	// === ORDERING ===
+	
+	private final Set<String> before = new HashSet<String>();
+	private Set<String> after;
+	
+	/**
+	 * Sets one or more classes that should occur before this class in the class infos list. This only affects the order in which classes are parsed if it's unknown of which type
+	 * the parsed string is.
+	 * 
+	 * <p>
+	 * Please note that subclasses will always be registered before superclasses, no matter what is defined here or in {@link #after(String...)}.
+	 * 
+	 * <p>
+	 * This list can safely contain classes that may not exist.
+	 * 
+	 * @param before
+	 * @return this ClassInfo
+	 */
+	public ClassInfo<T> before(final String... before) {
+		this.before.addAll(Arrays.asList(before));
+		return this;
 	}
 	
+	/**
+	 * Sets one or more classes that should occur after this class in the class infos list. This only affects the order in which classes are parsed if it's unknown of which type
+	 * the parsed string is.
+	 * 
+	 * <p>
+	 * Please note that subclasses will always be registered before superclasses, no matter what is defined here or in {@link #before(String...)}.
+	 * 
+	 * <p>
+	 * This list can safely contain classes that may not exist.
+	 * 
+	 * @param after
+	 * @return this ClassInfo
+	 */
+	public ClassInfo<T> after(final String... after) {
+		assert this.after == null;
+		this.after = new HashSet<String>(Arrays.asList(after));
+		return this;
+	}
+	
+	/**
+	 * 
+	 * @return never null
+	 */
+	public Set<String> before() {
+		return before;
+	}
+	
+	/**
+	 * 
+	 * @return maybe null
+	 */
+	public Set<String> after() {
+		return after;
+	}
+	
+	// === GENERAL ===
+	
+	@Override
+	public String toString() {
+		return codeName + " (" + c.getName() + ")";
+	}
 }

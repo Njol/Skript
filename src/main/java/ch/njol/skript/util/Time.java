@@ -21,6 +21,7 @@
 
 package ch.njol.skript.util;
 
+import java.io.Serializable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +30,9 @@ import ch.njol.skript.Skript;
 /**
  * @author Peter Güttinger
  */
-public class Time {
+public class Time implements Serializable {
+	
+	private static final long serialVersionUID = -5107423338469334935L;
 	
 	private final int time;
 	

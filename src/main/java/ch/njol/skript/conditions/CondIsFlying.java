@@ -24,24 +24,26 @@ package ch.njol.skript.conditions;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
-import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  */
 public class CondIsFlying extends PropertyCondition<Player> {
 	
+	private static final long serialVersionUID = 4858363620023013729L;
+	
 	static {
 		register(CondIsFlying.class, "flying", "players");
 	}
 	
-	public CondIsFlying() {
-		super("flying", new Checker<Player>() {
-			@Override
-			public boolean check(final Player p) {
-				return p.isFlying();
-			}
-		});
+	@Override
+	public boolean check(final Player p) {
+		return p.isFlying();
+	}
+	
+	@Override
+	protected String getPropertyName() {
+		return "flying";
 	}
 	
 }

@@ -34,11 +34,13 @@ import ch.njol.skript.effects.Delay;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprSignText extends SimpleExpression<String> {
+	private static final long serialVersionUID = -2027328055872524011L;
 	
 	static {
 		Skript.registerExpression(ExprSignText.class, String.class, ExpressionType.PROPERTY,
@@ -84,10 +86,11 @@ public class ExprSignText extends SimpleExpression<String> {
 		return new String[] {((Sign) b.getState()).getLine(line - 1)};
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-		if (mode == ChangeMode.CLEAR)
-			return Object.class;
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.CLEAR || mode == ChangeMode.SET)
+			return Skript.array(String.class);
 		return null;
 	}
 	
@@ -98,16 +101,24 @@ public class ExprSignText extends SimpleExpression<String> {
 			switch (mode) {
 				case CLEAR:
 					((SignChangeEvent) e).setLine(line - 1, "");
+					break;
+				case SET:
+					((SignChangeEvent) e).setLine(line - 1, Utils.replaceChatStyles((String) delta));
+					break;
 			}
 		}
+		final Block b = block.getSingle(e);
+		if (b == null)
+			return;
+		if (b.getType() != Material.SIGN_POST && b.getType() != Material.WALL_SIGN)
+			return;
 		switch (mode) {
 			case CLEAR:
-				final Block b = block.getSingle(e);
-				if (b == null)
-					return;
-				if (b.getType() != Material.SIGN_POST && b.getType() != Material.WALL_SIGN)
-					return;
 				((Sign) b.getState()).setLine(line - 1, "");
+				break;
+			case SET:
+				((Sign) b.getState()).setLine(line - 1, Utils.replaceChatStyles((String) delta));
+				break;
 		}
 	}
 	

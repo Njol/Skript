@@ -36,6 +36,8 @@ import ch.njol.skript.util.Timespan;
  */
 public class EffIgnite extends Effect {
 	
+	private static final long serialVersionUID = -8206560853398783813L;
+	
 	static {
 		Skript.registerEffect(EffIgnite.class,
 				"(ignite|set fire to) %livingentities% [for %-timespan%]", "(set|light) %livingentities% on fire [for %-timespan%]",

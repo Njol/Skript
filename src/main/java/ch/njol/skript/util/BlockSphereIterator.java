@@ -33,7 +33,7 @@ import ch.njol.util.iterator.CheckedIterator;
  */
 public class BlockSphereIterator extends CheckedIterator<Block> {
 	
-	public BlockSphereIterator(final Location center, final float radius) {
+	public BlockSphereIterator(final Location center, final double radius) {
 		super(new AABB(center, radius + 0.5001, radius + 0.5001, radius + 0.5001).iterator(), new Checker<Block>() {
 			private final double rSquared = radius * radius * Skript.EPSILON_MULT;
 			

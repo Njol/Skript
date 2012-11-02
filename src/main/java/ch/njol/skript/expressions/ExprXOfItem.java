@@ -26,36 +26,32 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.classes.Converter;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.util.SimpleExpression;
 
 /**
  * @author Peter Güttinger
  */
-public class ExprXOfItem extends SimpleExpression<ItemStack> {
+public class ExprXOfItem extends PropertyExpression<ItemStack, ItemStack> {
+	private static final long serialVersionUID = 5709306242713886383L;
 	
 	static {
-		Skript.registerExpression(ExprXOfItem.class, ItemStack.class, ExpressionType.PROPERTY, "<\\d+> of %itemstacks%");
+		Skript.registerExpression(ExprXOfItem.class, ItemStack.class, ExpressionType.PATTERN_MATCHES_EVERYTHING, "%number% of %itemstacks%");
 	}
 	
-	private int amount;
-	private Expression<ItemStack> items;
+	private Expression<Number> amount;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		items = (Expression<ItemStack>) exprs[0];
-		if (items instanceof Literal)// "x of y" is also an ItemType syntax
+		setExpr((Expression<? extends ItemStack>) exprs[1]);
+		amount = (Expression<Number>) exprs[0];
+		if (amount instanceof Literal && getExpr() instanceof Literal)// "x of y" is also an ItemType syntax
 			return false;
-		amount = Skript.parseInt(parseResult.regexes.get(0).group());
 		return true;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return items.isSingle();
 	}
 	
 	@Override
@@ -64,21 +60,22 @@ public class ExprXOfItem extends SimpleExpression<ItemStack> {
 	}
 	
 	@Override
-	protected ItemStack[] get(final Event e) {
-		final ItemStack[] iss = items.getArray(e);
-		for (final ItemStack is : iss)
-			is.setAmount(amount);
-		return iss;
+	protected ItemStack[] get(final Event e, final ItemStack[] source) {
+		return get(source, new Converter<ItemStack, ItemStack>() {
+			@Override
+			public ItemStack convert(final ItemStack is) {
+				final Number a = amount.getSingle(e);
+				if (a == null)
+					return null;
+				is.setAmount(a.intValue());
+				return is;
+			}
+		});
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return amount + " of " + items.toString(e, debug);
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return true;
+		return amount + " of " + getExpr().toString(e, debug);
 	}
 	
 }

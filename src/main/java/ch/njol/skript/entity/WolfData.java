@@ -25,11 +25,13 @@ import org.bukkit.entity.Wolf;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
 public class WolfData extends EntityData<Wolf> {
+	private static final long serialVersionUID = -5534357579840376057L;
 	
 	private int angry = 0;
 //	private String owner = null;
@@ -49,7 +51,7 @@ public class WolfData extends EntityData<Wolf> {
 			angry = matchedPattern - 1;
 		else
 			tamed = matchedPattern == 3 ? -1 : 1;
-		plural = parseResult.expr.endsWith("ves");
+		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "ves");
 		return true;
 	}
 	
@@ -86,5 +88,49 @@ public class WolfData extends EntityData<Wolf> {
 	@Override
 	public boolean isPlural() {
 		return plural;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + angry;
+		result = prime * result + tamed;
+		return result;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof WolfData))
+			return false;
+		final WolfData other = (WolfData) obj;
+		if (angry != other.angry)
+			return false;
+		if (tamed != other.tamed)
+			return false;
+		return true;
+	}
+	
+	@Override
+	public String serialize() {
+		return angry + "|" + tamed;
+	}
+	
+	@Override
+	protected boolean deserialize(final String s) {
+		final String[] split = s.split("\\|");
+		if (split.length != 2)
+			return false;
+		try {
+			angry = Integer.parseInt(split[0]);
+			tamed = Integer.parseInt(split[1]);
+			return true;
+		} catch (final NumberFormatException e) {
+			return false;
+		}
 	}
 }

@@ -25,12 +25,12 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Setter;
-import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
@@ -54,7 +54,8 @@ public class SectionValidator implements NodeValidator {
 	public SectionValidator() {}
 	
 	public SectionValidator addNode(final String name, final NodeValidator v, final boolean optional) {
-		Validate.notNull(name, v);
+		assert name != null;
+		assert v != null;
 		nodes.put(name, new NodeInfo(v, optional));
 		return this;
 	}
@@ -69,8 +70,8 @@ public class SectionValidator implements NodeValidator {
 		return this;
 	}
 	
-	public <T> SectionValidator addEntry(final String name, final Class<T> c, final Setter<T> setter, final boolean optional) {
-		addNode(name, new ParsedEntryValidator<T>(c, setter), optional);
+	public <T> SectionValidator addEntry(final String name, final Parser<? extends T> parser, final Setter<T> setter, final boolean optional) {
+		addNode(name, new ParsedEntryValidator<T>(parser, setter), optional);
 		return this;
 	}
 	
@@ -89,7 +90,7 @@ public class SectionValidator implements NodeValidator {
 		for (final Entry<String, NodeInfo> e : nodes.entrySet()) {
 			final Node n = ((SectionNode) node).get(e.getKey());
 			if (n == null && !e.getValue().optional) {
-				Skript.error("Required entry '" + e.getKey() + "' is missing in '" + node.getName() + "' (" + node.getConfig().getFileName() + ", starting at line " + node.getLine() + ")");
+				Skript.error("Required entry '" + e.getKey() + "' is missing in " + (node.getParent() == null ? node.getConfig().getFileName() : "'" + node.getName() + "' (" + node.getConfig().getFileName() + ", starting at line " + node.getLine() + ")"));
 				ok = false;
 			} else if (n != null) {
 				ok &= e.getValue().v.validate(n);
@@ -113,7 +114,7 @@ public class SectionValidator implements NodeValidator {
 	
 	public static final void notASectionError(final Node node) {
 		SkriptLogger.setNode(node);
-		Skript.error("'" + node.getName() + "' is not a section (like 'blah:', followed by one or more indented lines)");
+		Skript.error("'" + node.getName() + "' is not a section (like 'name:', followed by one or more indented lines)");
 	}
 	
 	public SectionValidator setAllowUndefinedSections(final boolean b) {

@@ -31,6 +31,7 @@ import ch.njol.skript.classes.data.DefaultChangers;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Time;
 
@@ -39,6 +40,7 @@ import ch.njol.skript.util.Time;
  * @author Peter Güttinger
  */
 public class ExprTime extends PropertyExpression<World, Time> {
+	private static final long serialVersionUID = 5470906768109932892L;
 	
 	static {
 		Skript.registerExpression(ExprTime.class, Time.class, ExpressionType.PROPERTY, "[the] time [(in|of) %worlds%]");
@@ -65,7 +67,7 @@ public class ExprTime extends PropertyExpression<World, Time> {
 	}
 	
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		return DefaultChangers.timeChanger.acceptChange(mode);
 	}
 	
@@ -83,7 +85,7 @@ public class ExprTime extends PropertyExpression<World, Time> {
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
 			return "the time in " + worlds.toString(e, debug);
-		return Skript.getDebugMessage(getAll(e));
+		return Classes.getDebugMessage(getAll(e));
 	}
 	
 }

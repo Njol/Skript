@@ -31,15 +31,18 @@ import ch.njol.skript.classes.Arithmetic;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.conditions.CondIs;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.registrations.Classes;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprDifference extends SimpleExpression<Object> {
+	private static final long serialVersionUID = -394336424028012141L;
 	
 	static {
 		Skript.registerExpression(ExprDifference.class, Object.class, ExpressionType.COMBINED, "difference (between|of) %object% and %object%");
@@ -56,21 +59,21 @@ public class ExprDifference extends SimpleExpression<Object> {
 		second = exprs[1];
 		final ClassInfo<?> ci;
 		if (first instanceof Variable && second instanceof Variable) {
-			ci = Skript.getExactClassInfo(Double.class);
+			ci = Classes.getExactClassInfo(Double.class);
 			first = first.getConvertedExpression(Double.class);
 			second = second.getConvertedExpression(Double.class);
-		} else if (first instanceof UnparsedLiteral && second instanceof UnparsedLiteral) {
+		} else if (first instanceof Literal<?> && second instanceof Literal<?>) {
 			first = first.getConvertedExpression(Object.class);
 			second = second.getConvertedExpression(Object.class);
 			if (first == null || second == null)
 				return false;
-			ci = Skript.getSuperClassInfo(second.getReturnType().isAssignableFrom(first.getReturnType()) ? second.getReturnType() : first.getReturnType());
+			ci = Classes.getSuperClassInfo(second.getReturnType().isAssignableFrom(first.getReturnType()) ? second.getReturnType() : first.getReturnType());
 		} else {
-			if (first instanceof UnparsedLiteral) {
+			if (first instanceof Literal<?>) {
 				first = first.getConvertedExpression(second.getReturnType());
 				if (first == null)
 					return false;
-			} else if (second instanceof UnparsedLiteral) {
+			} else if (second instanceof Literal<?>) {
 				second = second.getConvertedExpression(first.getReturnType());
 				if (second == null)
 					return false;
@@ -80,10 +83,10 @@ public class ExprDifference extends SimpleExpression<Object> {
 			} else if (second instanceof Variable) {
 				second = second.getConvertedExpression(first.getReturnType());
 			}
-			ci = Skript.getSuperClassInfo(second.getReturnType().isAssignableFrom(first.getReturnType()) ? second.getReturnType() : first.getReturnType());
+			ci = Classes.getSuperClassInfo(second.getReturnType().isAssignableFrom(first.getReturnType()) ? second.getReturnType() : first.getReturnType());
 		}
 		if (ci.getMath() == null) {
-			Skript.error("Can't get the difference of " + CondIs.f(first) + " and " + CondIs.f(second));
+			Skript.error("Can't get the difference of " + CondIs.f(first) + " and " + CondIs.f(second), ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
 		math = ci.getMath();

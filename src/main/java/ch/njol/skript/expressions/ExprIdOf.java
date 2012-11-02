@@ -22,6 +22,8 @@
 package ch.njol.skript.expressions;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
 
@@ -33,11 +35,13 @@ import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemData;
 import ch.njol.skript.util.ItemType;
+import ch.njol.util.iterator.SingleItemIterator;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
+	private static final long serialVersionUID = -8971341122715986474L;
 	
 	static {
 		Skript.registerExpression(ExprIdOf.class, Integer.class, ExpressionType.PROPERTY, "[the] id[<s>] of %itemtype%", "%itemtype%'[s] id[<s>]");
@@ -85,13 +89,44 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 	}
 	
 	@Override
-	public Class<Integer> getReturnType() {
-		return Integer.class;
+	public Iterator<Integer> iterator(final Event e) {
+		if (single) {
+			final ItemType t = types.getSingle(e);
+			if (t == null)
+				return null;
+			return new SingleItemIterator<Integer>(t.getTypes().get(0).getId());
+		}
+		final Iterator<? extends ItemType> iter = types.iterator(e);
+		if (iter == null || !iter.hasNext())
+			return null;
+		return new Iterator<Integer>() {
+			private Iterator<ItemData> current = iter.next().iterator();
+			
+			@Override
+			public boolean hasNext() {
+				while (iter.hasNext() && !current.hasNext()) {
+					current = iter.next().iterator();
+				}
+				return current.hasNext();
+			}
+			
+			@Override
+			public Integer next() {
+				if (!hasNext())
+					throw new NoSuchElementException();
+				return current.next().getId();
+			}
+			
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 	
 	@Override
-	public boolean canLoop() {
-		return !single;
+	public Class<Integer> getReturnType() {
+		return Integer.class;
 	}
 	
 	@Override

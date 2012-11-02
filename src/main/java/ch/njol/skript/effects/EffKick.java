@@ -34,6 +34,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 public class EffKick extends Effect {
 	
+	private static final long serialVersionUID = 884085677674361235L;
+	
 	static {
 		Skript.registerEffect(EffKick.class, "kick %players% [(by reason of|because [of]|on account of|due to) %-string%]");
 	}

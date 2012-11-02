@@ -56,11 +56,14 @@ public interface Changer<T, V> {
 	/**
 	 * Test whether this changer supports the given mode, and if yes what type it expects the <code>delta</code> to be.
 	 * 
+	 * <p>
+	 * Unlike {@link Expression#acceptChange(ChangeMode)} this method must not print errors
+	 * 
 	 * @param mode
-	 * @return the type that {@link #change(Event, Expression, Expression, ChangeMode)} accepts as it's <code>delta</code> parameter's type param,
-	 *         or null if the given mode is not supported. For {@link ChangeMode#CLEAR} this can return any non-null class instance to mark clear as supported.
+	 * @return An array of types that {@link #change(Event, Expression, Expression, ChangeMode)} accepts as it's <code>delta</code> parameter's type param,
+	 *         or null if the given mode is not supported. For {@link ChangeMode#CLEAR} this can return any array to mark clear as supported, event an empty one.
 	 */
-	public abstract Class<? extends V> acceptChange(ChangeMode mode);
+	public abstract Class<? extends V>[] acceptChange(ChangeMode mode);
 	
 	public static abstract class ChangerUtils {
 		

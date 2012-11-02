@@ -38,6 +38,8 @@ import ch.njol.util.Checker;
  */
 public class CondIsOfType extends Condition {
 	
+	private static final long serialVersionUID = 4817970930874939124L;
+	
 	static {
 		Skript.registerCondition(CondIsOfType.class,
 				"%itemstacks% (is|are) of type[s] %itemtypes%", "%itemstacks% (isn't|is not|aren't|are not) of type[s] %itemtypes%",

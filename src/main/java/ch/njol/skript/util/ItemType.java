@@ -21,6 +21,10 @@
 
 package ch.njol.skript.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,7 +51,9 @@ import ch.njol.skript.util.Container.ContainerType;
 import ch.njol.util.iterator.SingleItemIterator;
 
 @ContainerType(ItemStack.class)
-public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemStack> {
+public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Container<ItemStack> {
+	
+	private static final long serialVersionUID = 2512697660905031169L;
 	
 	/**
 	 * Note to self: use {@link #add(ItemData)} to add item datas, don't add them directly to this list.
@@ -58,13 +64,41 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	
 	private int amount = -1;
 	
-	Map<Enchantment, Integer> enchantments = null;
 	private boolean hasPreferred = false;
 	
 	/**
 	 * How many different items this item type represents
 	 */
 	private int numItems = 0;
+	
+	private transient Map<Enchantment, Integer> enchantments = null;
+	
+	private void writeObject(final ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+		if (enchantments == null) {
+			out.writeObject(null);
+		} else {
+			// Integer in case the map ever stores null
+			final Integer[][] enchs = new Integer[enchantments.size()][];
+			int i = 0;
+			for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
+				enchs[i] = new Integer[] {e.getKey().getId(), e.getValue()};
+				i++;
+			}
+			out.writeObject(enchs);
+		}
+	}
+	
+	private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
+		in.defaultReadObject();
+		final Object o = in.readObject();
+		if (o == null)
+			return;
+		final Integer[][] enchs = (Integer[][]) o;
+		enchantments = new HashMap<Enchantment, Integer>(enchs.length);
+		for (final Integer[] e : enchs)
+			enchantments.put(Enchantment.getById(e[0]), e[1]);
+	}
 	
 	/**
 	 * list of pairs {item/block, block... to replace if possible}
@@ -84,7 +118,11 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 			{Material.DIODE_BLOCK_OFF.getId(), Material.DIODE_BLOCK_ON.getId()},
 			{Material.SUGAR_CANE.getId(), Material.SUGAR_CANE_BLOCK.getId()},
 			{Material.SIGN.getId(), Material.SIGN_POST.getId(), Material.WALL_SIGN.getId()},
-			{Material.CAKE.getId(), Material.CAKE_BLOCK.getId()}
+			{Material.CAKE.getId(), Material.CAKE_BLOCK.getId()},
+			
+			// special cases
+			{Material.PISTON_BASE.getId(), Material.PISTON_EXTENSION.getId()},
+			{Material.PISTON_STICKY_BASE.getId(), Material.PISTON_EXTENSION.getId()}
 	};
 	
 	public ItemType() {}
@@ -97,6 +135,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	}
 	
 	public ItemType(final Block block) {
+		amount = 1;
 		add(new ItemData(block.getTypeId(), block.getData()));
 	}
 	
@@ -198,7 +237,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		}
 		if (enchantments == null)
 			return b.toString();
-		b.append(Language.getSpaced("ench.of"));
+		b.append(Language.getSpaced("enchantments.of"));
 		int i = 0;
 		for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
 			if (i != 0) {
@@ -207,7 +246,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 				else
 					b.append(Language.getSpaced("and"));
 			}
-			b.append(Language.get("ench.names." + e.getKey().getName()));
+			b.append(Language.get("enchantments.names." + e.getKey().getName()));
 			b.append(" ");
 			b.append(e.getValue());
 			i++;
@@ -234,6 +273,23 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		for (int i = 0; i < item.types.size(); i++) {
 			final ItemData d = item.types.get(i);
 			for (final int[] p : preferredMaterials) {
+				if (p[1] == Material.PISTON_EXTENSION.getId()) {
+					if (d.typeid == Material.PISTON_EXTENSION.getId()) {
+						boolean hasBase = false;
+						for (final ItemData t : types) {
+							if (t.typeid == Material.PISTON_BASE.getId() || t.typeid == Material.PISTON_STICKY_BASE.getId()) {
+								hasBase = true;
+								break;
+							}
+						}
+						if (hasBase) {
+							item.numItems -= d.numItems();
+							item.types.remove(i--);
+						}
+					}
+					// break as both normal & sticky are checked at once and it's the last in the list
+					break;
+				}
 				if (Utils.indexOf(p, d.typeid, 1) != -1) {
 					final ItemData c = d.clone();
 					c.typeid = p[0];
@@ -258,6 +314,23 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		for (int i = 0; i < block.types.size(); i++) {
 			final ItemData d = block.types.get(i);
 			for (final int[] p : preferredMaterials) {
+				if (p[1] == Material.PISTON_EXTENSION.getId()) {
+					if (d.typeid == Material.PISTON_EXTENSION.getId()) {
+						boolean hasBase = false;
+						for (final ItemData t : types) {
+							if (t.typeid == Material.PISTON_BASE.getId() || t.typeid == Material.PISTON_STICKY_BASE.getId()) {
+								hasBase = true;
+								break;
+							}
+						}
+						if (hasBase) {
+							item.numItems -= d.numItems();
+							item.types.remove(i--);
+						}
+					}
+					// break as both normal & sticky are checked at once and it's the last in the list
+					break;
+				}
 				if (p[0] <= Skript.MAXBLOCKID && Utils.indexOf(p, d.typeid, 1) != -1) {
 					final ItemData c = d.clone();
 					c.typeid = p[0];
@@ -282,9 +355,8 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	}
 	
 	private void checkHasPreferred() {
-		int c;
 		for (final int[] p : preferredMaterials) {
-			c = -1;
+			int c = -1;
 			for (final ItemData d : types) {
 				if (c != -1 && Utils.indexOf(p, d.typeid) != -1) {
 					hasPreferred = true;
@@ -363,11 +435,21 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		}
 	}
 	
+	public void addEnchantment(final Enchantment e, final int level) {
+		if (enchantments == null)
+			enchantments = new HashMap<Enchantment, Integer>();
+		enchantments.put(e, level);
+	}
+	
 	public void addEnchantments(final Map<Enchantment, Integer> enchantments) {
 		if (this.enchantments == null)
 			this.enchantments = new HashMap<Enchantment, Integer>(enchantments);
 		else
 			this.enchantments.putAll(enchantments);
+	}
+	
+	public void emptyEnchantments() {
+		enchantments = new HashMap<Enchantment, Integer>(0);
 	}
 	
 	public Map<Enchantment, Integer> getEnchantments() {
@@ -441,10 +523,8 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		if (enchantments != null && !enchantments.equals(item.getEnchantments()))
 			return item;
 		for (final ItemData type : types) {
-			if (type.isOfType(item)) {
+			if (type.isOfType(item))
 				item.setAmount(Math.max(item.getAmount() - getAmount(), 0));
-				return item;
-			}
 		}
 		return item;
 	}
@@ -501,7 +581,9 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	}
 	
 	/**
-	 * Test whether this ItemType has space on the given inventory.<br>
+	 * Test whether this ItemType has space on the given inventory.
+	 * 
+	 * <p>
 	 * TODO If this ItemType represents multiple items with OR, this function will immediately return false.<br/>
 	 * CondCanHold currently blocks aliases without 'every'/'all' as temporary solution
 	 * 
@@ -524,13 +606,11 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 		return buf;
 	}
 	
-	private final List<ItemData> unmodable = Collections.unmodifiableList(types);
-	
 	/**
 	 * @return List of ItemDatas. The returned list is not modifyable, use {@link #add(ItemData)} and {@link #remove(ItemData)} if you need to change the list.
 	 */
 	public List<ItemData> getTypes() {
-		return unmodable;
+		return Collections.unmodifiableList(types);
 	}
 	
 	public int numTypes() {
@@ -546,7 +626,7 @@ public class ItemType implements Cloneable, Iterable<ItemData>, Container<ItemSt
 	
 	@Override
 	public Iterator<ItemData> iterator() {
-		return unmodable.iterator();
+		return Collections.unmodifiableList(types).iterator();
 	}
 	
 	public boolean isContainedIn(final Inventory invi) {

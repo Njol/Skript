@@ -21,12 +21,18 @@
 
 package ch.njol.skript.lang.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.lang.reflect.Array;
+
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 
@@ -35,8 +41,35 @@ import ch.njol.util.Checker;
  * @see SimpleLiteral
  */
 public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements Literal<T> {
+	private static final long serialVersionUID = 2640112540190230558L;
 	
-	private final T[] data;
+	protected transient T[] data;
+	
+	private void writeObject(final ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+		final String codeName = Classes.getExactClassName(data.getClass().getComponentType());
+		if (codeName == null)
+			throw new SkriptAPIException(data.getClass().getComponentType().getName() + " is not registered");
+		out.writeUTF(codeName);
+		final String[][] d = new String[data.length][];
+		for (int i = 0; i < data.length; i++) {
+			if ((d[i] = Classes.serialize(data[i])) == null) {
+				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
+			}
+		}
+		out.writeObject(d);
+	}
+	
+	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+		in.defaultReadObject();
+		final String codeName = in.readUTF();
+		final String[][] d = (String[][]) in.readObject();
+		final ClassInfo<?> ci = Classes.getClassInfo(codeName);
+		data = (T[]) Array.newInstance(ci.getC(), d.length);
+		for (int i = 0; i < data.length; i++) {
+			data[i] = (T) Classes.deserialize(d[i][0], d[i][1]);
+		}
+	}
 	
 	public ConvertedLiteral(final Literal<F> source, final T[] data, final Class<T> to) {
 		super(source, to, null);
@@ -53,7 +86,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return Skript.toString(data, getAnd());
+		return Classes.toString(data, getAnd());
 	}
 	
 	@Override
@@ -75,7 +108,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	public T getSingle() {
 		if (getAnd() && data.length > 1)
 			throw new SkriptAPIException("Call to getSingle on a non-single expression");
-		return Utils.getRandom(data);
+		return Utils.random(data);
 	}
 	
 	@Override

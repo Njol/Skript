@@ -21,28 +21,45 @@
 
 package ch.njol.skript.util;
 
+import java.io.Serializable;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import ch.njol.skript.Skript;
 
 /**
  * @author Peter Güttinger
  */
-public class Version implements Comparable<Version> {
+public class Version implements Serializable, Comparable<Version> {
+	
+	private static final long serialVersionUID = -8351795409976068916L;
 	
 	private final int[] version = new int[3];
+	/**
+	 * Everything after the version, e.g. "alpha", "b", "rc 1", "build 2314" etc. or null if nothing.
+	 */
+	private final String postfix;
 	
-	public Version(final int[] version) {
+	public Version(final int... version) {
 		if (version.length < 1 || version.length > 3)
-			throw new IllegalArgumentException("Versions must hava a minimum of 2 and a maximum of 3 numbers (given: " + version.length + ")");
+			throw new IllegalArgumentException("Versions must have a minimum of 2 and a maximum of 3 numbers (" + version.length + " numbers given)");
 		for (int i = 0; i < version.length; i++)
 			this.version[i] = version[i];
+		postfix = null;
 	}
 	
+	public final static Pattern versionPattern = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?\\s*(.*)");
+	
 	public Version(final String version) {
-		if (!version.matches("\\d+(.\\d+){0,2}"))
+		final Matcher m = versionPattern.matcher(version.trim());
+		if (!m.matches())
 			throw new IllegalArgumentException("'" + version + "' is not a valid version string");
-		final String[] split = version.split("\\.");
-		for (int i = 0; i < split.length; i++)
-			this.version[i] = Integer.parseInt(split[i]);
+		for (int i = 0; i < 3; i++) {
+			if (m.group(i + 1) != null)
+				this.version[i] = Skript.parseInt(m.group(i + 1));
+		}
+		postfix = m.group(m.groupCount()).isEmpty() ? null : m.group(m.groupCount());
 	}
 	
 	@Override
@@ -56,18 +73,21 @@ public class Version implements Comparable<Version> {
 	
 	@Override
 	public int hashCode() {
-		return Arrays.hashCode(version);
+		return Arrays.hashCode(version) * 31 + (postfix == null ? 0 : postfix.hashCode());
 	}
 	
 	@Override
 	public int compareTo(final Version other) {
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < version.length; i++) {
 			if (version[i] > other.version[i])
 				return 1;
 			if (version[i] < other.version[i])
 				return -1;
 		}
-		return 0;
+		if (postfix == null)
+			return other.postfix == null ? 0 : 1;
+		else
+			return other.postfix == null ? -1 : postfix.compareTo(other.postfix);
 	}
 	
 	public boolean isSmallerThan(final Version other) {
@@ -80,7 +100,7 @@ public class Version implements Comparable<Version> {
 	
 	@Override
 	public String toString() {
-		return version[0] + "." + version[1] + (version[2] == 0 ? "" : "." + version[2]);
+		return version[0] + "." + version[1] + (version[2] == 0 ? "" : "." + version[2]) + (postfix == null ? "" : " " + postfix);
 	}
 	
 	public final static int compare(final String v1, final String v2) {

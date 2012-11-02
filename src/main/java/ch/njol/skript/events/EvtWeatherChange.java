@@ -37,6 +37,7 @@ import ch.njol.util.Checker;
  */
 @SuppressWarnings("unchecked")
 public class EvtWeatherChange extends SkriptEvent {
+	private static final long serialVersionUID = -1782552596336779326L;
 	
 	static {
 		Skript.registerEvent(EvtWeatherChange.class, Skript.array(WeatherChangeEvent.class, ThunderChangeEvent.class), "weather change [to %weathertypes%]");

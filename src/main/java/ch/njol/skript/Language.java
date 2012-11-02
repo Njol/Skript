@@ -21,12 +21,19 @@
 
 package ch.njol.skript;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Properties;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map.Entry;
+import java.util.regex.Pattern;
+
+import ch.njol.skript.config.Config;
 
 /**
  * @author Peter Güttinger
@@ -35,71 +42,194 @@ public class Language {
 	
 	private static String name = "english";
 	
-	private static Properties defaults = new Properties();
-	private static Properties strings = new Properties(defaults);
+	private static HashMap<String, String> english = new HashMap<String, String>();
+	private static HashMap<String, String> englishPlurals = new HashMap<String, String>();
+	
+	private static HashMap<String, String> localized;
+	private static HashMap<String, String> localizedPlurals;
+	
+	private static boolean useLocal = false;
 	
 	public static String getName() {
 		return name;
 	}
 	
+	private final static String get_i(final String key) {
+		if (useLocal && localized != null) {
+			final String s = localized.get(key);
+			if (s != null)
+				return s;
+		}
+		return english.get(key);
+	}
+	
+	/**
+	 * Gets a string from the language file with the given key, or the english variant if the string is missing from the chosen language's file, or the key itself if the key is
+	 * invalid.
+	 * 
+	 * @param key
+	 * @return
+	 */
 	public static String get(final String key) {
-		return strings.getProperty(key.toLowerCase());
+		final String s = get_i(key.toLowerCase(Locale.ENGLISH));
+		if (s == null)
+			return key.toLowerCase(Locale.ENGLISH);
+		return s;
 	}
 	
-	public static String getDefault(final String key) {
-		return defaults.getProperty(key.toLowerCase());
+	/**
+	 * Gets the plural of a word, or the singular if no plural is defined for the given key, or the key itself if it's invalid.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public static String getPlural(final String key) {
+		if (useLocal && localized != null) {
+			String s = localizedPlurals.get(key);
+			if (s != null)
+				return s;
+			s = localized.get(key);
+			if (s != null)
+				return s;
+		}
+		String s = englishPlurals.get(key);
+		if (s != null)
+			return s;
+		s = english.get(key);
+		if (s != null)
+			return s;
+		return key;
 	}
 	
-	public static String format(final String key, final Object... args) {
-		return String.format(get(key), args);
+	/**
+	 * Gets either the plural or singular version of a word, i.e. returns {@link #getPlural(String)} if <tt>plural</tt> is <tt>true</tt> and {@link #get(String)} otherwise.
+	 * 
+	 * @param key
+	 * @param plural
+	 * @return
+	 */
+	public static String get(final String key, final boolean plural) {
+		return plural ? getPlural(key) : get(key);
+	}
+	
+	/**
+	 * Gets a string and uses it as format in {@link String#format(String, Object...)}.
+	 * 
+	 * @param key
+	 * @param args The arguments to pass to {@link String#format(String, Object...)}
+	 * @return The formatted string
+	 */
+	public static String format(String key, final Object... args) {
+		key = key.toLowerCase(Locale.ENGLISH);
+		final String value = get_i(key);
+		if (value == null)
+			return key;
+		try {
+			return String.format(value, args);
+		} catch (final Exception e) {
+			return key;
+		}
 	}
 	
 	/**
 	 * Gets a localized string surrounded by spaces, or a space if the string is empty
 	 * 
 	 * @param key
-	 * @return
+	 * @return The spaced string or " "+key+" " if the entry is missing from the file.
 	 */
 	public static String getSpaced(final String key) {
-		final String s = strings.getProperty(key.toLowerCase());
+		final String s = get(key.toLowerCase(Locale.ENGLISH));
 		if (s.isEmpty())
 			return " ";
 		return " " + s + " ";
 	}
 	
+	private final static Pattern split = Pattern.compile("\\s*,\\s*");
+	
+	/**
+	 * Gets a list of strings.
+	 * 
+	 * @param key
+	 * @return a non-null String array with at least one element
+	 */
+	public static String[] getList(final String key) {
+		final String s = get_i(key.toLowerCase(Locale.ENGLISH));
+		if (s == null)
+			return new String[] {key.toLowerCase(Locale.ENGLISH)};
+		return split.split(s);
+	}
+	
+	private final static InputStream getInputStream(final String name) {
+		final File f = new File(Skript.getInstance().getDataFolder(), "lang" + File.separator + name + ".lang");
+		try {
+			if (f.exists())
+				return new FileInputStream(f);
+		} catch (final FileNotFoundException e) {
+			assert false;
+		}
+		return Skript.getInstance().getResource("lang/" + name + ".lang");
+	}
+	
 	static void loadDefault() {
-		final InputStream din = Skript.getInstance().getResource("lang/english.lang");
+		final InputStream din = getInputStream("english");
 		if (din == null)
 			throw new IllegalStateException("Skript.jar is missing the required english.lang file!");
 		try {
-			defaults.load(new InputStreamReader(din, "UTF-8"));
-		} catch (final IOException e) {
+			english = new Config(din, "english.lang", false, false, ":").toMap(".");
+		} catch (final Exception e) {
 			throw Skript.exception(e, "Could not load the default language file!");
+		} finally {
+			try {
+				din.close();
+			} catch (final IOException e) {}
 		}
+		makePlurals(english, englishPlurals);
 		for (final LanguageChangeListener l : listeners)
 			l.onLanguageChange();
 	}
 	
-	static boolean load(final String name) {
-		final InputStream in = Skript.getInstance().getResource("lang/" + name + ".lang");
+	static boolean load(String name) {
+		name = name.toLowerCase();
+		final InputStream in = getInputStream(name);
 		if (in == null)
 			return false;
 		try {
-			strings.load(new InputStreamReader(in, "UTF-8"));
+			localized = new Config(in, name + ".lang", false, false, ":").toMap(".");
 		} catch (final IOException e) {
-			throw Skript.exception(e, "Could not load the language file!");
+			Skript.exception(e, "Could not load the language file '" + name + ".lang': " + e.getLocalizedMessage());
+			return false;
+		} finally {
+			try {
+				in.close();
+			} catch (final IOException e) {}
 		}
+		localizedPlurals = new HashMap<String, String>();
+		makePlurals(localized, localizedPlurals);
 		Language.name = name;
-		for (final LanguageChangeListener l : listeners)
-			l.onLanguageChange();
+		if (useLocal) {
+			for (final LanguageChangeListener l : listeners)
+				l.onLanguageChange();
+		}
 		return true;
 	}
 	
-	static void clear() {
-		strings.clear();
+	private static final void makePlurals(final HashMap<String, String> lang, final HashMap<String, String> plurals) {
+		for (final Entry<String, String> e : lang.entrySet()) {
+			final String s = e.getValue();
+			final int c = s.indexOf("¦");
+			if (c == -1)
+				continue;
+			final int c2 = s.indexOf("¦", c + 1);
+			if (c2 == -1) {
+				e.setValue(s.substring(0, c));
+			} else {
+				e.setValue(s.substring(0, c) + s.substring(c + 1, c2));
+			}
+			plurals.put(e.getKey(), s.substring(0, c) + s.substring((c2 == -1 ? c : c2) + 1));
+		}
 	}
 	
-	private final static Collection<LanguageChangeListener> listeners = new HashSet<LanguageChangeListener>();
+	private final static Collection<LanguageChangeListener> listeners = new ArrayList<LanguageChangeListener>();
 	
 	public static interface LanguageChangeListener {
 		public void onLanguageChange();
@@ -107,12 +237,20 @@ public class Language {
 	
 	public static void addListener(final LanguageChangeListener l) {
 		listeners.add(l);
-		if (!defaults.isEmpty())
+		if (english != null)
 			l.onLanguageChange();
 	}
 	
-	public static void removeListener(final LanguageChangeListener l) {
-		listeners.remove(l);
+//	public static void removeListener(final LanguageChangeListener l) {
+//		listeners.remove(l);
+//	}
+	
+	public static void setUseLocal(final boolean b) {
+		if (useLocal == b)
+			return;
+		useLocal = b;
+		for (final LanguageChangeListener l : listeners)
+			l.onLanguageChange();
 	}
 	
 }

@@ -1,57 +1,250 @@
 # Which version of Skript this language file was written for
-version = 1.4.6
+version: 2.0 beta 3
 
 # -- General --
-and = and
-or = or
+and: and
+or: or
+a: a, an
 
 # -- Commands --
-command.no_permission_message = You don't have the required permission to use this command
+commands:
+	no_permission_message: You don't have the required permission to use this command
+	executable_by_players: This command can only be used by players
+	executable_by_console: This command can only be used by the console
+	usage: Correct usage: %s
 
-# -- Aliases --
-aliases.invalid_item_data = '%s' is no a valid item data
-aliases.invalid_block_data = Blocks only have data values from 0 to 15
-aliases.invalid_id = There doesn't exist a material with id %i!
-aliases.invalid_item_type = '%s' is not an item type
-aliases.invalid_range = The first number of a data range must be smaller than the second
+# -- Updater --
+updater:
+	not_started: Skript has not yet checked for the latest version. Use <gold>/skript update check<reset> to do so.
+	checking: Checking for the latest version of Skript...
+	check_in_progress: Checking for a new version is currently in progress.
+	check_error: <red>There was an error checking for the latest version of Skript:<reset> %s
+	running_latest_version: You're currently running the latest version of Skript
+	update_available: A new version of Skript is available: <gold>%s<reset> (you're currently running <gold>%s<reset>)
+	downloading: Downloading Skript %s...
+	download_in_progress: The latest version of Skript is currently being downloaded.
+	download_error: <red>There was an error downloading the latest version of Skript:<reset> %s
+	downloaded: The latest version of Skript has been downloaded! Restart the server or use /reload to apply the changes.
 
-aliases.format.every = every %s
-aliases.format.every_with_amount = %i of every %s
-aliases.format.any = any %s
-aliases.format.any-with_amount = %i of any %s
+# -- Aliases -- (not used yet)
+aliases:
+	invalid_item_data: '%s' is no a valid item data
+	invalid_block_data: Blocks only have data values from 0 to 15
+	invalid_id: There doesn't exist a material with id %i!
+	invalid_item_type: '%s' is not an item type
+	invalid_range: The first number of a data range must be smaller than the second
+	format:
+		every: every %s
+		every_with_amount: %i of every %s
+		any: any %s
+		any_with_amount: %i of any %s
 
 # -- Enchantments --
-ench.of = of
-ench.names.protection_environmental = Protection
-ench.names.protection_fire = Fire Protection
-ench.names.protection_fall = Feather Falling
-ench.names.protection_explosions = Blast Protection
-ench.names.protection_projectile = Projectile Protection
-ench.names.oxygen = Respiration
-ench.names.water_worker = Aqua Affinity
-ench.names.damage_all = Sharpness
-ench.names.damage_undead = Smite
-ench.names.damage_arthropods = Bane of Arthropods
-ench.names.knockback = Knockback
-ench.names.fire_aspect = Fire Aspect
-ench.names.loot_bonus_mobs = Looting
-ench.names.dig_speed = Efficiency
-ench.names.silk_touch = Silk Touch
-ench.names.durability = Unbreaking
-ench.names.loot_bonus_blocks = Fortune
-ench.names.arrow_damage = Power
-ench.names.arrow_knockback = Punch
-ench.names.arrow_fire = Flame
-ench.names.arrow_infinite = Infinity
+enchantments:
+	of: of
+	names:
+		protection_environmental: Protection
+		protection_fire: Fire Protection
+		protection_fall: Feather Falling
+		protection_explosions: Blast Protection
+		protection_projectile: Projectile Protection
+		oxygen: Respiration
+		water_worker: Aqua Affinity
+		damage_all: Sharpness
+		damage_undead: Smite
+		damage_arthropods: Bane of Arthropods
+		knockback: Knockback
+		fire_aspect: Fire Aspect
+		loot_bonus_mobs: Looting
+		dig_speed: Efficiency
+		silk_touch: Silk Touch
+		durability: Unbreaking
+		loot_bonus_blocks: Fortune
+		arrow_damage: Power
+		arrow_knockback: Punch
+		arrow_fire: Flame
+		arrow_infinite: Infinity
+
+# -- Potion Effects --
+potions:
+	names:
+		speed: speed
+		slow: slowness
+		fast_digging: haste
+		slow_digging: mining fatigue
+		increase_damage: strength
+		heal: instant health
+		harm: instant damage
+		jump: jump boost
+		confusion: nausea
+		regeneration: regeneration
+		damage_resistance: resistance
+		fire_resistance: fire resistance
+		water_breathing: water breathing
+		invisibility: invisibility
+		blindness: blindness
+		night_vision: night vision
+		hunger: hunger
+		weakness: weakness
+		poison: poison
+		wither: wither
 
 # -- Weather --
-weather.sun = clear, sun, sunny
-weather.rain = rain, rainy, raining
-weather.thunder = thunder, thundering, thunderstorm
+weather:
+	clear:
+		name: clear, sun, sunny
+		adjective: sunny
+	rain:
+		name: rain, rainy, raining
+		adjective: rainy
+	thunder:
+		name: thunder, thundering, thunderstorm
+		adjective: thundering
 
-# -- Time --
-time.tick = tick
-time.second = second
-time.minute = minute
-time.hour = hour
-time.day = day
+# -- Tree Types --
+treetypes:
+	tree:
+		name: tree¦s
+		pattern: (any )?trees?
+	regular:
+		name: oak¦s
+		pattern: (any )?(regular tree|normal tree|oak)s?
+	small_regular:
+		name: small oak¦s
+		pattern: small (regular tree|normal tree|oak)s?
+	big_regular:
+		name: big tree¦s
+		pattern: big (regular tree|normal tree|oak)s?
+	redwood:
+		name: redwood¦s
+		pattern: (any )?(fir|pine|spruce|redwood)s?
+	small_redwood:
+		name: small redwood¦s
+		pattern: small (fir|pine|spruce|redwood)s?
+	big_redwood:
+		name: tall redwood¦s
+		pattern: (big|tall) (fir|pine|spruce|redwood)s?
+	jungle:
+		name: jungle tree¦s
+		pattern: (any )?jungle trees?
+	small_jungle:
+		name: small jungle tree¦s
+		pattern: small jungle trees?
+	big_jungle:
+		name: big jungle tree¦s
+		pattern: (big|tall) jungle trees?
+	jungle_bush:
+		name: bush¦es
+		pattern: (jungle )?bush(es)?
+	swamp:
+		name: swamp tree¦s
+		pattern: swamp trees?
+	mushroom:
+		name: huge mushroom¦s
+		pattern: (any )?(huge|giant|large|big) mushrooms?
+	red_mushroom:
+		name: huge red mushroom¦s
+		pattern: (huge|giant|large|big) red mushrooms?
+	brown_mushroom:
+		name: huge brown mushroom¦s
+		pattern: (huge|giant|large|big) brown mushrooms?
+
+# -- Time -- (not used yet)
+time:
+	second: second¦s
+	minute: minute¦s
+	hour: hour¦s
+	day: day¦s
+
+# -- Chat and Wool Colours --
+colors:
+	black: black
+	dark_grey: dark grey, dark gray
+	light_grey: grey, light grey, gray, light gray, silver
+	white: white
+	dark_blue: blue, dark blue
+	brown: brown, light blue, indigo
+	dark_cyan: cyan, aqua, dark cyan, dark aqua
+	light_cyan: light cyan, light aqua
+	dark_green: green, dark green
+	light_green: light green, lime, lime green
+	yellow: yellow, light yellow
+	orange: orange, gold, dark yellow
+	dark_red: red, dark red
+	light_red: pink, light red
+	dark_purple: purple, dark purple
+	light_purple: magenta, light purple
+
+# -- Chat Styles --
+chatstyles:
+	bold: bold, b
+	italic: italic, italics, i
+	strikethrough: strikethrough, strike, s
+	underline: underlined, underline, u
+	magic: magic
+	reset: reset, r
+
+# -- Directions --
+directions:
+	meter: meter¦s
+	
+	at: at
+	
+	up: up
+	down: down
+	north: north
+	east: east
+	south: south
+	west: west
+	
+	above: above
+	below: below
+	front: in front of
+	behind: behind
+	right: to the right of
+	left: to the left of
+
+# -- Types --
+types:
+	# Java
+	object: object¦s
+	number: number¦s
+	integer: integer¦s
+	long: integer¦s
+	short: integer¦s
+	byte: integer¦s
+	double: number¦s
+	float: number¦s
+	boolean: boolean¦ (yes/no)¦s (yes/no)
+	string: text¦s
+	
+	# Bukkit
+	entity: entit¦y¦ies
+	livingentity: living entit¦y¦ies
+	projectile: projectile¦s
+	block: block¦s
+	location: location¦s
+	world: world¦s
+	inventory: inventor¦y¦ies
+	player: player¦s
+	offlineplayer: player¦s
+	commandsender: player¦/console¦s/consoles
+	blockface: direction¦s
+	inventoryholder: inventory holder¦s
+	gamemode: gamemode¦s
+	itemstack: material¦s
+	biome: biome¦s
+	potioneffecttype: potion¦s
+	
+	# Skript
+	weathertype: weather type¦s
+	itemtype: item type¦s
+	time: time¦s
+	timespan: time span¦s
+	timeperiod: time period¦s
+	date: date¦s
+	direction: direction¦s
+	slot: slot¦s
+	color: color¦s
+	structuretype: tree type¦s
+	enchantmenttype: enchantment¦s

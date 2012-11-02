@@ -24,18 +24,17 @@ package ch.njol.skript.conditions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
-import ch.njol.skript.classes.Comparator.ComparatorInfo;
 import ch.njol.skript.classes.Comparator.Relation;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.UnparsedLiteral;
-import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.SubLog;
+import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.util.Patterns;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
@@ -44,6 +43,8 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  */
 public class CondIs extends Condition {
+	
+	private static final long serialVersionUID = 6336144625887239693L;
 	
 	private final static Patterns<Relation> patterns = new Patterns<Relation>(new Object[][] {
 			{"%objects% ((is|are) ((greater|more|higher|bigger) than|above)|\\>) %objects%", Relation.GREATER},
@@ -80,11 +81,8 @@ public class CondIs extends Condition {
 	
 	private Expression<?> first, second, third;
 	private Relation relation;
-	private Comparator<?, ?> comp;
-	/**
-	 * True to compare like comp.compare(second, first), false for comp.compare(first, second)
-	 */
-	private boolean reverseOrder = false;
+	@SuppressWarnings("rawtypes")
+	private Comparator comp;
 	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
@@ -95,32 +93,33 @@ public class CondIs extends Condition {
 		relation = patterns.getInfo(matchedPattern);
 		final boolean b = init();
 		if (!b) {
-			if (third == null && first instanceof UnparsedLiteral && second instanceof UnparsedLiteral) {
+			if (third == null && first.getReturnType() == Object.class && second.getReturnType() == Object.class) {
 				return false;
 			} else {
-				Skript.error("Can't compare " + f(first) + " with " + f(second) + (third == null ? "" : " and " + f(third)));
+				Skript.error("Can't compare " + f(first) + " with " + f(second) + (third == null ? "" : " and " + f(third)), ErrorQuality.NOT_AN_EXPRESSION);
 				return false;
 			}
 		}
-		if (third == null) {
-			if (!relation.isEqualOrInverse() && !comp.supportsOrdering()) {
-				Skript.error("Can't test " + f(first) + " for being '" + relation + "' " + f(second));
-				return false;
-			}
-		} else {
-			if (!comp.supportsOrdering()) {
-				Skript.error("Can't test " + f(first) + " for being 'between' " + f(second) + " and " + f(third));
-				return false;
+		if (comp != null) {
+			if (third == null) {
+				if (!relation.isEqualOrInverse() && !comp.supportsOrdering()) {
+					Skript.error("Can't test " + f(first) + " for being '" + relation + "' " + f(second), ErrorQuality.NOT_AN_EXPRESSION);
+					return false;
+				}
+			} else {
+				if (!comp.supportsOrdering()) {
+					Skript.error("Can't test " + f(first) + " for being 'between' " + f(second) + " and " + f(third), ErrorQuality.NOT_AN_EXPRESSION);
+					return false;
+				}
 			}
 		}
 		return true;
 	}
 	
 	public final static String f(final Expression<?> e) {
-		final ClassInfo<?> ci = Skript.getSuperClassInfo(e.getReturnType());
-		if (ci.getC() == Object.class)
-			return "'" + e + "'";
-		return Utils.a(ci.getName());
+		if (e.getReturnType() == Object.class)
+			return e.toString(null, false);
+		return Utils.a(Classes.getSuperClassInfo(e.getReturnType()).getName());
 	}
 	
 	/**
@@ -129,194 +128,39 @@ public class CondIs extends Condition {
 	 * @return
 	 */
 	private boolean init() {
-		final Class<?> f = first.getReturnType(), s = second.getReturnType(), t = third == null ? null : third.getReturnType();
-		final int[] zeroOne = {0, 1};
-		
-		// perfect match:
-		
-		for (final ComparatorInfo<?, ?> info : Skript.getComparators()) {
-			if (info.c1.isAssignableFrom(f) && info.c2.isAssignableFrom(s) && (third == null || info.c2.isAssignableFrom(t))
-					|| info.c1.isAssignableFrom(s) && (third == null || info.c1.isAssignableFrom(t)) && info.c2.isAssignableFrom(f)) {
-				comp = info.c;
-				reverseOrder = !(info.c1.isAssignableFrom(f) && info.c2.isAssignableFrom(s) && (third == null || info.c2.isAssignableFrom(t)));
-				return true;
-			}
-		}
-		
-		// same type but no comparator:
-		
-		if (f != Object.class && s != Object.class && (f.isAssignableFrom(s) || s.isAssignableFrom(f)) && t == null) {
-			comp = Comparator.equalsComparator;
-			reverseOrder = f.isAssignableFrom(s);
-			return true;
-		}
-		
-		// variables, but numbers as well:
-		
 		final SubLog log = SkriptLogger.startSubLog();
+		if (first.getReturnType() == Object.class) {
+			final Expression<?> e = first.getConvertedExpression(Object.class);
+			if (e == null) {
+				log.stop();
+				return false;
+			}
+			first = e;
+		}
+		if (second.getReturnType() == Object.class) {
+			final Expression<?> e = second.getConvertedExpression(Object.class);
+			if (e == null) {
+				log.stop();
+				return false;
+			}
+			second = e;
+		}
+		if (third != null && third.getReturnType() == Object.class) {
+			final Expression<?> e = third.getConvertedExpression(Object.class);
+			if (e == null) {
+				log.stop();
+				return false;
+			}
+			third = e;
+		}
+		log.stop();
 		
-		final Expression<?> n1 = first instanceof Variable ? first : first.getConvertedExpression(Double.class);
-		final Expression<?> n2 = second instanceof Variable ? second : second.getConvertedExpression(Double.class);
-		final Expression<?> n3 = third == null ? null : third instanceof Variable ? third : third.getConvertedExpression(Double.class);
-		log.clear();
-		
-		if (n1 != null && n2 != null && (third == null || n3 != null)) {
-			comp = new Comparator<Object, Object>() {
-				@Override
-				public Relation compare(final Object o1, final Object o2) {
-					final double diff = (o1 instanceof Number ? ((Number) o1).doubleValue() : 0) - (o2 instanceof Number ? ((Number) o2).doubleValue() : 0);
-					if (Math.abs(diff) < Skript.EPSILON)
-						return Relation.EQUAL;
-					return Relation.get(diff);
-				}
-				
-				@Override
-				public boolean supportsOrdering() {
-					return true;
-				}
-			};
-			first = n1;
-			second = n2;
-			third = n3;
-			log.stop();
+		final Class<?> f = first.getReturnType(), s = third == null || second.getReturnType().isAssignableFrom(third.getReturnType()) ? second.getReturnType() : third.getReturnType();
+		if (f == Object.class || s == Object.class)
 			return true;
-		}
+		comp = Comparators.getComparator(f, s);
 		
-		// special cases for variables:
-		
-		if ((first instanceof Variable || second instanceof Variable) && relation.isEqualOrInverse() && third == null) {
-			log.stop();
-			if (first instanceof UnparsedLiteral) {
-				final Expression<?> v1 = first.getConvertedExpression(Object.class);
-				if (v1 == null)
-					return false;
-				first = v1;
-			} else if (second instanceof UnparsedLiteral) {
-				final Expression<?> v2 = second.getConvertedExpression(Object.class);
-				if (v2 == null)
-					return false;
-				second = v2;
-			}
-			comp = Comparator.equalsComparator;
-			return true;
-		}
-		
-		// and finally tons of trying to convert to match any comparator:
-		
-		for (final ComparatorInfo<?, ?> info : Skript.getComparators()) {
-			for (final int c : zeroOne) {
-				if (info.getType(c).isAssignableFrom(f)) {
-					final Expression<?> temp1 = second.getConvertedExpression(info.getType(1 - c));
-					final Expression<?> temp2 = third == null ? null : third.getConvertedExpression(info.getType(1 - c));
-					if (temp1 != null && (third == null || temp2 != null)) {
-						reverseOrder = c == 1;
-						comp = info.c;
-						second = temp1;
-						third = temp2;
-						
-						SkriptLogger.stopSubLog(log);
-						log.printLog();
-						return true;
-					}
-					log.clear();
-				}
-				if (info.getType(c).isAssignableFrom(s) && (third == null || info.getType(c).isAssignableFrom(t))) {
-					final Expression<?> temp = first.getConvertedExpression(info.getType(1 - c));
-					if (temp != null) {
-						reverseOrder = c == 0;
-						comp = info.c;
-						first = temp;
-						
-						SkriptLogger.stopSubLog(log);
-						log.printLog();
-						return true;
-					}
-					log.clear();
-				}
-			}
-		}
-		
-		for (final ComparatorInfo<?, ?> info : Skript.getComparators()) {
-			for (final int c : zeroOne) {
-				final Expression<?> v1 = first.getConvertedExpression(info.getType(c));
-				final Expression<?> v2 = second.getConvertedExpression(info.getType(1 - c));
-				final Expression<?> v3 = third == null ? null : third.getConvertedExpression(info.getType(1 - c));
-				if (v1 != null && v2 != null && (third == null || v3 != null)) {
-					first = v1;
-					second = v2;
-					third = v3;
-					reverseOrder = c == 1;
-					comp = info.c;
-					
-					SkriptLogger.stopSubLog(log);
-					log.printLog();
-					return true;
-				}
-				log.clear();
-			}
-		}
-		
-		if (third == null) {
-			if (f != Object.class) {
-				final Expression<?> v2 = second.getConvertedExpression(f);
-				if (v2 != null) {
-					comp = Comparator.equalsComparator;
-					second = v2;
-					SkriptLogger.stopSubLog(log);
-					log.printLog();
-					return true;
-				}
-				log.clear();
-			}
-			if (s != Object.class) {
-				final Expression<?> v1 = first.getConvertedExpression(s);
-				if (v1 != null) {
-					comp = Comparator.equalsComparator;
-					first = v1;
-					SkriptLogger.stopSubLog(log);
-					log.printLog();
-					return true;
-				}
-				log.clear();
-			}
-			
-			if (f == Object.class && s == Object.class) {
-				if (first instanceof UnparsedLiteral) {
-					final Expression<?> v1 = first.getConvertedExpression(Object.class);
-					if (v1 != null && v1.getReturnType() != Object.class) {
-						final Expression<?> v2 = second.getConvertedExpression(v1.getReturnType());
-						if (v2 != null) {
-							comp = Comparator.equalsComparator;
-							first = v1;
-							second = v2;
-							SkriptLogger.stopSubLog(log);
-							log.printLog();
-							return true;
-						}
-					}
-					log.clear();
-				}
-				if (second instanceof UnparsedLiteral) {
-					final Expression<?> v2 = second.getConvertedExpression(Object.class);
-					if (v2 != null && v2.getReturnType() != Object.class) {
-						final Expression<?> v1 = first.getConvertedExpression(v2.getReturnType());
-						if (v1 != null) {
-							comp = Comparator.equalsComparator;
-							first = v1;
-							second = v2;
-							SkriptLogger.stopSubLog(log);
-							log.printLog();
-							return true;
-						}
-					}
-					log.clear();
-				}
-			}
-			
-		}
-		
-		SkriptLogger.stopSubLog(log);
-		return false;
+		return comp != null;
 	}
 	
 	@Override
@@ -328,24 +172,19 @@ public class CondIs extends Condition {
 					@Override
 					public boolean check(final Object o2) {
 						if (third == null)
-							return relation.is(compare(o1, o2));
+							return relation.is(comp != null ? comp.compare(o1, o2) : Comparators.compare(o1, o2));
 						return third.check(e, new Checker<Object>() {
 							@Override
 							public boolean check(final Object o3) {
 								return relation == Relation.NOT_EQUAL ^
-										(Relation.GREATER_OR_EQUAL.is(compare(o1, o2))
-										&& Relation.SMALLER_OR_EQUAL.is(compare(o1, o3)));
+										(Relation.GREATER_OR_EQUAL.is(comp != null ? comp.compare(o1, o2) : Comparators.compare(o1, o2))
+										&& Relation.SMALLER_OR_EQUAL.is(comp != null ? comp.compare(o1, o3) : Comparators.compare(o1, o3)));
 							}
 						});
 					}
 				}, false, third == null ? relation == Relation.NOT_EQUAL ^ second.getAnd() : second.getAnd());
 			}
 		});
-	}
-	
-	@SuppressWarnings("unchecked")
-	private <T1, T2> Relation compare(final T1 o1, final T2 o2) {
-		return reverseOrder ? ((Comparator<? super T2, ? super T1>) comp).compare(o2, o1).getSwitched() : ((Comparator<? super T1, ? super T2>) comp).compare(o1, o2);
 	}
 	
 	@Override

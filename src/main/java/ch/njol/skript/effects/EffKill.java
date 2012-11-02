@@ -35,6 +35,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 public class EffKill extends Effect {
 	
+	private static final long serialVersionUID = 6790149689227295705L;
+	
 	static {
 		Skript.registerEffect(EffKill.class, "kill %entities%");
 	}

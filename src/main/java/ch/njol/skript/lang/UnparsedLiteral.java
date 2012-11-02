@@ -21,27 +21,13 @@
 
 package ch.njol.skript.lang;
 
-import java.lang.reflect.Array;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
-import ch.njol.skript.log.LogEntry;
-import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
-import ch.njol.util.Validate;
 import ch.njol.util.iterator.NonNullIterator;
 
 /**
@@ -51,6 +37,7 @@ import ch.njol.util.iterator.NonNullIterator;
  * @see SimpleLiteral
  */
 public class UnparsedLiteral implements Literal<Object> {
+	private static final long serialVersionUID = 6106827630431089311L;
 	
 	private final String data;
 	
@@ -59,7 +46,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	 * @param and
 	 */
 	public UnparsedLiteral(final String data) {
-		Validate.notNullOrEmpty(data, "data");
+		assert data != null && data.length() != 0;
 		this.data = data;
 	}
 	
@@ -77,102 +64,113 @@ public class UnparsedLiteral implements Literal<Object> {
 		return getConvertedExpression(to, ParseContext.DEFAULT);
 	}
 	
+	// TODO (Variable)Strings & Object in general
 	@SuppressWarnings("unchecked")
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to, final ParseContext context) {
-		if (to == String.class && context == ParseContext.DEFAULT) {
-			return (Literal<? extends R>) VariableStringLiteral.newInstance(this);
-		} else if (to == Object.class) {
-			if (context == ParseContext.DEFAULT) {
-				final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
-				if (vsl != null)
-					return (Literal<? extends R>) vsl;
-			}
-			final SubLog log = SkriptLogger.startSubLog();
-			for (final ClassInfo<?> ci : Skript.getClassInfos()) {
-				if (ci.getParser() != null) {
-					log.clear();
-					final Literal<?> l = convert(ci.getClass(), ci.getParser(), context);
-					if (l != null) {
-						log.stop();
-						log.printLog();
-						return (Literal<? extends R>) l;
-					}
-				}
-			}
-			log.stop();
-			return null;
-		}
-		final Parser<? extends R> p = Skript.getParser(to);
-		if (p == null)
-			return null;
-		return convert(to, p, context);
+		return (Literal<? extends R>) SkriptParser.parseExpression(data, true, context, to);
+//		if (to == String.class && context == ParseContext.DEFAULT) {
+//			return (Literal<? extends R>) VariableStringLiteral.newInstance(this);
+//		} else if (to == Object.class) {
+//			final SimpleLog log = SkriptLogger.startSubLog();
+//			if (context == ParseContext.DEFAULT) {
+//				final VariableStringLiteral vsl = VariableStringLiteral.newInstance(this);
+//				if (vsl != null)
+//					return (Literal<? extends R>) vsl;
+//				if (log.hasErrors()) {
+//					log.printLog();
+//					return null;
+//				}
+//			}
+//			for (final ClassInfo<?> ci : Classes.getClassInfos()) {
+//				if (ci.getParser() != null && ci.getParser().canParse(context)) {
+//					log.clear();
+//					final Literal<?> l = convert(ci.getC(), ci.getParser(), context);
+//					if (l != null) {
+//						log.stop();
+//						log.printLog();
+//						return (Literal<? extends R>) l;
+//					}
+//				}
+//			}
+//			log.stop();
+//			return null;
+//		}
+//		final Parser<? extends R> p = Classes.getParser(to);
+//		if (p == null || !p.canParse(context))
+//			return null;
+//		return convert(to, p, context);
 	}
 	
-	public final static Pattern literalSplitPattern = Pattern.compile("\\s*,?\\s+(and|n?or)\\s+|\\s*,\\s*", Pattern.CASE_INSENSITIVE);
-	
-	private <T> Literal<T> convert(final Class<T> to, final Parser<?> parser, final ParseContext context) {
-		final SubLog log = SkriptLogger.startSubLog();
-		
-		String last = data;
-		LogEntry lastError = null;
-		
-		final T r = (T) parser.parse(data, context);
-		if (r != null) {
-			log.stop();
-			log.printLog();
-			return new SimpleLiteral<T>(r, false);
-		}
-		lastError = log.getLastError();
-		log.clear();
-		
-		T t = null;
-		final Deque<T> ts = new LinkedList<T>();
-		final Matcher m = literalSplitPattern.matcher(data);
-		int end = data.length();
-		int expectedEnd = -1;
-		boolean and = true;
-		boolean isAndSet = false;
-		while (m.find()) {
-			if (expectedEnd == -1)
-				expectedEnd = m.start();
-			t = (T) parser.parse(last = data.substring(m.end(), end), context);
-			lastError = log.getLastError();
-			if (t != null) {
-				if (!m.group().matches("\\s*,\\s*")) {
-					if (isAndSet) {
-						if (and != m.group().toLowerCase().contains("and")) {
-							Skript.warning("list has multiple 'and' or 'or', will default to 'and'");
-							and = true;
-						}
-					} else {
-						and = m.group().toLowerCase().contains("and");
-						isAndSet = true;
-					}
-				}
-				ts.addFirst(t);
-				log.clear();
-				end = m.start();
-				m.region(0, end);
-			} else {
-				log.clear();
-			}
-		}
-		if (end == expectedEnd) {
-			t = (T) parser.parse(last = data.substring(0, end), context);
-			lastError = log.getLastError();
-			log.stop();
-			if (t != null) {
-				ts.addFirst(t);
-				return new SimpleLiteral<T>(ts.toArray((T[]) Array.newInstance(to, ts.size())), to, and, this);
-			}
-		}
-		log.stop();
-		if (lastError != null)
-			SkriptLogger.log(lastError);
-		else
-			Skript.error("'" + last + "' is not " + Utils.a(Skript.getSuperClassInfo(to).getName()));
-		return null;
+	public <R> Literal<? extends R> getConvertedExpression(final Class<? extends R>[] to, final ParseContext context) {
+		return (Literal<? extends R>) SkriptParser.parseExpression(data, true, context, to);
 	}
+	
+//	private <T> Literal<T> convert(final Class<T> to, final Parser<?> parser, final ParseContext context) {
+//		assert parser.canParse(context);
+//		final SimpleLog log = SkriptLogger.startSubLog();
+//		
+//		String last = data;
+//		LogEntry lastError = null;
+//		
+//		final T r = (T) parser.parse(data, context);
+//		if (r != null) {
+//			log.stop();
+//			log.printLog();
+//			return new SimpleLiteral<T>(r, false);
+//		}
+//		lastError = log.getFirstError();
+//		log.clear();
+//		
+//		final Deque<T> ts = new LinkedList<T>();
+//		final Matcher m = SkriptParser.listSplitPattern.matcher(data);
+//		int end = data.length();
+//		int expectedEnd = -1;
+//		boolean and = true;
+//		boolean isAndSet = false;
+//		while (m.find()) {
+//			if (expectedEnd == -1)
+//				expectedEnd = m.start();
+//			final T t = (T) parser.parse(last = data.substring(m.end(), end), context);
+//			lastError = log.getFirstError();
+//			if (t != null) {
+//				if (!m.group().matches("\\s*,\\s*")) {
+//					if (isAndSet) {
+//						if (and != m.group().toLowerCase().contains("and")) {
+//							Skript.warning("list has multiple 'and' or 'or', will default to 'and'");
+//							and = true;
+//						}
+//					} else {
+//						and = m.group().toLowerCase().contains("and");
+//						isAndSet = true;
+//					}
+//				}
+//				ts.addFirst(t);
+//				log.clear();
+//				end = m.start();
+//				m.region(0, end);
+//			} else {
+//				log.clear();
+//			}
+//		}
+//		if (!isAndSet)
+//			Skript.warning("List is missing 'and' or 'or', defaulting to 'and'");
+//		if (end == expectedEnd) {
+//			final T t = (T) parser.parse(last = data.substring(0, end), context);
+//			lastError = log.getFirstError();
+//			log.stop();
+//			if (t != null) {
+//				log.printLog();
+//				ts.addFirst(t);
+//				return new SimpleLiteral<T>(ts.toArray((T[]) Array.newInstance(to, ts.size())), to, and, this);
+//			}
+//		}
+//		log.stop();
+//		if (lastError != null)
+//			SkriptLogger.log(lastError);
+//		else
+//			Skript.error("'" + last + "' is not " + Utils.a(Classes.getSuperClassInfo(to).getName()));
+//		return null;
+//	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
@@ -189,18 +187,18 @@ public class UnparsedLiteral implements Literal<Object> {
 		return this;
 	}
 	
-	private final static SkriptAPIException invalidAccessException() {
-		return new SkriptAPIException("UnparsedLiterals must be converted before use");
-	}
-	
 	@Override
 	public boolean getAnd() {
-		throw invalidAccessException();
+		return true;
 	}
 	
 	@Override
 	public boolean isSingle() {
-		throw invalidAccessException();
+		return true;
+	}
+	
+	private final static SkriptAPIException invalidAccessException() {
+		return new SkriptAPIException("UnparsedLiterals must be converted before use");
 	}
 	
 	@Override
@@ -234,11 +232,6 @@ public class UnparsedLiteral implements Literal<Object> {
 	}
 	
 	@Override
-	public boolean canLoop() {
-		throw invalidAccessException();
-	}
-	
-	@Override
 	public NonNullIterator<Object> iterator(final Event e) {
 		throw invalidAccessException();
 	}
@@ -249,7 +242,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	}
 	
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		throw invalidAccessException();
 	}
 	

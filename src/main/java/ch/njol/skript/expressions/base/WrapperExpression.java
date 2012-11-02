@@ -21,17 +21,17 @@
 
 package ch.njol.skript.expressions.base;
 
+import java.util.Iterator;
+
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.ConvertedExpression;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.util.Validate;
-import ch.njol.util.iterator.NonNullIterator;
+import ch.njol.skript.registrations.Converters;
 
 /**
  * Represents an expression which is a wrapper of another one. Remember to set the wrapped expression in the constructor ({@link #WrapperExpression(SimpleExpression)})
@@ -41,13 +41,13 @@ import ch.njol.util.iterator.NonNullIterator;
  * @author Peter Güttinger
  */
 public abstract class WrapperExpression<T> extends SimpleExpression<T> {
-	
+	private static final long serialVersionUID = 674656422946139080L;
 	private Expression<? extends T> expr;
 	
 	protected WrapperExpression() {}
 	
 	public WrapperExpression(final SimpleExpression<? extends T> expr) {
-		Validate.notNull(expr);
+		assert expr != null;
 		setExpr(expr);
 	}
 	
@@ -61,10 +61,12 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	
 	@Override
 	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R> to) {
-		final Converter<? super T, ? extends R> conv = (Converter<? super T, ? extends R>) Skript.getConverter(getReturnType(), to);
+		final SerializableConverter<? super T, ? extends R> conv = (SerializableConverter<? super T, ? extends R>) Converters.getConverter(getReturnType(), to);
 		if (conv == null)
 			return null;
 		return new ConvertedExpression<T, R>(expr, to, conv) {
+			private static final long serialVersionUID = 2884135341799040191L;
+			
 			@Override
 			public String toString(final Event e, final boolean debug) {
 				if (debug && e == null)
@@ -80,8 +82,8 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	}
 	
 	@Override
-	public NonNullIterator<T> iterator(final Event e) {
-		return (NonNullIterator<T>) expr.iterator(e);
+	public Iterator<? extends T> iterator(final Event e) {
+		return expr.iterator(e);
 	}
 	
 	@Override
@@ -100,7 +102,7 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	}
 	
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		return expr.acceptChange(mode);
 	}
 	

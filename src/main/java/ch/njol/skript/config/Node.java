@@ -42,13 +42,14 @@ public abstract class Node {
 	protected String orig;
 	protected boolean modified = false;
 	
-	protected SectionNode parent;
+	protected final SectionNode parent;
 	protected final Config config;
 	
-	protected Node(final Config config, final String name, final String orig, final int lineNum) {
-		this.config = config;
-		this.orig = orig;
+	protected Node(final String name, final SectionNode parent, final String orig, final int lineNum) {
 		this.name = name;
+		config = parent.getConfig();
+		this.parent = parent;
+		this.orig = orig;
 		this.lineNum = lineNum;
 		SkriptLogger.setNode(this);
 	}
@@ -61,10 +62,10 @@ public abstract class Node {
 	 */
 	protected Node(final String name, final SectionNode parent, final ConfigReader r) {
 		this.name = name;
-		orig = r.getLine();
-		lineNum = r.getLineNum();
 		config = parent.getConfig();
 		this.parent = parent;
+		orig = r.getLine();
+		lineNum = r.getLineNum();
 		SkriptLogger.setNode(this);
 	}
 	
@@ -100,16 +101,16 @@ public abstract class Node {
 		modified();
 	}
 	
-	public void move(final SectionNode newParent) {
-		if (parent == null) {
-			Skript.error("can't move the main node!");
-			return;
-		}
-		parent.getNodeList().remove(this);
-		parent = newParent;
-		newParent.getNodeList().add(this);
-		config.modified = true;
-	}
+//	public void move(final SectionNode newParent) {
+//		if (parent == null) {
+//			Skript.error("can't move the main node!");
+//			return;
+//		}
+//		parent.getNodeList().remove(this);
+//		parent = newParent;
+//		newParent.getNodeList().add(this);
+//		config.modified = true;
+//	}
 	
 	protected void modified() {
 		modified = true;
@@ -162,7 +163,7 @@ public abstract class Node {
 	}
 	
 	/**
-	 * @return Whether this node holds information (i.e. is not empty, invalid or a parse option)
+	 * @return Whether this node does not hold information (i.e. is not empty, invalid or a parse option)
 	 */
 	public boolean isVoid() {
 		return this instanceof VoidNode || this instanceof ParseOptionNode;

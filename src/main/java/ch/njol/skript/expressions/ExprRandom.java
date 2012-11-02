@@ -30,28 +30,32 @@ import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprRandom extends SimpleExpression<Object> {
+	private static final long serialVersionUID = -4549744102145885982L;
 	
 	static {
-		Skript.registerExpression(ExprRandom.class, Object.class, ExpressionType.COMBINED, "[a[n]] random <.+> [out] of %objects%");
+		Skript.registerExpression(ExprRandom.class, Object.class, ExpressionType.COMBINED, "[a] random <.+> [out] of %objects%");
 	}
 	
 	private Expression<?> expr;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		Class<?> c = Skript.getClassFromUserInput(parseResult.regexes.get(0).group());
+		Class<?> c = Classes.getClassFromUserInput(parseResult.regexes.get(0).group());
 		if (c == null)
-			c = Skript.getClassByName(parseResult.regexes.get(0).group());
+			c = Classes.getClassByName(parseResult.regexes.get(0).group());
 		if (c == null)
 			return false;
 		expr = exprs[0];
-		return c.isAssignableFrom(expr.getReturnType());
+		if (!c.isAssignableFrom(expr.getReturnType()))
+			return false;
+		return true;
 	}
 	
 	@Override
@@ -60,7 +64,7 @@ public class ExprRandom extends SimpleExpression<Object> {
 		if (set.length <= 1)
 			return set;
 		final Object[] one = (Object[]) Array.newInstance(set.getClass().getComponentType(), 1);
-		one[0] = Utils.getRandom(set);
+		one[0] = Utils.random(set);
 		return one;
 	}
 	
@@ -71,8 +75,7 @@ public class ExprRandom extends SimpleExpression<Object> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		// TODO Auto-generated method stub
-		return null;
+		return "a random element out of " + expr.toString(e, debug);
 	}
 	
 	@Override

@@ -25,11 +25,13 @@ import org.bukkit.entity.Ocelot;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
 public class OcelotData extends EntityData<Ocelot> {
+	private static final long serialVersionUID = -7803473515795672650L;
 	
 	static {
 		EntityData.register(OcelotData.class, "ocelot", Ocelot.class,
@@ -43,7 +45,7 @@ public class OcelotData extends EntityData<Ocelot> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		tamed = matchedPattern - 1;
-		plural = parseResult.expr.endsWith("s");
+		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -71,6 +73,38 @@ public class OcelotData extends EntityData<Ocelot> {
 	@Override
 	public boolean isPlural() {
 		return plural;
+	}
+	
+	@Override
+	public int hashCode() {
+		return tamed;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof OcelotData))
+			return false;
+		final OcelotData other = (OcelotData) obj;
+		return tamed == other.tamed;
+	}
+	
+	@Override
+	public String serialize() {
+		return "" + tamed;
+	}
+	
+	@Override
+	protected boolean deserialize(final String s) {
+		try {
+			tamed = Integer.parseInt(s);
+			return true;
+		} catch (final NumberFormatException e) {
+			return false;
+		}
 	}
 	
 }

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -40,13 +41,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
+import ch.njol.skript.Language;
+import ch.njol.skript.Language.LanguageChangeListener;
 import ch.njol.skript.Skript;
 import ch.njol.skript.effects.EffTeleport;
 import ch.njol.skript.entity.EntityData;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
-import ch.njol.util.Validate;
 
 /**
  * Utility class.
@@ -71,7 +74,7 @@ public abstract class Utils {
 	}
 	
 	public static <T> int indexOf(final T[] array, final T t, final int start, final int end) {
-		Validate.notNull(array, "array");
+		assert array != null;
 		for (int i = start; i < end; i++) {
 			if (array[i] == null ? t == null : array[i].equals(t))
 				return i;
@@ -84,7 +87,8 @@ public abstract class Utils {
 	}
 	
 	public static <T> boolean containsAny(final T[] array, final T... os) {
-		Validate.notNull(array, os);
+		assert array != null;
+		assert os != null;
 		for (final T o : os) {
 			if (indexOf(array, o) != -1)
 				return true;
@@ -93,7 +97,8 @@ public abstract class Utils {
 	}
 	
 	public static <T> boolean containsAll(final T[] array, final T... os) {
-		Validate.notNull(array, os);
+		assert array != null;
+		assert os != null;
 		for (final T o : os) {
 			if (indexOf(array, o) == -1)
 				return false;
@@ -110,7 +115,7 @@ public abstract class Utils {
 	}
 	
 	public static int indexOf(final int[] array, final int num, final int start, final int end) {
-		Validate.notNull(array, "array");
+		assert array != null;
 		for (int i = start; i < end; i++) {
 			if (array[i] == num)
 				return i;
@@ -134,7 +139,7 @@ public abstract class Utils {
 	 * @return the index of the first occurrence of the given string or -1 if not found
 	 */
 	public static int indexOfIgnoreCase(final String[] array, final String s) {
-		Validate.notNull(array, "array");
+		assert array != null;
 		int i = 0;
 		for (final String a : array) {
 			if (a.equalsIgnoreCase(s))
@@ -152,7 +157,7 @@ public abstract class Utils {
 	 * @return the index of the first occurrence of the given object or -1 if not found
 	 */
 	public static <T> int indexOf(final Iterable<T> iter, final T o) {
-		Validate.notNull(iter, "iter");
+		assert iter != null;
 		int i = 0;
 		for (final T a : iter) {
 			if (a.equals(o))
@@ -170,7 +175,7 @@ public abstract class Utils {
 	 * @return the index of the first occurrence of the given string or -1 if not found
 	 */
 	public static int indexOfIgnoreCase(final Iterable<String> iter, final String s) {
-		Validate.notNull(iter, "iter");
+		assert iter != null;
 		int i = 0;
 		for (final String a : iter) {
 			if (a.equalsIgnoreCase(s))
@@ -187,7 +192,7 @@ public abstract class Utils {
 	 * @return a new entry object
 	 */
 	public static <T, U> Entry<T, U> containsKey(final Map<T, U> map, final T key) {
-		Validate.notNull(map, "map");
+		assert map != null;
 		final U u = map.get(key);
 		if (u == null)
 			return null;
@@ -195,7 +200,7 @@ public abstract class Utils {
 	}
 	
 	public static <U> Entry<String, U> containsKeyIgnoreCase(final Map<String, U> map, final String key) {
-		Validate.notNull(map, "map");
+		assert map != null;
 		for (final Entry<String, U> e : map.entrySet()) {
 			if (e.getKey().equalsIgnoreCase(key))
 				return e;
@@ -204,7 +209,7 @@ public abstract class Utils {
 	}
 	
 	public static BlockFace getBlockFace(final String s, final boolean printError) {
-		Validate.notNullOrEmpty(s, "s");
+		assert s != null && s.length() != 0;
 		final String supper = s.toUpperCase().replace(' ', '_');
 		try {
 			if (supper.equals("ABOVE"))
@@ -224,16 +229,16 @@ public abstract class Utils {
 						switch (supper.charAt(i)) {
 							case 'N':
 								r += "NORTH_";
-							break;
+								break;
 							case 'E':
 								r += "EAST_";
-							break;
+								break;
 							case 'S':
 								r += "SOUTH_";
-							break;
+								break;
 							case 'W':
 								r += "WEST_";
-							break;
+								break;
 							default:
 								if (printError)
 									Skript.error("invalid direction '" + s + "'");
@@ -250,12 +255,12 @@ public abstract class Utils {
 	}
 	
 	public static final int[] getBlockFaceDir(final BlockFace f) {
-		Validate.notNull(f, "f");
+		assert f != null;
 		return new int[] {f.getModX(), f.getModY(), f.getModZ()};
 	}
 	
 	public static final int getBlockFaceDir(final BlockFace f, final int axis) {
-		Validate.notNull(f, "f");
+		assert f != null;
 		switch (axis) {
 			case 0:
 				return f.getModX();
@@ -271,12 +276,20 @@ public abstract class Utils {
 		return join(strings, ", ");
 	}
 	
+	public static String join(final String[] strings, final char delimiter) {
+		return join(strings, Character.toString(delimiter), 0, strings.length);
+	}
+	
 	public static String join(final String[] strings, final String delimiter) {
 		return join(strings, delimiter, 0, strings.length);
 	}
 	
 	public static String join(final String[] strings, final String delimiter, final int start, final int end) {
-		Validate.notNull(strings, "strings");
+		assert strings != null;
+		if (strings.length == 0)
+			return "";
+		else if (strings.length == 1)
+			return strings[0];
 		final StringBuilder b = new StringBuilder();
 		for (int i = start; i < end; i++) {
 			if (i != start)
@@ -287,39 +300,39 @@ public abstract class Utils {
 	}
 	
 	public static String join(final Object[] objects) {
-		Validate.notNull(objects, "objects");
+		assert objects != null;
 		final StringBuilder b = new StringBuilder();
 		for (int i = 0; i < objects.length; i++) {
 			if (i != 0)
 				b.append(", ");
-			b.append(Skript.toString(objects[i]));
+			b.append(Classes.toString(objects[i]));
 		}
 		return b.toString();
 	}
 	
 	public static String join(final List<?> objects) {
-		Validate.notNull(objects, "objects");
+		assert objects != null;
 		final StringBuilder b = new StringBuilder();
 		for (int i = 0; i < objects.size(); i++) {
 			if (i != 0)
 				b.append(", ");
-			b.append(Skript.toString(objects.get(i)));
+			b.append(Classes.toString(objects.get(i)));
 		}
 		return b.toString();
 	}
 	
-	public static <T> T getRandom(final T[] os) {
-		Validate.notNullOrEmpty(os, "os");
+	public static <T> T random(final T[] os) {
+		assert os != null && os.length != 0;
 		return os[Skript.random.nextInt(os.length)];
 	}
 	
 	public static <T> T getRandom(final T[] os, final int start) {
-		Validate.notNullOrEmpty(os, "os");
+		assert os != null && os.length != 0;
 		return os[Skript.random.nextInt(os.length - start) + start];
 	}
 	
 	public static <T> T getRandom(final List<T> os) {
-		Validate.notNullOrEmpty(os, "os");
+		assert os != null && !os.isEmpty();
 		return os.get(Skript.random.nextInt(os.size()));
 	}
 	
@@ -337,7 +350,7 @@ public abstract class Utils {
 	}
 	
 	public static <T extends Entity> T getTarget(final LivingEntity entity, final EntityData<T> type) {
-		Validate.notNull(entity, "entity");
+		assert entity != null;
 		if (entity instanceof Creature) {
 			return type.isInstance(((Creature) entity).getTarget()) ? (T) ((Creature) entity).getTarget() : null;
 		}
@@ -459,7 +472,7 @@ public abstract class Utils {
 	 * @return Pair of singular string + boolean whether it was plural
 	 */
 	public static final Pair<String, Boolean> getPlural(final String s) {
-		Validate.notNull(s, "s");
+		assert s != null;
 		if (s.isEmpty())
 			return new Pair<String, Boolean>("", Boolean.FALSE);
 		for (final String[] p : plurals) {
@@ -478,7 +491,7 @@ public abstract class Utils {
 	 * @return
 	 */
 	public static final String toPlural(final String s) {
-		Validate.notNullOrEmpty(s, "s");
+		assert s != null && s.length() != 0;
 		for (final String[] p : plurals) {
 			if (s.endsWith(p[0]))
 				return s.substring(0, s.length() - p[0].length()) + p[1];
@@ -533,7 +546,7 @@ public abstract class Utils {
 	 * @see #a(String)
 	 */
 	public static final String a(final String s, final boolean capA) {
-		Validate.notNullOrEmpty(s, "s");
+		assert s != null && s.length() != 0;
 		switch (Character.toLowerCase(s.charAt(0))) {
 			case 'a':
 			case 'e':
@@ -557,7 +570,7 @@ public abstract class Utils {
 	 * @return
 	 */
 	public static double getBlockHeight(final Material type) {
-		Validate.notNull(type, "type");
+		assert type != null;
 		switch (type) {
 			case DIODE_BLOCK_OFF:
 			case DIODE_BLOCK_ON:
@@ -589,41 +602,76 @@ public abstract class Utils {
 		}
 	}
 	
+	private final static ChatColor[] styles = {ChatColor.BOLD, ChatColor.ITALIC, ChatColor.STRIKETHROUGH, ChatColor.UNDERLINE, ChatColor.MAGIC, ChatColor.RESET};
 	private final static Map<String, String> chat = new HashMap<String, String>();
+	private final static Map<String, String> englishChat = new HashMap<String, String>();
 	static {
-		chat.put("bold", ChatColor.BOLD.toString());
-		chat.put("b", ChatColor.BOLD.toString());
-		
-		chat.put("italics", ChatColor.ITALIC.toString());
-		chat.put("italic", ChatColor.ITALIC.toString());
-		chat.put("i", ChatColor.ITALIC.toString());
-		
-		chat.put("strikethrough", ChatColor.STRIKETHROUGH.toString());
-		chat.put("strike", ChatColor.STRIKETHROUGH.toString());
-		chat.put("s", ChatColor.STRIKETHROUGH.toString());
-		
-		chat.put("underlined", ChatColor.UNDERLINE.toString());
-		chat.put("underline", ChatColor.UNDERLINE.toString());
-		chat.put("u", ChatColor.UNDERLINE.toString());
-		
-		chat.put("magic", ChatColor.MAGIC.toString());
-		
-		chat.put("reset", ChatColor.RESET.toString());
-		
-		chat.put("<none>", "");
+		Language.addListener(new LanguageChangeListener() {
+			@Override
+			public void onLanguageChange() {
+				final boolean english = englishChat.isEmpty();
+				chat.clear();
+				for (final ChatColor style : styles) {
+					for (final String s : Language.getList("chatstyles." + style.name())) {
+						chat.put(s.toLowerCase(), style.toString());
+						if (english)
+							englishChat.put(s.toLowerCase(), style.toString());
+					}
+				}
+			}
+		});
 	}
 	
+	/**
+	 * Replaces &lt;chat styles&gt; in the message and fixes capitalization
+	 * 
+	 * @param message
+	 * @return
+	 */
 	public static final String prepareMessage(String message) {
-		Validate.notNull(message, "message");
+		assert message != null;
 		message = replaceChatStyles(message);
 		message = StringUtils.fixCapitalization(message);
 		return message;
 	}
 	
+	private final static Pattern stylePattern = Pattern.compile("<([^<>]+)>");
+	
+	/**
+	 * Replaces &lt;chat styles&gt; in the message
+	 * 
+	 * @param message
+	 * @return
+	 */
 	public final static String replaceChatStyles(String message) {
 		if (message == null || message.isEmpty())
 			return message;
-		message = StringUtils.replaceAll(message, "<([^<>]+|<none>)>", new Callback<String, Matcher>() {
+		message = StringUtils.replaceAll(message.replace("<<none>>", ""), stylePattern, new Callback<String, Matcher>() {
+			@Override
+			public String run(final Matcher m) {
+				final Color c = Color.byName(m.group(1));
+				if (c != null)
+					return c.getChat();
+				final String f = chat.get(m.group(1).toLowerCase());
+				if (f != null)
+					return f;
+				return m.group();
+			}
+		});
+		message = ChatColor.translateAlternateColorCodes('&', message);
+		return message;
+	}
+	
+	/**
+	 * Replaces english &lt;chat styles&gt; in the message. This is used for messages by the plugin.
+	 * 
+	 * @param message
+	 * @return
+	 */
+	public final static String replaceEnglishChatStyles(String message) {
+		if (message == null || message.isEmpty())
+			return message;
+		message = StringUtils.replaceAll(message, stylePattern, new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
 				final Color c = Color.byName(m.group(1));
@@ -646,7 +694,7 @@ public abstract class Utils {
 	public static final <E extends Entity> E validate(final E e) {
 		if (e == null)
 			return null;
-		if (e instanceof Player) {// FIXME improve this
+		if (!e.isValid() && e instanceof Player) {
 			final Player p = Bukkit.getPlayerExact(((Player) e).getName());
 			return p == null ? e : (E) p;
 		}
@@ -693,6 +741,16 @@ public abstract class Utils {
 	}
 	
 	/**
+	 * Shorthand for <code>{@link #permutation(int, int) permutation}(0, length - 1)</code>
+	 * 
+	 * @param length
+	 * @return
+	 */
+	public static final int[] permutation(final int length) {
+		return permutation(0, length - 1);
+	}
+	
+	/**
 	 * Gets a random value between the first value (inclusive) and the second value (exclusive)
 	 * 
 	 * @param start
@@ -700,9 +758,9 @@ public abstract class Utils {
 	 * @return
 	 */
 	public static int random(final int start, final int end) {
-		if (end < start)
-			throw new IllegalArgumentException("end (" + end + ") must be >= start (" + start + ")");
-		return start + random.nextInt(end - start + 1);
+		if (end <= start)
+			throw new IllegalArgumentException("end (" + end + ") must be > start (" + start + ")");
+		return start + random.nextInt(end - start);
 	}
 	
 }

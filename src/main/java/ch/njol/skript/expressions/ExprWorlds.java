@@ -37,6 +37,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * @author Peter Güttinger
  */
 public class ExprWorlds extends SimpleExpression<World> {
+	private static final long serialVersionUID = 6027512157613382336L;
 	
 	static {
 		Skript.registerExpression(ExprWorlds.class, World.class, ExpressionType.SIMPLE, "[(the|all)] worlds");
@@ -65,11 +66,6 @@ public class ExprWorlds extends SimpleExpression<World> {
 	@Override
 	public Iterator<World> iterator(final Event e) {
 		return Bukkit.getWorlds().iterator();
-	}
-	
-	@Override
-	public boolean canLoop() {
-		return true;
 	}
 	
 	@Override

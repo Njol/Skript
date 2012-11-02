@@ -21,6 +21,7 @@
 
 package ch.njol.skript.util;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -35,7 +36,9 @@ import ch.njol.util.iterator.SingleItemIterator;
  * 
  * @author Peter Güttinger
  */
-public class ItemData implements Cloneable {
+public class ItemData implements Serializable, Cloneable {
+	
+	private static final long serialVersionUID = 5716649615812229047L;
 	
 	/**
 	 * Only ItemType may set this directly.

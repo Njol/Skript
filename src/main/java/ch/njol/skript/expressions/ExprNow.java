@@ -34,6 +34,7 @@ import ch.njol.skript.util.Date;
  * @author Peter Güttinger
  */
 public class ExprNow extends SimpleExpression<Date> {
+	private static final long serialVersionUID = -7996644289867888426L;
 	
 	static {
 		Skript.registerExpression(ExprNow.class, Date.class, ExpressionType.SIMPLE, "now");

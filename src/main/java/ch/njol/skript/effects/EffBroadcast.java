@@ -38,6 +38,8 @@ import ch.njol.skript.util.Utils;
  */
 public class EffBroadcast extends Effect {
 	
+	private static final long serialVersionUID = -4691934406392042247L;
+	
 	static {
 		Skript.registerEffect(EffBroadcast.class, "broadcast %strings% [(to|in) %-worlds%]");
 	}

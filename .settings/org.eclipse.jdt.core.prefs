@@ -83,7 +83,7 @@ org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_annotation_de
 org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_enum_constant_header=true
 org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_enum_declaration_header=true
 org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_type_header=true
-org.eclipse.jdt.core.formatter.indent_breaks_compare_to_cases=false
+org.eclipse.jdt.core.formatter.indent_breaks_compare_to_cases=true
 org.eclipse.jdt.core.formatter.indent_empty_lines=true
 org.eclipse.jdt.core.formatter.indent_statements_compare_to_block=true
 org.eclipse.jdt.core.formatter.indent_statements_compare_to_body=true

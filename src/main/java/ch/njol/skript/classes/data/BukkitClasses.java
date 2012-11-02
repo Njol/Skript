@@ -22,6 +22,7 @@
 package ch.njol.skript.classes.data;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
@@ -30,7 +31,6 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.TreeType;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
@@ -44,6 +44,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffectType;
 
 import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
@@ -52,12 +53,13 @@ import ch.njol.skript.classes.EnumParser;
 import ch.njol.skript.classes.EnumSerializer;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
-import ch.njol.skript.classes.Validator;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.PotionEffectUtils;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
@@ -65,68 +67,12 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("unchecked")
 public class BukkitClasses {
 	
 	public BukkitClasses() {}
 	
-	public final static Validator<? extends Entity> entityValidator = new Validator<Entity>() {
-		@Override
-		public <C extends Entity> C validate(final C e) {
-			return Utils.validate(e);
-		}
-	};
-	
 	static {
-		Skript.registerClass(new ClassInfo<TreeType>(TreeType.class, "treetype", "tree type")
-				.user("tree ?types?", "trees?")
-				.defaultExpression(new SimpleLiteral<TreeType>(TreeType.TREE, true))
-				.parser(new Parser<TreeType>() {
-					
-					@Override
-					public TreeType parse(String s, final ParseContext context) {
-						s = s.toLowerCase();
-						if (s.endsWith(" tree"))
-							s = s.substring(0, s.length() - " tree".length());
-						
-						if (s.equals("regular"))
-							return TreeType.TREE;
-						if (s.equals("normal"))
-							return TreeType.TREE;
-						
-						if (s.equals("big"))
-							return TreeType.BIG_TREE;
-						
-						if (s.equals("fir"))
-							return TreeType.REDWOOD;
-						
-						if (s.equals("tall fir"))
-							return TreeType.TALL_REDWOOD;
-						if (s.equals("big fir"))
-							return TreeType.TALL_REDWOOD;
-						if (s.equals("big redwood"))
-							return TreeType.TALL_REDWOOD;
-						
-						try {
-							return TreeType.valueOf(s.toUpperCase().replace(' ', '_'));
-						} catch (final IllegalArgumentException e) {
-							return null;
-						}
-					}
-					
-					@Override
-					public String toString(final TreeType o) {
-						return o.toString().toLowerCase().replace('_', ' ');
-					}
-					
-					@Override
-					public String toCodeString(final TreeType o) {
-						return o.toString().toLowerCase().replace('_', ' ');
-					}
-					
-				}).serializer(new EnumSerializer<TreeType>(TreeType.class)));
-		
-		Skript.registerClass(new ClassInfo<Entity>(Entity.class, "entity", "entity")
+		Classes.registerClass(new ClassInfo<Entity>(Entity.class, "entity", "entity")
 				.defaultExpression(new EventValueExpression<Entity>(Entity.class))
 				.parser(new Parser<Entity>() {
 					@Override
@@ -140,29 +86,32 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final Entity e) {
+					public String toVariableNameString(final Entity e) {
 						return "entity:" + e.getUniqueId().toString();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "entity:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 					}
 					
 					@Override
 					public String toString(final Entity e) {
 						return EntityData.toString(e);
 					}
+					
 				})
-				.changer(DefaultChangers.entityChanger)
-				.validator((Validator<Entity>) entityValidator));
+				.changer(DefaultChangers.entityChanger));
 		
-		Skript.registerClass(new ClassInfo<LivingEntity>(LivingEntity.class, "livingentity", "living entity")
+		Classes.registerClass(new ClassInfo<LivingEntity>(LivingEntity.class, "livingentity", "living entity")
 				.defaultExpression(new EventValueExpression<LivingEntity>(LivingEntity.class))
-				.changer(DefaultChangers.entityChanger)
-				.validator((Validator<LivingEntity>) entityValidator));
+				.changer(DefaultChangers.entityChanger));
 		
-		Skript.registerClass(new ClassInfo<Projectile>(Projectile.class, "projectile", "projectile")
+		Classes.registerClass(new ClassInfo<Projectile>(Projectile.class, "projectile", "projectile")
 				.defaultExpression(new EventValueExpression<Projectile>(Projectile.class))
-				.changer(DefaultChangers.nonLivingEntityChanger)
-				.validator((Validator<Projectile>) entityValidator));
+				.changer(DefaultChangers.nonLivingEntityChanger));
 		
-		Skript.registerClass(new ClassInfo<Block>(Block.class, "block", "block")
+		Classes.registerClass(new ClassInfo<Block>(Block.class, "block", "block")
 				.user("block")
 				.defaultExpression(new EventValueExpression<Block>(Block.class))
 				.parser(new Parser<Block>() {
@@ -182,8 +131,13 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final Block b) {
+					public String toVariableNameString(final Block b) {
 						return b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "\\S:-?\\d+,-?\\d+,-?\\d+";
 					}
 					
 					@Override
@@ -218,7 +172,7 @@ public class BukkitClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Location>(Location.class, "location", "location")
+		Classes.registerClass(new ClassInfo<Location>(Location.class, "location", "location")
 				.defaultExpression(new EventValueExpression<Location>(Location.class))
 				.parser(new Parser<Location>() {
 					
@@ -238,8 +192,13 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final Location l) {
+					public String toVariableNameString(final Location l) {
 						return l.getWorld().getName() + ":" + l.getX() + "," + l.getY() + "," + l.getZ();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "\\S:-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?";
 					}
 					
 					@Override
@@ -274,8 +233,9 @@ public class BukkitClasses {
 					
 				}));
 		
-		Skript.registerClass(new ClassInfo<World>(World.class, "world", "world")
+		Classes.registerClass(new ClassInfo<World>(World.class, "world", "world")
 				.user("worlds?")
+				.before("string")
 				.defaultExpression(new EventValueExpression<World>(World.class))
 				.parser(new Parser<World>() {
 					@Override
@@ -293,8 +253,13 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final World o) {
+					public String toVariableNameString(final World o) {
 						return o.getName();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "\\S+";
 					}
 				}).serializer(new Serializer<World>() {
 					@Override
@@ -306,9 +271,9 @@ public class BukkitClasses {
 					public World deserialize(final String s) {
 						return Bukkit.getWorld(s);
 					}
-				}), "string");
+				}));
 		
-		Skript.registerClass(new ClassInfo<Inventory>(Inventory.class, "inventory", "inventory")
+		Classes.registerClass(new ClassInfo<Inventory>(Inventory.class, "inventory", "inventory")
 				.defaultExpression(new EventValueExpression<Inventory>(Inventory.class))
 				.parser(new Parser<Inventory>() {
 					@Override
@@ -323,35 +288,45 @@ public class BukkitClasses {
 					
 					@Override
 					public String toString(final Inventory i) {
-						return "inventory of " + Skript.toString(i.getHolder());
+						return "inventory of " + Classes.toString(i.getHolder());
 					}
 					
 					@Override
 					public String getDebugMessage(final Inventory i) {
-						return "inventory of " + Skript.getDebugMessage(i.getHolder());
+						return "inventory of " + Classes.getDebugMessage(i.getHolder());
 					}
 					
 					@Override
-					public String toCodeString(final Inventory o) {
-						return "inventory of " + Skript.toString(o.getHolder(), StringMode.VARIABLE_NAME, false);
+					public String toVariableNameString(final Inventory o) {
+						return "inventory of " + Classes.toString(o.getHolder(), StringMode.VARIABLE_NAME, false);
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "inventory of .+";
 					}
 				}).changer(DefaultChangers.inventoryChanger));
 		
-		Skript.registerClass(new ClassInfo<Player>(Player.class, "player", "player")
+		Classes.registerClass(new ClassInfo<Player>(Player.class, "player", "player")
 				.user("players?")
 				.defaultExpression(new EventValueExpression<Player>(Player.class))
+				.after("string")
 				.parser(new Parser<Player>() {
 					@Override
 					public Player parse(final String s, final ParseContext context) {
-						if (context != ParseContext.COMMAND)
+						if (context == ParseContext.COMMAND) {
+							final List<Player> ps = Bukkit.matchPlayer(s);
+							if (ps.size() == 1)
+								return ps.get(0);
+							if (ps.size() == 0)
+								Skript.error("There is no player online whose name starts with '" + s + "'");
+							else
+								Skript.error("There are several players online whose names start with '" + s + "'");
 							return null;
-						final List<Player> ps = Bukkit.matchPlayer(s);
-						if (ps.size() == 1)
-							return ps.get(0);
-						if (ps.size() == 0)
-							Skript.error("There is no player online whose name starts with '" + s + "'");
-						else
-							Skript.error("There are several players online whose names starts with '" + s + "'");
+						}
+//						if (s.matches("\"\\S+\""))
+//							return Bukkit.getPlayerExact(s.substring(1, s.length() - 1));
+						assert false;
 						return null;
 					}
 					
@@ -371,22 +346,27 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final Player p) {
+					public String toVariableNameString(final Player p) {
 						return p.getName();
 					}
 					
 					@Override
+					public String getVariableNamePattern() {
+						return "\\S+";
+					}
+					
+					@Override
 					public String getDebugMessage(final Player p) {
-						return p.getName() + " " + Skript.getDebugMessage(p.getLocation());
+						return p.getName() + " " + Classes.getDebugMessage(p.getLocation());
 					}
 				})
 				.changer(DefaultChangers.playerChanger)
-				.serializeAs(OfflinePlayer.class)
-				.validator((Validator<Player>) entityValidator));
+				.serializeAs(OfflinePlayer.class));
 		
-		Skript.registerClass(new ClassInfo<OfflinePlayer>(OfflinePlayer.class, "offlineplayer", "player")
-				.defaultExpression(new EventValueExpression<OfflinePlayer>(OfflinePlayer.class))
+		Classes.registerClass(new ClassInfo<OfflinePlayer>(OfflinePlayer.class, "offlineplayer", "player")
 				.user("offline ?players?")
+				.defaultExpression(new EventValueExpression<OfflinePlayer>(OfflinePlayer.class))
+				.after("string")
 				.parser(new Parser<OfflinePlayer>() {
 					@Override
 					public OfflinePlayer parse(final String s, final ParseContext context) {
@@ -397,12 +377,13 @@ public class BukkitClasses {
 						}
 //						if (s.matches("\"\\S+\""))
 //							return Bukkit.getOfflinePlayer(s.substring(1, s.length() - 1));
+						assert false;
 						return null;
 					}
 					
 					@Override
 					public boolean canParse(final ParseContext context) {
-						return false;
+						return context == ParseContext.COMMAND;
 					}
 					
 					@Override
@@ -418,14 +399,19 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final OfflinePlayer p) {
+					public String toVariableNameString(final OfflinePlayer p) {
 						return p.getName();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "\\S+";
 					}
 					
 					@Override
 					public String getDebugMessage(final OfflinePlayer p) {
 						if (p.isOnline())
-							return Skript.getDebugMessage(p.getPlayer());
+							return Classes.getDebugMessage(p.getPlayer());
 						return p.getName();
 					}
 				}).serializer(new Serializer<OfflinePlayer>() {
@@ -440,7 +426,7 @@ public class BukkitClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<CommandSender>(CommandSender.class, "commandsender", "player/console")
+		Classes.registerClass(new ClassInfo<CommandSender>(CommandSender.class, "commandsender", "player/console")
 				.defaultExpression(new EventValueExpression<CommandSender>(CommandSender.class))
 				.parser(new Parser<CommandSender>() {
 					@Override
@@ -459,12 +445,17 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final CommandSender o) {
+					public String toVariableNameString(final CommandSender o) {
 						return o.getName();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "\\S+";
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<BlockFace>(BlockFace.class, "blockface", "direction")
+		Classes.registerClass(new ClassInfo<BlockFace>(BlockFace.class, "blockface", "direction")
 				.user("directions?")
 				.parser(new Parser<BlockFace>() {
 					@Override
@@ -478,15 +469,20 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final BlockFace o) {
-						return o.toString().toLowerCase().replace('_', ' ');
+					public String toVariableNameString(final BlockFace o) {
+						return o.toString().toLowerCase(Locale.ENGLISH).replace('_', ' ');
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "[a-z ]+";
 					}
 				}).serializer(new EnumSerializer<BlockFace>(BlockFace.class)));
 		
-		Skript.registerClass(new ClassInfo<InventoryHolder>(InventoryHolder.class, "inventoryholder", "inventory holder")
+		Classes.registerClass(new ClassInfo<InventoryHolder>(InventoryHolder.class, "inventoryholder", "inventory holder")
 				.defaultExpression(new EventValueExpression<InventoryHolder>(InventoryHolder.class)));
 		
-		Skript.registerClass(new ClassInfo<GameMode>(GameMode.class, "gamemode", "game mode")
+		Classes.registerClass(new ClassInfo<GameMode>(GameMode.class, "gamemode", "game mode")
 				.user("game ?modes?")
 				.defaultExpression(new SimpleLiteral<GameMode>(GameMode.SURVIVAL, true))
 				.parser(new Parser<GameMode>() {
@@ -500,18 +496,24 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final GameMode o) {
-						return o.toString().toLowerCase();
-					}
-					
-					@Override
 					public String toString(final GameMode m) {
 						return m.toString().toLowerCase();
 					}
+					
+					@Override
+					public String toVariableNameString(final GameMode o) {
+						return o.toString().toLowerCase(Locale.ENGLISH);
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "[a-z]+";
+					}
 				}).serializer(new EnumSerializer<GameMode>(GameMode.class)));
 		
-		Skript.registerClass(new ClassInfo<ItemStack>(ItemStack.class, "itemstack", "material")
+		Classes.registerClass(new ClassInfo<ItemStack>(ItemStack.class, "itemstack", "material")
 				.user("item", "material")
+				.after("number")
 				.parser(new Parser<ItemStack>() {
 					@Override
 					public ItemStack parse(final String s, final ParseContext context) {
@@ -540,7 +542,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toCodeString(final ItemStack i) {
+					public String toVariableNameString(final ItemStack i) {
 						final StringBuilder b = new StringBuilder("item:");
 						b.append(i.getType().name());
 						b.append(":" + i.getDurability());
@@ -550,6 +552,11 @@ public class BukkitClasses {
 							b.append(":" + e.getValue());
 						}
 						return b.toString();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "item:.+";
 					}
 				}).serializer(new Serializer<ItemStack>() {
 					@Override
@@ -594,10 +601,46 @@ public class BukkitClasses {
 					}
 				}));
 		
-		Skript.registerClass(new ClassInfo<Biome>(Biome.class, "biome", "biome")
+		Classes.registerClass(new ClassInfo<Biome>(Biome.class, "biome", "biome")
 				.user("biomes?")
 				.parser(new EnumParser<Biome>(Biome.class))
 				.serializer(new EnumSerializer<Biome>(Biome.class)));
+		
+		Classes.registerClass(new ClassInfo<PotionEffectType>(PotionEffectType.class, "potioneffecttype", "potion")
+				.user("potions?( ?effects?)?( ?types?)?")
+				.parser(new Parser<PotionEffectType>() {
+					@Override
+					public PotionEffectType parse(final String s, final ParseContext context) {
+						return PotionEffectUtils.parse(s);
+					}
+					
+					@Override
+					public String toString(final PotionEffectType o) {
+						return PotionEffectUtils.toString(o);
+					}
+					
+					@Override
+					public String toVariableNameString(final PotionEffectType o) {
+						return o.getName();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return ".+";
+					}
+				})
+				.serializer(new Serializer<PotionEffectType>() {
+					
+					@Override
+					public String serialize(final PotionEffectType o) {
+						return o.getName();
+					}
+					
+					@Override
+					public PotionEffectType deserialize(final String s) {
+						return PotionEffectType.getByName(s);
+					}
+				}));
 		
 	}
 }

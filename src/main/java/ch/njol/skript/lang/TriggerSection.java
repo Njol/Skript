@@ -36,8 +36,7 @@ import ch.njol.skript.config.SectionNode;
  * @see Loop
  */
 public abstract class TriggerSection extends TriggerItem {
-	
-//	private List<TriggerItem> items;
+	private static final long serialVersionUID = -6022270709339418778L;
 	
 	private TriggerItem first = null;
 	protected TriggerItem last = null;
@@ -66,7 +65,6 @@ public abstract class TriggerSection extends TriggerItem {
 			last = items.get(items.size() - 1);
 			last.setNext(getNext());
 		}
-//		this.items = items;
 		for (final TriggerItem item : items) {
 			item.setParent(this);
 		}

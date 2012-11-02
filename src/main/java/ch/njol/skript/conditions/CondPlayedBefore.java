@@ -35,6 +35,8 @@ import ch.njol.util.Checker;
  */
 public class CondPlayedBefore extends Condition {
 	
+	private static final long serialVersionUID = -7504900855076739208L;
+	
 	static {
 		Skript.registerCondition(CondPlayedBefore.class,
 				"%offlineplayer% [(has|did)] [already] play[ed] [on (this|the) server] (before|already)",

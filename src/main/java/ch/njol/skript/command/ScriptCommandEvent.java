@@ -27,16 +27,16 @@ import org.bukkit.event.HandlerList;
 /**
  * @author Peter Güttinger
  */
-public class SkriptCommandEvent extends CommandEvent {
+public class ScriptCommandEvent extends CommandEvent {
 	
-	private final SkriptCommand skriptCommand;
+	private final ScriptCommand skriptCommand;
 	
-	public SkriptCommandEvent(final SkriptCommand command, final CommandSender sender) {
+	public ScriptCommandEvent(final ScriptCommand command, final CommandSender sender) {
 		super(sender, command.getLabel(), null);
 		skriptCommand = command;
 	}
 	
-	public SkriptCommand getSkriptCommand() {
+	public ScriptCommand getSkriptCommand() {
 		return skriptCommand;
 	}
 	

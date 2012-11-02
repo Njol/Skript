@@ -24,7 +24,6 @@ package ch.njol.skript.events;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -41,6 +40,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 @SuppressWarnings("unchecked")
 public class EvtDamage extends SkriptEvent {
+	private static final long serialVersionUID = -8211419854529792220L;
 	
 	static {
 		Skript.registerEvent(EvtDamage.class, Skript.array(EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class), "damag(e|ing) [of %entitydata%]");
@@ -57,8 +57,11 @@ public class EvtDamage extends SkriptEvent {
 	@Override
 	public boolean check(final Event evt) {
 		final EntityDamageEvent e = (EntityDamageEvent) evt;
-		return checkType(e.getEntity()) && !(e.getEntity() instanceof Player && ((LivingEntity) e.getEntity()).getNoDamageTicks() > 0) // only players can be invulnerable?
-				&& !(e instanceof EntityDamageByEntityEvent && ((EntityDamageByEntityEvent) e).getDamager() instanceof EnderDragon && ((EntityDamageByEntityEvent) e).getEntity() instanceof EnderDragon);
+		if (!checkType(e.getEntity()))
+			return false;
+		if (e instanceof EntityDamageByEntityEvent && ((EntityDamageByEntityEvent) e).getDamager() instanceof EnderDragon && ((EntityDamageByEntityEvent) e).getEntity() instanceof EnderDragon)
+			return false;
+		return checkDamage(e);
 	}
 	
 	private boolean checkType(final Entity e) {
@@ -76,4 +79,55 @@ public class EvtDamage extends SkriptEvent {
 		return "damage" + (types == null ? "" : " of " + types.toString(e, debug));
 	}
 	
+//	private static final WeakHashMap<LivingEntity, Integer> lastDamages = new WeakHashMap<LivingEntity, Integer>();
+	
+	private static boolean checkDamage(final EntityDamageEvent e) {
+		if (!(e.getEntity() instanceof LivingEntity))
+			return true;
+		final LivingEntity en = (LivingEntity) e.getEntity();
+		if (en.getHealth() <= 0)
+			return false;
+//		if (en.getNoDamageTicks() <= en.getMaximumNoDamageTicks() / 2) {
+//			lastDamages.put(en, e.getDamage());
+//			return true;
+//		}
+//		final Integer lastDamage = lastDamages.get(en);
+//		if (lastDamage != null && lastDamage >= e.getDamage())
+//			return false;
+//		lastDamages.put(en, e.getDamage());
+		return true;
+	}
+	
+	/*
+	static {
+		Bukkit.getPluginManager().registerEvents(new Listener() {
+			@EventHandler
+			public void onDamage(final EntityDamageEvent e) {
+				if (e.getEntity() == EffSpawn.lastSpawned) {
+					final Entity en = e.getEntity();
+					Skript.info("");
+					Skript.info("- damage event! time: " + en.getWorld().getTime());
+	//					Skript.info("entity: " + en);
+					Skript.info("damage: " + e.getDamage());
+	//					Skript.info("last damage: " + (en.getLastDamageCause() == null ? "<none>" : ""+en.getLastDamageCause().getDamage()));
+					if (en instanceof LivingEntity) {
+						Skript.info("is invincible: " + (((LivingEntity) en).getNoDamageTicks() > ((LivingEntity) en).getMaximumNoDamageTicks() / 2f));
+						if (((LivingEntity) en).getNoDamageTicks() > 0)
+							Skript.info("damage difference (positive = more): " + (e.getDamage() - en.getLastDamageCause().getDamage()));
+						final int h = Math.max(((LivingEntity) en).getHealth(), 0);
+						Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+							@Override
+							public void run() {
+								Skript.info("actual damage: " + (h - Math.max(((LivingEntity) en).getHealth(), 0)));
+							}
+						});
+					}
+					if (e instanceof EntityDamageByEntityEvent) {
+						Skript.info("attacker: " + ((EntityDamageByEntityEvent) e).getDamager());
+					}
+				}
+			}
+		}, Skript.getInstance());
+	}
+	//	*/
 }

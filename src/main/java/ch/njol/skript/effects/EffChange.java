@@ -30,10 +30,13 @@ import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.UnparsedLiteral;
+import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Patterns;
 
 /**
@@ -41,17 +44,17 @@ import ch.njol.skript.util.Patterns;
  */
 public class EffChange extends Effect {
 	
+	private static final long serialVersionUID = 5756451063750867855L;
+	
 	private static Patterns<ChangeMode> patterns = new Patterns<ChangeMode>(new Object[][] {
 			
 			{"(add|give) %objects% to %objects%", ChangeMode.ADD},
 			{"increase %objects% by %objects%", ChangeMode.ADD},
 			{"give %objects% %objects%", ChangeMode.ADD},
-			// TODO give items/xp to player
 			
 			{"set %objects% to %objects%", ChangeMode.SET},
 			
 			{"(remove|subtract) %objects% from %objects%", ChangeMode.REMOVE},
-			// TODO remove items/xp from drops
 			
 			{"(clear|delete) %objects%", ChangeMode.CLEAR},
 	
@@ -83,66 +86,84 @@ public class EffChange extends Effect {
 					changed = vars[0];
 					changer = vars[1];
 				}
-			break;
+				break;
 			case SET:
 				changer = vars[1];
 				changed = vars[0];
-			break;
+				break;
 			case REMOVE:
 				changer = vars[0];
 				changed = vars[1];
-			break;
+				break;
 			case CLEAR:
 				changed = vars[0];
-			break;
+				break;
 		}
 		
-		if (changed instanceof UnparsedLiteral)
+		if (changed instanceof Literal<?>)
 			return false;
 		
-		Class<?> r = changed.acceptChange(mode);
-		if (r == null) {
-			final ClassInfo<?> ci = Skript.getSuperClassInfo(changed.getReturnType());
+		final int e = SkriptLogger.getNumErrors();
+		Class<?>[] rs = changed.acceptChange(mode);
+		final boolean hasError = SkriptLogger.getNumErrors() != e;
+		if (rs == null) {
+			final ClassInfo<?> ci = Classes.getSuperClassInfo(changed.getReturnType());
 			if (ci == null || ci.getChanger() == null || ci.getChanger().acceptChange(mode) == null) {
+				if (hasError)
+					return false;
 				if (mode == ChangeMode.SET)
-					Skript.error(changed + " can't be set");
+					Skript.error(changed + " can't be set", ErrorQuality.SEMANTIC_ERROR);
 				else if (mode == ChangeMode.CLEAR)
-					Skript.error(changed + " can't be cleared/deleted");
+					Skript.error(changed + " can't be cleared/deleted", ErrorQuality.SEMANTIC_ERROR);
 				else
-					Skript.error(changed + " can't have something " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " it");
+					Skript.error(changed + " can't have anything " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " it", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 			c = ci.getChanger();
-			r = c.acceptChange(mode);
-		}
-		
-		if (r.isArray()) {
-			single = false;
-			r = r.getComponentType();
+			rs = c.acceptChange(mode);
 		}
 		
 		if (changer != null) {
-			final SubLog log = SkriptLogger.startSubLog();
-			final Expression<?> v = changer.getConvertedExpression(r);
+			final ErrorQuality q = changer.getReturnType() == Object.class ? ErrorQuality.NOT_AN_EXPRESSION : ErrorQuality.SEMANTIC_ERROR;
+			final SimpleLog log = SkriptLogger.startSubLog();
+			Expression<?> v = null;
+			Class<?> x = null;
+			for (final Class<?> r : rs) {
+				v = changer.getConvertedExpression(r.isArray() ? r.getComponentType() : r);
+				if (v != null) {
+					x = r;
+					break;
+				}
+			}
 			log.stop();
 			if (v == null) {
-				if (mode == ChangeMode.SET)
-					Skript.error(changed + " can't be set to " + changer);
+				if (log.hasErrors()) {
+					SkriptLogger.log(log.getFirstError());
+					return false;
+				}
+				if (rs.length == 1 && rs[0] == Object.class)
+					Skript.error("Can't understand this expression: " + changer, ErrorQuality.NOT_AN_EXPRESSION);
+				else if (mode == ChangeMode.SET)
+					Skript.error(changed + " can't be set to " + changer + " because the latter is " + SkriptParser.notOfType(rs), q);
 				else
-					Skript.error(changer + " can't be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed);
+					Skript.error(changer + " can't be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed + " because the former is " + SkriptParser.notOfType(rs), q);
 				return false;
+			}
+			
+			if (x.isArray()) {
+				single = false;
+				x = x.getComponentType();
 			}
 			changer = v;
 			
 			if (!changer.isSingle() && single) {
 				if (mode == ChangeMode.SET)
-					Skript.error(changed + " can only be set to one " + Skript.getSuperClassInfo(r).getName() + ", but multiple are given");
+					Skript.error(changed + " can only be set to one " + Classes.getSuperClassInfo(x).getName() + ", but multiple are given", ErrorQuality.SEMANTIC_ERROR);
 				else
-					Skript.error("only one " + Skript.getSuperClassInfo(r).getName() + " can be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed + ", but multiple are given");
+					Skript.error("only one " + Classes.getSuperClassInfo(x).getName() + " can be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed + ", but multiple are given", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 		}
-		
 		return true;
 	}
 	

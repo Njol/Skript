@@ -31,9 +31,18 @@ public class SyntaxElementInfo<E extends SyntaxElement> {
 	public final Class<E> c;
 	public final String[] patterns;
 	
-	public SyntaxElementInfo(final String[] patterns, final Class<E> c) {
+	public SyntaxElementInfo(final String[] patterns, final Class<E> c) throws IllegalArgumentException {
 		this.patterns = patterns;
 		this.c = c;
+		try {
+			c.getConstructor();
+//			if (!c.getDeclaredConstructor().isAccessible())
+//				throw new IllegalArgumentException("The nullary constructor of class "+c.getName()+" is not public");
+		} catch (final NoSuchMethodException e) {
+			throw new IllegalArgumentException("Class " + c.getName() + " does not have a public nullary constructor");
+		} catch (final SecurityException e) {
+			throw new IllegalArgumentException("Skript cannot run properly because a security manager is blocking it!");
+		}
 	}
 	
 }

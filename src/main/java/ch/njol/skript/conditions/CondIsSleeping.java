@@ -24,24 +24,26 @@ package ch.njol.skript.conditions;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
-import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  */
 public class CondIsSleeping extends PropertyCondition<Player> {
 	
+	private static final long serialVersionUID = -7926770715467447915L;
+	
 	static {
 		register(CondIsSleeping.class, "sleeping", "players");
 	}
 	
-	public CondIsSleeping() {
-		super("sleeping", new Checker<Player>() {
-			@Override
-			public boolean check(final Player p) {
-				return p.isSleeping();
-			}
-		});
+	@Override
+	public boolean check(final Player p) {
+		return p.isSleeping();
+	}
+	
+	@Override
+	protected String getPropertyName() {
+		return "sleeping";
 	}
 	
 }

@@ -37,6 +37,8 @@ import ch.njol.skript.util.Timespan;
  */
 public class EffPoison extends Effect {
 	
+	private static final long serialVersionUID = -1525181862499679238L;
+	
 	static {
 		Skript.registerEffect(EffPoison.class,
 				"poison %livingentities% [for %-timespan%]",

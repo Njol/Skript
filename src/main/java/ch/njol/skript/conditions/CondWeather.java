@@ -38,6 +38,8 @@ import ch.njol.util.Checker;
  */
 public class CondWeather extends Condition {
 	
+	private static final long serialVersionUID = 364874019960153313L;
+	
 	static {
 		Skript.registerCondition(CondWeather.class, "is %weathertypes% [in %worlds%]");
 	}

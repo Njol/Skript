@@ -21,7 +21,6 @@
 
 package ch.njol.skript.effects;
 
-import org.bukkit.TreeType;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
@@ -29,45 +28,44 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Offset;
+import ch.njol.skript.util.StructureType;
 
 /**
  * @author Peter Güttinger
  */
 public class EffTree extends Effect {
+	private static final long serialVersionUID = -7165734014003826172L;
 	
 	static {
 		Skript.registerEffect(EffTree.class,
-				"(grow|create|generate) tree [of type %treetype%] %offsets% %blocks%",
-				"(grow|create|generate) %treetype% [tree] %offsets% %blocks%");
+				"(grow|create|generate) tree [of type %structuretype%] %blocks%",
+				"(grow|create|generate) %structuretype% [tree] %blocks%");
 	}
 	
-	private Expression<Offset> offsets;
 	private Expression<Block> blocks;
-	private Expression<TreeType> type;
+	private Expression<StructureType> type;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		type = (Expression<TreeType>) vars[0];
-		offsets = (Expression<Offset>) vars[1];
-		blocks = (Expression<Block>) vars[2];
+		type = (Expression<StructureType>) vars[0];
+		blocks = (Expression<Block>) vars[1];
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		final TreeType type = this.type.getSingle(e);
+		final StructureType type = this.type.getSingle(e);
 		if (type == null)
 			return;
-		for (final Block b : Offset.setOff(offsets.getArray(e), blocks.getArray(e))) {
-			b.getWorld().generateTree(b.getLocation(), type);
+		for (final Block b : blocks.getArray(e)) {
+			type.grow(b);
 		}
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "grow tree of type " + type.toString(e, debug) + " " + offsets.toString(e, debug) + " " + blocks.toString(e, debug);
+		return "grow tree of type " + type.toString(e, debug) + " " + blocks.toString(e, debug);
 	}
 	
 }

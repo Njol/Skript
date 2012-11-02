@@ -30,11 +30,14 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Loop;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.TriggerItem;
+import ch.njol.skript.log.ErrorQuality;
 
 /**
  * @author Peter Güttinger
  */
 public class EffExit extends Effect {
+	
+	private static final long serialVersionUID = -5403936517942163172L;
 	
 	static {
 		Skript.registerEffect(EffExit.class,
@@ -51,23 +54,21 @@ public class EffExit extends Effect {
 		switch (matchedPattern) {
 			case 0:
 				breakLevels = ScriptLoader.currentSections.size() + 1;
-			break;
+				break;
 			case 1:
 			case 2:
 				breakLevels = matchedPattern == 1 ? 1 : Integer.parseInt(parser.regexes.get(0).group());
 				if (breakLevels > ScriptLoader.currentSections.size()) {
-					if (ScriptLoader.currentSections.isEmpty()) {
-						Skript.error("can't exit any sections as there are no sections present");
-						return false;
-					} else {
-						Skript.error("can't exit " + breakLevels + " sections as there are only " + ScriptLoader.currentSections.size() + " sections present");
-						return false;
-					}
+					if (ScriptLoader.currentSections.isEmpty())
+						Skript.error("can't exit any sections as there are no sections present", ErrorQuality.SEMANTIC_ERROR);
+					else
+						Skript.error("can't exit " + breakLevels + " sections as there are only " + ScriptLoader.currentSections.size() + " sections present", ErrorQuality.SEMANTIC_ERROR);
+					return false;
 				}
-			break;
+				break;
 			case 3:
 				breakLevels = ScriptLoader.currentSections.size();
-			break;
+				break;
 		}
 		return true;
 	}

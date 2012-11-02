@@ -21,7 +21,9 @@
 
 package ch.njol.skript.command;
 
-import java.util.Map;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.WeakHashMap;
 
 import org.bukkit.event.Event;
@@ -30,8 +32,10 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.UnparsedLiteral;
+import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 
 /**
@@ -39,7 +43,8 @@ import ch.njol.skript.util.Utils;
  * 
  * @author Peter Güttinger
  */
-public class Argument<T> {
+public class Argument<T> implements Serializable {
+	private static final long serialVersionUID = 3781008861450480426L;
 	
 	private final Expression<? extends T> def;
 	private final Class<T> type;
@@ -48,7 +53,12 @@ public class Argument<T> {
 	
 	private final boolean optional;
 	
-	private final Map<Event, T[]> current = new WeakHashMap<Event, T[]>();
+	private transient WeakHashMap<Event, T[]> current = new WeakHashMap<Event, T[]>();
+	
+	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+		in.defaultReadObject();
+		current = new WeakHashMap<Event, T[]>();
+	}
 	
 	public Argument(final Expression<? extends T> def, final Class<T> type, final boolean single, final int index, final boolean optional) {
 		this.def = def;
@@ -62,22 +72,26 @@ public class Argument<T> {
 		Expression<? extends T> d = null;
 		if (def != null) {
 			if (def.startsWith("%") && def.endsWith("%")) {
-				final Expression<?> e = (Expression<?>) SkriptParser.parse(def.substring(1, def.length() - 1), Skript.getExpressions().iterator(), false, true, "Can't understand the expression '" + def + "'");
+				final Expression<?> e = SkriptParser.parseExpression(def.substring(1, def.length() - 1), false, ParseContext.COMMAND, Object.class);
 				if (e == null)
 					return null;
-				final SubLog log = SkriptLogger.startSubLog();
+				if (e instanceof UnparsedLiteral) {
+					Skript.error("Can't understand this expression: " + def + "");
+					return null;
+				}
+				final SimpleLog log = SkriptLogger.startSubLog();
 				d = e.getConvertedExpression(type);
 				SkriptLogger.stopSubLog(log);
 				if (d == null) {
-					log.printErrors("'" + def + "' is not " + Utils.a(Skript.getExactClassName(type)));
+					log.printErrors("'" + def + "' is not " + Utils.a(Classes.getExactClassName(type)));
 					return null;
 				}
 			} else {
-				final SubLog log = SkriptLogger.startSubLog();
+				final SimpleLog log = SkriptLogger.startSubLog();
 				d = SkriptParser.parseLiteral(def, type, ParseContext.DEFAULT);
 				SkriptLogger.stopSubLog(log);
 				if (d == null) {
-					log.printErrors("'" + def + "' is not " + Utils.a(Skript.getExactClassName(type)));
+					log.printErrors("'" + def + "' is not " + Utils.a(Classes.getExactClassName(type)));
 					return null;
 				}
 			}
@@ -87,20 +101,20 @@ public class Argument<T> {
 	
 	@Override
 	public String toString() {
-		return "<" + Utils.toPlural(Skript.getExactClassName(type), !single) + (def == null ? "" : " = " + def.toString()) + ">";
+		return "<" + Utils.toPlural(Classes.getExactClassName(type), !single) + (def == null ? "" : " = " + def.toString()) + ">";
 	}
 	
 	public boolean isOptional() {
 		return optional;
 	}
 	
-	public void setToDefault(final SkriptCommandEvent event) {
+	public void setToDefault(final ScriptCommandEvent event) {
 		if (def != null)
 			current.put(event, def.getArray(event));
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void set(final SkriptCommandEvent e, final Object[] o) {
+	public void set(final ScriptCommandEvent e, final Object[] o) {
 		if (o == null || !(type.isAssignableFrom(o.getClass().getComponentType())))
 			throw new IllegalArgumentException();
 		current.put(e, (T[]) o);

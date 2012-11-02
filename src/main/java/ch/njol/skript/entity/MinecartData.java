@@ -27,11 +27,13 @@ import org.bukkit.entity.StorageMinecart;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
 public class MinecartData extends EntityData<Minecart> {
+	private static final long serialVersionUID = 2903518105647442587L;
 	
 	private static enum MinecartType {
 		ANY(Minecart.class, "minecart", "[mine]cart[s]"),
@@ -40,7 +42,7 @@ public class MinecartData extends EntityData<Minecart> {
 		POWERED(PoweredMinecart.class, "powered minecart", "powered [mine]cart[s]");
 		
 		final Class<? extends Minecart> c;
-		final String name;
+		private final String name;
 		final String pattern;
 		
 		MinecartType(final Class<? extends Minecart> c, final String name, final String pattern) {
@@ -57,6 +59,11 @@ public class MinecartData extends EntityData<Minecart> {
 			}
 		}
 		
+		@Override
+		public String toString() {
+			return name;
+		}
+		
 	}
 	
 	static {
@@ -70,7 +77,7 @@ public class MinecartData extends EntityData<Minecart> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		type = MinecartType.byPattern[matchedPattern];
-		plural = parseResult.expr.endsWith("s");
+		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -98,4 +105,37 @@ public class MinecartData extends EntityData<Minecart> {
 	public boolean isPlural() {
 		return plural;
 	}
+	
+	@Override
+	public int hashCode() {
+		return type.hashCode();
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof MinecartData))
+			return false;
+		final MinecartData other = (MinecartData) obj;
+		return type == other.type;
+	}
+	
+	@Override
+	public String serialize() {
+		return type.name();
+	}
+	
+	@Override
+	protected boolean deserialize(final String s) {
+		try {
+			type = MinecartType.valueOf(s);
+			return true;
+		} catch (final IllegalArgumentException e) {
+			return false;
+		}
+	}
+	
 }

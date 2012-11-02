@@ -21,8 +21,8 @@
 
 package ch.njol.skript.classes;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.StringMode;
 
 /**
@@ -31,9 +31,9 @@ import ch.njol.skript.util.StringMode;
  * @author Peter Güttinger
  * 
  * @param <T> the type of this parser
- * @see Skript#registerClass(ClassInfo)
+ * @see Classes#registerClass(ClassInfo)
  * @see ClassInfo
- * @see Skript#toString(Object)
+ * @see Classes#toString(Object)
  */
 public abstract class Parser<T> {
 	
@@ -76,7 +76,7 @@ public abstract class Parser<T> {
 			case DEBUG:
 				return getDebugMessage(o);
 			case VARIABLE_NAME:
-				return toCodeString(o);
+				return toVariableNameString(o);
 			case COMMAND:
 				return toCommandString(o);
 		}
@@ -94,7 +94,16 @@ public abstract class Parser<T> {
 	 * @param o
 	 * @return
 	 */
-	public abstract String toCodeString(final T o);
+	public abstract String toVariableNameString(final T o);
+	
+	/**
+	 * Returns a pattern that matches all possible outputs of {@link #toVariableNameString(Object)}. This is used to test for variable conflicts.<br>
+	 * This pattern is inserted directly into a pattern, i.e. without any surrounding parantheses, and the pattern is compiled without any checks, thus an invalid pattern will
+	 * crash Skript.
+	 * 
+	 * @return
+	 */
+	public abstract String getVariableNamePattern();
 	
 	/**
 	 * Returns a string representation of the given object to be used for debugging.<br>

@@ -30,7 +30,6 @@ import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Offset;
 
 /**
  * 
@@ -38,14 +37,15 @@ import ch.njol.skript.util.Offset;
  */
 public class EffSpawn extends Effect {
 	
+	private static final long serialVersionUID = -646938414963922055L;
+	
 	static {
 		Skript.registerEffect(EffSpawn.class,
-				"spawn %entitytypes% [%offset% %locations%]",
-				"spawn %integer% of %entitytypes% [%offset% %locations%]");
+				"spawn %entitytypes% [%locations%]",
+				"spawn %integer% of %entitytypes% [%locations%]");
 	}
 	
 	private Expression<Location> locations;
-	private Expression<Offset> offsets;
 	private Expression<EntityType> types;
 	private Expression<Integer> amount;
 	
@@ -56,8 +56,7 @@ public class EffSpawn extends Effect {
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		amount = matchedPattern == 0 ? null : (Expression<Integer>) (exprs[0]);
 		types = (Expression<EntityType>) exprs[matchedPattern];
-		offsets = (Expression<Offset>) exprs[1 + matchedPattern];
-		locations = (Expression<Location>) exprs[2 + matchedPattern];
+		locations = (Expression<Location>) exprs[1 + matchedPattern];
 		return true;
 	}
 	
@@ -67,7 +66,7 @@ public class EffSpawn extends Effect {
 			return;
 		final EntityType[] ts = types.getArray(e);
 		final int a = amount == null ? 1 : amount.getSingle(e);
-		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
+		for (final Location l : locations.getArray(e)) {
 			for (final EntityType type : ts) {
 				for (int i = 0; i < a * type.getAmount(); i++) {
 					lastSpawned = type.data.spawn(l);
@@ -78,7 +77,7 @@ public class EffSpawn extends Effect {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "spawn " + types.toString(e, debug) + " " + offsets.toString(e, debug) + " " + locations.toString(e, debug);
+		return "spawn " + types.toString(e, debug) + " " + locations.toString(e, debug);
 	}
 	
 }

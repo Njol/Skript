@@ -35,6 +35,7 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  */
 public final class EvtGameMode extends SkriptEvent {
+	private static final long serialVersionUID = -7921220368965034351L;
 	
 	static {
 		Skript.registerEvent(EvtGameMode.class, PlayerGameModeChangeEvent.class, "gamemode change [to %gamemode%]");

@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
@@ -33,8 +34,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.BlockLineIterator;
-import ch.njol.skript.util.Offset;
-import ch.njol.util.StringUtils;
+import ch.njol.skript.util.Direction;
 import ch.njol.util.iterator.IteratorIterable;
 
 /**
@@ -42,41 +42,43 @@ import ch.njol.util.iterator.IteratorIterable;
  * @author Peter Güttinger
  */
 public class ExprBlocks extends SimpleExpression<Block> {
+	private static final long serialVersionUID = -5840214530628307924L;
 	
 	static {
 		Skript.registerExpression(ExprBlocks.class, Block.class, ExpressionType.NORMAL,
-				"[the] block[s] %offsets% [%blocks%]",
+				"[the] blocks %directions% [%blocks/locations%]",
+				"[the] blocks from %block/location% [on] %directions%",
 				"[the] blocks from %block% to %block%",
-				"[the] blocks between %block% and %block%",
-				"[the] blocks from %block% on %offset%");
+				"[the] blocks between %block% and %block%");
 	}
 	
-	private boolean isLoop;
 	private Expression<Block> blocks;
+	private Expression<Location> locations;
 	private Expression<Block> end;
-	private Expression<Offset> offsets;
-	private int matchedPattern;
+	private Expression<Direction> directions;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		this.matchedPattern = matchedPattern;
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
-				offsets = (Expression<Offset>) vars[0];
-				blocks = (Expression<Block>) vars[1];
-				isLoop = StringUtils.startsWithIgnoreCase(parser.expr, "blocks") || StringUtils.startsWithIgnoreCase(parser.expr, "the blocks");
-			break;
+				directions = (Expression<Direction>) exprs[0];
+				if (Block.class.isAssignableFrom(exprs[1].getReturnType()))
+					blocks = (Expression<Block>) exprs[1];
+				else
+					locations = (Expression<Location>) exprs[1];
+				break;
 			case 1:
+				if (Block.class.isAssignableFrom(exprs[0].getReturnType()))
+					blocks = (Expression<Block>) exprs[0];
+				else
+					locations = (Expression<Location>) exprs[0];
+				directions = (Expression<Direction>) exprs[1];
+				break;
 			case 2:
-				blocks = (Expression<Block>) vars[0];
-				end = (Expression<Block>) vars[1];
-				isLoop = true;
-			break;
 			case 3:
-				blocks = (Expression<Block>) vars[0];
-				offsets = (Expression<Offset>) vars[1];
-				isLoop = true;
+				blocks = (Expression<Block>) exprs[0];
+				end = (Expression<Block>) exprs[1];
 		}
 		return true;
 	}
@@ -84,19 +86,13 @@ public class ExprBlocks extends SimpleExpression<Block> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (end == null)
-			return "block" + (isSingle() ? "" : "s") + " " + offsets.toString(e, debug) + " " + blocks.toString(e, debug);
+			return "block" + (isSingle() ? "" : "s") + " " + directions.toString(e, debug) + " " + (blocks != null ? blocks.toString(e, debug) : locations.toString(e, debug));
 		else
 			return "blocks from " + blocks.toString(e, debug) + " to " + end.toString(e, debug);
 	}
 	
 	@Override
 	protected Block[] get(final Event e) {
-		if (matchedPattern == 0) {
-			final Block[] bs = blocks.getArray(e);
-			if (offsets == null)
-				return bs;
-			return Offset.setOff(offsets.getArray(e), bs);
-		}
 		final ArrayList<Block> r = new ArrayList<Block>();
 		for (final Block b : new IteratorIterable<Block>(iterator(e)))
 			r.add(b);
@@ -105,28 +101,26 @@ public class ExprBlocks extends SimpleExpression<Block> {
 	
 	@Override
 	public Iterator<Block> iterator(final Event e) {
-		if (matchedPattern == 0 && !isLoop) {
-			return super.iterator(e);
-		}
-		final Block b = blocks.getSingle(e);
-		if (b == null)
-			return null;
-		if (offsets != null) {
-			final Offset o = offsets.getSingle(e);
-			if (o == null)
+		if (directions != null) {
+			final Block b = blocks != null ? blocks.getSingle(e) : null;
+			if (blocks != null && b == null)
 				return null;
-			return new BlockLineIterator(b, o.toVector(), Skript.TARGETBLOCKMAXDISTANCE);
+			final Location l = b != null ? b.getLocation() : locations.getSingle(e);
+			if (l == null)
+				return null;
+			final Direction d = directions.getSingle(e);
+			if (d == null)
+				return null;
+			return new BlockLineIterator(l, b != null ? d.getDirection(b) : d.getDirection(l), Skript.TARGETBLOCKMAXDISTANCE);
 		} else {
+			final Block b = blocks.getSingle(e);
+			if (b == null)
+				return null;
 			final Block b2 = end.getSingle(e);
 			if (b2 == null || b2.getWorld() != b.getWorld())
 				return null;
 			return new BlockLineIterator(b, b2);
 		}
-	}
-	
-	@Override
-	public boolean canLoop() {
-		return isLoop;
 	}
 	
 	@Override
@@ -136,12 +130,12 @@ public class ExprBlocks extends SimpleExpression<Block> {
 	
 	@Override
 	public boolean isSingle() {
-		return matchedPattern == 0 && blocks.isSingle() && offsets.isSingle();
+		return false;
 	}
 	
 	@Override
 	public boolean getAnd() {
-		return matchedPattern != 0 || blocks.getAnd() && offsets.getAnd();
+		return true;
 	}
 	
 }

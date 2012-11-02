@@ -25,11 +25,13 @@ import org.bukkit.entity.Creeper;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
 public class CreeperData extends EntityData<Creeper> {
+	private static final long serialVersionUID = -6873924444340993222L;
 	
 	static {
 		EntityData.register(CreeperData.class, "creeper", Creeper.class, "unpowered creeper[s]", "creeper[s]", "powered creeper[s]");
@@ -42,7 +44,7 @@ public class CreeperData extends EntityData<Creeper> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		powered = matchedPattern - 1;
-		plural = parseResult.expr.endsWith("s");
+		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -71,4 +73,37 @@ public class CreeperData extends EntityData<Creeper> {
 	public boolean isPlural() {
 		return plural;
 	}
+	
+	@Override
+	public int hashCode() {
+		return powered;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof CreeperData))
+			return false;
+		final CreeperData other = (CreeperData) obj;
+		return powered == other.powered;
+	}
+	
+	@Override
+	public String serialize() {
+		return "" + powered;
+	}
+	
+	@Override
+	protected boolean deserialize(final String s) {
+		try {
+			powered = Integer.parseInt(s);
+			return true;
+		} catch (final NumberFormatException e) {
+			return false;
+		}
+	}
+	
 }

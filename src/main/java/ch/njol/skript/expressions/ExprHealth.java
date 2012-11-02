@@ -23,13 +23,10 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
-import org.bukkit.event.entity.EntityDamageEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.Converter.ConverterUtils;
-import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -40,6 +37,7 @@ import ch.njol.util.Math2;
  * @author Peter Güttinger
  */
 public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
+	private static final long serialVersionUID = 1795106981005297008L;
 	
 	static {
 		Skript.registerExpression(ExprHealth.class, Float.class, ExpressionType.PROPERTY, "[the] health [of %livingentities%]", "%livingentities%'[s] health");
@@ -62,14 +60,14 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 	
 	@Override
 	protected Float[] get(final Event e, final LivingEntity[] source) {
-		if (e instanceof EntityDamageEvent && getTime() > 0 && entities.getSource() instanceof ExprAttacked && !Delay.isDelayed(e)) {
-			return ConverterUtils.convert(entities.getArray(e), Float.class, new Getter<Float, LivingEntity>() {
-				@Override
-				public Float get(final LivingEntity entity) {
-					return Float.valueOf(0.5f * (entity.getHealth() - ((EntityDamageEvent) e).getDamage()));// FIXME this is not the actual damage taken!
-				}
-			});
-		}
+//		if (e instanceof EntityDamageEvent && getTime() > 0 && entities.getSource() instanceof ExprAttacked && !Delay.isDelayed(e)) {
+//			return ConverterUtils.convert(entities.getArray(e), Float.class, new Getter<Float, LivingEntity>() {
+//				@Override
+//				public Float get(final LivingEntity entity) {
+//					return Float.valueOf(0.5f * (entity.getHealth() - ((EntityDamageEvent) e).getDamage()));
+//				}
+//			});
+//		}
 		return get(source, new Getter<Float, LivingEntity>() {
 			@Override
 			public Float get(final LivingEntity entity) {
@@ -80,33 +78,34 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 		});
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-		return Float.class;
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		return Skript.array(Number.class);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		int s = 0;
 		if (mode != ChangeMode.CLEAR)
-			s = Math.round((Float) delta * 2);
+			s = Math.round(((Number) delta).floatValue() * 2);
 		switch (mode) {
 			case CLEAR:
 			case SET:
 				for (final LivingEntity entity : entities.getArray(e)) {
 					entity.setHealth(Math2.fit(0, s, entity.getMaxHealth()));
 				}
-			break;
+				break;
 			case ADD:
 				for (final LivingEntity entity : entities.getArray(e)) {
 					entity.setHealth(Math2.fit(0, entity.getHealth() + s, entity.getMaxHealth()));
 				}
-			break;
+				break;
 			case REMOVE:
 				for (final LivingEntity entity : entities.getArray(e)) {
 					entity.setHealth(Math2.fit(0, entity.getHealth() - s, entity.getMaxHealth()));
 				}
-			break;
+				break;
 		}
 	}
 	

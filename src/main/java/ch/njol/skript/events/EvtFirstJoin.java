@@ -33,6 +33,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class EvtFirstJoin extends SkriptEvent {
+	private static final long serialVersionUID = -6457374984148760334L;
 	
 	static {
 		Skript.registerEvent(EvtFirstJoin.class, PlayerJoinEvent.class, "first (join|login)");

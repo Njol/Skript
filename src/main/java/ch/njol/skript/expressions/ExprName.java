@@ -23,30 +23,31 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Player;
 
-import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprName extends SimplePropertyExpression<Player, String> {
+	private static final long serialVersionUID = 8530462959975535372L;
 	
 	static {
 		register(ExprName.class, String.class, "name", "players");
 	}
 	
-	/**
-	 * @param returnType
-	 * @param propertyName
-	 * @param converter
-	 */
-	public ExprName() {
-		super(String.class, "name", new Converter<Player, String>() {
-			@Override
-			public String convert(final Player p) {
-				return p.getName();
-			}
-		});
+	@Override
+	public Class<String> getReturnType() {
+		return String.class;
+	}
+	
+	@Override
+	protected String getPropertyName() {
+		return "name";
+	}
+	
+	@Override
+	public String convert(final Player p) {
+		return p.getName();
 	}
 	
 }

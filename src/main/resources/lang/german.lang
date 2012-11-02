@@ -1,33 +1,237 @@
 # Which version of Skript this language file was written for
-version = 1.4.4
+version: 2.0 beta 3
 
 # -- General --
-and = und
-or = oder
+and: und
+or: oder
+a: ein, einer, eines
 
 # -- Commands --
-command.no_permission_message = Du hast nicht die Erlaubnis dieses Kommando zu benützen
+commands:
+	no_permission_message: Du hast nicht die Erlaubnis, diesen Befehl zu benutzen!
+	executable_by_players: Dieser Befehl kann nur von Spielern benutzt werden
+	executable_by_console: Dieser Befehl kann nur von der Konsole benutzt werden
+	usage: Richtige Benutzung: %s
+
+# -- Updater --
+updater:
+	not_started: Es wurde noch nicht geprüft, ob eine neue Version verfügbar ist. Benutze <gold>/skript update check<reset> um die Überprüfung zu starten.
+	checking: Es wird geprüft, ob eine neue Version verfügbar ist...
+	check_in_progress: Es wird gerade geprüft, ob eine neue Version verfügbar ist.
+	check_error: <red>Beim Prüfen auf eine neue Version ist ein Fehler aufgetreten:<reset> %s
+	running_latest_version: Auf diesem Server läuft die neueste Version von Skript.
+	update_available: Eine neue Version von Skript ist verfügbar: <gold>%s<reset> (Auf diesem Server läuft Version <gold>%s<reset>)
+	downloading: Lade Skript <gold>%s<reset> herunter...
+	download_in_progress: Die neueste Version wird gerade heruntergeladen.
+	download_error: <red>Beim Herunterladen der neuesten Version ist ein Fehler aufgetreten:<reset> %s
+	downloaded: Die neueste Version von Skript wurde heruntergeladen! Starte den Server neu oder benutze /reload um die Änderungen zu übernehmen.
 
 # -- Enchantments --
-ench.of =
-ench.names.protection_environmental = des Schutzes
-ench.names.protection_fire = des Feuerschutzes
-ench.names.protection_fall = des Federfalls
-ench.names.protection_explosions = des Explosionsschutzes
-ench.names.protection_projectile = der Schusssicherheit
-ench.names.oxygen = der Atmung
-ench.names.water_worker = der Wasseraffinität
-ench.names.damage_all = der Schärfe
-ench.names.damage_undead = des Banns
-ench.names.damage_arthropods = der Nemesis der Gliederfüsser
-ench.names.knockback = des Rückstosses
-ench.names.fire_aspect = der Verbrennung
-ench.names.loot_bonus_mobs = der Plünderung
-ench.names.dig_speed = der Effizienz
-ench.names.silk_touch = der Behutsamkeit
-ench.names.durability = der Haltbarkeit
-ench.names.loot_bonus_blocks = des Glücks
-ench.names.arrow_damage = der Stärke
-ench.names.arrow_knockback = des Schlags
-ench.names.arrow_fire = des Feuers
-ench.names.arrow_infinite = der Unendlichkeit
+enchantments:
+	of: # FIXME funktionniert nicht!
+	names:
+		protection_environmental: des Schutzes
+		protection_fire: des Feuerschutzes
+		protection_fall: des Federfalls
+		protection_explosions: des Explosionsschutzes
+		protection_projectile: der Schusssicherheit
+		oxygen: der Atmung
+		water_worker: der Wasseraffinität
+		damage_all: der Schärfe
+		damage_undead: des Banns
+		damage_arthropods: der Nemesis der Gliederfüsser
+		knockback: des Rückstosses
+		fire_aspect: der Verbrennung
+		loot_bonus_mobs: der Plünderung
+		dig_speed: der Effizienz
+		silk_touch: der Behutsamkeit
+		durability: der Haltbarkeit
+		loot_bonus_blocks: des Glücks
+		arrow_damage: der Stärke
+		arrow_knockback: des Schlags
+		arrow_fire: des Feuers
+		arrow_infinite: der Unendlichkeit
+
+# -- Potion Effects --
+potions:
+	names:
+		speed: Schnelligkeit
+		slow: Langsamkeit
+		fast_digging: Eile
+		slow_digging: Trägheit
+		increase_damage: Stärke
+		heal: Heilung
+		harm: Schaden
+		jump: Sprungkraft
+		confusion: Übelkeit
+		regeneration: Regeneration
+		damage_resistance: Widerstand
+		fire_resistance: Feuerresistenz
+		water_breathing: Wasseratmung
+		invisibility: Unsichtbarkeit
+		blindness: Blindheit
+		night_vision: Nachtsicht
+		hunger: Hunger
+		weakness: Schwäche
+		poison: Vergiftung
+		wither: Wither
+
+# -- Weather --
+weather:
+	clear:
+		name: sonnig, schön
+		adjective: sonnig
+	rain:
+		name: Regen, regnerisch
+		adjective: regnerisch
+	thunder:
+		name: Gewitter
+		adjective: aufgewühlt
+
+# -- Tree Types --
+treetypes:
+	tree:
+		name: B¦aum¦äume
+		pattern: B(aum|äume) 
+	regular:
+		name: Eiche¦n
+		pattern: Eichen?|normaler? B(aum|äume)
+	small_regular:
+		name: kleine Eiche¦n
+		pattern: kleiner? (Eichen?|normaler? B(aum|äume))
+	big_regular:
+		name: grosse Eiche¦n
+		pattern: grosser? (Eichen?|normaler? B(aum|äume))
+	redwood:
+		name: Tanne¦n
+		pattern: Tannen?|Fichten?
+	small_redwood:
+		name: kleine Tanne¦n
+		pattern: kleine (Tannen?|Fichten?)
+	big_redwood:
+		name: grosse Tanne¦n
+		pattern: (grosse|hohe) (Tannen?|Fichten?)
+	jungle:
+		name: Jungelb¦aum¦äume
+		pattern: Jungelb(aum|äume)
+	small_jungle:
+		name: kleiner Jungelb¦aum¦äume
+		pattern: kleiner? Jungelb(aum|äume)
+	big_jungle:
+		name: grosser Jungelb¦aum¦äume
+		pattern: (grosser?|hoher?) Jungelb(aum|äume)
+	jungle_bush:
+		name: B¦usch¦üsche
+		pattern: (Jungel)?b(usch|üsche)
+	swamp:
+		name: Sumpfb¦aum¦äume
+		pattern: Sumpfb(aum|äume)
+	mushroom:
+		name: grosse¦r Pilz¦ Pilze
+		pattern: grosser? Pilze?
+	red_mushroom:
+		name: grosse¦r roter Pilz¦ roter Pilze
+		pattern: grosser? (roter? Pilze?|Fliegenpilze?)
+	brown_mushroom:
+		name: grosse¦r brauner Pilz¦ braune Pilze
+		pattern: grosser? brauner? Pilze?
+
+# -- Time --
+time:
+	second: Sekunde¦n
+	minute: Minute¦n
+	hour: Stunde¦n
+	day: Tag¦e
+
+# -- Chat and Wool Colours --
+colors:
+	black: schwarz
+	dark_grey: dunkelgrau
+	light_grey: grau, hellgrau, silber
+	white: weiss
+	dark_blue: blau, dunkelblau
+	brown: braun, hellblau, indigo
+	dark_cyan: cyan, aqua, dunkelcyan, dunkelaqua
+	light_cyan: hellcyan, hellaqua
+	dark_green: grün, dunkelgrün
+	light_green: hellgrün, limettengrün
+	yellow: gelb, hellgelb, zitronengelb
+	orange: orange, gold, dunkelgelb
+	dark_red: rot, dunkelrot
+	light_red: pink, rosa, hellrot
+	dark_purple: violett, dunkelviolett
+	light_purple: magenta, hellviolett
+
+# -- Chat Styles -
+chatstyles:
+	bold: fett, f, b
+	italic: schräg, s, i
+	strikethrough: durchgestrichen, gestrichen, d, g
+	underline: unterstrichen, u
+	magic: magie
+	reset: zurücksetzen, z, r
+
+# -- Directions --
+directions:
+	meter: Meter
+	
+	at: bei
+	
+	up: oben
+	down: unten
+	north: nördlich
+	east: östlich
+	south: südlich
+	west: westlich
+	
+	above: über
+	below: unter
+	front: vor
+	behind: hinter
+	right: rechts
+	left: links
+
+# -- Types --
+types:
+	# Java
+	object: Objekt¦e
+	number: Nummer¦n
+	integer: ganze Zahl¦en
+	long: ganze Zahl¦en
+	short: ganze Zahl¦en
+	byte: ganze Zahl¦en
+	double: Nummer¦n
+	float: Nummer¦n
+	boolean: boolesche¦r Wert (ja/nein)¦e Werte (ja/nein)
+	string: Text¦e
+	
+	# Bukkit
+	entity: Wesen
+	livingentity: Lebewesen
+	projectile: Projektil¦e
+	block: ¦Block¦Blöcke
+	location: Ort¦e
+	world: Welt¦en
+	inventory: Inventar¦e
+	player: Spieler
+	offlineplayer: Spieler
+	commandsender: Spieler/Konsole¦n
+	blockface: Richtung¦en
+	inventoryholder: inventory holder
+	gamemode: Spiel¦modus¦modi
+	itemstack: Material¦ien
+	biome: Biom¦e
+	potioneffecttype: ¦Trank¦Tränke
+	
+	# Skript
+	weathertype: Wettertyp¦en
+	itemtype: Gegen¦stand¦stände
+	time: Zeit¦en
+	timespan: Zeitdauer¦n
+	timeperiod: Zeitspanne¦n
+	date: ¦Datum¦Daten
+	direction: Richtung¦en
+	slot: Inventar¦platz¦plätze
+	color: Farbe¦n
+	structuretype: Baumtyp¦en
+	enchantmenttype: Verzauberung¦en

@@ -24,6 +24,7 @@ package ch.njol.skript.events;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -32,22 +33,29 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.plugin.EventExecutor;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
+import ch.njol.skript.events.util.PlayerChatEventHandler;
 import ch.njol.skript.lang.Literal;
-import ch.njol.skript.lang.SkriptEvent;
+import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 
 /**
  * @author Peter Güttinger
  */
-public class EvtChat extends SkriptEvent {
+@SuppressWarnings("deprecation")
+public class EvtChat extends SelfRegisteringSkriptEvent {
+	private static final long serialVersionUID = -605839769417043132L;
 	
 	static {
-		Skript.registerEvent(EvtChat.class, AsyncPlayerChatEvent.class, false, "chat");
+		if (Skript.isRunningBukkit1_3())
+			Skript.registerEvent(EvtChat.class, AsyncPlayerChatEvent.class, "chat");
+		else
+			Skript.registerEvent(EvtChat.class, PlayerChatEvent.class, "chat");
 	}
 	
 	private final static Collection<Trigger> triggers = new ArrayList<Trigger>();
@@ -68,11 +76,11 @@ public class EvtChat extends SkriptEvent {
 		@Override
 		public void execute(final Listener l, final Event e) throws EventException {
 			if (!triggers.isEmpty()) {
-				if (!e.isAsynchronous()) {
+				if (!Skript.isRunningBukkit1_3() || !e.isAsynchronous()) {
 					execute(e);
 					return;
 				}
-				final Future<?> f = Bukkit.getScheduler().callSyncMethod(Skript.getInstance(), new Callable<Void>() {
+				final Future<Void> f = Bukkit.getScheduler().callSyncMethod(Skript.getInstance(), new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
 						execute(e);
@@ -86,20 +94,15 @@ public class EvtChat extends SkriptEvent {
 							break;
 						} catch (final InterruptedException e1) {}
 					}
-				} catch (final ExecutionException e1) {
-					Skript.exception(e1);
-				}
+				} catch (final ExecutionException ex) {
+					Skript.exception(ex);
+				} catch (final CancellationException ex) {} catch (final ThreadDeath err) {}// server shutting down
 			}
 		}
 	};
 	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		return true;
-	}
-	
-	@Override
-	public boolean check(final Event e) {
 		return true;
 	}
 	
@@ -112,7 +115,7 @@ public class EvtChat extends SkriptEvent {
 	public void register(final Trigger t) {
 		triggers.add(t);
 		if (!registeredExecutor) {
-			Bukkit.getPluginManager().registerEvent(AsyncPlayerChatEvent.class, new Listener() {}, Skript.getDefaultEventPriority(), executor, Skript.getInstance(), true);
+			PlayerChatEventHandler.registerChatEvent(Skript.getDefaultEventPriority(), executor, true);
 			registeredExecutor = true;
 		}
 	}

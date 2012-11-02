@@ -37,6 +37,8 @@ import ch.njol.skript.util.ItemType;
  */
 public class EffEquip extends Effect implements Testable {
 	
+	private static final long serialVersionUID = -4999752233557734343L;
+	
 	static {
 		Skript.registerEffect(EffEquip.class,
 				"equip [%players%] with %itemtypes%",
@@ -72,7 +74,7 @@ public class EffEquip extends Effect implements Testable {
 						for (final Player p : ps) {
 							p.getInventory().setBoots(item);
 						}
-					break;
+						break;
 					case LEATHER_LEGGINGS:
 					case IRON_LEGGINGS:
 					case GOLD_LEGGINGS:
@@ -80,7 +82,7 @@ public class EffEquip extends Effect implements Testable {
 						for (final Player p : ps) {
 							p.getInventory().setLeggings(item);
 						}
-					break;
+						break;
 					case LEATHER_CHESTPLATE:
 					case IRON_CHESTPLATE:
 					case GOLD_CHESTPLATE:
@@ -88,7 +90,7 @@ public class EffEquip extends Effect implements Testable {
 						for (final Player p : ps) {
 							p.getInventory().setChestplate(item);
 						}
-					break;
+						break;
 					default:
 						if (!item.getType().isBlock())
 							continue;

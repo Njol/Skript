@@ -22,6 +22,7 @@
 package ch.njol.skript.classes.data;
 
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
@@ -29,11 +30,14 @@ import org.bukkit.inventory.ItemStack;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.entity.EntityData;
+import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.StructureType;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
@@ -49,12 +53,15 @@ public class DefaultComparators {
 		//  why?
 		
 		// Number - Number
-		Skript.registerComparator(Number.class, Number.class, new Comparator<Number, Number>() {
+		Comparators.registerComparator(Number.class, Number.class, new Comparator<Number, Number>() {
+			private static final long serialVersionUID = -6345259176086215473L;
+			
 			@Override
 			public Relation compare(final Number n1, final Number n2) {
-				if (Math.abs(n1.doubleValue() - n2.doubleValue()) < Skript.EPSILON)
+				final double diff = n1.doubleValue() - n2.doubleValue();
+				if (Math.abs(diff) < Skript.EPSILON)
 					return Relation.EQUAL;
-				return Relation.get(n1.doubleValue() - n2.doubleValue());
+				return Relation.get(diff);
 			}
 			
 			@Override
@@ -64,7 +71,9 @@ public class DefaultComparators {
 		});
 		
 		// ItemStack - ItemType
-		Skript.registerComparator(ItemStack.class, ItemType.class, new Comparator<ItemStack, ItemType>() {
+		Comparators.registerComparator(ItemStack.class, ItemType.class, new Comparator<ItemStack, ItemType>() {
+			private static final long serialVersionUID = -6057967941800919748L;
+			
 			@Override
 			public Relation compare(final ItemStack is, final ItemType it) {
 				return Relation.get(it.isOfType(is));
@@ -77,7 +86,9 @@ public class DefaultComparators {
 		});
 		
 		// Block - ItemType
-		Skript.registerComparator(Block.class, ItemType.class, new Comparator<Block, ItemType>() {
+		Comparators.registerComparator(Block.class, ItemType.class, new Comparator<Block, ItemType>() {
+			private static final long serialVersionUID = -7249014324178703668L;
+			
 			@Override
 			public Relation compare(final Block b, final ItemType it) {
 				return Relation.get(it.isOfType(b));
@@ -90,7 +101,9 @@ public class DefaultComparators {
 		});
 		
 		// Block - Block
-		Skript.registerComparator(Block.class, Block.class, new Comparator<Block, Block>() {
+		Comparators.registerComparator(Block.class, Block.class, new Comparator<Block, Block>() {
+			private static final long serialVersionUID = -1909160103741575822L;
+			
 			@Override
 			public Relation compare(final Block b1, final Block b2) {
 				return Relation.get(b1.equals(b2));
@@ -104,7 +117,9 @@ public class DefaultComparators {
 		});
 		
 		// Entity - EntityData
-		Skript.registerComparator(Entity.class, EntityData.class, new Comparator<Entity, EntityData>() {
+		Comparators.registerComparator(Entity.class, EntityData.class, new Comparator<Entity, EntityData>() {
+			private static final long serialVersionUID = -8977780425174837488L;
+			
 			@Override
 			public Relation compare(final Entity e, final EntityData t) {
 				return Relation.get(t.isInstance(e));
@@ -116,7 +131,9 @@ public class DefaultComparators {
 			}
 		});
 		// EntityData - EntityData
-		Skript.registerComparator(EntityData.class, EntityData.class, new Comparator<EntityData, EntityData>() {
+		Comparators.registerComparator(EntityData.class, EntityData.class, new Comparator<EntityData, EntityData>() {
+			private static final long serialVersionUID = -236163145922471389L;
+			
 			@Override
 			public Relation compare(final EntityData t1, final EntityData t2) {
 				return Relation.get(t2.getType().isAssignableFrom(t1.getType()));
@@ -129,7 +146,9 @@ public class DefaultComparators {
 		});
 		
 		// Date - Date
-		Skript.registerComparator(Date.class, Date.class, new Comparator<Date, Date>() {
+		Comparators.registerComparator(Date.class, Date.class, new Comparator<Date, Date>() {
+			private static final long serialVersionUID = 3594484102475563679L;
+			
 			@Override
 			public Relation compare(final Date d1, final Date d2) {
 				return Relation.get(d1.compareTo(d2));
@@ -142,7 +161,9 @@ public class DefaultComparators {
 		});
 		
 		// Time - Time
-		Skript.registerComparator(Time.class, Time.class, new Comparator<Time, Time>() {
+		Comparators.registerComparator(Time.class, Time.class, new Comparator<Time, Time>() {
+			private static final long serialVersionUID = -2764424944652985572L;
+			
 			@Override
 			public Relation compare(final Time t1, final Time t2) {
 				return Relation.get(t1.getTicks() - t2.getTicks());
@@ -155,10 +176,12 @@ public class DefaultComparators {
 		});
 		
 		// Timespan - Timespan
-		Skript.registerComparator(Timespan.class, Timespan.class, new Comparator<Timespan, Timespan>() {
+		Comparators.registerComparator(Timespan.class, Timespan.class, new Comparator<Timespan, Timespan>() {
+			private static final long serialVersionUID = 7242706836233865191L;
+			
 			@Override
 			public Relation compare(final Timespan t1, final Timespan t2) {
-				return Relation.get(t1.getTicks() - t2.getTicks());
+				return Relation.get(t1.getMilliSeconds() - t2.getMilliSeconds());
 			}
 			
 			@Override
@@ -168,7 +191,9 @@ public class DefaultComparators {
 		});
 		
 		// Time - Timeperiod
-		Skript.registerComparator(Time.class, Timeperiod.class, new Comparator<Time, Timeperiod>() {
+		Comparators.registerComparator(Time.class, Timeperiod.class, new Comparator<Time, Timeperiod>() {
+			private static final long serialVersionUID = -8119546793395571359L;
+			
 			@Override
 			public Relation compare(final Time t, final Timeperiod p) {
 				return Relation.get(p.contains(t));
@@ -181,7 +206,9 @@ public class DefaultComparators {
 		});
 		
 		// OfflinePlayer - String
-		Skript.registerComparator(OfflinePlayer.class, String.class, new Comparator<OfflinePlayer, String>() {
+		Comparators.registerComparator(OfflinePlayer.class, String.class, new Comparator<OfflinePlayer, String>() {
+			private static final long serialVersionUID = -2533811470175803047L;
+			
 			@Override
 			public Relation compare(final OfflinePlayer p, final String name) {
 				return Relation.get(p.getName().equalsIgnoreCase(name));
@@ -192,12 +219,43 @@ public class DefaultComparators {
 				return false;
 			}
 		});
+		// World - String
+		Comparators.registerComparator(World.class, String.class, new Comparator<World, String>() {
+			private static final long serialVersionUID = -7724878030033153076L;
+			
+			@Override
+			public Relation compare(final World w, final String name) {
+				return Relation.get(w.getName().equalsIgnoreCase(name));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
 		
 		// String - String
-		Skript.registerComparator(String.class, String.class, new Comparator<String, String>() {
+		Comparators.registerComparator(String.class, String.class, new Comparator<String, String>() {
+			private static final long serialVersionUID = -4803766183428148678L;
+			
 			@Override
 			public Relation compare(final String s1, final String s2) {
 				return Relation.get(s1.equalsIgnoreCase(s2));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+		
+		// StructureType - StructureType
+		Comparators.registerComparator(StructureType.class, StructureType.class, new Comparator<StructureType, StructureType>() {
+			private static final long serialVersionUID = -4861991453918248942L;
+			
+			@Override
+			public Relation compare(final StructureType s1, final StructureType s2) {
+				return Relation.get(Utils.containsAll(s2.getTypes(), s2.getTypes()));
 			}
 			
 			@Override

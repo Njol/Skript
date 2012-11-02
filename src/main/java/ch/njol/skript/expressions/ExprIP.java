@@ -35,6 +35,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class ExprIP extends PropertyExpression<Player, String> {
+	private static final long serialVersionUID = 2670595902919005648L;
 	
 	static {
 		Skript.registerExpression(ExprIP.class, String.class, ExpressionType.PROPERTY, "IP[s][( |-)address[es]] of %players%", "%players%'[s] IP[s][( |-)address[es]]");

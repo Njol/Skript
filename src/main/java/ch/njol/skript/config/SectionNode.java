@@ -24,8 +24,10 @@ package ch.njol.skript.config;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
@@ -49,7 +51,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 	}
 	
 	public SectionNode(final String name, final SectionNode parent, final String orig, final int lineNum) {
-		super(parent.getConfig(), name, orig, lineNum);
+		super(name, parent, orig, lineNum);
 	}
 	
 	@Override
@@ -61,40 +63,32 @@ public class SectionNode extends Node implements Iterable<Node> {
 		return nodes;
 	}
 	
+	private transient Map<String, Node> fastAccessMap = null;
+	
 	/**
-	 * get a subnode with the specified name
+	 * Get a subnode (EntryNode or SectionNode) with the specified name
 	 * 
 	 * @param name
 	 * @return
 	 */
 	public Node get(final String name) {
-		for (final Node node : nodes) {
-			if (node.name != null && node.name.equals(name))
-				return node;
+		if (fastAccessMap == null) {
+			fastAccessMap = new HashMap<String, Node>();
+			for (final Node node : nodes) {
+				if (node.isVoid())
+					continue;
+				fastAccessMap.put(node.name, node);
+			}
 		}
-		return null;
+		return fastAccessMap.get(name);
 	}
 	
 	public boolean isEmpty() {
 		for (final Node node : nodes) {
-			if (!(node instanceof VoidNode))
+			if (!node.isVoid())
 				return false;
 		}
 		return true;
-	}
-	
-	/**
-	 * void here = void (incl. invalid)
-	 * 
-	 * @return
-	 */
-	public int getNumVoidNodes() {
-		int r = 0;
-		for (final Node node : nodes) {
-			if (node instanceof VoidNode)
-				r++;
-		}
-		return r;
 	}
 	
 	static final SectionNode load(final Config c, final ConfigReader r) throws IOException {
@@ -274,6 +268,18 @@ public class SectionNode extends Node implements Iterable<Node> {
 		if (n == null || !(n instanceof EntryNode))
 			return def;
 		return ((EntryNode) n).getValue();
+	}
+	
+	HashMap<String, String> toMap(final String prefix, final String separator) {
+		final HashMap<String, String> r = new HashMap<String, String>();
+		for (final Node n : this) {
+			if (n instanceof EntryNode) {
+				r.put(prefix + n.getName(), ((EntryNode) n).getValue());
+			} else {
+				r.putAll(((SectionNode) n).toMap(prefix + n.getName() + separator, separator));
+			}
+		}
+		return r;
 	}
 	
 }

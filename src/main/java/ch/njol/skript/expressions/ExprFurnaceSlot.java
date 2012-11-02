@@ -37,6 +37,7 @@ import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Slot;
 
@@ -44,7 +45,7 @@ import ch.njol.skript.util.Slot;
  * @author Peter Güttinger
  */
 public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
-	
+	private static final long serialVersionUID = 4874035145840682702L;
 	private final static int ORE = 0, FUEL = 1, RESULT = 2;
 	private final static String[] slotNames = {"ore", "fuel", "result"};
 	
@@ -177,7 +178,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
 			return "the " + (getTime() == -1 ? "past " : getTime() == 1 ? "future " : "") + slotNames[slot] + " slot of " + blocks.toString(e, debug);
-		return Skript.getDebugMessage(getSingle(e));
+		return Classes.getDebugMessage(getSingle(e));
 	}
 	
 	@SuppressWarnings("unchecked")

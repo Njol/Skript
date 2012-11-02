@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,11 +38,31 @@ import ch.njol.skript.classes.Converter;
  */
 public abstract class FileUtils {
 	
-	private final static boolean RUNNINGJAVA6 = !System.getProperty("java.version").startsWith("1.6");
+	private static boolean RUNNINGJAVA6 = true;// = System.getProperty("java.version").startsWith("1.6"); // doesn't work reliably?
+	static {
+		try {
+			new File(".").toPath();
+			RUNNINGJAVA6 = false;
+		} catch (final NoSuchMethodError e) {
+			RUNNINGJAVA6 = true;
+		} catch (final Exception e) {
+			RUNNINGJAVA6 = false;
+		}
+	}
 	
 	private FileUtils() {}
 	
-	private final static SimpleDateFormat backupFormat = new SimpleDateFormat("yyyy-MM-dd_kk-mm");
+	private final static SimpleDateFormat backupFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+	
+	/**
+	 * 
+	 * @return The current date and time
+	 */
+	public final static String getBackupSuffix() {
+		synchronized (backupFormat) {
+			return backupFormat.format(System.currentTimeMillis());
+		}
+	}
 	
 	public final static File backup(final File f) throws IOException {
 		String name = f.getName();
@@ -48,25 +70,47 @@ public abstract class FileUtils {
 		final String ext = c == -1 ? null : name.substring(c + 1);
 		if (c != -1)
 			name = name.substring(0, c);
-		final File backup = new File(f.getParentFile(), name + "_backup_" + backupFormat.format(System.currentTimeMillis()) + (ext == null ? "" : "." + ext));
+		final File backupFolder = new File(f.getParentFile(), "backups" + File.separator);
+		if (!backupFolder.exists() && !backupFolder.mkdirs())
+			throw new IOException("Cannot create backups folder");
+		final File backup = new File(backupFolder, name + "_" + getBackupSuffix() + (ext == null ? "" : "." + ext));
 		if (backup.exists())
-			throw new IOException("backup file " + backup.getName() + " does already exist");
+			throw new IOException("Backup file " + backup.getName() + " does already exist");
 		copy(f, backup);
 		return backup;
 	}
 	
-	public final static void move(final File from, final File to) throws IOException {
+	public final static void move(final File from, final File to, final boolean replace) throws IOException {
+		if (!replace && to.exists())
+			throw new IOException("Can't rename " + from.getName() + " to " + to.getName() + ": The target file already exists");
 		if (!RUNNINGJAVA6) {
-			Java7FileUtils.move(from, to);
+			if (replace)
+				Files.move(from.toPath(), to.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+			else
+				Files.move(from.toPath(), to.toPath(), StandardCopyOption.ATOMIC_MOVE);
 		} else {
-			if (!from.renameTo(to))
+			File moveTo = null;
+			if (replace && to.exists()) {
+				moveTo = new File(to.getAbsolutePath() + ".old0");
+				int i = 0;
+				while (moveTo.exists() && i < 1000)
+					moveTo = new File(to.getAbsolutePath() + ".old" + (++i));
+				if (i == 999 || !to.renameTo(moveTo))
+					throw new IOException("Can't rename " + from.getName() + " to " + to.getName() + ": Cannot temporarily rename the target file");
+			}
+			if (!from.renameTo(to)) {
+				if (moveTo != null)
+					moveTo.renameTo(to);
 				throw new IOException("Can't rename " + from.getName() + " to " + to.getName());
+			}
+			if (moveTo != null)
+				moveTo.delete();
 		}
 	}
 	
 	public final static void copy(final File from, final File to) throws IOException {
 		if (!RUNNINGJAVA6) {
-			Java7FileUtils.copy(from, to);
+			Files.copy(from.toPath(), to.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 		} else {
 			FileInputStream in = null;
 			FileOutputStream out = null;
@@ -110,7 +154,7 @@ public abstract class FileUtils {
 				if (newName == null)
 					continue;
 				final File newFile = new File(f.getParent(), newName);
-				move(f, newFile);
+				move(f, newFile, false);
 				changed.add(newFile);
 			}
 		}

@@ -38,6 +38,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 public class EffBan extends Effect {
 	
+	private static final long serialVersionUID = 5038891823006152632L;
+	
 	static {
 		Skript.registerEffect(EffBan.class,
 				"ban %strings/offlineplayers%", "unban %strings/offlineplayers%",

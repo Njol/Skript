@@ -27,8 +27,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Debuggable;
+import ch.njol.skript.registrations.Classes;
 
 /**
  * @author Peter Güttinger
@@ -70,15 +70,15 @@ public class Slot implements Debuggable {
 	
 	@Override
 	public String toString() {
-		return Skript.toString(getItem());
+		return Classes.toString(getItem());
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (!debug)
-			Skript.toString(getItem());
+			Classes.toString(getItem());
 		if (invi.getHolder() != null)
-			return "slot " + index + " of inventory of " + Skript.toString(invi.getHolder());
+			return "slot " + index + " of inventory of " + Classes.toString(invi.getHolder());
 		return "slot " + index + " of " + invi.toString();
 	}
 }

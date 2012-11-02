@@ -40,6 +40,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 
@@ -48,6 +49,7 @@ import ch.njol.util.Checker;
  */
 @SuppressWarnings("unchecked")
 public class EvtBlock extends SkriptEvent {
+	private static final long serialVersionUID = 1975641867786762510L;
 	
 	static {
 		Skript.registerEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class, PlayerBucketFillEvent.class), "(break[ing]|min(e|ing)) [[of] %itemtypes%]");
@@ -81,6 +83,9 @@ public class EvtBlock extends SkriptEvent {
 		if (e instanceof BlockEvent) {
 			id = ((BlockEvent) e).getBlock().getTypeId();
 			durability = ((BlockEvent) e).getBlock().getData();
+		} else if (e instanceof BlockFormEvent) {
+			id = ((BlockFormEvent) e).getNewState().getTypeId();
+			durability = ((BlockFormEvent) e).getNewState().getRawData();
 		} else if (e instanceof PlayerBucketFillEvent) {
 			id = ((PlayerBucketEvent) e).getBlockClicked().getRelative(((PlayerBucketEvent) e).getBlockFace()).getTypeId();
 			durability = ((PlayerBucketEvent) e).getBlockClicked().getRelative(((PlayerBucketEvent) e).getBlockFace()).getData();
@@ -104,7 +109,7 @@ public class EvtBlock extends SkriptEvent {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "break/place/burn/fade/form of " + Skript.toString(types);
+		return "break/place/burn/fade/form of " + Classes.toString(types);
 	}
 	
 }

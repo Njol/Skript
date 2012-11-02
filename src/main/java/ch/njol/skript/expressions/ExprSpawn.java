@@ -37,6 +37,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class ExprSpawn extends PropertyExpression<World, Location> {
+	private static final long serialVersionUID = 5775788092369920714L;
 	
 	static {
 		Skript.registerExpression(ExprSpawn.class, Location.class, ExpressionType.PROPERTY, "[the] spawn[s] [(point|location)[s]] [of %worlds%]", "%worlds%'[s] spawn[s] [(point|location)[s]]");
@@ -69,10 +70,11 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 		return "spawn of " + getExpr().toString(e, debug);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
-			return Location.class;
+			return Skript.array(Location.class);
 		return null;
 	}
 	

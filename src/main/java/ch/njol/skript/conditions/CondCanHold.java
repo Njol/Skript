@@ -30,6 +30,7 @@ import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 
@@ -37,6 +38,8 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  */
 public class CondCanHold extends Condition {
+	
+	private static final long serialVersionUID = -3011849911556293886L;
 	
 	static {
 		Skript.registerCondition(CondCanHold.class,
@@ -56,7 +59,7 @@ public class CondCanHold extends Condition {
 			for (ItemType t : ((Literal<ItemType>) items).getArray()) {
 				t = t.getItem();
 				if (!t.isAll() && (t.getTypes().size() != 1 || t.getTypes().get(0).hasDataRange() || t.getTypes().get(0).getId() == -1)) {
-					Skript.error("The condition 'can hold' can currently only be used with aliases that start with 'every' or 'all', or only stand for one item and one data value.");
+					Skript.error("The condition 'can hold' can currently only be used with aliases that start with 'every' or 'all', or only stand for one item and one data value.", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 			}

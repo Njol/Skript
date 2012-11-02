@@ -36,6 +36,7 @@ import ch.njol.skript.util.Getter;
  * @author Peter Güttinger
  */
 public class ExprInventory extends PropertyExpression<InventoryHolder, Inventory> {
+	private static final long serialVersionUID = 1029322639581603342L;
 	
 	static {
 		Skript.registerExpression(ExprInventory.class, Inventory.class, ExpressionType.PROPERTY, "[the] inventor(y|ies) of %inventoryholders%", "%inventoryholders%'[s] inventor(y|ies)");

@@ -36,6 +36,8 @@ import ch.njol.util.Checker;
  */
 public class CondItemInHand extends Condition {
 	
+	private static final long serialVersionUID = -5457568585633866601L;
+	
 	static {
 		Skript.registerCondition(CondItemInHand.class,
 				"[%players%] ha(s|ve) %itemtypes% in hand",

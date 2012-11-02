@@ -53,8 +53,8 @@ public class EffFertilize extends Effect {
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		blocks = (Expression<Block>) vars[0];
 		if (!Skript.isRunningCraftBukkit()) {
-			Skript.error("The fertilize effect can only be used with CraftBukkit");
-			return false;
+			Skript.error("The fertilize effect can only be used with CraftBukkit", ErrorQuality.);
+return false;
 		}
 		return true;
 	}

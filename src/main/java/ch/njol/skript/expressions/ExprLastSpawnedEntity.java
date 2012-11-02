@@ -33,28 +33,32 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprLastSpawnedEntity extends SimpleExpression<Entity> {
+	private static final long serialVersionUID = 5097807652181025015L;
 	
 	static {
-		Skript.registerExpression(ExprLastSpawnedEntity.class, Entity.class, ExpressionType.SIMPLE, "[last[ly]] spawned <.+>");
+		Skript.registerExpression(ExprLastSpawnedEntity.class, Entity.class, ExpressionType.SIMPLE, "[the] [last[ly]] spawned <.+>");
 	}
 	
 	private EntityData<?> type;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		final SubLog log = SkriptLogger.startSubLog();
+		final SimpleLog log = SkriptLogger.startSubLog();
 		type = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
 		log.stop();
-		if (type == null)
+		if (type == null) {
+			Skript.error("'" + parseResult.regexes.get(0).group() + "' is not an entity type", ErrorQuality.NOT_AN_EXPRESSION);
 			return false;
+		}
 		log.printLog();
 		return true;
 	}

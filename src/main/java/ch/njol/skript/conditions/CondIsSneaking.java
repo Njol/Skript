@@ -24,24 +24,26 @@ package ch.njol.skript.conditions;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
-import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  */
 public class CondIsSneaking extends PropertyCondition<Player> {
 	
+	private static final long serialVersionUID = -6598411397232537881L;
+	
 	static {
 		register(CondIsSneaking.class, "sneaking", "players");
 	}
 	
-	public CondIsSneaking() {
-		super("sneaking", new Checker<Player>() {
-			@Override
-			public boolean check(final Player p) {
-				return p.isSneaking();
-			}
-		});
+	@Override
+	public boolean check(final Player p) {
+		return p.isSneaking();
+	}
+	
+	@Override
+	protected String getPropertyName() {
+		return "sneaking";
 	}
 	
 }

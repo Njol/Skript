@@ -35,6 +35,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * @author Peter Güttinger
  */
 public class ExprEventCancelled extends SimpleExpression<Boolean> {
+	private static final long serialVersionUID = -2280930563562488727L;
 	
 	static {
 		Skript.registerExpression(ExprEventCancelled.class, Boolean.class, ExpressionType.SIMPLE, "[is] event cancelled");
@@ -47,8 +48,11 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 		return new Boolean[] {((Cancellable) e).isCancelled()};
 	}
 	
+	private int delay;
+	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+		delay = isDelayed;
 		return true;
 	}
 	
@@ -62,19 +66,16 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 		return "is event cancelled";
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-//		if (delayed) {
-//			// TODO error
-//			return null;
-//		}
-		switch (mode) {
-			case CLEAR:
-			case SET:
-				return Boolean.class;
-			default:
-				return null;
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (delay != -1) {
+			Skript.error("Can't cancel the event anymore after it has already passed");
+			return null;
 		}
+		if (mode == ChangeMode.SET || mode == ChangeMode.CLEAR)
+			return Skript.array(Boolean.class);
+		return null;
 	}
 	
 	@SuppressWarnings("incomplete-switch")
@@ -85,7 +86,7 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 		switch (mode) {
 			case CLEAR:
 				((Cancellable) e).setCancelled(false);
-			break;
+				break;
 			case SET:
 				((Cancellable) e).setCancelled((Boolean) delta);
 		}

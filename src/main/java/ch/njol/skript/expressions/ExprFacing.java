@@ -41,11 +41,12 @@ import ch.njol.skript.util.Utils;
  * @author Peter Güttinger
  */
 public class ExprFacing extends PropertyExpression<Object, BlockFace> {
+	private static final long serialVersionUID = -1100508280427464204L;
 	
 	static {
 		Skript.registerExpression(ExprFacing.class, BlockFace.class, ExpressionType.PROPERTY,
-				"[the] facing of %livingentity/block%", "%block/livingentity%'[s] facing",
-				"[the] horizontal facing of %livingentity/block%", "%block/livingentity%'[s] horizontal facing");
+				"[the] facing of %livingentity/block%", "%livingentity/block%'[s] facing",
+				"[the] horizontal facing of %livingentity/block%", "%livingentity/block%'[s] horizontal facing");
 	}
 	
 	private boolean horizontal;
@@ -86,12 +87,13 @@ public class ExprFacing extends PropertyExpression<Object, BlockFace> {
 		return "facing of " + getExpr();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (!Block.class.isAssignableFrom(getExpr().getReturnType()))
 			return null;
 		if (mode == ChangeMode.SET)
-			return BlockFace.class;
+			return Skript.array(BlockFace.class);
 		return null;
 	}
 	

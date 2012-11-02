@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import org.bukkit.Bukkit;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.config.Node;
 
 /**
@@ -47,7 +48,9 @@ public abstract class SkriptLogger {
 	private static int numErrors = 0;
 	
 	/**
-	 * Starts a sub log. All subsequent log messages will be added to this log and not printed.<br>
+	 * Starts a sub log. All subsequent log messages will be added to this log and not printed.
+	 * 
+	 * <p>
 	 * This should be used like this:
 	 * 
 	 * <pre>
@@ -59,8 +62,14 @@ public abstract class SkriptLogger {
 	 * 
 	 * @return a newly created sublog
 	 */
-	public final static SubLog startSubLog() {
-		final SubLog subLog = new SubLog();
+	public final static SimpleLog startSubLog() {
+		final SimpleLog subLog = new SimpleLog();
+		subLogs.addLast(subLog);
+		return subLog;
+	}
+	
+	public final static ParseLog startParseLog() {
+		final ParseLog subLog = new ParseLog();
 		subLogs.addLast(subLog);
 		return subLog;
 	}
@@ -72,8 +81,16 @@ public abstract class SkriptLogger {
 			int i = 1;
 			while (subLogs.removeLast() != log)
 				i++;
-			Bukkit.getLogger().severe("[Skript] " + i + " sub log(s) was/were not stopped properly!");
+			Bukkit.getLogger().severe("[Skript] " + i + " sub log" + (i == 1 ? " was" : "s were") + " not stopped properly! (at " + getCaller() + ") [if you're a server admin and you see this message please file a bug report at http://dev.bukkit.org/server-mods/skript/tickets/ if there is not already one]");
 		}
+	}
+	
+	final static StackTraceElement getCaller() {
+		for (final StackTraceElement e : new Exception().getStackTrace()) {
+			if (!e.getClassName().startsWith(SkriptLogger.class.getPackage().getName()))
+				return e;
+		}
+		return null;
 	}
 	
 	public static void setVerbosity(final Verbosity v) {
@@ -114,8 +131,9 @@ public abstract class SkriptLogger {
 	}
 	
 	public static void log(final LogEntry entry) {
+		assert entry != null;
 		if (!subLogs.isEmpty()) {
-			subLogs.getLast().log.add(entry);
+			subLogs.getLast().log(entry);
 		} else {
 			Bukkit.getLogger().log(entry.getLevel(), "[Skript] " + entry.getMessage());
 			if (entry.getLevel() == Level.SEVERE)
@@ -125,9 +143,11 @@ public abstract class SkriptLogger {
 	
 	public static void logAll(final Collection<LogEntry> entries) {
 		if (!subLogs.isEmpty()) {
-			subLogs.getLast().log.addAll(entries);
+			for (final LogEntry e : entries)
+				subLogs.getLast().log(e);
 		} else {
 			for (final LogEntry entry : entries) {
+				assert entry != null;
 				Bukkit.getLogger().log(entry.getLevel(), "[Skript] " + entry.getMessage());
 				if (entry.getLevel() == Level.SEVERE)
 					numErrors++;
@@ -150,7 +170,26 @@ public abstract class SkriptLogger {
 	}
 	
 	public static int getNumErrors() {
-		return numErrors;
+		int errors = numErrors;
+		for (final SubLog log : subLogs)
+			errors += log.getNumErrors();
+		return errors;
+	}
+	
+	public static void error(final LogEntry error, final ErrorQuality quality) {
+		if (error.getLevel() != Level.SEVERE)
+			throw new IllegalArgumentException("Cannot error anything else than an error");
+		if (!(subLogs.getLast() instanceof ParseLog))
+			throw new SkriptAPIException("Cannot log with a quality if no parsing is in progress");
+		((ParseLog) subLogs.getLast()).error(error, quality);
+	}
+	
+	static void printParseLogError(final LogEntry error, final int quality) {
+		if (subLogs.peekLast() instanceof ParseLog) {
+			((ParseLog) subLogs.getLast()).error(error, quality);
+		} else {
+			log(error);
+		}
 	}
 	
 }

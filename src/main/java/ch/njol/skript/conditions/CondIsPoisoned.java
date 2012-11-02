@@ -25,24 +25,26 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffectType;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
-import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  */
 public class CondIsPoisoned extends PropertyCondition<LivingEntity> {
 	
+	private static final long serialVersionUID = -6101877450207975485L;
+	
 	static {
 		register(CondIsPoisoned.class, "poisoned", "livingentities");
 	}
 	
-	public CondIsPoisoned() {
-		super("poisoned", new Checker<LivingEntity>() {
-			@Override
-			public boolean check(final LivingEntity e) {
-				return e.hasPotionEffect(PotionEffectType.POISON);
-			}
-		});
+	@Override
+	public boolean check(final LivingEntity e) {
+		return e.hasPotionEffect(PotionEffectType.POISON);
+	}
+	
+	@Override
+	protected String getPropertyName() {
+		return "poisoned";
 	}
 	
 }

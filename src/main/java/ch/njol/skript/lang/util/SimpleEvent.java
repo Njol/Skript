@@ -34,6 +34,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class SimpleEvent extends SkriptEvent {
+	private static final long serialVersionUID = 8291127725409390528L;
 	
 	public SimpleEvent() {}
 	

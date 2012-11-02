@@ -35,6 +35,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class ExprCoordinate extends PropertyExpression<Location, Double> {
+	private static final long serialVersionUID = -193327160570257540L;
 	
 	static {
 		Skript.registerExpression(ExprCoordinate.class, Double.class, ExpressionType.PROPERTY, "[the] <[xyz]>(-| )(coord[inate]|pos[ition]|loc[ation])[s] of %locations%", "%locations%'[s] <[xyz]>(-| )(coord[inate]|pos[ition]|loc[ation])[s]");

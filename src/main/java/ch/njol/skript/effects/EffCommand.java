@@ -38,6 +38,8 @@ import ch.njol.skript.util.StringMode;
  */
 public class EffCommand extends Effect {
 	
+	private static final long serialVersionUID = -1751790551384568446L;
+	
 	static {
 		Skript.registerEffect(EffCommand.class,
 				"[execute] [the] command %strings% [by %-commandsenders%]",

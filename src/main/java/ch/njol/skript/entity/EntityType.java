@@ -21,24 +21,28 @@
 
 package ch.njol.skript.entity;
 
+import java.io.Serializable;
+
 import org.bukkit.entity.Entity;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
+import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
-import ch.njol.util.Validate;
 
 /**
  * 
  * @author Peter Güttinger
  */
-public class EntityType {
+public class EntityType implements Serializable {
+	private static final long serialVersionUID = 7309746195257258341L;
 	
 	static {
-		Skript.registerClass(new ClassInfo<EntityType>(EntityType.class, "entitytype", "entity type")
+		Classes.registerClass(new ClassInfo<EntityType>(EntityType.class, "entitytype", "entity type")
 				.defaultExpression(new SimpleLiteral<EntityType>(new EntityType(Entity.class, 1), true))
 				.parser(new Parser<EntityType>() {
 					@Override
@@ -52,13 +56,19 @@ public class EntityType {
 					}
 					
 					@Override
-					public String toCodeString(final EntityType t) {
+					public String toVariableNameString(final EntityType t) {
 						return "entitytype:" + t.toString();
 					}
-				})/*.serializer(new Serializer<EntityType>() {
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "entitytype:.+";
+					}
+				})
+				.serializer(new Serializer<EntityType>() {
 					@Override
 					public String serialize(final EntityType t) {
-						return t.data..getName() + "*" + t.amount;
+						return t.amount + "*" + t.data.serialize();
 					}
 					
 					@Override
@@ -66,19 +76,16 @@ public class EntityType {
 						final String[] split = s.split("\\*");
 						if (split.length != 2)
 							return null;
+						final EntityData<?> d = EntityData.serializer.deserialize(split[1]);
+						if (d == null)
+							return null;
 						try {
-							return new EntityType(Class.forName(split[0]).asSubclass(Entity.class), Integer.parseInt(split[1]));
-						} catch (final LinkageError e) {
-							return null;
-						} catch (final ClassNotFoundException e) {
-							return null;
-						} catch (final ClassCastException e) {
-							return null;
+							return new EntityType(d, Integer.parseInt(split[1]));
 						} catch (final NumberFormatException e) {
 							return null;
 						}
 					}
-					})*/);
+				}));
 	}
 	
 	public int amount = -1;
@@ -86,13 +93,13 @@ public class EntityType {
 	public final EntityData<?> data;
 	
 	public EntityType(final EntityData<?> data, final int amount) {
-		Validate.notNull(data);
+		assert data != null;
 		this.data = data;
 		this.amount = amount;
 	}
 	
 	public EntityType(final Class<? extends Entity> c, final int amount) {
-		Validate.notNull(c);
+		assert c != null;
 		data = EntityData.fromClass(c);
 		this.amount = amount;
 	}
@@ -121,7 +128,7 @@ public class EntityType {
 	}
 	
 	public static EntityType parse(String s) {
-		Validate.notNullOrEmpty(s, "s");
+		assert s != null && s.length() != 0;
 		int amount = -1;
 		if (s.matches("\\d+ .+")) {
 			amount = Skript.parseInt(s.split(" ", 2)[0]);

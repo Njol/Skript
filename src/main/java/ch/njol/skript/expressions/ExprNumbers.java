@@ -36,44 +36,50 @@ import ch.njol.skript.lang.util.SimpleLiteral;
 /**
  * @author Peter Güttinger
  */
-public class ExprNumbers extends SimpleExpression<Integer> {
+public class ExprNumbers extends SimpleExpression<Number> {
+	private static final long serialVersionUID = -8168866962252682002L;
 	
 	static {
-		Skript.registerExpression(ExprNumbers.class, Integer.class, ExpressionType.NORMAL,
-				"[(all|the)] (numbers|integers) (between|from) %integer% (and|to) %integer%",
-				"%integer% times");
+		Skript.registerExpression(ExprNumbers.class, Number.class, ExpressionType.NORMAL,
+				"[(all|the)] (0¦numbers|1¦integers) (between|from) %number% (and|to) %number%",
+				"%number% times");
 	}
 	
-	private Expression<Integer> start, end;
+	private Expression<Number> start, end;
+	private boolean integer;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		start = matchedPattern == 0 ? (Expression<Integer>) exprs[0] : new SimpleLiteral<Integer>(1, false);
-		end = (Expression<Integer>) exprs[1 - matchedPattern];
+		start = matchedPattern == 0 ? (Expression<Number>) exprs[0] : new SimpleLiteral<Number>(1, false);
+		end = (Expression<Number>) exprs[1 - matchedPattern];
+		integer = parseResult.mark == 1;
 		return true;
 	}
 	
 	@Override
-	protected Integer[] get(final Event e) {
-		final Integer s = start.getSingle(e), f = end.getSingle(e);
-		if (s == null || f == null)
+	protected Number[] get(final Event e) {
+		final Number s = start.getSingle(e), f = end.getSingle(e);
+		if (s == null || f == null || f.doubleValue() < s.doubleValue())
 			return null;
-		final Integer[] array = new Integer[f - s + 1];
-		final int low = s;
+		final Number[] array = integer ? new Integer[(int) (Math.floor(f.doubleValue()) - Math.ceil(s.doubleValue()) + 1)] : new Double[(int) Math.floor(f.doubleValue() - s.doubleValue() + 1)];
+		final double low = integer ? Math.ceil(s.doubleValue()) : s.doubleValue();
 		for (int i = 0; i < array.length; i++) {
-			array[i] = Integer.valueOf(low + i);
+			if (integer)
+				array[i] = Integer.valueOf((int) low + i);
+			else
+				array[i] = Double.valueOf(low + i);
 		}
 		return array;
 	}
 	
 	@Override
-	public Iterator<Integer> iterator(final Event e) {
-		final Integer s = start.getSingle(e), f = end.getSingle(e);
+	public Iterator<Number> iterator(final Event e) {
+		final Number s = start.getSingle(e), f = end.getSingle(e);
 		if (s == null || f == null)
 			return null;
-		return new Iterator<Integer>() {
-			int i = s, max = f;
+		return new Iterator<Number>() {
+			double i = integer ? Math.ceil(s.doubleValue()) : s.doubleValue(), max = integer ? Math.floor(f.doubleValue()) : f.doubleValue();
 			
 			@Override
 			public boolean hasNext() {
@@ -81,10 +87,13 @@ public class ExprNumbers extends SimpleExpression<Integer> {
 			}
 			
 			@Override
-			public Integer next() {
+			public Number next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
-				return Integer.valueOf(i++);
+				if (integer)
+					return Integer.valueOf((int) i++);
+				else
+					return Double.valueOf(i++);
 			}
 			
 			@Override
@@ -96,12 +105,12 @@ public class ExprNumbers extends SimpleExpression<Integer> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "all integers from " + start.toString(e, debug) + " to " + end.toString(e, debug);
+		return (integer ? "integers" : "numbers") + " from " + start.toString(e, debug) + " to " + end.toString(e, debug);
 	}
 	
 	@Override
-	public boolean canLoop() {
-		return true;
+	public boolean isLoopOf(final String s) {
+		return integer && (s.equalsIgnoreCase("integer") || s.equalsIgnoreCase("int"));
 	}
 	
 	@Override
@@ -110,8 +119,8 @@ public class ExprNumbers extends SimpleExpression<Integer> {
 	}
 	
 	@Override
-	public Class<? extends Integer> getReturnType() {
-		return Integer.class;
+	public Class<? extends Number> getReturnType() {
+		return integer ? Integer.class : Double.class;
 	}
 	
 	@Override

@@ -25,27 +25,72 @@ import org.bukkit.Location;
 import org.bukkit.entity.ExperienceOrb;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Classes;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
 public class XpOrbData extends EntityData<ExperienceOrb> {
+	private static final long serialVersionUID = -8836499239061252576L;
 	
 	static {
-		register(XpOrbData.class, "xporb", ExperienceOrb.class, "([e]xp|experience)( |-)orb[s]", "<\\d+> ([e]xp|experience)");
+		register(XpOrbData.class, "xporb", ExperienceOrb.class, "<\\d+> ([e]xp|experience)", "([e]xp|experience)[( |-)orb[s]]");
+		Classes.registerClass(new ClassInfo<XpOrbData>(XpOrbData.class, "experience", "experience")
+				.parser(new Parser<XpOrbData>() {
+					@Override
+					public XpOrbData parse(String s, final ParseContext context) {
+						int xp = -1;
+						if (s.matches("\\d+ .+")) {
+							xp = Skript.parseInt(s.substring(0, s.indexOf(' ')));
+							s = s.substring(s.indexOf(' ') + 1);
+						} else if (StringUtils.startsWithIgnoreCase(s, "a ") || StringUtils.startsWithIgnoreCase(s, "an ")) {
+							xp = 1;
+							s = s.substring(s.indexOf(' ') + 1);
+						}
+						if (s.matches("(e?xp|experience)([ -]orbs?)?"))
+							return new XpOrbData(xp);
+						return null;
+					}
+					
+					@Override
+					public String toString(final XpOrbData xp) {
+						return xp.toString();
+					}
+					
+					@Override
+					public String toVariableNameString(final XpOrbData xp) {
+						return xp.toString();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return ".+";
+					}
+				})
+				.serializer(EntityData.serializer));
 	}
 	
 	private int xp = -1;
 	
 	private boolean plural;
 	
+	public XpOrbData() {}
+	
+	public XpOrbData(final int xp) {
+		this.xp = xp;
+	}
+	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
-		if (matchedPattern == 1)
+		if (matchedPattern == 0)
 			xp = Skript.parseInt(parseResult.regexes.get(0).group());
-		plural = parseResult.expr.endsWith("s");
+		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -73,13 +118,52 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 	@Override
 	public ExperienceOrb spawn(final Location loc) {
 		final ExperienceOrb orb = super.spawn(loc);
-		if (xp == -1)
-			orb.setExperience(1);
+		orb.setExperience(xp == -1 ? 1 : xp);
 		return orb;
 	}
 	
 	@Override
 	public boolean isPlural() {
 		return plural;
+	}
+	
+	public int getExperience() {
+		return xp == -1 ? 1 : xp;
+	}
+	
+	public int getInternExperience() {
+		return xp;
+	}
+	
+	@Override
+	public int hashCode() {
+		return xp;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof XpOrbData))
+			return false;
+		final XpOrbData other = (XpOrbData) obj;
+		return xp == other.xp;
+	}
+	
+	@Override
+	public String serialize() {
+		return "" + xp;
+	}
+	
+	@Override
+	protected boolean deserialize(final String s) {
+		try {
+			xp = Integer.parseInt(s);
+			return true;
+		} catch (final NumberFormatException e) {
+			return false;
+		}
 	}
 }

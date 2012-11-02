@@ -37,12 +37,14 @@ import ch.njol.skript.util.Slot;
  */
 public class EffHealth extends Effect {
 	
+	private static final long serialVersionUID = 6404302201372383022L;
+	
 	static {
 		Skript.registerEffect(EffHealth.class,
-				"damage %slots% by %integer%",
-				"damage %livingentities% by %double% [heart[s]]",
-				"heal %livingentities% [by %-double% [heart[s]]]",
-				"repair %slots% [by %-integer%]");
+				"damage %slots% by %number%",
+				"damage %livingentities% by %number% [heart[s]]",
+				"heal %livingentities% [by %-number% [heart[s]]]",
+				"repair %slots% [by %-number%]");
 	}
 	
 	private Expression<?> damageables;

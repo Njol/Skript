@@ -21,11 +21,15 @@
 
 package ch.njol.skript.util;
 
+import java.io.Serializable;
+
 /**
  * 
  * @author Peter Güttinger
  */
-public class Timeperiod {
+public class Timeperiod implements Serializable {
+	
+	private static final long serialVersionUID = 7536810840301396017L;
 	
 	public final int start, end;
 	

@@ -36,6 +36,7 @@ import ch.njol.skript.util.Patterns;
  * @author Peter Güttinger
  */
 public class ExprArithmetic extends SimpleExpression<Number> {
+	private static final long serialVersionUID = -8294655361410006842L;
 	
 	private static enum Operator {
 		PLUS('+') {
@@ -103,18 +104,12 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 			
 			{"%number%[ ]^[ ]%number%", Operator.EXP},
 			
-			{"\\(%number%[ ]+[ ]%number%\\)", Operator.PLUS},
-			{"\\(%number%[ ]-[ ]%number%\\)", Operator.MINUS},
-			
-			{"\\(%number%[ ]*[ ]%number%\\)", Operator.MULT},
-			{"\\(%number%[ ]/[ ]%number%\\)", Operator.DIV},
-			
-			{"\\(%number%[ ]^[ ]%number%\\)", Operator.EXP},
+			{"\\(%number%\\)", null}
 	
 	});
 	
 	static {
-		Skript.registerExpression(ExprArithmetic.class, Number.class, ExpressionType.COMBINED, patterns.getPatterns());
+		Skript.registerExpression(ExprArithmetic.class, Number.class, ExpressionType.PATTERN_MATCHES_EVERYTHING, patterns.getPatterns());
 	}
 	
 	private Expression<? extends Number> first, second;
@@ -127,9 +122,11 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		first = (Expression<? extends Number>) exprs[0];
-		second = (Expression<? extends Number>) exprs[1];
+		second = exprs.length == 1 ? null : (Expression<? extends Number>) exprs[1];
 		op = patterns.getInfo(matchedPattern);
-		if (op == Operator.DIV || op == Operator.EXP) {
+		if (op == null) {
+			returnType = first.getReturnType();
+		} else if (op == Operator.DIV || op == Operator.EXP) {
 			returnType = Double.class;
 		} else {
 			final Class<?> f = first.getReturnType(), s = second.getReturnType();
@@ -150,6 +147,8 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	
 	@Override
 	protected Number[] get(final Event e) {
+		if (op == null)
+			return first.getArray(e);
 		final Number[] one = (Number[]) Array.newInstance(returnType, 1);
 		Number n1 = first.getSingle(e), n2 = second.getSingle(e);
 		if (n1 == null)
@@ -177,7 +176,10 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "(" + first.toString(e, debug) + " " + op + " " + second.toString(e, debug) + ")";
+		if (op == null) {
+			return "(" + first.toString(e, debug) + ")";
+		}
+		return first.toString(e, debug) + " " + op + " " + second.toString(e, debug);
 	}
 	
 }

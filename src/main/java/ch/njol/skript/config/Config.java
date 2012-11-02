@@ -21,10 +21,14 @@
 
 package ch.njol.skript.config;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
 
 import ch.njol.skript.Skript;
 
@@ -34,8 +38,6 @@ import ch.njol.skript.Skript;
  * @author Peter Güttinger
  */
 public class Config {
-	
-	File file;
 	
 	boolean simple = false;
 	private String indentation = null;
@@ -54,33 +56,38 @@ public class Config {
 	
 	final boolean allowEmptySections;
 	
-	public Config(final File file, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
+	String fileName;
+	File file = null;
+	
+	public Config(final InputStream source, final String fileName, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
 		
-		this.file = file;
+		this.fileName = fileName;
 		this.simple = simple;
 		this.allowEmptySections = allowEmptySections;
 		this.defaultSeparator = defaultSeparator;
 		separator = defaultSeparator;
 		
-		if (file.length() == 0) {
+		if (source.available() == 0) {
 			main = new SectionNode(this);
 			Skript.warning("'" + getFileName() + "' is empty");
 			return;
 		}
 		
 		if (Skript.logVeryHigh())
-			Skript.info("loading '" + file.getName() + "'");
+			Skript.info("loading '" + fileName + "'");
 		
-		final ConfigReader r = new ConfigReader(file);
-		
+		final ConfigReader r = new ConfigReader(source);
 		try {
 			main = SectionNode.load(this, r);
-		} catch (final IOException e) {
+		} finally {
 			r.close();
-			throw e;
 		}
-		
-		r.close();
+	}
+	
+	@SuppressWarnings("resource")
+	public Config(final File file, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
+		this(new FileInputStream(file), file.getName(), simple, allowEmptySections, defaultSeparator);
+		this.file = file;
 	}
 	
 	/**
@@ -94,15 +101,7 @@ public class Config {
 	 * @throws IOException
 	 */
 	public Config(final String s, final String fileName, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
-		file = new File(fileName);
-		this.simple = simple;
-		this.allowEmptySections = allowEmptySections;
-		this.defaultSeparator = defaultSeparator;
-		separator = defaultSeparator;
-		
-		final ConfigReader r = new ConfigReader(s);
-		main = SectionNode.load(this, r);
-		r.close();
+		this(new ByteArrayInputStream(s.getBytes("UTF-8")), fileName, simple, allowEmptySections, defaultSeparator);
 	}
 	
 	void setIndentation(final String indent) {
@@ -123,7 +122,7 @@ public class Config {
 	}
 	
 	public String getFileName() {
-		return file.getName();
+		return fileName;
 	}
 	
 	public synchronized void save() throws IOException {
@@ -160,4 +159,37 @@ public class Config {
 	public String getSeparator() {
 		return separator;
 	}
+	
+	public String getByPath(final String path) {
+		return get(path.split("\\."));
+	}
+	
+	public String get(final String... path) {
+		SectionNode section = main;
+		for (int i = 0; i < path.length; i++) {
+			final Node n = section.get(path[i]);
+			if (n == null)
+				return null;
+			if (n instanceof SectionNode) {
+				if (i == path.length - 1)
+					return null;
+				section = (SectionNode) n;
+			} else {
+				if (i == path.length - 1)
+					return ((EntryNode) n).getValue();
+				else
+					return null;
+			}
+		}
+		return null;
+	}
+	
+	public boolean isEmpty() {
+		return main.isEmpty();
+	}
+	
+	public HashMap<String, String> toMap(final String separator) {
+		return main.toMap("", separator);
+	}
+	
 }

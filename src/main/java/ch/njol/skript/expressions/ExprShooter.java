@@ -36,6 +36,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class ExprShooter extends PropertyExpression<Projectile, LivingEntity> {
+	private static final long serialVersionUID = 6366560013863962472L;
 	
 	static {
 		Skript.registerExpression(ExprShooter.class, LivingEntity.class, ExpressionType.SIMPLE, "[the] shooter [of %projectile%]");

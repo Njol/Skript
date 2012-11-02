@@ -45,6 +45,7 @@ import ch.njol.util.iterator.ArrayIterator;
  * @author Peter Güttinger
  */
 public abstract class SimpleExpression<T> implements Expression<T> {
+	private static final long serialVersionUID = -4026754180106122345L;
 	
 	private int time = 0;
 	
@@ -189,7 +190,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		return null;
 	}
 	
@@ -259,17 +260,12 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	@Override
-	public boolean canLoop() {
-		return false;
-	}
-	
-	@Override
 	public boolean isLoopOf(final String s) {
 		return false;
 	}
 	
 	@Override
-	public Iterator<T> iterator(final Event e) {
+	public Iterator<? extends T> iterator(final Event e) {
 		return new ArrayIterator<T>(getArray(e));
 	}
 	

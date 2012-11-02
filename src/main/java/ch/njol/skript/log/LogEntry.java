@@ -23,6 +23,7 @@ package ch.njol.skript.log;
 
 import java.util.logging.Level;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.config.Node;
 
 /**
@@ -35,22 +36,34 @@ public class LogEntry {
 	
 	private final String message;
 	
-	private Node node = null;
+	private final Node node;
+	
+	private final String from;
 	
 	public LogEntry(final Level level, final String message) {
-		this.level = level;
-		this.message = message;
-		node = SkriptLogger.getNode();
+		this(level, message, SkriptLogger.getNode());
 	}
 	
 	public LogEntry(final Level level, final String message, final Node node) {
-		this(level, message);
+		this.level = level;
+		this.message = message;
 		this.node = node;
+		from = Skript.debug() ? findCaller() : "";
 	}
 	
-	public void setNode(final Node node) {
-		if (node != null)
-			this.node = node;
+	private static final String skriptLogPackageName = SkriptLogger.class.getPackage().getName();
+	
+	private static String findCaller() {
+		final StackTraceElement[] es = new Exception().getStackTrace();
+		for (int i = 0; i < es.length; i++) {
+			if (!es[i].getClassName().startsWith(skriptLogPackageName))
+				continue;
+			i++;
+			while (i < es.length - 1 && (es[i].getClassName().startsWith(skriptLogPackageName) || es[i].getClassName().equals(Skript.class.getName())))
+				i++;
+			return " (from " + es[i] + ")";
+		}
+		return es.length == 0 ? " (from an unknown source)" : " (from " + es[es.length - 1] + ")";
 	}
 	
 	public Level getLevel() {
@@ -65,7 +78,7 @@ public class LogEntry {
 	public String toString() {
 		if (node == null || level.intValue() < Level.WARNING.intValue())
 			return message;
-		return message + " (" + node.getConfig().getFileName() + ", line " + node.getLine() + (node.getOrig() == null ? "" : ": '" + node.getOrig().trim() + "')");
+		return message + from + " (" + node.getConfig().getFileName() + ", line " + node.getLine() + (node.getOrig() == null ? "" : ": '" + node.getOrig().trim() + "')");
 	}
 	
 }

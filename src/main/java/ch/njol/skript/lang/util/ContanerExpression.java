@@ -34,6 +34,7 @@ import ch.njol.skript.util.Container;
  * @author Peter Güttinger
  */
 public class ContanerExpression extends SimpleExpression<Object> {
+	private static final long serialVersionUID = 309689225239372629L;
 	
 	private final Expression<?> expr;
 	private final Class<?> c;

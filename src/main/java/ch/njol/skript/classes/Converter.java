@@ -21,11 +21,7 @@
 
 package ch.njol.skript.classes;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
-
-import ch.njol.skript.Skript;
-import ch.njol.util.Validate;
+import ch.njol.skript.registrations.Converters;
 
 /**
  * used to convert data from one type to another.
@@ -35,7 +31,7 @@ import ch.njol.util.Validate;
  * 
  * @author Peter Güttinger
  * 
- * @see Skript#registerConverter(Class, Class, Converter)
+ * @see Converters#registerConverter(Class, Class, Converter)
  */
 public interface Converter<F, T> {
 	
@@ -57,10 +53,10 @@ public interface Converter<F, T> {
 		
 		public final Class<F> from;
 		public final Class<T> to;
-		public final Converter<F, T> converter;
+		public final SerializableConverter<F, T> converter;
 		public final int options;
 		
-		public ConverterInfo(final Class<F> from, final Class<T> to, final Converter<F, T> converter, final int options) {
+		public ConverterInfo(final Class<F> from, final Class<T> to, final SerializableConverter<F, T> converter, final int options) {
 			this.from = from;
 			this.to = to;
 			this.converter = converter;
@@ -103,12 +99,14 @@ public interface Converter<F, T> {
 			return ((Converter<F, T>) conv).convert(from);
 		}
 		
-		public final static <F, T> Converter<?, T> createInstanceofConverter(final ConverterInfo<F, T> conv) {
+		public final static <F, T> SerializableConverter<?, T> createInstanceofConverter(final ConverterInfo<F, T> conv) {
 			return createInstanceofConverter(conv.from, conv.converter);
 		}
 		
-		public final static <F, T> Converter<?, T> createInstanceofConverter(final Class<F> from, final Converter<F, T> conv) {
-			return new Converter<Object, T>() {
+		public final static <F, T> SerializableConverter<?, T> createInstanceofConverter(final Class<F> from, final Converter<F, T> conv) {
+			return new SerializableConverter<Object, T>() {
+				private static final long serialVersionUID = -9026052502252522895L;
+				
 				@SuppressWarnings("unchecked")
 				@Override
 				public T convert(final Object o) {
@@ -119,8 +117,10 @@ public interface Converter<F, T> {
 			};
 		}
 		
-		public final static <F, T> Converter<F, T> createInstanceofConverter(final Converter<F, ?> conv, final Class<T> to) {
-			return new Converter<F, T>() {
+		public final static <F, T> SerializableConverter<F, T> createInstanceofConverter(final Converter<F, ?> conv, final Class<T> to) {
+			return new SerializableConverter<F, T>() {
+				private static final long serialVersionUID = 2408973867196975702L;
+				
 				@SuppressWarnings("unchecked")
 				@Override
 				public T convert(final F f) {
@@ -132,12 +132,14 @@ public interface Converter<F, T> {
 			};
 		}
 		
-		public final static <F, T> Converter<?, T> createDoubleInstanceofConverter(final ConverterInfo<F, ?> conv, final Class<T> to) {
+		public final static <F, T> SerializableConverter<?, T> createDoubleInstanceofConverter(final ConverterInfo<F, ?> conv, final Class<T> to) {
 			return createDoubleInstanceofConverter(conv.from, conv.converter, to);
 		}
 		
-		public final static <F, T> Converter<?, T> createDoubleInstanceofConverter(final Class<F> from, final Converter<F, ?> conv, final Class<T> to) {
-			return new Converter<Object, T>() {
+		public final static <F, T> SerializableConverter<?, T> createDoubleInstanceofConverter(final Class<F> from, final Converter<F, ?> conv, final Class<T> to) {
+			return new SerializableConverter<Object, T>() {
+				private static final long serialVersionUID = 6009912617490506586L;
+				
 				@SuppressWarnings("unchecked")
 				@Override
 				public T convert(final Object o) {
@@ -149,33 +151,6 @@ public interface Converter<F, T> {
 					return null;
 				}
 			};
-		}
-		
-		/**
-		 * 
-		 * @param from
-		 * @param to
-		 * @param conv
-		 * @return
-		 * @throws ArrayStoreException if the given class is not a superclass of all objects returned by the converter
-		 */
-		@SuppressWarnings("unchecked")
-		public final static <F, T> T[] convertUnsafe(final F[] from, final Class<?> to, final Converter<? super F, ? extends T> conv) {
-			return convert(from, (Class<T>) to, conv);
-		}
-		
-		public final static <F, T> T[] convert(final F[] from, final Class<T> to, final Converter<? super F, ? extends T> conv) {
-			Validate.notNull(from, to, conv);
-			final T[] ts = (T[]) Array.newInstance(to, from.length);
-			int j = 0;
-			for (int i = 0; i < from.length; i++) {
-				final T t = from[i] == null ? null : conv.convert(from[i]);
-				if (t != null)
-					ts[j++] = t;
-			}
-			if (j != ts.length)
-				return Arrays.copyOf(ts, j);
-			return ts;
 		}
 		
 	}

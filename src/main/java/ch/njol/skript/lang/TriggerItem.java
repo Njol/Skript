@@ -21,6 +21,8 @@
 
 package ch.njol.skript.lang;
 
+import java.io.Serializable;
+
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -34,7 +36,8 @@ import ch.njol.util.StringUtils;
  * @see Trigger
  * @see Statement
  */
-public abstract class TriggerItem implements Debuggable {
+public abstract class TriggerItem implements Debuggable, Serializable {
+	private static final long serialVersionUID = -7003760134485389509L;
 	
 	protected TriggerSection parent = null;
 	private TriggerItem next = null;

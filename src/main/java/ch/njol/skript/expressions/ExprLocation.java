@@ -22,43 +22,78 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Direction;
 
 /**
  * @author Peter Güttinger
  */
-public class ExprLocation extends PropertyExpression<Location, Location> {
+public class ExprLocation extends SimpleExpression<Location> {
+	private static final long serialVersionUID = -2703003572226455590L;
 	
 	static {
-		Skript.registerExpression(ExprLocation.class, Location.class, ExpressionType.PROPERTY, "location of %location%", "%location%'[s] location");
+		Skript.registerExpression(ExprLocation.class, Location.class, ExpressionType.PATTERN_MATCHES_EVERYTHING,
+				"%direction% %block/location%");
 	}
+	
+	private Expression<Direction> direction;
+	private Expression<Block> block;
+	private Expression<Location> location;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		setExpr((Expression<? extends Location>) vars[0]);
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+		direction = (Expression<Direction>) exprs[0];
+		if (Block.class.isAssignableFrom(exprs[1].getReturnType()))
+			block = (Expression<Block>) exprs[1];
+		else
+			location = (Expression<Location>) exprs[1];
 		return true;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the location of " + getExpr().toString(e, debug);
+	protected Location[] get(final Event e) {
+		final Direction d = direction.getSingle(e);
+		if (d == null)
+			return null;
+		if (block != null) {
+			final Block b = block.getSingle(e);
+			if (b == null)
+				return null;
+			return new Location[] {d.getRelative(b)};
+		} else {
+			final Location l = location.getSingle(e);
+			if (l == null)
+				return null;
+			return new Location[] {d.getRelative(l)};
+		}
 	}
 	
 	@Override
-	public Class<Location> getReturnType() {
+	public boolean isSingle() {
+		return true;
+	}
+	
+	@Override
+	public Class<? extends Location> getReturnType() {
 		return Location.class;
 	}
 	
 	@Override
-	protected Location[] get(final Event e, final Location[] source) {
-		return source;
+	public boolean getAnd() {
+		return false;
+	}
+	
+	@Override
+	public String toString(final Event e, final boolean debug) {
+		return direction.toString(e, debug) + " " + location.toString(e, debug);
 	}
 	
 }

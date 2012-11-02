@@ -38,6 +38,8 @@ import ch.njol.util.Checker;
  */
 public class CondInventoryContains extends Condition {
 	
+	private static final long serialVersionUID = -5748739007049607102L;
+	
 	static {
 		Skript.registerCondition(CondInventoryContains.class,
 				"%inventories% ha(s|ve) %itemtypes% [in [(the[ir]|his|her|its)] inventory]",

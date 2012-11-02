@@ -21,6 +21,9 @@
 
 package ch.njol.skript.lang.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,9 +36,14 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Debuggable;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.UnparsedLiteral;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.StringMode;
 import ch.njol.util.StringUtils;
 
@@ -45,20 +53,26 @@ import ch.njol.util.StringUtils;
  * 
  * @author Peter Güttinger
  */
-public class VariableString implements Debuggable {
-	private final ArrayList<Object> string;
+public class VariableString implements Debuggable, Serializable {
+	private static final long serialVersionUID = -2456868967246699395L;
+	
+	private final String name;
+	
+	private final Object[] string;
 	private final boolean isSimple;
 	private final String simple;
 	private StringMode mode;
 	
 	private VariableString(final String s, final StringMode mode) {
+		name = s;
 		string = null;
 		isSimple = true;
 		simple = s;
 		this.mode = mode;
 	}
 	
-	private VariableString(final ArrayList<Object> string, final StringMode mode) {
+	private VariableString(final String name, final Object[] string, final StringMode mode) {
+		this.name = name;
 		isSimple = false;
 		simple = null;
 		this.string = string;
@@ -66,6 +80,7 @@ public class VariableString implements Debuggable {
 	}
 	
 	/**
+	 * Prints errors
 	 * 
 	 * @param s unquoted string
 	 * @return
@@ -76,11 +91,14 @@ public class VariableString implements Debuggable {
 	
 	public final static Map<String, Pattern> variableNames = new HashMap<String, Pattern>();
 	
+	/**
+	 * Prints errors
+	 * 
+	 * @param s
+	 * @param mode
+	 * @return
+	 */
 	public static VariableString newInstance(final String s, final StringMode mode) {
-//		if (mode == StringMode.VARIABLE_NAME && (s.contains("<") || s.contains(">"))) {
-//			Skript.error("A variable's name must not contain <angle brackets>");
-//			return null;
-//		}
 		final ArrayList<Object> string = new ArrayList<Object>();
 		int c = s.indexOf('%');
 		if (c != -1) {
@@ -98,14 +116,17 @@ public class VariableString implements Debuggable {
 					a = b2;
 				}
 				if (c2 == -1) {
-					Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a %, type it twice: %%.");
+					Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a % type it twice: %%.");
 					return null;
 				}
 				if (c + 1 == c2) {
 					string.add("%");
 				} else {
-					final Expression<?> expr = (Expression<?>) SkriptParser.parse(s.substring(c + 1, c2), Skript.getExpressions().iterator(), false, true, "can't understand the expression %" + s.substring(c + 1, c2) + "%");
+					final Expression<?> expr = SkriptParser.parseExpression(s.substring(c + 1, c2), false, ParseContext.DEFAULT, Object.class);
 					if (expr == null) {
+						return null;
+					} else if (expr instanceof UnparsedLiteral) {
+						Skript.error("C't understand this expression: " + s.substring(c + 1, c2));
 						return null;
 					} else {
 						string.add(expr);
@@ -120,30 +141,53 @@ public class VariableString implements Debuggable {
 			string.add(s);
 		}
 		
-		if (mode == StringMode.VARIABLE_NAME && !variableNames.containsKey(s)) {
-			if (s.startsWith("%") && !Skript.disableVariableConflictWarnings) // inside the if to only print this message once per variable
-				Skript.warning("Starting a variable's name with an expression is discouraged ({" + s + "}). You could prefix it with the script's name: {" + StringUtils.substring(ScriptLoader.currentScript.getFileName(), 0, -3) + "." + s + "}");
-			
-			final StringBuilder p = new StringBuilder();
-			for (final Object o : string) {
-				if (o instanceof Expression)
-					p.append("[^%](.*[^%])?");
-				else
-					p.append(Pattern.quote(o.toString()));
-			}
-			final Pattern pattern = Pattern.compile(p.toString());
-			for (final Entry<String, Pattern> e : variableNames.entrySet()) {
-				if (e.getValue().matcher(s).matches() || pattern.matcher(e.getKey()).matches()) {
-					Skript.warning("Possible name conflict of variables {" + s + "} and {" + e.getKey() + "} (there might be more conflicts).");
-					break;
-				}
-			}
-			variableNames.put(s, pattern);
-		}
+		checkVariableConflicts(s, mode, string);
 		
 		if (c == -1)
 			return new VariableString(s, mode);
-		return new VariableString(string, mode);
+		return new VariableString(s, string.toArray(), mode);
+	}
+	
+	private static void checkVariableConflicts(final String name, final StringMode mode, final Iterable<Object> string) {
+		if (mode == StringMode.VARIABLE_NAME && !variableNames.containsKey(name)) {
+			if (name.startsWith("%")) // inside the if to only print this message once per variable
+				Skript.warning("Starting a variable's name with an expression is discouraged ({" + name + "}). You could prefix it with the script's name: {" + StringUtils.substring(ScriptLoader.currentScript.getFileName(), 0, -3) + "." + name + "}");
+			
+			final Pattern pattern;
+			if (string != null) {
+				final StringBuilder p = new StringBuilder();
+				stringLoop: for (final Object o : string) {
+					if (o instanceof Expression) {
+						for (final ClassInfo<?> ci : Classes.getClassInfos()) {
+							if (ci.getParser() != null && ci.getC().isAssignableFrom(((Expression<?>) o).getReturnType())) {
+								p.append("(?!%)" + ci.getParser().getVariableNamePattern() + "(?<!%)");
+								continue stringLoop;
+							}
+						}
+						p.append("[^%](.*[^%])?");
+					} else {
+						p.append(Pattern.quote(o.toString()));
+					}
+				}
+				pattern = Pattern.compile(p.toString());
+			} else {
+				pattern = Pattern.compile(Pattern.quote(name));
+			}
+			if (!SkriptConfig.disableVariableConflictWarnings) {
+				for (final Entry<String, Pattern> e : variableNames.entrySet()) {
+					if (e.getValue().matcher(name).matches() || pattern.matcher(e.getKey()).matches()) {
+						Skript.warning("Possible name conflict of variables {" + name + "} and {" + e.getKey() + "} (there might be more conflicts).");
+						break;
+					}
+				}
+			}
+			variableNames.put(name, pattern);
+		}
+	}
+	
+	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+		in.defaultReadObject();
+		checkVariableConflicts(name, mode, string == null ? null : Arrays.asList(string));
 	}
 	
 	/**
@@ -200,7 +244,7 @@ public class VariableString implements Debuggable {
 	}
 	
 	/**
-	 * Parses all expressions in the string and returns it. The returned string is cached as long as this method is always called with the same event argument.
+	 * Parses all expressions in the string and returns it.
 	 * 
 	 * @param e Event to pass to the expressions.
 	 * @return The input string with all expressions replaced.
@@ -209,22 +253,16 @@ public class VariableString implements Debuggable {
 		if (isSimple)
 			return simple;
 		final StringBuilder b = new StringBuilder();
-		for (int i = 0; i < string.size(); i++) {
-			final Object o = string.get(i);
+		for (int i = 0; i < string.length; i++) {
+			final Object o = string[i];
 			if (o instanceof Expression) {
-				boolean plural = false;
-				if (mode == StringMode.MESSAGE && i + 1 < string.size()) {
-					if (string.get(i + 1) instanceof String) {
-						if (((String) string.get(i + 1)).startsWith("s "))
-							plural = true;
-					}
-				}
-				if (mode == StringMode.MESSAGE && (plural || Math.abs(StringUtils.numberBefore(b, b.length() - 1)) != 1))
-					b.append(Skript.toString(((Expression<?>) o).getArray(e), ((Expression<?>) o).getAnd(), mode, true));
-				else
-					b.append(Skript.toString(((Expression<?>) o).getArray(e), ((Expression<?>) o).getAnd(), mode, false));
+				b.append(Classes.toString(((Expression<?>) o).getArray(e), ((Expression<?>) o).getAnd(), mode, mode == StringMode.MESSAGE &&
+						(Math.abs(StringUtils.numberBefore(b, b.length() - 1)) != 1 || i + 1 < string.length && string[i + 1] instanceof String && StringUtils.startsWithIgnoreCase((String) string[i + 1], "s"))));
 			} else {
-				b.append(o);
+				if (mode == StringMode.MESSAGE && i != 0 && string[i - 1] instanceof Expression && StringUtils.startsWithIgnoreCase((String) o, "s"))
+					b.append(((String) o).substring(1));
+				else
+					b.append(o);
 			}
 		}
 		return b.toString();
@@ -259,7 +297,7 @@ public class VariableString implements Debuggable {
 		final StringBuilder b = new StringBuilder();
 		for (final Object o : string) {
 			if (o instanceof Expression) {
-				b.append("<" + Skript.getSuperClassInfo(((Expression<?>) o).getReturnType()).getCodeName() + ">");
+				b.append("<" + Classes.getSuperClassInfo(((Expression<?>) o).getReturnType()).getCodeName() + ">");
 			} else {
 				b.append(o);
 			}
@@ -278,4 +316,25 @@ public class VariableString implements Debuggable {
 	public void setMode(final StringMode mode) {
 		this.mode = mode;
 	}
+	
+	/* TODO allow special characters
+	private static String allowedChars = null;
+	private static Field allowedCharacters = null;
+	
+	static {
+		if (Skript.isRunningCraftBukkit()) {
+			try {
+				allowedCharacters = SharedConstants.class.getDeclaredField("allowedCharacters");
+				allowedCharacters.setAccessible(true);
+				Field modifiersField = Field.class.getDeclaredField("modifiers");
+				modifiersField.setAccessible(true);
+				modifiersField.setInt(allowedCharacters, allowedCharacters.getModifiers() & ~Modifier.FINAL);
+				allowedChars = (String) allowedCharacters.get(null);
+			} catch (Throwable e) {
+				allowedChars = null;
+				allowedCharacters = null;
+			}
+		}
+	}
+	*/
 }

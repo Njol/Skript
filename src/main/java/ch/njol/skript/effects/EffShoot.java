@@ -27,61 +27,70 @@ import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
+import org.bukkit.util.Vector;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
 
 /**
  * @author Peter Güttinger
  */
 public class EffShoot extends Effect {
 	
+	private static final long serialVersionUID = 7878514863545530061L;
+	
 	static {
 		Skript.registerEffect(EffShoot.class,
-				"shoot %entitydatas% [from %livingentity%] [(at|with) (speed|velocity) %-double%]",
-				"(make|let) %livingentity% shoot %entitydatas% [(at|with) (speed|velocity) %-double%]");
+				"shoot %entitydatas% [from %livingentity%] [(at|with) (speed|velocity) %-number%] [%-direction%]",
+				"(make|let) %livingentity% shoot %entitydatas% [(at|with) (speed|velocity) %-number%] [%-direction%]");
 	}
 	
-	private final static double DEFAULT_SPEED = 5;
+	private final static Double DEFAULT_SPEED = 5.;
 	
 	private Expression<EntityData<?>> types;
 	private Expression<LivingEntity> shooters;
-	private Expression<Double> velocity;
+	private Expression<Number> velocity;
+	private Expression<Direction> direction;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		types = (Expression<EntityData<?>>) exprs[matchedPattern];
 		shooters = (Expression<LivingEntity>) exprs[1 - matchedPattern];
-		velocity = (Expression<Double>) exprs[2];
+		velocity = (Expression<Number>) exprs[2];
+		direction = (Expression<Direction>) exprs[3];
 		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		final Double v = velocity == null ? DEFAULT_SPEED : velocity.getSingle(e);
+		final Number v = velocity == null ? DEFAULT_SPEED : velocity.getSingle(e);
 		if (v == null)
+			return;
+		final Direction dir = direction == null ? Direction.IDENTITY : direction.getSingle(e);
+		if (dir == null)
 			return;
 		for (final LivingEntity shooter : shooters.getArray(e)) {
 			for (final EntityData<?> d : types.getArray(e)) {
-				if (Fireball.class.isAssignableFrom(d.getType())) {// otherwise fireballs explode in the shooter's face
-					final Fireball projectile = (Fireball) shooter.getWorld().spawn(shooter.getEyeLocation().add(shooter.getLocation().getDirection().multiply(0.5)), d.getType());
+				final Vector vel = dir.getDirection(shooter).multiply(v.doubleValue());
+				if (Fireball.class.isAssignableFrom(d.getType())) {// fireballs explode in the shooter's face by default
+					final Fireball projectile = (Fireball) shooter.getWorld().spawn(shooter.getEyeLocation().add(vel.normalize().multiply(0.5)), d.getType());
 					projectile.setShooter(shooter);
-					projectile.setVelocity(shooter.getLocation().getDirection().multiply(v));
+					projectile.setVelocity(vel);
 				} else if (Projectile.class.isAssignableFrom(d.getType())) {
 					final Projectile projectile = shooter.launchProjectile((Class<? extends Projectile>) d.getType());
 					set(projectile, d);
-					if (velocity != null)
-						projectile.setVelocity(projectile.getVelocity().normalize().multiply(v));
+					projectile.setVelocity(vel);
 				} else {
 					final Location loc = shooter.getLocation();
 					loc.setY(loc.getY() + shooter.getEyeHeight() / 2);
 					final Entity projectile = d.spawn(loc);
 					if (projectile != null)
-						projectile.setVelocity(shooter.getLocation().getDirection().multiply(v));
+						projectile.setVelocity(vel);
 				}
 			}
 		}

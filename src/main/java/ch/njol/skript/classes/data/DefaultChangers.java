@@ -25,13 +25,17 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.potion.PotionEffectType;
 
-import ch.njol.skript.classes.Changer;
+import ch.njol.skript.Skript;
+import ch.njol.skript.classes.SerializableChanger;
+import ch.njol.skript.entity.XpOrbData;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timespan;
@@ -46,15 +50,18 @@ public class DefaultChangers {
 	/**
 	 * Although this is a Changer&lt;World, ?&gt;, it should not be used for worlds.
 	 */
-	public final static Changer<World, Object> timeChanger = new Changer<World, Object>() {
+	public final static SerializableChanger<World, Object> timeChanger = new SerializableChanger<World, Object>() {
+		private static final long serialVersionUID = -7723176266948346432L;
+		
+		@SuppressWarnings("unchecked")
 		@Override
-		public Class<?> acceptChange(final ChangeMode mode) {
+		public Class<?>[] acceptChange(final ChangeMode mode) {
 			switch (mode) {
 				case ADD:
 				case REMOVE:
-					return Timespan.class;
+					return Skript.array(Timespan.class);
 				case SET:
-					return Time.class;
+					return Skript.array(Time.class);
 				default:
 					return null;
 			}
@@ -70,7 +77,7 @@ public class DefaultChangers {
 					for (final World w : worlds) {
 						w.setTime(time.getTicks());
 					}
-				break;
+					break;
 				case REMOVE:
 					mod = -1;
 					//$FALL-THROUGH$
@@ -79,52 +86,83 @@ public class DefaultChangers {
 					for (final World w : worlds) {
 						w.setTime(w.getTime() + mod * ts.getTicks());
 					}
-				break;
+					break;
 			}
 		}
 	};
 	
-	public final static Changer<Entity, ItemType[]> entityChanger = new Changer<Entity, ItemType[]>() {
+	public final static SerializableChanger<Entity, Object[]> entityChanger = new SerializableChanger<Entity, Object[]>() {
+		private static final long serialVersionUID = 4191773847489489771L;
+		
+		@SuppressWarnings("unchecked")
 		@Override
-		public Class<? extends ItemType[]> acceptChange(final ChangeMode mode) {
-			if (mode == ChangeMode.SET)
-				return null;
-			return ItemType[].class;
+		public Class<? extends Object[]>[] acceptChange(final ChangeMode mode) {
+			switch (mode) {
+				case ADD:
+					return Skript.array(ItemType[].class, XpOrbData[].class);
+				case CLEAR:
+					return Skript.array();
+				case REMOVE:
+					return Skript.array(ItemType[].class, PotionEffectType[].class);
+				case SET:
+					return null;
+			}
+			assert false;
+			return null;
 		}
 		
 		@SuppressWarnings("deprecation")
 		@Override
-		public void change(final Entity[] entities, final ItemType[] delta, final ChangeMode mode) {
-			for (final Entity e : entities) {
-				if (!(e instanceof Player)) {
+		public void change(final Entity[] entities, final Object[] delta, final ChangeMode mode) {
+			if (delta instanceof PotionEffectType[]) {
+				for (final Entity e : entities) {
+					if (!(e instanceof LivingEntity))
+						continue;
+					for (final PotionEffectType t : (PotionEffectType[]) delta)
+						((LivingEntity) e).removePotionEffect(t);
+				}
+			} else {
+				for (final Entity e : entities) {
+					if (!(e instanceof Player)) {
+						if (mode == ChangeMode.CLEAR)
+							e.remove();
+						continue;
+					}
 					if (mode == ChangeMode.CLEAR)
-						e.remove();
-					continue;
+						continue;
+					if (delta instanceof XpOrbData[]) {
+						int xp = 0;
+						for (final XpOrbData x : (XpOrbData[]) delta)
+							xp += x.getExperience();
+						((Player) e).giveExp(xp);
+					} else {
+						final PlayerInventory invi = ((Player) e).getInventory();
+						for (final ItemType type : (ItemType[]) delta) {
+							if (mode == ChangeMode.ADD)
+								type.addTo(invi);
+							else
+								type.removeFrom(invi);
+						}
+						((Player) e).updateInventory();
+					}
 				}
-				if (mode == ChangeMode.CLEAR)
-					continue;
-				final PlayerInventory invi = ((Player) e).getInventory();
-				for (final ItemType type : delta) {
-					if (mode == ChangeMode.ADD)
-						type.addTo(invi);
-					else
-						type.removeFrom(invi);
-				}
-				((Player) e).updateInventory();
 			}
 		}
 	};
 	
-	public final static Changer<Entity, Void> nonLivingEntityChanger = new Changer<Entity, Void>() {
+	public final static SerializableChanger<Entity, Object> nonLivingEntityChanger = new SerializableChanger<Entity, Object>() {
+		private static final long serialVersionUID = 2080340413775243075L;
+		
+		@SuppressWarnings("unchecked")
 		@Override
-		public Class<Void> acceptChange(final ChangeMode mode) {
+		public Class<Object>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.CLEAR)
-				return Void.class;
+				return Skript.array();
 			return null;
 		}
 		
 		@Override
-		public void change(final Entity[] entities, final Void delta, final ChangeMode mode) {
+		public void change(final Entity[] entities, final Object delta, final ChangeMode mode) {
 			for (final Entity e : entities) {
 				if (e instanceof Player)
 					continue;
@@ -133,12 +171,15 @@ public class DefaultChangers {
 		}
 	};
 	
-	public final static Changer<Player, ItemType[]> playerChanger = new Changer<Player, ItemType[]>() {
+	public final static SerializableChanger<Player, ItemType[]> playerChanger = new SerializableChanger<Player, ItemType[]>() {
+		private static final long serialVersionUID = 9048165091425550382L;
+		
+		@SuppressWarnings("unchecked")
 		@Override
-		public Class<? extends ItemType[]> acceptChange(final ChangeMode mode) {
+		public Class<? extends ItemType[]>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.SET || mode == ChangeMode.CLEAR)
 				return null;
-			return ItemType[].class;
+			return Skript.array(ItemType[].class);
 		}
 		
 		@SuppressWarnings("deprecation")
@@ -157,10 +198,13 @@ public class DefaultChangers {
 		}
 	};
 	
-	public final static Changer<Inventory, ItemType[]> inventoryChanger = new Changer<Inventory, ItemType[]>() {
+	public final static SerializableChanger<Inventory, ItemType[]> inventoryChanger = new SerializableChanger<Inventory, ItemType[]>() {
+		private static final long serialVersionUID = -8150546084341399001L;
+		
+		@SuppressWarnings("unchecked")
 		@Override
-		public Class<ItemType[]> acceptChange(final ChangeMode mode) {
-			return ItemType[].class;
+		public Class<ItemType[]>[] acceptChange(final ChangeMode mode) {
+			return Skript.array(ItemType[].class);
 		}
 		
 		@SuppressWarnings("deprecation")
@@ -181,12 +225,12 @@ public class DefaultChangers {
 						for (final ItemType type : delta) {
 							type.addTo(invi);
 						}
-					break;
+						break;
 					case REMOVE:
 						for (final ItemType type : delta) {
 							type.removeFrom(invi);
 						}
-					break;
+						break;
 				}
 				if (invi instanceof PlayerInventory) {
 					((Player) invi.getHolder()).updateInventory();
@@ -195,12 +239,15 @@ public class DefaultChangers {
 		}
 	};
 	
-	public final static Changer<Block, Object> blockChanger = new Changer<Block, Object>() {
+	public final static SerializableChanger<Block, Object> blockChanger = new SerializableChanger<Block, Object>() {
+		private static final long serialVersionUID = -490468386085652881L;
+		
+		@SuppressWarnings("unchecked")
 		@Override
-		public Class<?> acceptChange(final ChangeMode mode) {
+		public Class<?>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.SET)
-				return ItemType.class;
-			return ItemType[].class;
+				return Skript.array(ItemType.class);
+			return Skript.array(ItemType[].class);
 		}
 		
 		@Override
@@ -209,10 +256,10 @@ public class DefaultChangers {
 				switch (mode) {
 					case SET:
 						((ItemType) delta).setBlock(block, true);
-					break;
+						break;
 					case CLEAR:
 						block.setTypeId(0, true);
-					break;
+						break;
 					case ADD:
 					case REMOVE:
 						final BlockState state = block.getState();
@@ -228,7 +275,7 @@ public class DefaultChangers {
 							}
 						}
 						state.update();
-					break;
+						break;
 				}
 			}
 		}

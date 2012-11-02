@@ -19,26 +19,16 @@
  * 
  */
 
-package ch.njol.skript.util;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+package ch.njol.skript.log;
 
 /**
+ * The quality of a parse error.
+ * 
  * @author Peter Güttinger
  */
-abstract class Java7FileUtils {
-	
-	private Java7FileUtils() {}
-	
-	public final static void move(final File from, final File to) throws IOException {
-		Files.move(from.toPath(), to.toPath());
+public enum ErrorQuality {
+	NONE, NOT_AN_EXPRESSION, SEMANTIC_ERROR;
+	int quality() {
+		return ordinal();
 	}
-	
-	public final static void copy(final File from, final File to) throws IOException {
-		Files.copy(from.toPath(), to.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
-	}
-	
 }

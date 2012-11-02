@@ -32,8 +32,8 @@ import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.StringUtils;
 
@@ -41,9 +41,10 @@ import ch.njol.util.StringUtils;
  * @author Peter Güttinger
  */
 public class ExprEntity extends SimpleExpression<Entity> {
+	private static final long serialVersionUID = 6139015110513079985L;
 	
 	static {
-		Skript.registerExpression(ExprEntity.class, Entity.class, ExpressionType.SIMPLE, "[the] [event-]<.+>");
+		Skript.registerExpression(ExprEntity.class, Entity.class, ExpressionType.PATTERN_MATCHES_EVERYTHING, "[the] [event-]<.+>");
 	}
 	
 	private EntityData<?> type;
@@ -52,7 +53,7 @@ public class ExprEntity extends SimpleExpression<Entity> {
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		final SubLog log = SkriptLogger.startSubLog();
+		final SimpleLog log = SkriptLogger.startSubLog();
 		final ItemType item = Aliases.parseItemType(parseResult.regexes.get(0).group());
 		if (item != null && !StringUtils.startsWithIgnoreCase(parseResult.expr, "the ")) {
 			log.stop();
@@ -65,7 +66,8 @@ public class ExprEntity extends SimpleExpression<Entity> {
 			return false;
 		log.printLog();
 		entity = new EventValueExpression<Entity>(type.getType());
-		return entity.init();
+		entity.init();
+		return true;
 	}
 	
 	@Override

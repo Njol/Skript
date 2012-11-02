@@ -37,8 +37,7 @@ public class EntryNode extends Node implements Entry<String, String> {
 	}
 	
 	public EntryNode(final String key, final String value, final String orig, final SectionNode parent, final int lineNum) {
-		super(parent.getConfig(), key, orig, lineNum);
-		this.parent = parent;
+		super(key, parent, orig, lineNum);
 		this.value = value;
 	}
 	

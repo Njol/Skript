@@ -21,8 +21,6 @@
 
 package ch.njol.skript.config.validate;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
@@ -36,10 +34,10 @@ public class ParsedEntryValidator<T> extends EntryValidator {
 	private final Parser<? extends T> parser;
 	private final Setter<T> setter;
 	
-	public ParsedEntryValidator(final Class<T> c, final Setter<T> setter) {
-		parser = Skript.getParser(c);
-		if (parser == null)
-			throw new SkriptAPIException("There's no parser registered for " + c.getName());
+	public ParsedEntryValidator(final Parser<? extends T> parser, final Setter<T> setter) {
+		assert parser != null;
+		assert setter != null;
+		this.parser = parser;
 		this.setter = setter;
 	}
 	

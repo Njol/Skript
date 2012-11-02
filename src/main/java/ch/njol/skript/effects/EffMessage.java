@@ -21,6 +21,7 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
@@ -28,6 +29,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Utils;
 
 /**
@@ -36,8 +38,10 @@ import ch.njol.skript.util.Utils;
  */
 public class EffMessage extends Effect {
 	
+	private static final long serialVersionUID = -3885693386533277658L;
+	
 	static {
-		Skript.registerEffect(EffMessage.class, "([send] message|send) %strings% [to %commandsenders%]");
+		Skript.registerEffect(EffMessage.class, "(message|send [message]) %strings% [to %commandsenders%]", "log %strings%");
 	}
 	
 	private Expression<String> messages;
@@ -45,13 +49,13 @@ public class EffMessage extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (matchedPattern == 0) {
-			messages = (Expression<String>) vars[0];
-			recipients = (Expression<CommandSender>) vars[1];
+			messages = (Expression<String>) exprs[0];
+			recipients = (Expression<CommandSender>) exprs[1];
 		} else {
-			recipients = (Expression<CommandSender>) vars[0];
-			messages = (Expression<String>) vars[1];
+			messages = (Expression<String>) exprs[0];
+			recipients = new SimpleLiteral<CommandSender>(Bukkit.getConsoleSender(), false);
 		}
 		return true;
 	}

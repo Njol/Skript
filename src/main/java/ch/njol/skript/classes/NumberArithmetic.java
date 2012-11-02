@@ -26,6 +26,8 @@ package ch.njol.skript.classes;
  */
 public class NumberArithmetic<T extends Number> implements Arithmetic<T, Double> {
 	
+	private static final long serialVersionUID = 1395512586628132626L;
+	
 	@Override
 	public Double difference(final T first, final T second) {
 		return Math.abs(first.doubleValue() - second.doubleValue());

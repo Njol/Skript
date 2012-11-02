@@ -39,9 +39,12 @@ import ch.njol.util.Checker;
 import ch.njol.util.iterator.ArrayIterator;
 
 /**
+ * FIXME change this to an expression
+ * 
  * @author Peter Güttinger
  */
 public class VariableStringLiteral implements Literal<String> {
+	private static final long serialVersionUID = -5097464026639553998L;
 	
 	private final UnparsedLiteral source;
 	private final VariableString[] strings;
@@ -55,6 +58,12 @@ public class VariableStringLiteral implements Literal<String> {
 		this.source = source;
 	}
 	
+	/**
+	 * Prints errors iff <tt>source</tt> is a text (i.e. if <tt>source.</tt>{@link UnparsedLiteral#getData() getData()} starts and ends with a quote)
+	 * 
+	 * @param source
+	 * @return
+	 */
 	public static VariableStringLiteral newInstance(final UnparsedLiteral source) {
 		final String s = source.getData();
 		if (!s.startsWith("\"") || !s.endsWith("\""))
@@ -83,7 +92,7 @@ public class VariableStringLiteral implements Literal<String> {
 			if (end == s.length() - 1)
 				break;
 			
-			final Matcher m = UnparsedLiteral.literalSplitPattern.matcher(s).region(end + 1, s.length());
+			final Matcher m = SkriptParser.listSplitPattern.matcher(s).region(end + 1, s.length());
 			if (!m.lookingAt())
 				return null;
 			start = m.end();
@@ -151,7 +160,7 @@ public class VariableStringLiteral implements Literal<String> {
 	public String[] getArray(final Event e) {
 		if (and)
 			return getAll(e);
-		return new String[] {Utils.getRandom(strings).toString(e)};
+		return new String[] {Utils.random(strings).toString(e)};
 	}
 	
 	@Override
@@ -163,7 +172,7 @@ public class VariableStringLiteral implements Literal<String> {
 	public String getSingle(final Event e) {
 		if (getAnd() && strings.length > 1)
 			throw new SkriptAPIException("Call to getSingle on a non-single expression");
-		return Utils.getRandom(strings).toString(e);
+		return Utils.random(strings).toString(e);
 	}
 	
 	@Override
@@ -192,7 +201,7 @@ public class VariableStringLiteral implements Literal<String> {
 	}
 	
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		return null;
 	}
 	
@@ -213,11 +222,6 @@ public class VariableStringLiteral implements Literal<String> {
 	
 	@Override
 	public boolean isDefault() {
-		return false;
-	}
-	
-	@Override
-	public boolean canLoop() {
 		return false;
 	}
 	

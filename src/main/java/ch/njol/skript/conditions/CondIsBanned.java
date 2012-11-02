@@ -38,6 +38,8 @@ import ch.njol.util.Checker;
  */
 public class CondIsBanned extends Condition {
 	
+	private static final long serialVersionUID = -2253265799057608926L;
+	
 	static {
 		Skript.registerCondition(CondIsBanned.class,
 				"%offlineplayers/strings% (is|are) banned", "%players/strings% (is|are) IP(-| |)banned",
@@ -52,7 +54,7 @@ public class CondIsBanned extends Condition {
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		players = exprs[0];
 		setNegated(matchedPattern >= 2);
-		ipBanned = matchedPattern % 2 == 1;
+		ipBanned = matchedPattern % 2 != 0;
 		return true;
 	}
 	

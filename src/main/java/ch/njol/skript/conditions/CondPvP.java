@@ -35,6 +35,8 @@ import ch.njol.util.Checker;
  */
 public class CondPvP extends Condition {
 	
+	private static final long serialVersionUID = 6964627634149153402L;
+	
 	static {
 		Skript.registerCondition(CondPvP.class, "(is PvP|PvP is) enabled [in %worlds%]", "(is PvP|PvP is) disabled [in %worlds%]");
 	}

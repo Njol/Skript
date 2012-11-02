@@ -37,6 +37,8 @@ import ch.njol.util.Checker;
  */
 public class CondIsWearing extends Condition {
 	
+	private static final long serialVersionUID = 5321022094554217823L;
+	
 	static {
 		Skript.registerCondition(CondIsWearing.class, "%players% (is|are) wearing %itemtypes%", "%players% (isn't|is not|aren't|are not) wearing %itemtypes%");
 	}

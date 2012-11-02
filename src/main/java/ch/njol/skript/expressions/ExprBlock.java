@@ -32,42 +32,35 @@ import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.util.Offset;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprBlock extends SimpleExpression<Block> {
+	private static final long serialVersionUID = -2975233846363855942L;
 	
 	static {
 		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.SIMPLE, "[the] [event-]block");
-		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.NORMAL, "[the] block %offset% [%block%]");
+		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.NORMAL, "[the] block [%block%]");
 	}
 	
-	private Expression<Offset> offset = null;
 	private Expression<Block> block;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (exprs.length > 0) {
-			offset = (Expression<Offset>) exprs[0];
-			block = (Expression<Block>) exprs[1];
-			return true;
+			block = (Expression<Block>) exprs[0];
 		} else {
 			block = new EventValueExpression<Block>(Block.class);
 			return ((EventValueExpression<Block>) block).init();
 		}
+		return true;
 	}
 	
 	@Override
 	protected Block[] get(final Event e) {
-		if (offset == null)
-			return block.getArray(e);
-		final Offset o = offset.getSingle(e);
-		if (o == null)
-			return null;
-		return new Block[] {o.getRelative(block.getSingle(e))};
+		return block.getAll(e);
 	}
 	
 	@Override
@@ -82,18 +75,16 @@ public class ExprBlock extends SimpleExpression<Block> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return offset == null ? "the block" : "the block " + offset.toString(e, debug) + " " + block.toString(e, debug);
+		return block instanceof EventValueExpression ? "the block" : "the block " + block.toString(e, debug);
 	}
 	
 	@Override
 	public boolean isDefault() {
-		return offset == null;
+		return block.isDefault();
 	}
 	
 	@Override
 	public boolean setTime(final int time) {
-		if (offset != null)
-			return false;
 		return block.setTime(time);
 	}
 	
@@ -108,7 +99,7 @@ public class ExprBlock extends SimpleExpression<Block> {
 	}
 	
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		return DefaultChangers.blockChanger.acceptChange(mode);
 	}
 	

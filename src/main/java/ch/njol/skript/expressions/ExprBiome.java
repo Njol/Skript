@@ -36,6 +36,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class ExprBiome extends PropertyExpression<Location, Biome> {
+	private static final long serialVersionUID = 664790396177783245L;
 	
 	static {
 		Skript.registerExpression(ExprBiome.class, Biome.class, ExpressionType.PROPERTY, "[the] biome (of|at) %location%", "%location%'[s] biome");
@@ -45,7 +46,7 @@ public class ExprBiome extends PropertyExpression<Location, Biome> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends Location>) exprs[0]);
-		return false;
+		return true;
 	}
 	
 	@Override

@@ -34,39 +34,47 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.BlockSphereIterator;
+import ch.njol.util.iterator.EmptyIterator;
 import ch.njol.util.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprBlockSphere extends SimpleExpression<Block> {
+	private static final long serialVersionUID = 6461487091404137540L;
 	
 	static {
 		Skript.registerExpression(ExprBlockSphere.class, Block.class, ExpressionType.NORMAL,
-				"blocks in radius %float% [around %location%]",
-				"blocks around %location% in radius %float%");
+				"blocks in radius %number% [(of|around) %location%]",
+				"blocks around %location% in radius %number%");
 	}
 	
-	private Expression<Float> radius;
+	private Expression<Number> radius;
 	private Expression<Location> center;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		radius = (Expression<Float>) exprs[matchedPattern];
+		radius = (Expression<Number>) exprs[matchedPattern];
 		center = (Expression<Location>) exprs[1 - matchedPattern];
 		return true;
 	}
 	
 	@Override
 	public Iterator<Block> iterator(final Event e) {
-		return new BlockSphereIterator(center.getSingle(e), radius.getSingle(e));
+		final Location l = center.getSingle(e);
+		final Number r = radius.getSingle(e);
+		if (l == null || r == null)
+			return new EmptyIterator<Block>();
+		return new BlockSphereIterator(l, r.doubleValue());
 	}
 	
 	@Override
 	protected Block[] get(final Event e) {
-		final float r = radius.getSingle(e);
-		final ArrayList<Block> list = new ArrayList<Block>((int) (1.1 * 4 / 3. * Math.PI * r * r * r));
+		final Number r = radius.getSingle(e);
+		if (r == null)
+			return null;
+		final ArrayList<Block> list = new ArrayList<Block>((int) (1.1 * 4 / 3. * Math.PI * Math.pow(r.doubleValue(), 3)));
 		for (final Block b : new IteratorIterable<Block>(iterator(e)))
 			list.add(b);
 		return list.toArray(new Block[list.size()]);
@@ -80,11 +88,6 @@ public class ExprBlockSphere extends SimpleExpression<Block> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		return "the blocks in radius " + radius + " around " + center.toString(e, debug);
-	}
-	
-	@Override
-	public boolean canLoop() {
-		return true;
 	}
 	
 	@Override

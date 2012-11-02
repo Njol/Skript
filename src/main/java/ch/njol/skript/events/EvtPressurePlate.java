@@ -35,6 +35,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class EvtPressurePlate extends SkriptEvent {
+	private static final long serialVersionUID = -5459891389086610473L;
 	
 	static {
 		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class,

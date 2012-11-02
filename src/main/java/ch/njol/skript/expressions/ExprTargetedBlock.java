@@ -34,11 +34,13 @@ import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Classes;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
+	private static final long serialVersionUID = -1829985920300166314L;
 	
 	static {
 		Skript.registerExpression(ExprTargetedBlock.class, Block.class, ExpressionType.NORMAL,
@@ -66,7 +68,7 @@ public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
 			return "the targeted block" + (players.isSingle() ? "" : "s") + " of " + players.toString(e, debug);
-		return Skript.getDebugMessage(getAll(e));
+		return Classes.getDebugMessage(getAll(e));
 	}
 	
 	private Block getTargetedBlock(final Player p, final Event e) {

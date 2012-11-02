@@ -39,6 +39,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class ExprGameMode extends PropertyExpression<Player, GameMode> {
+	private static final long serialVersionUID = 715080620914863107L;
 	
 	static {
 		Skript.registerExpression(ExprGameMode.class, GameMode.class, ExpressionType.PROPERTY, "[the] game[ ]mode of %players%", "%players%'[s] game[ ]mode");
@@ -77,10 +78,11 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 		return GameMode.class;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
-			return GameMode.class;
+			return Skript.array(GameMode.class);
 		return null;
 	}
 	

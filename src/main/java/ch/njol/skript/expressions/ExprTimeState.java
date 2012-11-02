@@ -27,13 +27,15 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.UnparsedLiteral;
+import ch.njol.skript.log.ErrorQuality;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprTimeState extends WrapperExpression<Object> {
+	private static final long serialVersionUID = 7845622836544154737L;
 	
 	static {
 		Skript.registerExpression(ExprTimeState.class, Object.class, ExpressionType.PROPERTY,
@@ -44,14 +46,14 @@ public class ExprTimeState extends WrapperExpression<Object> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		final Expression<?> expr = vars[0];
-		if (expr instanceof UnparsedLiteral)
+		if (expr instanceof Literal<?>)
 			return false;
 		if (isDelayed == 1) {
-			Skript.error("Cannot use time states after the event has already passed");
+			Skript.error("Cannot use time states after the event has already passed", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
 		if (!expr.setTime(matchedPattern >= 2 ? 1 : -1)) {
-			Skript.error(expr + " does not have a " + (matchedPattern >= 2 ? "future" : "past") + " state");
+			Skript.error(expr + " does not have a " + (matchedPattern >= 2 ? "future" : "past") + " state", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
 		setExpr(expr);

@@ -32,23 +32,18 @@ import ch.njol.util.Checker;
 /**
  * @author Peter Güttinger
  */
-public abstract class PropertyCondition<T> extends Condition {
+public abstract class PropertyCondition<T> extends Condition implements Checker<T> {
 	
-	private final Checker<? super T> checker;
+	private static final long serialVersionUID = 7450779043764578921L;
+	
 	private Expression<? extends T> expr;
-	private final String property;
-	
-	public PropertyCondition(final String property, final Checker<? super T> checker) {
-		this.property = property;
-		this.checker = checker;
-	}
 	
 	/**
 	 * @param c
 	 * @param property
 	 * @param type must be plural
 	 */
-	protected static void register(final Class<? extends PropertyCondition<?>> c, final String property, final String type) {
+	public static void register(final Class<? extends Condition> c, final String property, final String type) {
 		Skript.registerCondition(c, "%" + type + "% (is|are) " + property, "%" + type + "% (isn't|is not|aren't|are not) " + property);
 	}
 	
@@ -62,12 +57,17 @@ public abstract class PropertyCondition<T> extends Condition {
 	
 	@Override
 	public boolean check(final Event e) {
-		return expr.check(e, checker, this);
+		return expr.check(e, this, this);
 	}
 	
 	@Override
+	public abstract boolean check(T t);
+	
+	protected abstract String getPropertyName();
+	
+	@Override
 	public String toString(final Event e, final boolean debug) {
-		return expr.toString(e, debug) + (expr.isSingle() ? " is " : " are ") + (isNegated() ? "not " : "") + property;
+		return expr.toString(e, debug) + (expr.isSingle() ? " is " : " are ") + (isNegated() ? "not " : "") + getPropertyName();
 	}
 	
 }

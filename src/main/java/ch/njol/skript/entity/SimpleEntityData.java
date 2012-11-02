@@ -21,9 +21,11 @@
 
 package ch.njol.skript.entity;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Blaze;
@@ -68,14 +70,15 @@ import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
-import ch.njol.util.Validate;
 
 /**
  * @author Peter Güttinger
  */
 public class SimpleEntityData extends EntityData<Entity> {
+	private static final long serialVersionUID = -1021159610746515883L;
 	
 	private final static Map<String, Class<? extends Entity>> names = new LinkedHashMap<String, Class<? extends Entity>>();
+	private final static Set<Class<?>> superTypes = new HashSet<Class<?>>();
 	static {
 		names.put("arrow", Arrow.class);
 		names.put("boat", Boat.class);
@@ -97,8 +100,10 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("giant", Giant.class);
 		names.put("giant zombie", Giant.class);
 		names.put("iron golem", IronGolem.class);
+		names.put("item entity", Item.class);
 		names.put("dropped item", Item.class);
 		names.put("magma cube", MagmaCube.class);
+		names.put("magma slime", MagmaCube.class);
 		names.put("mooshroom", MushroomCow.class);
 		names.put("painting", Painting.class);
 		names.put("pig", Pig.class);
@@ -125,9 +130,13 @@ public class SimpleEntityData extends EntityData<Entity> {
 		
 		// supertypes
 		names.put("human", HumanEntity.class);
+		superTypes.add(HumanEntity.class);
 		names.put("creature", Creature.class);
+		superTypes.add(Creature.class);
 		names.put("projectile", Projectile.class);
+		superTypes.add(Projectile.class);
 		names.put("entity", Entity.class);
+		superTypes.add(Entity.class);
 	}
 	
 	static {
@@ -143,7 +152,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 	public SimpleEntityData() {}
 	
 	public SimpleEntityData(final Class<? extends Entity> c) {
-		Validate.notNull(c, "c");
+		assert c != null;
 		this.c = c;
 	}
 	
@@ -157,11 +166,18 @@ public class SimpleEntityData extends EntityData<Entity> {
 		final String s = p.first;
 		c = names.get(s);
 		plural = p.second;
-		return c != null;
+		if (c == null)
+			return false;
+		return true;
 	}
 	
 	@Override
 	public void set(final Entity entity) {}
+	
+	@Override
+	public boolean isInstance(final Entity e) {
+		return superTypes.contains(c) ? c.isAssignableFrom(e.getClass()) : e.getClass() == c;
+	}
 	
 	@Override
 	public boolean match(final Entity entity) {
@@ -191,6 +207,38 @@ public class SimpleEntityData extends EntityData<Entity> {
 	@Override
 	public boolean isPlural() {
 		return plural;
+	}
+	
+	@Override
+	public int hashCode() {
+		return c.hashCode();
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof SimpleEntityData))
+			return false;
+		final SimpleEntityData other = (SimpleEntityData) obj;
+		return c == other.c;
+	}
+	
+	@Override
+	public String serialize() {
+		return c.getName();
+	}
+	
+	@Override
+	protected boolean deserialize(final String s) {
+		try {
+			c = (Class<? extends Entity>) Class.forName(s);
+			return true;
+		} catch (final ClassNotFoundException e) {
+			return false;
+		}
 	}
 	
 }

@@ -34,11 +34,13 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Color;
 import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprColorOf extends PropertyExpression<ItemStack, Color> {
+	private static final long serialVersionUID = 4412920468773410611L;
 	
 	static {
 		Skript.registerExpression(ExprColorOf.class, Color.class, ExpressionType.PROPERTY, "colo[u]r[s] of %itemstacks%", "%itemstacks%'[s] colo[u]r[s]");
@@ -80,12 +82,13 @@ public class ExprColorOf extends PropertyExpression<ItemStack, Color> {
 		});
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode != ChangeMode.SET || !types.isSingle())
 			return null;
-		if (types.acceptChange(mode) == ItemStack.class || types.acceptChange(mode) == ItemType.class)
-			return Color.class;
+		if (types.acceptChange(mode) != null && Utils.containsAny(types.acceptChange(mode), ItemStack.class, ItemType.class))
+			return Skript.array(Color.class);
 		return null;
 	}
 	
@@ -101,7 +104,7 @@ public class ExprColorOf extends PropertyExpression<ItemStack, Color> {
 		else
 			return;
 		
-		if (types.acceptChange(mode) == ItemStack.class)
+		if (Utils.contains(types.acceptChange(mode), ItemStack.class))
 			types.change(e, is, mode);
 		else
 			types.change(e, new ItemType(is), mode);

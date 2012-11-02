@@ -35,6 +35,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * @author Peter Güttinger
  */
 public class ExprAltitude extends PropertyExpression<Location, Double> {
+	private static final long serialVersionUID = 4801214565823548848L;
 	
 	static {
 		Skript.registerExpression(ExprAltitude.class, Double.class, ExpressionType.PROPERTY, "[the] altitude[s] of %locations%", "%locations%'[s] altitudes");

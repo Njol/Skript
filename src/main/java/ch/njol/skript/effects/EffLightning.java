@@ -28,18 +28,18 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Offset;
 
 /**
  * @author Peter Güttinger
  */
 public class EffLightning extends Effect {
 	
+	private static final long serialVersionUID = -4592368027843536618L;
+	
 	static {
-		Skript.registerEffect(EffLightning.class, "(create|strike) lightning %offsets% %locations%", "(create|strike) lightning[ ]effect %offsets% %locations%");
+		Skript.registerEffect(EffLightning.class, "(create|strike) lightning %locations%", "(create|strike) lightning[ ]effect %locations%");
 	}
 	
-	private Expression<Offset> offsets;
 	private Expression<Location> locations;
 	
 	private boolean effectOnly;
@@ -47,15 +47,14 @@ public class EffLightning extends Effect {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		offsets = (Expression<Offset>) exprs[0];
-		locations = (Expression<Location>) exprs[1];
+		locations = (Expression<Location>) exprs[0];
 		effectOnly = matchedPattern == 1;
 		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
+		for (final Location l : locations.getArray(e)) {
 			if (effectOnly)
 				l.getWorld().strikeLightningEffect(l);
 			else
@@ -65,7 +64,7 @@ public class EffLightning extends Effect {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "strike lightning " + (effectOnly ? "effect " : "") + offsets.toString(e, debug) + locations.toString(e, debug);
+		return "strike lightning " + (effectOnly ? "effect " : "") + locations.toString(e, debug);
 	}
 	
 }

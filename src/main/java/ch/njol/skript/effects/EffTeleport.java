@@ -40,6 +40,8 @@ import ch.njol.skript.util.Utils;
  */
 public class EffTeleport extends Effect {
 	
+	private static final long serialVersionUID = 7988224895549370400L;
+	
 	static {
 		Skript.registerEffect(EffTeleport.class, "teleport %entities% to %location%");
 	}

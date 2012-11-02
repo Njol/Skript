@@ -21,6 +21,8 @@
 
 package ch.njol.skript.lang;
 
+import java.util.Iterator;
+
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -34,6 +36,7 @@ import ch.njol.util.Checker;
  * @see Skript#registerCondition(Class, String...)
  */
 public abstract class Condition extends Statement {
+	private static final long serialVersionUID = 2131348038967424595L;
 	
 	private boolean negated = false;
 	
@@ -72,8 +75,9 @@ public abstract class Condition extends Statement {
 		return negated;
 	}
 	
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static Condition parse(final String s, final String defaultError) {
-		return (Condition) SkriptParser.parse(s, Skript.getConditions().iterator(), false, false, defaultError);
+		return (Condition) SkriptParser.parse(s, (Iterator) Skript.getConditions().iterator(), defaultError);
 	}
 	
 }

@@ -25,8 +25,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.util.Utils;
 
@@ -34,29 +34,32 @@ import ch.njol.skript.util.Utils;
  * @author Peter Güttinger
  */
 public class ExprDisplayName extends SimplePropertyExpression<Player, String> {
+	private static final long serialVersionUID = 1074676488757488994L;
 	
 	static {
 		register(ExprDisplayName.class, String.class, "(display|nick)[ ]name", "players");
 	}
 	
-	/**
-	 * @param returnType
-	 * @param propertyName
-	 * @param converter
-	 */
-	public ExprDisplayName() {
-		super(String.class, "display name", new Converter<Player, String>() {
-			@Override
-			public String convert(final Player p) {
-				return p.getDisplayName();
-			}
-		});
+	@Override
+	protected String getPropertyName() {
+		return "display name";
 	}
 	
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
+	public String convert(final Player p) {
+		return p.getDisplayName();
+	}
+	
+	@Override
+	public Class<String> getReturnType() {
+		return String.class;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
-			return String.class;
+			return Skript.array(String.class);
 		return null;
 	}
 	

@@ -35,6 +35,8 @@ import ch.njol.util.Checker;
  */
 public class CondPermission extends Condition {
 	
+	private static final long serialVersionUID = 5480435441737985507L;
+	
 	static {
 		Skript.registerCondition(CondPermission.class,
 				"[%commandsenders%] (do[es]n't|don't|do[es] not) have [the] permission[s] %strings%",

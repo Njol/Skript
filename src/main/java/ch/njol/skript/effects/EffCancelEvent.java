@@ -29,12 +29,15 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.log.ErrorQuality;
 
 /**
  * 
  * @author Peter Güttinger
  */
 public class EffCancelEvent extends Effect {
+	
+	private static final long serialVersionUID = 6979588466163703921L;
 	
 	static {
 		Skript.registerEffect(EffCancelEvent.class, "cancel [the] event");//, "uncancel event");
@@ -45,7 +48,7 @@ public class EffCancelEvent extends Effect {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		if (isDelayed == 1) {
-			Skript.error("Can't cancel an event anymore after is has already passed");
+			Skript.error("Can't cancel an event anymore after is has already passed", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
 		cancel = matchedPattern == 0;
@@ -53,7 +56,7 @@ public class EffCancelEvent extends Effect {
 			if (Cancellable.class.isAssignableFrom(e))
 				return true;
 		}
-		Skript.error("This event can't be cancelled");
+		Skript.error("This event can't be cancelled", ErrorQuality.SEMANTIC_ERROR);
 		return false;
 	}
 	

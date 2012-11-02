@@ -39,8 +39,9 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 
@@ -48,6 +49,7 @@ import ch.njol.skript.util.Utils;
  * @author Peter Güttinger
  */
 public class ExprClicked extends SimpleExpression<Object> {
+	private static final long serialVersionUID = -133125615663535001L;
 	
 	static {
 		Skript.registerExpression(ExprClicked.class, Object.class, ExpressionType.SIMPLE, "[the] clicked <.+>");
@@ -59,11 +61,10 @@ public class ExprClicked extends SimpleExpression<Object> {
 	 */
 	private ItemType itemType = null;
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		final String s = parseResult.regexes.get(0).group();
-		final SubLog log = SkriptLogger.startSubLog();
+		final SimpleLog log = SkriptLogger.startSubLog();
 		entityType = EntityData.parse(s);
 		if (entityType == null) {
 			log.clear();
@@ -71,21 +72,21 @@ public class ExprClicked extends SimpleExpression<Object> {
 				itemType = Aliases.parseItemType(s);
 				log.stop();
 				if (itemType == null) {
-					Skript.error("'" + s + "' is neither an entity type nor an item type");
+					Skript.error("'" + s + "' is neither an entity type nor an item type", ErrorQuality.NOT_AN_EXPRESSION);
 					return false;
 				}
 			}
 			log.stop();
 			log.printLog();
 			if (!Utils.contains(ScriptLoader.currentEvents, PlayerInteractEvent.class)) {
-				Skript.error("The expression 'clicked block' can only be used in a click event");
+				Skript.error("The expression 'clicked block' can only be used in a click event", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 		} else {
 			log.stop();
 			log.printLog();
-			if (!Utils.containsAny(ScriptLoader.currentEvents, PlayerInteractEntityEvent.class, EntityDamageByEntityEvent.class)) {
-				Skript.error("The expression '" + parseResult.expr + "' can only be used in a click event");
+			if (!Utils.contains(ScriptLoader.currentEvents, PlayerInteractEntityEvent.class)) {
+				Skript.error("The expression '" + parseResult.expr + "' can only be used in a click event", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 		}

@@ -31,12 +31,16 @@ import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Slot;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  */
 public class ExprDurability extends PropertyExpression<ItemStack, Short> {
+	private static final long serialVersionUID = -774982996815756186L;
 	
 	static {
 		Skript.registerExpression(ExprDurability.class, Short.class, ExpressionType.PROPERTY,
@@ -75,10 +79,17 @@ public class ExprDurability extends PropertyExpression<ItemStack, Short> {
 	
 	private Expression<? extends Slot> slots = null;
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-		if ((slots = types.getConvertedExpression(Slot.class)) != null)
-			return Integer.class;
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		final SimpleLog log = SkriptLogger.startSubLog();
+		if ((slots = types.getConvertedExpression(Slot.class)) != null) {
+			log.stop();
+			return Skript.array(Number.class);
+		}
+		log.stop();
+		if (types.isSingle() && Utils.contains(types.acceptChange(ChangeMode.SET), ItemStack.class))
+			return Skript.array(Number.class);
 		return null;
 	}
 	
@@ -86,28 +97,44 @@ public class ExprDurability extends PropertyExpression<ItemStack, Short> {
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		int a = 0;
 		if (mode != ChangeMode.CLEAR)
-			a = (Integer) delta;
+			a = ((Number) delta).intValue();
 		switch (mode) {
 			case REMOVE:
 				a = -a;
 				//$FALL-THROUGH$
 			case ADD:
-				for (final Slot slot : slots.getArray(e)) {
-					final ItemStack item = slot.getItem();
-					item.setDurability((short) (item.getDurability() + a));
-					slot.setItem(item);
+				if (slots != null) {
+					for (final Slot slot : slots.getArray(e)) {
+						final ItemStack item = slot.getItem();
+						item.setDurability((short) (item.getDurability() + a));
+						slot.setItem(item);
+					}
+				} else {
+					final ItemStack is = types.getSingle(e);
+					if (is == null)
+						return;
+					is.setDurability((short) (is.getDurability() + a));
+					types.change(e, is, ChangeMode.SET);
 				}
-			break;
+				break;
 			case CLEAR:
 				a = 0;
 				//$FALL-THROUGH$
 			case SET:
-				for (final Slot slot : slots.getArray(e)) {
-					final ItemStack item = slot.getItem();
-					item.setDurability((short) a);
-					slot.setItem(item);
+				if (slots != null) {
+					for (final Slot slot : slots.getArray(e)) {
+						final ItemStack item = slot.getItem();
+						item.setDurability((short) a);
+						slot.setItem(item);
+					}
+				} else {
+					final ItemStack is = types.getSingle(e);
+					if (is == null)
+						return;
+					is.setDurability((short) a);
+					types.change(e, is, ChangeMode.SET);
 				}
-			break;
+				break;
 		}
 	}
 	

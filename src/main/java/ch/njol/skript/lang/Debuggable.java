@@ -31,14 +31,14 @@ import org.bukkit.event.Event;
 public interface Debuggable {
 	
 	/**
-	 * @param e The event to get information to. This is always null if debug = false.
+	 * @param e The event to get information to. This is always null if debug == false.
 	 * @param debug If true this should print more information, if false this should print what is shown to the end user
 	 * @return string representation of this object
 	 */
 	public String toString(Event e, boolean debug);
 	
 	/**
-	 * Should return {@link #toString(Event, boolean) toString(null, false)}
+	 * Should return <tt>{@link #toString(Event, boolean) toString}(null, false)</tt>
 	 */
 	@Override
 	public String toString();

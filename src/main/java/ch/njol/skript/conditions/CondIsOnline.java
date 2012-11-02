@@ -35,6 +35,8 @@ import ch.njol.util.Checker;
  */
 public class CondIsOnline extends Condition {
 	
+	private static final long serialVersionUID = 153524622963352231L;
+	
 	static {
 		Skript.registerCondition(CondIsOnline.class, "%offlineplayers% ((is|are) online|(is not|isn't|are not|aren't) offline)", "%offlineplayers% ((is|are) offline|(is not|isn't|are not|aren't) online)");
 	}

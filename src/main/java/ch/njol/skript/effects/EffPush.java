@@ -29,50 +29,52 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Offset;
+import ch.njol.skript.util.Direction;
 
 /**
  * @author Peter Güttinger
  */
 public class EffPush extends Effect {
 	
+	private static final long serialVersionUID = -4749884923811319031L;
+	
 	static {
-		Skript.registerEffect(EffPush.class, "(push|thrust) %entities% %offsets% [(at|with) (speed|velocity) %-double%]");
+		Skript.registerEffect(EffPush.class, "(push|thrust) %entities% %direction% [(at|with) (speed|velocity) %-number%]");
 	}
 	
 	private Expression<Entity> entities;
-	private Expression<Offset> directions;
-	private Expression<Double> speed = null;
+	private Expression<Direction> direction;
+	private Expression<Number> speed = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		entities = (Expression<Entity>) exprs[0];
-		directions = (Expression<Offset>) exprs[1];
-		speed = (Expression<Double>) exprs[2];
+		direction = (Expression<Direction>) exprs[1];
+		speed = (Expression<Number>) exprs[2];
 		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		final Offset o = Offset.combine(directions.getArray(e));
-		if (o == null)
+		final Direction d = direction.getSingle(e);
+		if (d == null)
 			return;
-		final Vector mod = o.toVector();
-		final Double v = speed == null ? null : speed.getSingle(e);
+		final Number v = speed == null ? null : speed.getSingle(e);
 		if (speed != null && v == null)
 			return;
-		if (v != null)
-			mod.normalize().multiply(v);
 		final Entity[] ents = entities.getArray(e);
-		for (final Entity ent : ents) {
-			ent.setVelocity(ent.getVelocity().add(mod));
+		for (final Entity en : ents) {
+			final Vector mod = d.getDirection(en);
+			if (v != null)
+				mod.normalize().multiply(v.doubleValue());
+			en.setVelocity(en.getVelocity().add(mod));
 		}
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "push " + entities.toString(e, debug) + " " + directions.toString(e, debug) + (speed == null ? "" : " at speed " + speed.toString(e, debug));
+		return "push " + entities.toString(e, debug) + " " + direction.toString(e, debug) + (speed == null ? "" : " at speed " + speed.toString(e, debug));
 	}
 	
 }

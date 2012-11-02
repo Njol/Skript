@@ -33,6 +33,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 public class CondChance extends Condition {
 	
+	private static final long serialVersionUID = -4186689549153575171L;
+	
 	static {
 		Skript.registerCondition(CondChance.class, "chance of %double%\\%");
 	}

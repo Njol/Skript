@@ -21,6 +21,9 @@
 
 package ch.njol.skript.lang;
 
+import java.io.Serializable;
+
+import ch.njol.skript.Skript;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 
 /**
@@ -28,19 +31,19 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * 
  * @author Peter Güttinger
  */
-public interface SyntaxElement {
+public interface SyntaxElement extends Serializable {
 	
 	/**
-	 * called just after the constructor.
+	 * Called just after the constructor.
 	 * 
 	 * @param exprs all %expr%s included in the matching pattern in the order they appear in the pattern. If an optional value was left out it will still be included in this list
 	 *            holding the default value of the desired type which usually depends on the event.
-	 * @param matchedPattern the index of the pattern which matched
-	 * @param isDelayed whether this expression is used after a delay or not (i.e. if the event has already passed when this expression will be called)
-	 * @param parseResult The parser osed to parse this expression. Might hold useful information in the future.
-	 * @return Whether this expression was sucessfully initialized.
-	 *         If this returns false, an error should be logged stating what went wrong,
-	 *         but if no error is logged the effect is the same as if no pattern matched for this expression.
+	 * @param matchedPattern The index of the pattern which matched
+	 * @param isDelayed Whether this expression is used after a delay or not (i.e. if the event has already passed when this expression will be called) (1 = delayed, 0 = possibly
+	 *            delayed, -1 = not delayed)
+	 * @param parseResult Additional information about the match.
+	 * @return Whether this expression was initialized successfully. Can print an error prior to returning false to specity the cause (can use
+	 *         {@link Skript#error(String, ch.njol.skript.log.ErrorQuality)})
 	 */
 	public boolean init(Expression<?>[] exprs, int matchedPattern, int isDelayed, ParseResult parseResult);
 	

@@ -23,8 +23,6 @@ package ch.njol.skript.expressions.base;
 
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -32,28 +30,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> {
-	
-	/**
-	 * 
-	 * @param c
-	 * @param type
-	 * @param property
-	 * @param fromType Should be plural but doesn't have to be
-	 */
-	protected static <T> void register(final Class<? extends SimplePropertyExpression<?, T>> c, final Class<T> type, final String property, final String fromType) {
-		Skript.registerExpression(c, type, ExpressionType.PROPERTY, "[the] " + property + " of %" + fromType + "%", "%" + fromType + "%'[s] " + property);
-	}
-	
-	private final Class<T> returnType;
-	private final String propertyName;
-	private final Converter<? super F, ? extends T> converter;
-	
-	public SimplePropertyExpression(final Class<T> returnType, final String propertyName, final Converter<? super F, ? extends T> converter) {
-		this.returnType = returnType;
-		this.propertyName = propertyName;
-		this.converter = converter;
-	}
+public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> implements Converter<F, T> {
+	private static final long serialVersionUID = 5661174406099244885L;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -63,17 +41,20 @@ public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<
 	}
 	
 	@Override
-	public Class<T> getReturnType() {
-		return returnType;
-	}
+	public abstract Class<T> getReturnType();
+	
+	protected abstract String getPropertyName();
+	
+	@Override
+	public abstract T convert(F f);
 	
 	@Override
 	protected T[] get(final Event e, final F[] source) {
-		return super.get(source, converter);
+		return super.get(source, this);
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "the " + propertyName + " of " + getExpr().toString(e, debug);
+		return "the " + getPropertyName() + " of " + getExpr().toString(e, debug);
 	}
 }

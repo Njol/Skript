@@ -32,7 +32,6 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
-import ch.njol.skript.util.Offset;
 
 /**
  * 
@@ -40,13 +39,14 @@ import ch.njol.skript.util.Offset;
  */
 public class EffDrop extends Effect {
 	
+	private static final long serialVersionUID = -3561531766438040547L;
+	
 	static {
-		Skript.registerEffect(EffDrop.class, "drop %integer% ([e]xp|experience) [orb[s]] [%offsets% %locations%]", "drop %itemtypes% [%offsets% %locations%]");
+		Skript.registerEffect(EffDrop.class, "drop %integer% ([e]xp|experience) [orb[s]] [%locations%]", "drop %itemtypes% [%locations%]");
 	}
 	
 	private Expression<Integer> xp = null;
 	private Expression<ItemType> items = null;
-	private Expression<Offset> offsets;
 	private Expression<Location> locations;
 	
 	@SuppressWarnings("unchecked")
@@ -56,8 +56,7 @@ public class EffDrop extends Effect {
 			xp = (Expression<Integer>) vars[0];
 		else
 			items = (Expression<ItemType>) vars[0];
-		offsets = (Expression<Offset>) vars[1];
-		locations = (Expression<Location>) vars[2];
+		locations = (Expression<Location>) vars[1];
 		return true;
 	}
 	
@@ -76,7 +75,7 @@ public class EffDrop extends Effect {
 			}
 			return;
 		}
-		for (final Location l : Offset.setOff(offsets.getArray(e), locations.getArray(e))) {
+		for (final Location l : locations.getArray(e)) {
 			if (xp != null) {
 				final Integer exp = xp.getSingle(e);
 				if (exp != null) {
@@ -96,7 +95,7 @@ public class EffDrop extends Effect {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "drop " + items.toString(e, debug) + " " + offsets.toString(e, debug) + " " + locations.toString(e, debug);
+		return "drop " + items.toString(e, debug) + " " + locations.toString(e, debug);
 	}
 	
 }

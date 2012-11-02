@@ -34,6 +34,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 public class EffPvP extends Effect {
 	
+	private static final long serialVersionUID = 1566222140734268666L;
+	
 	static {
 		Skript.registerEffect(EffPvP.class, "enable PvP [in %worlds%]", "disable PVP [in %worlds%]");
 	}

@@ -39,6 +39,7 @@ import ch.njol.util.Math2;
  * @author Peter Güttinger
  */
 public class ExprFoodLevel extends PropertyExpression<Player, Float> {
+	private static final long serialVersionUID = -8189707370394201162L;
 	
 	static {
 		Skript.registerExpression(ExprFoodLevel.class, Float.class, ExpressionType.PROPERTY, "[the] (food|hunger)[[ ](level|meter|bar)] [of %player%]", "%player%'[s] (food|hunger)[[ ](level|meter|bar)]");
@@ -72,16 +73,17 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 		});
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Class<?> acceptChange(final ChangeMode mode) {
-		return Float.class;
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		return Skript.array(Number.class);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		int s = 0;
 		if (mode != ChangeMode.CLEAR)
-			s = Math.round(((Float) delta).floatValue() * 2);
+			s = Math.round(((Number) delta).floatValue() * 2);
 		switch (mode) {
 			case SET:
 			case CLEAR:

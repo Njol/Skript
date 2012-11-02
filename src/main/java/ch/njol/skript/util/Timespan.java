@@ -21,174 +21,145 @@
 
 package ch.njol.skript.util;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.Arithmetic;
-import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.Parser;
-import ch.njol.skript.classes.Serializer;
-import ch.njol.skript.lang.ParseContext;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
-public class Timespan {
+public class Timespan implements Serializable {
 	
+	private static final long serialVersionUID = -6991526817985173927L;
+	
+	static final HashMap<String, Integer> parseValues = new HashMap<String, Integer>();
 	static {
-		final HashMap<String, Integer> simpleValues = new HashMap<String, Integer>();
-		simpleValues.put("tick", 1);
+		parseValues.put("tick", 50);
 		
-		simpleValues.put("second", 20);
-		simpleValues.put("minute", 20 * 60);
-		simpleValues.put("hour", 20 * 60 * 60);
-		simpleValues.put("day", 20 * 60 * 60 * 24);
-		
-		Skript.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan", "time span")
-				.user("time ?spans?")
-				.parser(new Parser<Timespan>() {
-					@Override
-					public Timespan parse(final String s, final ParseContext context) {
-						if (s.isEmpty())
-							return null;
-						int t = 0;
-						boolean minecraftTime = false;
-						boolean isMinecraftTimeSet = false;
-						if (s.matches("^\\d+:\\d\\d$")) {
-							final String[] ss = s.split(":");
-							final int[] times = {20 * 60, 20};
-							for (int i = 0; i < ss.length; i++) {
-								t += times[i] * Skript.parseInt(ss[i]);
-							}
-						} else {
-							final String[] subs = s.toLowerCase().split("\\s+");
-							for (int i = 0; i < subs.length; i++) {
-								String sub = subs[i];
-								
-								if (sub.equals("and")) {
-									if (i == 0 || i == subs.length - 1)
-										return null;
-									continue;
-								}
-								
-								float amount = 1;
-								if (sub.equalsIgnoreCase("a") || sub.equalsIgnoreCase("an")) {
-									if (i == subs.length - 1)
-										return null;
-									amount = 1;
-									sub = subs[++i];
-								} else if (sub.matches("^\\d+(.\\d+)?$")) {
-									if (i == subs.length - 1)
-										return null;
-									amount = Float.parseFloat(sub);
-									sub = subs[++i];
-								}
-								
-								if (sub.equals("real") || sub.equals("rl") || sub.equals("irl")) {
-									if (i == subs.length - 1 || isMinecraftTimeSet && minecraftTime)
-										return null;
-									sub = subs[++i];
-								} else if (sub.equals("mc") || sub.equals("minecraft")) {
-									if (i == subs.length - 1 || isMinecraftTimeSet && !minecraftTime)
-										return null;
-									minecraftTime = true;
-									sub = subs[++i];
-								}
-								
-								if (minecraftTime)
-									amount /= 72f;
-								
-								if (sub.endsWith(","))
-									sub = sub.substring(0, sub.length() - 1);
-								
-								final Pair<String, Boolean> p = Utils.getPlural(sub);
-								sub = p.first;
-								
-								if (!simpleValues.containsKey(sub))
-									return null;
-								
-								if (sub.equals("tick") && minecraftTime)
-									amount *= 72f;
-								
-								t += Math.round(amount * simpleValues.get(sub));
-								
-								isMinecraftTimeSet = true;
-								
-							}
-						}
-						return new Timespan(t);
-					}
-					
-					@Override
-					public String toString(final Timespan t) {
-						return t.toString();
-					}
-					
-					@Override
-					public String toCodeString(final Timespan o) {
-						return "timespan:" + o.ticks;
-					}
-				}).serializer(new Serializer<Timespan>() {
-					@Override
-					public String serialize(final Timespan t) {
-						return "" + t.ticks;
-					}
-					
-					@Override
-					public Timespan deserialize(final String s) {
-						try {
-							return new Timespan(Integer.parseInt(s));
-						} catch (final NumberFormatException e) {
-							return null;
-						}
-					}
-				})
-				.math(Timespan.class, new Arithmetic<Timespan, Timespan>() {
-					@Override
-					public Timespan difference(final Timespan t1, final Timespan t2) {
-						return new Timespan(Math.abs(t1.getTicks() - t2.getTicks()));
-					}
-				}));
+		parseValues.put("second", 1000);
+		parseValues.put("minute", 1000 * 60);
+		parseValues.put("hour", 1000 * 60 * 60);
+		parseValues.put("day", 1000 * 60 * 60 * 24);
 	}
 	
-	private final int ticks;
+	public static final Timespan parse(final String s) {
+		if (s.isEmpty())
+			return null;
+		int t = 0;
+		boolean minecraftTime = false;
+		boolean isMinecraftTimeSet = false;
+		if (s.matches("^\\d+:\\d\\d$")) {
+			final String[] ss = s.split(":");
+			final int[] times = {1000 * 60, 1000};
+			for (int i = 0; i < ss.length; i++) {
+				t += times[i] * Skript.parseInt(ss[i]);
+			}
+		} else {
+			final String[] subs = s.toLowerCase().split("\\s+");
+			for (int i = 0; i < subs.length; i++) {
+				String sub = subs[i];
+				
+				if (sub.equals("and")) {
+					if (i == 0 || i == subs.length - 1)
+						return null;
+					continue;
+				}
+				
+				float amount = 1;
+				if (sub.equalsIgnoreCase("a") || sub.equalsIgnoreCase("an")) {
+					if (i == subs.length - 1)
+						return null;
+					amount = 1;
+					sub = subs[++i];
+				} else if (sub.matches("^\\d+(.\\d+)?$")) {
+					if (i == subs.length - 1)
+						return null;
+					amount = Float.parseFloat(sub);
+					sub = subs[++i];
+				}
+				
+				if (sub.equals("real") || sub.equals("rl") || sub.equals("irl")) {
+					if (i == subs.length - 1 || isMinecraftTimeSet && minecraftTime)
+						return null;
+					sub = subs[++i];
+				} else if (sub.equals("mc") || sub.equals("minecraft")) {
+					if (i == subs.length - 1 || isMinecraftTimeSet && !minecraftTime)
+						return null;
+					minecraftTime = true;
+					sub = subs[++i];
+				}
+				
+				if (minecraftTime)
+					amount /= 72f;
+				
+				if (sub.endsWith(","))
+					sub = sub.substring(0, sub.length() - 1);
+				
+				final Pair<String, Boolean> p = Utils.getPlural(sub);
+				sub = p.first;
+				
+				if (!parseValues.containsKey(sub))
+					return null;
+				
+				if (sub.equals("tick") && minecraftTime)
+					amount *= 72f;
+				
+				t += Math.round(amount * parseValues.get(sub));
+				
+				isMinecraftTimeSet = true;
+				
+			}
+		}
+		return new Timespan(t);
+	}
 	
-	public Timespan(final int ticks) {
-		if (ticks < 0)
-			throw new IllegalArgumentException("ticks must be >= 0");
-		this.ticks = ticks;
+	private final long millis;
+	
+	public Timespan(final long millis) {
+		if (millis < 0)
+			throw new IllegalArgumentException("millis must be >= 0");
+		this.millis = millis;
+	}
+	
+	public static Timespan fromTicks(final int ticks) {
+		return new Timespan(ticks * 50);
+	}
+	
+	public long getMilliSeconds() {
+		return millis;
 	}
 	
 	public int getTicks() {
-		return ticks;
+		return Math.round(millis / 50f);
 	}
 	
 	@Override
 	public String toString() {
-		return toString(ticks);
+		return toString(millis);
 	}
 	
 	@SuppressWarnings("unchecked")
 	final static Pair<String, Integer>[] simpleValues = (Pair<String, Integer>[]) new Pair<?, ?>[] {
-			new Pair<String, Integer>("day", 20 * 60 * 60 * 24),
-			new Pair<String, Integer>("hour", 20 * 60 * 60),
-			new Pair<String, Integer>("minute", 20 * 60),
-			new Pair<String, Integer>("second", 20)
+			new Pair<String, Integer>("day", 1000 * 60 * 60 * 24),
+			new Pair<String, Integer>("hour", 1000 * 60 * 60),
+			new Pair<String, Integer>("minute", 1000 * 60),
+			new Pair<String, Integer>("second", 1000)
 	};
 	
-	public static String toString(final int ticks) {
+	public static String toString(final long millis) {
 		for (int i = 0; i < simpleValues.length - 1; i++) {
-			if (ticks >= simpleValues[i].second) {
-				if (ticks % simpleValues[i].second != 0) {
-					return toString(Math.floor(1. * ticks / simpleValues[i].second), simpleValues[i]) + " and " + toString(1. * (ticks % simpleValues[i].second) / simpleValues[i + 1].second, simpleValues[i + 1]);
+			if (millis >= simpleValues[i].second) {
+				if (millis % simpleValues[i].second != 0) {
+					return toString(Math.floor(1. * millis / simpleValues[i].second), simpleValues[i]) + " and " + toString(1. * (millis % simpleValues[i].second) / simpleValues[i + 1].second, simpleValues[i + 1]);
 				} else {
-					return toString(1. * ticks / simpleValues[i].second, simpleValues[i]);
+					return toString(1. * millis / simpleValues[i].second, simpleValues[i]);
 				}
 			}
 		}
-		return toString(1. * ticks / simpleValues[simpleValues.length - 1].second, simpleValues[simpleValues.length - 1]);
+		return toString(1. * millis / simpleValues[simpleValues.length - 1].second, simpleValues[simpleValues.length - 1]);
 	}
 	
 	private static String toString(final double amount, final Pair<String, Integer> p) {

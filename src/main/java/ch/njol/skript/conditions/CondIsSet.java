@@ -26,13 +26,15 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.UnparsedLiteral;
 
 /**
  * @author Peter Güttinger
  */
 public class CondIsSet extends Condition {
+	
+	private static final long serialVersionUID = -4829090036168579749L;
 	
 	static {
 		Skript.registerCondition(CondIsSet.class,
@@ -45,8 +47,10 @@ public class CondIsSet extends Condition {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		expr = exprs[0];
-		if (expr instanceof UnparsedLiteral)
+		if (expr instanceof Literal<?>) {
+//			Skript.error("Can't understand this expression: " + expr, ErrorQuality.NOT_AN_EXPRESSION);
 			return false;
+		}
 		setNegated(matchedPattern == 1);
 		return true;
 	}

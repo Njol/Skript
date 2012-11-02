@@ -21,11 +21,10 @@
 
 package ch.njol.skript.classes;
 
+import java.io.Serializable;
+
 /**
  * @author Peter Güttinger
+ * 
  */
-public interface Validator<T> {
-	
-	public <C extends T> C validate(C o);
-	
-}
+public interface SerializableConverter<F, T> extends Converter<F, T>, Serializable {}

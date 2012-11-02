@@ -24,24 +24,26 @@ package ch.njol.skript.conditions;
 import org.bukkit.entity.Entity;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
-import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  */
 public class CondIsBurning extends PropertyCondition<Entity> {
 	
+	private static final long serialVersionUID = 696041723474529334L;
+	
 	static {
 		register(CondIsBurning.class, "(burning|ignited|on fire)", "entities");
 	}
 	
-	public CondIsBurning() {
-		super("burning", new Checker<Entity>() {
-			@Override
-			public boolean check(final Entity e) {
-				return e.getFireTicks() > 0;
-			}
-		});
+	@Override
+	public boolean check(final Entity e) {
+		return e.getFireTicks() > 0;
+	}
+	
+	@Override
+	protected String getPropertyName() {
+		return "burning";
 	}
 	
 }

@@ -21,12 +21,16 @@
 
 package ch.njol.skript.util;
 
-import ch.njol.skript.Skript;
+import java.io.Serializable;
+
+import ch.njol.skript.SkriptConfig;
 
 /**
  * @author Peter Güttinger
  */
-public class Date implements Comparable<Date> {
+public class Date implements Serializable, Comparable<Date> {
+	
+	private static final long serialVersionUID = -1539462104112834389L;
 	
 	private long timestamp;
 	
@@ -39,7 +43,7 @@ public class Date implements Comparable<Date> {
 	}
 	
 	public Timespan difference(final Date other) {
-		return new Timespan((int) Math.round(1. * Math.abs(timestamp - other.timestamp) / 50.));
+		return new Timespan(Math.abs(timestamp - other.timestamp));
 	}
 	
 	@Override
@@ -49,7 +53,7 @@ public class Date implements Comparable<Date> {
 	
 	@Override
 	public String toString() {
-		return Skript.getDateFormat().format(timestamp);
+		return SkriptConfig.getDateFormat().format(timestamp);
 	}
 	
 	public long getTimestamp() {
@@ -57,11 +61,11 @@ public class Date implements Comparable<Date> {
 	}
 	
 	public void add(final Timespan span) {
-		timestamp += span.getTicks() * 50;
+		timestamp += span.getMilliSeconds();
 	}
 	
 	public void subtract(final Timespan span) {
-		timestamp -= span.getTicks() * 50;
+		timestamp -= span.getMilliSeconds();
 	}
 	
 }

@@ -34,6 +34,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * @author Peter Güttinger
  */
 public class ExprDistance extends SimpleExpression<Double> {
+	private static final long serialVersionUID = -5679392405001538372L;
 	
 	static {
 		Skript.registerExpression(ExprDistance.class, Double.class, ExpressionType.COMBINED, "[the] distance between %location% and %location%");

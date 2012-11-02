@@ -26,6 +26,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 
@@ -33,9 +34,10 @@ import ch.njol.skript.lang.util.SimpleExpression;
  * @author Peter Güttinger
  */
 public class ExprAmount extends SimpleExpression<Integer> {
+	private static final long serialVersionUID = -7942367671283216811L;
 	
 	static {
-		Skript.registerExpression(ExprAmount.class, Integer.class, ExpressionType.COMBINED, "(amount|number) of %objects%");
+		Skript.registerExpression(ExprAmount.class, Integer.class, ExpressionType.COMBINED, "(amount|number|size) of %objects%");
 	}
 	
 	private Expression<?> expr;
@@ -43,6 +45,8 @@ public class ExprAmount extends SimpleExpression<Integer> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		expr = exprs[0];
+		if (expr instanceof Literal<?>)
+			return false;
 		return true;
 	}
 	

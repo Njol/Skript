@@ -30,6 +30,8 @@ import org.bukkit.event.Event;
  * @author Peter Güttinger
  */
 public class Trigger extends TriggerSection {
+	private static final long serialVersionUID = -5519696586457355447L;
+	
 	private final String name;
 	private final SkriptEvent event;
 	

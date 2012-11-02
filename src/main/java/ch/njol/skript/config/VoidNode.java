@@ -32,13 +32,11 @@ import java.io.PrintWriter;
 public class VoidNode extends Node {
 	
 	VoidNode(final SectionNode parent, final String line, final int lineNum) {
-		super(parent.getConfig(), line, line, lineNum);
-		this.parent = parent;
+		super(line, parent, line, lineNum);
 	}
 	
 	VoidNode(final SectionNode parent, final ConfigReader r) {
-		super(parent.getConfig(), r.getLine(), r.getLine(), r.getLineNum());
-		this.parent = parent;
+		super(r.getLine(), parent, r.getLine(), r.getLineNum());
 	}
 	
 	public void set(final String s) {

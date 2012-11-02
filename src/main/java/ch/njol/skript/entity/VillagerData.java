@@ -28,11 +28,13 @@ import org.bukkit.entity.Villager.Profession;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
 public class VillagerData extends EntityData<Villager> {
+	private static final long serialVersionUID = -6472488986043622652L;
 	
 	static {
 		// professions in order!
@@ -49,7 +51,7 @@ public class VillagerData extends EntityData<Villager> {
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (matchedPattern > 0)
 			profession = Profession.getProfession(matchedPattern - 1);
-		plural = parseResult.expr.endsWith("s");
+		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -63,7 +65,7 @@ public class VillagerData extends EntityData<Villager> {
 	public Villager spawn(final Location loc) {
 		final Villager v = super.spawn(loc);
 		if (profession == null)
-			v.setProfession(Utils.getRandom(Profession.values()));
+			v.setProfession(Utils.random(Profession.values()));
 		return v;
 	}
 	
@@ -85,6 +87,40 @@ public class VillagerData extends EntityData<Villager> {
 	@Override
 	public boolean isPlural() {
 		return plural;
+	}
+	
+	@Override
+	public int hashCode() {
+		return profession == null ? 0 : profession.hashCode();
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof VillagerData))
+			return false;
+		final VillagerData other = (VillagerData) obj;
+		return profession == other.profession;
+	}
+	
+	@Override
+	public String serialize() {
+		return profession == null ? "" : profession.name();
+	}
+	
+	@Override
+	protected boolean deserialize(final String s) {
+		if (s.isEmpty())
+			return true;
+		try {
+			profession = Profession.valueOf(s);
+			return true;
+		} catch (final IllegalArgumentException e) {
+			return false;
+		}
 	}
 	
 }

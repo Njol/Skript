@@ -27,59 +27,66 @@ import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 
+import ch.njol.skript.Language;
+import ch.njol.skript.Language.LanguageChangeListener;
+
 /**
  * @author Peter Güttinger
  */
 public enum Color {
 	
-	BLACK(DyeColor.BLACK, ChatColor.BLACK, "black"),
-	DARK_GREY(DyeColor.GRAY, ChatColor.DARK_GRAY, "dark grey", "dark gray"),
-	LIGHT_GREY(DyeColor.SILVER, ChatColor.GRAY, "grey", "light grey", "gray", "light gray", "silver"),
-	WHITE(DyeColor.WHITE, ChatColor.WHITE, "white"),
+	BLACK(DyeColor.BLACK, ChatColor.BLACK),
+	DARK_GREY(DyeColor.GRAY, ChatColor.DARK_GRAY),
+	LIGHT_GREY(DyeColor.SILVER, ChatColor.GRAY),
+	WHITE(DyeColor.WHITE, ChatColor.WHITE),
 	
-	DARK_BLUE(DyeColor.BLUE, ChatColor.DARK_BLUE, "blue", "dark blue"),
-	CYAN(DyeColor.CYAN, ChatColor.DARK_AQUA, "cyan", "aqua", "dark cyan", "dark aqua"),
-	LIGHT_BLUE(DyeColor.LIGHT_BLUE, ChatColor.AQUA, "light blue", "light cyan", "light aqua"),
+	DARK_BLUE(DyeColor.BLUE, ChatColor.DARK_BLUE),
+	BROWN(DyeColor.BROWN, ChatColor.BLUE),
+	DARK_CYAN(DyeColor.CYAN, ChatColor.DARK_AQUA),
+	LIGHT_CYAN(DyeColor.LIGHT_BLUE, ChatColor.AQUA),
 	
-	DARK_GREEN(DyeColor.GREEN, ChatColor.DARK_GREEN, "green", "dark green"),
-	LIGHT_GREEN(DyeColor.LIME, ChatColor.GREEN, "light green", "lime", "lime green"),
+	DARK_GREEN(DyeColor.GREEN, ChatColor.DARK_GREEN),
+	LIGHT_GREEN(DyeColor.LIME, ChatColor.GREEN),
 	
-	YELLOW(DyeColor.YELLOW, ChatColor.YELLOW, "yellow", "light yellow"),
-	ORANGE(DyeColor.ORANGE, ChatColor.GOLD, "orange", "gold", "dark yellow"),
+	YELLOW(DyeColor.YELLOW, ChatColor.YELLOW),
+	ORANGE(DyeColor.ORANGE, ChatColor.GOLD),
 	
-	DARK_RED(DyeColor.RED, ChatColor.DARK_RED, "red", "dark red"),
-	LIGHT_RED(DyeColor.PINK, ChatColor.RED, "pink", "light red"),
+	DARK_RED(DyeColor.RED, ChatColor.DARK_RED),
+	LIGHT_RED(DyeColor.PINK, ChatColor.RED),
 	
-	DARK_PURPLE(DyeColor.PURPLE, ChatColor.DARK_PURPLE, "purple", "dark purple"),
-	LIGHT_PURPLE(DyeColor.MAGENTA, ChatColor.LIGHT_PURPLE, "magenta", "light purple"),
-	
-	BROWN(DyeColor.BROWN, ChatColor.BLUE, "brown", "indigo");
+	DARK_PURPLE(DyeColor.PURPLE, ChatColor.DARK_PURPLE),
+	LIGHT_PURPLE(DyeColor.MAGENTA, ChatColor.LIGHT_PURPLE), ;
 	
 	private final DyeColor wool;
 	private final ChatColor chat;
-	private final String[] names;
+	private String[] names = null;
 	
-	private final static Map<String, Color> byName = new HashMap<String, Color>();
-	static {
-		for (final Color c : values()) {
-			for (final String name : c.names) {
-				byName.put(name, c);
-			}
-		}
+	private Color(final DyeColor wool, final ChatColor chat) {
+		this.wool = wool;
+		this.chat = chat;
 	}
 	
 	private final static Color[] byWool = new Color[16];
 	static {
 		for (final Color c : values()) {
-			byWool[c.getWool()] = c;
+			byWool[c.wool.getData()] = c;
 		}
 	}
 	
-	private Color(final DyeColor wool, final ChatColor chat, final String... names) {
-		this.wool = wool;
-		this.chat = chat;
-		this.names = names;
-		assert names.length > 0;
+	private final static Map<String, Color> byName = new HashMap<String, Color>();
+	static {
+		Language.addListener(new LanguageChangeListener() {
+			@Override
+			public void onLanguageChange() {
+				byName.clear();
+				for (final Color c : values()) {
+					c.names = Language.getList("colors." + c.name());
+					for (final String name : c.names) {
+						byName.put(name.toLowerCase(), c);
+					}
+				}
+			}
+		});
 	}
 	
 	public byte getDye() {

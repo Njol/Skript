@@ -36,6 +36,8 @@ import ch.njol.util.Checker;
  */
 public class CondIsInWorld extends Condition {
 	
+	private static final long serialVersionUID = -7537687552492593230L;
+	
 	static {
 		Skript.registerCondition(CondIsInWorld.class, "%entities% (is|are) in [[the] world[s]] %worlds%", "%entities% (is not|isn't|are not|aren't) in [[the] world[s]] %worlds%");
 	}

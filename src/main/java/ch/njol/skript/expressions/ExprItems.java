@@ -44,6 +44,7 @@ import ch.njol.util.iterator.IteratorIterable;
  * @author Peter Güttinger
  */
 public class ExprItems extends SimpleExpression<ItemStack> {
+	private static final long serialVersionUID = 4347646855966040096L;
 	
 	static {
 		Skript.registerExpression(ExprItems.class, ItemStack.class, ExpressionType.NORMAL,
@@ -79,11 +80,6 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 		if (types instanceof Literal)
 			return buffer = r.toArray(new ItemStack[r.size()]);
 		return r.toArray(new ItemStack[r.size()]);
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return false;
 	}
 	
 	@Override
@@ -155,8 +151,8 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 	}
 	
 	@Override
-	public boolean canLoop() {
-		return types == null || !types.isSingle() || types instanceof Literal && types.getSingle(null).numTypes() > 1;
+	public boolean isSingle() {
+		return false;
 	}
 	
 	@Override

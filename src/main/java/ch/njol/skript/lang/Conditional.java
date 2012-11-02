@@ -33,6 +33,7 @@ import ch.njol.skript.config.SectionNode;
  * @see Condition
  */
 public class Conditional extends TriggerSection {
+	private static final long serialVersionUID = -4697142217876371099L;
 	
 	private final Condition cond;
 	
@@ -62,6 +63,8 @@ public class Conditional extends TriggerSection {
 	
 	public void loadElseClause(final SectionNode node) {
 		elseClause = new TriggerSection(node) {
+			private static final long serialVersionUID = -7199203950275667534L;
+			
 			@Override
 			public TriggerItem walk(final Event e) {
 				return walk(e, true);
