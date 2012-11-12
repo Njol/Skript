@@ -9,19 +9,19 @@
 		<dependency>
 			<groupId>org.bukkit</groupId>
 			<artifactId>bukkit</artifactId>
-			<version>1.3.1-R1.0</version>
+			<version>1.4.2-R0.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.bukkit</groupId>
 			<artifactId>minecraft-server</artifactId>
-			<version>1.3.1</version>
+			<version>1.4.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.bukkit</groupId>
 			<artifactId>craftbukkit</artifactId>
-			<version>1.3.1-R1.0</version>
+			<version>1.4.2-R0.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -60,10 +60,8 @@
 			<id>bukkit-repo</id>
 			<url>http://repo.bukkit.org/content/repositories/releases/</url>
 		</repository>
-		<repository>
-			<id>Plugin Metrics Repo</id>
-			<url>http://repo.mcstats.org/content/repositories/public</url>
-		</repository>
+		<!-- <repository> <id>Plugin Metrics Repo</id> <url>http://repo.mcstats.org/content/repositories/public</url> 
+			</repository> -->
 	</repositories>
 	<url>http://njol.ch/projects/skript</url>
 	<build>

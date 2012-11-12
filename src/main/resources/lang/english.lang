@@ -114,7 +114,7 @@ treetypes:
 		pattern: small (regular tree|normal tree|oak)s?
 	big_regular:
 		name: big tree¦s
-		pattern: big (regular tree|normal tree|oak)s?
+		pattern: (big|large) (regular tree|normal tree|oak)s?
 	redwood:
 		name: redwood¦s
 		pattern: (any )?(fir|pine|spruce|redwood)s?
@@ -132,7 +132,7 @@ treetypes:
 		pattern: small jungle trees?
 	big_jungle:
 		name: big jungle tree¦s
-		pattern: (big|tall) jungle trees?
+		pattern: (big|tall|huge|giant|large) jungle trees?
 	jungle_bush:
 		name: bush¦es
 		pattern: (jungle )?bush(es)?

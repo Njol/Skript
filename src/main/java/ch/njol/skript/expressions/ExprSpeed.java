@@ -21,52 +21,71 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
+ * 
  */
-public class ExprDisplayName extends SimplePropertyExpression<Player, String> {
-	private static final long serialVersionUID = 1074676488757488994L;
+public class ExprSpeed extends SimplePropertyExpression<Player, Float> {
+	private static final long serialVersionUID = -1840963360507113110L;
 	
 	static {
-		register(ExprDisplayName.class, String.class, "(display|nick)[ ]name", "players");
+		register(ExprSpeed.class, Float.class, "(0¦walk[ing]|1¦fl(y[ing]|ight))[( |-])speed", "players");
+	}
+	
+	private boolean walk;
+	
+	@Override
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+		if (!Skript.isRunningBukkit(1, 4)) {
+			Skript.error("fly and walk speed can only be used in Minecraft 1.4 and newer");
+			return false;
+		}
+		super.init(exprs, matchedPattern, isDelayed, parseResult);
+		walk = parseResult.mark == 0;
+		return true;
 	}
 	
 	@Override
-	protected String getPropertyName() {
-		return "display name";
+	public Float convert(final Player p) {
+		return walk ? p.getWalkSpeed() : p.getFlySpeed();
 	}
 	
-	@Override
-	public String convert(final Player p) {
-		return p.getDisplayName();
-	}
-	
-	@Override
-	public Class<String> getReturnType() {
-		return String.class;
-	}
-	
-	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
-			return Skript.array(String.class);
+			return new Class[] {Number.class};
 		return null;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+		final float d = Math2.fit(-1, (Float) delta, 1);
 		for (final Player p : getExpr().getArray(e)) {
-			p.setDisplayName((String) delta + ChatColor.RESET);
+			if (walk)
+				p.setWalkSpeed(d);
+			else
+				p.setFlySpeed(d);
 		}
+	}
+	
+	@Override
+	public Class<Float> getReturnType() {
+		return Float.class;
+	}
+	
+	@Override
+	protected String getPropertyName() {
+		return walk ? "walk speed" : "fly speed";
 	}
 	
 }

@@ -33,6 +33,7 @@ import org.bukkit.event.EventPriority;
 import ch.njol.skript.config.Config;
 import ch.njol.skript.config.validate.EnumEntryValidator;
 import ch.njol.skript.config.validate.SectionValidator;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.registrations.Classes;

@@ -71,6 +71,7 @@ import ch.njol.skript.lang.TriggerSection;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.While;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
@@ -104,7 +105,7 @@ final public class ScriptLoader {
 	
 	public static int hasDelayBefore = -1;
 	
-	public final static class ScriptInfo {
+	public static class ScriptInfo {
 		public int files, triggers, commands;
 		
 		public ScriptInfo() {}
@@ -296,6 +297,7 @@ final public class ScriptLoader {
 					Skript.error("invalid line - all code has to be put into triggers");
 					continue;
 				}
+				System.out.println(" # "+cnode.getOrig());
 				
 				final SectionNode node = ((SectionNode) cnode);
 				String event = node.getName();
@@ -356,7 +358,7 @@ final public class ScriptLoader {
 							continue;
 						final SimpleLog log = SkriptLogger.startSubLog();
 						Object o = Classes.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.CONFIG);
-						SkriptLogger.stopSubLog(log);
+						log.stop();
 						if (o == null) {
 							log.printErrors("Can't understand the value '" + ((EntryNode) n).getValue() + "'");
 							continue;
@@ -539,6 +541,8 @@ final public class ScriptLoader {
 		int hadDelayBeforeLastIf = -1;
 		
 		for (final Node n : node) {
+			System.out.println(" # "+n.getOrig());
+			
 			SkriptLogger.setNode(n);
 			if (n instanceof SimpleNode) {
 				final SimpleNode e = (SimpleNode) n;
@@ -558,6 +562,7 @@ final public class ScriptLoader {
 					final String l = replaceOptions(n.getName().substring("loop ".length()));
 					if (l == null)
 						continue;
+					@SuppressWarnings("unchecked")
 					final Expression<?> loopedExpr = SkriptParser.parseExpression(l, false, ParseContext.DEFAULT, Object.class);
 					if (loopedExpr == null)
 						continue;

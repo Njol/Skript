@@ -27,11 +27,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import ch.njol.skript.Language;
-import ch.njol.skript.Language.LanguageChangeListener;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Language.LanguageChangeListener;
 
 /**
  * @author Peter Güttinger

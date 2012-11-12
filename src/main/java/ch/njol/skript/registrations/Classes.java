@@ -306,23 +306,23 @@ public abstract class Classes {
 	public static <T> T parseSimple(final String s, final Class<T> c, final ParseContext context) {
 		final SimpleLog log = SkriptLogger.startSubLog();
 		for (final ClassInfo<?> info : classInfos) {
-			if (info.getParser() == null || !c.isAssignableFrom(info.getC()))
+			if (info.getParser() == null || !info.getParser().canParse(context) || !c.isAssignableFrom(info.getC()))
 				continue;
 			log.clear();
 			final T t = (T) info.getParser().parse(s, context);
 			if (t != null) {
-				SkriptLogger.stopSubLog(log);
+				log.stop();
 				log.printLog();
 				return t;
 			}
 		}
-		SkriptLogger.stopSubLog(log);
+		log.stop();
 		return null;
 	}
 	
 	/**
 	 * Parses a string to get an object of the desired type.<br/>
-	 * Instead of repeatedly calling this with the same class argument, you should get a parser with {@link Classes#getParser(Class)} and use it for parsing.<br>
+	 * Instead of repeatedly calling this with the same class argument, you should get a parser with {@link #getParser(Class)} and use it for parsing.<br>
 	 * Can log something if it doesn't return null.
 	 * 
 	 * @param s The string to parse
@@ -341,14 +341,14 @@ public abstract class Classes {
 				if (o != null) {
 					t = (T) ConverterUtils.convert(conv, o);
 					if (t != null) {
-						SkriptLogger.stopSubLog(log);
+						log.stop();
 						log.printLog();
 						return t;
 					}
 				}
 			}
 		}
-		SkriptLogger.stopSubLog(log);
+		log.stop();
 		return null;
 	}
 	

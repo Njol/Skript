@@ -44,14 +44,14 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	
 	static {
 		Skript.registerExpression(ExprDirection.class, Direction.class, ExpressionType.COMBINED,
-				"%-number% [(block|meter)[s]]] [to the] (" +
+				"[%-number% [(block|meter)[s]]] [to the]] (" +
 						"2¦north[(-| |)(6¦east|7¦west)[(ward(s|ly|)|er(n|ly|))]] [of]" +
 						"|3¦south[(-| |)(8¦east|9¦west)[(ward(s|ly|)|er(n|ly|))]] [of]" +
 						"|(4¦east|5¦west)[(ward(s|ly|)|er(n|ly|))]] [of]" +
 						"|0¦above|0¦over|(0¦up|1¦down)[ward(s|ly|)]|1¦below|1¦under[neath]|1¦beneath" +
 						")",
-				"%-number% [(block|meter)[s]] in [the] (0¦direction|1¦horizontal direction|2¦facing|3¦horizontal facing) of %entity/block% (of|from|)",
-				"%-number% [(block|meter)[s]] (0¦in[ ]front [of]|0¦forward[s]|2¦behind|2¦backwards|to the (1¦right|-1¦left) [of])");
+				"[%-number% [(block|meter)[s]]] in [the] (0¦direction|1¦horizontal direction|2¦facing|3¦horizontal facing) of %entity/block% (of|from|)",
+				"[%-number% [(block|meter)[s]]] (0¦in[ ]front [of]|0¦forward[s]|2¦behind|2¦backwards|to the (1¦right|-1¦left) [of])");
 	}
 	
 	private final static BlockFace[] byMark = new BlockFace[] {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST,
@@ -148,7 +148,7 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return amount.toString(e, debug) + " " + (direction != null ?
+		return (amount == null ? "" : amount.toString(e, debug) + " ") + (direction != null ?
 				Direction.toString(direction) : relativeTo != null ?
 						" in " + (horizontal ? "horizontal " : "") + (facing ? "facing" : "direction") + " of " + relativeTo.toString(e, debug) :
 						Direction.toString(0, yaw, 1));

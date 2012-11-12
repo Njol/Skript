@@ -43,35 +43,44 @@ public class CondInventoryContains extends Condition {
 	static {
 		Skript.registerCondition(CondInventoryContains.class,
 				"%inventories% ha(s|ve) %itemtypes% [in [(the[ir]|his|her|its)] inventory]",
-				"%inventories% contain[s] %itemtypes%",
+				"%inventories/strings% contain[s] %itemtypes/strings%",
 				"%inventories% do[es](n't| not) have %itemtypes% [in [(the[ir]|his|her|its)] inventory]",
-				"%inventories% do[es](n't| not) contain %itemtypes%");
+				"%inventories/strings% do[es](n't| not) contain %itemtypes/strings%");
 	}
 	
-	private Expression<Inventory> invis;
-	private Expression<ItemType> items;
+	private Expression<?> invis;
+	private Expression<?> items;
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		invis = (Expression<Inventory>) vars[0];
-		items = (Expression<ItemType>) vars[1];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+		invis = exprs[0];
+		items = exprs[1];
 		setNegated(matchedPattern >= 2);
 		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
-		return invis.check(e, new Checker<Inventory>() {
+		return invis.check(e, new Checker<Object>() {
 			@Override
-			public boolean check(final Inventory invi) {
-				final ItemStack[] buf = invi.getContents();
-				return items.check(e, new Checker<ItemType>() {
-					@Override
-					public boolean check(final ItemType type) {
-						return type.isContainedIn(buf);
-					}
-				});
+			public boolean check(final Object invi) {
+				if (invi instanceof Inventory) {
+					final ItemStack[] buf = ((Inventory) invi).getContents();
+					return items.check(e, new Checker<Object>() {
+						@Override
+						public boolean check(final Object type) {
+							return type instanceof ItemType && ((ItemType) type).isContainedIn(buf);
+						}
+					});
+				} else {
+					final String s = ((String) invi).toLowerCase();
+					return items.check(e, new Checker<Object>() {
+						@Override
+						public boolean check(final Object type) {
+							return type instanceof String && s.contains(((String) type).toLowerCase());
+						}
+					});
+				}
 			}
 		}, this);
 	}

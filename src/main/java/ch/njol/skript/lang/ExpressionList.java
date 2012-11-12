@@ -46,7 +46,7 @@ public class ExpressionList<T> implements Expression<T> {
 	protected final Expression<? extends T>[] expressions;
 	protected final boolean and;
 	private final boolean single;
-	private final Class<? extends T> returnType;
+	private final Class<T> returnType;
 	private ExpressionList<?> source;
 	
 	public ExpressionList(final Expression<? extends T>[] expressions, final boolean and) {
@@ -57,11 +57,10 @@ public class ExpressionList<T> implements Expression<T> {
 		assert expressions != null && expressions.length > 1;
 		this.expressions = expressions;
 		this.and = and;
-		Class<? extends T> returnType = expressions[0].getReturnType();
-		for (int i = 1; i < expressions.length; i++) {
-			if (expressions[i].getReturnType().isAssignableFrom(returnType))
-				returnType = expressions[i].getReturnType();
-		}
+		final Class<?>[] cs = new Class[expressions.length];
+		for (int i = 0; i < cs.length; i++)
+			cs[i] = expressions[i].getReturnType();
+		final Class<T> returnType = (Class<T>) Utils.getSuperType(cs);
 		this.returnType = returnType;
 		if (and) {
 			single = false;
@@ -180,7 +179,7 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
-	public Class<? extends T> getReturnType() {
+	public Class<T> getReturnType() {
 		return returnType;
 	}
 	
@@ -247,4 +246,7 @@ public class ExpressionList<T> implements Expression<T> {
 		return toString(null, false);
 	}
 	
+	public Expression<? extends T>[] getExpressions() {
+		return expressions;
+	}
 }

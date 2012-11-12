@@ -49,7 +49,8 @@ public class ExprTypeOf extends PropertyExpression<Object, Object> {
 	
 	@Override
 	public Class<? extends Object> getReturnType() {
-		return EntityData.class.isAssignableFrom(getExpr().getReturnType()) ? EntityData.class : ItemStack.class;
+		return EntityData.class.isAssignableFrom(getExpr().getReturnType()) ? EntityData.class
+				: ItemStack.class.isAssignableFrom(getExpr().getReturnType()) ? ItemStack.class : Object.class;
 	}
 	
 	@Override

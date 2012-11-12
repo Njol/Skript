@@ -27,7 +27,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.effects.EffBan;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -72,11 +71,7 @@ public class CondIsBanned extends Condition {
 				} else if (o instanceof OfflinePlayer) {
 					return ((OfflinePlayer) o).isBanned();
 				} else if (o instanceof String) {
-					if (EffBan.IPv4.matcher((String) o).matches()) {
-						return Bukkit.getIPBans().contains(o);
-					} else {
-						return Bukkit.getOfflinePlayer((String) o).isBanned();
-					}
+					return Bukkit.getIPBans().contains(o) || Bukkit.getOfflinePlayer((String) o).isBanned();
 				}
 				assert false;
 				return false;

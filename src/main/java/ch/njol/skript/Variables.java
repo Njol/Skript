@@ -53,6 +53,7 @@ import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.util.Version;
 
 /**
  * @author Peter Güttinger
@@ -221,13 +222,13 @@ public class Variables {
 			Skript.error("Cannot write to the variables file - no variables will be saved!");
 		}
 		if (!file.canRead()) {
-			Skript.error("Cannot read or from the variables file!");
+			Skript.error("Cannot read from the variables file!");
 			Skript.error("This means that no variables will be available and can also prevent new variables from being saved!");
 			try {
 				final File backup = FileUtils.backup(file);
 				Skript.info("Created a backup of your variables.csv as " + backup.getName());
-			} catch (final IOException e1) {
-				Skript.error("Failed to create a backup of your variables.csv: " + e1.getLocalizedMessage());
+			} catch (final IOException e) {
+				Skript.error("Failed to create a backup of your variables.csv: " + e.getLocalizedMessage());
 				loadError = true;
 			}
 			return false;
@@ -237,26 +238,29 @@ public class Variables {
 		int unsuccessful = 0;
 		final StringBuilder invalid = new StringBuilder();
 		
-//		Version varVersion = Skript.getVersion();
+		Version varVersion = Skript.getVersion();
+		final Version v2_0_beta3 = new Version(2, 0, "beta 3");
 		
 		BufferedReader r = null;
 		boolean ioEx = false;
 		try {
 			r = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 			String line = null;
+			int lineNum = 0;
 			while ((line = r.readLine()) != null) {
+				lineNum++;
 				line = line.trim();
 				if (line.isEmpty() || line.startsWith("#")) {
-//					if (line.startsWith("# version:")) {
-//						try {
-//							varVersion = new Version(line.substring("# version:".length()).trim());
-//						} catch (final IllegalArgumentException e) {}
-//					}
+					if (line.startsWith("# version:")) {
+						try {
+							varVersion = new Version(line.substring("# version:".length()).trim());
+						} catch (final IllegalArgumentException e) {}
+					}
 					continue;
 				}
 				final String[] split = splitCSV(line);
 				if (split == null || split.length != 3) {
-					Skript.error("invalid amount of commas in line '" + line + "'");
+					Skript.error("invalid amount of commas in line " + lineNum + " ('" + line + "')");
 					if (invalid.length() != 0)
 						invalid.append(", ");
 					invalid.append(split == null ? "<unknown>" : split[0]);
@@ -266,13 +270,16 @@ public class Variables {
 				if (split[1].equals("null")) {
 					setVariable(Variable.splitVariableName(split[0]), null);
 				} else {
-					final Object d = Classes.deserialize(split[1], split[2]);
+					Object d = Classes.deserialize(split[1], split[2]);
 					if (d == null) {
 						if (invalid.length() != 0)
 							invalid.append(", ");
 						invalid.append(split[0]);
 						unsuccessful++;
 						continue;
+					}
+					if (d instanceof String && varVersion.isSmallerThan(v2_0_beta3)) {
+						d = Utils.replaceChatStyles((String) d);
 					}
 					setVariable(Variable.splitVariableName(split[0]), d);
 				}
@@ -288,7 +295,7 @@ public class Variables {
 				} catch (final IOException e) {}
 			}
 		}
-		SkriptLogger.stopSubLog(log);
+		log.stop();
 		if (ioEx || unsuccessful > 0) {
 			if (unsuccessful > 0) {
 				Skript.error(unsuccessful + " variable" + (unsuccessful == 1 ? "" : "s") + " could not be loaded!");
@@ -371,6 +378,7 @@ public class Variables {
 	 * @param value
 	 */
 	private final void saveVariableChange(final String[] name, final Object value) {
+		assert Thread.holdsLock(variables);
 		if (changesWriter != null) {// null while loading
 			changes++;
 			final String[] s = value == null ? null : Classes.serialize(value);

@@ -72,6 +72,7 @@ public class Argument<T> implements Serializable {
 		Expression<? extends T> d = null;
 		if (def != null) {
 			if (def.startsWith("%") && def.endsWith("%")) {
+				@SuppressWarnings("unchecked")
 				final Expression<?> e = SkriptParser.parseExpression(def.substring(1, def.length() - 1), false, ParseContext.COMMAND, Object.class);
 				if (e == null)
 					return null;
@@ -81,7 +82,7 @@ public class Argument<T> implements Serializable {
 				}
 				final SimpleLog log = SkriptLogger.startSubLog();
 				d = e.getConvertedExpression(type);
-				SkriptLogger.stopSubLog(log);
+				log.stop();
 				if (d == null) {
 					log.printErrors("'" + def + "' is not " + Utils.a(Classes.getExactClassName(type)));
 					return null;
@@ -89,7 +90,7 @@ public class Argument<T> implements Serializable {
 			} else {
 				final SimpleLog log = SkriptLogger.startSubLog();
 				d = SkriptParser.parseLiteral(def, type, ParseContext.DEFAULT);
-				SkriptLogger.stopSubLog(log);
+				log.stop();
 				if (d == null) {
 					log.printErrors("'" + def + "' is not " + Utils.a(Classes.getExactClassName(type)));
 					return null;

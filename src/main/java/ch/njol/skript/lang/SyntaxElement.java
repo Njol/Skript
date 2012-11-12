@@ -40,7 +40,7 @@ public interface SyntaxElement extends Serializable {
 	 *            holding the default value of the desired type which usually depends on the event.
 	 * @param matchedPattern The index of the pattern which matched
 	 * @param isDelayed Whether this expression is used after a delay or not (i.e. if the event has already passed when this expression will be called) (1 = delayed, 0 = possibly
-	 *            delayed, -1 = not delayed)
+	 *            delayed, -1 = not delayed) // TODO make some kind of "tri-boolean" enum with true, false and maybe
 	 * @param parseResult Additional information about the match.
 	 * @return Whether this expression was initialized successfully. Can print an error prior to returning false to specity the cause (can use
 	 *         {@link Skript#error(String, ch.njol.skript.log.ErrorQuality)})

@@ -25,11 +25,13 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.lang.Conditional;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Loop;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.TriggerItem;
+import ch.njol.skript.lang.TriggerSection;
 import ch.njol.skript.log.ErrorQuality;
 
 /**
@@ -42,44 +44,72 @@ public class EffExit extends Effect {
 	static {
 		Skript.registerEffect(EffExit.class,
 				"(exit|stop) [trigger]",
-				"(exit|stop) [(1|a|the|this)] section",
-				"(exit|stop) <\\d+> sections",
-				"(exit|stop) all sections");
+				"(exit|stop) [(1|a|the|this)] (0¦section|1¦loop|2¦conditional)",
+				"(exit|stop) <\\d+> (0¦section|1¦loop|2¦conditional)",
+				"(exit|stop) all (0¦section|1¦loop|2¦conditional)s");
 	}
 	
 	private int breakLevels;
+	
+	private final static int EVERYTHING = 0, LOOPS = 1, CONDITIONALS = 2;
+	private final static String[] names = {"sections", "loops", "conditionals"};
+	private int type;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 				breakLevels = ScriptLoader.currentSections.size() + 1;
+				type = EVERYTHING;
 				break;
 			case 1:
 			case 2:
 				breakLevels = matchedPattern == 1 ? 1 : Integer.parseInt(parser.regexes.get(0).group());
-				if (breakLevels > ScriptLoader.currentSections.size()) {
-					if (ScriptLoader.currentSections.isEmpty())
-						Skript.error("can't exit any sections as there are no sections present", ErrorQuality.SEMANTIC_ERROR);
+				type = parser.mark;
+				if (breakLevels > numLevels()) {
+					if (numLevels() == 0)
+						Skript.error("can't stop any " + names[type] + " as there are no " + names[type] + " present", ErrorQuality.SEMANTIC_ERROR);
 					else
-						Skript.error("can't exit " + breakLevels + " sections as there are only " + ScriptLoader.currentSections.size() + " sections present", ErrorQuality.SEMANTIC_ERROR);
+						Skript.error("can't stop " + breakLevels + " " + names[type] + " as there are only " + numLevels() + " " + names[type] + " present", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 				break;
 			case 3:
-				breakLevels = ScriptLoader.currentSections.size();
+				type = parser.mark;
+				breakLevels = numLevels();
+				if (breakLevels == 0) {
+					Skript.error("can't stop any " + names[type] + " as there are no " + names[type] + " present", ErrorQuality.SEMANTIC_ERROR);
+					return false;
+				}
 				break;
 		}
 		return true;
 	}
 	
+	private final int numLevels() {
+		if (type == EVERYTHING)
+			return ScriptLoader.currentSections.size();
+		int r = 0;
+		for (final TriggerSection s : ScriptLoader.currentSections) {
+			if (type == CONDITIONALS ? s instanceof Conditional : s instanceof Loop)
+				r++;
+		}
+		return r;
+	}
+	
 	@Override
 	protected TriggerItem walk(final Event e) {
 		debug(e, false);
-		TriggerItem n = parent;
-		for (int i = breakLevels - 1; i > 0; i--) {
+		TriggerItem n = this;
+		for (int i = breakLevels; i > 0;) {
 			n = n.getParent();
 			assert n != null;
+			if (type == EVERYTHING)
+				i--;
+			else if (type == CONDITIONALS && n instanceof Conditional)
+				i--;
+			else if (type == LOOPS && n instanceof Loop)
+				i--;
 		}
 		return n instanceof Loop ? ((Loop) n).getActualNext() : n.getNext();
 	}
@@ -91,7 +121,7 @@ public class EffExit extends Effect {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "exit " + breakLevels + " sections";
+		return "stop " + breakLevels + " " + names[type];
 	}
 	
 }

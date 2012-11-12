@@ -37,6 +37,7 @@ import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
@@ -67,7 +68,7 @@ public class ExprDifference extends SimpleExpression<Object> {
 			second = second.getConvertedExpression(Object.class);
 			if (first == null || second == null)
 				return false;
-			ci = Classes.getSuperClassInfo(second.getReturnType().isAssignableFrom(first.getReturnType()) ? second.getReturnType() : first.getReturnType());
+			ci = Classes.getSuperClassInfo(Utils.getSuperType(first.getReturnType(), second.getReturnType()));
 		} else {
 			if (first instanceof Literal<?>) {
 				first = first.getConvertedExpression(second.getReturnType());
@@ -83,7 +84,7 @@ public class ExprDifference extends SimpleExpression<Object> {
 			} else if (second instanceof Variable) {
 				second = second.getConvertedExpression(first.getReturnType());
 			}
-			ci = Classes.getSuperClassInfo(second.getReturnType().isAssignableFrom(first.getReturnType()) ? second.getReturnType() : first.getReturnType());
+			ci = Classes.getSuperClassInfo(Utils.getSuperType(first.getReturnType(), second.getReturnType()));
 		}
 		if (ci.getMath() == null) {
 			Skript.error("Can't get the difference of " + CondIs.f(first) + " and " + CondIs.f(second), ErrorQuality.SEMANTIC_ERROR);

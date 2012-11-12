@@ -77,29 +77,29 @@ public class EvtClick extends SkriptEvent {
 				blocks = args[matchedPattern].getConvertedExpression(ItemType.class);
 				log.clear();
 				if (blocks == null) {
-					SkriptLogger.stopSubLog(log);
+					log.stop();
 					Skript.error(args[matchedPattern] + " is neither an entity type nor an item type", ErrorQuality.NOT_AN_EXPRESSION);
 					return false;
 				} else if (!blocks.isSingle()) {
-					SkriptLogger.stopSubLog(log);
+					log.stop();
 					Skript.error("It's impossible to click on multiple blocks at the same time", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 			} else {
 				if (!entities.isSingle()) {
-					SkriptLogger.stopSubLog(log);
+					log.stop();
 					Skript.error("It's impossible to click on multiple entites at the same time", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 				if (click == LEFT) {
-					SkriptLogger.stopSubLog(log);
+					log.stop();
 					Skript.error("A leftclick on an entity is an attack and thus not covered by the 'click' event, but the 'damage' event.", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				} else if (click == ANY) {
 					Skript.warning("A leftclick on an entity is an attack and thus not covered by the 'click' event, but the 'damage' event. Change this event to a rightclick to disable this warning message.");
 				}
 			}
-			SkriptLogger.stopSubLog(log);
+			log.stop();
 			log.printLog();
 		}
 		tools = (Literal<ItemType>) args[1 - matchedPattern];

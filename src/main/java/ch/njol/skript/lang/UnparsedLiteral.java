@@ -25,8 +25,12 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.iterator.NonNullIterator;
 
@@ -59,15 +63,41 @@ public class UnparsedLiteral implements Literal<Object> {
 		return Object.class;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to) {
-		return getConvertedExpression(to, ParseContext.DEFAULT);
+		return getConvertedExpression(ParseContext.DEFAULT, to);
 	}
 	
-	// TODO (Variable)Strings & Object in general
-	@SuppressWarnings("unchecked")
-	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to, final ParseContext context) {
-		return (Literal<? extends R>) SkriptParser.parseExpression(data, true, context, to);
+	public <R> Literal<? extends R> getConvertedExpression(final ParseContext context, final Class<? extends R>... to) {
+		assert to != null && to.length > 0;
+		assert to.length == 1 || !Utils.contains(to, Object.class);
+		if (to[0] != Object.class) {
+			return (Literal<? extends R>) SkriptParser.parseExpression(data, new Converter<String, Literal<? extends R>>() {
+				@Override
+				public Literal<? extends R> convert(final String s) {
+					for (final Class<? extends R> c : to) {
+						final R r = Classes.parse(s, c, context);
+						if (r != null)
+							return new SimpleLiteral<R>(r, false);
+					}
+					return null;
+				}
+			}, "'" + data + "' is " + SkriptParser.notOfType(to));
+		}
+		return (Literal<? extends R>) SkriptParser.parseExpression(data, new Converter<String, Literal<Object>>() {
+			@Override
+			public Literal<Object> convert(final String s) {
+				for (final ClassInfo<?> ci : Classes.getClassInfos()) {
+					if (ci.getParser() != null && ci.getParser().canParse(context)) {
+						final Object o = ci.getParser().parse(s, context);
+						if (o != null)
+							return new SimpleLiteral<Object>(o, false);
+					}
+				}
+				return null;
+			}
+		}, null);
 //		if (to == String.class && context == ParseContext.DEFAULT) {
 //			return (Literal<? extends R>) VariableStringLiteral.newInstance(this);
 //		} else if (to == Object.class) {
@@ -99,10 +129,6 @@ public class UnparsedLiteral implements Literal<Object> {
 //		if (p == null || !p.canParse(context))
 //			return null;
 //		return convert(to, p, context);
-	}
-	
-	public <R> Literal<? extends R> getConvertedExpression(final Class<? extends R>[] to, final ParseContext context) {
-		return (Literal<? extends R>) SkriptParser.parseExpression(data, true, context, to);
 	}
 	
 //	private <T> Literal<T> convert(final Class<T> to, final Parser<?> parser, final ParseContext context) {

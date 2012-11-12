@@ -30,8 +30,8 @@ import org.bukkit.Location;
 import org.bukkit.TreeType;
 import org.bukkit.block.Block;
 
-import ch.njol.skript.Language;
-import ch.njol.skript.Language.LanguageChangeListener;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Language.LanguageChangeListener;
 
 /**
  * @author Peter Güttinger

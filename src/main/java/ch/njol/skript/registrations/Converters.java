@@ -75,14 +75,23 @@ public abstract class Converters {
 			for (int j = 0; j < converters.size(); j++) {// not from j = i+1 since new converters get added during the loops
 				final ConverterInfo<?, ?> info2 = converters.get(j);
 				if ((info.options & ConverterOptions.NO_RIGHT_CHAINING) == 0 && (info2.options & ConverterOptions.NO_LEFT_CHAINING) == 0
-						&& info2.from.isAssignableFrom(info.to) && !Converters.converterExists(info.from, info2.to)) {
-					converters.add(Converters.createChainedConverter(info, info2));
+						&& info2.from.isAssignableFrom(info.to) && !converterExistsSlow(info.from, info2.to)) {
+					converters.add(createChainedConverter(info, info2));
 				} else if ((info.options & ConverterOptions.NO_LEFT_CHAINING) == 0 && (info2.options & ConverterOptions.NO_RIGHT_CHAINING) == 0
-						&& info.from.isAssignableFrom(info2.to) && !Converters.converterExists(info2.from, info.to)) {
-					converters.add(Converters.createChainedConverter(info2, info));
+						&& info.from.isAssignableFrom(info2.to) && !converterExistsSlow(info2.from, info.to)) {
+					converters.add(createChainedConverter(info2, info));
 				}
 			}
 		}
+	}
+	
+	private final static boolean converterExistsSlow(final Class<?> from, final Class<?> to) {
+		for (final ConverterInfo<?, ?> i : converters) {
+			if ((i.from.isAssignableFrom(from) || from.isAssignableFrom(i.from)) && (i.to.isAssignableFrom(to) || to.isAssignableFrom(i.to))) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -185,6 +194,8 @@ public abstract class Converters {
 		return l.toArray((T[]) Array.newInstance(superType, l.size()));
 	}
 	
+	private final static Map<Pair<Class<?>, Class<?>>, SerializableConverter<?, ?>> convertersQuickAccess = new HashMap<Pair<Class<?>, Class<?>>, SerializableConverter<?, ?>>();
+	
 	/**
 	 * Tests whether a converter between the given classes exists.
 	 * 
@@ -197,14 +208,8 @@ public abstract class Converters {
 		assert to != null;
 		if (to.isAssignableFrom(from) || from.isAssignableFrom(to))
 			return true;
-		for (final ConverterInfo<?, ?> conv : converters) {
-			if ((conv.from.isAssignableFrom(from) || from.isAssignableFrom(conv.from)) && (conv.to.isAssignableFrom(to) || to.isAssignableFrom(conv.to)))
-				return true;
-		}
-		return false;
+		return getConverter(from, to) != null;
 	}
-	
-	private final static Map<Pair<Class<?>, Class<?>>, SerializableConverter<?, ?>> convertersQuickAccess = new HashMap<Pair<Class<?>, Class<?>>, SerializableConverter<?, ?>>();
 	
 	/**
 	 * Gets a converter

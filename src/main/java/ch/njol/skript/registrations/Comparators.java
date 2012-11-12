@@ -73,12 +73,8 @@ public class Comparators {
 	@SuppressWarnings("unchecked")
 	public final static <F, S> Comparator<? super F, ? super S> getComparator(final Class<F> f, final Class<S> s) {
 		final Pair<Class<?>, Class<?>> p = new Pair<Class<?>, Class<?>>(f, s);
-		if (comparatorsQuickAccess.containsKey(p)) {
-			final Comparator<?, ?> comp = comparatorsQuickAccess.get(p);
-			if (comp == null)
-				return null;
-			return (Comparator<? super F, ? super S>) comp;
-		}
+		if (comparatorsQuickAccess.containsKey(p))
+			return (Comparator<? super F, ? super S>) comparatorsQuickAccess.get(p);
 		final Comparator<?, ?> comp = getComparator_i(f, s);
 		comparatorsQuickAccess.put(p, comp);
 		return (Comparator<? super F, ? super S>) comp;

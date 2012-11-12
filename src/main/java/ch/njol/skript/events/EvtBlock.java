@@ -47,14 +47,14 @@ import ch.njol.util.Checker;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"deprecation", "unchecked"})
 public class EvtBlock extends SkriptEvent {
 	private static final long serialVersionUID = 1975641867786762510L;
 	
 	static {
-		Skript.registerEvent(EvtBlock.class, Skript.array(BlockBreakEvent.class, PaintingBreakEvent.class, PlayerBucketFillEvent.class), "(break[ing]|min(e|ing)) [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, new Class[] {BlockBreakEvent.class, PaintingBreakEvent.class, PlayerBucketFillEvent.class}, "(break[ing]|min(e|ing)) [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, BlockBurnEvent.class, "burn[ing] [[of] %itemtypes%]");
-		Skript.registerEvent(EvtBlock.class, Skript.array(BlockPlaceEvent.class, PaintingPlaceEvent.class, PlayerBucketEmptyEvent.class), "plac(e|ing) [[of] %itemtypes%]");
+		Skript.registerEvent(EvtBlock.class, new Class[] {BlockPlaceEvent.class, PaintingPlaceEvent.class, PlayerBucketEmptyEvent.class}, "plac(e|ing) [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, BlockFadeEvent.class, "fad(e|ing) [[of] %itemtypes%]");
 		Skript.registerEvent(EvtBlock.class, BlockFormEvent.class, "form[ing] [[of] %itemtypes%]");
 	}

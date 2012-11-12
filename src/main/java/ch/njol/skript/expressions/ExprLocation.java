@@ -51,7 +51,7 @@ public class ExprLocation extends SimpleExpression<Location> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		direction = (Expression<Direction>) exprs[0];
-		if (Block.class.isAssignableFrom(exprs[1].getReturnType()))
+		if (Block.class.isAssignableFrom(exprs[1].getReturnType()))//TODO
 			block = (Expression<Block>) exprs[1];
 		else
 			location = (Expression<Location>) exprs[1];

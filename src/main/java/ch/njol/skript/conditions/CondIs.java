@@ -155,7 +155,7 @@ public class CondIs extends Condition {
 		}
 		log.stop();
 		
-		final Class<?> f = first.getReturnType(), s = third == null || second.getReturnType().isAssignableFrom(third.getReturnType()) ? second.getReturnType() : third.getReturnType();
+		final Class<?> f = first.getReturnType(), s = third == null ? second.getReturnType() : Utils.getSuperType(second.getReturnType(), third.getReturnType());
 		if (f == Object.class || s == Object.class)
 			return true;
 		comp = Comparators.getComparator(f, s);

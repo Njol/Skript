@@ -41,11 +41,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
-import ch.njol.skript.Language;
-import ch.njol.skript.Language.LanguageChangeListener;
 import ch.njol.skript.Skript;
 import ch.njol.skript.effects.EffTeleport;
 import ch.njol.skript.entity.EntityData;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Language.LanguageChangeListener;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
@@ -663,7 +663,8 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * Replaces english &lt;chat styles&gt; in the message. This is used for messages by the plugin.
+	 * Replaces english &lt;chat styles&gt; in the message. This is used for messages in the language file as the language of colour codes is not well defined while the language is
+	 * changing.
 	 * 
 	 * @param message
 	 * @return
@@ -761,6 +762,37 @@ public abstract class Utils {
 		if (end <= start)
 			throw new IllegalArgumentException("end (" + end + ") must be > start (" + start + ")");
 		return start + random.nextInt(end - start);
+	}
+	
+	// TODO improve?
+	public final static Class<?> getSuperType(final Class<?>... cs) {
+		assert cs != null && cs.length > 0;
+		Class<?> r = cs[0];
+		outer: for (final Class<?> c : cs) {
+			assert !c.isArray() && !c.isPrimitive();
+			if (c.isAssignableFrom(r)) {
+				r = c;
+				continue;
+			}
+			if (!r.isAssignableFrom(c)) {
+				Class<?> s = c;
+				while ((s = s.getSuperclass()) != null) {
+					if (s.isAssignableFrom(r)) {
+						r = s;
+						continue outer;
+					}
+				}
+				for (final Class<?> i : c.getInterfaces()) {
+					s = getSuperType(i, r);
+					if (s != Object.class) {
+						r = s;
+						continue outer;
+					}
+				}
+				return Object.class;
+			}
+		}
+		return r;
 	}
 	
 }

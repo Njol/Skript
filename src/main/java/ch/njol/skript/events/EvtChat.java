@@ -52,7 +52,7 @@ public class EvtChat extends SelfRegisteringSkriptEvent {
 	private static final long serialVersionUID = -605839769417043132L;
 	
 	static {
-		if (Skript.isRunningBukkit1_3())
+		if (Skript.isRunningBukkit(1, 3))
 			Skript.registerEvent(EvtChat.class, AsyncPlayerChatEvent.class, "chat");
 		else
 			Skript.registerEvent(EvtChat.class, PlayerChatEvent.class, "chat");
@@ -76,7 +76,7 @@ public class EvtChat extends SelfRegisteringSkriptEvent {
 		@Override
 		public void execute(final Listener l, final Event e) throws EventException {
 			if (!triggers.isEmpty()) {
-				if (!Skript.isRunningBukkit1_3() || !e.isAsynchronous()) {
+				if (!Skript.isRunningBukkit(1, 3) || !e.isAsynchronous()) {
 					execute(e);
 					return;
 				}

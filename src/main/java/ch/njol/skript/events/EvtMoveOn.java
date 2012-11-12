@@ -80,7 +80,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 	
 	static {
 //		Skript.registerEvent(EvtMoveOn.class, PlayerMoveEvent.class, "(step|walk) on <.+>");
-		Skript.registerEvent(EvtMoveOn.class, PlayerMoveEvent.class, "(step|walk) on %itemtypes%");
+		Skript.registerEvent(EvtMoveOn.class, PlayerMoveEvent.class, "(step|walk)[ing] (on|over) %itemtypes%");
 	}
 	
 //	private final static HashMap<BlockLocation, List<Trigger>> blockTriggers = new HashMap<BlockLocation, List<Trigger>>();

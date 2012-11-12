@@ -23,10 +23,10 @@ package ch.njol.skript.lang.util;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,15 +37,21 @@ import org.bukkit.event.Event;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.lang.Debuggable;
+import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.StringMode;
+import ch.njol.skript.util.Utils;
+import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
+import ch.njol.util.iterator.SingleItemIterator;
 
 /**
  * 
@@ -53,7 +59,7 @@ import ch.njol.util.StringUtils;
  * 
  * @author Peter Güttinger
  */
-public class VariableString implements Debuggable, Serializable {
+public class VariableString implements Expression<String> {
 	private static final long serialVersionUID = -2456868967246699395L;
 	
 	private final String name;
@@ -107,26 +113,26 @@ public class VariableString implements Debuggable, Serializable {
 				int c2 = s.indexOf('%', c + 1);
 				int a = c, b;
 				while (c2 != -1 && (b = s.indexOf('{', a + 1)) != -1 && b < c2) {
-					final int b2 = nextBracket(s, '}', '{', b + 1);
-					if (b2 == -1) {
+					a = nextBracket(s, '}', '{', b + 1);
+					if (a == -1) {
 						Skript.error("Missing closing bracket '}' to end variable");
 						return null;
 					}
-					c2 = s.indexOf('%', b2 + 1);
-					a = b2;
+					c2 = s.indexOf('%', a + 1);
 				}
 				if (c2 == -1) {
-					Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a % type it twice: %%.");
+					Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a '%' type it twice: %%.");
 					return null;
 				}
 				if (c + 1 == c2) {
 					string.add("%");
 				} else {
+					@SuppressWarnings("unchecked")
 					final Expression<?> expr = SkriptParser.parseExpression(s.substring(c + 1, c2), false, ParseContext.DEFAULT, Object.class);
 					if (expr == null) {
 						return null;
 					} else if (expr instanceof UnparsedLiteral) {
-						Skript.error("C't understand this expression: " + s.substring(c + 1, c2));
+						Skript.error("Can't understand this expression: " + s.substring(c + 1, c2));
 						return null;
 					} else {
 						string.add(expr);
@@ -191,7 +197,7 @@ public class VariableString implements Debuggable, Serializable {
 	}
 	
 	/**
-	 * Copied from {@link SkriptParser#nextBracket(String, char, char, int)}
+	 * Copied from {@link SkriptParser#nextBracket(String, char, char, int)} and removed escaping
 	 * 
 	 * @param s
 	 * @param closingBracket
@@ -265,7 +271,7 @@ public class VariableString implements Debuggable, Serializable {
 					b.append(o);
 			}
 		}
-		return b.toString();
+		return Utils.replaceChatStyles(b.toString());
 	}
 	
 	/**
@@ -315,6 +321,108 @@ public class VariableString implements Debuggable, Serializable {
 	
 	public void setMode(final StringMode mode) {
 		this.mode = mode;
+	}
+	
+	@Override
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public String getSingle(final Event e) {
+		return toString(e);
+	}
+	
+	@Override
+	public String[] getArray(final Event e) {
+		return new String[] {toString(e)};
+	}
+	
+	@Override
+	public String[] getAll(final Event e) {
+		return new String[] {toString(e)};
+	}
+	
+	@Override
+	public boolean isSingle() {
+		return true;
+	}
+	
+	@Override
+	public boolean check(final Event e, final Checker<? super String> c, final Condition cond) {
+		return SimpleExpression.check(getAll(e), c, cond.isNegated(), false);
+	}
+	
+	@Override
+	public boolean check(final Event e, final Checker<? super String> c) {
+		return SimpleExpression.check(getAll(e), c, false, false);
+	}
+	
+	@Override
+	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
+		// can't convert Strings to anything
+		return null;
+	}
+	
+	@Override
+	public Class<? extends String> getReturnType() {
+		return String.class;
+	}
+	
+	@Override
+	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		return null;
+	}
+	
+	@Override
+	public boolean getAnd() {
+		return false;
+	}
+	
+	@Override
+	public boolean setTime(final int time) {
+		return false;
+	}
+	
+	@Override
+	public int getTime() {
+		return 0;
+	}
+	
+	@Override
+	public boolean isDefault() {
+		return false;
+	}
+	
+	@Override
+	public Iterator<? extends String> iterator(final Event e) {
+		return new SingleItemIterator<String>(toString(e));
+	}
+	
+	@Override
+	public boolean isLoopOf(final String s) {
+		return false;
+	}
+	
+	@Override
+	public Expression<?> getSource() {
+		return this;
+	}
+	
+	public final static void setStringMode(final Expression<?> e) {
+		if (e instanceof ExpressionList) {
+			for (final Expression<?> ex : ((ExpressionList<?>) e).getExpressions()) {
+				if (ex instanceof VariableString)
+					((VariableString) ex).setMode(StringMode.COMMAND);
+			}
+		} else if (e instanceof VariableString) {
+			((VariableString) e).setMode(StringMode.COMMAND);
+		}
 	}
 	
 	/* TODO allow special characters

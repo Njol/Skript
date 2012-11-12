@@ -19,7 +19,7 @@
  * 
  */
 
-package ch.njol.skript;
+package ch.njol.skript.localization;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.config.Config;
 
 /**
@@ -170,7 +171,7 @@ public class Language {
 		return Skript.getInstance().getResource("lang/" + name + ".lang");
 	}
 	
-	static void loadDefault() {
+	public static void loadDefault() {
 		final InputStream din = getInputStream("english");
 		if (din == null)
 			throw new IllegalStateException("Skript.jar is missing the required english.lang file!");
@@ -188,7 +189,7 @@ public class Language {
 			l.onLanguageChange();
 	}
 	
-	static boolean load(String name) {
+	public static boolean load(String name) {
 		name = name.toLowerCase();
 		final InputStream in = getInputStream(name);
 		if (in == null)

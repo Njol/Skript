@@ -48,20 +48,18 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
+import ch.njol.skript.localization.FormattedMessage;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Message;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.Version;
 import ch.njol.util.ExceptionUtils;
+import ch.njol.util.SynchronizedReference;
 
 /**
  * @author Peter Güttinger
  */
 public final class Updater {
-	
-	private final static Updater instance = new Updater();
-	
-	public final static Updater getInstance() {
-		return instance;
-	}
 	
 	public final static class VersionInfo {
 		Version version;
@@ -78,12 +76,27 @@ public final class Updater {
 		NOT_STARTED, CHECK_IN_PROGRESS, CHECK_ERROR, CHECKED_FOR_UPDATE, DOWNLOAD_IN_PROGRESS, DOWNLOAD_ERROR, DOWNLOADED;
 	}
 	
-	public final Object stateLock = new Object();
-	public volatile UpdateState state = UpdateState.NOT_STARTED;
-	public volatile String error;
+	public final static Object stateLock = new Object();
+	/**
+	 * must be synchronized with {@link #stateLock}
+	 */
+	public static volatile UpdateState state = UpdateState.NOT_STARTED;
+	private final static SynchronizedReference<String> error = new SynchronizedReference<String>();
 	
-	public final List<VersionInfo> infos = new ArrayList<VersionInfo>();
-	public volatile VersionInfo latest = null;
+	public final static List<VersionInfo> infos = new ArrayList<VersionInfo>();
+	public final static SynchronizedReference<VersionInfo> latest = new SynchronizedReference<VersionInfo>();
+	
+	// must be down here as they reference 'error' and 'latest' which are defined above
+	public final static Message m_not_started = new Message("updater.not_started");
+	public final static Message m_checking = new Message("updater.checking");
+	public final static Message m_check_in_progress = new Message("updater.check_in_progress");
+	public final static FormattedMessage m_check_error = new FormattedMessage("updater.check_error", error);
+	public final static Message m_running_latest_version = new Message("updater.running_latest_version");
+	public final static FormattedMessage m_update_available = new FormattedMessage("updater.update_available", latest, Skript.getVersion());
+	public final static FormattedMessage m_downloading = new FormattedMessage("updater.downloading", latest);
+	public final static Message m_download_in_progress = new Message("updater.download_in_progress");
+	public final static FormattedMessage m_download_error = new FormattedMessage("updater.download_error", error);
+	public final static Message m_downloaded = new Message("updater.downloaded");
 	
 	/**
 	 * Must only be called if {@link #state} == {@link UpdateState#NOT_STARTED} or {@link UpdateState#CHECK_ERROR}
@@ -91,7 +104,7 @@ public final class Updater {
 	 * @param sender Sender to recieve messages or null if this is an automatic check
 	 * @param download
 	 */
-	void check(final CommandSender sender, final boolean download, final boolean isAutomatic) {
+	static void check(final CommandSender sender, final boolean download, final boolean isAutomatic) {
 		assert sender != null;
 		synchronized (stateLock) {
 			if (state != UpdateState.NOT_STARTED && state != UpdateState.CHECK_ERROR)
@@ -159,10 +172,10 @@ public final class Updater {
 								return v2.version.compareTo(v1.version);
 							}
 						});
-						latest = infos.get(0);
+						latest.set(infos.get(0));
 					}
 					
-					final String message = infos.isEmpty() ? Language.get("updater.running_latest_version") : Language.format("updater.update_available", latest.version, Skript.getVersion());
+					final String message = infos.isEmpty() ? "" + m_running_latest_version : "" + m_update_available;
 					if (isAutomatic && !infos.isEmpty()) {
 						Skript.adminBroadcast(message);
 					} else {
@@ -183,14 +196,14 @@ public final class Updater {
 					Skript.error(sender, Language.format("updater.check_error", ExceptionUtils.toString(e)));
 					synchronized (stateLock) {
 						state = UpdateState.CHECK_ERROR;
-						error = ExceptionUtils.toString(e);
+						error.set(ExceptionUtils.toString(e));
 					}
 				} catch (final Exception e) {
 					Skript.error(sender, "An internal error occurred while checking for the latest version of Skript. See the erver log for details.");
 					Skript.exception(e, "Error while checking for a new version of Skript");
 					synchronized (stateLock) {
 						state = UpdateState.CHECK_ERROR;
-						error = e.getClass().getSimpleName() + ": " + e.getLocalizedMessage();
+						error.set(e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
 					}
 				} finally {
 					if (in != null) {
@@ -245,17 +258,17 @@ public final class Updater {
 	 * 
 	 * @param sender not null
 	 */
-	private void download_i(final CommandSender sender, final boolean isAutomatic) {
+	private static void download_i(final CommandSender sender, final boolean isAutomatic) {
 		synchronized (stateLock) {
 			if (state != UpdateState.DOWNLOAD_IN_PROGRESS)
 				throw new IllegalStateException();
 		}
-		Skript.info(sender, Language.format("updater.downloading", latest.version));
+		Skript.info(sender, "" + m_downloading);
 		boolean hasJar = false;
 		final boolean hasConfig = true;
 		ZipInputStream zip = null;
 		try {
-			final URLConnection conn = new URL(getFileURL(latest.pageURL)).openConnection();
+			final URLConnection conn = new URL(getFileURL(latest.get().pageURL)).openConnection();
 			zip = new ZipInputStream(conn.getInputStream());
 			ZipEntry entry;
 			while ((entry = zip.getNextEntry()) != null) {
@@ -295,13 +308,13 @@ public final class Updater {
 			Skript.error(sender, Language.format("updater.download_error", ExceptionUtils.toString(e)));
 			synchronized (stateLock) {
 				state = UpdateState.DOWNLOAD_ERROR;
-				error = ExceptionUtils.toString(e);
+				error.set(ExceptionUtils.toString(e));
 			}
 		} catch (final Exception e) {
 			Skript.exception(e, "Error while downloading the latest version of Skript");
 			synchronized (stateLock) {
 				state = UpdateState.DOWNLOAD_ERROR;
-				error = e.getClass().getSimpleName() + ": " + e.getLocalizedMessage();
+				error.set(e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
 			}
 		} finally {
 			if (zip != null) {
@@ -317,7 +330,7 @@ public final class Updater {
 	 * 
 	 * @param sender
 	 */
-	public void download(final CommandSender sender, final boolean isAutomatic) {
+	public static void download(final CommandSender sender, final boolean isAutomatic) {
 		assert sender != null;
 		synchronized (stateLock) {
 			if (state != UpdateState.CHECKED_FOR_UPDATE && state != UpdateState.DOWNLOAD_ERROR)

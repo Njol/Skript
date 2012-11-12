@@ -41,7 +41,7 @@ public class EffPotion extends Effect {
 	
 	static {
 		Skript.registerEffect(EffPotion.class,
-				"apply %potioneffecttypes% [potion] [[[of] tier] %-number%] to %livingentities% [for %-timespan%]",
+				"apply [potion of] %potioneffecttypes% [potion] [[[of] tier] %-number%] to %livingentities% [for %-timespan%]",
 				"remove %potioneffecttypes% from %livingentities%");
 	}
 	

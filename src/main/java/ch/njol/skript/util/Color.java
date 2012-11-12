@@ -27,8 +27,8 @@ import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 
-import ch.njol.skript.Language;
-import ch.njol.skript.Language.LanguageChangeListener;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Language.LanguageChangeListener;
 
 /**
  * @author Peter Güttinger

@@ -32,8 +32,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.material.Directional;
 import org.bukkit.util.Vector;
 
-import ch.njol.skript.Language;
 import ch.njol.skript.Skript;
+import ch.njol.skript.localization.Language;
 
 /**
  * 

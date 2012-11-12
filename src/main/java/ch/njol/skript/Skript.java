@@ -75,6 +75,7 @@ import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.LogEntry;
 import ch.njol.skript.log.SimpleLog;
@@ -161,7 +162,6 @@ public final class Skript extends JavaPlugin implements Listener {
 			return;
 		}
 		minecraftVersion = new Version(m.group());
-		runningBukkit1_3 = minecraftVersion.compareTo(new Version(1, 3)) >= 0;
 		
 		getCommand("skript").setExecutor(new SkriptCommand());
 		
@@ -187,7 +187,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		SkriptConfig.load();
 		
 		if (SkriptConfig.checkForNewVersion)
-			Updater.getInstance().check(Bukkit.getConsoleSender(), SkriptConfig.automaticallyDownloadNewVersion, true);
+			Updater.check(Bukkit.getConsoleSender(), SkriptConfig.automaticallyDownloadNewVersion, true);
 		
 		Aliases.load();
 		
@@ -295,10 +295,9 @@ public final class Skript extends JavaPlugin implements Listener {
 					Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.this, new Runnable() {
 						@Override
 						public void run() {
-							final Updater updater = Updater.getInstance();
-							synchronized (updater.stateLock) {
-								if ((updater.state == UpdateState.CHECKED_FOR_UPDATE || updater.state == UpdateState.DOWNLOAD_ERROR) && updater.latest != null)
-									info(e.getPlayer(), Language.format("updater.update_available", updater.latest.version, version));
+							synchronized (Updater.stateLock) {
+								if ((Updater.state == UpdateState.CHECKED_FOR_UPDATE || Updater.state == UpdateState.DOWNLOAD_ERROR) && Updater.latest != null)
+									info(e.getPlayer(), "" + Updater.m_update_available);
 							}
 						}
 					});
@@ -310,7 +309,6 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	private static Version minecraftVersion = null;
 	private static boolean runningCraftBukkit;
-	private static boolean runningBukkit1_3;
 	
 	public static Version getMinecraftVersion() {
 		return minecraftVersion;
@@ -324,10 +322,14 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * @return whether this server is running Bukkit 1.3 or higher
+	 * @return whether this server is running Bukkit <tt>major.minor</tt> or higher
 	 */
-	public static boolean isRunningBukkit1_3() {
-		return runningBukkit1_3;
+	public static boolean isRunningBukkit(final int major, final int minor) {
+		return minecraftVersion.compareTo(major, minor) >= 0;
+	}
+	
+	public static boolean isRunningBukkit(final int major, final int minor, final int revision) {
+		return minecraftVersion.compareTo(major, minor, revision) >= 0;
 	}
 	
 	private static Variables variables = null;
@@ -670,6 +672,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		return new CheckedIterator<ExpressionInfo<?, ?>>(expressions.iterator(), new Checker<ExpressionInfo<?, ?>>() {
 			@Override
 			public boolean check(final ExpressionInfo<?, ?> i) {
+				if (i.returnType == Object.class)
+					return true;
 				for (final Class<?> returnType : returnTypes) {
 					if (Converters.converterExists(i.returnType, returnType))
 						return true;
@@ -857,6 +861,12 @@ public final class Skript extends JavaPlugin implements Listener {
 		sender.sendMessage(skriptPrefix + Utils.replaceEnglishChatStyles(info));
 	}
 	
+	/**
+	 * 
+	 * @param message
+	 * @param permission
+	 * @see #adminBroadcast(String)
+	 */
 	public static void broadcast(final String message, final String permission) {
 		Bukkit.broadcast(skriptPrefix + Utils.replaceEnglishChatStyles(message), permission);
 	}

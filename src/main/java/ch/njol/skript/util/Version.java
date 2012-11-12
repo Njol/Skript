@@ -49,6 +49,12 @@ public class Version implements Serializable, Comparable<Version> {
 		postfix = null;
 	}
 	
+	public Version(final int major, final int minor, final String postfix) {
+		version[0] = major;
+		version[1] = minor;
+		this.postfix = postfix;
+	}
+	
 	public final static Pattern versionPattern = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?\\s*(.*)");
 	
 	public Version(final String version) {
@@ -88,6 +94,17 @@ public class Version implements Serializable, Comparable<Version> {
 			return other.postfix == null ? 0 : 1;
 		else
 			return other.postfix == null ? -1 : postfix.compareTo(other.postfix);
+	}
+	
+	public int compareTo(final int... other) {
+		assert other.length >= 2 && other.length <= 3;
+		for (int i = 0; i < version.length; i++) {
+			if (version[i] > (i >= other.length ? 0 : other[i]))
+				return 1;
+			if (version[i] < (i >= other.length ? 0 : other[i]))
+				return -1;
+		}
+		return 0;
 	}
 	
 	public boolean isSmallerThan(final Version other) {

@@ -34,7 +34,6 @@ import ch.njol.skript.effects.Delay;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
@@ -103,7 +102,7 @@ public class ExprSignText extends SimpleExpression<String> {
 					((SignChangeEvent) e).setLine(line - 1, "");
 					break;
 				case SET:
-					((SignChangeEvent) e).setLine(line - 1, Utils.replaceChatStyles((String) delta));
+					((SignChangeEvent) e).setLine(line - 1, (String) delta);
 					break;
 			}
 		}
@@ -117,7 +116,7 @@ public class ExprSignText extends SimpleExpression<String> {
 				((Sign) b.getState()).setLine(line - 1, "");
 				break;
 			case SET:
-				((Sign) b.getState()).setLine(line - 1, Utils.replaceChatStyles((String) delta));
+				((Sign) b.getState()).setLine(line - 1, (String) delta);
 				break;
 		}
 	}

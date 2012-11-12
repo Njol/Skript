@@ -69,4 +69,9 @@ public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 		return new LiteralList<R>(exprs, and, this);
 	}
 	
+	@Override
+	public Literal<? extends T>[] getExpressions() {
+		return (Literal<? extends T>[]) super.getExpressions();
+	}
+	
 }

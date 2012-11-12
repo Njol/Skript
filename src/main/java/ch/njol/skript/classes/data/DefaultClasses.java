@@ -31,6 +31,7 @@ import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
 
 /**
@@ -83,9 +84,12 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public Double deserialize(final String s) {
+					public Number deserialize(final String s) {
 						try {
-							return Double.parseDouble(s);
+							return Integer.valueOf(s);
+						} catch (final NumberFormatException e) {}
+						try {
+							return Double.valueOf(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
@@ -183,7 +187,7 @@ public class DefaultClasses {
 		Classes.registerClass(new ClassInfo<Double>(Double.class, "double", "number")
 				.defaultExpression(new SimpleLiteral<Double>(1., true))
 				.after("long")
-				.before("float", "integer")
+				.before("float", "integer", "short", "byte")
 				.parser(new Parser<Double>() {
 					@Override
 					public Double parse(final String s, final ParseContext context) {
@@ -401,11 +405,11 @@ public class DefaultClasses {
 					@Override
 					public String parse(final String s, final ParseContext context) {
 						if (context == ParseContext.DEFAULT)
-							throw new SkriptAPIException("Strings must not be parsed as DEFAULT using it's Parser, but by parsing it as a VariableStringLiteral!");
+							throw new SkriptAPIException("Strings must not be parsed as DEFAULT using it's Parser, but by parsing it as a VariableString!");
 						if ((context == ParseContext.COMMAND || context == ParseContext.EVENT) && !s.isEmpty())
-							return s;
+							return Utils.replaceChatStyles(s);
 						else if (context == ParseContext.CONFIG && s.startsWith("\"") && s.endsWith("\""))
-							return s.substring(1, s.length() - 1);
+							return Utils.replaceChatStyles(s.substring(1, s.length() - 1));
 						return null;
 					}
 					

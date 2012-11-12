@@ -429,7 +429,7 @@ public abstract class Commands {
 	public final static void registerListener() {
 		if (!registeredListener) {
 			Bukkit.getPluginManager().registerEvents(commandListener, Skript.getInstance());
-			if (Skript.isRunningBukkit1_3())
+			if (Skript.isRunningBukkit(1, 3))
 				Bukkit.getPluginManager().registerEvents(post1_3chatListener, Skript.getInstance());
 			else
 				Bukkit.getPluginManager().registerEvents(pre1_3chatListener, Skript.getInstance());

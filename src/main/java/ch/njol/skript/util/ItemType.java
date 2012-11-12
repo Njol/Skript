@@ -45,8 +45,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import ch.njol.skript.Language;
 import ch.njol.skript.Skript;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.util.Container.ContainerType;
 import ch.njol.util.iterator.SingleItemIterator;
 
@@ -102,6 +102,8 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	
 	/**
 	 * list of pairs {item/block, block... to replace if possible}
+	 * <p>
+	 * TODO update with every version
 	 */
 	private static final int[][] preferredMaterials = {
 			{Material.STATIONARY_WATER.getId(), Material.WATER.getId()},
@@ -119,6 +121,10 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 			{Material.SUGAR_CANE.getId(), Material.SUGAR_CANE_BLOCK.getId()},
 			{Material.SIGN.getId(), Material.SIGN_POST.getId(), Material.WALL_SIGN.getId()},
 			{Material.CAKE.getId(), Material.CAKE_BLOCK.getId()},
+			{140, 390}, // [1.4] plower pot
+			{141, 391}, // [1.4] carrots
+			{142, 392}, // [1.4] potatoes
+			{144, 387}, // [1.4] heads
 			
 			// special cases
 			{Material.PISTON_BASE.getId(), Material.PISTON_EXTENSION.getId()},

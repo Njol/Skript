@@ -26,8 +26,8 @@ import java.util.Map;
 
 import org.bukkit.potion.PotionEffectType;
 
-import ch.njol.skript.Language;
-import ch.njol.skript.Language.LanguageChangeListener;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Language.LanguageChangeListener;
 
 /**
  * @author Peter Güttinger

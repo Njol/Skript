@@ -87,9 +87,13 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	}
 	
 	private <E extends Event> T getValue(final E e) {
-		final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getters.get(e.getClass());
-		if (g != null)
-			return g.get(e);
+		if (getters.containsKey(e.getClass())) {
+			final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getters.get(e.getClass());
+			if (g != null)
+				return g.get(e);
+			else
+				return null;
+		}
 		
 		for (final Entry<Class<? extends Event>, SerializableGetter<? extends T, ?>> p : getters.entrySet()) {
 			if (p.getKey().isAssignableFrom(e.getClass())) {
@@ -97,6 +101,8 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 				return ((Getter<? extends T, ? super E>) p.getValue()).get(e);
 			}
 		}
+		
+		getters.put(e.getClass(), null);
 		
 		return null;
 	}

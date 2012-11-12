@@ -52,13 +52,13 @@ import org.bukkit.help.HelpTopicComparator;
 import org.bukkit.help.IndexHelpTopic;
 import org.bukkit.plugin.Plugin;
 
-import ch.njol.skript.Language;
 import ch.njol.skript.Skript;
 import ch.njol.skript.command.Commands.CommandAliasHelpTopic;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SimpleEvent;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
@@ -177,7 +177,7 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		
 		final SimpleLog log = SkriptLogger.startSubLog();
 		final boolean ok = SkriptParser.parseArguments(rest, this, event);
-		SkriptLogger.stopSubLog(log);
+		log.stop();
 		if (!ok) {
 			log.printErrors(sender, null);
 			sender.sendMessage(Language.format("commands.usage", usage));

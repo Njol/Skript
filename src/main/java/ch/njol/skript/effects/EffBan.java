@@ -21,8 +21,6 @@
 
 package ch.njol.skript.effects;
 
-import java.util.regex.Pattern;
-
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -45,8 +43,6 @@ public class EffBan extends Effect {
 				"ban %strings/offlineplayers%", "unban %strings/offlineplayers%",
 				"ban %players% by IP", "unban %players% by IP");
 	}
-	
-	public final static Pattern IPv4 = Pattern.compile("((\\d\\d?|1\\d\\d|2[0-4]\\d|25[0-5])\\.){3}(\\d\\d?|1\\d\\d|2[0-4]\\d|25[0-5])");
 	
 	private Expression<?> players;
 	
@@ -76,14 +72,11 @@ public class EffBan extends Effect {
 			} else if (o instanceof OfflinePlayer) {
 				((OfflinePlayer) o).setBanned(ban);
 			} else if (o instanceof String) {
-				if (IPv4.matcher((String) o).matches()) {
-					if (ban)
-						Bukkit.banIP((String) o);
-					else
-						Bukkit.unbanIP((String) o);
-				} else {
-					Bukkit.getOfflinePlayer((String) o).setBanned(ban);
-				}
+				if (ban)
+					Bukkit.banIP((String) o);
+				else
+					Bukkit.unbanIP((String) o);
+				Bukkit.getOfflinePlayer((String) o).setBanned(ban);
 			} else {
 				assert false;
 			}

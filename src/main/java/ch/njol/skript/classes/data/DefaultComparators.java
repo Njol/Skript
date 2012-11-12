@@ -136,7 +136,7 @@ public class DefaultComparators {
 			
 			@Override
 			public Relation compare(final EntityData t1, final EntityData t2) {
-				return Relation.get(t2.getType().isAssignableFrom(t1.getType()));
+				return Relation.get(t2.getType().isAssignableFrom(t1.getType())); //TODO not completely correct
 			}
 			
 			@Override

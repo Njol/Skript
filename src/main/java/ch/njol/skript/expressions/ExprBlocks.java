@@ -63,13 +63,13 @@ public class ExprBlocks extends SimpleExpression<Block> {
 		switch (matchedPattern) {
 			case 0:
 				directions = (Expression<Direction>) exprs[0];
-				if (Block.class.isAssignableFrom(exprs[1].getReturnType()))
+				if (Block.class.isAssignableFrom(exprs[1].getReturnType()))//TODO
 					blocks = (Expression<Block>) exprs[1];
 				else
 					locations = (Expression<Location>) exprs[1];
 				break;
 			case 1:
-				if (Block.class.isAssignableFrom(exprs[0].getReturnType()))
+				if (Block.class.isAssignableFrom(exprs[0].getReturnType()))//TODO
 					blocks = (Expression<Block>) exprs[0];
 				else
 					locations = (Expression<Location>) exprs[0];

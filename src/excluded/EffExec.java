@@ -57,7 +57,7 @@ public class EffExec extends Effect {
 			return;
 		final SubLog log = SkriptLogger.startSubLog();
 		final Effect eff = Effect.parse(s, "can't understand this effect: '" + s + "'");
-		SkriptLogger.stopSubLog(log);
+		log.stop();
 		if (eff != null) {
 			eff.run(e);
 		} else {

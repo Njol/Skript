@@ -58,15 +58,15 @@ public class ExprEntities extends SimpleExpression<Entity> {
 		Skript.registerExpression(ExprEntities.class, Entity.class, ExpressionType.PATTERN_MATCHES_EVERYTHING,
 				"[all] <.+> [(in|of) [world[s]] %-worlds%]",
 				"[all] entities of type[s] %entitydatas% [(in|of) [world[s]] %-worlds%]",
-				"[all] <.+> in radius %double% (of|around) %location%",
-				"[all] entities of type[s] %entitydatas% in radius %double% (of|around) %location%");
+				"[all] <.+> in radius %number% (of|around) %location%",
+				"[all] entities of type[s] %entitydatas% in radius %number% (of|around) %location%");
 	}
 	
 	private Expression<? extends EntityData<?>> types;
 	
 	private Expression<World> worlds;
 	
-	private Expression<Double> radius;
+	private Expression<Number> radius;
 	private Expression<Location> center;
 	private Expression<? extends Entity> centerEntity;
 	
@@ -92,7 +92,7 @@ public class ExprEntities extends SimpleExpression<Entity> {
 		if (matchedPattern < 2) {
 			worlds = (Expression<World>) exprs[exprs.length - 1];
 		} else {
-			radius = (Expression<Double>) exprs[exprs.length - 2];
+			radius = (Expression<Number>) exprs[exprs.length - 2];
 			center = (Expression<Location>) exprs[exprs.length - 1];
 			final SimpleLog log = SkriptLogger.startSubLog();
 			centerEntity = center.getSource().getConvertedExpression(Entity.class);
@@ -143,9 +143,10 @@ public class ExprEntities extends SimpleExpression<Entity> {
 					return null;
 				en = l.getWorld().spawn(l, ExperienceOrb.class);
 			}
-			final Double d = radius.getSingle(e);
-			if (d == null)
+			final Number n = radius.getSingle(e);
+			if (n == null)
 				return null;
+			final double d = n.doubleValue();
 			final List<Entity> es = en.getNearbyEntities(d, d, d);
 			if (centerEntity == null)
 				en.remove();

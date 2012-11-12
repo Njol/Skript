@@ -235,7 +235,7 @@ public class BukkitClasses {
 		
 		Classes.registerClass(new ClassInfo<World>(World.class, "world", "world")
 				.user("worlds?")
-				.before("string")
+				.after("string")
 				.defaultExpression(new EventValueExpression<World>(World.class))
 				.parser(new Parser<World>() {
 					@Override

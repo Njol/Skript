@@ -49,10 +49,8 @@ public abstract class SkriptLogger {
 	
 	/**
 	 * Starts a sub log. All subsequent log messages will be added to this log and not printed.
-	 * 
 	 * <p>
 	 * This should be used like this:
-	 * 
 	 * <pre>
 	 * SubLog log = SkriptLogger.startSubLog();
 	 * doSomethingThatLogsMessages();
@@ -74,7 +72,7 @@ public abstract class SkriptLogger {
 		return subLog;
 	}
 	
-	public final static void stopSubLog(final SubLog log) {
+	final static void stopSubLog(final SubLog log) {
 		if (!subLogs.contains(log))
 			return;
 		if (subLogs.removeLast() != log) {

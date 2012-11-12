@@ -68,10 +68,20 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 		TriggerItem i = start;
 		try {
 			while ((i = i.walk(e)) != null);
+		} catch (final StackOverflowError err) {
+			TriggerItem s = start;
+			while (s.getParent() != null)
+				s = s.getParent();
+			if (!(s instanceof Trigger)) {
+				Skript.exception(err, "Trigger without a trigger found! o_O");
+				return;
+			}
+			Skript.adminBroadcast("<red>The script '<gold>" + ((Trigger) s).getScript().getName() + "<red>' infinitely repeated itself!");
+			if (Skript.debug())
+				err.printStackTrace();
 		} catch (final Exception ex) {
 			if (ex.getStackTrace().length != 0)// empty exceptions have already been printed
 				Skript.exception(ex);
-			return;
 		}
 	}
 	
@@ -110,8 +120,17 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 		this.parent = parent;
 	}
 	
-	final public TriggerSection getParent() {
+	public final TriggerSection getParent() {
 		return parent;
+	}
+	
+	public final Trigger getTrigger() {
+		TriggerItem i = this;
+		while (i != null && !(i instanceof Trigger))
+			i = i.getParent();
+		if (i == null)
+			throw new IllegalStateException("TriggerItem without a Trigger detected!");
+		return (Trigger) i;
 	}
 	
 	public void setNext(final TriggerItem next) {

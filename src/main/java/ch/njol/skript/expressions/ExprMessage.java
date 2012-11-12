@@ -49,7 +49,7 @@ public class ExprMessage extends SimpleExpression<String> {
 		CHAT("chat", "[chat( |-)]message", null) {
 			@Override
 			String get(final Event e) {
-				if (Skript.isRunningBukkit1_3())
+				if (Skript.isRunningBukkit(1, 3))
 					return ((AsyncPlayerChatEvent) e).getMessage();
 				else
 					return ((PlayerChatEvent) e).getMessage();
@@ -57,7 +57,7 @@ public class ExprMessage extends SimpleExpression<String> {
 			
 			@Override
 			void set(final Event e, final String message) {
-				if (Skript.isRunningBukkit1_3())
+				if (Skript.isRunningBukkit(1, 3))
 					((AsyncPlayerChatEvent) e).setMessage(message);
 				else
 					((PlayerChatEvent) e).setMessage(message);
@@ -129,7 +129,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
 		type = MessageType.values()[matchedPattern];
 		if (type == MessageType.CHAT) {
-			if (!Utils.contains(ScriptLoader.currentEvents, Skript.isRunningBukkit1_3() ? AsyncPlayerChatEvent.class : PlayerChatEvent.class)) {
+			if (!Utils.contains(ScriptLoader.currentEvents, Skript.isRunningBukkit(1, 3) ? AsyncPlayerChatEvent.class : PlayerChatEvent.class)) {
 				Skript.error("The message can only be used in a chat event", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
@@ -161,7 +161,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		if (!type.event.isInstance(e))
 			return;
-		type.set(e, Utils.replaceChatStyles((String) delta));
+		type.set(e, (String) delta);
 	}
 	
 	@Override

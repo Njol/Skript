@@ -26,9 +26,9 @@ import java.util.Map;
 
 import org.bukkit.enchantments.Enchantment;
 
-import ch.njol.skript.Language;
-import ch.njol.skript.Language.LanguageChangeListener;
 import ch.njol.skript.Skript;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Language.LanguageChangeListener;
 
 /**
  * @author Peter Güttinger

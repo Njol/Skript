@@ -21,48 +21,43 @@
 
 package ch.njol.skript.effects;
 
-import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
+ *
  */
-public class EffMessage extends Effect {
-	private static final long serialVersionUID = -3885693386533277658L;
+public class EffPlayEffect extends Effect {
 	
 	static {
-		Skript.registerEffect(EffMessage.class, "(message|send [message]) %strings% [to %commandsenders%]");
+		Skript.registerEffect(EffPlayEffect.class, "");
 	}
 	
-	private Expression<String> messages;
-	private Expression<CommandSender> recipients;
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		messages = (Expression<String>) exprs[0];
-		recipients = (Expression<CommandSender>) exprs[1];
-		return true;
+	private static enum EffectType {
+		
 	}
 	
 	@Override
-	protected void execute(final Event e) {
-		for (String message : messages.getArray(e)) {
-			message = StringUtils.fixCapitalization(message);
-			for (final CommandSender s : recipients.getArray(e)) {
-				s.sendMessage(message);
-			}
-		}
+	public boolean init(Expression<?>[] exprs, int matchedPattern, int isDelayed, ParseResult parseResult) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "send " + messages.toString(e, debug) + " to " + recipients.toString(e, debug);
+	public String toString(Event e, boolean debug) {
+		// TODO Auto-generated method stub
+		return null;
 	}
+	
+	@Override
+	protected void execute(Event e) {
+		// TODO Auto-generated method stub
+		
+	}
+	
 }

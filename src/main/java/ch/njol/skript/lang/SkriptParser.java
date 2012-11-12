@@ -35,10 +35,12 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.ScriptCommand;
 import ch.njol.skript.command.ScriptCommandEvent;
 import ch.njol.skript.lang.SkriptEvent.SkriptEventInfo;
+import ch.njol.skript.lang.util.VariableString;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.ParseLog;
 import ch.njol.skript.log.SimpleLog;
@@ -111,15 +113,16 @@ public class SkriptParser {
 	 * @param context
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static final <T> Literal<? extends T> parseLiteral(String expr, final Class<T> c, final ParseContext context) {
 		expr = expr.trim();
 		if (expr.isEmpty())
 			return null;
-		return new UnparsedLiteral(expr).getConvertedExpression(c, context);
+		return new UnparsedLiteral(expr).getConvertedExpression(context, c);
 	}
 	
 	/**
-	 * Parses a string as one of the given expressions
+	 * Parses a string as one of the given syntax elements
 	 * 
 	 * <p>
 	 * Can print an error
@@ -154,7 +157,7 @@ public class SkriptParser {
 		}
 		final ParseLog log = SkriptLogger.startParseLog();
 		final T e = new SkriptParser(expr, true).parse(source);
-		SkriptLogger.stopSubLog(log);
+		log.stop();
 		if (e != null) {
 			log.printLog();
 			return e;
@@ -229,6 +232,7 @@ public class SkriptParser {
 	
 	@SuppressWarnings("unchecked")
 	public final static <T> Expression<? extends T> parseExpression(final String s, final boolean parseStatic, final ParseContext context, final Class<? extends T>... types) {
+		assert s != null && context != null && types != null && types.length > 0;
 		assert types.length == 1 || !Utils.contains(types, Object.class);
 		if (types.length == 1 && types[0] == Object.class) {
 			if (parseStatic)
@@ -239,6 +243,7 @@ public class SkriptParser {
 		return new SkriptParser(s, parseStatic, context).parseExpression(types);
 	}
 	
+	// TODO: use the general method below?
 	private final <T> Expression<? extends T> parseExpression(final Class<? extends T>[] types) {
 		assert !Utils.contains(types, Object.class);
 		String lastExpr = expr;
@@ -337,7 +342,7 @@ public class SkriptParser {
 				startOfLiteral = last ? expr.length() : m.end();
 				ts.add(t);
 				log.clear();
-			} else {
+			} else { // TODO ^/v clears log in both cases?
 				log.clear();
 			}
 			if (last)
@@ -358,6 +363,7 @@ public class SkriptParser {
 		return new ExpressionList<Object>(ts.toArray(new Expression[ts.size()]), and);
 	}
 	
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	private final <T> Expression<? extends T> parseSingleExpr(final String s, final boolean parseLiteral, final Class<? extends T>... types) {
 		assert types.length > 0;
 		assert types.length == 1 || !Utils.contains(types, Object.class);
@@ -379,8 +385,12 @@ public class SkriptParser {
 		}
 		log.clear();
 		if (!parseStatic) {
-			@SuppressWarnings({"unchecked", "rawtypes"})
-			final Expression<? extends T> e = (Expression<? extends T>) parse(s, (Iterator) Skript.getExpressions(types), null);
+			final Expression<? extends T> e;
+			if (s.startsWith("\"") && s.endsWith("\"") && (types[0] == Object.class || Utils.contains(types, String.class))) {
+				e = (Expression<? extends T>) VariableString.newInstance(s);
+			} else {
+				e = (Expression<? extends T>) parse(s, (Iterator) Skript.getExpressions(types), null);
+			}
 			if (e != null) {
 				log.printLog();
 				return e;
@@ -392,13 +402,76 @@ public class SkriptParser {
 			return null;
 		}
 		final UnparsedLiteral ul = new UnparsedLiteral(s);
-		@SuppressWarnings("unchecked")
-		final Literal<? extends T> l = types[0] == Object.class ? (Literal<? extends T>) ul : ul.getConvertedExpression(types, context);
+		final Literal<? extends T> l = types[0] == Object.class ? (Literal<? extends T>) ul : ul.getConvertedExpression(context, types);
 		if (l == null)
 			log.printError(null);
 		else
 			log.printLog();
 		return l;
+	}
+	
+	public final static <T> Expression<? extends T> parseExpression(final String s, final Converter<String, ? extends Expression<? extends T>> parser, final String defaultError) {
+		return new SkriptParser(s, false).parseExpression(parser, defaultError);
+	}
+	
+	private final <T> Expression<? extends T> parseExpression(final Converter<String, ? extends Expression<? extends T>> parser, final String defaultError) {
+		final ParseLog log = SkriptLogger.startParseLog();
+		
+		final Expression<? extends T> r = parser.convert(expr);
+		if (r != null) {
+			log.printLog();
+			return r;
+		}
+		log.clear();
+		
+		final Deque<Expression<? extends T>> ts = new LinkedList<Expression<? extends T>>();
+		final Matcher m = listSplitPattern.matcher(expr);
+		int end = expr.length();
+		int expectedEnd = -1;
+		boolean and = true;
+		boolean isAndSet = false;
+		boolean last = false;
+		boolean isLiteralList = true;
+		while (m.find() || (last = !last)) {
+			if (expectedEnd == -1)
+				expectedEnd = last ? expr.length() : m.start();
+			final Expression<? extends T> t = parser.convert(expr.substring(last ? 0 : m.end(), end));
+			if (t != null) {
+				isLiteralList &= t instanceof Literal;
+				if (!last && !m.group().matches("\\s*,\\s*")) {
+					if (isAndSet) {
+						if (and != m.group().toLowerCase().contains("and")) {
+							Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
+							and = true;
+						}
+					} else {
+						and = m.group().toLowerCase().contains("and");
+						isAndSet = true;
+					}
+				}
+				ts.addFirst(t);
+				if (last)
+					break;
+				end = m.start();
+				m.region(0, end);
+			} else {
+				log.clear();
+			}
+		}
+		if (end != expectedEnd || ts.isEmpty()) {
+			log.printError(defaultError);
+			return null;
+		}
+		log.printLog();
+		if (ts.size() == 1)
+			return ts.getFirst();
+		if (!isAndSet)
+			Skript.warning("List is missing 'and' or 'or', defaulting to 'and'");
+		if (isLiteralList) {
+			return new LiteralList<T>(ts.toArray(new Literal[ts.size()]), and);
+		} else {
+			return new ExpressionList<T>(ts.toArray(new Expression[ts.size()]), and);
+		}
 	}
 	
 	/**
@@ -682,6 +755,7 @@ public class SkriptParser {
 							final ParseLog log2 = SkriptLogger.startParseLog();
 							for (int k = 0; k < vi.classes.length; k++) {
 								log2.clear();
+								@SuppressWarnings("unchecked")
 								final Expression<?> e = parseExpression(expr.substring(i, i2), parseStatic, context, vi.classes[k].getC());
 								if (e != null) {
 									log2.stop();

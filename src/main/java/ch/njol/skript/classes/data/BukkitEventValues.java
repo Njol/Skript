@@ -85,7 +85,7 @@ import ch.njol.skript.util.DelayedChangeBlock;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "deprecation"})
 public final class BukkitEventValues {
 	
 	public BukkitEventValues() {}
