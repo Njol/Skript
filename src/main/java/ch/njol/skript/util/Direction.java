@@ -29,11 +29,17 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
+import org.bukkit.event.Event;
 import org.bukkit.material.Directional;
 import org.bukkit.util.Vector;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.Language;
+import ch.njol.util.Kleenean;
 
 /**
  * 
@@ -120,9 +126,9 @@ public class Direction implements Serializable {
 	
 	@Override
 	public int hashCode() {
-		return (relative ? 7 : 3) * Arrays.hashCode(mod);
+		return relative ? Arrays.hashCode(mod) : Arrays.asList(pitch, yaw, length).hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj)
@@ -132,7 +138,7 @@ public class Direction implements Serializable {
 		if (!(obj instanceof Direction))
 			return false;
 		final Direction other = (Direction) obj;
-		return relative == other.relative && Arrays.equals(mod, other.mod) && pitch == other.pitch && yaw == other.yaw && other.length == length;
+		return relative == other.relative && (relative ? pitch == other.pitch && yaw == other.yaw && other.length == length : Arrays.equals(mod, other.mod));
 	}
 	
 	/**
@@ -280,6 +286,77 @@ public class Direction implements Serializable {
 				return null;
 			}
 		}
+	}
+
+	/**
+	 * 
+	 * @param dirs
+	 * @param locs A block and/or location expression. This is not checked and will throw a {@link ClassCastException} at runtime if invalid!
+	 * @return
+	 */
+	public final static Expression<Location> combine(final Expression<? extends Direction> dirs, final Expression<? extends Location> locs) {
+		return new SimpleExpression<Location>() {
+			private static final long serialVersionUID = 1316369726663020906L;
+
+			@Override
+			protected Location[] get(Event e) {
+				Direction[] ds = dirs.getArray(e);
+				Location[] ls = locs.getArray(e);
+				Location[] r = new Location[ds.length*ls.length];
+				for (int i = 0; i < ds.length; i++) {
+					for (int j = 0; j < ls.length; j++) {
+						r[i+j*ds.length] = ds[i].getRelative(ls[j]);
+					}
+				}
+				return r;
+			}
+
+			@Override
+			public Location[] getAll(Event e) {
+				Direction[] ds = dirs.getAll(e);
+				Location[] ls = locs.getAll(e);
+				Location[] r = new Location[ds.length*ls.length];
+				for (int i = 0; i < ds.length; i++) {
+					for (int j = 0; j < ls.length; j++) {
+						r[i+j*ds.length] = ds[i].getRelative(ls[j]);
+					}
+				}
+				return r;
+			}
+			
+			@Override
+			public boolean getAnd() {
+				return dirs.getAnd() && locs.getAnd();
+			}
+
+			@Override
+			public boolean isSingle() {
+				return dirs.isSingle() && locs.isSingle();
+			}
+
+			@Override
+			public Class<? extends Location> getReturnType() {
+				return Location.class;
+			}
+
+			@Override
+			public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public String toString(Event e, boolean debug) {
+				return dirs.toString(e, debug) + " " + locs.toString(e, debug);
+			}
+			
+			@Override
+			public Expression<? extends Location> simplify() {
+				if (dirs instanceof Literal && dirs.isSingle() && dirs.getSingle(null).equals(Direction.ZERO)) {
+					return locs;
+				}
+				return this;
+			}
+		};
 	}
 	
 }

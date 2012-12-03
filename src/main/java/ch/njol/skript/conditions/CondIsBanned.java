@@ -31,6 +31,7 @@ import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -50,7 +51,7 @@ public class CondIsBanned extends Condition {
 	boolean ipBanned;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		players = exprs[0];
 		setNegated(matchedPattern >= 2);
 		ipBanned = matchedPattern % 2 != 0;
@@ -76,7 +77,7 @@ public class CondIsBanned extends Condition {
 				assert false;
 				return false;
 			}
-		}, this);
+		}, isNegated());
 	}
 	
 	@Override

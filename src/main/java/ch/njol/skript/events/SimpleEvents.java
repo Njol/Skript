@@ -98,7 +98,7 @@ public class SimpleEvents {
 		Skript.registerEvent(SimpleEvent.class, BlockPistonExtendEvent.class, "piston extend");
 		Skript.registerEvent(SimpleEvent.class, BlockPistonRetractEvent.class, "piston retract");
 		Skript.registerEvent(SimpleEvent.class, BlockRedstoneEvent.class, "redstone");
-		Skript.registerEvent(SimpleEvent.class, BlockSpreadEvent.class, "spread(ing)?");
+		Skript.registerEvent(SimpleEvent.class, BlockSpreadEvent.class, "spread[ing]");
 		Skript.registerEvent(SimpleEvent.class, ChunkLoadEvent.class, "chunk load");
 		Skript.registerEvent(SimpleEvent.class, ChunkPopulateEvent.class, "chunk populate");
 		Skript.registerEvent(SimpleEvent.class, ChunkUnloadEvent.class, "chunk unload");

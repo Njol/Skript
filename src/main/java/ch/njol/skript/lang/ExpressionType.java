@@ -19,28 +19,8 @@
  * 
  */
 
-package ch.njol.skript.expressions;
+package ch.njol.skript.lang;
 
-import org.bukkit.inventory.ItemStack;
-
-import ch.njol.skript.Skript;
-import ch.njol.skript.expressions.base.EventValueExpression;
-import ch.njol.skript.lang.ExpressionType;
-
-/**
- * @author Peter Güttinger
- * 
- */
-public class ExprItem extends EventValueExpression<ItemStack> {
-	
-	private static final long serialVersionUID = 1124422770106475966L;
-	
-	static {
-		Skript.registerExpression(ExprItem.class, ItemStack.class, ExpressionType.SIMPLE, "[the] item");
-	}
-	
-	public ExprItem() {
-		super(ItemStack.class);
-	}
-	
+public enum ExpressionType {
+	SIMPLE, NORMAL, COMBINED, PROPERTY, PATTERN_MATCHES_EVERYTHING;
 }

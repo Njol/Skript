@@ -26,11 +26,12 @@ import java.lang.reflect.Array;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.Patterns;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -120,7 +121,7 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		first = (Expression<? extends Number>) exprs[0];
 		second = exprs.length == 1 ? null : (Expression<? extends Number>) exprs[1];
 		op = patterns.getInfo(matchedPattern);
@@ -180,6 +181,13 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 			return "(" + first.toString(e, debug) + ")";
 		}
 		return first.toString(e, debug) + " " + op + " " + second.toString(e, debug);
+	}
+	
+	@Override
+	public Expression<? extends Number> simplify() {
+		if (op == null)
+			return first;
+		return this;
 	}
 	
 }

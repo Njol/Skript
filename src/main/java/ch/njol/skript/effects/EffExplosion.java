@@ -28,6 +28,8 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
+import ch.njol.util.Kleenean;
 
 /**
  * 
@@ -38,7 +40,7 @@ public class EffExplosion extends Effect {
 	private static final long serialVersionUID = -8064905811905989142L;
 	
 	static {
-		Skript.registerEffect(EffExplosion.class, "[create] explosion (of|with) (force|strength|power) %number% [%locations%]");
+		Skript.registerEffect(EffExplosion.class, "[create] [an] explosion (of|with) (force|strength|power) %number% [%directions% %locations%]");
 	}
 	
 	private Expression<Number> force;
@@ -46,9 +48,9 @@ public class EffExplosion extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		force = (Expression<Number>) vars[0];
-		locations = (Expression<Location>) vars[1];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		force = (Expression<Number>) exprs[0];
+		locations = Direction.combine((Expression<? extends Direction>) exprs[1], (Expression<? extends Location>) exprs[2]);
 		return true;
 	}
 	

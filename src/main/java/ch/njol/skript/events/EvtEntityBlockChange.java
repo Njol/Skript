@@ -62,7 +62,7 @@ public class EvtEntityBlockChange extends SkriptEvent {
 				return e.getEntity() instanceof Sheep;
 			}
 		});
-		// TODO silverfishes
+		// TODO silverfishes? -> likely a block break & silverfish spawn, so no need for such a special event.
 		
 		private final String pattern;
 		final Checker<EntityChangeBlockEvent> checker;

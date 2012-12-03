@@ -27,16 +27,17 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.effects.EffSpawn;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -51,7 +52,7 @@ public class ExprLastSpawnedEntity extends SimpleExpression<Entity> {
 	private EntityData<?> type;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		final SimpleLog log = SkriptLogger.startSubLog();
 		type = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
 		log.stop();

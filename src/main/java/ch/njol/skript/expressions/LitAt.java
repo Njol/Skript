@@ -21,54 +21,41 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.Bukkit;
-import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
+import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.util.Direction;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
+ * 
  */
-public class ExprConsole extends SimpleExpression<ConsoleCommandSender> {
-	private static final long serialVersionUID = -8525866833010434799L;
+public class LitAt extends SimpleLiteral<Direction> {
+	private static final long serialVersionUID = -3634800441027284731L;
 	
 	static {
-		Skript.registerExpression(ExprConsole.class, ConsoleCommandSender.class, ExpressionType.SIMPLE, "[the] (console|server)");
+		Skript.registerExpression(LitAt.class, Direction.class, ExpressionType.SIMPLE, "at");
+	}
+	
+	public LitAt() {
+		super(Direction.ZERO, true);
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
 		return true;
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return true;
-	}
-	
-	@Override
-	public Class<? extends ConsoleCommandSender> getReturnType() {
-		return ConsoleCommandSender.class;
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return false;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "the console";
-	}
-	
-	@Override
-	protected ConsoleCommandSender[] get(final Event e) {
-		return new ConsoleCommandSender[] {Bukkit.getConsoleSender()};
+		return "at";
 	}
 	
 }

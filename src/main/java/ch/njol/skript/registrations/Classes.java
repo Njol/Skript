@@ -329,6 +329,7 @@ public abstract class Classes {
 	 * @param c The desired type. The returned value will be of this type or a subclass if it.
 	 * @return The parsed object.
 	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static <T> T parse(final String s, final Class<T> c, final ParseContext context) {
 		T t = parseSimple(s, c, context);
 		if (t != null)
@@ -339,7 +340,7 @@ public abstract class Classes {
 				log.clear();
 				final Object o = parseSimple(s, conv.from, context);
 				if (o != null) {
-					t = (T) ConverterUtils.convert(conv, o);
+					t = (T) ((Converter)conv.converter).convert(o);
 					if (t != null) {
 						log.stop();
 						log.printLog();

@@ -45,6 +45,7 @@ import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
 import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
+import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.EmptyIterator;
 
 /**
@@ -126,7 +127,7 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -418,8 +419,8 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
-	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
-		return SimpleExpression.check(getAll(e), c, cond.isNegated(), getAnd());
+	public boolean check(final Event e, final Checker<? super T> c, final boolean negated) {
+		return SimpleExpression.check(getAll(e), c, negated, getAnd());
 	}
 	
 	@Override
@@ -450,6 +451,11 @@ public class Variable<T> implements Expression<T> {
 	@Override
 	public Expression<?> getSource() {
 		return source == null ? this : source;
+	}
+
+	@Override
+	public Expression<? extends T> simplify() {
+		return this;
 	}
 	
 }

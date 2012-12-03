@@ -31,6 +31,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Timespan;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -55,7 +56,7 @@ public class EffPotion extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		apply = matchedPattern == 0;
 		if (apply) {
 			types = (Expression<PotionEffectType>) exprs[0];

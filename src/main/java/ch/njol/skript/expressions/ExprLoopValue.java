@@ -30,9 +30,9 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Loop;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Variable;
@@ -41,6 +41,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
+import ch.njol.util.Kleenean;
 
 /**
  * used to access a loop's current value.
@@ -64,7 +65,7 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	boolean isIndex = false;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		name = parser.expr;
 		String s = parser.regexes.get(0).group();
 		int i = -1;

@@ -21,36 +21,40 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.Location;
+import org.bukkit.Bukkit;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
-import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
- * 
  */
-public class ExprAt extends WrapperExpression<Location> {
-	private static final long serialVersionUID = -3634800441027284731L;
+public class LitConsole extends SimpleLiteral<ConsoleCommandSender> {
+	private static final long serialVersionUID = -8525866833010434799L;
 	
 	static {
-		Skript.registerExpression(ExprAt.class, Location.class, ExpressionType.NORMAL, "at %location%");
+		Skript.registerExpression(LitConsole.class, ConsoleCommandSender.class, ExpressionType.SIMPLE, "[the] (console|server)");
 	}
 	
-	@SuppressWarnings("unchecked")
+	public LitConsole() {
+		super(Bukkit.getConsoleSender(), false);
+	}
+	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		setExpr((Expression<? extends Location>) exprs[0]);
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		return true;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "at " + getExpr().toString(e, debug);
+		return "the console";
 	}
 	
 }

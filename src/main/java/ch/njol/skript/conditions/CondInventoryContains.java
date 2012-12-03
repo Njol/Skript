@@ -31,6 +31,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * 
@@ -52,7 +53,7 @@ public class CondInventoryContains extends Condition {
 	private Expression<?> items;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		invis = exprs[0];
 		items = exprs[1];
 		setNegated(matchedPattern >= 2);
@@ -71,7 +72,7 @@ public class CondInventoryContains extends Condition {
 						public boolean check(final Object type) {
 							return type instanceof ItemType && ((ItemType) type).isContainedIn(buf);
 						}
-					});
+					}, isNegated());
 				} else {
 					final String s = ((String) invi).toLowerCase();
 					return items.check(e, new Checker<Object>() {
@@ -79,10 +80,10 @@ public class CondInventoryContains extends Condition {
 						public boolean check(final Object type) {
 							return type instanceof String && s.contains(((String) type).toLowerCase());
 						}
-					});
+					}, isNegated());
 				}
 			}
-		}, this);
+		});
 	}
 	
 	@Override

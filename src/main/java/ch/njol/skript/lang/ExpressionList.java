@@ -32,8 +32,10 @@ import org.bukkit.event.Event;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * Used for lists of expressions, i.e. expr1, expr2, ..., and/or exprN
@@ -78,7 +80,7 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -159,13 +161,27 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
-	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
-		return SimpleExpression.check(getAll(e), c, cond.isNegated(), and);
+	public boolean check(final Event e, final Checker<? super T> c, final boolean negated) {
+		for (Expression<? extends T> expr : expressions) {
+			Boolean b = expr.check(e, c, negated);
+			if (and && !b)
+				return false;
+			if (!and && b)
+				return true;
+		}
+		return and;
 	}
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super T> c) {
-		return SimpleExpression.check(getAll(e), c, false, and);
+		for (Expression<? extends T> expr : expressions) {
+			Boolean b = expr.check(e, c);
+			if (and && !b)
+				return false;
+			if (!and && b)
+				return true;
+		}
+		return and;
 	}
 	
 	@Override
@@ -249,4 +265,25 @@ public class ExpressionList<T> implements Expression<T> {
 	public Expression<? extends T>[] getExpressions() {
 		return expressions;
 	}
+
+	@Override
+	public Expression<T> simplify() {
+		boolean isLiteralList = true;
+		boolean isSimpleList = true;
+		for (int i = 0; i < expressions.length; i++) {
+			expressions[i] = expressions[i].simplify();
+			isLiteralList &= expressions[i] instanceof Literal;
+			isSimpleList &= expressions[i].isSingle();
+		}
+		if (isLiteralList && isSimpleList) {
+			T[] values = (T[]) Array.newInstance(returnType, expressions.length);
+			for (int i = 0; i < values.length; i++)
+				values[i] = ((Literal<? extends T>) expressions[i]).getSingle();
+			return new SimpleLiteral<T>(values, returnType, and);
+		}
+		if (isLiteralList)
+			return new LiteralList<T>(Arrays.copyOf(expressions, expressions.length, Literal[].class), and);
+		return this;
+	}
+	
 }

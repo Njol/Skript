@@ -28,13 +28,14 @@ import java.util.NoSuchElementException;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemData;
 import ch.njol.skript.util.ItemType;
+import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**
@@ -53,7 +54,7 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		types = (Expression<ItemType>) vars[0];
 		setExpr(types);
 		if (parser.regexes.isEmpty()) {

@@ -30,6 +30,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Slot;
+import ch.njol.util.Kleenean;
 
 /**
  * 
@@ -53,7 +54,7 @@ public class EffHealth extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		damageables = vars[0];
 		damage = (Expression<Number>) vars[1];
 		heal = (matchedPattern >= 2);

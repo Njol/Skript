@@ -33,7 +33,9 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -43,7 +45,7 @@ public class EffTeleport extends Effect {
 	private static final long serialVersionUID = 7988224895549370400L;
 	
 	static {
-		Skript.registerEffect(EffTeleport.class, "teleport %entities% to %location%");
+		Skript.registerEffect(EffTeleport.class, "teleport %entities% (to|%direction%) %location%");
 	}
 	
 	private Expression<Entity> entities;
@@ -51,9 +53,9 @@ public class EffTeleport extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		entities = (Expression<Entity>) vars[0];
-		location = (Expression<Location>) vars[1];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		entities = (Expression<Entity>) exprs[0];
+		location = Direction.combine((Expression<? extends Direction>) exprs[1], (Expression<? extends Location>) exprs[2]);
 		return true;
 	}
 	

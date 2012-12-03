@@ -25,6 +25,7 @@ import java.io.Serializable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Kleenean;
 
 /**
  * Represents a general part of the syntax. Implementing classes/interfaces are {@link Expression} and {@link Statement}.
@@ -45,6 +46,5 @@ public interface SyntaxElement extends Serializable {
 	 * @return Whether this expression was initialized successfully. Can print an error prior to returning false to specity the cause (can use
 	 *         {@link Skript#error(String, ch.njol.skript.log.ErrorQuality)})
 	 */
-	public boolean init(Expression<?>[] exprs, int matchedPattern, int isDelayed, ParseResult parseResult);
-	
+	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult);
 }

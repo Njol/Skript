@@ -31,7 +31,6 @@ import org.bukkit.event.Event;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
@@ -42,6 +41,7 @@ import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.NonNullIterator;
 
 /**
@@ -108,7 +108,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -187,8 +187,8 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	@Override
-	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
-		return SimpleExpression.check(data, c, cond.isNegated(), getAnd());
+	public boolean check(final Event e, final Checker<? super T> c, final boolean negated) {
+		return SimpleExpression.check(data, c, negated, getAnd());
 	}
 	
 	@Override
@@ -243,6 +243,11 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	@Override
 	public Expression<?> getSource() {
 		return source == null ? this : source;
+	}
+
+	@Override
+	public Expression<T> simplify() {
+		return this;
 	}
 	
 }

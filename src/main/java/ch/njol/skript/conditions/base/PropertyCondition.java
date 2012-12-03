@@ -28,6 +28,7 @@ import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -49,7 +50,7 @@ public abstract class PropertyCondition<T> extends Condition implements Checker<
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		expr = (Expression<? extends T>) exprs[0];
 		setNegated(matchedPattern == 1);
 		return true;
@@ -57,7 +58,7 @@ public abstract class PropertyCondition<T> extends Condition implements Checker<
 	
 	@Override
 	public boolean check(final Event e) {
-		return expr.check(e, this, this);
+		return expr.check(e, this, isNegated());
 	}
 	
 	@Override

@@ -30,7 +30,6 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
@@ -122,8 +121,8 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	}
 	
 	@Override
-	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
-		return SimpleExpression.check(data, c, cond.isNegated(), getAnd());
+	public boolean check(final Event e, final Checker<? super T> c, final boolean negated) {
+		return SimpleExpression.check(data, c, negated, getAnd());
 	}
 	
 }

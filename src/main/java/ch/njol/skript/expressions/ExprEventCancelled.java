@@ -25,11 +25,12 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -48,10 +49,10 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 		return new Boolean[] {((Cancellable) e).isCancelled()};
 	}
 	
-	private int delay;
+	private Kleenean delay;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		delay = isDelayed;
 		return true;
 	}
@@ -69,7 +70,7 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (delay != -1) {
+		if (delay != Kleenean.FALSE) {
 			Skript.error("Can't cancel the event anymore after it has already passed");
 			return null;
 		}

@@ -21,24 +21,29 @@
 
 package ch.njol.skript.expressions;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.entity.XpOrbData;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Kleenean;
+import ch.njol.util.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger
@@ -50,10 +55,10 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 		Skript.registerExpression(ExprDrops.class, ItemStack.class, ExpressionType.SIMPLE, "[the] drops");
 	}
 	
-	private int delay;
+	private Kleenean delay;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		if (!Utils.contains(ScriptLoader.currentEvents, EntityDeathEvent.class)) {
 			Skript.error("'drops' can only be used in death events", ErrorQuality.SEMANTIC_ERROR);
 			return false;
@@ -72,11 +77,11 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (delay != -1) {
+		if (delay != Kleenean.FALSE) {
 			Skript.error("Can't change the drops anymore after the event has already passed");
 			return null;
 		}
-		return Skript.array(ItemType[].class, XpOrbData.class);
+		return Skript.array(ItemType[].class, Inventory.class, XpOrbData.class);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -102,13 +107,28 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 					drops.clear();
 					//$FALL-THROUGH$
 				case ADD:
-					for (final ItemType i : ((ItemType[]) delta)) {
-						i.addTo(drops);
+					if (delta instanceof Inventory) {
+						for (ItemStack is : new IteratorIterable<ItemStack>(((Inventory) delta).iterator())) {
+							if (is != null)
+								drops.add(is);
+						}
+					} else {
+						for (final ItemType type : (ItemType[]) delta) {
+							type.addTo(drops);
+						}
 					}
 					break;
 				case REMOVE:
-					for (final ItemType i : ((ItemType[]) delta)) {
-						i.removeFrom(drops);
+					if (delta instanceof Inventory) {
+						for (ItemStack is : new IteratorIterable<ItemStack>(((Inventory) delta).iterator())) {
+							if (is == null)
+								continue;
+							new ItemType(is).removeFrom(drops);
+						}
+					} else {
+						for (final ItemType type : (ItemType[]) delta) {
+							type.removeFrom(drops);
+						}
 					}
 					break;
 				case CLEAR:

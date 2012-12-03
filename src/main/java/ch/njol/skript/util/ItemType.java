@@ -395,8 +395,8 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	
 	/**
 	 * Intersects all ItemDatas with all ItemDatas of the given ItemType, returning an ItemType with at most n*m ItemDatas, where n = #ItemDatas of this ItemType, and m =
-	 * #ItemDatas of the
-	 * argument. <br/>
+	 * #ItemDatas of the argument.
+	 * <p>
 	 * more info: {@link ItemData#intersection(ItemData)}
 	 * 
 	 * @param other
@@ -518,7 +518,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	}
 	
 	/**
-	 * Removes this type from the item stack if applicable
+	 * Removes this type from the item stack if appropriate
 	 * 
 	 * @param item
 	 * @return The passed ItemStack
@@ -588,7 +588,6 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	
 	/**
 	 * Test whether this ItemType has space on the given inventory.
-	 * 
 	 * <p>
 	 * TODO If this ItemType represents multiple items with OR, this function will immediately return false.<br/>
 	 * CondCanHold currently blocks aliases without 'every'/'all' as temporary solution

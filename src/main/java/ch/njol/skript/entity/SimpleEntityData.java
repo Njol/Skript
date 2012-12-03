@@ -92,7 +92,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("cow", Cow.class);
 		names.put("cave spider", CaveSpider.class);
 		names.put("cavespider", CaveSpider.class);
-		names.put("egg", Egg.class);
+		names.put("egg", Egg.class); // TODO fix comparisions of eggs, arrows, etc. (e.g. 'projectile is an arrow')
 		names.put("ender crystal", EnderCrystal.class);
 		names.put("ender dragon", EnderDragon.class);
 		names.put("ender pearl", EnderPearl.class);

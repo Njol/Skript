@@ -26,14 +26,15 @@ import org.bukkit.event.Event;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Getter;
 import ch.njol.util.Math2;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -49,7 +50,7 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		players = (Expression<Player>) vars[0];
 		setExpr(players);
 		return true;

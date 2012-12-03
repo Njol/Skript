@@ -30,6 +30,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
+import ch.njol.util.Kleenean;
 
 /**
  * 
@@ -46,8 +47,8 @@ public class EffCancelEvent extends Effect {
 	private boolean cancel;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		if (isDelayed == 1) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		if (isDelayed == Kleenean.TRUE) {
 			Skript.error("Can't cancel an event anymore after is has already passed", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}

@@ -30,6 +30,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Direction;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -48,7 +49,7 @@ public class EffPush extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		entities = (Expression<Entity>) exprs[0];
 		direction = (Expression<Direction>) exprs[1];
 		speed = (Expression<Number>) exprs[2];

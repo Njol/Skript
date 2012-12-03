@@ -5,6 +5,8 @@ version: 2.0 beta 3
 and: and
 or: or
 a: a, an
+is: is
+are: are
 
 # -- Commands --
 commands:
@@ -18,12 +20,12 @@ updater:
 	not_started: Skript has not yet checked for the latest version. Use <gold>/skript update check<reset> to do so.
 	checking: Checking for the latest version of Skript...
 	check_in_progress: Checking for a new version is currently in progress.
-	check_error: <red>There was an error checking for the latest version of Skript:<reset> %s
+	check_error: <red>There was an error checking for the latest version of Skript:<light red> %s
 	running_latest_version: You're currently running the latest version of Skript
 	update_available: A new version of Skript is available: <gold>%s<reset> (you're currently running <gold>%s<reset>)
 	downloading: Downloading Skript %s...
 	download_in_progress: The latest version of Skript is currently being downloaded.
-	download_error: <red>There was an error downloading the latest version of Skript:<reset> %s
+	download_error: <red>There was an error downloading the latest version of Skript:<light red> %s
 	downloaded: The latest version of Skript has been downloaded! Restart the server or use /reload to apply the changes.
 
 # -- Aliases -- (not used yet)
@@ -67,27 +69,27 @@ enchantments:
 
 # -- Potion Effects --
 potions:
-	names:
-		speed: speed
-		slow: slowness
-		fast_digging: haste
-		slow_digging: mining fatigue
-		increase_damage: strength
-		heal: instant health
-		harm: instant damage
-		jump: jump boost
-		confusion: nausea
-		regeneration: regeneration
-		damage_resistance: resistance
-		fire_resistance: fire resistance
-		water_breathing: water breathing
-		invisibility: invisibility
-		blindness: blindness
-		night_vision: night vision
-		hunger: hunger
-		weakness: weakness
-		poison: poison
-		wither: wither
+	speed: speed, swiftness
+	slow: slowness
+	fast_digging: haste, fast digging, fast mining
+	slow_digging: mining fatigue, slow digging, slow mining
+	increase_damage: strength, power
+	heal: instant health, health
+	harm: instant damage, damage
+	jump: jump boost, jump
+	confusion: nausea
+	regeneration: regeneration
+	damage_resistance: resistance
+	fire_resistance: fire resistance
+	water_breathing: water breathing
+	invisibility: invisibility
+	blindness: blindness
+	night_vision: night vision
+	hunger: hunger
+	weakness: weakness
+	poison: poison
+	wither: wither
+
 
 # -- Weather --
 weather:
@@ -206,6 +208,10 @@ directions:
 
 # -- Types --
 types:
+	not_a: not a(n)
+	neither: neither
+	nor: nor
+	
 	# Java
 	object: object¦s
 	number: number¦s
@@ -238,6 +244,8 @@ types:
 	
 	# Skript
 	weathertype: weather type¦s
+	entitytype: entity type¦s
+	entitydata: entity type¦s
 	itemtype: item type¦s
 	time: time¦s
 	timespan: time span¦s
@@ -248,3 +256,4 @@ types:
 	color: color¦s
 	structuretype: tree type¦s
 	enchantmenttype: enchantment¦s
+	experience: experience point¦s

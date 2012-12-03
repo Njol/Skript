@@ -56,7 +56,7 @@ public class DefaultClasses {
 							return Integer.valueOf(s);
 						} catch (final NumberFormatException e) {}
 						try {
-							return Double.valueOf(s);
+							return s.endsWith("%") ? Double.parseDouble(s.substring(0, s.length() - 1))/100 : Double.valueOf(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
@@ -192,7 +192,7 @@ public class DefaultClasses {
 					@Override
 					public Double parse(final String s, final ParseContext context) {
 						try {
-							return Double.valueOf(s);
+							return s.endsWith("%") ? Double.parseDouble(s.substring(0, s.length() - 1))/100 : Double.valueOf(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
@@ -235,7 +235,7 @@ public class DefaultClasses {
 					@Override
 					public Float parse(final String s, final ParseContext context) {
 						try {
-							return Float.valueOf(s);
+							return s.endsWith("%") ? Float.parseFloat(s.substring(0, s.length() - 1))/100 : Float.valueOf(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
@@ -406,11 +406,7 @@ public class DefaultClasses {
 					public String parse(final String s, final ParseContext context) {
 						if (context == ParseContext.DEFAULT)
 							throw new SkriptAPIException("Strings must not be parsed as DEFAULT using it's Parser, but by parsing it as a VariableString!");
-						if ((context == ParseContext.COMMAND || context == ParseContext.EVENT) && !s.isEmpty())
-							return Utils.replaceChatStyles(s);
-						else if (context == ParseContext.CONFIG && s.startsWith("\"") && s.endsWith("\""))
-							return Utils.replaceChatStyles(s.substring(1, s.length() - 1));
-						return null;
+						return Utils.replaceChatStyles(s);
 					}
 					
 					@Override

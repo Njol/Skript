@@ -39,18 +39,20 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.UnparsedLiteral;
+import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.StringUtils;
+import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**
@@ -97,14 +99,19 @@ public class VariableString implements Expression<String> {
 	
 	public final static Map<String, Pattern> variableNames = new HashMap<String, Pattern>();
 	
+	private final static Pattern loneQuotePattern = Pattern.compile("(?<!\")\"(?!\")");
+	
 	/**
 	 * Prints errors
 	 * 
-	 * @param s
+	 * @param s unquoted string
 	 * @param mode
 	 * @return
 	 */
-	public static VariableString newInstance(final String s, final StringMode mode) {
+	public static VariableString newInstance(String s, final StringMode mode) {
+		if (loneQuotePattern.matcher(s).find())
+			return null;
+		s = s.replace("\"\"", "\"");
 		final ArrayList<Object> string = new ArrayList<Object>();
 		int c = s.indexOf('%');
 		if (c != -1) {
@@ -113,7 +120,7 @@ public class VariableString implements Expression<String> {
 				int c2 = s.indexOf('%', c + 1);
 				int a = c, b;
 				while (c2 != -1 && (b = s.indexOf('{', a + 1)) != -1 && b < c2) {
-					a = nextBracket(s, '}', '{', b + 1);
+					a = nextVariableBracket(s, b + 1);
 					if (a == -1) {
 						Skript.error("Missing closing bracket '}' to end variable");
 						return null;
@@ -127,16 +134,16 @@ public class VariableString implements Expression<String> {
 				if (c + 1 == c2) {
 					string.add("%");
 				} else {
+					SimpleLog log = SkriptLogger.startSubLog();
 					@SuppressWarnings("unchecked")
-					final Expression<?> expr = SkriptParser.parseExpression(s.substring(c + 1, c2), false, ParseContext.DEFAULT, Object.class);
+					final Expression<?> expr = SkriptParser.parseExpression(s.substring(c + 1, c2), false, ParseContext.DEFAULT, Object.class).getConvertedExpression(Object.class);
 					if (expr == null) {
-						return null;
-					} else if (expr instanceof UnparsedLiteral) {
-						Skript.error("Can't understand this expression: " + s.substring(c + 1, c2));
+						log.printErrors("Can't understand this expression: " + s.substring(c + 1, c2));
 						return null;
 					} else {
 						string.add(expr);
 					}
+					log.printLog();
 				}
 				c = s.indexOf('%', c2 + 1);
 				if (c == -1)
@@ -197,7 +204,7 @@ public class VariableString implements Expression<String> {
 	}
 	
 	/**
-	 * Copied from {@link SkriptParser#nextBracket(String, char, char, int)} and removed escaping
+	 * Copied from {@link SkriptParser#nextBracket(String, char, char, int)}, but removed escaping & returns -1 on error.
 	 * 
 	 * @param s
 	 * @param closingBracket
@@ -205,14 +212,14 @@ public class VariableString implements Expression<String> {
 	 * @param start
 	 * @return
 	 */
-	private static int nextBracket(final String s, final char closingBracket, final char openingBracket, final int start) {
+	public static int nextVariableBracket(final String s, final int start) {
 		int n = 0;
 		for (int i = start; i < s.length(); i++) {
-			if (s.charAt(i) == closingBracket) {
+			if (s.charAt(i) == '}') {
 				if (n == 0)
 					return i;
 				n--;
-			} else if (s.charAt(i) == openingBracket) {
+			} else if (s.charAt(i) == '{') {
 				n++;
 			}
 		}
@@ -274,6 +281,11 @@ public class VariableString implements Expression<String> {
 		return Utils.replaceChatStyles(b.toString());
 	}
 	
+	@Override
+	public String toString() {
+		return toString(null, false);
+	}
+	
 	/**
 	 * Use {@link #toString(Event)} to get the actual string
 	 * 
@@ -324,7 +336,7 @@ public class VariableString implements Expression<String> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -349,8 +361,8 @@ public class VariableString implements Expression<String> {
 	}
 	
 	@Override
-	public boolean check(final Event e, final Checker<? super String> c, final Condition cond) {
-		return SimpleExpression.check(getAll(e), c, cond.isNegated(), false);
+	public boolean check(final Event e, final Checker<? super String> c, final boolean negated) {
+		return SimpleExpression.check(getAll(e), c, negated, false);
 	}
 	
 	@Override
@@ -358,9 +370,11 @@ public class VariableString implements Expression<String> {
 		return SimpleExpression.check(getAll(e), c, false, false);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
-		// can't convert Strings to anything
+		if (to.isAssignableFrom(String.class))
+			return (Expression<? extends R>) this;
 		return null;
 	}
 	
@@ -424,8 +438,13 @@ public class VariableString implements Expression<String> {
 			((VariableString) e).setMode(StringMode.COMMAND);
 		}
 	}
+
+	@Override
+	public Expression<String> simplify() {
+		return this;
+	}
 	
-	/* TODO allow special characters
+	/* TODO allow special characters?
 	private static String allowedChars = null;
 	private static Field allowedCharacters = null;
 	

@@ -27,11 +27,12 @@ import java.util.NoSuchElementException;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -41,7 +42,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	
 	static {
 		Skript.registerExpression(ExprNumbers.class, Number.class, ExpressionType.NORMAL,
-				"[(all|the)] (0¦numbers|1¦integers) (between|from) %number% (and|to) %number%",
+				"[(all|the)] (numbers|1¦integers) (between|from) %number% (and|to) %number%",
 				"%number% times");
 	}
 	
@@ -50,10 +51,10 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		start = matchedPattern == 0 ? (Expression<Number>) exprs[0] : new SimpleLiteral<Number>(1, false);
 		end = (Expression<Number>) exprs[1 - matchedPattern];
-		integer = parseResult.mark == 1;
+		integer = parseResult.mark == 1 || matchedPattern == 1;
 		return true;
 	}
 	

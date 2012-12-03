@@ -33,6 +33,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.TriggerSection;
 import ch.njol.skript.log.ErrorQuality;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -56,7 +57,7 @@ public class EffExit extends Effect {
 	private int type;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 				breakLevels = ScriptLoader.currentSections.size() + 1;

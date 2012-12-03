@@ -46,6 +46,7 @@ import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -152,7 +153,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		return init(Arrays.copyOf(exprs, exprs.length, Literal[].class), matchedPattern, parseResult);
 	}
 	

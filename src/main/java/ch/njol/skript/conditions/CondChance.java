@@ -27,6 +27,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -36,29 +37,31 @@ public class CondChance extends Condition {
 	private static final long serialVersionUID = -4186689549153575171L;
 	
 	static {
-		Skript.registerCondition(CondChance.class, "chance of %double%\\%");
+		Skript.registerCondition(CondChance.class, "chance of %number%(1¦\\%|)");
 	}
 	
 	private Expression<Double> chance;
+	boolean percent;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		chance = (Expression<Double>) exprs[0];
+		percent = parser.mark == 1;
 		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
-		final Double c = chance.getSingle(e);
-		if (c == null)
+		final Number n = chance.getSingle(e);
+		if (n == null)
 			return false;
-		return Math.random() * 100 < c;
+		return Math.random() < (percent ? n.doubleValue()/100 : n.doubleValue());
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "chance of " + chance.toString(e, debug) + "%";
+		return "chance of " + chance.toString(e, debug) + (percent ? "%" : "");
 	}
 	
 }

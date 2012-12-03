@@ -28,6 +28,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -45,7 +46,7 @@ public class EffOp extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		players = (Expression<OfflinePlayer>) exprs[0];
 		op = !parseResult.expr.substring(0, 2).equalsIgnoreCase("de");
 		return true;

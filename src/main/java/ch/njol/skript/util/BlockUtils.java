@@ -23,6 +23,7 @@ package ch.njol.skript.util;
 
 import java.util.Arrays;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -205,6 +206,11 @@ public abstract class BlockUtils {
 	
 	public static Iterable<BlockFace> getFaces() {
 		return Arrays.asList(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST);
+	}
+
+	public static Location getLocation(Block b) {
+		// TODO include direction (required for relative directions to work)
+		return b.getLocation().add(0.5,0.5,0.5);
 	}
 	
 }

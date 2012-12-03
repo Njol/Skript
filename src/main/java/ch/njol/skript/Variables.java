@@ -54,6 +54,7 @@ import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -211,132 +212,136 @@ public class Variables {
 	 * @return whether all variables were loaded successfully
 	 */
 	final boolean loadVariables() {
-		file = new File(Skript.getInstance().getDataFolder(), "variables.csv");
-		try {
-			file.createNewFile();
-		} catch (final IOException e) {
-			Skript.error("Cannot create the variables file: " + e.getLocalizedMessage());
-			return false;
-		}
-		if (!file.canWrite()) {
-			Skript.error("Cannot write to the variables file - no variables will be saved!");
-		}
-		if (!file.canRead()) {
-			Skript.error("Cannot read from the variables file!");
-			Skript.error("This means that no variables will be available and can also prevent new variables from being saved!");
+		assert !Thread.holdsLock(variables);
+		synchronized(variables) {
+			assert variables.isEmpty();
+			file = new File(Skript.getInstance().getDataFolder(), "variables.csv");
 			try {
-				final File backup = FileUtils.backup(file);
-				Skript.info("Created a backup of your variables.csv as " + backup.getName());
+				file.createNewFile();
 			} catch (final IOException e) {
-				Skript.error("Failed to create a backup of your variables.csv: " + e.getLocalizedMessage());
-				loadError = true;
+				Skript.error("Cannot create the variables file: " + e.getLocalizedMessage());
+				return false;
 			}
-			return false;
-		}
-		
-		final SimpleLog log = SkriptLogger.startSubLog();
-		int unsuccessful = 0;
-		final StringBuilder invalid = new StringBuilder();
-		
-		Version varVersion = Skript.getVersion();
-		final Version v2_0_beta3 = new Version(2, 0, "beta 3");
-		
-		BufferedReader r = null;
-		boolean ioEx = false;
-		try {
-			r = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-			String line = null;
-			int lineNum = 0;
-			while ((line = r.readLine()) != null) {
-				lineNum++;
-				line = line.trim();
-				if (line.isEmpty() || line.startsWith("#")) {
-					if (line.startsWith("# version:")) {
-						try {
-							varVersion = new Version(line.substring("# version:".length()).trim());
-						} catch (final IllegalArgumentException e) {}
+			if (!file.canWrite()) {
+				Skript.error("Cannot write to the variables file - no variables will be saved!");
+			}
+			if (!file.canRead()) {
+				Skript.error("Cannot read from the variables file!");
+				Skript.error("This means that no variables will be available and can also prevent new variables from being saved!");
+				try {
+					final File backup = FileUtils.backup(file);
+					Skript.info("Created a backup of your variables.csv as " + backup.getName());
+				} catch (final IOException e) {
+					Skript.error("Failed to create a backup of your variables.csv: " + e.getLocalizedMessage());
+					loadError = true;
+				}
+				return false;
+			}
+			
+			final SimpleLog log = SkriptLogger.startSubLog();
+			int unsuccessful = 0;
+			final StringBuilder invalid = new StringBuilder();
+			
+			Version varVersion = Skript.getVersion();
+			final Version v2_0_beta3 = new Version(2, 0, "beta 3");
+			
+			BufferedReader r = null;
+			boolean ioEx = false;
+			try {
+				r = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+				String line = null;
+				int lineNum = 0;
+				while ((line = r.readLine()) != null) {
+					lineNum++;
+					line = line.trim();
+					if (line.isEmpty() || line.startsWith("#")) {
+						if (line.startsWith("# version:")) {
+							try {
+								varVersion = new Version(line.substring("# version:".length()).trim());
+							} catch (final IllegalArgumentException e) {}
+						}
+						continue;
 					}
-					continue;
-				}
-				final String[] split = splitCSV(line);
-				if (split == null || split.length != 3) {
-					Skript.error("invalid amount of commas in line " + lineNum + " ('" + line + "')");
-					if (invalid.length() != 0)
-						invalid.append(", ");
-					invalid.append(split == null ? "<unknown>" : split[0]);
-					unsuccessful++;
-					continue;
-				}
-				if (split[1].equals("null")) {
-					setVariable(Variable.splitVariableName(split[0]), null);
-				} else {
-					Object d = Classes.deserialize(split[1], split[2]);
-					if (d == null) {
+					final String[] split = splitCSV(line);
+					if (split == null || split.length != 3) {
+						Skript.error("invalid amount of commas in line " + lineNum + " ('" + line + "')");
 						if (invalid.length() != 0)
 							invalid.append(", ");
-						invalid.append(split[0]);
+						invalid.append(split == null ? "<unknown>" : split[0]);
 						unsuccessful++;
 						continue;
 					}
-					if (d instanceof String && varVersion.isSmallerThan(v2_0_beta3)) {
-						d = Utils.replaceChatStyles((String) d);
+					if (split[1].equals("null")) {
+						setVariable(Variable.splitVariableName(split[0]), null);
+					} else {
+						Object d = Classes.deserialize(split[1], split[2]);
+						if (d == null) {
+							if (invalid.length() != 0)
+								invalid.append(", ");
+							invalid.append(split[0]);
+							unsuccessful++;
+							continue;
+						}
+						if (d instanceof String && varVersion.isSmallerThan(v2_0_beta3)) {
+							d = Utils.replaceChatStyles((String) d);
+						}
+						setVariable(Variable.splitVariableName(split[0]), d);
 					}
-					setVariable(Variable.splitVariableName(split[0]), d);
+				}
+			} catch (final IOException e) {
+				Skript.error(e.getLocalizedMessage());
+				loadError = true;
+				ioEx = true;
+			} finally {
+				if (r != null) {
+					try {
+						r.close();
+					} catch (final IOException e) {}
 				}
 			}
-		} catch (final IOException e) {
-			Skript.error(e.getLocalizedMessage());
-			loadError = true;
-			ioEx = true;
-		} finally {
-			if (r != null) {
+			log.stop();
+			if (ioEx || unsuccessful > 0) {
+				if (unsuccessful > 0) {
+					Skript.error(unsuccessful + " variable" + (unsuccessful == 1 ? "" : "s") + " could not be loaded!");
+					Skript.error("Affected variables: " + invalid.toString());
+					if (log.hasErrors()) {
+						Skript.error("further information:");
+						log.printErrors(null);
+					}
+				}
+				if (ioEx) {
+					Skript.error("An I/O error occurred while loading the variables");
+					Skript.error("This means that some to all variables could not be loaded!");
+				}
 				try {
-					r.close();
-				} catch (final IOException e) {}
-			}
-		}
-		log.stop();
-		if (ioEx || unsuccessful > 0) {
-			if (unsuccessful > 0) {
-				Skript.error(unsuccessful + " variable" + (unsuccessful == 1 ? "" : "s") + " could not be loaded!");
-				Skript.error("Affected variables: " + invalid.toString());
-				if (log.hasErrors()) {
-					Skript.error("further information:");
-					log.printErrors(null);
+					final File backup = FileUtils.backup(file);
+					Skript.info("Created a backup of variables.csv as " + backup.getName());
+					loadError = false;
+				} catch (final IOException ex) {
+					Skript.error("Could not backup variables.csv: " + ex.getMessage());
 				}
 			}
-			if (ioEx) {
-				Skript.error("An I/O error occurred while loading the variables");
-				Skript.error("This means that some to all variables could not be loaded!");
-			}
-			try {
-				final File backup = FileUtils.backup(file);
-				Skript.info("Created a backup of variables.csv as " + backup.getName());
-				loadError = false;
-			} catch (final IOException ex) {
-				Skript.error("Could not backup variables.csv: " + ex.getMessage());
-			}
-		}
-		
-		setupChangesWriter();
-		changesWriterThread.start();
-		
-		saveTask = new Task(Skript.getInstance(), 5 * 60 * 20, 5 * 60 * 20, true) {
-			@Override
-			public void run() {
-				synchronized (variables) {
-					if (changes >= REQUIRED_CHANGES_FOR_RESAVE) {
-						saveVariables(false);
-						changes = 0;
+			
+			setupChangesWriter();
+			changesWriterThread.start();
+			
+			saveTask = new Task(Skript.getInstance(), 5 * 60 * 20, 5 * 60 * 20, true) {
+				@Override
+				public void run() {
+					synchronized (variables) {
+						if (changes >= REQUIRED_CHANGES_FOR_RESAVE) {
+							saveVariables(false);
+							changes = 0;
+						}
 					}
 				}
-			}
-		};
-		
-		if (backupTask == null && SkriptConfig.variableBackupPeriod != null)
-			startBackupTask(SkriptConfig.variableBackupPeriod);
-		
-		return !ioEx;
+			};
+			
+			if (backupTask == null && SkriptConfig.variableBackupPeriod != null)
+				startBackupTask(SkriptConfig.variableBackupPeriod);
+			
+			return !ioEx;
+		}
 	}
 	
 	private final static Pattern csv = Pattern.compile("\\s*([^\",]+|\"([^\"]|\"\")*\")\\s*(,|$)");
@@ -383,19 +388,21 @@ public class Variables {
 			changes++;
 			final String[] s = value == null ? null : Classes.serialize(value);
 			if (s == null)
-				changesQueue.add(new String[] {Utils.join(name, Variable.SEPARATOR), "null", "null"});
+				changesQueue.add(new String[] {StringUtils.join(name, Variable.SEPARATOR), "null", "null"});
 			else
-				changesQueue.add(new String[] {Utils.join(name, Variable.SEPARATOR), s[0], s[1]});
+				changesQueue.add(new String[] {StringUtils.join(name, Variable.SEPARATOR), s[0], s[1]});
 		}
 	}
 	
 	final void closeChangesWriter() {
+		assert Thread.holdsLock(variables);
 		changesQueue.clear();
 		changesWriter.close();
 		changesWriter = null;
 	}
 	
 	final void setupChangesWriter() {
+		assert Thread.holdsLock(variables);
 		try {
 			changesWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
 		} catch (final FileNotFoundException e) {} catch (final UnsupportedEncodingException e) {}

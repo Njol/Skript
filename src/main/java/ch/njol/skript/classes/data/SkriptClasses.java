@@ -24,6 +24,7 @@ package ch.njol.skript.classes.data;
 import java.util.Locale;
 import java.util.Map.Entry;
 
+import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 
@@ -403,6 +404,7 @@ public class SkriptClasses {
 		
 		Classes.registerClass(new ClassInfo<Direction>(Direction.class, "direction", "direction")
 				.user("direction")
+				.defaultExpression(new SimpleLiteral<Direction>(new Direction(new double[] {0,0,0}), true))
 				.parser(new Parser<Direction>() {
 					
 					@Override

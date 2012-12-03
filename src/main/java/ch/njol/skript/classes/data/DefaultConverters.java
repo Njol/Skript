@@ -39,6 +39,7 @@ import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.registrations.Converters;
+import ch.njol.skript.util.BlockUtils;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Slot;
 
@@ -183,7 +184,7 @@ public class DefaultConverters {
 			
 			@Override
 			public Location convert(final Block b) {
-				return b.getLocation().add(0.5, 0.5, 0.5);
+				return BlockUtils.getLocation(b);
 			}
 		});
 		

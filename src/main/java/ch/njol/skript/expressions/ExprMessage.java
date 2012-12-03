@@ -30,13 +30,14 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -126,7 +127,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	private MessageType type;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		type = MessageType.values()[matchedPattern];
 		if (type == MessageType.CHAT) {
 			if (!Utils.contains(ScriptLoader.currentEvents, Skript.isRunningBukkit(1, 3) ? AsyncPlayerChatEvent.class : PlayerChatEvent.class)) {

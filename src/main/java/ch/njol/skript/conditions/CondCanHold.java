@@ -33,6 +33,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -52,7 +53,7 @@ public class CondCanHold extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		invis = (Expression<Inventory>) vars[0];
 		items = (Expression<ItemType>) vars[1];
 		if (items instanceof Literal) {
@@ -79,7 +80,7 @@ public class CondCanHold extends Condition {
 						public boolean check(final ItemType t) {
 							return t.getItem().hasSpace(invi);
 						}
-					});
+					}, isNegated());
 				}
 				final ItemStack[] buf = ItemType.getCopiedContents(invi);
 				return items.check(e, new Checker<ItemType>() {
@@ -87,9 +88,9 @@ public class CondCanHold extends Condition {
 					public boolean check(final ItemType t) {
 						return t.getItem().addTo(buf);
 					}
-				});
+				}, isNegated());
 			}
-		}, this);
+		});
 	}
 	
 	@Override

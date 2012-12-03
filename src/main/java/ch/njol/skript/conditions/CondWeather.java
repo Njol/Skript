@@ -32,6 +32,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.WeatherType;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -49,7 +50,7 @@ public class CondWeather extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		weathers = (Expression<WeatherType>) vars[0];
 		worlds = (Expression<World>) vars[1];
 		return true;
@@ -63,7 +64,7 @@ public class CondWeather extends Condition {
 				public boolean check(final WeatherType t) {
 					return t == WeatherType.fromEvent((WeatherEvent) e);
 				}
-			}, this);
+			}, isNegated());
 		}
 		return weathers.check(e, new Checker<WeatherType>() {
 			@Override
@@ -73,9 +74,9 @@ public class CondWeather extends Condition {
 					public boolean check(final World w) {
 						return wt.isWeather(w);
 					}
-				});
+				}, isNegated());
 			}
-		}, this);
+		});
 	}
 	
 	@Override

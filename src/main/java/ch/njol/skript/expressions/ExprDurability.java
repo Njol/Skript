@@ -25,16 +25,17 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Slot;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -51,7 +52,7 @@ public class ExprDurability extends PropertyExpression<ItemStack, Short> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		types = (Expression<ItemStack>) exprs[0];
 		setExpr(types);
 		return true;

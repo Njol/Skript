@@ -33,6 +33,7 @@ import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * Represents an expression. Expressions are used within conditions, effects and other expressions.
@@ -50,7 +51,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * This method may only return null if it always returns null for the given event, i.e. it is equivalent to getting a random element out of {@link #getAll(Event)} or null iff
 	 * that array is empty.
 	 * <p>
-	 * Do not use this in conditions, use {@link #check(Event, Checker, Condition)} instead.
+	 * Do not use this in conditions, use {@link #check(Event, Checker, boolean)} instead.
 	 * 
 	 * @param e The event
 	 * @return The value or null if this expression doesn't have any value for the event
@@ -60,7 +61,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	
 	/**
 	 * Get all the values of this expression. The returned array is empty if this expression doesn't have any values for the given event.<br/>
-	 * Do not use this in conditions, use {@link #check(Event, Checker, Condition)} instead.<br/>
+	 * Do not use this in conditions, use {@link #check(Event, Checker, boolean)} instead.<br/>
 	 * The returned array must not contain any null valuse.
 	 * 
 	 * @param e The event
@@ -85,18 +86,18 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	
 	/**
 	 * Checks this expression against the given checker. This is the normal version of this method and the one which must be used for simple checks,
-	 * or as the outmost check of nested checks.
+	 * or as the innermost check of nested checks.
 	 * 
 	 * @param e The event
 	 * @param c A checker
-	 * @param cond The condition that is checking this expression. This is required as the check needs the condition's negated state.
+	 * @param negated The condition's negated state. This is used to invert the output of the ckecker if true (i.e. negated ^ checker.check(...)
 	 * @return Whether this expression matches or doesn't match the given checker depending on the condition's negated state.
 	 * @see SimpleExpression#check(Object[], Checker, boolean, boolean)
 	 */
-	public boolean check(final Event e, final Checker<? super T> c, final Condition cond);
+	public boolean check(final Event e, final Checker<? super T> c, final boolean negated);
 	
 	/**
-	 * Checks this expression against the given checker. This method must only be used <b>in</b> nested expression checks, use {@link #check(Event, Checker, Condition)} otherwise!
+	 * Checks this expression against the given checker. This method must only be used around other checks, use {@link #check(Event, Checker, boolean)} for a simple ckeck or the innermost check of a nested check.
 	 * 
 	 * @param e The event
 	 * @param c A checker
@@ -107,9 +108,8 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	
 	/**
 	 * Tries to convert this expression to the given type. This method can print an error prior to returning null to specify the cause.
-	 * 
 	 * <p>
-	 * Please note that expressions whose {@link #getReturnType() returnType} is not Object will not be parsed at all for a certain class if there's no converter from this
+	 * Please note that expressions whose {@link #getReturnType() returnType} is not Object will not be parsed at all for a certain class if there's no converter from the
 	 * expression's returnType and the desired class. Thus this method should only be overridden if this expression's returnType is Object.
 	 * 
 	 * @param to the desired return type of the returned expression
@@ -154,7 +154,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	/**
 	 * Returns true if this expression returns all possible values, false if it only returns one.
 	 * <p>
-	 * This method significantly influences {@link #check(Event, Checker)} and {@link #check(Event, Checker, Condition)} and thus breaks conditions that use this expression if it
+	 * This method significantly influences {@link #check(Event, Checker)} and {@link #check(Event, Checker, boolean)} and thus breaks conditions that use this expression if it
 	 * returns a wrong value.
 	 * <p>
 	 * This method can return anything if this is a {@link #isSingle() single} expression.
@@ -170,7 +170,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * it only <i>can be</i> after a delay (e.g. if the preceding delay is in an if or a loop) as well as if there's no delay involved.
 	 * 
 	 * @param time -1 for past, 0 for default or 1 for future respectively (this is not the same as the <tt>isDelayed</tt> parameter of
-	 *            {@link SyntaxElement#init(Expression[], int, int, ParseResult) init}!)
+	 *            {@link SyntaxElement#init(Expression[], int, Kleenean, ParseResult) init}!)
 	 * @return whether this expression has distinct states, e.g. a player never changes but a block can. This should also be sensitive for the event (using
 	 *         {@link ScriptLoader#currentEvents}).
 	 */
@@ -213,9 +213,22 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	
 	/**
 	 * Returns the original expression that was parsed, i.e. without any conversions done.
+	 * <p>
+	 * This method is undefined for simplyfied expressions.
 	 * 
 	 * @return The unconverted source expression of this expression or this expression itself if it was never converted.
 	 */
 	public Expression<?> getSource();
+	
+	/**
+	 * Simplyfies the expression, e.g. if it only contains literals the expression may be simplified to a literal, and wrapped expressions are unwrapped.
+	 * <p>
+	 * After this method was used the toString methods are likely not useful anymore.
+	 * <p>
+	 * This method is not yet used but will be used to improve efficiency in the future.
+	 * 
+	 * @return A reference to a simpler version of this expression. Can change this expression directly and return itself if applicable, i.e. no references to the expression before this method call should be kept!
+	 */
+	public Expression<? extends T> simplify();
 	
 }

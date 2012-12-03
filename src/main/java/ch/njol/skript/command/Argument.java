@@ -30,11 +30,13 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.SubLog;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 
@@ -68,25 +70,18 @@ public class Argument<T> implements Serializable {
 		this.optional = optional;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static <T> Argument<T> newInstance(final Class<T> type, final String def, final int index, final boolean single, final boolean forceOptional) {
 		Expression<? extends T> d = null;
 		if (def != null) {
 			if (def.startsWith("%") && def.endsWith("%")) {
-				@SuppressWarnings("unchecked")
-				final Expression<?> e = SkriptParser.parseExpression(def.substring(1, def.length() - 1), false, ParseContext.COMMAND, Object.class);
-				if (e == null)
-					return null;
-				if (e instanceof UnparsedLiteral) {
-					Skript.error("Can't understand this expression: " + def + "");
-					return null;
-				}
-				final SimpleLog log = SkriptLogger.startSubLog();
-				d = e.getConvertedExpression(type);
-				log.stop();
+				SimpleLog log = SkriptLogger.startSubLog();
+				d = SkriptParser.parseExpression(def.substring(1, def.length() - 1), false, ParseContext.COMMAND, type);
 				if (d == null) {
-					log.printErrors("'" + def + "' is not " + Utils.a(Classes.getExactClassName(type)));
+					log.printErrors("Can't understand this expression: " + def + "");
 					return null;
 				}
+				log.printLog();
 			} else {
 				final SimpleLog log = SkriptLogger.startSubLog();
 				d = SkriptParser.parseLiteral(def, type, ParseContext.DEFAULT);

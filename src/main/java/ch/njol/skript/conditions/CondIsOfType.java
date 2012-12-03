@@ -32,6 +32,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -50,7 +51,7 @@ public class CondIsOfType extends Condition {
 	private boolean item;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		what = exprs[0];
 		types = exprs[1];
 		item = matchedPattern <= 1;
@@ -72,9 +73,9 @@ public class CondIsOfType extends Condition {
 							return ((EntityData<?>) o2).isInstance((Entity) o1);
 						}
 					}
-				});
+				}, isNegated());
 			}
-		}, this);
+		});
 	}
 	
 	@Override

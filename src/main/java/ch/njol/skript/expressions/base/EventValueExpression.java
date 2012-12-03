@@ -45,6 +45,7 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.Getter;
+import ch.njol.util.Kleenean;
 
 /**
  * A useful class for creating default expressions. It simply returns the event value of the given type.<br/>
@@ -108,7 +109,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		if (exprs.length != 0)
 			throw new SkriptAPIException(this.getClass().getName() + " has expressions in it's pattern but does not override init(...)");
 		return init();

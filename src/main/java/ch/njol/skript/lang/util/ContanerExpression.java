@@ -29,6 +29,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Container;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -89,7 +90,7 @@ public class ContanerExpression extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	

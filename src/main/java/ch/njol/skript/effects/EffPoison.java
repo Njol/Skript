@@ -31,6 +31,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Timespan;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -54,7 +55,7 @@ public class EffPoison extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		entites = (Expression<LivingEntity>) exprs[0];
 		if (matchedPattern == 0)
 			duration = (Expression<Timespan>) exprs[1];

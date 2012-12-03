@@ -26,12 +26,13 @@ import java.lang.reflect.Array;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -46,7 +47,7 @@ public class ExprRandom extends SimpleExpression<Object> {
 	private Expression<?> expr;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		Class<?> c = Classes.getClassFromUserInput(parseResult.regexes.get(0).group());
 		if (c == null)
 			c = Classes.getClassByName(parseResult.regexes.get(0).group());

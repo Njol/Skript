@@ -29,11 +29,12 @@ import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.Direction;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -43,13 +44,15 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	private static final long serialVersionUID = -2703003572226455590L;
 	
 	static {
+		// TODO think about parsing statically & dynamically (also in general)
+		// "at": see LitAt
 		Skript.registerExpression(ExprDirection.class, Direction.class, ExpressionType.COMBINED,
-				"[%-number% [(block|meter)[s]]] [to the]] (" +
-						"2¦north[(-| |)(6¦east|7¦west)[(ward(s|ly|)|er(n|ly|))]] [of]" +
-						"|3¦south[(-| |)(8¦east|9¦west)[(ward(s|ly|)|er(n|ly|))]] [of]" +
-						"|(4¦east|5¦west)[(ward(s|ly|)|er(n|ly|))]] [of]" +
+				"[%-number% [(block|meter)[s]] [to the]] (" +
+						"2¦north[(-| |)(6¦east|7¦west)][(ward(s|ly|)|er(n|ly|))] [of]" +
+						"|3¦south[(-| |)(8¦east|9¦west)][(ward(s|ly|)|er(n|ly|))] [of]" +
+						"|(4¦east|5¦west)[(ward(s|ly|)|er(n|ly|))] [of]" +
 						"|0¦above|0¦over|(0¦up|1¦down)[ward(s|ly|)]|1¦below|1¦under[neath]|1¦beneath" +
-						")",
+						") [%-direction%]",
 				"[%-number% [(block|meter)[s]]] in [the] (0¦direction|1¦horizontal direction|2¦facing|3¦horizontal facing) of %entity/block% (of|from|)",
 				"[%-number% [(block|meter)[s]]] (0¦in[ ]front [of]|0¦forward[s]|2¦behind|2¦backwards|to the (1¦right|-1¦left) [of])");
 	}
@@ -69,11 +72,16 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		amount = (Expression<Number>) exprs[0];
 		switch (matchedPattern) {
 			case 0:
 				direction = new Vector(byMark[parseResult.mark].getModX(), byMark[parseResult.mark].getModY(), byMark[parseResult.mark].getModZ());
+				if (exprs[1] != null) {
+					if (!(exprs[1] instanceof ExprDirection) || ((ExprDirection) exprs[1]).direction == null)
+						return false;
+					direction.add(((ExprDirection) exprs[1]).direction);
+				}
 				break;
 			case 1:
 				relativeTo = exprs[1];

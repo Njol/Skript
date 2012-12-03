@@ -29,6 +29,7 @@ import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -48,7 +49,7 @@ public class CondPermission extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		senders = (Expression<CommandSender>) vars[0];
 		permissions = (Expression<String>) vars[1];
 		setNegated(matchedPattern == 0);
@@ -74,9 +75,9 @@ public class CondPermission extends Condition {
 						}
 						return false;
 					}
-				});
+				}, isNegated());
 			}
-		}, this);
+		});
 	}
 	
 	@Override

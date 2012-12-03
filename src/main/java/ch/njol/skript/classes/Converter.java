@@ -76,29 +76,6 @@ public interface Converter<F, T> {
 	
 	public static final class ConverterUtils {
 		
-		/**
-		 * Converts a value using a ConverterInfo. Does not throw an error if the given object is of the wrong type, but returns null instead.
-		 * 
-		 * @param info
-		 * @param o
-		 * @return info.converter.convert(o) or null if o is not of the correct type.
-		 */
-		@SuppressWarnings("unchecked")
-		public final static <T, F> T convert(final ConverterInfo<F, T> info, final Object o) {
-			if (o == null)
-				return null;
-			if (info.from.isInstance(o))
-				return info.converter.convert((F) o);
-			return null;
-		}
-		
-		@SuppressWarnings("unchecked")
-		public final static <F, T> T convertUnsafe(final F from, final Converter<?, T> conv) {
-			if (from == null)
-				return null;
-			return ((Converter<F, T>) conv).convert(from);
-		}
-		
 		public final static <F, T> SerializableConverter<?, T> createInstanceofConverter(final ConverterInfo<F, T> conv) {
 			return createInstanceofConverter(conv.from, conv.converter);
 		}

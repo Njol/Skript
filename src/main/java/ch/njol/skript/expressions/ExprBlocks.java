@@ -29,12 +29,13 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.BlockLineIterator;
 import ch.njol.skript.util.Direction;
+import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.IteratorIterable;
 
 /**
@@ -46,38 +47,31 @@ public class ExprBlocks extends SimpleExpression<Block> {
 	
 	static {
 		Skript.registerExpression(ExprBlocks.class, Block.class, ExpressionType.NORMAL,
-				"[the] blocks %directions% [%blocks/locations%]",
-				"[the] blocks from %block/location% [on] %directions%",
+				"[the] blocks %directions% [%locations%]",
+				"[the] blocks from %location% [on] %directions%",
 				"[the] blocks from %block% to %block%",
 				"[the] blocks between %block% and %block%");
 	}
 	
-	private Expression<Block> blocks;
-	private Expression<Location> locations;
+	private Expression<?> from;
 	private Expression<Block> end;
 	private Expression<Direction> directions;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		switch (matchedPattern) {
 			case 0:
 				directions = (Expression<Direction>) exprs[0];
-				if (Block.class.isAssignableFrom(exprs[1].getReturnType()))//TODO
-					blocks = (Expression<Block>) exprs[1];
-				else
-					locations = (Expression<Location>) exprs[1];
+				from = exprs[1];
 				break;
 			case 1:
-				if (Block.class.isAssignableFrom(exprs[0].getReturnType()))//TODO
-					blocks = (Expression<Block>) exprs[0];
-				else
-					locations = (Expression<Location>) exprs[0];
+				from = exprs[1];
 				directions = (Expression<Direction>) exprs[1];
 				break;
 			case 2:
 			case 3:
-				blocks = (Expression<Block>) exprs[0];
+				from = exprs[1];
 				end = (Expression<Block>) exprs[1];
 		}
 		return true;
@@ -86,9 +80,9 @@ public class ExprBlocks extends SimpleExpression<Block> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (end == null)
-			return "block" + (isSingle() ? "" : "s") + " " + directions.toString(e, debug) + " " + (blocks != null ? blocks.toString(e, debug) : locations.toString(e, debug));
+			return "block" + (isSingle() ? "" : "s") + " " + directions.toString(e, debug) + " " + from.toString(e, debug);
 		else
-			return "blocks from " + blocks.toString(e, debug) + " to " + end.toString(e, debug);
+			return "blocks from " + from.toString(e, debug) + " to " + end.toString(e, debug);
 	}
 	
 	@Override
@@ -102,18 +96,16 @@ public class ExprBlocks extends SimpleExpression<Block> {
 	@Override
 	public Iterator<Block> iterator(final Event e) {
 		if (directions != null) {
-			final Block b = blocks != null ? blocks.getSingle(e) : null;
-			if (blocks != null && b == null)
+			Object o = from.getSingle(e);
+			if (o == null)
 				return null;
-			final Location l = b != null ? b.getLocation() : locations.getSingle(e);
-			if (l == null)
-				return null;
+			final Location l = o instanceof Location ? (Location) o : ((Block) o).getLocation().add(0.5,0.5,0.5);
 			final Direction d = directions.getSingle(e);
 			if (d == null)
 				return null;
-			return new BlockLineIterator(l, b != null ? d.getDirection(b) : d.getDirection(l), Skript.TARGETBLOCKMAXDISTANCE);
+			return new BlockLineIterator(l, o != l ? d.getDirection((Block) o) : d.getDirection(l), Skript.TARGETBLOCKMAXDISTANCE);
 		} else {
-			final Block b = blocks.getSingle(e);
+			final Block b = (Block) from.getSingle(e);
 			if (b == null)
 				return null;
 			final Block b2 = end.getSingle(e);

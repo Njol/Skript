@@ -171,45 +171,52 @@ public class DefaultChangers {
 		}
 	};
 	
-	public final static SerializableChanger<Player, ItemType[]> playerChanger = new SerializableChanger<Player, ItemType[]>() {
+	public final static SerializableChanger<Player, Object> playerChanger = new SerializableChanger<Player, Object>() {
 		private static final long serialVersionUID = 9048165091425550382L;
 		
 		@SuppressWarnings("unchecked")
 		@Override
-		public Class<? extends ItemType[]>[] acceptChange(final ChangeMode mode) {
+		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.SET || mode == ChangeMode.CLEAR)
 				return null;
-			return Skript.array(ItemType[].class);
+			return Skript.array(ItemType[].class, Inventory.class);
 		}
 		
 		@SuppressWarnings("deprecation")
 		@Override
-		public void change(final Player[] players, final ItemType[] delta, final ChangeMode mode) {
+		public void change(final Player[] players, final Object delta, final ChangeMode mode) {
 			for (final Player p : players) {
 				final PlayerInventory invi = p.getInventory();
-				for (final ItemType type : delta) {
+				if (delta instanceof Inventory) {
 					if (mode == ChangeMode.ADD)
-						type.addTo(invi);
+						invi.addItem(((Inventory) delta).getContents());
 					else
-						type.removeFrom(invi);
+						invi.removeItem(((Inventory) delta).getContents());
+				} else {
+					for (final ItemType type : (ItemType[]) delta) {
+						if (mode == ChangeMode.ADD)
+							type.addTo(invi);
+						else
+							type.removeFrom(invi);
+					}
 				}
 				p.updateInventory();
 			}
 		}
 	};
 	
-	public final static SerializableChanger<Inventory, ItemType[]> inventoryChanger = new SerializableChanger<Inventory, ItemType[]>() {
+	public final static SerializableChanger<Inventory, Object> inventoryChanger = new SerializableChanger<Inventory, Object>() {
 		private static final long serialVersionUID = -8150546084341399001L;
 		
 		@SuppressWarnings("unchecked")
 		@Override
-		public Class<ItemType[]>[] acceptChange(final ChangeMode mode) {
-			return Skript.array(ItemType[].class);
+		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
+			return Skript.array(ItemType[].class, Inventory.class);
 		}
 		
 		@SuppressWarnings("deprecation")
 		@Override
-		public void change(final Inventory[] invis, final ItemType[] delta, final ChangeMode mode) {
+		public void change(final Inventory[] invis, final Object delta, final ChangeMode mode) {
 			for (final Inventory invi : invis) {
 				switch (mode) {
 					case CLEAR:
@@ -222,13 +229,21 @@ public class DefaultChangers {
 							break;
 						//$FALL-THROUGH$
 					case ADD:
-						for (final ItemType type : delta) {
-							type.addTo(invi);
+						if (delta instanceof Inventory) {
+							invi.addItem(((Inventory) delta).getContents());
+						} else {
+							for (final ItemType type : (ItemType[]) delta) {
+								type.addTo(invi);
+							}
 						}
 						break;
 					case REMOVE:
-						for (final ItemType type : delta) {
-							type.removeFrom(invi);
+						if (delta instanceof Inventory) {
+							invi.removeItem(((Inventory) delta).getContents());
+						} else {
+							for (final ItemType type : (ItemType[]) delta) {
+								type.removeFrom(invi);
+							}
 						}
 						break;
 				}
@@ -247,7 +262,7 @@ public class DefaultChangers {
 		public Class<?>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.SET)
 				return Skript.array(ItemType.class);
-			return Skript.array(ItemType[].class);
+			return Skript.array(ItemType[].class, Inventory.class);
 		}
 		
 		@Override
@@ -265,13 +280,22 @@ public class DefaultChangers {
 						final BlockState state = block.getState();
 						if (!(state instanceof InventoryHolder))
 							break;
+						Inventory invi = ((InventoryHolder) state).getInventory();
 						if (mode == ChangeMode.ADD) {
-							for (final ItemType type : (ItemType[]) delta) {
-								type.addTo(((InventoryHolder) state).getInventory());
+							if (delta instanceof Inventory) {
+								invi.addItem(((Inventory) delta).getContents());
+							} else {
+								for (final ItemType type : (ItemType[]) delta) {
+									type.addTo(invi);
+								}
 							}
 						} else {
-							for (final ItemType type : (ItemType[]) delta) {
-								type.removeFrom(((InventoryHolder) state).getInventory());
+							if (delta instanceof Inventory) {
+								invi.removeItem(((Inventory) delta).getContents());
+							} else {
+								for (final ItemType type : (ItemType[]) delta) {
+									type.removeFrom(invi);
+								}
 							}
 						}
 						state.update();

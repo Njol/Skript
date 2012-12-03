@@ -23,6 +23,7 @@ package ch.njol.skript.expressions.base;
 
 import java.util.Iterator;
 
+import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -32,10 +33,11 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.ConvertedExpression;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.Converters;
+import ch.njol.util.Kleenean;
 
 /**
  * Represents an expression which is a wrapper of another one. Remember to set the wrapped expression in the constructor ({@link #WrapperExpression(SimpleExpression)})
- * or with {@link #setExpr(Expression)} in {@link #init(Expression[], int, int, ParseResult)}.<br/>
+ * or with {@link #setExpr(Expression)} in {@link #init(Expression[], int, Kleenean, ParseResult)}.<br/>
  * If you override {@link #get(Event)} you must override {@link #iterator(Event)} as well.
  * 
  * @author Peter Güttinger
@@ -124,6 +126,11 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	@Override
 	public boolean isDefault() {
 		return expr.isDefault();
+	}
+
+	@Override
+	public Expression<? extends T> simplify() {
+		return expr;
 	}
 	
 }

@@ -38,6 +38,7 @@ import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Patterns;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -73,7 +74,7 @@ public class EffChange extends Effect {
 	private Changer<?, ?> c = null;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		
 		mode = patterns.getInfo(matchedPattern);
 		
@@ -141,12 +142,15 @@ public class EffChange extends Effect {
 					SkriptLogger.log(log.getFirstError());
 					return false;
 				}
+				Class<?>[] r = new Class[rs.length];
+				for (int i = 0; i < rs.length; i++)
+					r[i] = rs[i].isArray() ? rs[i].getComponentType() : rs[i];
 				if (rs.length == 1 && rs[0] == Object.class)
 					Skript.error("Can't understand this expression: " + changer, ErrorQuality.NOT_AN_EXPRESSION);
 				else if (mode == ChangeMode.SET)
-					Skript.error(changed + " can't be set to " + changer + " because the latter is " + SkriptParser.notOfType(rs), q);
+					Skript.error(changed + " can't be set to " + changer + " because the latter is " + SkriptParser.notOfType(r), q);
 				else
-					Skript.error(changer + " can't be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed + " because the former is " + SkriptParser.notOfType(rs), q);
+					Skript.error(changer + " can't be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed + " because the former is " + SkriptParser.notOfType(r), q);
 				return false;
 			}
 			

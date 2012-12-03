@@ -26,7 +26,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EmptyStackException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -66,6 +68,7 @@ import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionInfo;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptEvent.SkriptEventInfo;
@@ -89,6 +92,7 @@ import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.CheckedIterator;
 import ch.njol.util.iterator.EnumerationIterable;
@@ -98,19 +102,17 @@ import ch.njol.util.iterator.EnumerationIterable;
  * <p>
  * Use this class to extend this plugin's functionality by adding more {@link Condition conditions}, {@link Effect effects}, {@link SimpleExpression expressions}, etc.
  * <p>
- * To test whether Skript is loaded you can use
- * 
- * <pre>
- * Bukkit.getPluginManager().getPlugin(&quot;Skript&quot;) != null
- * </pre>
+ * If your plugin.yml contains <tt>'depend: [Skript]'</tt> then your plugin will not start at all if Skript is not present. Add <tt>'softdepend: [Skript]'</tt> to your plugin.yml if
+ * you want your plugin to work even if Skript isn't present, but want to make sure that it's loaded after Skript.
  * <p>
- * After you made sure that Skript is loaded you can use <code>Skript.getinstance()</code> whenever you need a reference to the plugin, but you likely don't need it since most API
+ * If you use the softdepend approach you can test whether Skript is loaded using <tt>'Bukkit.getPluginManager().getPlugin(&quot;Skript&quot;) != null'</tt>
+ * <p>
+ * Once you made sure that Skript is loaded you can use <code>Skript.getInstance()</code> whenever you need a reference to the plugin, but you likely won't need it since all API
  * methods are static.
- * <p>
- * Don't forget to add either <tt>depend: [Skript]</tt> or <tt>softdepend: [Skript]</tt> to your plugin.yml.
  * 
  * @author Peter Güttinger
  * 
+ * @see #registerAddon(JavaPlugin)
  * @see #registerCondition(Class, String...)
  * @see #registerEffect(Class, String...)
  * @see #registerExpression(Class, Class, String...)
@@ -150,7 +152,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		if (disabled)
 			throw new IllegalStateException("Skript may only be reloaded by either Bukkit's '/reload' or Skript's '/skript reload' command");
 		
-		Language.loadDefault();
+		Language.loadDefault(getAddonInstance());
+		getFile();
 		
 		version = new Version(getDescription().getVersion());
 		runningCraftBukkit = Bukkit.getServer().getClass().getName().equals("org.bukkit.craftbukkit.CraftServer");
@@ -174,7 +177,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		new DefaultConverters();
 		
 		try {
-			loadClasses("ch.njol.skript", "conditions", "effects", "events", "expressions", "entity");
+			getAddonInstance().loadClasses("ch.njol.skript", "conditions", "effects", "events", "expressions", "entity");
 		} catch (final Exception e) {
 			exception(e, "could not load required .class files: " + e.getLocalizedMessage());
 			setEnabled(false);
@@ -200,6 +203,7 @@ public final class Skript extends JavaPlugin implements Listener {
 			@Override
 			public void run() {
 				
+				// TODO hooks
 //				Economy.load();
 				
 				Skript.stopAcceptingRegistrations();
@@ -438,34 +442,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		}).start();
 	}
 	
-	private static void loadClasses(String packageName, final String... subPackages) throws IOException {
-		final JarFile jar = new JarFile(Skript.getInstance().getFile());
-		for (int i = 0; i < subPackages.length; i++)
-			subPackages[i] = subPackages[i].replace('.', '/') + "/";
-		packageName = packageName.replace('.', '/') + "/";
-		try {
-			entryLoop: for (final JarEntry e : new EnumerationIterable<JarEntry>(jar.entries())) {
-				if (e.getName().startsWith(packageName) && e.getName().endsWith(".class")) {
-					for (final String sub : subPackages) {
-						if (e.getName().startsWith(sub, packageName.length()) && e.getName().lastIndexOf('/') == packageName.length() + sub.length() - 1) {
-							final String c = e.getName().replace('/', '.').substring(0, e.getName().length() - ".class".length());
-							try {
-								Class.forName(c);
-							} catch (final ClassNotFoundException ex) {
-								exception(ex, "cannot load class " + c);
-							} catch (final ExceptionInInitializerError err) {
-								exception(err.getCause(), "Class " + c + " generated an exception while loading");
-							}
-							continue entryLoop;
-						}
-					}
-				}
-			}
-		} finally {
-			jar.close();
-		}
-	}
-	
 	// ================ CONSTANTS, OPTIONS & OTHER ================
 	
 	public static final String SCRIPTSFOLDER = "scripts";
@@ -596,6 +572,51 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 	}
 	
+	// ================ ADDONS ================
+	
+	private final static HashMap<String, SkriptAddon> addons = new HashMap<String, SkriptAddon>();
+	
+	/**
+	 * Registers an addon to Skript. This is currently not required for addons to work, but the returned {@link SkriptAddon} provides useful methods for registering syntax elements
+	 * and adding new strings to Skript's localization system (e.g. the required "types.[type]" strings for registered classes).
+	 * 
+	 * @param p The plugin
+	 */
+	public static SkriptAddon registerAddon(final JavaPlugin p) {
+		checkAcceptRegistrations();
+		if (addons.containsKey(p.getName()))
+			throw new IllegalArgumentException("The plugin " + p.getName() + " is already registered");
+		final SkriptAddon addon = new SkriptAddon(p);
+		addons.put(p.getName(), addon);
+		return addon;
+	}
+	
+	public static SkriptAddon getAddon(final JavaPlugin p) {
+		return addons.get(p.getName());
+	}
+	
+	public static SkriptAddon getAddon(final String name) {
+		return addons.get(name);
+	}
+	
+	public static Collection<SkriptAddon> getAddons() {
+		return Collections.unmodifiableCollection(addons.values());
+	}
+	
+	private static SkriptAddon addon;
+	
+	/**
+	 * @return A {@link SkriptAddon} representing Skript.
+	 */
+	public static SkriptAddon getAddonInstance() {
+		if (addon == null) {
+			final SkriptAddon a = new SkriptAddon(Skript.getInstance())
+					.setLanguageFileDirectory("lang");
+			addon = a; // just to make FindBugs shut up =P
+		}
+		return addon;
+	}
+	
 	// ================ CONDITIONS & EFFECTS ================
 	
 	private static final Collection<SyntaxElementInfo<? extends Condition>> conditions = new ArrayList<SyntaxElementInfo<? extends Condition>>(20);
@@ -640,10 +661,6 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ EXPRESSIONS ================
 	
-	public static enum ExpressionType {
-		SIMPLE, NORMAL, COMBINED, PROPERTY, PATTERN_MATCHES_EVERYTHING;
-	}
-	
 	private static final List<ExpressionInfo<?, ?>> expressions = new ArrayList<ExpressionInfo<?, ?>>(30);
 	
 	private final static int[] expressionTypesStartIndices = new int[ExpressionType.values().length];
@@ -651,7 +668,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	/**
 	 * Registers an expression.
 	 * 
-	 * @param c The expression class. This has to be a SimpleExpression as it provides a norm for expressions.
+	 * @param c The expression class.
 	 * @param returnType
 	 * @param patterns
 	 */
@@ -775,7 +792,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * Use this in {@link Expression#init(Expression[], int, int, ch.njol.skript.lang.SkriptParser.ParseResult)} (and other methods that are called during the parsing) to log
+	 * Use this in {@link Expression#init(Expression[], int, Kleenean, ch.njol.skript.lang.SkriptParser.ParseResult)} (and other methods that are called during the parsing) to log
 	 * errors with a specific {@link ErrorQuality}.
 	 * 
 	 * @param error

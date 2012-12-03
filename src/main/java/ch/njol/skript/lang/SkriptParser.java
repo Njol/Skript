@@ -40,6 +40,7 @@ import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.ScriptCommand;
 import ch.njol.skript.command.ScriptCommandEvent;
 import ch.njol.skript.lang.SkriptEvent.SkriptEventInfo;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.lang.util.VariableString;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.ParseLog;
@@ -49,6 +50,7 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
+import ch.njol.util.Kleenean;
 
 /**
  * Used for parsing my custom patterns.<br>
@@ -122,10 +124,9 @@ public class SkriptParser {
 	}
 	
 	/**
-	 * Parses a string as one of the given syntax elements
-	 * 
+	 * Parses a string as one of the given syntax elements.
 	 * <p>
-	 * Can print an error
+	 * Can print an error.
 	 * 
 	 * @param expr
 	 * @param source
@@ -228,22 +229,28 @@ public class SkriptParser {
 		return null;
 	}
 	
+	/**
+	 * Matches ,/and/or
+	 * <p>
+	 * group 1 is null for ',' or and/or/nor (not necessarily lowercase).
+	 */
 	public final static Pattern listSplitPattern = Pattern.compile("\\s*,?\\s+(and|n?or)\\s+|\\s*,\\s*", Pattern.CASE_INSENSITIVE);
+	/**
+	 * Matches a list item and ,/and/or without splitting variables or strings.
+	 * <p>
+	 * group 1 is the item (which should be trimmed), group 2 is null for ',' or and/or/nor (not necessarily lowercase).
+	 */
+	public final static Pattern listElementPattern = Pattern.compile("((?:[^\"{}]|\"(?:[^\"]|\"\")*\"|\\{(?:[^{}]|%\\{|\\}%)+\\})+?)(?:\\s*,?\\s+(and|n?or)\\s+|\\s*,\\s*)", Pattern.CASE_INSENSITIVE);
 	
 	@SuppressWarnings("unchecked")
 	public final static <T> Expression<? extends T> parseExpression(final String s, final boolean parseStatic, final ParseContext context, final Class<? extends T>... types) {
 		assert s != null && context != null && types != null && types.length > 0;
 		assert types.length == 1 || !Utils.contains(types, Object.class);
-		if (types.length == 1 && types[0] == Object.class) {
-			if (parseStatic)
-				return (Expression<? extends T>) new UnparsedLiteral(s);
-			else
-				return (Expression<? extends T>) new SkriptParser(s, parseStatic, context).parseObjectExpression();
-		}
+		if (types.length == 1 && types[0] == Object.class)
+			return (Expression<? extends T>) new SkriptParser(s, parseStatic, context).parseObjectExpression();
 		return new SkriptParser(s, parseStatic, context).parseExpression(types);
 	}
 	
-	// TODO: use the general method below?
 	private final <T> Expression<? extends T> parseExpression(final Class<? extends T>[] types) {
 		assert !Utils.contains(types, Object.class);
 		String lastExpr = expr;
@@ -260,23 +267,23 @@ public class SkriptParser {
 		final Matcher m = listSplitPattern.matcher(expr);
 		int end = expr.length();
 		int expectedEnd = -1;
-		boolean and = true;
-		boolean isAndSet = false;
+		Kleenean and = Kleenean.UNKNOWN;
 		boolean last = false;
+		boolean isLiteralList = true;
 		while (m.find() || (last = !last)) {
 			if (expectedEnd == -1)
 				expectedEnd = last ? expr.length() : m.start();
 			final Expression<? extends T> t = parseSingleExpr(lastExpr = expr.substring(last ? 0 : m.end(), end), true, types);
 			if (t != null) {
-				if (!last && !m.group().matches("\\s*,\\s*")) {
-					if (isAndSet) {
-						if (and != m.group().toLowerCase().contains("and")) {
-							Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
-							and = true;
-						}
+				isLiteralList &= t instanceof Literal;
+				if (!last && m.group(1) != null) {
+					if (and.isUnknown()) {
+						and = Kleenean.get(m.group(1).equalsIgnoreCase("and"));
 					} else {
-						and = m.group().toLowerCase().contains("and");
-						isAndSet = true;
+						if (and != Kleenean.get(m.group(1).equalsIgnoreCase("and"))) {
+							Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
+							and = Kleenean.TRUE;
+						}
 					}
 				}
 				ts.addFirst(t);
@@ -295,79 +302,68 @@ public class SkriptParser {
 		log.printLog();
 		if (ts.size() == 1)
 			return ts.getFirst();
-		if (!isAndSet)
+		if (and.isUnknown())
 			Skript.warning("List is missing 'and' or 'or', defaulting to 'and'");
-		if (parseStatic) {
-			return new LiteralList<T>(ts.toArray(new Literal[ts.size()]), and);
+		if (isLiteralList) {
+			return new LiteralList<T>(ts.toArray(new Literal[ts.size()]), !and.isFalse());
 		} else {
-			return new ExpressionList<T>(ts.toArray(new Expression[ts.size()]), and);
+			return new ExpressionList<T>(ts.toArray(new Expression[ts.size()]), !and.isFalse());
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
 	private final Expression<?> parseObjectExpression() {
-		assert !parseStatic;
-		final ParseLog log = SkriptLogger.startParseLog();
-		
-		final Expression<?> r = parseSingleExpr(expr, false, Object.class);
-		if (r != null) {
-			log.printLog();
-			return r;
+		if (!parseStatic) {
+			final ParseLog log = SkriptLogger.startParseLog();
+			final Expression<?> r = parseSingleExpr(expr, false, Object.class);
+			if (r != null) {
+				log.printLog();
+				return r;
+			}
+			log.stop();
 		}
-		log.clear();
 		
 		final List<Expression<?>> ts = new ArrayList<Expression<?>>();
-		final Matcher m = listSplitPattern.matcher(expr);
-		int startOfLiteral = 0;
-		int start = 0, lastEnd = 0;
-		boolean and = true;
-		boolean isAndSet = false;
+		final Matcher m = listElementPattern.matcher(expr);
+		int start = 0;
+		Kleenean and = Kleenean.UNKNOWN;
 		boolean last = false;
-		while (m.find() || (last = !last)) {
-			final Expression<?> t = parseSingleExpr(expr.substring(start, last ? expr.length() : m.start()), false, Object.class);
-			if (t != null) {
-				if (!last && !m.group().matches("\\s*,\\s*")) {
-					if (isAndSet) {
-						if (and != m.group().toLowerCase().contains("and")) {
-							Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
-							and = true;
-						}
-					} else {
-						and = m.group().toLowerCase().contains("and");
-						isAndSet = true;
+		boolean isLiteralList = true;
+		while (m.lookingAt() || (last = !last)) {
+			String sub = last ? expr.substring(start) : m.group(1).trim();
+			final Expression<?> t = parseSingleExpr(sub, true, Object.class);
+			isLiteralList &= t instanceof Literal;
+			if (!last && m.group(2) != null) {
+				if (and.isUnknown()) {
+					and = Kleenean.get(m.group(2).equalsIgnoreCase("and"));
+				} else {
+					if (and != Kleenean.get(m.group(2).equalsIgnoreCase("and"))) {
+						Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
+						and = Kleenean.TRUE;
 					}
 				}
-				if (startOfLiteral != start)
-					ts.add(new UnparsedLiteral(expr.substring(startOfLiteral, lastEnd)));
-				startOfLiteral = last ? expr.length() : m.end();
-				ts.add(t);
-				log.clear();
-			} else { // TODO ^/v clears log in both cases?
-				log.clear();
 			}
+			ts.add(t);
 			if (last)
 				break;
 			start = m.end();
-			lastEnd = m.end();
+			m.region(start, expr.length());
 		}
-		log.stop();
-		if (startOfLiteral == 0)
-			return new UnparsedLiteral(expr);
-		if (startOfLiteral != expr.length())
-			ts.add(new UnparsedLiteral(expr.substring(startOfLiteral)));
-		log.printLog();
 		if (ts.size() == 1)
 			return ts.get(0);
-		if (!isAndSet)
+		if (and.isUnknown())
 			Skript.warning("List is missing 'and' or 'or', defaulting to 'and'");
-		return new ExpressionList<Object>(ts.toArray(new Expression[ts.size()]), and);
+		if (isLiteralList) {
+			return new LiteralList<Object>(ts.toArray(new Literal[ts.size()]), !and.isFalse());
+		} else {
+			return new ExpressionList<Object>(ts.toArray(new Expression[ts.size()]), !and.isFalse());
+		}
 	}
 	
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private final <T> Expression<? extends T> parseSingleExpr(final String s, final boolean parseLiteral, final Class<? extends T>... types) {
 		assert types.length > 0;
 		assert types.length == 1 || !Utils.contains(types, Object.class);
-		assert !(parseStatic && types[0] == Object.class);
 		assert !(parseStatic && !parseLiteral);
 		if (s.isEmpty())
 			return null;
@@ -387,7 +383,7 @@ public class SkriptParser {
 		if (!parseStatic) {
 			final Expression<? extends T> e;
 			if (s.startsWith("\"") && s.endsWith("\"") && (types[0] == Object.class || Utils.contains(types, String.class))) {
-				e = (Expression<? extends T>) VariableString.newInstance(s);
+				e = (Expression<? extends T>) VariableString.newInstance(s.substring(1, s.length() - 1));
 			} else {
 				e = (Expression<? extends T>) parse(s, (Iterator) Skript.getExpressions(types), null);
 			}
@@ -401,78 +397,82 @@ public class SkriptParser {
 			log.stop();
 			return null;
 		}
-		final UnparsedLiteral ul = new UnparsedLiteral(s);
-		final Literal<? extends T> l = types[0] == Object.class ? (Literal<? extends T>) ul : ul.getConvertedExpression(context, types);
-		if (l == null)
-			log.printError(null);
-		else
-			log.printLog();
-		return l;
-	}
-	
-	public final static <T> Expression<? extends T> parseExpression(final String s, final Converter<String, ? extends Expression<? extends T>> parser, final String defaultError) {
-		return new SkriptParser(s, false).parseExpression(parser, defaultError);
-	}
-	
-	private final <T> Expression<? extends T> parseExpression(final Converter<String, ? extends Expression<? extends T>> parser, final String defaultError) {
-		final ParseLog log = SkriptLogger.startParseLog();
-		
-		final Expression<? extends T> r = parser.convert(expr);
-		if (r != null) {
-			log.printLog();
-			return r;
+		if (types[0] == Object.class) {
+			log.stop();
+			return (Literal<? extends T>) new UnparsedLiteral(s);
 		}
-		log.clear();
-		
-		final Deque<Expression<? extends T>> ts = new LinkedList<Expression<? extends T>>();
-		final Matcher m = listSplitPattern.matcher(expr);
-		int end = expr.length();
-		int expectedEnd = -1;
-		boolean and = true;
-		boolean isAndSet = false;
-		boolean last = false;
-		boolean isLiteralList = true;
-		while (m.find() || (last = !last)) {
-			if (expectedEnd == -1)
-				expectedEnd = last ? expr.length() : m.start();
-			final Expression<? extends T> t = parser.convert(expr.substring(last ? 0 : m.end(), end));
+		for (final Class<? extends T> c : types) {
+			log.clear();
+			final T t = Classes.parse(s, c, context);
 			if (t != null) {
-				isLiteralList &= t instanceof Literal;
-				if (!last && !m.group().matches("\\s*,\\s*")) {
-					if (isAndSet) {
-						if (and != m.group().toLowerCase().contains("and")) {
-							Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
-							and = true;
-						}
-					} else {
-						and = m.group().toLowerCase().contains("and");
-						isAndSet = true;
-					}
-				}
-				ts.addFirst(t);
-				if (last)
-					break;
-				end = m.start();
-				m.region(0, end);
-			} else {
-				log.clear();
+				log.printLog();
+				return new SimpleLiteral<T>(t, false);
 			}
 		}
-		if (end != expectedEnd || ts.isEmpty()) {
-			log.printError(defaultError);
-			return null;
-		}
-		log.printLog();
-		if (ts.size() == 1)
-			return ts.getFirst();
-		if (!isAndSet)
-			Skript.warning("List is missing 'and' or 'or', defaulting to 'and'");
-		if (isLiteralList) {
-			return new LiteralList<T>(ts.toArray(new Literal[ts.size()]), and);
-		} else {
-			return new ExpressionList<T>(ts.toArray(new Expression[ts.size()]), and);
-		}
+		log.printError(null);
+		return null;
 	}
+	
+	// not used anymore
+//	public final static <T> Expression<? extends T> parseExpression(final String expr, final Converter<String, ? extends Expression<? extends T>> parser, final String defaultError) {
+//		final ParseLog log = SkriptLogger.startParseLog();
+//		
+//		final Expression<? extends T> r = parser.convert(expr);
+//		if (r != null) {
+//			log.printLog();
+//			return r;
+//		}
+//		log.clear();
+//		
+//		final Deque<Expression<? extends T>> ts = new LinkedList<Expression<? extends T>>();
+//		final Matcher m = listSplitPattern.matcher(expr);
+//		int end = expr.length();
+//		int expectedEnd = -1;
+//		boolean and = true;
+//		boolean isAndSet = false;
+//		boolean last = false;
+//		boolean isLiteralList = true;
+//		while (m.find() || (last = !last)) {
+//			if (expectedEnd == -1)
+//				expectedEnd = last ? expr.length() : m.start();
+//			final Expression<? extends T> t = parser.convert(expr.substring(last ? 0 : m.end(), end));
+//			if (t != null) {
+//				isLiteralList &= t instanceof Literal;
+//				if (!last && !m.group().matches("\\s*,\\s*")) {
+//					if (isAndSet) {
+//						if (and != m.group().toLowerCase().contains("and")) {
+//							Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
+//							and = true;
+//						}
+//					} else {
+//						and = m.group().toLowerCase().contains("and");
+//						isAndSet = true;
+//					}
+//				}
+//				ts.addFirst(t);
+//				if (last)
+//					break;
+//				end = m.start();
+//				m.region(0, end);
+//			} else {
+//				log.clear();
+//			}
+//		}
+//		if (end != expectedEnd || ts.isEmpty()) {
+//			log.printError(defaultError);
+//			return null;
+//		}
+//		log.printLog();
+//		if (ts.size() == 1)
+//			return ts.getFirst();
+//		if (!isAndSet)
+//			Skript.warning("List is missing 'and' or 'or', defaulting to 'and'");
+//		if (isLiteralList) {
+//			return new LiteralList<T>(ts.toArray(new Literal[ts.size()]), and);
+//		} else {
+//			return new ExpressionList<T>(ts.toArray(new Expression[ts.size()]), and);
+//		}
+//	}
 	
 	/**
 	 * Prints errors
@@ -690,14 +690,14 @@ public class SkriptParser {
 								if (j2 != -1) {
 									try {
 										mark = Integer.parseInt(pattern.substring(j + 1, j2));
-										j = j2 + 1;
+										j = j2;
 									} catch (final NumberFormatException e) {}
 								}
 							}
 							res = parse_i(pattern, i, j + 1);
 							if (res != null) {
 								log.printLog();
-								if (mark != -1)
+								if (mark != -1 && res.mark == -1)// the rightmost mark is the one kept
 									res.mark = mark;
 								return res;
 							}
@@ -726,30 +726,15 @@ public class SkriptParser {
 						if (i2 == 0)
 							return null;
 					} else if (expr.charAt(i) == '{') {
-						i2 = expr.indexOf('}', i + 1) + 1;
+						i2 = VariableString.nextVariableBracket(expr, i + 1) + 1;
 						if (i2 == 0)
 							return null;
 					} else {
-						i2 = i + 1;
+						i2 = i+1;
 					}
 					final ParseLog log1 = SkriptLogger.startParseLog();
 					for (; i2 <= expr.length(); i2++) {
 						log1.clear();
-						if (i2 < expr.length()) {
-							if (expr.charAt(i2) == '"') {
-								i2 = nextQuote(expr, i2 + 1) + 1;
-								if (i2 == 0) {
-									log1.stop();
-									return null;
-								}
-							} else if (expr.charAt(i2) == '{') {
-								i2 = expr.indexOf('}', i2 + 1) + 1;
-								if (i2 == 0) {
-									log1.stop();
-									return null;
-								}
-							}
-						}
 						res = parse_i(pattern, i2, end + 1);
 						if (res != null) {
 							final ParseLog log2 = SkriptLogger.startParseLog();
@@ -772,7 +757,7 @@ public class SkriptParser {
 									if (vi.time != 0) {
 										if (e instanceof Literal<?>)
 											return null;
-										if (ScriptLoader.hasDelayBefore == 1) {
+										if (ScriptLoader.hasDelayBefore == Kleenean.TRUE) {
 											Skript.error("Cannot use time states after the event has already passed", ErrorQuality.SEMANTIC_ERROR);
 											return null;
 										}
@@ -854,12 +839,12 @@ public class SkriptParser {
 	
 	private final static class ExprInfo {
 		ClassInfo<?>[] classes;
-		boolean isOptional;
 		boolean[] isPlural;
+		boolean isOptional;
 		int time = 0;
 	}
 	
-	private static ExprInfo getExprInfo(String s) throws MalformedPatternException {
+	private static ExprInfo getExprInfo(String s) throws MalformedPatternException, IllegalArgumentException, SkriptAPIException {
 		final ExprInfo r = new ExprInfo();
 		r.isOptional = s.startsWith("-");
 		if (r.isOptional)

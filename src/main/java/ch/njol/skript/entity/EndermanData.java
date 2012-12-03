@@ -80,7 +80,7 @@ public class EndermanData extends EntityData<Enderman> {
 	
 	@Override
 	public String toString() {
-		return "enderman carrying " + Classes.toString(hand, false);
+		return "enderman" + (hand == null ? "" : " carrying " + Classes.toString(hand, false));
 	}
 	
 	@Override

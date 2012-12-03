@@ -29,12 +29,21 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import org.bukkit.plugin.Plugin;
+
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.Config;
+import ch.njol.skript.util.Utils;
+import ch.njol.skript.util.Version;
+import ch.njol.util.ExceptionUtils;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -50,6 +59,8 @@ public class Language {
 	private static HashMap<String, String> localizedPlurals;
 	
 	private static boolean useLocal = false;
+	
+	private static HashMap<Plugin, Version> langVersion = new HashMap<Plugin, Version>();
 	
 	public static String getName() {
 		return name;
@@ -160,58 +171,99 @@ public class Language {
 		return split.split(s);
 	}
 	
-	private final static InputStream getInputStream(final String name) {
-		final File f = new File(Skript.getInstance().getDataFolder(), "lang" + File.separator + name + ".lang");
-		try {
-			if (f.exists())
-				return new FileInputStream(f);
-		} catch (final FileNotFoundException e) {
-			assert false;
-		}
-		return Skript.getInstance().getResource("lang/" + name + ".lang");
+	/**
+	 * 
+	 * @param key
+	 * @return Whether the given key exists in the <b>english</b> language file.
+	 */
+	public static boolean keyExists(String key) {
+		return english.containsKey(key);
 	}
 	
-	public static void loadDefault() {
-		final InputStream din = getInputStream("english");
+	public static void loadDefault(SkriptAddon addon) {
+		if (addon.getLanguageFileDirectory() == null)
+			return;
+		final InputStream din = addon.plugin.getResource(addon.getLanguageFileDirectory()+"/english.lang");
 		if (din == null)
-			throw new IllegalStateException("Skript.jar is missing the required english.lang file!");
+			throw new IllegalStateException(addon.getFile().getName()+" is missing the required english.lang file!");
+		HashMap<String, String> en; 
 		try {
-			english = new Config(din, "english.lang", false, false, ":").toMap(".");
+			en = new Config(din, "english.lang", false, false, ":").toMap(".");
 		} catch (final Exception e) {
-			throw Skript.exception(e, "Could not load the default language file!");
+			throw Skript.exception(e, "Could not load "+addon.name+"'s default language file!");
 		} finally {
 			try {
 				din.close();
 			} catch (final IOException e) {}
 		}
-		makePlurals(english, englishPlurals);
-		for (final LanguageChangeListener l : listeners)
+		langVersion.put(addon.plugin, new Version(en.get("version")));
+		en.remove("version");
+		makePlurals(en, englishPlurals);
+		english.putAll(en);
+		for (LanguageChangeListener l : listeners)
 			l.onLanguageChange();
 	}
-	
+
 	public static boolean load(String name) {
 		name = name.toLowerCase();
-		final InputStream in = getInputStream(name);
-		if (in == null)
-			return false;
-		try {
-			localized = new Config(in, name + ".lang", false, false, ":").toMap(".");
-		} catch (final IOException e) {
-			Skript.exception(e, "Could not load the language file '" + name + ".lang': " + e.getLocalizedMessage());
-			return false;
-		} finally {
-			try {
-				in.close();
-			} catch (final IOException e) {}
-		}
 		localizedPlurals = new HashMap<String, String>();
-		makePlurals(localized, localizedPlurals);
+		boolean exists = load(Skript.getAddonInstance(), name);
+		for (SkriptAddon addon : Skript.getAddons())
+			exists |= load(addon, name);
+		if (!exists)
+			return false;
 		Language.name = name;
+		validateLocalized();
 		if (useLocal) {
 			for (final LanguageChangeListener l : listeners)
 				l.onLanguageChange();
 		}
 		return true;
+	}
+	
+	private static boolean load(SkriptAddon addon, String name) {
+		if (addon.getLanguageFileDirectory() == null)
+			return false;
+		HashMap<String, String> l = load(addon.plugin.getResource(addon.getLanguageFileDirectory()+"/" + name + ".lang"), name);
+		final File f = new File(addon.plugin.getDataFolder(), addon.getLanguageFileDirectory() + File.separator + name + ".lang");
+		try {
+			if (f.exists())
+				l.putAll(load(new FileInputStream(f), name));
+		} catch (final FileNotFoundException e) {
+			assert false;
+		}
+		if (l.isEmpty())
+			return false;
+		if (!l.containsKey("version")) {
+			Skript.error(addon.name+"'s language file "+name+".lang does not provide a version number!");
+		} else {
+			try {
+				Version v = new Version(l.get("version"));
+				if (v.isSmallerThan(langVersion.get(addon.plugin)))
+					Skript.warning(addon.name+"'s language file "+name+".lang is outdated, some messages will be english.");
+			} catch (IllegalArgumentException e) {
+				Skript.error("Illegal version syntax in "+addon.name+"'s language file "+name+".lang: "+e.getLocalizedMessage());
+			}
+		}
+		l.remove("version");
+		makePlurals(l, localizedPlurals);
+		localized.putAll(l);
+		return true;
+	}
+	
+	private static HashMap<String, String> load(InputStream in, String name) {
+		if (in == null)
+			return new HashMap<String, String>();
+		try {
+			return new Config(in, name + ".lang", false, false, ":").toMap(".");
+		} catch (final IOException e) {
+			Skript.exception(e, "Could not load the language file '" + name + ".lang': " + ExceptionUtils.toString(e));
+			return new HashMap<String, String>();
+		} finally {
+			try {
+				in.close();
+			} catch (final IOException e) {}
+		}
 	}
 	
 	private static final void makePlurals(final HashMap<String, String> lang, final HashMap<String, String> plurals) {
@@ -228,6 +280,27 @@ public class Language {
 			}
 			plurals.put(e.getKey(), s.substring(0, c) + s.substring((c2 == -1 ? c : c2) + 1));
 		}
+	}
+	
+	private static void validateLocalized() {
+		HashSet<String> s = new HashSet<String>(english.keySet());
+		s.removeAll(localized.keySet());
+		if (!s.isEmpty() && Skript.logNormal())
+			Skript.error(name+".lang is missing the following entries: "+StringUtils.join(s));
+		s = new HashSet<String>(localized.keySet());
+		s.removeAll(english.keySet());
+		if (!s.isEmpty() && Skript.logHigh())
+			Skript.warning(name+".lang has superfluous entries: "+StringUtils.join(s));
+	}
+	
+	/**
+	 * Registers new default strings. Use this if you need to register some strings to Skript's locatization system, e.g. class names.
+	 * <p>
+	 * There's no method to register localized strings as they can simply be added to the respective language file.
+	 * @param m
+	 */
+	public void addDefaults(Map<String, String> m) {
+		english.putAll(m);
 	}
 	
 	private final static Collection<LanguageChangeListener> listeners = new ArrayList<LanguageChangeListener>();

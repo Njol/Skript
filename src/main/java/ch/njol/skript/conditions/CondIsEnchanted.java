@@ -30,6 +30,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -49,7 +50,7 @@ public class CondIsEnchanted extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		items = (Expression<ItemType>) exprs[0];
 		enchs = (Expression<EnchantmentType>) exprs[1];
 		setNegated(matchedPattern == 1);
@@ -68,9 +69,9 @@ public class CondIsEnchanted extends Condition {
 					public boolean check(final EnchantmentType ench) {
 						return ench.has(item);
 					}
-				});
+				}, isNegated());
 			}
-		}, this);
+		});
 	}
 	
 	@Override

@@ -63,6 +63,7 @@ import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
 
 /**
@@ -151,7 +152,7 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 	
 	@Override
 	public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
-		execute(sender, label, Utils.join(args, " "));
+		execute(sender, label, StringUtils.join(args, " "));
 		return true;
 	}
 	

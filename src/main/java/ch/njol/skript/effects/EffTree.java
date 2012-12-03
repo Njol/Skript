@@ -21,6 +21,7 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
@@ -28,7 +29,9 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
 import ch.njol.skript.util.StructureType;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -38,18 +41,18 @@ public class EffTree extends Effect {
 	
 	static {
 		Skript.registerEffect(EffTree.class,
-				"(grow|create|generate) tree [of type %structuretype%] %blocks%",
-				"(grow|create|generate) %structuretype% [tree] %blocks%");
+				"(grow|create|generate) tree [of type %structuretype%] %directions% %locations%",
+				"(grow|create|generate) %structuretype% [tree] %directions% %locations%");
 	}
 	
-	private Expression<Block> blocks;
+	private Expression<Location> blocks;
 	private Expression<StructureType> type;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		type = (Expression<StructureType>) vars[0];
-		blocks = (Expression<Block>) vars[1];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		type = (Expression<StructureType>) exprs[0];
+		blocks = Direction.combine((Expression<? extends Direction>) exprs[1],  (Expression<? extends Location>) exprs[2]);
 		return true;
 	}
 	
@@ -58,8 +61,8 @@ public class EffTree extends Effect {
 		final StructureType type = this.type.getSingle(e);
 		if (type == null)
 			return;
-		for (final Block b : blocks.getArray(e)) {
-			type.grow(b);
+		for (final Location l : blocks.getArray(e)) {
+			type.grow(l.getBlock());
 		}
 	}
 	

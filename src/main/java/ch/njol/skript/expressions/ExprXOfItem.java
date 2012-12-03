@@ -25,12 +25,13 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -46,7 +47,7 @@ public class ExprXOfItem extends PropertyExpression<ItemStack, ItemStack> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends ItemStack>) exprs[1]);
 		amount = (Expression<Number>) exprs[0];
 		if (amount instanceof Literal && getExpr() instanceof Literal)// "x of y" is also an ItemType syntax

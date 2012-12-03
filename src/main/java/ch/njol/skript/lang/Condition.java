@@ -59,7 +59,7 @@ public abstract class Condition extends Statement {
 	}
 	
 	/**
-	 * Sets the negation status of this condition. This will change the behaviour of {@link Expression#check(Event, Checker, Condition)}.
+	 * Sets the negation status of this condition. This will change the behaviour of {@link Expression#check(Event, Checker, boolean)}.
 	 * 
 	 * @param invert
 	 */

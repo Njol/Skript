@@ -31,6 +31,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -48,7 +49,7 @@ public class CondIsWearing extends Condition {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		players = (Expression<Player>) vars[0];
 		types = (Expression<ItemType>) vars[1];
 		setNegated(matchedPattern == 1);
@@ -74,9 +75,9 @@ public class CondIsWearing extends Condition {
 						}
 						return false;
 					}
-				});
+				}, isNegated());
 			}
-		}, this);
+		});
 	}
 	
 }

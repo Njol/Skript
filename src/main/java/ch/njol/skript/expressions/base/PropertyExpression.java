@@ -24,16 +24,17 @@ package ch.njol.skript.expressions.base;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.Converters;
+import ch.njol.util.Kleenean;
 
 /**
  * Represents an expression which represents a property of another one. Remember to set the expression with {@link #setExpr(Expression)} in
- * {@link #init(Expression[], int, int, ParseResult)}.
+ * {@link #init(Expression[], int, Kleenean, ParseResult)}.
  * 
  * @author Peter Güttinger
  */
@@ -66,6 +67,7 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 		return get(e, expr.getArray(e));
 	}
 	
+	//TODO remove null elements
 	@Override
 	public final T[] getAll(final Event e) {
 		return get(e, expr.getAll(e));

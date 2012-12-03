@@ -81,6 +81,7 @@ import ch.njol.skript.util.ItemType;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -103,7 +104,7 @@ final public class ScriptLoader {
 	 */
 	private static volatile ScriptInfo loadedScripts = new ScriptInfo();
 	
-	public static int hasDelayBefore = -1;
+	public static Kleenean hasDelayBefore = Kleenean.FALSE;
 	
 	public static class ScriptInfo {
 		public int files, triggers, commands;
@@ -297,7 +298,6 @@ final public class ScriptLoader {
 					Skript.error("invalid line - all code has to be put into triggers");
 					continue;
 				}
-				System.out.println(" # "+cnode.getOrig());
 				
 				final SectionNode node = ((SectionNode) cnode);
 				String event = node.getName();
@@ -414,13 +414,13 @@ final public class ScriptLoader {
 				
 				currentEvent = parsedEvent.second;
 				currentEvents = parsedEvent.first.events;
-				hasDelayBefore = -1;
+				hasDelayBefore = Kleenean.FALSE;
 				
 				final Trigger trigger = new Trigger(config.getFile(), event, parsedEvent.second, loadItems(node));
 				
 				currentEvent = null;
 				currentEvents = null;
-				hasDelayBefore = -1;
+				hasDelayBefore = Kleenean.FALSE;
 				
 				if (parsedEvent.second instanceof SelfRegisteringSkriptEvent) {
 					((SelfRegisteringSkriptEvent) parsedEvent.second).register(trigger);
@@ -538,11 +538,9 @@ final public class ScriptLoader {
 		
 		final ArrayList<TriggerItem> items = new ArrayList<TriggerItem>();
 		
-		int hadDelayBeforeLastIf = -1;
+		Kleenean hadDelayBeforeLastIf = Kleenean.FALSE;
 		
 		for (final Node n : node) {
-			System.out.println(" # "+n.getOrig());
-			
 			SkriptLogger.setNode(n);
 			if (n instanceof SimpleNode) {
 				final SimpleNode e = (SimpleNode) n;
@@ -556,30 +554,26 @@ final public class ScriptLoader {
 					Skript.info(indentation + stmt.toString(null, true));
 				items.add(stmt);
 				if (stmt instanceof Delay)
-					hasDelayBefore = 1;
+					hasDelayBefore = Kleenean.TRUE;
 			} else if (n instanceof SectionNode) {
 				if (StringUtils.startsWithIgnoreCase(n.getName(), "loop ")) {
 					final String l = replaceOptions(n.getName().substring("loop ".length()));
 					if (l == null)
 						continue;
 					@SuppressWarnings("unchecked")
-					final Expression<?> loopedExpr = SkriptParser.parseExpression(l, false, ParseContext.DEFAULT, Object.class);
+					final Expression<?> loopedExpr = SkriptParser.parseExpression(l, false, ParseContext.DEFAULT, Object.class).getConvertedExpression(Object.class);
 					if (loopedExpr == null)
 						continue;
-					if (loopedExpr instanceof UnparsedLiteral) {
-						Skript.error("can't understand this loop: " + n.getName());
-						continue;
-					}
 					if (loopedExpr.isSingle()) {
 						Skript.error("Can't loop " + loopedExpr);
 						continue;
 					}
 					if (Skript.debug())
 						Skript.info(indentation + "loop " + loopedExpr.toString(null, true) + ":");
-					final int hadDelayBefore = hasDelayBefore;
+					final Kleenean hadDelayBefore = hasDelayBefore;
 					items.add(new Loop(loopedExpr, (SectionNode) n));
-					if (hadDelayBefore != 1 && hasDelayBefore != -1)
-						hasDelayBefore = 0;
+					if (hadDelayBefore != Kleenean.TRUE && hasDelayBefore != Kleenean.FALSE)
+						hasDelayBefore = Kleenean.UNKNOWN;
 				} else if (StringUtils.startsWithIgnoreCase(n.getName(), "while ")) {
 					final String l = replaceOptions(n.getName().substring("while ".length()));
 					if (l == null)
@@ -589,10 +583,10 @@ final public class ScriptLoader {
 						continue;
 					if (Skript.debug())
 						Skript.info(indentation + "while " + c.toString(null, true) + ":");
-					final int hadDelayBefore = hasDelayBefore;
+ 					final Kleenean hadDelayBefore = hasDelayBefore;
 					items.add(new While(c, (SectionNode) n));
-					if (hadDelayBefore != 1 && hasDelayBefore != -1)
-						hasDelayBefore = 0;
+					if (hadDelayBefore != Kleenean.TRUE && hasDelayBefore != Kleenean.FALSE)
+						hasDelayBefore = Kleenean.UNKNOWN;
 				} else if (n.getName().equalsIgnoreCase("else")) {
 					if (items.size() == 0 || !(items.get(items.size() - 1) instanceof Conditional)) {
 						Skript.error("'else' has to be placed just after the end of a conditional section");
@@ -600,19 +594,10 @@ final public class ScriptLoader {
 					}
 					if (Skript.debug())
 						Skript.info(indentation + "else:");
-					final int hadDelayAfterLastIf = hasDelayBefore;
+					final Kleenean hadDelayAfterLastIf = hasDelayBefore;
 					hasDelayBefore = hadDelayBeforeLastIf;
 					((Conditional) items.get(items.size() - 1)).loadElseClause((SectionNode) n);
-					if (hadDelayBeforeLastIf == 1) {
-						hasDelayBefore = 1;
-					} else if (hadDelayBeforeLastIf == -1 && hadDelayAfterLastIf == -1 && hasDelayBefore == -1) {
-						hasDelayBefore = -1;
-					} else {
-						if (hadDelayAfterLastIf == 1 && hasDelayBefore == 1)
-							hasDelayBefore = 1;
-						else if (hadDelayAfterLastIf != -1 || hasDelayBefore != -1)
-							hasDelayBefore = 0;
-					}
+					hasDelayBefore = hasDelayBefore.and(hadDelayAfterLastIf).or(hadDelayBeforeLastIf);
 				} else {
 					String name = n.getName();
 					if (StringUtils.startsWithIgnoreCase(name, "if "))
@@ -622,11 +607,11 @@ final public class ScriptLoader {
 						continue;
 					if (Skript.debug())
 						Skript.info(indentation + cond.toString(null, true) + ":");
-					final int hadDelayBefore = hasDelayBefore;
+					final Kleenean hadDelayBefore = hasDelayBefore;
 					hadDelayBeforeLastIf = hadDelayBefore;
 					items.add(new Conditional(cond, (SectionNode) n));
-					if (hadDelayBefore != 1 && hasDelayBefore != -1)
-						hasDelayBefore = 0;
+					if (hadDelayBefore != Kleenean.TRUE && hasDelayBefore != Kleenean.FALSE)
+						hasDelayBefore = Kleenean.UNKNOWN;
 				}
 			}
 		}

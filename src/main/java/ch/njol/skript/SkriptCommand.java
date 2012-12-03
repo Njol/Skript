@@ -21,6 +21,7 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.CommandHelp;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.StringUtils;
 
 /*
  *   This file is part of Skript.
@@ -123,7 +124,7 @@ public class SkriptCommand implements CommandExecutor {
 				if (f == null)
 					return true;
 				if (f.getName().startsWith("-")) {
-					info(sender, "This script is currently disabled. Use <gray>/<gold>skript <cyan>enable <red>" + Utils.join(args, " ", 1, args.length) + "<reset> to enable it.");
+					info(sender, "This script is currently disabled. Use <gray>/<gold>skript <cyan>enable <red>" + StringUtils.join(args, " ", 1, args.length) + "<reset> to enable it.");
 					return true;
 				}
 				ScriptLoader.unloadScript(f);
@@ -159,7 +160,7 @@ public class SkriptCommand implements CommandExecutor {
 				if (f == null)
 					return true;
 				if (!f.getName().startsWith("-")) {
-					info(sender, "<gold>" + f.getName() + "<reset> is already enabled! Use <gray>/<gold>skript <cyan>reload <red>" + Utils.join(args, " ", 1, args.length) + "<reset> to reload it if it was changed.");
+					info(sender, "<gold>" + f.getName() + "<reset> is already enabled! Use <gray>/<gold>skript <cyan>reload <red>" + StringUtils.join(args, " ", 1, args.length) + "<reset> to reload it if it was changed.");
 					return true;
 				}
 				
@@ -323,7 +324,7 @@ public class SkriptCommand implements CommandExecutor {
 	}
 	
 	private static File getScriptFromArgs(final CommandSender sender, final String[] args, final int start) {
-		String script = Utils.join(args, " ", start, args.length);
+		String script = StringUtils.join(args, " ", start, args.length);
 		if (!script.endsWith(".sk"))
 			script = script + ".sk";
 		if (script.startsWith("-"))

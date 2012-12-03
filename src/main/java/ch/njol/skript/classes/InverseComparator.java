@@ -35,7 +35,7 @@ public class InverseComparator<T1, T2> implements Comparator<T1, T2> {
 	}
 	
 	@Override
-	public ch.njol.skript.classes.Comparator.Relation compare(final T1 o1, final T2 o2) {
+	public Relation compare(final T1 o1, final T2 o2) {
 		return comp.compare(o2, o1).getSwitched();
 	}
 	

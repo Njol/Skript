@@ -26,6 +26,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.events.EvtClick;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Kleenean;
 
 /**
  * A SkriptEvent is like a condition. It is called when any of the registered events occurs.
@@ -52,7 +53,7 @@ public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 	}
 	
 	@Override
-	public final boolean init(final ch.njol.skript.lang.Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public final boolean init(final ch.njol.skript.lang.Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		throw new UnsupportedOperationException();
 	}
 	

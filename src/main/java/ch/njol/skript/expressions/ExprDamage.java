@@ -28,13 +28,14 @@ import org.bukkit.event.entity.EntityDamageEvent;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -46,11 +47,11 @@ public class ExprDamage extends SimpleExpression<Float> {
 		Skript.registerExpression(ExprDamage.class, Float.class, ExpressionType.SIMPLE, "[the] damage");
 	}
 	
-	private int delay;
+	private Kleenean delay;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		if (!Utils.containsAny(ScriptLoader.currentEvents, EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class)) {
 			Skript.error("'damage' can only be used in damage events", ErrorQuality.SEMANTIC_ERROR);
 			return false;
@@ -69,7 +70,7 @@ public class ExprDamage extends SimpleExpression<Float> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (delay != -1) {
+		if (delay != Kleenean.FALSE) {
 			Skript.error("Can't change the damage anymore after the event has already passed");
 			return null;
 		}

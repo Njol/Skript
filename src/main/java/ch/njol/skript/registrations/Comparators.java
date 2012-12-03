@@ -95,23 +95,23 @@ public class Comparators {
 			return (s.isAssignableFrom(f) ? Comparator.equalsComparator : new InverseComparator<F, S>((Comparator<? super S, ? super F>) Comparator.equalsComparator));
 		}
 		
-		final int[] zeroOne = {0, 1};
+		final boolean[] trueFalse = {true, false};
 		Converter<? super F, ?> c1;
 		Converter<? super S, ?> c2;
 		
 		// single conversion
 		for (final ComparatorInfo<?, ?> info : comparators) {
-			for (final int c : zeroOne) {
-				if (info.getType(c).isAssignableFrom(f)) {
-					c2 = Converters.getConverter(s, info.getType(1 - c));
+			for (final boolean first : trueFalse) {
+				if (info.getType(first).isAssignableFrom(f)) {
+					c2 = Converters.getConverter(s, info.getType(!first));
 					if (c2 != null) {
-						return c == 0 ? new ConvertedComparator<F, S>(info.c, c2) : new InverseComparator<F, S>(new ConvertedComparator<S, F>(c2, info.c));
+						return first ? new ConvertedComparator<F, S>(info.c, c2) : new InverseComparator<F, S>(new ConvertedComparator<S, F>(c2, info.c));
 					}
 				}
-				if (info.getType(c).isAssignableFrom(s)) {
-					c1 = Converters.getConverter(f, info.getType(1 - c));
+				if (info.getType(first).isAssignableFrom(s)) {
+					c1 = Converters.getConverter(f, info.getType(!first));
 					if (c1 != null) {
-						return c == 1 ? new ConvertedComparator<F, S>(c1, info.c) : new InverseComparator<F, S>(new ConvertedComparator<S, F>(info.c, c1));
+						return first ? new ConvertedComparator<F, S>(c1, info.c) : new InverseComparator<F, S>(new ConvertedComparator<S, F>(info.c, c1));
 					}
 				}
 			}
@@ -119,11 +119,11 @@ public class Comparators {
 		
 		// double conversion
 		for (final ComparatorInfo<?, ?> info : comparators) {
-			for (final int c : zeroOne) {
-				c1 = Converters.getConverter(f, info.getType(c));
-				c2 = Converters.getConverter(s, info.getType(1 - c));
+			for (final boolean first : trueFalse) {
+				c1 = Converters.getConverter(f, info.getType(first));
+				c2 = Converters.getConverter(s, info.getType(!first));
 				if (c1 != null && c2 != null) {
-					return c == 0 ? new ConvertedComparator<F, S>(c1, info.c, c2) : new InverseComparator<F, S>(new ConvertedComparator<S, F>(c2, info.c, c1));
+					return first ? new ConvertedComparator<F, S>(c1, info.c, c2) : new InverseComparator<F, S>(new ConvertedComparator<S, F>(c2, info.c, c1));
 				}
 			}
 		}

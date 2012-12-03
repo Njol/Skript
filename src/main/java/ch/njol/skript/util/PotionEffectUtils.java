@@ -47,7 +47,7 @@ public abstract class PotionEffectUtils {
 				for (final PotionEffectType t : PotionEffectType.values()) {
 					if (t == null)
 						continue;
-					final String[] ls = Language.getList("potions.names." + t.getName());
+					final String[] ls = Language.getList("potions." + t.getName());
 					names[t.getId()] = ls[0];
 					for (final String l : ls) {
 						types.put(l, t);

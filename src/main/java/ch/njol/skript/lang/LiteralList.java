@@ -21,25 +21,21 @@
 
 package ch.njol.skript.lang;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
+import ch.njol.skript.lang.util.SimpleLiteral;
+
 /**
  * @author Peter Güttinger
  */
 public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 	private static final long serialVersionUID = -5054176694578441222L;
 	
-	/**
-	 * @param array
-	 * @param and
-	 */
 	public LiteralList(final Literal<? extends T>[] literals, final boolean and) {
 		super(literals, and);
 	}
 	
-	/**
-	 * @param exprs
-	 * @param and
-	 * @param literalList
-	 */
 	public LiteralList(final Literal<? extends T>[] literals, final boolean and, final LiteralList<?> source) {
 		super(literals, and, source);
 	}
@@ -72,6 +68,20 @@ public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 	@Override
 	public Literal<? extends T>[] getExpressions() {
 		return (Literal<? extends T>[]) super.getExpressions();
+	}
+
+	@Override
+	public Expression<T> simplify() {
+		boolean isSimpleList = true;
+		for (int i = 0; i < expressions.length; i++)
+			isSimpleList &= expressions[i].isSingle();
+		if (isSimpleList) {
+			T[] values = (T[]) Array.newInstance(getReturnType(), expressions.length);
+			for (int i = 0; i < values.length; i++)
+				values[i] = ((Literal<? extends T>) expressions[i]).getSingle();
+			return new SimpleLiteral<T>(values, getReturnType(), and);
+		}
+		return this;
 	}
 	
 }

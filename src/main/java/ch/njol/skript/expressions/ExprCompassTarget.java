@@ -34,6 +34,10 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 public class ExprCompassTarget extends SimplePropertyExpression<Player, Location> {
 	private static final long serialVersionUID = -1807483603722971666L;
 	
+	static {
+		register(ExprCompassTarget.class, Location.class, "compass target", "players");
+	}
+	
 	@Override
 	public Location convert(final Player p) {
 		return p.getCompassTarget();

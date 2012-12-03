@@ -38,6 +38,7 @@ import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.util.Patterns;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -85,7 +86,7 @@ public class CondIs extends Condition {
 	private Comparator comp;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		first = vars[0];
 		second = vars[1];
 		if (vars.length == 3)
@@ -163,16 +164,46 @@ public class CondIs extends Condition {
 		return comp != null;
 	}
 	
+	/*
+	 * # := condition (e.g. is, contains, is enchanted with, etc.)
+	 * !# := not #
+	 * 
+	 * a and b # x === a # x && b # x
+	 * a or b # x === a # x || b # x
+	 * a # x and y === a # x && a # y
+	 * a # x or y === a # x || a # y
+	 * a and b # x and y === a # x and y && b # x and y === a # x && a # y && b # x && b # y
+	 * a and b # x or y === a # x or y && b # x or y
+	 * a or b # x and y === a # x and y || b # x and y
+	 * a or b # x or y === a # x or y || b # x or y
+	 * 
+	 * a and b !# x === a !# x && b !# x
+	 * a or b !# x === a !# x || b !# x
+	 * a !# x and y === a !# x && a !# y
+	 * a !# x or y === a !# x || a !# y
+	 * a and b !# x and y === a !# x and y && b !# x and y === a !# x && a !# y && b !# x && b !# y
+	 * a and b !# x or y === a !# x or y && b !# x or y
+	 * a or b !# x and y === a !# x and y || b !# x and y
+	 * a or b !# x or y === a !# x or y || b !# x or y
+	 * 
+	 * Exception for 'is not':
+	 *  a !# x or y === a !# x && a !# y === !(a # x || a # y) === !(a # x or y)
+	 *  a !# x and y === a !# x || a !# y  === !(a # x && a # y) === !(a # x and y)
+	 *  a and/or b !# x is normal
+	 *  This does not apply to 'is not greater/smaller than'
+	 *  TODO: check whether any other condition should behave the same
+	 * 
+	 */
 	@Override
 	public boolean check(final Event e) {
 		return first.check(e, new Checker<Object>() {
 			@Override
 			public boolean check(final Object o1) {
-				return SimpleExpression.check(second.getAll(e), new Checker<Object>() {
+				return (relation == Relation.NOT_EQUAL && third == null) ^ second.check(e, new Checker<Object>() {
 					@Override
 					public boolean check(final Object o2) {
 						if (third == null)
-							return relation.is(comp != null ? comp.compare(o1, o2) : Comparators.compare(o1, o2));
+							return (relation == Relation.NOT_EQUAL) ^ relation.is(comp != null ? comp.compare(o1, o2) : Comparators.compare(o1, o2));
 						return third.check(e, new Checker<Object>() {
 							@Override
 							public boolean check(final Object o3) {
@@ -182,7 +213,7 @@ public class CondIs extends Condition {
 							}
 						});
 					}
-				}, false, third == null ? relation == Relation.NOT_EQUAL ^ second.getAnd() : second.getAnd());
+				});
 			}
 		});
 	}

@@ -21,39 +21,39 @@
 
 package ch.njol.skript.expressions;
 
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
 import ch.njol.util.StringUtils;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
-public class ExprLightLevel extends PropertyExpression<Block, Byte> {
+public class ExprLightLevel extends PropertyExpression<Location, Byte> {
 	private static final long serialVersionUID = -5974786826590395433L;
 	
 	static {
-		Skript.registerExpression(ExprLightLevel.class, Byte.class, ExpressionType.PROPERTY, "[(sky|sun|block)[ ]]light[ ]level [of] %block%");
+		Skript.registerExpression(ExprLightLevel.class, Byte.class, ExpressionType.PROPERTY, "[(1¦sky|1¦sun|2¦block)[ ]]light[ ]level [(of|%direction%) %location%]");
 	}
 	
-	private Expression<Block> blocks;
-	private final int SKY = 1, BLOCK = 2, ANY = 3;
+	private Expression<Location> blocks;
+	private final int SKY = 1, BLOCK = 2, ANY = -1;
 	private int whatLight = ANY;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		blocks = (Expression<Block>) exprs[0];
-		if (StringUtils.startsWithIgnoreCase(parseResult.expr, "sky") || StringUtils.startsWithIgnoreCase(parseResult.expr, "sun"))
-			whatLight = SKY;
-		else if (StringUtils.startsWithIgnoreCase(parseResult.expr, "block"))
-			whatLight = BLOCK;
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		blocks = Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]);
+		whatLight = parseResult.mark;
 		return true;
 	}
 	
@@ -68,10 +68,11 @@ public class ExprLightLevel extends PropertyExpression<Block, Byte> {
 	}
 	
 	@Override
-	protected Byte[] get(final Event e, final Block[] source) {
-		return get(source, new Converter<Block, Byte>() {
+	protected Byte[] get(final Event e, final Location[] source) {
+		return get(source, new Converter<Location, Byte>() {
 			@Override
-			public Byte convert(final Block b) {
+			public Byte convert(final Location l) {
+				Block b = l.getBlock();
 				return whatLight == ANY ? b.getLightLevel() : whatLight == BLOCK ? b.getLightFromBlocks() : b.getLightFromSky();
 			}
 		});

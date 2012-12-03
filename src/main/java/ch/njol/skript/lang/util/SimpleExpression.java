@@ -31,10 +31,10 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.ArrayIterator;
 
 /**
@@ -132,17 +132,13 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	protected abstract T[] get(Event e);
 	
 	@Override
-	public final boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
-		return check(e, c, cond.isNegated());
-	}
-	
-	@Override
 	public final boolean check(final Event e, final Checker<? super T> c) {
 		return check(e, c, false);
 	}
 	
-	private final boolean check(final Event e, final Checker<? super T> c, final boolean invert) throws ClassCastException {
-		return check(get(e), c, invert, getAnd());
+	@Override
+	public final boolean check(final Event e, final Checker<? super T> c, final boolean negated) {
+		return check(get(e), c, negated, getAnd());
 	}
 	
 	public final static <T> boolean check(final T[] all, final Checker<? super T> c, final boolean invert, final boolean and) {
@@ -209,7 +205,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 */
 	@Override
 	public boolean setTime(final int time) {
-		if (ScriptLoader.hasDelayBefore == 1 && time != 0) {
+		if (ScriptLoader.hasDelayBefore == Kleenean.TRUE && time != 0) {
 			Skript.error("Can't use time states after the event has already passed");
 			return false;
 		}
@@ -218,7 +214,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	protected final boolean setTime(final int time, final Class<? extends Event> applicableEvent, final Expression<?>... mustbeDefaultVars) {
-		if (ScriptLoader.hasDelayBefore == 1 && time != 0) {
+		if (ScriptLoader.hasDelayBefore == Kleenean.TRUE && time != 0) {
 			Skript.error("Can't use time states after the event has already passed");
 			return false;
 		}
@@ -234,7 +230,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	protected final boolean setTime(final int time, final Expression<?> mustbeDefaultVar, final Class<? extends Event>... applicableEvents) {
-		if (ScriptLoader.hasDelayBefore == 1 && time != 0) {
+		if (ScriptLoader.hasDelayBefore == Kleenean.TRUE && time != 0) {
 			Skript.error("Can't use time states after the event has already passed");
 			return false;
 		}
@@ -276,6 +272,11 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	
 	@Override
 	public Expression<?> getSource() {
+		return this;
+	}
+	
+	@Override
+	public Expression<? extends T> simplify() {
 		return this;
 	}
 	

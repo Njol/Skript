@@ -5,6 +5,8 @@ version: 2.0 beta 3
 and: und
 or: oder
 a: ein, einer, eines
+is: ist
+are: sind
 
 # -- Commands --
 commands:
@@ -18,12 +20,12 @@ updater:
 	not_started: Es wurde noch nicht geprüft, ob eine neue Version verfügbar ist. Benutze <gold>/skript update check<reset> um die Überprüfung zu starten.
 	checking: Es wird geprüft, ob eine neue Version verfügbar ist...
 	check_in_progress: Es wird gerade geprüft, ob eine neue Version verfügbar ist.
-	check_error: <red>Beim Prüfen auf eine neue Version ist ein Fehler aufgetreten:<reset> %s
+	check_error: <red>Beim Prüfen auf eine neue Version ist ein Fehler aufgetreten:<light red> %s
 	running_latest_version: Auf diesem Server läuft die neueste Version von Skript.
 	update_available: Eine neue Version von Skript ist verfügbar: <gold>%s<reset> (Auf diesem Server läuft Version <gold>%s<reset>)
 	downloading: Lade Skript <gold>%s<reset> herunter...
 	download_in_progress: Die neueste Version wird gerade heruntergeladen.
-	download_error: <red>Beim Herunterladen der neuesten Version ist ein Fehler aufgetreten:<reset> %s
+	download_error: <red>Beim Herunterladen der neuesten Version ist ein Fehler aufgetreten:<light red> %s
 	downloaded: Die neueste Version von Skript wurde heruntergeladen! Starte den Server neu oder benutze /reload um die Änderungen zu übernehmen.
 
 # -- Enchantments --
@@ -54,27 +56,26 @@ enchantments:
 
 # -- Potion Effects --
 potions:
-	names:
-		speed: Schnelligkeit
-		slow: Langsamkeit
-		fast_digging: Eile
-		slow_digging: Trägheit
-		increase_damage: Stärke
-		heal: Heilung
-		harm: Schaden
-		jump: Sprungkraft
-		confusion: Übelkeit
-		regeneration: Regeneration
-		damage_resistance: Widerstand
-		fire_resistance: Feuerresistenz
-		water_breathing: Wasseratmung
-		invisibility: Unsichtbarkeit
-		blindness: Blindheit
-		night_vision: Nachtsicht
-		hunger: Hunger
-		weakness: Schwäche
-		poison: Vergiftung
-		wither: Wither
+	speed: Schnelligkeit
+	slow: Langsamkeit
+	fast_digging: Eile
+	slow_digging: Trägheit
+	increase_damage: Stärke
+	heal: Heilung
+	harm: Schaden
+	jump: Sprungkraft
+	confusion: Übelkeit
+	regeneration: Regeneration
+	damage_resistance: Widerstand
+	fire_resistance: Feuerresistenz
+	water_breathing: Wasseratmung
+	invisibility: Unsichtbarkeit
+	blindness: Blindheit
+	night_vision: Nachtsicht
+	hunger: Hunger
+	weakness: Schwäche
+	poison: Vergiftung
+	wither: Wither
 
 # -- Weather --
 weather:
@@ -193,6 +194,10 @@ directions:
 
 # -- Types --
 types:
+	not_a: kein(e)
+	neither: weder
+	nor: noch
+	
 	# Java
 	object: Objekt¦e
 	number: Nummer¦n
@@ -217,7 +222,7 @@ types:
 	offlineplayer: Spieler
 	commandsender: Spieler/Konsole¦n
 	blockface: Richtung¦en
-	inventoryholder: inventory holder
+	inventoryholder: Inventarbesitzer # wird eh nie benutzt
 	gamemode: Spiel¦modus¦modi
 	itemstack: Material¦ien
 	biome: Biom¦e
@@ -225,6 +230,8 @@ types:
 	
 	# Skript
 	weathertype: Wettertyp¦en
+	entitytype: Kreaturentyp|en
+	entitydata: Kreaturentyp|en
 	itemtype: Gegen¦stand¦stände
 	time: Zeit¦en
 	timespan: Zeitdauer¦n
@@ -235,3 +242,5 @@ types:
 	color: Farbe¦n
 	structuretype: Baumtyp¦en
 	enchantmenttype: Verzauberung¦en
+	experience: Erfahrungspunkt|e
+	

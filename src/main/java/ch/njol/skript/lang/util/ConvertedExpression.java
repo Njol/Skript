@@ -28,11 +28,11 @@ import org.bukkit.event.Event;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.SerializableConverter;
-import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.util.Checker;
+import ch.njol.util.Kleenean;
 
 /**
  * Represents a expression converted to another type. This, and not Expression, is the required return type of {@link SimpleExpression#getConvertedExpr(Class)} because this class<br/>
@@ -85,7 +85,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	@Override
-	public final boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult matcher) {
+	public final boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult matcher) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -148,7 +148,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	@Override
-	public boolean check(final Event e, final Checker<? super T> c, final Condition cond) {
+	public boolean check(final Event e, final Checker<? super T> c, final boolean negated) {
 		return source.check(e, new Checker<F>() {
 			@Override
 			public boolean check(final F f) {
@@ -157,7 +157,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 					return false;
 				return c.check(t);
 			}
-		}, cond);
+		}, negated);
 	}
 	
 	@Override
@@ -223,6 +223,11 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	@Override
 	public Expression<?> getSource() {
 		return source;
+	}
+
+	@Override
+	public Expression<? extends T> simplify() {
+		return source.simplify().getConvertedExpression(to);
 	}
 	
 }

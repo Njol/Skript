@@ -177,7 +177,7 @@ public interface Comparator<T1, T2> extends Serializable {
 	}
 	
 	/**
-	 * holds information a about a comparator.
+	 * holds information about a comparator.
 	 * 
 	 * @param <T1> see {@link Comparator}
 	 * @param <T2> dito
@@ -194,8 +194,8 @@ public interface Comparator<T1, T2> extends Serializable {
 			this.c = c;
 		}
 		
-		public Class<?> getType(final int i) {
-			return i == 0 ? c1 : c2;
+		public Class<?> getType(final boolean first) {
+			return first ? c1 : c2;
 		}
 		
 	}

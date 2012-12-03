@@ -272,33 +272,6 @@ public abstract class Utils {
 		throw new IllegalArgumentException("axis must be between 0 and 2 inclusive");
 	}
 	
-	public static String join(final String[] strings) {
-		return join(strings, ", ");
-	}
-	
-	public static String join(final String[] strings, final char delimiter) {
-		return join(strings, Character.toString(delimiter), 0, strings.length);
-	}
-	
-	public static String join(final String[] strings, final String delimiter) {
-		return join(strings, delimiter, 0, strings.length);
-	}
-	
-	public static String join(final String[] strings, final String delimiter, final int start, final int end) {
-		assert strings != null;
-		if (strings.length == 0)
-			return "";
-		else if (strings.length == 1)
-			return strings[0];
-		final StringBuilder b = new StringBuilder();
-		for (int i = start; i < end; i++) {
-			if (i != start)
-				b.append(delimiter);
-			b.append(strings[i]);
-		}
-		return b.toString();
-	}
-	
 	public static String join(final Object[] objects) {
 		assert objects != null;
 		final StringBuilder b = new StringBuilder();
@@ -310,13 +283,16 @@ public abstract class Utils {
 		return b.toString();
 	}
 	
-	public static String join(final List<?> objects) {
+	public static String join(final Iterable<?> objects) {
 		assert objects != null;
 		final StringBuilder b = new StringBuilder();
-		for (int i = 0; i < objects.size(); i++) {
-			if (i != 0)
+		boolean first = true;
+		for (Object o:objects) {
+			if (!first)
 				b.append(", ");
-			b.append(Classes.toString(objects.get(i)));
+			else
+				first = false;
+			b.append(Classes.toString(o));
 		}
 		return b.toString();
 	}
@@ -766,7 +742,7 @@ public abstract class Utils {
 	
 	// TODO improve?
 	public final static Class<?> getSuperType(final Class<?>... cs) {
-		assert cs != null && cs.length > 0;
+		assert cs.length > 0;
 		Class<?> r = cs[0];
 		outer: for (final Class<?> c : cs) {
 			assert !c.isArray() && !c.isPrimitive();
@@ -777,7 +753,7 @@ public abstract class Utils {
 			if (!r.isAssignableFrom(c)) {
 				Class<?> s = c;
 				while ((s = s.getSuperclass()) != null) {
-					if (s.isAssignableFrom(r)) {
+					if (s != Object.class && s.isAssignableFrom(r)) {
 						r = s;
 						continue outer;
 					}

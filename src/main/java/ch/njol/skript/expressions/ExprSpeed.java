@@ -30,6 +30,7 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Math2;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -45,7 +46,7 @@ public class ExprSpeed extends SimplePropertyExpression<Player, Float> {
 	private boolean walk;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		if (!Skript.isRunningBukkit(1, 4)) {
 			Skript.error("fly and walk speed can only be used in Minecraft 1.4 and newer");
 			return false;

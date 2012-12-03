@@ -26,10 +26,12 @@ import java.util.Random;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionList;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -39,11 +41,10 @@ public class ExprRandomNumber extends SimpleExpression<Number> {
 	
 	static {
 		Skript.registerExpression(ExprRandomNumber.class, Number.class, ExpressionType.NORMAL,
-				"[a] random number (from|between) %number% (to|and) %number%",
-				"[a] random integer (from|between) %number% (to|and) %number%");
+				"[a] random (1¦integer|2¦number) (from|between) %number% (to|and) %number%");
 	}
 	
-	private Expression<Number> lower, upper;
+	private Expression<? extends Number> lower, upper;
 	
 	private final Random rand = new Random();
 	
@@ -51,10 +52,10 @@ public class ExprRandomNumber extends SimpleExpression<Number> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
-		lower = (Expression<Number>) vars[0];
-		upper = (Expression<Number>) vars[1];
-		integer = matchedPattern == 1;
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		lower = (Expression<Number>) exprs[0];
+		upper = (Expression<Number>) exprs[1];
+		integer = parser.mark == 1;
 		return true;
 	}
 	

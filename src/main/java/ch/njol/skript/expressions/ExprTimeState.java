@@ -24,12 +24,13 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -44,11 +45,11 @@ public class ExprTimeState extends WrapperExpression<Object> {
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		final Expression<?> expr = vars[0];
 		if (expr instanceof Literal<?>)
 			return false;
-		if (isDelayed == 1) {
+		if (isDelayed == Kleenean.TRUE) {
 			Skript.error("Cannot use time states after the event has already passed", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}

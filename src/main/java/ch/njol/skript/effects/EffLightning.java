@@ -28,6 +28,8 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -37,7 +39,7 @@ public class EffLightning extends Effect {
 	private static final long serialVersionUID = -4592368027843536618L;
 	
 	static {
-		Skript.registerEffect(EffLightning.class, "(create|strike) lightning %locations%", "(create|strike) lightning[ ]effect %locations%");
+		Skript.registerEffect(EffLightning.class, "(create|strike) lightning %directions% %locations%", "(create|strike) lightning[ ]effect %directions% %locations%");
 	}
 	
 	private Expression<Location> locations;
@@ -46,8 +48,8 @@ public class EffLightning extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		locations = (Expression<Location>) exprs[0];
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		locations = Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]);
 		effectOnly = matchedPattern == 1;
 		return true;
 	}

@@ -31,7 +31,9 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
 import ch.njol.skript.util.ItemType;
+import ch.njol.util.Kleenean;
 
 /**
  * 
@@ -42,7 +44,7 @@ public class EffDrop extends Effect {
 	private static final long serialVersionUID = -3561531766438040547L;
 	
 	static {
-		Skript.registerEffect(EffDrop.class, "drop %integer% ([e]xp|experience) [orb[s]] [%locations%]", "drop %itemtypes% [%locations%]");
+		Skript.registerEffect(EffDrop.class, "drop %integer% ([e]xp|experience) [orb[s]] [%directions% %locations%]", "drop %itemtypes% [%directions% %locations%]");
 	}
 	
 	private Expression<Integer> xp = null;
@@ -51,12 +53,12 @@ public class EffDrop extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		if (matchedPattern == 0)
-			xp = (Expression<Integer>) vars[0];
+			xp = (Expression<Integer>) exprs[0];
 		else
-			items = (Expression<ItemType>) vars[0];
-		locations = (Expression<Location>) vars[1];
+			items = (Expression<ItemType>) exprs[0];
+		locations = Direction.combine((Expression<? extends Direction>) exprs[1], (Expression<? extends Location>) exprs[2]);
 		return true;
 	}
 	

@@ -282,14 +282,14 @@ public final class BukkitEventValues {
 			}
 		}, 0);
 		// BlockPistonEvent
-		EventValues.registerEventValue(BlockPistonEvent.class, BlockFace.class, new SerializableGetter<BlockFace, BlockPistonEvent>() {
-			private static final long serialVersionUID = 7011074064679528577L;
-			
-			@Override
-			public BlockFace get(final BlockPistonEvent e) {
-				return e.getDirection();
-			}
-		}, 0);
+//		EventValues.registerEventValue(BlockPistonEvent.class, BlockFace.class, new SerializableGetter<BlockFace, BlockPistonEvent>() {
+//			private static final long serialVersionUID = 7011074064679528577L;
+//			
+//			@Override
+//			public BlockFace get(final BlockPistonEvent e) {
+//				return e.getDirection();
+//			}
+//		}, 0);
 		// SignChangeEvent
 		EventValues.registerEventValue(SignChangeEvent.class, Player.class, new SerializableGetter<Player, SignChangeEvent>() {
 			private static final long serialVersionUID = -125995721827677072L;

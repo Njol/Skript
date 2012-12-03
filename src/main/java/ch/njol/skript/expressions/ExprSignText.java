@@ -28,12 +28,13 @@ import org.bukkit.event.Event;
 import org.bukkit.event.block.SignChangeEvent;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -43,7 +44,8 @@ public class ExprSignText extends SimpleExpression<String> {
 	
 	static {
 		Skript.registerExpression(ExprSignText.class, String.class, ExpressionType.PROPERTY,
-				"[the] line <[1-4]> [of %block%]");//, "[the] (1st|2nd|3rd|4th) line [of %block%]");
+				// TODO use %number%
+				"[the] line (1¦1|2¦2|3¦3|4¦4) [of %block%]", "[the] (1¦1st|1¦first|2¦2nd|2¦second|3¦3rd|3¦third|4¦4th|4¦fourth) line [of %block%]");
 	}
 	
 	private int line;
@@ -51,8 +53,8 @@ public class ExprSignText extends SimpleExpression<String> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
-		line = Integer.parseInt(parseResult.regexes.get(0).group());
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		line = parseResult.mark;
 		block = (Expression<Block>) exprs[0];
 		return true;
 	}

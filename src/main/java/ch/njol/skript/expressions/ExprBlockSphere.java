@@ -29,11 +29,12 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.BlockSphereIterator;
+import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.EmptyIterator;
 import ch.njol.util.iterator.IteratorIterable;
 
@@ -54,7 +55,7 @@ public class ExprBlockSphere extends SimpleExpression<Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		radius = (Expression<Number>) exprs[matchedPattern];
 		center = (Expression<Location>) exprs[1 - matchedPattern];
 		return true;

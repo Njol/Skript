@@ -34,9 +34,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import ch.njol.skript.Aliases;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.Skript.ExpressionType;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
@@ -44,6 +44,7 @@ import ch.njol.skript.log.SimpleLog;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
@@ -62,7 +63,7 @@ public class ExprClicked extends SimpleExpression<Object> {
 	private ItemType itemType = null;
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		final String s = parseResult.regexes.get(0).group();
 		final SimpleLog log = SkriptLogger.startSubLog();
 		entityType = EntityData.parse(s);

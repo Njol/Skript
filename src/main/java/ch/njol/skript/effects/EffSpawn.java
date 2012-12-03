@@ -30,6 +30,8 @@ import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
+import ch.njol.util.Kleenean;
 
 /**
  * 
@@ -41,8 +43,8 @@ public class EffSpawn extends Effect {
 	
 	static {
 		Skript.registerEffect(EffSpawn.class,
-				"spawn %entitytypes% [%locations%]",
-				"spawn %integer% of %entitytypes% [%locations%]");
+				"spawn %entitytypes% [%directions% %locations%]",
+				"spawn %integer% of %entitytypes% [%directions% %locations%]");
 	}
 	
 	private Expression<Location> locations;
@@ -53,10 +55,10 @@ public class EffSpawn extends Effect {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final int isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		amount = matchedPattern == 0 ? null : (Expression<Integer>) (exprs[0]);
 		types = (Expression<EntityType>) exprs[matchedPattern];
-		locations = (Expression<Location>) exprs[1 + matchedPattern];
+		locations = Direction.combine((Expression<? extends Direction>) exprs[1+matchedPattern], (Expression<? extends Location>) exprs[2 + matchedPattern]);
 		return true;
 	}
 	
