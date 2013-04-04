@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -42,8 +42,8 @@ import ch.njol.skript.util.Container.ContainerType;
  * @author Peter Güttinger
  * @see LoopExpr
  */
+@SuppressWarnings("serial")
 public class Loop extends TriggerSection {
-	private static final long serialVersionUID = -6026515058664939972L;
 	
 	private final Expression<?> expr;
 	
@@ -69,9 +69,11 @@ public class Loop extends TriggerSection {
 		} else {
 			this.expr = expr;
 		}
+		ScriptLoader.currentSections.add(this);
 		ScriptLoader.currentLoops.add(this);
 		setTriggerItems(ScriptLoader.loadItems(node));
 		ScriptLoader.currentLoops.remove(ScriptLoader.currentLoops.size() - 1);
+		ScriptLoader.currentSections.remove(ScriptLoader.currentSections.size() - 1);
 		super.setNext(this);
 	}
 	

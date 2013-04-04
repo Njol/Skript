@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,6 +30,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
+import ch.njol.skript.events.bukkit.ScheduledEvent;
+import ch.njol.skript.events.bukkit.ScheduledWorldEvent;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -39,11 +41,14 @@ import ch.njol.skript.util.Timespan;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class EvtPeriodical extends SelfRegisteringSkriptEvent {
-	private static final long serialVersionUID = -349465844236259126L;
-	
 	static {
-		Skript.registerEvent(EvtPeriodical.class, ScheduledEvent.class, "every %timespan% [in [world[s]] %worlds%]");
+		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledEvent.class, "every %timespan%");
+		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledWorldEvent.class, "every %timespan% in [world[s]] %worlds%")
+				.description("An event that is called periodically. The event is used like 'every &lt;<a href='../classes/#timespan'>timespan</a>&gt;', e.g. 'every second' or 'every 5 minutes'.")
+				.examples("every second", "every minecraft hour", "every tick # warning: lag!", "every minecraft day in \"world\"")
+				.since("1.0");
 	}
 	
 	private Timespan period;
@@ -59,7 +64,7 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		period = ((Literal<Timespan>) args[0]).getSingle();
-		if (args[1] != null) {
+		if (args.length > 1 && args[1] != null) {
 			worlds = ((Literal<World>) args[1]).getArray();
 			worldNames = new String[worlds.length];
 			for (int i = 0; i < worlds.length; i++)
@@ -69,10 +74,10 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 	}
 	
 	private void execute(final World w) {
-		final ScheduledEvent e = new ScheduledEvent(w);
+		final ScheduledEvent e = w == null ? new ScheduledEvent() : new ScheduledWorldEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerStart(t);
-		t.start(e);
+		t.execute(e);
 		SkriptEventHandler.logTriggerEnd(t);
 		SkriptEventHandler.logEventEnd();
 	}

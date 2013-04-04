@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,9 +28,7 @@ import ch.njol.skript.registrations.Converters;
  * 
  * @param <F> the accepted type of objects to convert <u>f</u>rom
  * @param <T> the type to convert <u>t</u>o
- * 
  * @author Peter Güttinger
- * 
  * @see Converters#registerConverter(Class, Class, Converter)
  */
 public interface Converter<F, T> {
@@ -45,7 +43,6 @@ public interface Converter<F, T> {
 	 * holds information about a converter
 	 * 
 	 * @author Peter Güttinger
-	 * 
 	 * @param <F> same as in {@link Converter}
 	 * @param <T> dito
 	 */

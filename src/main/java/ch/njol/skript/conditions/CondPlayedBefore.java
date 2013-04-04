@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,6 +25,10 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,9 +38,13 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Has Played Before")
+@Description("Checks whether a player has played on this server before. You can also use <a href='../events/#first_join'>on first join</a> if you want to make triggers for new players.")
+@Examples({"player has played on this server before",
+		"player hasn't played before"})
+@Since("1.4")
 public class CondPlayedBefore extends Condition {
-	
-	private static final long serialVersionUID = -7504900855076739208L;
 	
 	static {
 		Skript.registerCondition(CondPlayedBefore.class,

@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,14 +24,20 @@ package ch.njol.skript.conditions;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is Sprinting")
+@Description("Checks whether a player is sprinting")
+@Examples("player is not sprinting")
+@Since("1.4.4")
 public class CondIsSprinting extends PropertyCondition<Player> {
-	
-	private static final long serialVersionUID = 5613251351286394976L;
-	
 	static {
 		register(CondIsSprinting.class, "sprinting", "players");
 	}

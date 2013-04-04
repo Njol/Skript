@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,6 +24,10 @@ package ch.njol.skript.conditions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
@@ -33,9 +37,15 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Exists/Is Set")
+@Description("Checks whether a given expression or variable is set.")
+@Examples({"{teamscript.%player%.preferred team} is not set",
+		"on damage:",
+		"	projectile exists",
+		"	broadcast \"%attacker% used a projectile to attack %victim%!\""})
+@Since("1.2")
 public class CondIsSet extends Condition {
-	
-	private static final long serialVersionUID = -4829090036168579749L;
 	
 	static {
 		Skript.registerCondition(CondIsSet.class,

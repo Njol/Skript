@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,6 +25,10 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,9 +38,13 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Lightning")
+@Description("Strike lightning at a given location. Can use 'ligning effect' to create a lightning that does not harm entities or start fires.")
+@Examples({"strike lightning at the player",
+		"strike lightning effect at the victim"})
+@Since("1.4")
 public class EffLightning extends Effect {
-	
-	private static final long serialVersionUID = -4592368027843536618L;
 	
 	static {
 		Skript.registerEffect(EffLightning.class, "(create|strike) lightning %directions% %locations%", "(create|strike) lightning[ ]effect %directions% %locations%");

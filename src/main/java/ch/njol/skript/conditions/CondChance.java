@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,6 +24,10 @@ package ch.njol.skript.conditions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -32,10 +36,16 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Chance")
+@Description({"A condition that randomly succeeds or fails.",
+		"Valid values are between 0% and 100%, or if the percent sign is omitted between 0 and 1."})
+@Examples({"chance of 50%:",
+		"	drop a diamond",
+		"chance of {var}% # {var} between 0 and 100",
+		"chance of {var} # {var} between 0 and 1"})
+@Since("1.0")
 public class CondChance extends Condition {
-	
-	private static final long serialVersionUID = -4186689549153575171L;
-	
 	static {
 		Skript.registerCondition(CondChance.class, "chance of %number%(1¦\\%|)");
 	}
@@ -56,7 +66,7 @@ public class CondChance extends Condition {
 		final Number n = chance.getSingle(e);
 		if (n == null)
 			return false;
-		return Math.random() < (percent ? n.doubleValue()/100 : n.doubleValue());
+		return Math.random() < (percent ? n.doubleValue() / 100 : n.doubleValue());
 	}
 	
 	@Override

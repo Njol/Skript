@@ -15,59 +15,49 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.expressions.base.PropertyExpression;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Getter;
-import ch.njol.util.Kleenean;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
+import ch.njol.skript.expressions.base.SimplePropertyExpression;
 
 /**
  * @author Peter Güttinger
  */
-public class ExprInventory extends PropertyExpression<InventoryHolder, Inventory> {
-	private static final long serialVersionUID = 1029322639581603342L;
-	
+@SuppressWarnings("serial")
+@Name("Inventory")
+@Description("The inventory of a block or player. You can usually omit this expression and can directly add or remove items to/from blocks or players.")
+@Examples({"add a plank to the player's inventory",
+		"clear the player's inventory",
+		"remove 5 wool from the inventory of the clicked block"})
+@Since("1.0")
+public class ExprInventory extends SimplePropertyExpression<InventoryHolder, Inventory> {
 	static {
-		Skript.registerExpression(ExprInventory.class, Inventory.class, ExpressionType.PROPERTY, "[the] inventor(y|ies) of %inventoryholders%", "%inventoryholders%'[s] inventor(y|ies)");
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		setExpr((Expression<InventoryHolder>) vars[0]);
-		return true;
+		register(ExprInventory.class, Inventory.class, "inventor(y|ies)", "inventoryholders");
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the inventor" + (getExpr().isSingle() ? "y" : "ies") + " of " + getExpr().toString(e, debug);
-	}
-	
-	@Override
-	protected Inventory[] get(final Event e, final InventoryHolder[] source) {
-		return get(source, new Getter<Inventory, InventoryHolder>() {
-			@Override
-			public Inventory get(final InventoryHolder h) {
-				return h.getInventory();
-			}
-		});
+	public Inventory convert(final InventoryHolder h) {
+		return h.getInventory();
 	}
 	
 	@Override
 	public Class<Inventory> getReturnType() {
 		return Inventory.class;
+	}
+	
+	@Override
+	protected String getPropertyName() {
+		return "inventor" + (getExpr().isSingle() ? "y" : "ies");
 	}
 	
 }

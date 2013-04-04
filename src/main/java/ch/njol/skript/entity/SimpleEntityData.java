@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -47,15 +47,13 @@ import org.bukkit.entity.Giant;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.MagmaCube;
 import org.bukkit.entity.MushroomCow;
 import org.bukkit.entity.Painting;
-import org.bukkit.entity.Pig;
 import org.bukkit.entity.PigZombie;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Silverfish;
-import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Slime;
 import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.Snowball;
@@ -79,8 +77,10 @@ import ch.njol.util.Pair;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class SimpleEntityData extends EntityData<Entity> {
-	private static final long serialVersionUID = -1021159610746515883L;
+	
+	// TODO falling blocks
 	
 	private final static Map<String, Class<? extends Entity>> names = new LinkedHashMap<String, Class<? extends Entity>>();
 	private final static Set<Class<?>> superTypes = new HashSet<Class<?>>();
@@ -92,7 +92,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("cow", Cow.class);
 		names.put("cave spider", CaveSpider.class);
 		names.put("cavespider", CaveSpider.class);
-		names.put("egg", Egg.class); // TODO fix comparisions of eggs, arrows, etc. (e.g. 'projectile is an arrow')
+		names.put("egg", Egg.class);
 		names.put("ender crystal", EnderCrystal.class);
 		names.put("ender dragon", EnderDragon.class);
 		names.put("ender pearl", EnderPearl.class);
@@ -111,13 +111,10 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("magma slime", MagmaCube.class);
 		names.put("mooshroom", MushroomCow.class);
 		names.put("painting", Painting.class);
-		names.put("pig", Pig.class);
 		names.put("zombie pigman", PigZombie.class);
 		names.put("pig zombie", PigZombie.class);
 		names.put("pigzombie", PigZombie.class);
-		names.put("player", Player.class);
 		names.put("silverfish", Silverfish.class);
-		names.put("skeleton", Skeleton.class);
 		names.put("slime", Slime.class);
 		names.put("snowball", Snowball.class);
 		names.put("snow golem", Snowman.class);
@@ -133,13 +130,15 @@ public class SimpleEntityData extends EntityData<Entity> {
 		names.put("primed tnt", TNTPrimed.class);
 		names.put("zombie", Zombie.class);
 		
-		if (Skript.isRunningBukkit(1, 4)) {
-			// TODO wither skeleton?
+		if (Skript.isRunningMinecraft(1, 4)) {
+			names.put("item frame", ItemFrame.class);
 			names.put("bat", Bat.class);
 			names.put("witch", Witch.class);
 			names.put("wither", Wither.class);
 			names.put("wither skull", WitherSkull.class);
 		}
+		
+		// TODO !Update with every version [entities]
 		
 		// supertypes
 		names.put("human", HumanEntity.class);
@@ -157,7 +156,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		int i = 0;
 		for (final String name : names.keySet()) {
 			patterns[i++] = name;
-			patterns[i++] = Utils.toPlural(name);
+			patterns[i++] = Utils.toEnglishPlural(name);
 		}
 		EntityData.register(SimpleEntityData.class, "simple", Entity.class, patterns);
 	}
@@ -165,22 +164,25 @@ public class SimpleEntityData extends EntityData<Entity> {
 	public SimpleEntityData() {}
 	
 	public SimpleEntityData(final Class<? extends Entity> c) {
-		assert c != null;
+		assert c != null && c.isInterface() : c;
 		this.c = c;
+		isSupertype = superTypes.contains(c);
 	}
 	
 	private Class<? extends Entity> c = Entity.class;
+	boolean isSupertype = true;
 	
 	private boolean plural;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
-		final Pair<String, Boolean> p = Utils.getPlural(parseResult.expr.toLowerCase());
+		final Pair<String, Boolean> p = Utils.getEnglishPlural(parseResult.expr.toLowerCase());
 		final String s = p.first;
 		c = names.get(s);
-		plural = p.second;
 		if (c == null)
 			return false;
+		isSupertype = superTypes.contains(c);
+		plural = p.second;
 		return true;
 	}
 	
@@ -188,13 +190,8 @@ public class SimpleEntityData extends EntityData<Entity> {
 	public void set(final Entity entity) {}
 	
 	@Override
-	public boolean isInstance(final Entity e) {
-		return superTypes.contains(c) ? c.isAssignableFrom(e.getClass()) : e.getClass() == c;
-	}
-	
-	@Override
-	public boolean match(final Entity entity) {
-		return true;
+	public boolean match(final Entity e) {
+		return isSupertype ? c.isAssignableFrom(e.getClass()) : Utils.contains(e.getClass().getInterfaces(), c);
 	}
 	
 	@Override
@@ -208,11 +205,12 @@ public class SimpleEntityData extends EntityData<Entity> {
 	public String toString() {
 		if (name == null) {
 			for (final Entry<String, Class<? extends Entity>> e : names.entrySet()) {
-				if (e.getValue().isAssignableFrom(c)) {
+				if (isSupertype ? e.getValue().isAssignableFrom(c) : e.getValue() == c) {
 					return name = e.getKey();
 				}
 			}
-			assert false;
+			assert false : c;
+			return name = "[ERROR]";
 		}
 		return name;
 	}
@@ -248,10 +246,16 @@ public class SimpleEntityData extends EntityData<Entity> {
 	protected boolean deserialize(final String s) {
 		try {
 			c = (Class<? extends Entity>) Class.forName(s);
+			isSupertype = superTypes.contains(c);
 			return true;
 		} catch (final ClassNotFoundException e) {
 			return false;
 		}
+	}
+	
+	@Override
+	protected boolean isSupertypeOf_i(final EntityData<? extends Entity> e) {
+		return e.getType() == getType() || superTypes.contains(c);
 	}
 	
 }

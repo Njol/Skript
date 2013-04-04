@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,24 +28,41 @@ import ch.njol.skript.config.Node;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class LogEntry {
 	
-	private final Level level;
+	public final Level level;
+	public int quality;
 	
-	private final String message;
+	public String message;
 	
 	private final Node node;
 	
 	private final String from;
 	
 	public LogEntry(final Level level, final String message) {
-		this(level, message, SkriptLogger.getNode());
+		this(level, ErrorQuality.SEMANTIC_ERROR.quality(), message, SkriptLogger.getNode());
+	}
+	
+	public LogEntry(final Level level, final int quality, final String message) {
+		this(level, quality, message, SkriptLogger.getNode());
+	}
+	
+	public LogEntry(final Level level, final ErrorQuality quality, final String message) {
+		this(level, quality.quality(), message, SkriptLogger.getNode());
 	}
 	
 	public LogEntry(final Level level, final String message, final Node node) {
+		this(level, ErrorQuality.SEMANTIC_ERROR.quality(), message, node);
+	}
+	
+	public LogEntry(final Level level, final ErrorQuality quality, final String message, final Node node) {
+		this(level, quality.quality(), message, node);
+	}
+	
+	public LogEntry(final Level level, final int quality, final String message, final Node node) {
 		this.level = level;
+		this.quality = quality;
 		this.message = message;
 		this.node = node;
 		from = Skript.debug() ? findCaller() : "";
@@ -68,6 +85,10 @@ public class LogEntry {
 	
 	public Level getLevel() {
 		return level;
+	}
+	
+	public int getQuality() {
+		return quality;
 	}
 	
 	public String getMessage() {

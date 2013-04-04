@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,15 +28,12 @@ import java.util.WeakHashMap;
 
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
-import ch.njol.skript.lang.UnparsedLiteral;
-import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 
@@ -45,8 +42,8 @@ import ch.njol.skript.util.Utils;
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class Argument<T> implements Serializable {
-	private static final long serialVersionUID = 3781008861450480426L;
 	
 	private final Expression<? extends T> def;
 	private final Class<T> type;
@@ -75,19 +72,30 @@ public class Argument<T> implements Serializable {
 		Expression<? extends T> d = null;
 		if (def != null) {
 			if (def.startsWith("%") && def.endsWith("%")) {
-				SimpleLog log = SkriptLogger.startSubLog();
-				d = SkriptParser.parseExpression(def.substring(1, def.length() - 1), false, ParseContext.COMMAND, type);
-				if (d == null) {
-					log.printErrors("Can't understand this expression: " + def + "");
-					return null;
+				final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+				try {
+					d = SkriptParser.parseExpression(def.substring(1, def.length() - 1), SkriptParser.PARSE_EXPRESSIONS, ParseContext.COMMAND, type);
+					if (d == null) {
+						log.printErrors("Can't understand this expression: " + def + "");
+						return null;
+					}
+				} finally {
+					log.stop();
 				}
 				log.printLog();
 			} else {
-				final SimpleLog log = SkriptLogger.startSubLog();
-				d = SkriptParser.parseLiteral(def, type, ParseContext.DEFAULT);
-				log.stop();
+				final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+				try {
+					if (type == String.class && def.startsWith("\"") && def.endsWith("\"")) {
+						d = (Expression<? extends T>) VariableString.newInstance(def.substring(1, def.length() - 1));
+					} else {
+						d = SkriptParser.parseLiteral(def, type, ParseContext.DEFAULT);
+					}
+				} finally {
+					log.stop();
+				}
 				if (d == null) {
-					log.printErrors("'" + def + "' is not " + Utils.a(Classes.getExactClassName(type)));
+					log.printErrors("'" + def + "' is not " + Classes.getSuperClassInfo(type).getName().withIndefiniteArticle());
 					return null;
 				}
 			}
@@ -97,7 +105,7 @@ public class Argument<T> implements Serializable {
 	
 	@Override
 	public String toString() {
-		return "<" + Utils.toPlural(Classes.getExactClassName(type), !single) + (def == null ? "" : " = " + def.toString()) + ">";
+		return "<" + Utils.toEnglishPlural(Classes.getExactClassName(type), !single) + (def == null ? "" : " = " + def.toString()) + ">";
 	}
 	
 	public boolean isOptional() {

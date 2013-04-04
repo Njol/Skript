@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,6 +26,10 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,9 +38,15 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Kill")
+@Description({"Kills an entity.",
+		"Note: This effect does not set the entitie's health to 0 (which causes issues), but damages the entity by 100 times its maximum health."})
+@Examples({"kill the player",
+		"kill all creepers in the player's world",
+		"kill all endermen, witches and bats"})
+@Since("1.0")
 public class EffKill extends Effect {
-	
-	private static final long serialVersionUID = 6790149689227295705L;
 	
 	static {
 		Skript.registerEffect(EffKill.class, "kill %entities%");

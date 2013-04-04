@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,8 +27,7 @@ package ch.njol.skript;
  * @author Peter Güttinger
  */
 public class SkriptAPIException extends RuntimeException {
-	
-	private static final long serialVersionUID = 154696276104637157L;
+	private static final long serialVersionUID = -4556442222803379002L;
 	
 	public SkriptAPIException(final String message) {
 		super(message);

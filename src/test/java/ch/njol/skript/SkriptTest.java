@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -70,7 +70,7 @@ public class SkriptTest {
 	private final static void test() {
 		
 		final Trigger t = ScriptLoader.loadTrigger(nodeFromString("on rightclick on air:\n kill player"));
-		t.start(new PlayerInteractEvent(njol, Action.LEFT_CLICK_AIR, null, null, null));
+		t.execute(new PlayerInteractEvent(njol, Action.LEFT_CLICK_AIR, null, null, null));
 		
 	}
 	

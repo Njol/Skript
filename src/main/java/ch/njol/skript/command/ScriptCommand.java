@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -59,7 +59,7 @@ import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SimpleEvent;
 import ch.njol.skript.localization.Language;
-import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.util.Utils;
@@ -71,9 +71,8 @@ import ch.njol.util.Validate;
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class ScriptCommand implements CommandExecutor, Serializable {
-	
-	private static final long serialVersionUID = -1363349456797660011L;
 	
 	private final String name, label;
 	private final List<String> aliases;
@@ -110,7 +109,7 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		this.name = name;
 		label = name.toLowerCase();
 		this.permission = permission;
-		this.permissionMessage = permissionMessage == null ? Language.get("commands.no_permission_message") : permissionMessage;
+		this.permissionMessage = permissionMessage == null ? Language.get("commands.no permission message") : permissionMessage;
 		
 		this.aliases = aliases;
 		activeAliases = new ArrayList<String>(aliases);
@@ -159,12 +158,12 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 	public boolean execute(final CommandSender sender, final String commandLabel, final String rest) {
 		if (sender instanceof Player) {
 			if ((executableBy & PLAYERS) == 0) {
-				sender.sendMessage(Language.get("commands.executable_by_players"));
+				sender.sendMessage(Language.get("commands.executable by players"));
 				return false;
 			}
 		} else {
 			if ((executableBy & CONSOLE) == 0) {
-				sender.sendMessage(Language.get("commands.executable_by_console"));
+				sender.sendMessage(Language.get("commands.executable by console"));
 				return false;
 			}
 		}
@@ -176,19 +175,24 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		
 		final ScriptCommandEvent event = new ScriptCommandEvent(this, sender);
 		
-		final SimpleLog log = SkriptLogger.startSubLog();
-		final boolean ok = SkriptParser.parseArguments(rest, this, event);
-		log.stop();
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		final boolean ok;
+		try {
+			ok = SkriptParser.parseArguments(rest, this, event);
+		} finally {
+			log.stop();
+		}
 		if (!ok) {
-			log.printErrors(sender, null);
-			sender.sendMessage(Language.format("commands.usage", usage));
+			if (log.hasError())
+				sender.sendMessage(ChatColor.DARK_RED + log.getError().getMessage());
+			sender.sendMessage(Commands.m_correct_usage + " " + usage);
 			return false;
 		}
 		
 		if (Skript.log(Verbosity.VERY_HIGH))
 			Skript.info("# /" + name + " " + rest);
 		final long startTrigger = System.nanoTime();
-		trigger.start(event);
+		trigger.execute(event);
 		if (Skript.log(Verbosity.VERY_HIGH))
 			Skript.info("# " + name + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 		

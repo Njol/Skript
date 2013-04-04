@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -34,11 +34,14 @@ import ch.njol.util.Checker;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public final class EvtGameMode extends SkriptEvent {
-	private static final long serialVersionUID = -7921220368965034351L;
 	
 	static {
-		Skript.registerEvent(EvtGameMode.class, PlayerGameModeChangeEvent.class, "gamemode change [to %gamemode%]");
+		Skript.registerEvent("Gamemode Change", EvtGameMode.class, PlayerGameModeChangeEvent.class, "game[ ]mode change [to %gamemode%]")
+				.description("Called when a player's <a href='../classes/#gamemode'>gamemode</a> changes.")
+				.examples("on gamemode change", "on gamemode change to adventure")
+				.since("1.0");
 	}
 	
 	private Literal<GameMode> mode;

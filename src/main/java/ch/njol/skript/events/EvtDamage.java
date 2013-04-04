@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -34,16 +34,19 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "serial"})
 public class EvtDamage extends SkriptEvent {
-	private static final long serialVersionUID = -8211419854529792220L;
 	
 	static {
-		Skript.registerEvent(EvtDamage.class, Skript.array(EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class), "damag(e|ing) [of %entitydata%]");
+		Skript.registerEvent("Damage", EvtDamage.class, Utils.array(EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class), "damag(e|ing) [of %entitydata%]")
+				.description("Called when an entity recieves damage, e.g. by an attack from another entity, lava, fire, drowning, fall, suffocation, etc.")
+				.examples("on damage", "on damage of a player")
+				.since("1.0");
 	}
 	
 	private Literal<EntityData<?>> types;

@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -39,18 +39,8 @@ import ch.njol.util.Kleenean;
  * @see Skript#registerEvent(Class, Class, String...)
  * @see Skript#registerEvent(Class, Class[], String...)
  */
+@SuppressWarnings("serial")
 public abstract class SkriptEvent implements SyntaxElement, Debuggable {
-	private static final long serialVersionUID = -7442359418081996529L;
-	
-	public static class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementInfo<E> {
-		
-		public Class<? extends Event>[] events;
-		
-		public SkriptEventInfo(final String[] patterns, final Class<E> c, final Class<? extends Event>[] events) throws IllegalArgumentException {
-			super(patterns, c);
-			this.events = events;
-		}
-	}
 	
 	@Override
 	public final boolean init(final ch.njol.skript.lang.Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
@@ -62,7 +52,7 @@ public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 	 * 
 	 * @param args
 	 */
-	public abstract boolean init(final Literal<?>[] args, int matchedPattern, ParseResult parser);
+	public abstract boolean init(final Literal<?>[] args, int matchedPattern, ParseResult parseResult);
 	
 	/**
 	 * Checks whether the given Event applies, e.g. the leftclick event is only part of the PlayerInteractEvent, and this checks whether the player leftclicked or not. This method

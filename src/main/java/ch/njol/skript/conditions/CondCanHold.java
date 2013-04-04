@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,22 +26,29 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Can Hold")
+@Description("Tests whether a player or a chest can hold the given item.")
+@Examples({"block can hold 200 cobblestone",
+		"player has enough space for 64 feathers"})
+@Since("1.0")
 public class CondCanHold extends Condition {
-	
-	private static final long serialVersionUID = -3011849911556293886L;
-	
 	static {
 		Skript.registerCondition(CondCanHold.class,
 				"%inventories% (can hold|ha(s|ve) [enough] space (for|to hold)) %itemtypes%",
@@ -57,10 +64,10 @@ public class CondCanHold extends Condition {
 		invis = (Expression<Inventory>) vars[0];
 		items = (Expression<ItemType>) vars[1];
 		if (items instanceof Literal) {
-			for (ItemType t : ((Literal<ItemType>) items).getArray()) {
+			for (ItemType t : ((Literal<ItemType>) items).getAll()) {
 				t = t.getItem();
-				if (!t.isAll() && (t.getTypes().size() != 1 || t.getTypes().get(0).hasDataRange() || t.getTypes().get(0).getId() == -1)) {
-					Skript.error("The condition 'can hold' can currently only be used with aliases that start with 'every' or 'all', or only stand for one item and one data value.", ErrorQuality.SEMANTIC_ERROR);
+				if (!(t.isAll() || (t.getTypes().size() == 1 && !t.getTypes().get(0).hasDataRange() && t.getTypes().get(0).getId() != -1))) {
+					Skript.error("The condition 'can hold' can currently only be used with aliases that start with 'every' or 'all', or only represent one item and one data value.", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 			}

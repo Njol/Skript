@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,7 +29,9 @@ import java.lang.reflect.Array;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.Expression;
@@ -42,6 +44,7 @@ import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Pair;
 import ch.njol.util.iterator.NonNullIterator;
 
 /**
@@ -50,8 +53,8 @@ import ch.njol.util.iterator.NonNullIterator;
  * @author Peter Güttinger
  * @see UnparsedLiteral
  */
+@SuppressWarnings("serial")
 public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
-	private static final long serialVersionUID = 8435080459332928709L;
 	
 	protected final Class<T> c;
 	
@@ -65,7 +68,8 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	private void writeObject(final ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
 		out.writeObject(data.getClass().getComponentType());
-		final String[][] d = new String[data.length][];
+		@SuppressWarnings("unchecked")
+		final Pair<String, String>[] d = new Pair[data.length];
 		for (int i = 0; i < data.length; i++) {
 			if ((d[i] = Classes.serialize(data[i])) == null) {
 				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
@@ -77,10 +81,10 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
 		in.defaultReadObject();
 		final Class<?> c = (Class<?>) in.readObject();
-		final String[][] d = (String[][]) in.readObject();
+		final Pair<String, String>[] d = (Pair<String, String>[]) in.readObject();
 		data = (T[]) Array.newInstance(c, d.length);
 		for (int i = 0; i < data.length; i++) {
-			data[i] = (T) Classes.deserialize(d[i][0], d[i][1]);
+			data[i] = (T) Classes.deserialize(d[i].first, d[i].second);
 		}
 	}
 	
@@ -154,13 +158,15 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> ConvertedLiteral<T, ? extends R> getConvertedExpression(final Class<R> to) {
+	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to) {
 		if (to.isAssignableFrom(c))
-			return new ConvertedLiteral<T, R>(this, (R[]) data, to);
+			return (Literal<? extends R>) this;
 		final Converter<? super T, ? extends R> p = Converters.getConverter(c, to);
 		if (p == null)
 			return null;
 		final R[] parsedData = Converters.convert(data, to, p);
+		if (parsedData.length != data.length)
+			return null;
 		return new ConvertedLiteral<T, R>(this, parsedData, to);
 	}
 	
@@ -196,14 +202,18 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		return SimpleExpression.check(data, c, false, getAnd());
 	}
 	
+	private ClassInfo<? super T> returnTypeInfo;
+	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		return null;
+		if (returnTypeInfo == null)
+			returnTypeInfo = Classes.getSuperClassInfo(getReturnType());
+		return returnTypeInfo.getChanger() == null ? null : returnTypeInfo.getChanger().acceptChange(mode);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		throw new UnsupportedOperationException();
+		((Changer<T, Object>) returnTypeInfo.getChanger()).change(getArray(), delta, mode);
 	}
 	
 	@Override
@@ -244,7 +254,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	public Expression<?> getSource() {
 		return source == null ? this : source;
 	}
-
+	
 	@Override
 	public Expression<T> simplify() {
 		return this;

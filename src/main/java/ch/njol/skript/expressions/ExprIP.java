@@ -15,58 +15,50 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.Converter;
-import ch.njol.skript.expressions.base.PropertyExpression;
-import ch.njol.skript.lang.Expression;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
+import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
-public class ExprIP extends PropertyExpression<Player, String> {
-	private static final long serialVersionUID = 2670595902919005648L;
-	
+@SuppressWarnings("serial")
+@Name("IP")
+@Description("The IP address of a player.")
+@Examples({"IP-ban the player # is equal to the next line",
+		"ban the IP-address of the player",
+		"broadcast \"Banned the IP %IP of player%\""})
+@Since("1.4")
+public class ExprIP extends SimplePropertyExpression<Player, String> {
 	static {
 		Skript.registerExpression(ExprIP.class, String.class, ExpressionType.PROPERTY, "IP[s][( |-)address[es]] of %players%", "%players%'[s] IP[s][( |-)address[es]]");
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		setExpr((Expression<? extends Player>) exprs[0]);
-		return true;
+	public String convert(final Player p) {
+		return p.getAddress().getAddress().getHostAddress();
 	}
 	
 	@Override
-	protected String[] get(final Event e, final Player[] source) {
-		return get(source, new Converter<Player, String>() {
-			@Override
-			public String convert(final Player p) {
-				return p.getAddress().getAddress().getHostAddress();
-			}
-		});
-	}
-	
-	@Override
-	public Class<? extends String> getReturnType() {
+	public Class<String> getReturnType() {
 		return String.class;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "IP address" + (getExpr().isSingle() ? "" : "es") + " of " + getExpr().toString(e, debug);
+	protected String getPropertyName() {
+		return "IP address" + (getExpr().isSingle() ? "" : "es");
 	}
 	
 }

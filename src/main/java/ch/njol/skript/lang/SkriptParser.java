@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -31,26 +31,30 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.bukkit.inventory.ItemStack;
+
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.Converter;
 import ch.njol.skript.command.Argument;
+import ch.njol.skript.command.Commands;
 import ch.njol.skript.command.ScriptCommand;
 import ch.njol.skript.command.ScriptCommandEvent;
-import ch.njol.skript.lang.SkriptEvent.SkriptEventInfo;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.log.ParseLog;
-import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.log.ParseLogHandler;
+import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
-import ch.njol.util.Kleenean;
 
 /**
  * Used for parsing my custom patterns.<br>
@@ -63,22 +67,25 @@ public class SkriptParser {
 	
 	private final String expr;
 	
-	private final boolean parseStatic;
+	public final static int PARSE_EXPRESSIONS = 1;
+	public final static int PARSE_LITERALS = 2;
+	private final int flags;
 	
 	public final ParseContext context;
 	
 	private SkriptParser(final String expr) {
-		this(expr, false);
+		this(expr, PARSE_EXPRESSIONS | PARSE_LITERALS);
 	}
 	
-	private SkriptParser(final String expr, final boolean parseStatic) {
-		this(expr, parseStatic, ParseContext.DEFAULT);
+	private SkriptParser(final String expr, final int flags) {
+		this(expr, flags, ParseContext.DEFAULT);
 	}
 	
-	private SkriptParser(final String expr, final boolean parseStatic, final ParseContext context) {
+	private SkriptParser(final String expr, final int flags, final ParseContext context) {
 		assert expr != null;
+		assert flags != 0;
 		this.expr = expr;
-		this.parseStatic = parseStatic;
+		this.flags = flags;
 		this.context = context;
 	}
 	
@@ -97,14 +104,11 @@ public class SkriptParser {
 		}
 	}
 	
+	@SuppressWarnings("serial")
 	private final static class MalformedPatternException extends RuntimeException {
-		
-		private static final long serialVersionUID = -2479399963189481643L;
-		
 		public MalformedPatternException(final String pattern, final String message) {
 			super(message + " [pattern: " + pattern + "]");
 		}
-		
 	}
 	
 	/**
@@ -139,9 +143,13 @@ public class SkriptParser {
 			Skript.error(defaultError);
 			return null;
 		}
-		final ParseLog log = SkriptLogger.startParseLog();
-		final T e = new SkriptParser(expr).parse(source);
-		log.stop();
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		final T e;
+		try {
+			e = new SkriptParser(expr).parse(source);
+		} finally {
+			log.stop();
+		}
 		if (e != null) {
 			log.printLog();
 			return e;
@@ -156,9 +164,13 @@ public class SkriptParser {
 			Skript.error(defaultError);
 			return null;
 		}
-		final ParseLog log = SkriptLogger.startParseLog();
-		final T e = new SkriptParser(expr, true).parse(source);
-		log.stop();
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		final T e;
+		try {
+			e = new SkriptParser(expr, PARSE_LITERALS).parse(source);
+		} finally {
+			log.stop();
+		}
 		if (e != null) {
 			log.printLog();
 			return e;
@@ -168,53 +180,61 @@ public class SkriptParser {
 	}
 	
 	private final <T extends SyntaxElement> T parse(final Iterator<? extends SyntaxElementInfo<? extends T>> source) {
-		final ParseLog log = SkriptLogger.startParseLog();
-		while (source.hasNext()) {
-			final SyntaxElementInfo<? extends T> info = source.next();
-			patternsLoop: for (int i = 0; i < info.patterns.length; i++) {
-				log.clear();
-				try {
-					final ParseResult res = parse_i(info.patterns[i], 0, 0);
-					if (res != null) {
-						int x = -1;
-						for (int j = 0; (x = nextUnescaped(info.patterns[i], '%', x + 1)) != -1; j++) {
-							final int x2 = nextUnescaped(info.patterns[i], '%', x + 1);
-							if (res.exprs[j] == null) {
-								final String name = info.patterns[i].substring(x + 1, x2);
-								if (!name.startsWith("-")) {
-									final ExprInfo vi = getExprInfo(name);
-									final DefaultExpression<?> expr = vi.classes[0].getDefaultExpression();
-									if (expr == null)
-										throw new SkriptAPIException("The class '" + vi.classes[0].getName() + "' does not provide a default expression. Either allow null (with %-" + vi.classes[0].getCodeName() + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
-									if (!vi.isPlural[0] && !expr.isSingle())
-										throw new SkriptAPIException("The default expression of '" + vi.classes[0].getName() + "' is not a single-element expression. Change your pattern to allow multiple elements or make the expression mandatory [pattern: " + info.patterns[i] + "]");
-									if (vi.time != 0 && !expr.setTime(vi.time))
-										throw new SkriptAPIException("The default expression of '" + vi.classes[0].getName() + "' does not have distinct time states. [pattern: " + info.patterns[i] + "]");
-									if (!expr.init())
-										continue patternsLoop;
-									res.exprs[j] = expr;
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		try {
+			while (source.hasNext()) {
+				final SyntaxElementInfo<? extends T> info = source.next();
+				patternsLoop: for (int i = 0; i < info.patterns.length; i++) {
+					log.clear();
+					try {
+						final ParseResult res = parse_i(info.patterns[i], 0, 0);
+						if (res != null) {
+							int x = -1;
+							for (int j = 0; (x = nextUnescaped(info.patterns[i], '%', x + 1)) != -1; j++) {
+								final int x2 = nextUnescaped(info.patterns[i], '%', x + 1);
+								if (res.exprs[j] == null) {
+									final String name = info.patterns[i].substring(x + 1, x2);
+									if (!name.startsWith("-")) {
+										final ExprInfo vi = getExprInfo(name);
+										final DefaultExpression<?> expr = vi.classes[0].getDefaultExpression();
+										if (expr == null)
+											throw new SkriptAPIException("The class '" + vi.classes[0].getCodeName() + "' does not provide a default expression. Either allow null (with %-" + vi.classes[0].getCodeName() + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
+										if (!(expr instanceof Literal) && (vi.flagMask & PARSE_EXPRESSIONS) == 0)
+											throw new SkriptAPIException("The default expression of '" + vi.classes[0].getCodeName() + "' is not a literal. Either allow null (with %-*" + vi.classes[0].getCodeName() + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
+										if (expr instanceof Literal && (vi.flagMask & PARSE_LITERALS) == 0)
+											throw new SkriptAPIException("The default expression of '" + vi.classes[0].getCodeName() + "' is a literal. Either allow null (with %-~" + vi.classes[0].getCodeName() + "%) or make it mandatory [pattern: " + info.patterns[i] + "]");
+										if (!vi.isPlural[0] && !expr.isSingle())
+											throw new SkriptAPIException("The default expression of '" + vi.classes[0].getCodeName() + "' is not a single-element expression. Change your pattern to allow multiple elements or make the expression mandatory [pattern: " + info.patterns[i] + "]");
+										if (vi.time != 0 && !expr.setTime(vi.time))
+											throw new SkriptAPIException("The default expression of '" + vi.classes[0].getCodeName() + "' does not have distinct time states. [pattern: " + info.patterns[i] + "]");
+										if (!expr.init())
+											continue patternsLoop;
+										res.exprs[j] = expr;
+									}
 								}
+								x = x2;
 							}
-							x = x2;
+							final T t = info.c.newInstance();
+							if (t.init(res.exprs, i, ScriptLoader.hasDelayBefore, res)) {
+								log.printLog();
+								return t;
+							}
 						}
-						final T t = info.c.newInstance();
-						if (t.init(res.exprs, i, ScriptLoader.hasDelayBefore, res)) {
-							log.printLog();
-							return t;
-						}
+					} catch (final InstantiationException e) {
+						assert false;
+					} catch (final IllegalAccessException e) {
+						assert false;
 					}
-				} catch (final InstantiationException e) {
-					assert false;
-				} catch (final IllegalAccessException e) {
-					assert false;
 				}
 			}
+		} finally {
+			log.stop();
 		}
 		log.printError(null);
 		return null;
 	}
 	
-	private final static Pattern varPattern = Pattern.compile("^(?i)((the )?var(iable)? )?\\{([^{}]|%\\{|\\}%)+\\}$");
+	private final static Pattern varPattern = Pattern.compile("^((the )?var(iable)? )?\\{([^{}]|%\\{|\\}%)+\\}$", Pattern.CASE_INSENSITIVE);
 	
 	/**
 	 * Prints errors
@@ -243,61 +263,66 @@ public class SkriptParser {
 	public final static Pattern listElementPattern = Pattern.compile("((?:[^\"{}]|\"(?:[^\"]|\"\")*\"|\\{(?:[^{}]|%\\{|\\}%)+\\})+?)(?:\\s*,?\\s+(and|n?or)\\s+|\\s*,\\s*)", Pattern.CASE_INSENSITIVE);
 	
 	@SuppressWarnings("unchecked")
-	public final static <T> Expression<? extends T> parseExpression(final String s, final boolean parseStatic, final ParseContext context, final Class<? extends T>... types) {
+	public final static <T> Expression<? extends T> parseExpression(final String s, final int flags, final ParseContext context, final Class<? extends T>... types) {
 		assert s != null && context != null && types != null && types.length > 0;
 		assert types.length == 1 || !Utils.contains(types, Object.class);
 		if (types.length == 1 && types[0] == Object.class)
-			return (Expression<? extends T>) new SkriptParser(s, parseStatic, context).parseObjectExpression();
-		return new SkriptParser(s, parseStatic, context).parseExpression(types);
+			return (Expression<? extends T>) new SkriptParser(s, flags, context).parseObjectExpression();
+		return new SkriptParser(s, flags, context).parseExpression(types);
 	}
 	
-	private final <T> Expression<? extends T> parseExpression(final Class<? extends T>[] types) {
+	private final <T> Expression<? extends T> parseExpression(final Class<? extends T>... types) {
 		assert !Utils.contains(types, Object.class);
-		String lastExpr = expr;
-		final ParseLog log = SkriptLogger.startParseLog();
-		
-		final Expression<? extends T> r = parseSingleExpr(expr, true, types);
-		if (r != null) {
-			log.printLog();
-			return r;
-		}
-		log.clear();
 		
 		final Deque<Expression<? extends T>> ts = new LinkedList<Expression<? extends T>>();
-		final Matcher m = listSplitPattern.matcher(expr);
-		int end = expr.length();
-		int expectedEnd = -1;
 		Kleenean and = Kleenean.UNKNOWN;
-		boolean last = false;
 		boolean isLiteralList = true;
-		while (m.find() || (last = !last)) {
-			if (expectedEnd == -1)
-				expectedEnd = last ? expr.length() : m.start();
-			final Expression<? extends T> t = parseSingleExpr(lastExpr = expr.substring(last ? 0 : m.end(), end), true, types);
-			if (t != null) {
-				isLiteralList &= t instanceof Literal;
-				if (!last && m.group(1) != null) {
-					if (and.isUnknown()) {
-						and = Kleenean.get(m.group(1).equalsIgnoreCase("and"));
-					} else {
-						if (and != Kleenean.get(m.group(1).equalsIgnoreCase("and"))) {
-							Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
-							and = Kleenean.TRUE;
+		
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		try {
+			final Expression<? extends T> r = parseSingleExpr(expr, flags, types);
+			if (r != null) {
+				log.printLog();
+				return r;
+			}
+			log.clear();
+			
+			String lastExpr = expr;
+			final Matcher m = listSplitPattern.matcher(expr);
+			int end = expr.length();
+			int expectedEnd = -1;
+			boolean last = false;
+			while (m.find() || (last = !last)) {
+				if (expectedEnd == -1)
+					expectedEnd = last ? expr.length() : m.start();
+				final Expression<? extends T> t = parseSingleExpr(lastExpr = expr.substring(last ? 0 : m.end(), end), flags, types);
+				if (t != null) {
+					isLiteralList &= t instanceof Literal;
+					if (!last && m.group(1) != null) {
+						if (and.isUnknown()) {
+							and = Kleenean.get(m.group(1).equalsIgnoreCase("and"));
+						} else {
+							if (and != Kleenean.get(m.group(1).equalsIgnoreCase("and"))) {
+								Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
+								and = Kleenean.TRUE;
+							}
 						}
 					}
+					ts.addFirst(t);
+					if (last)
+						break;
+					end = m.start();
+					m.region(0, end);
+				} else {
+					log.clear();
 				}
-				ts.addFirst(t);
-				if (last)
-					break;
-				end = m.start();
-				m.region(0, end);
-			} else {
-				log.clear();
 			}
-		}
-		if (end != expectedEnd || ts.isEmpty()) {
-			log.printError("'" + lastExpr + "' is " + notOfType(types));
-			return null;
+			if (end != expectedEnd || ts.isEmpty()) {
+				log.printError("'" + lastExpr + "' is " + notOfType(types));
+				return null;
+			}
+		} finally {
+			log.stop();
 		}
 		log.printLog();
 		if (ts.size() == 1)
@@ -305,40 +330,78 @@ public class SkriptParser {
 		if (and.isUnknown())
 			Skript.warning("List is missing 'and' or 'or', defaulting to 'and'");
 		if (isLiteralList) {
-			return new LiteralList<T>(ts.toArray(new Literal[ts.size()]), !and.isFalse());
+			return new LiteralList<T>(ts.toArray(new Literal[ts.size()]), (Class<T>) Utils.getSuperType(types), !and.isFalse());
 		} else {
-			return new ExpressionList<T>(ts.toArray(new Expression[ts.size()]), !and.isFalse());
+			return new ExpressionList<T>(ts.toArray(new Expression[ts.size()]), (Class<T>) Utils.getSuperType(types), !and.isFalse());
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
 	private final Expression<?> parseObjectExpression() {
-		if (!parseStatic) {
-			final ParseLog log = SkriptLogger.startParseLog();
-			final Expression<?> r = parseSingleExpr(expr, false, Object.class);
-			if (r != null) {
-				log.printLog();
-				return r;
+		if ((flags & PARSE_EXPRESSIONS) != 0) {
+			final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+			try {
+				final Expression<?> r = parseSingleExpr(expr, PARSE_EXPRESSIONS, Object.class);
+				if (r != null) {
+					log.printLog();
+					return r;
+				}
+				if ((flags & PARSE_LITERALS) == 0) {
+					log.printError(null);
+					return null;
+				}
+			} finally {
+				log.stop();
 			}
+		}
+		
+		// Hack as items use '..., ... and ...' for enchantments. Numbers and Times are parsed beforehand as they use the same (deprecated) id[:data] syntax.
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		try {
+			Expression<?> e = parseExpression(Number.class);
+			if (e != null) {
+				log.printLog();
+				return e;
+			}
+			e = parseExpression(Time.class);
+			if (e != null) {
+				log.printLog();
+				return e;
+			}
+			e = parseExpression(ItemType.class);
+			if (e != null) {
+				log.printLog();
+				return e;
+			}
+			e = parseExpression(ItemStack.class);
+			if (e != null) {
+				log.printLog();
+				return e;
+			}
+		} finally {
 			log.stop();
 		}
 		
-		final List<Expression<?>> ts = new ArrayList<Expression<?>>();
 		final Matcher m = listElementPattern.matcher(expr);
+		if (!m.find()) {
+			return parseSingleExpr(expr, PARSE_LITERALS, Object.class);
+		}
+		
+		final List<Expression<?>> ts = new ArrayList<Expression<?>>();
 		int start = 0;
 		Kleenean and = Kleenean.UNKNOWN;
 		boolean last = false;
 		boolean isLiteralList = true;
 		while (m.lookingAt() || (last = !last)) {
-			String sub = last ? expr.substring(start) : m.group(1).trim();
-			final Expression<?> t = parseSingleExpr(sub, true, Object.class);
+			final String sub = last ? expr.substring(start) : m.group(1).trim();
+			final Expression<?> t = parseSingleExpr(sub, flags, Object.class);
 			isLiteralList &= t instanceof Literal;
 			if (!last && m.group(2) != null) {
 				if (and.isUnknown()) {
 					and = Kleenean.get(m.group(2).equalsIgnoreCase("and"));
 				} else {
 					if (and != Kleenean.get(m.group(2).equalsIgnoreCase("and"))) {
-						Skript.warning("List has multiple 'and' or 'or', will default to 'and'");
+						Skript.warning("List has multiple 'and' and 'or', will default to 'and'");
 						and = Kleenean.TRUE;
 					}
 				}
@@ -349,65 +412,81 @@ public class SkriptParser {
 			start = m.end();
 			m.region(start, expr.length());
 		}
-		if (ts.size() == 1)
-			return ts.get(0);
+		assert ts.size() > 1;
 		if (and.isUnknown())
 			Skript.warning("List is missing 'and' or 'or', defaulting to 'and'");
 		if (isLiteralList) {
-			return new LiteralList<Object>(ts.toArray(new Literal[ts.size()]), !and.isFalse());
+			return new LiteralList<Object>(ts.toArray(new Literal[ts.size()]), Object.class, !and.isFalse());
 		} else {
-			return new ExpressionList<Object>(ts.toArray(new Expression[ts.size()]), !and.isFalse());
+			return new ExpressionList<Object>(ts.toArray(new Expression[ts.size()]), Object.class, !and.isFalse());
 		}
 	}
 	
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private final <T> Expression<? extends T> parseSingleExpr(final String s, final boolean parseLiteral, final Class<? extends T>... types) {
+	private final <T> Expression<? extends T> parseSingleExpr(final String s, final int flags, final Class<? extends T>... types) {
 		assert types.length > 0;
 		assert types.length == 1 || !Utils.contains(types, Object.class);
-		assert !(parseStatic && !parseLiteral);
 		if (s.isEmpty())
 			return null;
-		final ParseLog log = SkriptLogger.startParseLog();
-		final Variable<? extends T> var = parseVariable(expr, types);
-		if (var != null) {
-			log.stop();
-			if (parseStatic)
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		try {
+			final Variable<? extends T> var = parseVariable(expr, types);
+			if (var != null) {
+				log.stop();
+				if ((flags & PARSE_EXPRESSIONS) == 0)
+					return null;
+				log.printLog();
+				return var;
+			} else if (log.hasError()) {
+				log.printError(null);
 				return null;
-			log.printLog();
-			return var;
-		} else if (log.hasError()) {
-			log.printError(null);
-			return null;
-		}
-		log.clear();
-		if (!parseStatic) {
-			final Expression<? extends T> e;
-			if (s.startsWith("\"") && s.endsWith("\"") && (types[0] == Object.class || Utils.contains(types, String.class))) {
-				e = (Expression<? extends T>) VariableString.newInstance(s.substring(1, s.length() - 1));
-			} else {
-				e = (Expression<? extends T>) parse(s, (Iterator) Skript.getExpressions(types), null);
-			}
-			if (e != null) {
-				log.printLog();
-				return e;
 			}
 			log.clear();
-		}
-		if (!parseLiteral) {
-			log.stop();
-			return null;
-		}
-		if (types[0] == Object.class) {
-			log.stop();
-			return (Literal<? extends T>) new UnparsedLiteral(s);
-		}
-		for (final Class<? extends T> c : types) {
-			log.clear();
-			final T t = Classes.parse(s, c, context);
-			if (t != null) {
-				log.printLog();
-				return new SimpleLiteral<T>(t, false);
+			if ((flags & PARSE_EXPRESSIONS) != 0) {
+				final Expression<?> e;
+				if (s.startsWith("\"") && s.endsWith("\"") && (types[0] == Object.class || Utils.contains(types, String.class))) {
+					e = VariableString.newInstance(s.substring(1, s.length() - 1));
+				} else {
+					e = parse(s, (Iterator) Skript.getExpressions(types), null);
+				}
+				if (e != null) {
+					for (final Class<? extends T> t : types) {
+						if (t.isAssignableFrom(e.getReturnType())) {
+							log.printLog();
+							return (Expression<? extends T>) e;
+						}
+					}
+					for (final Class<? extends T> t : types) {
+						final Expression<? extends T> r = e.getConvertedExpression(t);
+						if (r != null) {
+							log.printLog();
+							return r;
+						}
+					}
+					log.error(e.toString(null, false) + " is " + notOfType(types), ErrorQuality.NOT_AN_EXPRESSION);
+					log.printError(null);
+					return null;
+				}
+				log.clear();
 			}
+			if ((flags & PARSE_LITERALS) == 0) {
+				log.printError(null);
+				return null;
+			}
+			if (types[0] == Object.class) {
+				log.stop();
+				return (Literal<? extends T>) new UnparsedLiteral(s);
+			}
+			for (final Class<? extends T> c : types) {
+				log.clear();
+				final T t = Classes.parse(s, c, context);
+				if (t != null) {
+					log.printLog();
+					return new SimpleLiteral<T>(t, false);
+				}
+			}
+		} finally {
+			log.stop();
 		}
 		log.printError(null);
 		return null;
@@ -475,7 +554,7 @@ public class SkriptParser {
 //	}
 	
 	/**
-	 * Prints errors
+	 * Prints parse errors (i.e. must start a ParseLog before calling this method)
 	 * 
 	 * @param args
 	 * @param command
@@ -483,8 +562,7 @@ public class SkriptParser {
 	 * @return
 	 */
 	public static boolean parseArguments(final String args, final ScriptCommand command, final ScriptCommandEvent event) {
-		
-		final SkriptParser parser = new SkriptParser(args, true, ParseContext.COMMAND);
+		final SkriptParser parser = new SkriptParser(args, PARSE_LITERALS, ParseContext.COMMAND);
 		final ParseResult res = parser.parse_i(command.getPattern(), 0, 0);
 		if (res == null)
 			return false;
@@ -502,9 +580,13 @@ public class SkriptParser {
 	}
 	
 	public static Pair<SkriptEventInfo<?>, SkriptEvent> parseEvent(final String event, final String defaultError) {
-		final SimpleLog log = SkriptLogger.startSubLog();
-		final Pair<SkriptEventInfo<?>, SkriptEvent> e = new SkriptParser(event, true, ParseContext.EVENT).parseEvent();
-		log.stop();
+		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		final Pair<SkriptEventInfo<?>, SkriptEvent> e;
+		try {
+			e = new SkriptParser(event, PARSE_LITERALS, ParseContext.EVENT).parseEvent();
+		} finally {
+			log.stop();
+		}
 		if (e != null) {
 			log.printLog();
 			return e;
@@ -515,27 +597,34 @@ public class SkriptParser {
 	
 	private Pair<SkriptEventInfo<?>, SkriptEvent> parseEvent() {
 		assert context == ParseContext.EVENT;
-		assert parseStatic;
-		final ParseLog log = SkriptLogger.startParseLog();
-		for (final SkriptEventInfo<?> info : Skript.getEvents()) {
-			for (int i = 0; i < info.patterns.length; i++) {
-				log.clear();
-				try {
-					final ParseResult res = parse_i(info.patterns[i], 0, 0);
-					if (res != null) {
-						final SkriptEvent e = info.c.newInstance();
-						e.init(Arrays.copyOf(res.exprs, res.exprs.length, Literal[].class), i, res);
-						log.printLog();
-						return new Pair<SkriptEventInfo<?>, SkriptEvent>(info, e);
+		assert flags == PARSE_LITERALS;
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		try {
+			for (final SkriptEventInfo<?> info : Skript.getEvents()) {
+				for (int i = 0; i < info.patterns.length; i++) {
+					log.clear();
+					try {
+						final ParseResult res = parse_i(info.patterns[i], 0, 0);
+						if (res != null) {
+							final SkriptEvent e = info.c.newInstance();
+							if (!e.init(Arrays.copyOf(res.exprs, res.exprs.length, Literal[].class), i, res)) {
+								log.printError();
+								return null;
+							}
+							log.printLog();
+							return new Pair<SkriptEventInfo<?>, SkriptEvent>(info, e);
+						}
+					} catch (final InstantiationException e) {
+						assert false;
+					} catch (final IllegalAccessException e) {
+						assert false;
 					}
-				} catch (final InstantiationException e) {
-					assert false;
-				} catch (final IllegalAccessException e) {
-					assert false;
 				}
 			}
+		} finally {
+			log.stop();
 		}
-		log.printLog();
+		log.printError(null);
 		return null;
 	}
 	
@@ -609,23 +698,22 @@ public class SkriptParser {
 	}
 	
 	/**
-	 * 
 	 * @param cs
 	 * @return "not x" or "neither x, y nor z"
 	 */
 	public final static String notOfType(final Class<?>... cs) {
 		if (cs.length == 1) {
-			return "not " + Utils.a(Classes.getSuperClassInfo(cs[0]).getName());
+			return Language.get("not") + " " + Classes.getSuperClassInfo(cs[0]).getName().withIndefiniteArticle();
 		} else {
-			final StringBuilder b = new StringBuilder("neither ");
+			final StringBuilder b = new StringBuilder(Language.get("neither") + " ");
 			for (int k = 0; k < cs.length; k++) {
 				if (k != 0) {
 					if (k != cs.length - 1)
 						b.append(", ");
 					else
-						b.append(" nor ");
+						b.append(" " + Language.get("nor") + " ");
 				}
-				b.append(Utils.a(Classes.getSuperClassInfo(cs[k]).getName()));
+				b.append(Classes.getSuperClassInfo(cs[k]).getName().withIndefiniteArticle());
 			}
 			return b.toString();
 		}
@@ -633,17 +721,17 @@ public class SkriptParser {
 	
 	public final static String notOfType(final ClassInfo<?>... cs) {
 		if (cs.length == 1) {
-			return "not " + Utils.a(cs[0].getName());
+			return Language.get("not") + " " + cs[0].getName().withIndefiniteArticle();
 		} else {
-			final StringBuilder b = new StringBuilder("neither ");
+			final StringBuilder b = new StringBuilder(Language.get("neither") + " ");
 			for (int k = 0; k < cs.length; k++) {
 				if (k != 0) {
 					if (k != cs.length - 1)
 						b.append(", ");
 					else
-						b.append(" nor ");
+						b.append(" " + Language.get("nor") + " ");
 				}
-				b.append(Utils.a(cs[k].getName()));
+				b.append(cs[k].getName().withIndefiniteArticle());
 			}
 			return b.toString();
 		}
@@ -664,52 +752,60 @@ public class SkriptParser {
 		while (j < pattern.length()) {
 			switch (pattern.charAt(j)) {
 				case '[':
-					final ParseLog log0 = SkriptLogger.startParseLog();
-					res = parse_i(pattern, i, j + 1);
-					if (res != null) {
-						log0.printLog();
-						return res;
+					final ParseLogHandler log0 = SkriptLogger.startParseLogHandler();
+					try {
+						res = parse_i(pattern, i, j + 1);
+						if (res != null) {
+							log0.printLog();
+							return res;
+						}
+						log0.clear();
+						j = nextBracket(pattern, ']', '[', j + 1) + 1;
+						res = parse_i(pattern, i, j);
+					} finally {
+						log0.stop();
 					}
-					log0.clear();
-					j = nextBracket(pattern, ']', '[', j + 1) + 1;
-					res = parse_i(pattern, i, j);
 					if (res == null)
 						log0.printError(null);
 					else
 						log0.printLog();
 					return res;
 				case '(':
-					final ParseLog log = SkriptLogger.startParseLog();
-					final int start = j;
-					for (; j < pattern.length(); j++) {
-						log.clear();
-						if (j == start || pattern.charAt(j) == '|') {
-							int mark = -1;
-							if (j != pattern.length() - 1 && (Character.isDigit(pattern.charAt(j + 1)) || pattern.charAt(j + 1) == '-')) {
-								final int j2 = pattern.indexOf('¦', j + 2);
-								if (j2 != -1) {
-									try {
-										mark = Integer.parseInt(pattern.substring(j + 1, j2));
-										j = j2;
-									} catch (final NumberFormatException e) {}
+					final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+					try {
+						final int start = j;
+						for (; j < pattern.length(); j++) {
+							log.clear();
+							if (j == start || pattern.charAt(j) == '|') {
+								int mark = -1;
+								if (j != pattern.length() - 1 && (Character.isDigit(pattern.charAt(j + 1)) || pattern.charAt(j + 1) == '-')) {
+									final int j2 = pattern.indexOf('¦', j + 2);
+									if (j2 != -1) {
+										try {
+											mark = Integer.parseInt(pattern.substring(j + 1, j2));
+											j = j2;
+										} catch (final NumberFormatException e) {}
+									}
 								}
+								res = parse_i(pattern, i, j + 1);
+								if (res != null) {
+									log.printLog();
+									if (mark != -1 && res.mark == -1)// the rightmost mark is the one kept
+										res.mark = mark;
+									return res;
+								}
+							} else if (pattern.charAt(j) == '(') {
+								j = nextBracket(pattern, ')', '(', j + 1);
+							} else if (pattern.charAt(j) == ')') {
+								break;
+							} else if (j == pattern.length() - 1) {
+								throw new MalformedPatternException(pattern, "Missing closing bracket ')'");
 							}
-							res = parse_i(pattern, i, j + 1);
-							if (res != null) {
-								log.printLog();
-								if (mark != -1 && res.mark == -1)// the rightmost mark is the one kept
-									res.mark = mark;
-								return res;
-							}
-						} else if (pattern.charAt(j) == '(') {
-							j = nextBracket(pattern, ')', '(', j + 1);
-						} else if (pattern.charAt(j) == ')') {
-							break;
-						} else if (j == pattern.length() - 1) {
-							throw new MalformedPatternException(pattern, "Missing closing bracket ')'");
 						}
+					} finally {
+						log.stop();
 					}
-					log.printError(null);
+					log.printError();
 					return null;
 				case '%':
 					if (i == expr.length())
@@ -730,76 +826,86 @@ public class SkriptParser {
 						if (i2 == 0)
 							return null;
 					} else {
-						i2 = i+1;
+						i2 = i + 1;
 					}
-					final ParseLog log1 = SkriptLogger.startParseLog();
-					for (; i2 <= expr.length(); i2++) {
-						log1.clear();
-						res = parse_i(pattern, i2, end + 1);
-						if (res != null) {
-							final ParseLog log2 = SkriptLogger.startParseLog();
-							for (int k = 0; k < vi.classes.length; k++) {
-								log2.clear();
-								@SuppressWarnings("unchecked")
-								final Expression<?> e = parseExpression(expr.substring(i, i2), parseStatic, context, vi.classes[k].getC());
-								if (e != null) {
+					final ParseLogHandler log1 = SkriptLogger.startParseLogHandler();
+					try {
+						for (; i2 <= expr.length(); i2++) {
+							log1.clear();
+							res = parse_i(pattern, i2, end + 1);
+							if (res != null) {
+								final ParseLogHandler log2 = SkriptLogger.startParseLogHandler();
+								try {
+									for (int k = 0; k < vi.classes.length; k++) {
+										log2.clear();
+										@SuppressWarnings("unchecked")
+										final Expression<?> e = parseExpression(expr.substring(i, i2), flags & vi.flagMask, context, vi.classes[k].getC());
+										if (e != null) {
+											log2.stop();
+											log1.stop();
+											if (!vi.isPlural[k] && !((Expression<?>) e).isSingle()) {
+												if (context == ParseContext.COMMAND) {
+													Skript.error(Commands.m_too_many_arguments.toString(vi.classes[k].getName().getIndefiniteArticle(), vi.classes[k].getName().toString()), ErrorQuality.SEMANTIC_ERROR);
+													return null;
+												} else {
+													Skript.error("'" + expr.substring(0, i) + "<...>" + expr.substring(i2) + "' can only accept a single " + vi.classes[k].getName() + ", not more", ErrorQuality.SEMANTIC_ERROR);
+													return null;
+												}
+											}
+											if (vi.time != 0) {
+												if (e instanceof Literal<?>)
+													return null;
+												if (ScriptLoader.hasDelayBefore == Kleenean.TRUE) {
+													Skript.error("Cannot use time states after the event has already passed", ErrorQuality.SEMANTIC_ERROR);
+													return null;
+												}
+												if (!((Expression<?>) e).setTime(vi.time)) {
+													Skript.error(e + " does not have a " + (vi.time == -1 ? "past" : "future") + " state", ErrorQuality.SEMANTIC_ERROR);
+													return null;
+												}
+											}
+											log2.printLog();
+											log1.printLog();
+											res.exprs[StringUtils.count(pattern, '%', 0, j - 1) / 2] = e;
+											return res;
+										}
+									}
+								} finally {
 									log2.stop();
-									log1.stop();
-									if (!vi.isPlural[k] && !((Expression<?>) e).isSingle()) {
-										if (context == ParseContext.COMMAND) {
-											Skript.error("This command can only accept a single " + vi.classes[k].getName() + ".", ErrorQuality.SEMANTIC_ERROR);
-											return null;
-										} else {
-											Skript.error("This expression can only accept a single " + vi.classes[k].getName() + ", but multiple are given.", ErrorQuality.SEMANTIC_ERROR);
-											return null;
-										}
-									}
-									if (vi.time != 0) {
-										if (e instanceof Literal<?>)
-											return null;
-										if (ScriptLoader.hasDelayBefore == Kleenean.TRUE) {
-											Skript.error("Cannot use time states after the event has already passed", ErrorQuality.SEMANTIC_ERROR);
-											return null;
-										}
-										if (!((Expression<?>) e).setTime(vi.time)) {
-											Skript.error(e + " does not have a " + (vi.time == -1 ? "past" : "future") + " state", ErrorQuality.SEMANTIC_ERROR);
-											return null;
-										}
-									}
-									log2.printLog();
-									log1.printLog();
-									res.exprs[StringUtils.count(pattern, '%', 0, j - 1) / 2] = e;
-									return res;
 								}
-							}
-							log2.stop();
-							log1.stop();
-							if (log2.hasError()) {
-								log2.printError(null);
+								if (log2.hasError()) {
+									log2.printError(null);
+									return null;
+								}
+								Skript.error("'" + expr.substring(i, i2) + "' is " + notOfType(vi.classes), ErrorQuality.NOT_AN_EXPRESSION);
 								return null;
 							}
-							Skript.error("'" + expr.substring(i, i2) + "' is " + notOfType(vi.classes), ErrorQuality.NOT_AN_EXPRESSION);
-							return null;
 						}
+					} finally {
+						log1.stop();
 					}
-					log1.printError(null);
+					log1.printError();
 					return null;
 				case '<':
 					end = pattern.indexOf('>', j + 1);// not next()
 					if (end == -1)
 						throw new MalformedPatternException(pattern, "missing closing regex bracket '>'");
-					final ParseLog log2 = SkriptLogger.startParseLog();
-					for (i2 = i + 1; i2 <= expr.length(); i2++) {
-						log2.clear();
-						res = parse_i(pattern, i2, end + 1);
-						if (res != null) {
-							final Matcher m = Pattern.compile(pattern.substring(j + 1, end)).matcher(expr.substring(i, i2));
-							if (m.matches()) {
-								res.regexes.add(0, m.toMatchResult());
-								log2.printLog();
-								return res;
+					final ParseLogHandler log2 = SkriptLogger.startParseLogHandler();
+					try {
+						for (i2 = i + 1; i2 <= expr.length(); i2++) {
+							log2.clear();
+							res = parse_i(pattern, i2, end + 1);
+							if (res != null) {
+								final Matcher m = Pattern.compile(pattern.substring(j + 1, end)).matcher(expr.substring(i, i2));
+								if (m.matches()) {
+									res.regexes.add(0, m.toMatchResult());
+									log2.printLog();
+									return res;
+								}
 							}
 						}
+					} finally {
+						log2.stop();
 					}
 					log2.printError(null);
 					return null;
@@ -841,6 +947,7 @@ public class SkriptParser {
 		ClassInfo<?>[] classes;
 		boolean[] isPlural;
 		boolean isOptional;
+		int flagMask = ~0;
 		int time = 0;
 	}
 	
@@ -849,6 +956,13 @@ public class SkriptParser {
 		r.isOptional = s.startsWith("-");
 		if (r.isOptional)
 			s = s.substring(1);
+		if (s.startsWith("*")) {
+			s = s.substring(1);
+			r.flagMask &= ~PARSE_EXPRESSIONS;
+		} else if (s.startsWith("~")) {
+			s = s.substring(1);
+			r.flagMask &= ~PARSE_LITERALS;
+		}
 		final int a = s.indexOf("@");
 		if (a != -1) {
 			r.time = Integer.parseInt(s.substring(a + 1));
@@ -858,7 +972,7 @@ public class SkriptParser {
 		r.classes = new ClassInfo<?>[classes.length];
 		r.isPlural = new boolean[classes.length];
 		for (int i = 0; i < classes.length; i++) {
-			final Pair<String, Boolean> p = Utils.getPlural(classes[i]);
+			final Pair<String, Boolean> p = Utils.getEnglishPlural(classes[i]);
 			r.classes[i] = Classes.getClassInfo(p.first);
 			r.isPlural[i] = p.second;
 		}

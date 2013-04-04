@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,6 +29,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -39,9 +43,14 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Delay")
+@Description("Delays the script's execution by a given timespan. Please note that delays are not persistent, e.g. trying to create a tempban script with <code>ban player → wait 7 days → unban player</code> will not work if you restart your server anytime within these 7 days. You also have to be careful even when using small delays! ")
+@Examples({"wait 2 minutes",
+		"halt for 5 minecraft hours",
+		"wait a tick"})
+@Since("1.4")
 public class Delay extends Effect {
-	
-	private static final long serialVersionUID = -6754842737504578386L;
 	
 	static {
 		Skript.registerEffect(Delay.class, "(wait|halt) [for] %timespan%");
@@ -59,7 +68,7 @@ public class Delay extends Effect {
 	@Override
 	protected TriggerItem walk(final Event e) {
 		debug(e, true);
-		final long start = System.nanoTime();
+		final long start = Skript.debug() ? System.nanoTime() : 0;
 		if (getNext() != null) {
 			delayed.add(e);
 			final Timespan d = duration.getSingle(e);

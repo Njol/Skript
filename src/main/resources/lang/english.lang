@@ -1,5 +1,7 @@
+# Default English language file
+
 # Which version of Skript this language file was written for
-version: 2.0 beta 3
+version: 2.0 beta 8
 
 # -- General --
 and: and
@@ -7,39 +9,112 @@ or: or
 a: a, an
 is: is
 are: are
+not: not
+not a: not a # @a:not a @an:not an @x:not
+neither: neither
+nor: nor
 
-# -- Commands --
-commands:
-	no_permission_message: You don't have the required permission to use this command
-	executable_by_players: This command can only be used by players
-	executable_by_console: This command can only be used by the console
-	usage: Correct usage: %s
+genders:
+	0:
+		name: a
+		definite article: the
+		indefinite article: a
+	1:
+		name: an
+		definite article: the
+		indefinite article: an
+	plural:
+		# name: x
+		definite article: the
+
+# -- Skript --
+skript:
+	copyright: ~ created by & © Peter Güttinger aka Njol ~
+	quotes error: Invalid use of quotes ("). If you want to use quotes in "quoted text", double them: "".
+	invalid reload: Skript may only be reloaded by either Bukkit's '/reload' or Skript's '/skript reload' command
+
+# -- Skript command --
+skript command:
+	description: Skript's main command
+	help: Prints this help message. Use '/skript reload/enable/disable/update' to get more info
+	reload:
+		description: Reloads the config, all scripts, everything, or a specific script
+		all: Reloads all configs and all scripts
+		config: Reloads the main config
+		aliases: Reloads the aliases config (aliases.sk)
+		scripts: Reloads all scripts
+		<script>: Reloads a specific script
+	enable:
+		description: Enables all scripts or a specific one
+		all: Enables all scripts in the 'scripts' folder
+		<script>: Enables a specific script
+	disable:
+		description: Disables all scripts or a specific one
+		all: Disables all scripts
+		<script>: Disables a specific script
+	update:
+		description: Check for updates, read the changelog, or download the latest version of Skript
+		check: Checks for a new version
+		changes: Lists all changes since the current version
+		download: Download the newest version
 
 # -- Updater --
 updater:
-	not_started: Skript has not yet checked for the latest version. Use <gold>/skript update check<reset> to do so.
+	not started: Skript has not yet checked for the latest version. Use <gold>/skript update check<reset> to do so.
 	checking: Checking for the latest version of Skript...
-	check_in_progress: Checking for a new version is currently in progress.
-	check_error: <red>There was an error checking for the latest version of Skript:<light red> %s
-	running_latest_version: You're currently running the latest version of Skript
-	update_available: A new version of Skript is available: <gold>%s<reset> (you're currently running <gold>%s<reset>)
-	downloading: Downloading Skript %s...
-	download_in_progress: The latest version of Skript is currently being downloaded.
-	download_error: <red>There was an error downloading the latest version of Skript:<light red> %s
-	downloaded: The latest version of Skript has been downloaded! Restart the server or use /reload to apply the changes.
+	check in progress: Checking for a new version is currently in progress.
+	check error: <red>There was an error checking for the latest version of Skript:<light red> %s
+	running latest version: You're currently running the latest stable version of Skript.
+	running latest version (beta): You're currently running a <i>beta<r> version of Skript, and no new <i>stable<r> version is available. Please note that you have to update to newer beta versions manually!
+	update available: A new version of Skript is available: <gold>%s<reset> (you're currently running <gold>%s<reset>)
+	downloading: Downloading Skript <gold>%s<reset>...
+	download in progress: The latest version of Skript is currently being downloaded.
+	download error: <red>There was an error downloading the latest version of Skript:<light red> %s
+	downloaded: The latest version of Skript has been downloaded! Restart the server or use /reload to apply the changes. The (possibly unchanged) new config.sk and aliases.sk have been downloaded as config-%s$1.sk and aliases-%s$1-sk.
+	internal error: An internal error occurred while checking for the latest version of Skript. Please refer to the server log for details.
 
-# -- Aliases -- (not used yet)
+# -- Commands --
+commands:
+	no permission message: You don't have the required permission to use this command
+	executable by players: This command can only be used by players.
+	executable by console: This command can only be used by the console.
+	usage: Usage:
+	correct usage: Correct usage:
+	invalid argument: Invalid argument <gray>'<%s>%s<gray>'<reset>. Correct usage:
+	too many arguments: This command can only accept a single %s$2.
+	internal error: An internal error occurred while attempting to perform this command.
+
+# -- Hooks --
+hooks:
+	hooked: Successfully hooked into %s
+
+# -- Aliases --
 aliases:
-	invalid_item_data: '%s' is no a valid item data
-	invalid_block_data: Blocks only have data values from 0 to 15
-	invalid_id: There doesn't exist a material with id %i!
-	invalid_item_type: '%s' is not an item type
-	invalid_range: The first number of a data range must be smaller than the second
-	format:
-		every: every %s
-		every_with_amount: %i of every %s
-		any: any %s
-		any_with_amount: %i of any %s
+	# regexes
+	any: any
+	every: (?:every|all)
+	of every: of (?:every|all)
+	of: of(?: any)?
+	# messages
+	brackets error: brackets have a special meaning in aliases and cannot be used as usual
+	empty alias: '%s' results in an empty alias (i.e. it doesn't map to any id/data), it will thus be ignored
+	unknown variation: unknown variation {%s}
+	starting with number: aliases must not start with a number
+	missing aliases: There are no aliases defined for the following ids:
+	empty string: '' is not an item type
+	invalid item data: '%s' is no a valid item data
+	invalid id: There doesn't exist a material with id %s!
+	invalid block data: Blocks only have data values from 0 to 15
+	invalid item type: '%s' is not an item type
+	out of data range: Item datas must be between 0 and %s (inclusive)
+	invalid range: The first number of a data range must be smaller than the second
+	invalid section: Invalid section '%s'. If this is an alias section add it to 'aliases' so it will be loaded
+	section not found: alias section '%s' not found!
+	not a section: aliases have to be in sections, but '%s' is not a section!
+	unexpected non-variation section: unexpected non-variation section
+	unexpected section: unexpected section
+	loaded x aliases from: loaded %s aliases from %s
+	loaded x aliases: loaded a total of %s aliases
 
 # -- Enchantments --
 enchantments:
@@ -90,7 +165,6 @@ potions:
 	poison: poison
 	wither: wither
 
-
 # -- Weather --
 weather:
 	clear:
@@ -104,7 +178,7 @@ weather:
 		adjective: thundering
 
 # -- Tree Types --
-treetypes:
+tree types:
 	tree:
 		name: tree¦s
 		pattern: (any )?trees?
@@ -178,7 +252,7 @@ colors:
 	light_purple: magenta, light purple
 
 # -- Chat Styles --
-chatstyles:
+chat styles:
 	bold: bold, b
 	italic: italic, italics, i
 	strikethrough: strikethrough, strike, s
@@ -192,8 +266,8 @@ directions:
 	
 	at: at
 	
-	up: up
-	down: down
+	up: above
+	down: below
 	north: north
 	east: east
 	south: south
@@ -206,54 +280,155 @@ directions:
 	right: to the right of
 	left: to the left of
 
+# -- Entities -- (not yet used)
+entities:
+	arrow: arrow¦s @an
+	bat: bat¦s
+	boat: boat¦s
+	blaze: blaze¦s
+	chicken: chicken¦s
+	cow: cow¦s
+	cave spider: cave spider¦s
+	creeper: creeper¦s
+	unpowered creeper: unpowered creeper¦s
+	powered creeper: powered creeper¦s
+	egg: egg¦s @an
+	enderman:
+		name: ender¦man¦men @an
+		pattern: enderm(a|e)n [(carrying|holding) %-itemtype%]
+		format: %s$1 holding %s$2
+	ender crystal: ender crystal¦s @an
+	ender dragon: ender dragon¦s @an
+	ender pearl: ender pearl¦s @an
+	fireball: fireball¦s
+	small fireball: small fireball¦s
+	fish: fish¦es
+	ghast: ghast¦s
+	giant: giant¦s
+	iron golem: iron golems¦s
+	dropped item: dropped item¦s
+	item frame: item frame¦s @an
+	magma cube:
+		name: magma cube¦s
+		pattern: magma (cube|slime)[s]
+	minecart: minecart¦s
+	regular minecart: regular minecart¦s
+	storage minecart: storage minecart¦s
+	powered minecart: powered minecart¦s
+	mooshroom: mooshroom¦s
+	ocelot: ocelot¦s @an
+	wild ocelot: wild ocelot¦s
+	cat: cat¦s
+	painting: painting¦s
+	pig: pig¦s
+	saddled pig: saddled pig¦s
+	unsaddled pig: unsaddled pig¦s @an
+	player: player¦s
+	op: op¦s @an
+	non-op: non-op¦s
+	zombie pigman: zombie pig¦man¦men
+	sheep:
+		name: sheep
+		pattern: [%-colors%] sheep[s] # while sheep is unclear, sheeps is plural (even though it's wrong)
+		format: %s$2 %s$1
+	silverfish: silverfish¦es
+	skeleton: skeleton¦s
+	slime: slime¦s
+	snowball: snowball¦s
+	snow golem: snow golem¦s
+	spider: spider¦s
+	squid: squid¦s
+	bottle of enchanting: bottle¦ of enchanting¦s of enchanting
+	potion: thrown potions¦s
+	TNT: TNT
+	villager: villager¦s
+	farmer: farmer¦s
+	librarian: librarian¦s
+	priest: priest¦s
+	blacksmith: blacksmith¦s
+	butcher: butcher¦s
+	witch: witch¦es
+	wither: wither¦s
+	wither zkeleton: wither skeleton¦s
+	wither skull: wither skull¦s
+	wolf: wol¦f¦ves
+	tamed wolf: tamed wol¦f¦ves
+	wild wolf: wild wol¦f¦ves
+	angry wolf: angry wol¦f¦ves @an
+	peaceful wolf: peaceful wol¦f¦ves
+	zombie: zombie¦s
+	xp-orb:
+		name: exprerience orb¦s
+		pattern: [<\\d+>] ([e]xp|experience)[( |-)orb[s]]
+		format: %s$2 %s$1
+
+damage causes:
+	contact: cactus
+	entity_attack: attack @an
+	projectile: projectile
+	suffocation: suffocation
+	fall: fall
+	fire: fire
+	fire_tick: burning
+	melting: melting
+	lava: lava
+	drowning: drowning
+	block_explosion: TNT
+	entity_explosion: creeper
+	void: void
+	lightning: lightning
+	starvation: starvation
+	poison: poison
+	magic: potion
+	wither: wither
+	falling_block: anvil @an
+	custom: unknown
+
 # -- Types --
 types:
-	not_a: not a(n)
-	neither: neither
-	nor: nor
-	
 	# Java
-	object: object¦s
-	number: number¦s
-	integer: integer¦s
-	long: integer¦s
-	short: integer¦s
-	byte: integer¦s
-	double: number¦s
-	float: number¦s
-	boolean: boolean¦ (yes/no)¦s (yes/no)
-	string: text¦s
+	object: object¦s @an
+	number: number¦s @a
+	integer: integer¦s @an
+	long: integer¦s @an
+	short: integer¦s @an
+	byte: integer¦s @an
+	double: number¦s @a
+	float: number¦s @a
+	boolean: boolean¦ (yes/no)¦s (yes/no) @a
+	string: text¦s @a
 	
 	# Bukkit
-	entity: entit¦y¦ies
-	livingentity: living entit¦y¦ies
-	projectile: projectile¦s
-	block: block¦s
-	location: location¦s
-	world: world¦s
-	inventory: inventor¦y¦ies
-	player: player¦s
-	offlineplayer: player¦s
-	commandsender: player¦/console¦s/consoles
-	blockface: direction¦s
-	inventoryholder: inventory holder¦s
-	gamemode: gamemode¦s
-	itemstack: material¦s
-	biome: biome¦s
-	potioneffecttype: potion¦s
+	entity: entit¦y¦ies @an
+	livingentity: living entit¦y¦ies @a
+	projectile: projectile¦s @a
+	block: block¦s @a
+	location: location¦s @a
+	world: world¦s @a
+	inventory: inventor¦y¦ies @an
+	player: player¦s @a
+	offlineplayer: offline player¦s @a
+	commandsender: player¦¦s¦/console @a
+	inventoryholder: inventory holder¦s @an
+	gamemode: gamemode¦s @a
+	itemstack: item stack¦s @an
+	biome: biome¦s @a
+	potioneffecttype: potion¦s @a
+	enchantment: enchantment¦s @an
 	
 	# Skript
-	weathertype: weather type¦s
-	entitytype: entity type¦s
-	entitydata: entity type¦s
-	itemtype: item type¦s
-	time: time¦s
-	timespan: time span¦s
-	timeperiod: time period¦s
-	date: date¦s
-	direction: direction¦s
-	slot: slot¦s
-	color: color¦s
-	structuretype: tree type¦s
-	enchantmenttype: enchantment¦s
-	experience: experience point¦s
+	weathertype: weather type¦s @a
+	entitytype: entity type¦s @an
+	entitydata: entity type¦s @an
+	itemtype: item type¦s @an
+	time: time¦s @a
+	timespan: time span¦s @a
+	timeperiod: time period¦s @a
+	date: date¦s @a
+	direction: direction¦s @a
+	slot: slot¦s @a
+	color: color¦s @a
+	structuretype: tree type¦s @a
+	enchantmenttype: enchantment type¦s @an
+	experience: experience point¦s @an
+	classinfo: type¦s @a

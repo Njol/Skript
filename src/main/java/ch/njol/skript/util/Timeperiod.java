@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,12 +24,10 @@ package ch.njol.skript.util;
 import java.io.Serializable;
 
 /**
- * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class Timeperiod implements Serializable {
-	
-	private static final long serialVersionUID = 7536810840301396017L;
 	
 	public final int start, end;
 	

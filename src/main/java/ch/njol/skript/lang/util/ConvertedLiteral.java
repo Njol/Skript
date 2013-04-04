@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -34,13 +34,14 @@ import ch.njol.skript.lang.Literal;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.Pair;
 
 /**
  * @author Peter Güttinger
  * @see SimpleLiteral
  */
+@SuppressWarnings("serial")
 public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements Literal<T> {
-	private static final long serialVersionUID = 2640112540190230558L;
 	
 	protected transient T[] data;
 	
@@ -50,7 +51,8 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 		if (codeName == null)
 			throw new SkriptAPIException(data.getClass().getComponentType().getName() + " is not registered");
 		out.writeUTF(codeName);
-		final String[][] d = new String[data.length][];
+		@SuppressWarnings("unchecked")
+		final Pair<String, String>[] d = new Pair[data.length];
 		for (int i = 0; i < data.length; i++) {
 			if ((d[i] = Classes.serialize(data[i])) == null) {
 				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
@@ -62,11 +64,11 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
 		in.defaultReadObject();
 		final String codeName = in.readUTF();
-		final String[][] d = (String[][]) in.readObject();
+		final Pair<String, String>[] d = (Pair<String, String>[]) in.readObject();
 		final ClassInfo<?> ci = Classes.getClassInfo(codeName);
 		data = (T[]) Array.newInstance(ci.getC(), d.length);
 		for (int i = 0; i < data.length; i++) {
-			data[i] = (T) Classes.deserialize(d[i][0], d[i][1]);
+			data[i] = (T) Classes.deserialize(d[i].first, d[i].second);
 		}
 	}
 	

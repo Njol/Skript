@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,6 +24,10 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,8 +38,12 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Now")
+@Description("The current <a href='../classes/#date'>system time</a> of the server. Use <a href='#ExprTime'>time</a> to get the <a href='../classes/#time'>Minecraft time</a> of a world.")
+@Examples({"broadcast \"Current server time: %now%\""})
+@Since("1.4")
 public class ExprNow extends SimpleExpression<Date> {
-	private static final long serialVersionUID = -7996644289867888426L;
 	
 	static {
 		Skript.registerExpression(ExprNow.class, Date.class, ExpressionType.SIMPLE, "now");

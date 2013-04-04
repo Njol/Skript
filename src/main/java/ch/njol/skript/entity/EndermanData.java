@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,21 +25,21 @@ import java.util.Arrays;
 
 import org.bukkit.entity.Enderman;
 
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class EndermanData extends EntityData<Enderman> {
-	private static final long serialVersionUID = -6712988549478058004L;
-	
 	static {
 		EntityData.register(EndermanData.class, "enderman", Enderman.class, "enderm(a|e)n [(carrying|holding) %-itemtypes%]");
 	}
@@ -111,14 +111,14 @@ public class EndermanData extends EntityData<Enderman> {
 			return "";
 		final StringBuilder b = new StringBuilder();
 		for (final ItemType h : hand) {
-			final String[] s = Classes.serialize(h);
+			final Pair<String, String> s = Classes.serialize(h);
 			if (s == null)
 				return null;
 			if (b.length() != 0)
 				b.append(",");
-			b.append(s[0]);
+			b.append(s.first);
 			b.append(":");
-			b.append(s[1].replace(",", ",,").replace(":", "::"));
+			b.append(s.second.replace(",", ",,").replace(":", "::"));
 		}
 		return b.toString();
 	}
@@ -138,6 +138,28 @@ public class EndermanData extends EntityData<Enderman> {
 				return false;
 			hand[i] = (ItemType) o;
 		}
+		return false;
+	}
+	
+	private boolean isSubhand(final ItemType[] sub) {
+		if (hand == null)
+			return true;
+		if (sub == null)
+			return false;
+		outer: for (final ItemType s : sub) {
+			for (final ItemType h : hand) {
+				if (h.isSupertypeOf(s))
+					continue outer;
+			}
+			return false;
+		}
+		return true;
+	}
+	
+	@Override
+	protected boolean isSupertypeOf_i(final EntityData<? extends Enderman> e) {
+		if (e instanceof EndermanData)
+			return isSubhand(((EndermanData) e).hand);
 		return false;
 	}
 	

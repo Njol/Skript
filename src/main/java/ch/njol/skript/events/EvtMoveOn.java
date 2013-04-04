@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -36,20 +36,21 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.EventExecutor;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.SkriptEventHandler;
+import ch.njol.skript.aliases.ItemData;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.ItemData;
-import ch.njol.skript.util.ItemType;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class EvtMoveOn extends SelfRegisteringSkriptEvent {
-	private static final long serialVersionUID = -6868864134840413002L;
 	
 //	private final static class BlockLocation {
 //		final World world;
@@ -80,7 +81,10 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 	
 	static {
 //		Skript.registerEvent(EvtMoveOn.class, PlayerMoveEvent.class, "(step|walk) on <.+>");
-		Skript.registerEvent(EvtMoveOn.class, PlayerMoveEvent.class, "(step|walk)[ing] (on|over) %itemtypes%");
+		Skript.registerEvent("Move On", EvtMoveOn.class, PlayerMoveEvent.class, "(step|walk)[ing] (on|over) %itemtypes%")
+				.description("Called when a player moves onto a certain type of block. Please note that using this event can cause lag if there are many players online.")
+				.examples("on walking on dirt or grass", "on stepping on stone")
+				.since("2.0");
 	}
 	
 //	private final static HashMap<BlockLocation, List<Trigger>> blockTriggers = new HashMap<BlockLocation, List<Trigger>>();
@@ -118,7 +122,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 						for (final ItemType i : se.types) {
 							if (i.isOfType(id, data)) {
 								SkriptEventHandler.logTriggerStart(t);
-								t.start(e);
+								t.execute(e);
 								SkriptEventHandler.logTriggerEnd(t);
 								continue triggersLoop;
 							}
@@ -195,7 +199,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 		}
 //		}
 		if (!registeredExecutor) {
-			Bukkit.getPluginManager().registerEvent(PlayerMoveEvent.class, new Listener() {}, Skript.getDefaultEventPriority(), executor, Skript.getInstance(), true);
+			Bukkit.getPluginManager().registerEvent(PlayerMoveEvent.class, new Listener() {}, SkriptConfig.defaultEventPriority.value(), executor, Skript.getInstance(), true);
 			registeredExecutor = true;
 		}
 	}

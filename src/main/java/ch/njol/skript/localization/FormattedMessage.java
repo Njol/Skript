@@ -15,40 +15,42 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.localization;
 
-import ch.njol.skript.util.StaticGetter;
+import java.util.IllegalFormatException;
+
+import ch.njol.skript.Skript;
 import ch.njol.util.Reference;
 
-public final class FormattedMessage {
-	private final String key;
+public final class FormattedMessage extends Message {
+	
 	private final Object[] args;
 	
 	/**
-	 * 
 	 * @param key
-	 * @param args an array of Objects, {@link StaticGetter}s and/or {@link Reference}s.
+	 * @param args An array of Objects to replace into the format message, e.g. {@link Reference}s.
 	 */
 	public FormattedMessage(final String key, final Object... args) {
+		super(key);
 		assert args.length > 0;
-		this.key = key;
 		this.args = args;
 	}
 	
 	@Override
 	public String toString() {
-		final Object[] args = this.args.clone();
-		for (int i = 0; i < args.length; i++) {
-			if (this.args[i] instanceof Reference)
-				args[i] = ((Reference<?>) this.args[i]).get();
-			if (this.args[i] instanceof StaticGetter)
-				args[i] = ((StaticGetter<?>) this.args[i]).get();
+		try {
+			return getValue() == null ? key : String.format(getValue(), args);
+		} catch (final IllegalFormatException e) {
+			final String m = "The formatted message '" + key + "' uses an illegal format: " + e.getLocalizedMessage();
+			Skript.adminBroadcast("<red>" + m);
+			System.err.println("[Skript] " + m);
+			e.printStackTrace();
+			return "[ERROR]";
 		}
-		return Language.format(key, args);
 	}
 	
 }

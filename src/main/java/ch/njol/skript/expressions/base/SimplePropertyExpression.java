@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,10 +29,14 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
 
 /**
+ * A base class for property expressions that requires only few overridden methods
+ * 
  * @author Peter Güttinger
+ * @see PropertyExpression
+ * @see PropertyExpression#register(Class, Class, String, String)
  */
+@SuppressWarnings("serial")
 public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> implements Converter<F, T> {
-	private static final long serialVersionUID = 5661174406099244885L;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -40,9 +44,6 @@ public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<
 		setExpr((Expression<? extends F>) exprs[0]);
 		return true;
 	}
-	
-	@Override
-	public abstract Class<T> getReturnType();
 	
 	protected abstract String getPropertyName();
 	

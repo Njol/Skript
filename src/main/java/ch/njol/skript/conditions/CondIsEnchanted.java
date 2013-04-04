@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,20 +24,28 @@ package ch.njol.skript.conditions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.EnchantmentType;
-import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is Enchanted")
+@Description("Checks whether an item is enchanted.")
+@Examples({"tool of the player is enchanted with efficiency 2",
+		"helm, chestplate, leggings or boots are enchanted"})
+@Since("1.4.6")
 public class CondIsEnchanted extends Condition {
-	
-	private static final long serialVersionUID = -3094351899572493389L;
 	
 	static {
 		Skript.registerCondition(CondIsEnchanted.class,
@@ -63,7 +71,7 @@ public class CondIsEnchanted extends Condition {
 			@Override
 			public boolean check(final ItemType item) {
 				if (enchs == null)
-					return item.getEnchantments() != null && !item.getEnchantments().isEmpty();
+					return isNegated() ^ (item.getEnchantments() != null && !item.getEnchantments().isEmpty());
 				return enchs.check(e, new Checker<EnchantmentType>() {
 					@Override
 					public boolean check(final EnchantmentType ench) {

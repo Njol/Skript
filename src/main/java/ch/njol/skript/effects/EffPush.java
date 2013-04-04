@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,6 +26,10 @@ import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -35,12 +39,16 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Push")
+@Description("Push entities around.")
+@Examples({"push the player upwards",
+		"push the victim downwards at speed 0.5"})
+@Since("1.4.6")
 public class EffPush extends Effect {
 	
-	private static final long serialVersionUID = -4749884923811319031L;
-	
 	static {
-		Skript.registerEffect(EffPush.class, "(push|thrust) %entities% %direction% [(at|with) (speed|velocity) %-number%]");
+		Skript.registerEffect(EffPush.class, "(push|thrust) %entities% %direction% [(at|with) (speed|velocity|force) %-number%]");
 	}
 	
 	private Expression<Entity> entities;

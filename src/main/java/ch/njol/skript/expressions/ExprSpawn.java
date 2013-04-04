@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,22 +24,33 @@ package ch.njol.skript.expressions;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.event.Event;
+import org.bukkit.event.world.SpawnChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
+import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Spawn")
+@Description("The spawnpoint of a world.")
+@Examples({"teleport all players to spawn",
+		"set the spawn point of \"world\" to the player's location"})
+@Since("1.4.2")
 public class ExprSpawn extends PropertyExpression<World, Location> {
-	private static final long serialVersionUID = 5775788092369920714L;
-	
 	static {
 		Skript.registerExpression(ExprSpawn.class, Location.class, ExpressionType.PROPERTY, "[the] spawn[s] [(point|location)[s]] [of %worlds%]", "%worlds%'[s] spawn[s] [(point|location)[s]]");
 	}
@@ -53,6 +64,9 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 	
 	@Override
 	protected Location[] get(final Event e, final World[] source) {
+		if (getTime() == -1 && e instanceof SpawnChangeEvent && !Delay.isDelayed(e)) {
+			return new Location[] {((SpawnChangeEvent) e).getPreviousLocation()};
+		}
 		return get(source, new Converter<World, Location>() {
 			@Override
 			public Location convert(final World w) {
@@ -75,7 +89,7 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
-			return Skript.array(Location.class);
+			return Utils.array(Location.class);
 		return null;
 	}
 	
@@ -87,4 +101,11 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 			w.setSpawnLocation(x, y, z);
 		}
 	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, getExpr(), SpawnChangeEvent.class);
+	}
+	
 }

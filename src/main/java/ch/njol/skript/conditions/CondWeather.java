@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,6 +26,10 @@ import org.bukkit.event.Event;
 import org.bukkit.event.weather.WeatherEvent;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
@@ -37,10 +41,14 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Weather")
+@Description({"Checks whether the weather in a world is of a specific type.",
+		"<i>I welcome any ideas how to write this condition differently.</i>"})
+@Examples({"is thundering",
+		"is raining in \"world\" or \"world2\""})
+@Since("1.0")
 public class CondWeather extends Condition {
-	
-	private static final long serialVersionUID = 364874019960153313L;
-	
 	static {
 		Skript.registerCondition(CondWeather.class, "is %weathertypes% [in %worlds%]");
 	}

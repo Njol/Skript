@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,6 +27,10 @@ import java.util.NoSuchElementException;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -37,9 +41,16 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Numbers")
+@Description({"All numbers between two given numbers, useful for looping.",
+		"Use 'numbers' if your start is not an integer and you want to keep the fractional part of the start number constant, or use 'integers' if you only want to loop integers.",
+		"An integer loop from 1 to a number x can also be written as 'loop x times'."})
+@Examples({"loop 5 times: # loops 1, 2, 3, 4, 5",
+		"loop numbers from 2.5 to 5.5: # loops 2.5, 3.5, 4.5, 5.5",
+		"loop integers from 2.9 to 5.1: # same as '3 to 5', i.e. loops 3, 4, 5"})
+@Since("1.4.6")
 public class ExprNumbers extends SimpleExpression<Number> {
-	private static final long serialVersionUID = -8168866962252682002L;
-	
 	static {
 		Skript.registerExpression(ExprNumbers.class, Number.class, ExpressionType.NORMAL,
 				"[(all|the)] (numbers|1¦integers) (between|from) %number% (and|to) %number%",

@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -49,7 +50,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
 import ch.njol.skript.localization.FormattedMessage;
-import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.Version;
@@ -66,6 +66,11 @@ public final class Updater {
 		String pageURL;
 		String changelog;
 		Date date;
+		
+		@Override
+		public String toString() {
+			return version.toString();
+		}
 	}
 	
 	private final static String rssURL = "http://dev.bukkit.org/server-mods/skript/files.rss";
@@ -76,7 +81,7 @@ public final class Updater {
 		NOT_STARTED, CHECK_IN_PROGRESS, CHECK_ERROR, CHECKED_FOR_UPDATE, DOWNLOAD_IN_PROGRESS, DOWNLOAD_ERROR, DOWNLOADED;
 	}
 	
-	public final static Object stateLock = new Object();
+	public final static ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock();
 	/**
 	 * must be synchronized with {@link #stateLock}
 	 */
@@ -87,31 +92,37 @@ public final class Updater {
 	public final static SynchronizedReference<VersionInfo> latest = new SynchronizedReference<VersionInfo>();
 	
 	// must be down here as they reference 'error' and 'latest' which are defined above
-	public final static Message m_not_started = new Message("updater.not_started");
+	public final static Message m_not_started = new Message("updater.not started");
 	public final static Message m_checking = new Message("updater.checking");
-	public final static Message m_check_in_progress = new Message("updater.check_in_progress");
-	public final static FormattedMessage m_check_error = new FormattedMessage("updater.check_error", error);
-	public final static Message m_running_latest_version = new Message("updater.running_latest_version");
-	public final static FormattedMessage m_update_available = new FormattedMessage("updater.update_available", latest, Skript.getVersion());
+	public final static Message m_check_in_progress = new Message("updater.check in progress");
+	public final static FormattedMessage m_check_error = new FormattedMessage("updater.check error", error);
+	public final static Message m_running_latest_version = new Message("updater.running latest version");
+	public final static Message m_running_latest_version_beta = new Message("updater.running latest version (beta)");
+	public final static FormattedMessage m_update_available = new FormattedMessage("updater.update available", latest, Skript.getVersion());
 	public final static FormattedMessage m_downloading = new FormattedMessage("updater.downloading", latest);
-	public final static Message m_download_in_progress = new Message("updater.download_in_progress");
-	public final static FormattedMessage m_download_error = new FormattedMessage("updater.download_error", error);
-	public final static Message m_downloaded = new Message("updater.downloaded");
+	public final static Message m_download_in_progress = new Message("updater.download in progress");
+	public final static FormattedMessage m_download_error = new FormattedMessage("updater.download error", error);
+	public final static FormattedMessage m_downloaded = new FormattedMessage("updater.downloaded", latest);
+	public final static Message m_internal_error = new Message("updater.internal error");
 	
 	/**
 	 * Must only be called if {@link #state} == {@link UpdateState#NOT_STARTED} or {@link UpdateState#CHECK_ERROR}
 	 * 
-	 * @param sender Sender to recieve messages or null if this is an automatic check
-	 * @param download
+	 * @param sender Sender to recieve messages
+	 * @param download Whether to directly download the newest version if one is found
+	 * @param isAutomatic
 	 */
 	static void check(final CommandSender sender, final boolean download, final boolean isAutomatic) {
 		assert sender != null;
-		synchronized (stateLock) {
+		stateLock.writeLock().lock();
+		try {
 			if (state != UpdateState.NOT_STARTED && state != UpdateState.CHECK_ERROR)
 				throw new IllegalStateException("Cannot check for an update twice");
 			state = UpdateState.CHECK_IN_PROGRESS;
+		} finally {
+			stateLock.writeLock().unlock();
 		}
-		Skript.info(sender, Language.get("updater.checking"));
+		Skript.info(sender, "" + m_checking);
 		new Thread(new Runnable() {
 			@SuppressWarnings("resource")
 			@Override
@@ -175,7 +186,7 @@ public final class Updater {
 						latest.set(infos.get(0));
 					}
 					
-					final String message = infos.isEmpty() ? "" + m_running_latest_version : "" + m_update_available;
+					final String message = infos.isEmpty() ? (Skript.getVersion().isStable() ? "" + m_running_latest_version : "" + m_running_latest_version_beta) : "" + m_update_available;
 					if (isAutomatic && !infos.isEmpty()) {
 						Skript.adminBroadcast(message);
 					} else {
@@ -183,27 +194,39 @@ public final class Updater {
 					}
 					
 					if (download && !infos.isEmpty()) {
-						synchronized (stateLock) {
+						stateLock.writeLock().lock();
+						try {
 							state = UpdateState.DOWNLOAD_IN_PROGRESS;
+						} finally {
+							stateLock.writeLock().unlock();
 						}
 						download_i(sender, isAutomatic);
 					} else {
-						synchronized (stateLock) {
+						stateLock.writeLock().lock();
+						try {
 							state = UpdateState.CHECKED_FOR_UPDATE;
+						} finally {
+							stateLock.writeLock().unlock();
 						}
 					}
 				} catch (final IOException e) {
-					Skript.error(sender, Language.format("updater.check_error", ExceptionUtils.toString(e)));
-					synchronized (stateLock) {
+					stateLock.writeLock().lock();
+					try {
 						state = UpdateState.CHECK_ERROR;
 						error.set(ExceptionUtils.toString(e));
+						Skript.error(sender, m_check_error.toString());
+					} finally {
+						stateLock.writeLock().unlock();
 					}
 				} catch (final Exception e) {
-					Skript.error(sender, "An internal error occurred while checking for the latest version of Skript. See the erver log for details.");
-					Skript.exception(e, "Error while checking for a new version of Skript");
-					synchronized (stateLock) {
+					Skript.error(sender, m_internal_error.toString());
+					Skript.exception(e, "Unexpected error while checking for a new version of Skript");
+					stateLock.writeLock().lock();
+					try {
 						state = UpdateState.CHECK_ERROR;
 						error.set(e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+					} finally {
+						stateLock.writeLock().unlock();
 					}
 				} finally {
 					if (in != null) {
@@ -253,68 +276,92 @@ public final class Updater {
 		throw new IOException("Could not get the file's URL. You can however download Skript manually from " + pageURL);
 	}
 	
+	private final static void saveZipEntry(final ZipInputStream zip, final File file) throws IOException {
+		file.getParentFile().mkdirs();
+		FileOutputStream out = null;
+		try {
+			out = new FileOutputStream(file);
+			final byte[] buffer = new byte[16 * 1024];
+			int read;
+			while ((read = zip.read(buffer)) > 0) {
+				out.write(buffer, 0, read);
+			}
+		} finally {
+			if (out != null)
+				out.close();
+		}
+	}
+	
 	/**
 	 * Must set {@link #state} to {@link UpdateState#DOWNLOAD_IN_PROGRESS} prior to calling this
 	 * 
-	 * @param sender not null
+	 * @param sender
+	 * @param isAutomatic
 	 */
 	private static void download_i(final CommandSender sender, final boolean isAutomatic) {
-		synchronized (stateLock) {
+		assert sender != null;
+		stateLock.readLock().lock();
+		try {
 			if (state != UpdateState.DOWNLOAD_IN_PROGRESS)
 				throw new IllegalStateException();
+		} finally {
+			stateLock.readLock().unlock();
 		}
 		Skript.info(sender, "" + m_downloading);
 		boolean hasJar = false;
-		final boolean hasConfig = true;
 		ZipInputStream zip = null;
 		try {
 			final URLConnection conn = new URL(getFileURL(latest.get().pageURL)).openConnection();
 			zip = new ZipInputStream(conn.getInputStream());
 			ZipEntry entry;
+			boolean hasConfig = false, hasAliases = false;
 			while ((entry = zip.getNextEntry()) != null) {
 				if (entry.getName().endsWith("Skript.jar")) {
-					Bukkit.getUpdateFolderFile().mkdirs();
-					final File update = new File(Bukkit.getUpdateFolderFile(), "Skript.jar");
-					FileOutputStream out = null;
-					try {
-						out = new FileOutputStream(update);
-						final byte[] buffer = new byte[4 * 1024];
-						int read;
-						while ((read = zip.read(buffer)) > 0) {
-							out.write(buffer, 0, read);
-						}
-					} finally {
-						if (out != null)
-							out.close();
-					}
+					assert !hasJar;
+					saveZipEntry(zip, new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
 					hasJar = true;
-//				} else if (entry.getName().endsWith("config.sk")) {
-					// TODO automagically update new config options
-					// important: only update config if the jar was successfully extracted!
-					//hasConfig = true;
+				} else if (entry.getName().endsWith("config.sk")) {
+//					TODO automagically update new config options
+//					important: only update config if the jar was successfully extracted!
+					assert !hasConfig;
+					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "config-" + latest.get().version + ".sk"));
+					hasConfig = true;
+				} else if (entry.getName().endsWith("aliases.sk")) {
+					assert !hasAliases;
+					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "aliases-" + latest.get().version + ".sk"));
+					hasAliases = true;
 				}
-				if (hasJar && hasConfig)
+				if (hasJar && hasConfig && hasAliases)
 					break;
 				zip.closeEntry();
 			}
 			if (isAutomatic)
-				Skript.adminBroadcast(Language.get("updater.downloaded"));
+				Skript.adminBroadcast("" + m_downloaded);
 			else
-				Skript.info(sender, Language.get("updater.downloaded"));
-			synchronized (stateLock) {
+				Skript.info(sender, "" + m_downloaded);
+			stateLock.writeLock().lock();
+			try {
 				state = UpdateState.DOWNLOADED;
+			} finally {
+				stateLock.writeLock().unlock();
 			}
 		} catch (final IOException e) {
-			Skript.error(sender, Language.format("updater.download_error", ExceptionUtils.toString(e)));
-			synchronized (stateLock) {
+			stateLock.writeLock().lock();
+			try {
 				state = UpdateState.DOWNLOAD_ERROR;
 				error.set(ExceptionUtils.toString(e));
+				Skript.error(sender, m_download_error.toString());
+			} finally {
+				stateLock.writeLock().unlock();
 			}
 		} catch (final Exception e) {
 			Skript.exception(e, "Error while downloading the latest version of Skript");
-			synchronized (stateLock) {
+			stateLock.writeLock().lock();
+			try {
 				state = UpdateState.DOWNLOAD_ERROR;
 				error.set(e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+			} finally {
+				stateLock.writeLock().unlock();
 			}
 		} finally {
 			if (zip != null) {
@@ -332,10 +379,13 @@ public final class Updater {
 	 */
 	public static void download(final CommandSender sender, final boolean isAutomatic) {
 		assert sender != null;
-		synchronized (stateLock) {
+		stateLock.writeLock().lock();
+		try {
 			if (state != UpdateState.CHECKED_FOR_UPDATE && state != UpdateState.DOWNLOAD_ERROR)
 				throw new IllegalStateException("Must check for an update first");
 			state = UpdateState.DOWNLOAD_IN_PROGRESS;
+		} finally {
+			stateLock.writeLock().unlock();
 		}
 		new Thread(new Runnable() {
 			@Override

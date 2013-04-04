@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,35 +26,38 @@ import java.lang.reflect.Array;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Random")
+@Description("Gets a random item out of a set, e.g. a random player out of all players online.")
+@Examples({"give a diamond to a random player out of all players",
+		"give a random item out of all items to the player"})
+@Since("1.4.9")
 public class ExprRandom extends SimpleExpression<Object> {
-	private static final long serialVersionUID = -4549744102145885982L;
-	
 	static {
-		Skript.registerExpression(ExprRandom.class, Object.class, ExpressionType.COMBINED, "[a] random <.+> [out] of %objects%");
+		Skript.registerExpression(ExprRandom.class, Object.class, ExpressionType.COMBINED, "[a] random %*classinfo% [out] of %objects%");
 	}
 	
 	private Expression<?> expr;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		Class<?> c = Classes.getClassFromUserInput(parseResult.regexes.get(0).group());
-		if (c == null)
-			c = Classes.getClassByName(parseResult.regexes.get(0).group());
-		if (c == null)
-			return false;
-		expr = exprs[0];
-		if (!c.isAssignableFrom(expr.getReturnType()))
+		expr = exprs[1].getConvertedExpression(((ClassInfo<?>) exprs[0].getSingle(null)).getC());
+		if (expr == null)
 			return false;
 		return true;
 	}

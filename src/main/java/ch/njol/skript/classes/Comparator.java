@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,10 +30,8 @@ import ch.njol.skript.registrations.Comparators;
  * Used to compare two objects of a different or the same type.
  * 
  * @author Peter Güttinger
- * 
  * @param <T1> ,
  * @param <T2> the types to compare
- * 
  * @see Comparators#registerComparator(Class, Class, Comparator)
  * @see DefaultComparators
  */
@@ -226,7 +224,6 @@ public interface Comparator<T1, T2> extends Serializable {
 	public Relation compare(T1 o1, T2 o2);
 	
 	/**
-	 * 
 	 * @return whether this comparator supports ordering of elements or not.
 	 */
 	public boolean supportsOrdering();

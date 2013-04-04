@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,6 +26,10 @@ import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
 
 import ch.njol.skript.ScriptLoader;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.util.Utils;
@@ -33,8 +37,13 @@ import ch.njol.skript.util.Utils;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Level")
+@Description("The level of a player.")
+@Examples({"reduce the victim's level by 1",
+		"set the player's level to 0"})
+@Since("")
 public class ExprLevel extends SimplePropertyExpression<Player, Integer> {
-	private static final long serialVersionUID = 6940533102393939250L;
 	
 	static {
 		register(ExprLevel.class, Integer.class, "level", "players");

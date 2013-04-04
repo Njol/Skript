@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,9 +29,12 @@ import org.bukkit.event.Event;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
@@ -41,11 +44,10 @@ import ch.njol.util.iterator.ArrayIterator;
  * An implementation of the {@link Expression} interface. You should usually extend this class to make a new expression.
  * 
  * @see Skript#registerExpression(Class, Class, String...)
- * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public abstract class SimpleExpression<T> implements Expression<T> {
-	private static final long serialVersionUID = -4026754180106122345L;
 	
 	private int time = 0;
 	
@@ -61,6 +63,11 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		return all[0];
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Unlike {@link #get(Event)} you have to make sure that the this method's returned array is neither null nor contains null elements.
+	 */
 	@Override
 	public T[] getAll(final Event e) {
 		final T[] all = get(e);
@@ -98,7 +105,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		if (!getAnd()) {
 			if (all.length == 1 && all[0] != null)
 				return all;
-			int rand = Skript.random.nextInt(numNonNull);
+			int rand = Utils.random(0, numNonNull);
 			final T[] one = (T[]) Array.newInstance(getReturnType(), 1);
 			for (final T t : all) {
 				if (t != null) {
@@ -161,7 +168,8 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	/**
-	 * Converts this expression to another type. Unless the expression is special, the default implementation is sufficient.<br/>
+	 * Converts this expression to another type. Unless the expression is special, the default implementation is sufficient.
+	 * <p>
 	 * This method is guaranteed to never being called with a supertype of the return type of this expression, or the return type itself.
 	 * 
 	 * @param to The desired return type of the returned expression
@@ -185,19 +193,25 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		return this.getConvertedExpr(to);
 	}
 	
+	private ClassInfo<?> returnTypeInfo;
+	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		return null;
+		if (returnTypeInfo == null)
+			returnTypeInfo = Classes.getSuperClassInfo(getReturnType());
+		if (returnTypeInfo.getChanger() == null)
+			return null;
+		return returnTypeInfo.getChanger().acceptChange(mode);
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		throw new UnsupportedOperationException();
+	public void change(final Event e, final Object delta, final ChangeMode mode) {
+		((Changer<T, Object>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
 	}
 	
 	/**
-	 * {@inheritDoc} <br>
-	 * <br>
+	 * {@inheritDoc}
+	 * <p>
 	 * This implementation sets the time but returns false.
 	 * 
 	 * @see #setTime(int, Class, Expression...)
@@ -218,7 +232,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 			Skript.error("Can't use time states after the event has already passed");
 			return false;
 		}
-		if (!Utils.contains(ScriptLoader.currentEvents, applicableEvent))
+		if (!isCurrentEvent(applicableEvent))
 			return false;
 		for (final Expression<?> var : mustbeDefaultVars) {
 			if (!var.isDefault()) {
@@ -234,13 +248,21 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 			Skript.error("Can't use time states after the event has already passed");
 			return false;
 		}
-		if (mustbeDefaultVar.isDefault()) {
-			for (final Class<? extends Event> e : applicableEvents) {
-				if (Utils.contains(ScriptLoader.currentEvents, e)) {
-					this.time = time;
-					return true;
-				}
+		if (!mustbeDefaultVar.isDefault())
+			return false;
+		for (final Class<? extends Event> e : applicableEvents) {
+			if (isCurrentEvent(e)) {
+				this.time = time;
+				return true;
 			}
+		}
+		return false;
+	}
+	
+	private final static boolean isCurrentEvent(final Class<? extends Event> e) {
+		for (final Class<?> e2 : ScriptLoader.currentEvents) {
+			if (e.isAssignableFrom(e2))
+				return true;
 		}
 		return false;
 	}

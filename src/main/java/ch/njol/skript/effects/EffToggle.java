@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,6 +27,10 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -35,8 +39,15 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Toggle")
+@Description("Toggle the state of a block.")
+@Examples({"# use arrows to toggle switches, doors, etc.",
+		"on projectile hit:",
+		"    projectile is arrow",
+		"    toggle the block at the arrow"})
+@Since("1.4")
 public class EffToggle extends Effect {
-	private static final long serialVersionUID = 7996026371293820669L;
 	static {
 		Skript.registerEffect(EffToggle.class, "(close|turn off|de[-]activate) %blocks%", "(toggle|switch) [[the] state of] %blocks%", "(open|turn on|activate) %blocks%");
 	}
@@ -73,13 +84,15 @@ public class EffToggle extends Effect {
 	@Override
 	protected void execute(final Event e) {
 		for (Block b : blocks.getArray(e)) {
-			if ((b.getType() == Material.WOODEN_DOOR || b.getType() == Material.IRON_DOOR_BLOCK) && (b.getData() & 0x8) == 0x8) {
+			int type = b.getTypeId();
+			byte data = b.getData();
+			if ((type == Material.WOODEN_DOOR.getId() || type == Material.IRON_DOOR_BLOCK.getId()) && (data & 0x8) == 0x8) {
 				b = b.getRelative(BlockFace.DOWN);
-				if (b.getType() != Material.WOODEN_DOOR && b.getType() != Material.IRON_DOOR_BLOCK)
+				type = b.getTypeId();
+				if (type != Material.WOODEN_DOOR.getId() && type != Material.IRON_DOOR_BLOCK.getId())
 					continue;
+				data = b.getData();
 			}
-			final int type = b.getTypeId();
-			final byte data = b.getData();
 			if (toggle == -1)
 				b.setData((byte) (data & ~bitFlags[type]));
 			else if (toggle == 0)

@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -36,11 +36,14 @@ import ch.njol.util.Checker;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class EvtEntityBlockChange extends SkriptEvent {
-	private static final long serialVersionUID = -734540476278000105L;
 	
 	static {
-		Skript.registerEvent(EvtEntityBlockChange.class, EntityChangeBlockEvent.class, ChangeEvent.patterns);
+		Skript.registerEvent("Enderman/Sheep", EvtEntityBlockChange.class, EntityChangeBlockEvent.class, ChangeEvent.patterns)
+				.description("Called when an enderman places or picks up a block, or a sheep eats grass respectively.")
+				.examples("")
+				.since("");
 	}
 	
 	private static enum ChangeEvent {

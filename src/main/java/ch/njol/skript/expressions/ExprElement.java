@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,6 +27,10 @@ import java.util.Iterator;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -36,10 +40,14 @@ import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
- * 
  */
+@SuppressWarnings("serial")
+@Name("Element of")
+@Description({"The first, last or a random element of a set, e.g. a list variable.",
+		"See also: <a href='#ExprRandom'>random</a>"})
+@Examples("give a random element out of {free items::*} to the player")
+@Since("2.0")
 public class ExprElement extends SimpleExpression<Object> {
-	private static final long serialVersionUID = 611157266196537628L;
 	
 	static {
 		Skript.registerExpression(ExprElement.class, Object.class, ExpressionType.PROPERTY, "([the] first|[the] last|[a] random) element [out] of %objects%");

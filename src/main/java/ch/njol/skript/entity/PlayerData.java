@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -31,14 +31,15 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class PlayerData extends EntityData<Player> {
-	private static final long serialVersionUID = -5005465199256939698L;
 	
 	static {
 		EntityData.register(PlayerData.class, "player", Player.class, "non-op[s]", "player[s]", "op[s]");
 	}
 	
-	private int op = 0;
+	// used by EntityData.getAll
+	int op = 0;
 	
 	private boolean plural;
 	
@@ -50,14 +51,14 @@ public class PlayerData extends EntityData<Player> {
 	}
 	
 	@Override
-	public void set(final Player entity) {
+	public void set(final Player p) {
 		if (op != 0)
-			entity.setOp(op == 1);
+			p.setOp(op == 1);
 	}
 	
 	@Override
-	protected boolean match(final Player entity) {
-		return op == 0 || entity.isOp() == (op == 1);
+	protected boolean match(final Player p) {
+		return op == 0 || p.isOp() == (op == 1);
 	}
 	
 	@Override
@@ -110,6 +111,13 @@ public class PlayerData extends EntityData<Player> {
 		} catch (final NumberFormatException e) {
 			return false;
 		}
+	}
+	
+	@Override
+	protected boolean isSupertypeOf_i(final EntityData<? extends Player> e) {
+		if (e instanceof PlayerData)
+			return op == 0 || ((PlayerData) e).op == op;
+		return false;
 	}
 	
 }

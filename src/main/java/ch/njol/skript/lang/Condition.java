@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -35,8 +35,8 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  * @see Skript#registerCondition(Class, String...)
  */
+@SuppressWarnings("serial")
 public abstract class Condition extends Statement {
-	private static final long serialVersionUID = 2131348038967424595L;
 	
 	private boolean negated = false;
 	
@@ -68,7 +68,6 @@ public abstract class Condition extends Statement {
 	}
 	
 	/**
-	 * 
 	 * @return whether this condition is negated or not.
 	 */
 	public final boolean isNegated() {

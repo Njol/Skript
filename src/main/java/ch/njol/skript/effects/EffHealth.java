@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,6 +26,10 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -33,12 +37,16 @@ import ch.njol.skript.util.Slot;
 import ch.njol.util.Kleenean;
 
 /**
- * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Damage/Heal/Repair")
+@Description("Damage/Heal/Repair an entity, or item stack.")
+@Examples({"damage player by 5 hearts",
+		"heal the player",
+		"repair tool of player"})
+@Since("1.0")
 public class EffHealth extends Effect {
-	
-	private static final long serialVersionUID = 6404302201372383022L;
 	
 	static {
 		Skript.registerEffect(EffHealth.class,

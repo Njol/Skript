@@ -15,37 +15,53 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
-import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.entity.EntityData;
-import ch.njol.skript.expressions.base.PropertyExpression;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.Kleenean;
+import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import ch.njol.skript.lang.util.ConvertedExpression;
+import ch.njol.skript.registrations.Converters;
 
 /**
  * @author Peter Güttinger
  */
-public class ExprTypeOf extends PropertyExpression<Object, Object> {
-	private static final long serialVersionUID = -7288078858273805343L;
-	
+@SuppressWarnings("serial")
+@Name("Type of")
+@Description("The type of a block/item or entity. The type of an item is only it's id and data value, i.e. it ignores the amount, enchantments etc., and the type of an entity is e.g. 'angry wolf' or 'player'.")
+@Examples({"on rightclick on an entity:",
+		"	message \"This is a %type of clicked entity%!\""})
+@Since("1.4")
+public class ExprTypeOf extends SimplePropertyExpression<Object, Object> {
 	static {
-		Skript.registerExpression(ExprTypeOf.class, Object.class, ExpressionType.PROPERTY, "[the] type of %entitydata/itemstack%");
+		register(ExprTypeOf.class, Object.class, "type", "entitydatas/itemstacks");
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		setExpr(exprs[0]);
-		return true;
+	protected String getPropertyName() {
+		return "type";
+	}
+	
+	@Override
+	public Object convert(final Object o) {
+		if (o == null)
+			return null;
+		if (o instanceof EntityData) {
+			return o;
+		} else if (o instanceof ItemStack) {
+			return new ItemStack(((ItemStack) o).getTypeId(), 1, ((ItemStack) o).getDurability());
+		}
+		assert false;
+		return null;
 	}
 	
 	@Override
@@ -55,22 +71,9 @@ public class ExprTypeOf extends PropertyExpression<Object, Object> {
 	}
 	
 	@Override
-	protected Object[] get(final Event e, final Object[] source) {
-		final Object o = getExpr().getSingle(e);
-		if (o == null)
+	protected <R> ConvertedExpression<Object, ? extends R> getConvertedExpr(final Class<R> to) {
+		if (!Converters.converterExists(EntityData.class, to) && !Converters.converterExists(ItemStack.class, to))
 			return null;
-		if (o instanceof EntityData) {
-			return new EntityData[] {(EntityData<?>) o};
-		} else if (o instanceof ItemStack) {
-			return new ItemStack[] {new ItemStack(((ItemStack) o).getTypeId(), 1, ((ItemStack) o).getDurability())};
-		}
-		assert false;
-		return null;
+		return super.getConvertedExpr(to);
 	}
-	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the type of " + getExpr().toString(e, debug);
-	}
-	
 }

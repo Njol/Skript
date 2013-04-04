@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,23 +29,18 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.effects.EffTeleport;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.localization.Language;
-import ch.njol.skript.localization.Language.LanguageChangeListener;
+import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
@@ -70,11 +65,14 @@ public abstract class Utils {
 	 * @return the index of the first occurrence of the given object or -1 if not found
 	 */
 	public static <T> int indexOf(final T[] array, final T t) {
+		if (array == null)
+			return -1;
 		return indexOf(array, t, 0, array.length);
 	}
 	
 	public static <T> int indexOf(final T[] array, final T t, final int start, final int end) {
-		assert array != null;
+		if (array == null)
+			return -1;
 		for (int i = start; i < end; i++) {
 			if (array[i] == null ? t == null : array[i].equals(t))
 				return i;
@@ -87,8 +85,8 @@ public abstract class Utils {
 	}
 	
 	public static <T> boolean containsAny(final T[] array, final T... os) {
-		assert array != null;
-		assert os != null;
+		if (array == null || os == null)
+			return false;
 		for (final T o : os) {
 			if (indexOf(array, o) != -1)
 				return true;
@@ -97,8 +95,8 @@ public abstract class Utils {
 	}
 	
 	public static <T> boolean containsAll(final T[] array, final T... os) {
-		assert array != null;
-		assert os != null;
+		if (array == null || os == null)
+			return false;
 		for (final T o : os) {
 			if (indexOf(array, o) == -1)
 				return false;
@@ -107,15 +105,20 @@ public abstract class Utils {
 	}
 	
 	public static int indexOf(final int[] array, final int num) {
+		if (array == null)
+			return -1;
 		return indexOf(array, num, 0, array.length);
 	}
 	
 	public static int indexOf(final int[] array, final int num, final int start) {
+		if (array == null)
+			return -1;
 		return indexOf(array, num, start, array.length);
 	}
 	
 	public static int indexOf(final int[] array, final int num, final int start, final int end) {
-		assert array != null;
+		if (array == null)
+			return -1;
 		for (int i = start; i < end; i++) {
 			if (array[i] == num)
 				return i;
@@ -139,7 +142,8 @@ public abstract class Utils {
 	 * @return the index of the first occurrence of the given string or -1 if not found
 	 */
 	public static int indexOfIgnoreCase(final String[] array, final String s) {
-		assert array != null;
+		if (array == null)
+			return -1;
 		int i = 0;
 		for (final String a : array) {
 			if (a.equalsIgnoreCase(s))
@@ -186,7 +190,6 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * 
 	 * @param map
 	 * @param key
 	 * @return a new entry object
@@ -208,70 +211,6 @@ public abstract class Utils {
 		return null;
 	}
 	
-	public static BlockFace getBlockFace(final String s, final boolean printError) {
-		assert s != null && s.length() != 0;
-		final String supper = s.toUpperCase().replace(' ', '_');
-		try {
-			if (supper.equals("ABOVE"))
-				return BlockFace.UP;
-			if (supper.equals("BELOW"))
-				return BlockFace.DOWN;
-			return BlockFace.valueOf(supper);
-		} catch (final IllegalArgumentException e1) {
-			if (supper.equals("U"))
-				return BlockFace.UP;
-			if (supper.equals("D"))
-				return BlockFace.DOWN;
-			if (supper.length() <= 3) {
-				try {
-					String r = "";
-					for (int i = 0; i < supper.length(); i++) {
-						switch (supper.charAt(i)) {
-							case 'N':
-								r += "NORTH_";
-								break;
-							case 'E':
-								r += "EAST_";
-								break;
-							case 'S':
-								r += "SOUTH_";
-								break;
-							case 'W':
-								r += "WEST_";
-								break;
-							default:
-								if (printError)
-									Skript.error("invalid direction '" + s + "'");
-								return null;
-						}
-					}
-					return BlockFace.valueOf(r.substring(0, r.length() - 1));
-				} catch (final IllegalArgumentException e2) {}
-			}
-		}
-		if (printError)
-			Skript.error("invalid direction '" + supper + "'");
-		return null;
-	}
-	
-	public static final int[] getBlockFaceDir(final BlockFace f) {
-		assert f != null;
-		return new int[] {f.getModX(), f.getModY(), f.getModZ()};
-	}
-	
-	public static final int getBlockFaceDir(final BlockFace f, final int axis) {
-		assert f != null;
-		switch (axis) {
-			case 0:
-				return f.getModX();
-			case 1:
-				return f.getModY();
-			case 2:
-				return f.getModZ();
-		}
-		throw new IllegalArgumentException("axis must be between 0 and 2 inclusive");
-	}
-	
 	public static String join(final Object[] objects) {
 		assert objects != null;
 		final StringBuilder b = new StringBuilder();
@@ -287,7 +226,7 @@ public abstract class Utils {
 		assert objects != null;
 		final StringBuilder b = new StringBuilder();
 		boolean first = true;
-		for (Object o:objects) {
+		for (final Object o : objects) {
 			if (!first)
 				b.append(", ");
 			else
@@ -299,17 +238,17 @@ public abstract class Utils {
 	
 	public static <T> T random(final T[] os) {
 		assert os != null && os.length != 0;
-		return os[Skript.random.nextInt(os.length)];
+		return os[random.nextInt(os.length)];
 	}
 	
 	public static <T> T getRandom(final T[] os, final int start) {
 		assert os != null && os.length != 0;
-		return os[Skript.random.nextInt(os.length - start) + start];
+		return os[random.nextInt(os.length - start) + start];
 	}
 	
 	public static <T> T getRandom(final List<T> os) {
 		assert os != null && !os.isEmpty();
-		return os.get(Skript.random.nextInt(os.size()));
+		return os.get(random.nextInt(os.size()));
 	}
 	
 	/**
@@ -325,18 +264,25 @@ public abstract class Utils {
 		return is1.getTypeId() == is2.getTypeId() && is1.getDurability() == is2.getDurability() && is1.getEnchantments().equals(is2.getEnchantments());
 	}
 	
+	/**
+	 * Gets an entity's target.
+	 * 
+	 * @param entity The entity to get the target of
+	 * @param type Can be null for any entity
+	 * @return
+	 */
 	public static <T extends Entity> T getTarget(final LivingEntity entity, final EntityData<T> type) {
 		assert entity != null;
 		if (entity instanceof Creature) {
-			return type.isInstance(((Creature) entity).getTarget()) ? (T) ((Creature) entity).getTarget() : null;
+			return ((Creature) entity).getTarget() == null || type != null && !type.isInstance(((Creature) entity).getTarget()) ? null : (T) ((Creature) entity).getTarget();
 		}
 		T target = null;
 		double targetDistanceSquared = 0;
 		final double radiusSquared = 1;
 		final Vector l = entity.getEyeLocation().toVector(), n = entity.getLocation().getDirection().normalize();
 		final double cos45 = Math.cos(Math.PI / 4);
-		for (final T other : entity.getWorld().getEntitiesByClass(type.getType())) {
-			if (other == entity || !type.isInstance(other))
+		for (final T other : type == null ? (List<T>) entity.getWorld().getEntities() : entity.getWorld().getEntitiesByClass(type.getType())) {
+			if (other == entity || type != null && !type.isInstance(other))
 				continue;
 			if (target == null || targetDistanceSquared > other.getLocation().distanceSquared(entity.getLocation())) {
 				final Vector t = other.getLocation().add(0, 1, 0).toVector().subtract(l);
@@ -349,18 +295,18 @@ public abstract class Utils {
 		return target;
 	}
 	
-	public static final Pair<String, Integer> getAmount(final String s) {
+	public final static Pair<String, Integer> getAmount(final String s) {
 		if (s.matches("\\d+ of .+")) {
-			return new Pair<String, Integer>(s.split(" ", 3)[2], Skript.parseInt(s.split(" ", 2)[0]));
+			return new Pair<String, Integer>(s.split(" ", 3)[2], Utils.parseInt(s.split(" ", 2)[0]));
 		} else if (s.matches("\\d+ .+")) {
-			return new Pair<String, Integer>(s.split(" ", 2)[1], Skript.parseInt(s.split(" ", 2)[0]));
+			return new Pair<String, Integer>(s.split(" ", 2)[1], Utils.parseInt(s.split(" ", 2)[0]));
 		} else if (s.matches("an? .+")) {
 			return new Pair<String, Integer>(s.split(" ", 2)[1], 1);
 		}
 		return new Pair<String, Integer>(s, Integer.valueOf(-1));
 	}
 	
-	public static final class AmountResponse {
+	public final static class AmountResponse {
 		public final String s;
 		public final int amount;
 		public final boolean every;
@@ -390,13 +336,13 @@ public abstract class Utils {
 		}
 	}
 	
-	public static final AmountResponse getAmountWithEvery(final String s) {
+	public final static AmountResponse getAmountWithEvery(final String s) {
 		if (s.matches("\\d+ of (all|every) .+")) {
-			return new AmountResponse(s.split(" ", 4)[3], Skript.parseInt(s.split(" ", 2)[0]), true);
+			return new AmountResponse(s.split(" ", 4)[3], Utils.parseInt(s.split(" ", 2)[0]), true);
 		} else if (s.matches("\\d+ of .+")) {
-			return new AmountResponse(s.split(" ", 3)[2], Skript.parseInt(s.split(" ", 2)[0]));
+			return new AmountResponse(s.split(" ", 3)[2], Utils.parseInt(s.split(" ", 2)[0]));
 		} else if (s.matches("\\d+ .+")) {
-			return new AmountResponse(s.split(" ", 2)[1], Skript.parseInt(s.split(" ", 2)[0]));
+			return new AmountResponse(s.split(" ", 2)[1], Utils.parseInt(s.split(" ", 2)[0]));
 		} else if (s.matches("an? .+")) {
 			return new AmountResponse(s.split(" ", 2)[1], 1);
 		} else if (s.matches("(all|every) .+")) {
@@ -443,11 +389,10 @@ public abstract class Utils {
 	};
 	
 	/**
-	 * 
 	 * @param s trimmed string
 	 * @return Pair of singular string + boolean whether it was plural
 	 */
-	public static final Pair<String, Boolean> getPlural(final String s) {
+	public static final Pair<String, Boolean> getEnglishPlural(final String s) {
 		assert s != null;
 		if (s.isEmpty())
 			return new Pair<String, Boolean>("", Boolean.FALSE);
@@ -466,7 +411,7 @@ public abstract class Utils {
 	 * @param s
 	 * @return
 	 */
-	public static final String toPlural(final String s) {
+	public static final String toEnglishPlural(final String s) {
 		assert s != null && s.length() != 0;
 		for (final String[] p : plurals) {
 			if (s.endsWith(p[0]))
@@ -483,9 +428,9 @@ public abstract class Utils {
 	 * @param p
 	 * @return
 	 */
-	public final static String toPlural(final String s, final boolean p) {
+	public final static String toEnglishPlural(final String s, final boolean p) {
 		if (p)
-			return toPlural(s);
+			return toEnglishPlural(s);
 		return s;
 	}
 	
@@ -523,19 +468,14 @@ public abstract class Utils {
 	 */
 	public static final String a(final String s, final boolean capA) {
 		assert s != null && s.length() != 0;
-		switch (Character.toLowerCase(s.charAt(0))) {
-			case 'a':
-			case 'e':
-			case 'i':
-			case 'o':
-			case 'u':
-				if (capA)
-					return "An " + s;
-				return "an " + s;
-			default:
-				if (capA)
-					return "A " + s;
-				return "a " + s;
+		if ("aeiouAEIOU".indexOf(s.charAt(0)) != -1) {
+			if (capA)
+				return "An " + s;
+			return "an " + s;
+		} else {
+			if (capA)
+				return "A " + s;
+			return "a " + s;
 		}
 	}
 	
@@ -588,7 +528,7 @@ public abstract class Utils {
 				final boolean english = englishChat.isEmpty();
 				chat.clear();
 				for (final ChatColor style : styles) {
-					for (final String s : Language.getList("chatstyles." + style.name())) {
+					for (final String s : Language.getList("chat styles." + style.name())) {
 						chat.put(s.toLowerCase(), style.toString());
 						if (english)
 							englishChat.put(s.toLowerCase(), style.toString());
@@ -664,38 +604,6 @@ public abstract class Utils {
 		return message;
 	}
 	
-	/*
-	 * Validating = find out whether a new reference is needed - it breaks several things otherwise.
-	 */
-	@SuppressWarnings("unchecked")
-	public static final <E extends Entity> E validate(final E e) {
-		if (e == null)
-			return null;
-		if (!e.isValid() && e instanceof Player) {
-			final Player p = Bukkit.getPlayerExact(((Player) e).getName());
-			return p == null ? e : (E) p;
-		}
-		return e;
-	}
-	
-	private final static double sqrt2i = 1. / Math.sqrt(2);
-	
-	public static final BlockFace getFacing(final Location loc, final boolean horizontal) {
-		final Vector dir = loc.getDirection();
-		if (!horizontal) {
-			if (dir.getY() > sqrt2i)
-				return BlockFace.UP;
-			if (dir.getY() < sqrt2i)
-				return BlockFace.DOWN;
-		}
-		for (final BlockFace f : new BlockFace[] {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST}) {
-			if (f.getModX() * dir.getX() + f.getModZ() * dir.getZ() >= sqrt2i - Skript.EPSILON)
-				return f;
-		}
-		assert false;
-		return null;
-	}
-	
 	/**
 	 * Creates a permutation of all integers in the interval [start, end]
 	 * 
@@ -728,7 +636,7 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * Gets a random value between the first value (inclusive) and the second value (exclusive)
+	 * Gets a random value between <tt>start</tt> (inclusive) and <tt>end</tt> (exclusive)
 	 * 
 	 * @param start
 	 * @param end
@@ -769,6 +677,57 @@ public abstract class Utils {
 			}
 		}
 		return r;
+	}
+	
+	/**
+	 * @param set The set of elements
+	 * @param sub The set to test for being a subset of <tt>set</tt>
+	 * @return Whether <tt>sub</tt> only contains elements out of <tt>set</tt> or not
+	 */
+	public static boolean isSubset(final Object[] set, final Object[] sub) {
+		for (final Object s : set) {
+			if (!contains(sub, s))
+				return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Parses a number that was validated to be an integer but might still result in a {@link NumberFormatException} when parsed with {@link Integer#parseInt(String)} due to
+	 * overflow.
+	 * This method will return {@link Integer#MIN_VALUE} or {@link Integer#MAX_VALUE} respectively if that happens.
+	 * 
+	 * @param s
+	 * @return
+	 */
+	public final static int parseInt(final String s) {
+		assert s.matches("-?\\d+");
+		try {
+			return Integer.parseInt(s);
+		} catch (final NumberFormatException e) {
+			return s.startsWith("-") ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+		}
+	}
+	
+	/**
+	 * Parses a number that was validated to be an integer but might still result in a {@link NumberFormatException} when parsed with {@link Long#parseLong(String)} due to
+	 * overflow.
+	 * This method will return {@link Long#MIN_VALUE} or {@link Long#MAX_VALUE} respectively if that happens.
+	 * 
+	 * @param s
+	 * @return
+	 */
+	public final static long parseLong(final String s) {
+		assert s.matches("-?\\d+");
+		try {
+			return Long.parseLong(s);
+		} catch (final NumberFormatException e) {
+			return s.startsWith("-") ? Long.MIN_VALUE : Long.MAX_VALUE;
+		}
+	}
+	
+	public static <T> T[] array(final T... array) {
+		return array;
 	}
 	
 }

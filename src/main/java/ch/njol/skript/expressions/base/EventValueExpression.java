@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -40,11 +40,13 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.log.LogEntry;
+import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.Getter;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -61,8 +63,8 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  * @see Skript#registerClass(ch.njol.skript.api.ClassInfo)
  */
+@SuppressWarnings("serial")
 public class EventValueExpression<T> extends SimpleExpression<T> implements DefaultExpression<T> {
-	private static final long serialVersionUID = -3439325970470812137L;
 	private final Class<? extends T> c;
 	private SerializableChanger<? super T, ?> changer;
 	private final Map<Class<? extends Event>, SerializableGetter<? extends T, ?>> getters = new HashMap<Class<? extends Event>, SerializableGetter<? extends T, ?>>();
@@ -90,16 +92,13 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	private <E extends Event> T getValue(final E e) {
 		if (getters.containsKey(e.getClass())) {
 			final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getters.get(e.getClass());
-			if (g != null)
-				return g.get(e);
-			else
-				return null;
+			return g == null ? null : g.get(e);
 		}
 		
 		for (final Entry<Class<? extends Event>, SerializableGetter<? extends T, ?>> p : getters.entrySet()) {
 			if (p.getKey().isAssignableFrom(e.getClass())) {
 				getters.put(e.getClass(), p.getValue());
-				return ((Getter<? extends T, ? super E>) p.getValue()).get(e);
+				return p.getValue() == null ? null : ((Getter<? extends T, ? super E>) p.getValue()).get(e);
 			}
 		}
 		
@@ -111,28 +110,33 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		if (exprs.length != 0)
-			throw new SkriptAPIException(this.getClass().getName() + " has expressions in it's pattern but does not override init(...)");
+			throw new SkriptAPIException(this.getClass().getName() + " has expressions in its pattern but does not override init(...)");
 		return init();
 	}
 	
 	@Override
 	public boolean init() {
 		boolean hasValue = false;
-		final SimpleLog log = SkriptLogger.startSubLog();
-		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
-			if (getters.containsKey(e)) {
-				hasValue = true;
-				continue;
+		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		try {
+			for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
+				if (getters.containsKey(e)) {
+					hasValue = true;
+					continue;
+				}
+				final SerializableGetter<? extends T, ?> getter = EventValues.getEventValueGetter(e, c, getTime());
+				if (getter != null) {
+					getters.put(e, getter);
+					hasValue = true;
+				}
 			}
-			final SerializableGetter<? extends T, ?> getter = EventValues.getEventValueGetter(e, c, getTime());
-			if (getter != null) {
-				getters.put(e, getter);
-				hasValue = true;
-			}
+		} finally {
+			log.stop();
 		}
-		log.stop();
 		if (!hasValue) {
-			SkriptLogger.error(log.getFirstError("There's no " + Classes.getSuperClassInfo(c).getName() + " in this event"), ErrorQuality.NOT_AN_EXPRESSION);
+			final LogEntry e = log.getFirstError("There's no " + Classes.getSuperClassInfo(c).getName() + " in " + Utils.a(ScriptLoader.currentEventName) + " event");
+			e.quality = ErrorQuality.NOT_AN_EXPRESSION.quality();
+			SkriptLogger.log(e);
 			return false;
 		}
 		log.printLog();
@@ -160,7 +164,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (changer == null)
 			changer = (SerializableChanger<? super T, ?>) Classes.getSuperClassInfo(c).getChanger();
-		return changer.acceptChange(mode);
+		return changer == null ? null : changer.acceptChange(mode);
 	}
 	
 	@Override

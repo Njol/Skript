@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,7 +28,7 @@ package ch.njol.skript.log;
  */
 public enum ErrorQuality {
 	NONE, NOT_AN_EXPRESSION, SEMANTIC_ERROR;
-	int quality() {
+	public int quality() {
 		return ordinal();
 	}
 }

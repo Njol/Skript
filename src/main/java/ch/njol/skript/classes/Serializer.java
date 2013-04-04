@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,6 +28,8 @@ public interface Serializer<T> {
 	
 	/**
 	 * Serializes an object to a string.
+	 * <p>
+	 * This method must be thread-safe and never return null.
 	 * 
 	 * @param o
 	 * @return
@@ -35,6 +37,9 @@ public interface Serializer<T> {
 	public String serialize(T o);
 	
 	/**
+	 * Deserializes an object from a string returned by this serializer or an earlier version thereof.
+	 * <p>
+	 * This method must be thread-safe and should only return null if the input is invalid (i.e. not produced by {@link #serialize(Object)} or an older version of that method)
 	 * 
 	 * @param s
 	 * @return The deserialized object or null if the input is invalid. An error message may be logged to specify the cause.

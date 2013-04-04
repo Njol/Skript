@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -181,7 +181,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 			if (line.endsWith(":") && (config.simple
 					|| line.indexOf(config.separator) == -1
 					|| config.separator.endsWith(":") && line.indexOf(config.separator) == line.length() - config.separator.length()
-					)) {
+					) && !r.getLine().matches("([^#]|##)*#-#([^#].*)?")) {
 				nodes.add(SectionNode.load(line.substring(0, line.length() - 1), this, r));
 				continue;
 			}
@@ -221,7 +221,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 		convertToEntries(levels, config.separator);
 	}
 	
-	// FIXME: breaks saving!
+	// TODO breaks saving!
 	public void convertToEntries(final int levels, final String separator) {
 		if (levels < -1)
 			throw new IllegalArgumentException("levels must be >= -1");
@@ -257,10 +257,10 @@ public class SectionNode extends Node implements Iterable<Node> {
 	}
 	
 	/**
-	 * Gets an entry or the default value if it doesn't exist or is not an EntryNode.
+	 * Gets an entry's value or the default value if it doesn't exist or is not an EntryNode.
 	 * 
-	 * @param name the exact name of the node
-	 * @param def the default value
+	 * @param name The exact name of the node // TODO make case insensitive?
+	 * @param def The default value
 	 * @return
 	 */
 	public String get(final String name, final String def) {

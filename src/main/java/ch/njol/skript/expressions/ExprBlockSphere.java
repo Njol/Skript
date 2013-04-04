@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,6 +29,10 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -41,8 +45,12 @@ import ch.njol.util.iterator.IteratorIterable;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Block Sphere")
+@Description("All blocks in a sphere around a center, mostly useful for looping.")
+@Examples("loop blocks in radius 5 around the player:")
+@Since("1.0")
 public class ExprBlockSphere extends SimpleExpression<Block> {
-	private static final long serialVersionUID = 6461487091404137540L;
 	
 	static {
 		Skript.registerExpression(ExprBlockSphere.class, Block.class, ExpressionType.NORMAL,

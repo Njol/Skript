@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -33,8 +33,8 @@ import ch.njol.skript.Skript;
  * @author Peter Güttinger
  * @see Skript#registerEffect(Class, String...)
  */
+@SuppressWarnings("serial")
 public abstract class Effect extends Statement {
-	private static final long serialVersionUID = -7476146804482313031L;
 	
 	protected Effect() {}
 	

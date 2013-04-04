@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,37 +24,52 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.command.Argument;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.command.ScriptCommandEvent;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.util.StringUtils;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.StringUtils;
 
 /**
- * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Argument")
+@Description({"Only usable in command events. Holds the value of the n-th argument given to the command, " +
+		"e.g. if the command \"/tell &lt;player&gt; &lt;text&gt;\" is used like \"/tell Njol Hello Njol!\" argument 1 is the player named \"Njol\" and argument 2 is \"Hello Njol!\".",
+		"One can also use the type of the argument instead of it's index to address the argument, e.g. in the above example 'player-argument' is the same as 'argument 1'."})
+@Examples({"give the item-argument to the player-argument",
+		"damage the player-argument by the number-argument",
+		"give a diamond pickaxe to the argument",
+		"add argument 1 to argument 2",
+		"heal the last argument"})
+@Since("1.0")
 public class ExprArgument extends SimpleExpression<Object> {
-	private static final long serialVersionUID = -5796806278680095086L;
 	
 	static {
 		Skript.registerExpression(ExprArgument.class, Object.class, ExpressionType.SIMPLE,
 				"[the] last arg[ument][s]",
 				"[the] arg[ument][s](-| )<(\\d+)>", "[the] <(\\d*1)st|(\\d*2)nd|(\\d*3)rd|(\\d*[4-90])th> arg[ument][s]",
 				"[the] arg[ument][s]",
-				"[the] <.+>( |-)arg[ument][( |-)<\\d+>]", "[the] arg[ument]( |-)<.+>[( |-)<\\d+>]");
+				"[the] %*classinfo%( |-)arg[ument][( |-)<\\d+>]", "[the] arg[ument]( |-)%*classinfo%[( |-)<\\d+>]");
 	}
 	
 	private Argument<?> arg;
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		if (Commands.currentArguments == null) {
 			Skript.error("The expression 'argument' can only be used within a command", ErrorQuality.SEMANTIC_ERROR);
 			return false;
@@ -69,7 +84,7 @@ public class ExprArgument extends SimpleExpression<Object> {
 				break;
 			case 1:
 			case 2:
-				final int i = Skript.parseInt(parser.regexes.get(0).group(1));
+				final int i = Utils.parseInt(parser.regexes.get(0).group(1));
 				if (i > Commands.currentArguments.size()) {
 					Skript.error("The command doesn't have a " + StringUtils.fancyOrderNumber(i) + " argument", ErrorQuality.SEMANTIC_ERROR);
 					return false;
@@ -86,16 +101,14 @@ public class ExprArgument extends SimpleExpression<Object> {
 				break;
 			case 4:
 			case 5:
-				final Class<?> c = Classes.getClassFromUserInput(parser.regexes.get(0).group());
-				if (c == null)
-					return false;
-				final int num = parser.regexes.size() > 1 ? Skript.parseInt(parser.regexes.get(1).group()) : -1;
+				final ClassInfo<?> c = (ClassInfo<?>) exprs[0].getSingle(null);
+				final int num = parser.regexes.size() > 0 ? Utils.parseInt(parser.regexes.get(0).group()) : -1;
 				int j = 1;
 				for (final Argument<?> a : Commands.currentArguments) {
-					if (!c.isAssignableFrom(a.getType()))
+					if (!c.getC().isAssignableFrom(a.getType()))
 						continue;
 					if (arg != null) {
-						Skript.error("There are multiple " + Classes.getExactClassName(c) + " arguments in this command", ErrorQuality.SEMANTIC_ERROR);
+						Skript.error("There are multiple " + c + " arguments in this command", ErrorQuality.SEMANTIC_ERROR);
 						return false;
 					}
 					if (j < num) {
@@ -109,11 +122,11 @@ public class ExprArgument extends SimpleExpression<Object> {
 				if (arg == null) {
 					j--;
 					if (num == -1 || j == 0)
-						Skript.error("There is no " + Classes.getExactClassName(c) + " argument in this command", ErrorQuality.SEMANTIC_ERROR);
+						Skript.error("There is no " + c + " argument in this command", ErrorQuality.SEMANTIC_ERROR);
 					else if (j == 1)
-						Skript.error("There is only one " + Classes.getExactClassName(c) + " argument in this command", ErrorQuality.SEMANTIC_ERROR);
+						Skript.error("There is only one " + c + " argument in this command", ErrorQuality.SEMANTIC_ERROR);
 					else
-						Skript.error("There are only " + j + " " + Classes.getExactClassName(c) + " arguments in this command", ErrorQuality.SEMANTIC_ERROR);
+						Skript.error("There are only " + j + " " + c + " arguments in this command", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 		}

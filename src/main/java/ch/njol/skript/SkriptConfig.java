@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,47 +30,143 @@ import java.util.Collection;
 
 import org.bukkit.event.EventPriority;
 
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.config.Config;
-import ch.njol.skript.config.validate.EnumEntryValidator;
-import ch.njol.skript.config.validate.SectionValidator;
+import ch.njol.skript.config.EnumParser;
+import ch.njol.skript.config.Option;
+import ch.njol.skript.config.Section;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
-import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Timespan;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.Setter;
 
 /**
- * @author Peter Güttinger
+ * Important: don't save values from the config, a '/skript reload config/configs/all' won't work correctly otherwise!
  * 
+ * @author Peter Güttinger
  */
+@SuppressWarnings("unused")
 public abstract class SkriptConfig {
-	
 	private SkriptConfig() {}
 	
 	static Config mainConfig;
 	static Collection<Config> configs = new ArrayList<Config>();
-	static boolean keepConfigsLoaded = false;
 	
-	public static boolean enableEffectCommands = false;
-	public static String effectCommandToken = "!";
+	public final static Option<Boolean> keepConfigsLoaded = new Option<Boolean>("keep configs loaded", Boolean.class)
+			.optional(true)
+			.defaultValue(false);
 	
-	static boolean checkForNewVersion = false;
-	static boolean automaticallyDownloadNewVersion = false;
+	public static final Option<Boolean> enableEffectCommands = new Option<Boolean>("enable effect commands", Boolean.class)
+			.defaultValue(false);
+	public static final Option<String> effectCommandToken = new Option<String>("effect command token", String.class)
+			.defaultValue("!");
 	
-	public static boolean logPlayerCommands = false;
+	static final Option<Boolean> checkForNewVersion = new Option<Boolean>("check for new version", Boolean.class)
+			.defaultValue(false);
+	static final Option<Boolean> automaticallyDownloadNewVersion = new Option<Boolean>("automatically download new version", Boolean.class)
+			.defaultValue(false);
 	
-	public static boolean disableVariableConflictWarnings;
+	public static final Option<Boolean> logPlayerCommands = new Option<Boolean>("log player commands", Boolean.class)
+			.defaultValue(false);
 	
-	public static Timespan variableBackupPeriod = null;
+	public static final Option<Boolean> disableVariableConflictWarnings = new Option<Boolean>("disable variable conflict warnings", Boolean.class)
+			.defaultValue(false);
 	
-	private static DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+	public static final Option<Timespan> variableBackupInterval = new Option<Timespan>("variables backup interval", Timespan.class)
+			.defaultValue(new Timespan(0))
+			.setter(new Setter<Timespan>() {
+				@Override
+				public void set(final Timespan t) {
+					if (Variables.file.backupTask != null) { // initial schedule accesses this value directly
+						if (t.getTicks() == 0)
+							Variables.file.backupTask.cancel();
+						else
+							Variables.file.backupTask.setPeriod(t.getTicks());
+					}
+				}
+			});
 	
-	public static boolean enableScriptCaching = false;
+	private static final Option<DateFormat> dateFormat = new Option<DateFormat>("date format", new Converter<String, DateFormat>() {
+		@Override
+		public DateFormat convert(final String s) {
+			try {
+				if (s.equalsIgnoreCase("default"))
+					return null;
+				return new SimpleDateFormat(s);
+			} catch (final IllegalArgumentException e) {
+				// TODO shorten URL?
+				Skript.error("'" + s + "' is not a valid date format. Please refer to http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html for instructions on the format.");
+			}
+			return null;
+		}
+	}).defaultValue(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT));
 	
-	public static DateFormat getDateFormat() {
-		return dateFormat;
+	public final static String formatDate(final long timestamp) {
+		final DateFormat f = dateFormat.value();
+		synchronized (f) {
+			return f.format(timestamp);
+		}
 	}
+	
+	public static final Option<Boolean> enableScriptCaching = new Option<Boolean>("enable script caching", Boolean.class)
+			.optional(true)
+			.defaultValue(false);
+	
+	public final static Option<EventPriority> defaultEventPriority = new Option<EventPriority>("plugin priority", new Converter<String, EventPriority>() {
+		@Override
+		public EventPriority convert(final String s) {
+			try {
+				return EventPriority.valueOf(s.toUpperCase());
+			} catch (final IllegalArgumentException e) {
+				Skript.error("The plugin priority has to be one of lowest, low, normal, high, or highest.");
+				return null;
+			}
+		}
+	}).defaultValue(EventPriority.NORMAL);
+	
+	private final static Option<Verbosity> verbosity = new Option<Verbosity>("verbosity", new EnumParser<Verbosity>(Verbosity.class, "verbosity"))
+			.defaultValue(Verbosity.NORMAL)
+			.setter(new Setter<Verbosity>() {
+				@Override
+				public void set(final Verbosity v) {
+					SkriptLogger.setVerbosity(v);
+				}
+			});
+	
+	public final static Option<String> language = new Option<String>("language", String.class)
+			.optional(true)
+			.setter(new Setter<String>() {
+				@Override
+				public void set(final String s) {
+					if (!Language.load(s)) {
+						Skript.error("No language file found for '" + s + "'!");
+					}
+				}
+			});
+	
+	public static final Option<Integer> maxTargetBlockDistance = new Option<Integer>("maximum target block distance", Integer.class)
+			.defaultValue(100);
+	
+	/**
+	 * maximum number of digits to display after the period for floats and doubles
+	 */
+	public static final Option<Integer> numberAccuracy = new Option<Integer>("number accuracy", Integer.class)
+			.defaultValue(2);
+	
+	public final static Section database = new Section("database") {
+		private final Option<String> type = new Option<String>("type", String.class);
+		private final Option<String> pattern = new Option<String>("pattern", String.class);
+		private final Option<Boolean> monitor_changes = new Option<Boolean>("monitor changes", Boolean.class);
+		private final Option<Timespan> monitor_interval = new Option<Timespan>("monitor interval", Timespan.class);
+		private final Option<String> host = new Option<String>("host", String.class);
+		private final Option<Integer> port = new Option<Integer>("port", Integer.class);
+		private final Option<String> user = new Option<String>("user", String.class);
+		private final Option<String> password = new Option<String>("password", String.class);
+		private final Option<String> database = new Option<String>("database", String.class);
+		private final Option<String> file = new Option<String>("file", String.class);
+	};
 	
 	static boolean load() {
 		try {
@@ -85,7 +181,7 @@ public abstract class SkriptConfig {
 				}
 			}
 			if (!config.exists()) {
-				Skript.error("Config file 'config.sk' does not exist! Please make sure that you downloaded the .zip file (and not the .jar) from Skript's BukkitDev page and extracted it correctly.");
+				Skript.error("Config file 'config.sk' does not exist! Please make sure that you downloaded the .zip file (i.e. not the .jar) from Skript's BukkitDev page and extracted it correctly.");
 				return false;
 			}
 			if (!config.canRead()) {
@@ -100,106 +196,12 @@ public abstract class SkriptConfig {
 				return false;
 			}
 			
-			new SectionValidator()
-					.addNode("verbosity", new EnumEntryValidator<Verbosity>(Verbosity.class, new Setter<Verbosity>() {
-						@Override
-						public void set(final Verbosity v) {
-							SkriptLogger.setVerbosity(v);
-						}
-					}), false)
-					.addNode("plugin priority", new EnumEntryValidator<EventPriority>(EventPriority.class, new Setter<EventPriority>() {
-						@Override
-						public void set(final EventPriority p) {
-							Skript.defaultEventPriority = p;
-						}
-					}, "lowest, low, normal, high, highest"), false)
-					.addEntry("keep configs loaded", Classes.getExactParser(Boolean.class), new Setter<Boolean>() {
-						@Override
-						public void set(final Boolean b) {
-							keepConfigsLoaded = b;
-						}
-					}, true)
-					.addEntry("enable effect commands", Classes.getExactParser(Boolean.class), new Setter<Boolean>() {
-						@Override
-						public void set(final Boolean b) {
-							enableEffectCommands = b;
-						}
-					}, false)
-					.addEntry("effect command token", new Setter<String>() {
-						@Override
-						public void set(final String s) {
-							if (s.startsWith("/")) {
-								Skript.error("Cannot use a token that starts with a slash because it can conflict with commands");
-							} else {
-								effectCommandToken = s;
-							}
-						}
-					}, false)
-					.addEntry("date format", new Setter<String>() {
-						@Override
-						public void set(final String s) {
-							try {
-								if (!s.equalsIgnoreCase("default"))
-									dateFormat = new SimpleDateFormat(s);
-							} catch (final IllegalArgumentException e) {
-								// TODO shorten URL?
-								Skript.error("'" + s + "' is not a valid date format. Please refer to http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html for instructions on the format.");
-							}
-						}
-					}, true)
-					.addEntry("disable variable conflict warnings", Classes.getExactParser(Boolean.class), new Setter<Boolean>() {
-						@Override
-						public void set(final Boolean b) {
-							disableVariableConflictWarnings = b;
-						}
-					}, true)
-					.addEntry("language", new Setter<String>() {
-						@Override
-						public void set(final String s) {
-							if (!Language.load(s)) {
-								Skript.error("No language file found for '" + s + "'!");
-							}
-						}
-					}, true)
-					.addEntry("check for new version", Classes.getExactParser(Boolean.class), new Setter<Boolean>() {
-						@Override
-						public void set(final Boolean b) {
-							checkForNewVersion = b;
-						}
-					}, false)
-					.addEntry("automatically download new version", Classes.getExactParser(Boolean.class), new Setter<Boolean>() {
-						@Override
-						public void set(final Boolean b) {
-							automaticallyDownloadNewVersion = b;
-						}
-					}, false)
-					.addEntry("log player commands", Classes.getExactParser(Boolean.class), new Setter<Boolean>() {
-						@Override
-						public void set(final Boolean b) {
-							logPlayerCommands = b;
-						}
-					}, true)
-					.addEntry("variables backup interval", Classes.getExactParser(Timespan.class), new Setter<Timespan>() {
-						@Override
-						public void set(final Timespan t) {
-							if (t.getTicks() != 0) {
-								variableBackupPeriod = t;
-								// task is scheduled when the variables are loaded
-							}
-						}
-					}, true)
-					.addEntry("enable script caching", Classes.getExactParser(Boolean.class), new Setter<Boolean>() {
-						@Override
-						public void set(final Boolean b) {
-							enableScriptCaching = b;
-						}
-					}, true)
-					.validate(mainConfig.getMainNode());
+			mainConfig.load(SkriptConfig.class);
 			
-			if (!keepConfigsLoaded)
+			if (!keepConfigsLoaded.value())
 				mainConfig = null;
 		} catch (final Exception e) {
-			Skript.exception(e, "error loading config");
+			Skript.exception(e, "An error occurred while loading the config");
 			return false;
 		}
 		return true;

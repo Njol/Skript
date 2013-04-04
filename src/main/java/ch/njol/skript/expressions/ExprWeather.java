@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,43 +28,49 @@ import org.bukkit.event.weather.WeatherChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Getter;
+import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.WeatherType;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Weather")
+@Description("The weather in the given or the current world.")
+@Examples({"set weather to clear",
+		"weather in \"world\" is rainy"})
+@Since("1.0")
 public class ExprWeather extends PropertyExpression<World, WeatherType> {
-	private static final long serialVersionUID = -3454589103235115715L;
-	
 	static {
-		Skript.registerExpression(ExprWeather.class, WeatherType.class, ExpressionType.PROPERTY, "[the] weather [(in|of) %worlds%]");
+		Skript.registerExpression(ExprWeather.class, WeatherType.class, ExpressionType.PROPERTY, "[the] weather [(in|of) %worlds%]", "%worlds%'[s] weather");
 	}
-	
-	private Expression<World> worlds;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		worlds = (Expression<World>) vars[0];
-		setExpr(worlds);
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		setExpr((Expression<World>) exprs[0]);
 		return true;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "the weather in " + worlds.toString(e, debug);
+		return "the weather in " + getExpr().toString(e, debug);
 	}
 	
 	@Override
 	protected WeatherType[] get(final Event e, final World[] source) {
-		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault() && !Delay.isDelayed(e)) {
+		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && getExpr().isDefault() && !Delay.isDelayed(e)) {
 			if (e instanceof WeatherChangeEvent) {
 				if (!((WeatherChangeEvent) e).toWeatherState())
 					return new WeatherType[] {WeatherType.CLEAR};
@@ -86,15 +92,15 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (mode == ChangeMode.CLEAR || mode == ChangeMode.SET)
-			return Skript.array(WeatherType.class);
+		if (mode == ChangeMode.DELETE || mode == ChangeMode.SET)
+			return Utils.array(WeatherType.class);
 		return null;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		final WeatherType t = mode == ChangeMode.CLEAR ? WeatherType.CLEAR : (WeatherType) delta;
-		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && worlds.isDefault() && !Delay.isDelayed(e)) {
+		final WeatherType t = mode == ChangeMode.DELETE ? WeatherType.CLEAR : (WeatherType) delta;
+		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && getExpr().isDefault() && !Delay.isDelayed(e)) {
 			if (e instanceof WeatherChangeEvent) {
 				if (((WeatherChangeEvent) e).toWeatherState() && t == WeatherType.CLEAR)
 					((WeatherChangeEvent) e).setCancelled(true);
@@ -107,7 +113,7 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 					((ThunderChangeEvent) e).getWorld().setStorm(t != WeatherType.CLEAR);
 			}
 		} else {
-			for (final World w : worlds.getArray(e)) {
+			for (final World w : getExpr().getArray(e)) {
 				t.setWeather(w);
 			}
 		}
@@ -121,7 +127,7 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean setTime(final int time) {
-		return super.setTime(time, worlds, WeatherChangeEvent.class, ThunderChangeEvent.class);
+		return super.setTime(time, getExpr(), WeatherChangeEvent.class, ThunderChangeEvent.class);
 	}
 	
 }

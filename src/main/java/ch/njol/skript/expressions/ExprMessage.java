@@ -15,13 +15,14 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChatEvent;
@@ -31,6 +32,10 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -42,15 +47,32 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "serial"})
+@Name("Message")
+@Description("The (chat) message of a chat event, the join message of a join event, the quit message of a quit event, or the death message on a death event. This expression is mostly useful for being changed.")
+@Examples({"on chat:",
+		"	player has permission \"admin\"",
+		"	set message to \"<red>%message%\"",
+		"",
+		"on first join:",
+		"	set join message to \"Welcome %player% to our awesome server!\"",
+		"on join:",
+		"	player has played before",
+		"	set join message to \"Welcome back, %player%!\"",
+		"",
+		"on quit:",
+		"	set quit message to \"%player% left this awesome server!\"",
+		"",
+		"on death:",
+		"	set the death message to \"%player% died!\""})
+@Since("1.4.6 (chat message), 1.4.9 (join & quit messages), 2.0 (death message)")
 public class ExprMessage extends SimpleExpression<String> {
-	private static final long serialVersionUID = 691567046005405494L;
 	
 	private static enum MessageType {
-		CHAT("chat", "[chat( |-)]message", null) {
+		CHAT("chat", "[chat( |-)]message", Skript.isRunningMinecraft(1, 3) ? AsyncPlayerChatEvent.class : PlayerChatEvent.class) {
 			@Override
 			String get(final Event e) {
-				if (Skript.isRunningBukkit(1, 3))
+				if (Skript.isRunningMinecraft(1, 3))
 					return ((AsyncPlayerChatEvent) e).getMessage();
 				else
 					return ((PlayerChatEvent) e).getMessage();
@@ -58,7 +80,7 @@ public class ExprMessage extends SimpleExpression<String> {
 			
 			@Override
 			void set(final Event e, final String message) {
-				if (Skript.isRunningBukkit(1, 3))
+				if (Skript.isRunningMinecraft(1, 3))
 					((AsyncPlayerChatEvent) e).setMessage(message);
 				else
 					((PlayerChatEvent) e).setMessage(message);
@@ -86,15 +108,18 @@ public class ExprMessage extends SimpleExpression<String> {
 				((PlayerQuitEvent) e).setQuitMessage(message);
 			}
 		},
-		DEATH("death", "death( |-)message", PlayerDeathEvent.class) {
+		DEATH("death", "death( |-)message", EntityDeathEvent.class) {
 			@Override
 			String get(final Event e) {
-				return ((PlayerDeathEvent) e).getDeathMessage();
+				if (e instanceof PlayerDeathEvent)
+					return ((PlayerDeathEvent) e).getDeathMessage();
+				return null;
 			}
 			
 			@Override
 			void set(final Event e, final String message) {
-				((PlayerDeathEvent) e).setDeathMessage(message);
+				if (e instanceof PlayerDeathEvent)
+					((PlayerDeathEvent) e).setDeathMessage(message);
 			}
 		};
 		
@@ -129,16 +154,9 @@ public class ExprMessage extends SimpleExpression<String> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		type = MessageType.values()[matchedPattern];
-		if (type == MessageType.CHAT) {
-			if (!Utils.contains(ScriptLoader.currentEvents, Skript.isRunningBukkit(1, 3) ? AsyncPlayerChatEvent.class : PlayerChatEvent.class)) {
-				Skript.error("The message can only be used in a chat event", ErrorQuality.SEMANTIC_ERROR);
-				return false;
-			}
-		} else {
-			if (!Utils.contains(ScriptLoader.currentEvents, type.event)) {
-				Skript.error("The " + type.name + " message can only be used in a " + type.name + " event", ErrorQuality.SEMANTIC_ERROR);
-				return false;
-			}
+		if (!Utils.contains(ScriptLoader.currentEvents, type.event)) {
+			Skript.error("The " + type.name + " message can only be used in a " + type.name + " event", ErrorQuality.SEMANTIC_ERROR);
+			return false;
 		}
 		return true;
 	}
@@ -154,7 +172,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
-			return Skript.array(String.class);
+			return Utils.array(String.class);
 		return null;
 	}
 	

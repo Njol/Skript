@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,7 +29,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
@@ -40,16 +45,21 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Targeted Block")
+@Description("The block at the crosshair. This regards all blocks that are not air as fully opaque, e.g. torches will be like a solid stone block for this expression.")
+@Examples({"# A command to set the block a player looks at to a specific type:",
+		"command /setblock <material>:",
+		"    trigger:",
+		"        set targeted block to argument"})
+@Since("1.0")
 public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
-	private static final long serialVersionUID = -1829985920300166314L;
-	
 	static {
 		Skript.registerExpression(ExprTargetedBlock.class, Block.class, ExpressionType.NORMAL,
 				"[the] target[ed] block[s] [of %players%]", "%players%'[s] target[ed] block[s]",
 				"[the] actual[ly] target[ed] block[s] [of %players%]", "%players%'[s] actual[ly] target[ed] block[s]");
 	}
 	
-	private Expression<Player> players;
 	private boolean actualTargetedBlock;
 	
 	private static Event last = null;
@@ -58,9 +68,8 @@ public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		players = (Expression<Player>) vars[0];
-		setExpr(players);
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		setExpr((Expression<Player>) exprs[0]);
 		actualTargetedBlock = matchedPattern >= 2;
 		return true;
 	}
@@ -68,7 +77,7 @@ public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "the targeted block" + (players.isSingle() ? "" : "s") + " of " + players.toString(e, debug);
+			return "the targeted block" + (getExpr().isSingle() ? "" : "s") + " of " + getExpr().toString(e, debug);
 		return Classes.getDebugMessage(getAll(e));
 	}
 	
@@ -87,7 +96,7 @@ public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 //			targetedBlocks.put(((PlayerInteractEvent) e).getPlayer(), ((PlayerInteractEvent) e).getClickedBlock());
 //			return ((PlayerInteractEvent) e).getClickedBlock();
 //		}
-		Block b = p.getTargetBlock(null, Skript.TARGETBLOCKMAXDISTANCE);
+		Block b = p.getTargetBlock(null, SkriptConfig.maxTargetBlockDistance.value());
 		if (b.getTypeId() == 0)
 			b = null;
 		targetedBlocks.put(p, b);

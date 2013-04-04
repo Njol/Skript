@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,6 +29,10 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Arithmetic;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.conditions.CondIs;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
@@ -43,8 +47,14 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Difference")
+@Description("The difference between two values, e.g. <a href='../classes/#number'>numbers</a>, <a href='../classes/#date'>dates</a> or <a href='../classes/#time'>times</a>.")
+@Examples({"difference between {command.%player%.lastuse} and now is smaller than a minute:",
+		"  message \"You have to wait a minute before using this command again!\"",
+		"  stop"})
+@Since("1.4")
 public class ExprDifference extends SimpleExpression<Object> {
-	private static final long serialVersionUID = -394336424028012141L;
 	
 	static {
 		Skript.registerExpression(ExprDifference.class, Object.class, ExpressionType.COMBINED, "difference (between|of) %object% and %object%");

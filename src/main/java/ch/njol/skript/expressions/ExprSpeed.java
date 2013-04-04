@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,19 +26,27 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.Math2;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
- * 
  */
+@SuppressWarnings("serial")
+@Name("Speed")
+@Description({"A player's walking or flying speed. Both can be changed, but values must be between -1 and 1 (excessive values will be changed to -1 or 1 respectively). Negative values reverse directions.",
+		"Please note that changing a player's speed will change his FOV just like potions do."})
+@Examples({"set the player's walk speed to 1",
+		"increase the argument's fly speed by 0.1"})
+@Since("")
 public class ExprSpeed extends SimplePropertyExpression<Player, Float> {
-	private static final long serialVersionUID = -1840963360507113110L;
-	
 	static {
 		register(ExprSpeed.class, Float.class, "(0¦walk[ing]|1¦fl(y[ing]|ight))[( |-])speed", "players");
 	}
@@ -47,7 +55,7 @@ public class ExprSpeed extends SimplePropertyExpression<Player, Float> {
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		if (!Skript.isRunningBukkit(1, 4)) {
+		if (!Skript.isRunningMinecraft(1, 4)) {
 			Skript.error("fly and walk speed can only be used in Minecraft 1.4 and newer");
 			return false;
 		}
@@ -70,7 +78,7 @@ public class ExprSpeed extends SimplePropertyExpression<Player, Float> {
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		final float d = Math2.fit(-1, (Float) delta, 1);
+		final float d = Math2.fit(-1, ((Number) delta).floatValue(), 1);
 		for (final Player p : getExpr().getArray(e)) {
 			if (walk)
 				p.setWalkSpeed(d);

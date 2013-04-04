@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,7 +25,11 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.expressions.base.PropertyExpression;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
+import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,11 +38,17 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-public class ExprLocationOf extends PropertyExpression<Location, Location> {
-	private static final long serialVersionUID = 4540473293646562988L;
-	
+@SuppressWarnings("serial")
+@Name("Location")
+@Description({"The location of a block or entity. This not only represents the x, y and z coordinates of the location but also includes the world and the direction an entity is looking " +
+		"(e.g. teleporting to a saved location will make the teleported entity face the same saved direction every time).",
+		"Please note that the location of an entity is at it's feet, use <a href='#ExprEyeLocation'>head location</a> to get the location of the head."})
+@Examples({"set {home.%player%} to the location of the player",
+		"message \"You home was set to %player's location% in %player's world%.\""})
+@Since("")
+public class ExprLocationOf extends WrapperExpression<Location> {
 	static {
-		Skript.registerExpression(ExprLocationOf.class, Location.class, ExpressionType.PROPERTY, "location of %location%", "%location%'[s] location");
+		Skript.registerExpression(ExprLocationOf.class, Location.class, ExpressionType.PROPERTY, "(location|position) of %location%", "%location%'[s] (location|position)");
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -51,16 +61,6 @@ public class ExprLocationOf extends PropertyExpression<Location, Location> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		return "the location of " + getExpr().toString(e, debug);
-	}
-	
-	@Override
-	public Class<Location> getReturnType() {
-		return Location.class;
-	}
-	
-	@Override
-	protected Location[] get(final Event e, final Location[] source) {
-		return source;
 	}
 	
 }

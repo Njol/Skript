@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,14 +26,11 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ch.njol.skript.Skript;
-
 /**
  * @author Peter Güttinger
  */
 public class Version implements Serializable, Comparable<Version> {
-	
-	private static final long serialVersionUID = -8351795409976068916L;
+	private static final long serialVersionUID = 8687040355286333293L;
 	
 	private final int[] version = new int[3];
 	/**
@@ -63,7 +60,7 @@ public class Version implements Serializable, Comparable<Version> {
 			throw new IllegalArgumentException("'" + version + "' is not a valid version string");
 		for (int i = 0; i < 3; i++) {
 			if (m.group(i + 1) != null)
-				this.version[i] = Skript.parseInt(m.group(i + 1));
+				this.version[i] = Utils.parseInt(m.group(i + 1));
 		}
 		postfix = m.group(m.groupCount()).isEmpty() ? null : m.group(m.groupCount());
 	}
@@ -113,6 +110,13 @@ public class Version implements Serializable, Comparable<Version> {
 	
 	public boolean isLargerThan(final Version other) {
 		return compareTo(other) > 0;
+	}
+	
+	/**
+	 * @return Whether this is a stable version, i.e. a simple version number without any additional details (like alpha/beta/etc.)
+	 */
+	public boolean isStable() {
+		return postfix.isEmpty();
 	}
 	
 	@Override

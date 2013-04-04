@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,6 +25,10 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -33,9 +37,13 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("op/deop")
+@Description("Grant/revoke a user operator status.")
+@Examples({"op the player",
+		"deop all players"})
+@Since("1.0")
 public class EffOp extends Effect {
-	
-	private static final long serialVersionUID = -5388188967675196369L;
 	
 	static {
 		Skript.registerEffect(EffOp.class, "[de[-]]op %offlineplayers%");

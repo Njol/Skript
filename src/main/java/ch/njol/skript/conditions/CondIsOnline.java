@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,6 +25,10 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,9 +38,13 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is Online")
+@Description("Checks whether a player is online.")
+@Examples({"player is online",
+		"player-argument is offline"})
+@Since("1.4")
 public class CondIsOnline extends Condition {
-	
-	private static final long serialVersionUID = 153524622963352231L;
 	
 	static {
 		Skript.registerCondition(CondIsOnline.class, "%offlineplayers% ((is|are) online|(is not|isn't|are not|aren't) offline)", "%offlineplayers% ((is|are) offline|(is not|isn't|are not|aren't) online)");

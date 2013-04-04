@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,8 +30,8 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class WolfData extends EntityData<Wolf> {
-	private static final long serialVersionUID = -5534357579840376057L;
 	
 	private int angry = 0;
 //	private String owner = null;
@@ -132,5 +132,12 @@ public class WolfData extends EntityData<Wolf> {
 		} catch (final NumberFormatException e) {
 			return false;
 		}
+	}
+	
+	@Override
+	protected boolean isSupertypeOf_i(final EntityData<? extends Wolf> e) {
+		if (e instanceof WolfData)
+			return (angry == 0 || ((WolfData) e).angry == angry) && (tamed == 0 || ((WolfData) e).tamed == tamed);
+		return false;
 	}
 }

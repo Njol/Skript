@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,14 +30,14 @@ import ch.njol.skript.Skript;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class Time implements Serializable {
-	
-	private static final long serialVersionUID = -5107423338469334935L;
 	
 	private final int time;
 	
 	public Time(final int time) {
-		this.time = time % 24000;
+		assert time >= -24000 && time <= 24000 : time;
+		this.time = (time + 24000) % 24000;
 	}
 	
 	public int getTicks() {
@@ -57,7 +57,6 @@ public class Time implements Serializable {
 	}
 	
 	/**
-	 * 
 	 * @param s The trim()med string to parse
 	 * @return The parsed time of null if the input was invalid
 	 */
@@ -66,28 +65,32 @@ public class Time implements Serializable {
 //			return new Time(Integer.parseInt(s));
 //		} else 
 		if (s.matches("\\d?\\d:\\d\\d")) {
-			final int hours = Skript.parseInt(s.split(":")[0]);
-			if (hours >= 24) {
+			int hours = Utils.parseInt(s.split(":")[0]);
+			if (hours == 24) { // allows to write 24:00 - 24:59 instead of 0:00-0:59
+				hours = 0;
+			} else if (hours > 24) {
 				Skript.error("a day only has 24 hours");
 				return null;
 			}
-			final int minutes = Skript.parseInt(s.split(":")[1]);
+			final int minutes = Utils.parseInt(s.split(":")[1]);
 			if (minutes >= 60) {
 				Skript.error("an hour only has 60 minutes");
 				return null;
 			}
 			return new Time((int) Math.round(hours * 1000 - 6000 + minutes * 16.6666667));
 		} else {
-			final Matcher m = Pattern.compile("^(?i)(\\d?\\d)(:(\\d\\d))? ?(am|pm)$").matcher(s);
+			final Matcher m = Pattern.compile("(\\d?\\d)(:(\\d\\d))? ?(am|pm)", Pattern.CASE_INSENSITIVE).matcher(s);
 			if (m.matches()) {
-				int hours = Skript.parseInt(m.group(1));
-				if (hours > 12) {
+				int hours = Utils.parseInt(m.group(1));
+				if (hours == 12) {
+					hours = 0;
+				} else if (hours > 12) {
 					Skript.error("using 12-hour format does not allow more than 12 hours");
 					return null;
 				}
 				int minutes = 0;
 				if (m.group(3) != null)
-					minutes = Skript.parseInt(m.group(3));
+					minutes = Utils.parseInt(m.group(3));
 				if (minutes >= 60) {
 					Skript.error("an hour only has 60 minutes");
 					return null;

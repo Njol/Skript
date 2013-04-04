@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,15 +27,14 @@ import ch.njol.skript.registrations.Converters;
  * Used to chain convertes to build a single converter. This is automatically created when a new converter is added.
  * 
  * @author Peter Güttinger
- * 
  * @param <F> same as Converter's <F> (from)
  * @param <M> the middle type, i.e. the type the first converter converts to and the second converter comverts from.
  * @param <T> same as Converter's <T> (to)
  * @see Converters#registerConverter(Class, Class, Converter)
  * @see Converter
  */
+@SuppressWarnings("serial")
 public final class ChainedConverter<F, M, T> implements SerializableConverter<F, T> {
-	private static final long serialVersionUID = 1346224491930327700L;
 	
 	private final Converter<? super F, ? extends M> first;
 	private final Converter<? super M, ? extends T> second;

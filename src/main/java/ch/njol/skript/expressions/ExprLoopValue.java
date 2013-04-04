@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -31,6 +31,10 @@ import org.bukkit.event.Event;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.SerializableConverter;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Loop;
@@ -41,15 +45,27 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
- * used to access a loop's current value.
+ * Used to access a loop's current value.
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Loop value")
+@Description("The currently looped value.")
+@Examples({"# countdown:",
+		"loop 5 times:",
+		"	message \"%6 - loop-number%\"",
+		"	wait a second",
+		"# renerate a 10x10 floor made of randomly coloured wool below the player:",
+		"loop blocks from the block below the player to the block 10 east of the block below the player:",
+		"	loop blocks from the loop-block to the block 10 north of the loop-block:",
+		"		set loop-block-2 to any wool"})
+@Since("1.0")
 public class ExprLoopValue extends SimpleExpression<Object> {
-	private static final long serialVersionUID = -6116372561839231268L;
 	
 	static {
 		Skript.registerExpression(ExprLoopValue.class, Object.class, ExpressionType.SIMPLE, "[the] loop-<.+>");
@@ -72,14 +88,12 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 		final Matcher m = Pattern.compile("^(.+)-(\\d+)$").matcher(s);
 		if (m.matches()) {
 			s = m.group(1);
-			i = Skript.parseInt(m.group(2));
+			i = Utils.parseInt(m.group(2));
 		}
-		Class<?> c = Classes.getClassByName(s);
-		if (c == null)
-			c = Classes.getClassFromUserInput(s);
+		final Class<?> c = Classes.getClassFromUserInput(s);
 		int j = 1;
 		for (final Loop l : ScriptLoader.currentLoops) {
-			if (c != null && c.isAssignableFrom(l.getLoopedExpression().getReturnType()) || l.getLoopedExpression().isLoopOf(s)) {
+			if ((c != null && c.isAssignableFrom(l.getLoopedExpression().getReturnType())) || l.getLoopedExpression().isLoopOf(s)) {
 				if (j < i) {
 					j++;
 					continue;

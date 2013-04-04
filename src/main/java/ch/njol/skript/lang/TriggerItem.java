@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,15 +29,15 @@ import ch.njol.skript.Skript;
 import ch.njol.util.StringUtils;
 
 /**
- * Represents a trigger item, i.e. a trgger section, a condition or an effect.
+ * Represents a trigger item, i.e. a trigger section, a condition or an effect.
  * 
  * @author Peter Güttinger
  * @see TriggerSection
  * @see Trigger
  * @see Statement
  */
+@SuppressWarnings("serial")
 public abstract class TriggerItem implements Debuggable, Serializable {
-	private static final long serialVersionUID = -7003760134485389509L;
 	
 	protected TriggerSection parent = null;
 	private TriggerItem next = null;
@@ -49,10 +49,12 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 	}
 	
 	/**
-	 * Overriding classes must call {@link #debug(Event, boolean)}
+	 * Executes this item and returns the next item to run.
+	 * <p>
+	 * Overriding classes must call {@link #debug(Event, boolean)}. If this method is overridden, {@link #run(Event)} is not used anymore and can be ignored.
 	 * 
 	 * @param e
-	 * @return
+	 * @return The next item to run or null to stop execution
 	 */
 	protected TriggerItem walk(final Event e) {
 		if (run(e)) {
@@ -64,24 +66,27 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 		}
 	}
 	
+	/**
+	 * Executes this item.
+	 * 
+	 * @param e
+	 * @return Whether the next item should be run or this ite's parent
+	 */
+	protected abstract boolean run(Event e);
+	
 	public final static void walk(final TriggerItem start, final Event e) {
+		assert start != null && e != null;
 		TriggerItem i = start;
 		try {
-			while ((i = i.walk(e)) != null);
+			while (i != null)
+				i = i.walk(e);
 		} catch (final StackOverflowError err) {
-			TriggerItem s = start;
-			while (s.getParent() != null)
-				s = s.getParent();
-			if (!(s instanceof Trigger)) {
-				Skript.exception(err, "Trigger without a trigger found! o_O");
-				return;
-			}
-			Skript.adminBroadcast("<red>The script '<gold>" + ((Trigger) s).getScript().getName() + "<red>' infinitely repeated itself!");
+			Skript.adminBroadcast("<red>The script '<gold>" + start.getTrigger().getScript().getName() + "<red>' infinitely repeated itself!");
 			if (Skript.debug())
 				err.printStackTrace();
 		} catch (final Exception ex) {
 			if (ex.getStackTrace().length != 0)// empty exceptions have already been printed
-				Skript.exception(ex);
+				Skript.exception(ex, i);
 		}
 	}
 	
@@ -110,11 +115,9 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 	}
 	
 	@Override
-	public String toString() {
+	public final String toString() {
 		return toString(null, false);
 	}
-	
-	protected abstract boolean run(Event e);
 	
 	public void setParent(final TriggerSection parent) {
 		this.parent = parent;

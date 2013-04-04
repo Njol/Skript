@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,6 +30,10 @@ import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -40,9 +44,13 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Teleport")
+@Description("Teleport an entity to a specific location.")
+@Examples({"teleport the player to {homes.%player%}",
+		"teleport the attacker to the victim"})
+@Since("1.0")
 public class EffTeleport extends Effect {
-	
-	private static final long serialVersionUID = 7988224895549370400L;
 	
 	static {
 		Skript.registerEffect(EffTeleport.class, "teleport %entities% (to|%direction%) %location%");

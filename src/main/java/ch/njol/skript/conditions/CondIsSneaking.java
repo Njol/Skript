@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,13 +24,24 @@ package ch.njol.skript.conditions;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is Sneaking")
+@Description("Checks whether a player is sneaking")
+@Examples({"# prevent mobs from seeing sneaking players if they are at least 4 meters apart",
+		"on target:",
+		"	target is sneaking",
+		"	distance of target and the entity is bigger than 4",
+		"	cancel the event"})
+@Since("1.4.4")
 public class CondIsSneaking extends PropertyCondition<Player> {
-	
-	private static final long serialVersionUID = -6598411397232537881L;
 	
 	static {
 		register(CondIsSneaking.class, "sneaking", "players");

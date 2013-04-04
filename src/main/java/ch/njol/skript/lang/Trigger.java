@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,8 +29,8 @@ import org.bukkit.event.Event;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class Trigger extends TriggerSection {
-	private static final long serialVersionUID = -5519696586457355447L;
 	
 	private final String name;
 	private final SkriptEvent event;
@@ -44,7 +44,7 @@ public class Trigger extends TriggerSection {
 		this.event = event;
 	}
 	
-	public void start(final Event e) {
+	public void execute(final Event e) {
 		TriggerItem.walk(this, e);
 	}
 	

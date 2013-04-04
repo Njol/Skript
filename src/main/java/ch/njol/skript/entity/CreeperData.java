@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,8 +30,8 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class CreeperData extends EntityData<Creeper> {
-	private static final long serialVersionUID = -6873924444340993222L;
 	
 	static {
 		EntityData.register(CreeperData.class, "creeper", Creeper.class, "unpowered creeper[s]", "creeper[s]", "powered creeper[s]");
@@ -104,6 +104,13 @@ public class CreeperData extends EntityData<Creeper> {
 		} catch (final NumberFormatException e) {
 			return false;
 		}
+	}
+	
+	@Override
+	protected boolean isSupertypeOf_i(final EntityData<? extends Creeper> e) {
+		if (e instanceof CreeperData)
+			return powered == 0 || ((CreeperData) e).powered == powered;
+		return false;
 	}
 	
 }

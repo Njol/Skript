@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -33,8 +33,8 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class VillagerData extends EntityData<Villager> {
-	private static final long serialVersionUID = -6472488986043622652L;
 	
 	static {
 		// professions in order!
@@ -121,6 +121,13 @@ public class VillagerData extends EntityData<Villager> {
 		} catch (final IllegalArgumentException e) {
 			return false;
 		}
+	}
+	
+	@Override
+	protected boolean isSupertypeOf_i(final EntityData<? extends Villager> e) {
+		if (e instanceof VillagerData)
+			return profession == null || ((VillagerData) e).profession == profession;
+		return false;
 	}
 	
 }

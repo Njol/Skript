@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,6 +26,10 @@ import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityCombustEvent;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -35,9 +39,13 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Ignite/Extinguish")
+@Description("Set a player ablaze, or extinguish them.")
+@Examples({"ignite the player",
+		"extinguish the player"})
+@Since("1.4")
 public class EffIgnite extends Effect {
-	
-	private static final long serialVersionUID = -8206560853398783813L;
 	
 	static {
 		Skript.registerEffect(EffIgnite.class,

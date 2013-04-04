@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,8 +30,6 @@ import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Kleenean;
 
 /**
@@ -39,24 +37,15 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class ExprEventExpression extends WrapperExpression<Object> {
-	private static final long serialVersionUID = 3943483158827368442L;
-	
 	static {
-		Skript.registerExpression(ExprEventExpression.class, Object.class, ExpressionType.PROPERTY, "[the] event-<.+>");// property so that it is parsed after most other expressions
+		Skript.registerExpression(ExprEventExpression.class, Object.class, ExpressionType.PROPERTY, "[the] event-%*classinfo%");// property so that it is parsed after most other expressions
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		ClassInfo<?> ci = Classes.getClassInfoFromUserInput(parser.regexes.get(0).group());
-		if (ci == null) {
-			final Class<?> c = Classes.getClassByName(parser.regexes.get(0).group());
-			if (c == null) {
-				Skript.error("'" + parser.regexes.get(0) + "' is not a valid type", ErrorQuality.SEMANTIC_ERROR);
-				return false;
-			}
-			ci = Classes.getExactClassInfo(c);
-		}
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		final ClassInfo<?> ci = (ClassInfo<?>) exprs[0].getSingle(null);
 		final EventValueExpression<?> e = new EventValueExpression<Object>(ci.getC());
 		setExpr(e);
 		return e.init();

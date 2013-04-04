@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -34,8 +34,8 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class ContanerExpression extends SimpleExpression<Object> {
-	private static final long serialVersionUID = 309689225239372629L;
 	
 	private final Expression<?> expr;
 	private final Class<?> c;

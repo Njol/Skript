@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -32,10 +32,13 @@ import org.bukkit.inventory.FurnaceInventory;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Getter;
@@ -45,27 +48,30 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Furnace Slot")
+@Description({"A slot of a furnace, i.e. either the ore, fuel or result slot.",
+		"Remember to use '<a href='#ExprBlock'>block</a>' and not 'furnace', as 'furnace' is not an existing expression."})
+@Examples({"set the fuel slot of the clicked block to a lava bucket",
+		"set the block's ore slot to 64 iron ore",
+		"give the result of the block to the player",
+		"clear the result slot of the block"})
+@Since("1.0")
 public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
-	private static final long serialVersionUID = 4874035145840682702L;
 	private final static int ORE = 0, FUEL = 1, RESULT = 2;
 	private final static String[] slotNames = {"ore", "fuel", "result"};
 	
 	static {
-		Skript.registerExpression(ExprFurnaceSlot.class, Slot.class, ExpressionType.PROPERTY,
-				"[the] ore[s] [slot[s]] of %blocks%", "%block%'[s] ore[s] [slot[s]]",
-				"[the] fuel[s] [slot[s]] of %blocks%", "%block%'[s] fuel[s] [slot[s]]",
-				"[the] result[s] [slot[s]] of %blocks%", "%block%'[s] result[s] [slot[s]]");
+		register(ExprFurnaceSlot.class, Slot.class, "(" + ORE + "¦ore|" + FUEL + "¦fuel|" + RESULT + "¦result)[s] [slot[s]]", "blocks");
 	}
 	
-	private Expression<Block> blocks;
 	private int slot;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		blocks = (Expression<Block>) vars[0];
-		setExpr(blocks);
-		slot = matchedPattern / 2;
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		setExpr((Expression<Block>) exprs[0]);
+		slot = parser.mark;
 		return true;
 	}
 	
@@ -154,8 +160,8 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	
 	@Override
 	protected Slot[] get(final Event e, final Block[] source) {
-		if (blocks.isDefault() && (e instanceof FurnaceSmeltEvent || e instanceof FurnaceBurnEvent) && !Delay.isDelayed(e)) {
-			final Block b = blocks.getSingle(e);
+		if (getExpr().isDefault() && (e instanceof FurnaceSmeltEvent || e instanceof FurnaceBurnEvent) && !Delay.isDelayed(e)) {
+			final Block b = getExpr().getSingle(e);
 			if (b.getType() != Material.FURNACE && b.getType() != Material.BURNING_FURNACE)
 				return null;
 			return new Slot[] {new FurnaceEventSlot(e, ((Furnace) b.getState()).getInventory())};
@@ -178,14 +184,14 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "the " + (getTime() == -1 ? "past " : getTime() == 1 ? "future " : "") + slotNames[slot] + " slot of " + blocks.toString(e, debug);
+			return "the " + (getTime() == -1 ? "past " : getTime() == 1 ? "future " : "") + slotNames[slot] + " slot of " + getExpr().toString(e, debug);
 		return Classes.getDebugMessage(getSingle(e));
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean setTime(final int time) {
-		return super.setTime(time, blocks, FurnaceSmeltEvent.class, FurnaceBurnEvent.class);
+		return super.setTime(time, getExpr(), FurnaceSmeltEvent.class, FurnaceBurnEvent.class);
 	}
 	
 }

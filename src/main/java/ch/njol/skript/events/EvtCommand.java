@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,21 +29,22 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
- * 
  */
-@SuppressWarnings("unchecked")
-public class EvtCommand extends SkriptEvent {
-	private static final long serialVersionUID = 6554740820047650855L;
-	
+@SuppressWarnings({"unchecked", "serial"})
+public class EvtCommand extends SkriptEvent { // TODO condition to check whether a given command exists, & a conditon to check whether it's a custom skript command
 	static {
-		Skript.registerEvent(EvtCommand.class, Skript.array(PlayerCommandPreprocessEvent.class, ServerCommandEvent.class), "command [%-string%]");
+		Skript.registerEvent("Command", EvtCommand.class, Utils.array(PlayerCommandPreprocessEvent.class, ServerCommandEvent.class), "command [%-string%]")
+				.description("Called when a player enters a command (not neccessarily a Skript command).")
+				.examples("on command", "on command \"/stop\"", "on command \"pm Njol \"")
+				.since("2.0");
 	}
 	
-	private String command;
+	private String command = null;
 	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
@@ -57,16 +58,21 @@ public class EvtCommand extends SkriptEvent {
 	
 	@Override
 	public boolean check(final Event e) {
+		if (command == null)
+			return true;
+		final String message;
 		if (e instanceof PlayerCommandPreprocessEvent) {
-			return StringUtils.startsWithIgnoreCase(((PlayerCommandPreprocessEvent) e).getMessage(), command, 1);
+			message = ((PlayerCommandPreprocessEvent) e).getMessage().substring(1);
 		} else {
-			return StringUtils.startsWithIgnoreCase(((ServerCommandEvent) e).getCommand(), command);
+			message = ((ServerCommandEvent) e).getCommand();
 		}
+		return StringUtils.startsWithIgnoreCase(message, command)
+				&& (command.contains(" ") || message.length() == command.length() || Character.isWhitespace(message.charAt(command.length())));
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "command" + (command == null ? "" : " " + command);
+		return "command" + (command == null ? "" : " /" + command);
 	}
 	
 }

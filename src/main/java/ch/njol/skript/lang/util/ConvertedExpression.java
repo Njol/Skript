@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,17 +25,20 @@ import java.util.Iterator;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 
 /**
- * Represents a expression converted to another type. This, and not Expression, is the required return type of {@link SimpleExpression#getConvertedExpr(Class)} because this class<br/>
+ * Represents a expression converted to another type. This, and not Expression, is the required return type of {@link SimpleExpression#getConvertedExpr(Class)} because this class
  * <ol>
  * <li>automatically lets the source expression handle everything apart from the get() methods</li>
  * <li>will never convert itself to another type, but rather request a new converted expression from the source expression.</li>
@@ -43,8 +46,8 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class ConvertedExpression<F, T> implements Expression<T> {
-	private static final long serialVersionUID = -8169038485835998271L;
 	
 	protected Expression<? extends F> source;
 	protected Class<T> to;
@@ -57,28 +60,12 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	public static <F, T> ConvertedExpression<F, T> newInstance(final Expression<F> v, final Class<T> to) {
-		if (v == null || to == null || to.isAssignableFrom(v.getReturnType()))
-			return null;
-		return newInstance(v, v.getReturnType(), to);
-	}
-	
-	@SuppressWarnings("unchecked")
-	private static <F, T> ConvertedExpression<F, T> newInstance(final Expression<F> v, final Class<? extends F> from, final Class<T> to) {
-		if (from.isAssignableFrom(to)) {
-			return new ConvertedExpression<F, T>(v, to, new SerializableConverter<F, T>() {
-				private static final long serialVersionUID = 7203493497281269183L;
-				
-				@Override
-				public T convert(final F f) {
-					if (to.isInstance(f))
-						return (T) f;
-					return null;
-				}
-			});
-		}
+		assert v != null;
+		assert to != null;
+		assert !to.isAssignableFrom(v.getReturnType());
 		// casting <? super ? extends F> to <? super F> is wrong, but since the converter is only used for values returned by the expression
 		// (which are instances of "<? extends F>") this won't result in any ClassCastExceptions.
-		final SerializableConverter<? super F, ? extends T> c = (SerializableConverter<? super F, ? extends T>) Converters.getConverter(from, to);
+		final SerializableConverter<? super F, ? extends T> c = (SerializableConverter<? super F, ? extends T>) Converters.getConverter(v.getReturnType(), to);
 		if (c == null)
 			return null;
 		return new ConvertedExpression<F, T>(v, to, c);
@@ -119,14 +106,25 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 		return source.getConvertedExpression(to);
 	}
 	
+	private ClassInfo<? super T> returnTypeInfo;
+	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		return source.acceptChange(mode);
+		final Class<?>[] r = source.acceptChange(mode);
+		if (r == null) {
+			returnTypeInfo = Classes.getSuperClassInfo(getReturnType());
+			return returnTypeInfo.getChanger() == null ? null : returnTypeInfo.getChanger().acceptChange(mode);
+		}
+		return r;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		source.change(e, delta, mode);
+		if (returnTypeInfo != null) {
+			((Changer<T, Object>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
+		} else {
+			source.change(e, delta, mode);
+		}
 	}
 	
 	@Override
@@ -195,14 +193,13 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	
 	@Override
 	public boolean isLoopOf(final String s) {
-		return false;// A loop does not convert the variable to loop
+		return false;// A loop does not convert the expression to loop
 	}
 	
 	@Override
 	public Iterator<T> iterator(final Event e) {
 		final Iterator<? extends F> iter = source.iterator(e);
 		return new Iterator<T>() {
-			
 			@Override
 			public boolean hasNext() {
 				return iter.hasNext();
@@ -224,7 +221,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	public Expression<?> getSource() {
 		return source;
 	}
-
+	
 	@Override
 	public Expression<? extends T> simplify() {
 		return source.simplify().getConvertedExpression(to);

@@ -15,21 +15,18 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.log;
 
 import java.util.Collection;
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.config.Node;
 
 /**
@@ -43,43 +40,51 @@ public abstract class SkriptLogger {
 	
 	static boolean debug;
 	
-	private final static Deque<SubLog> subLogs = new LinkedList<SubLog>();
-	
-	private static int numErrors = 0;
+	/**
+	 * use addFirst and pollFirst
+	 */
+	private final static HandlerList handlers = new HandlerList();
 	
 	/**
-	 * Starts a sub log. All subsequent log messages will be added to this log and not printed.
+	 * Starts retaining the log, i.e. all subsequent log messages will be added to this handler and not printed.
 	 * <p>
 	 * This should be used like this:
+	 * 
 	 * <pre>
-	 * SubLog log = SkriptLogger.startSubLog();
+	 * RetainingLogHandler log = SkriptLogger.startRetainingLog();
 	 * doSomethingThatLogsMessages();
 	 * log.stop();
-	 * // do something with the logged messages or ignore them
+	 * // do something with the logged messages
 	 * </pre>
 	 * 
-	 * @return a newly created sublog
+	 * @return a newly created RetainingLogHandler
+	 * @see BlockingLogHandler
 	 */
-	public final static SimpleLog startSubLog() {
-		final SimpleLog subLog = new SimpleLog();
-		subLogs.addLast(subLog);
-		return subLog;
+	public final static RetainingLogHandler startRetainingLog() {
+		final RetainingLogHandler h = new RetainingLogHandler();
+		handlers.add(h);
+		return h;
 	}
 	
-	public final static ParseLog startParseLog() {
-		final ParseLog subLog = new ParseLog();
-		subLogs.addLast(subLog);
-		return subLog;
+	public final static ParseLogHandler startParseLogHandler() {
+		final ParseLogHandler h = new ParseLogHandler();
+		handlers.add(h);
+		return h;
 	}
 	
-	final static void stopSubLog(final SubLog log) {
-		if (!subLogs.contains(log))
+	public final static <T extends LogHandler> T startLogHandler(final T h) {
+		handlers.add(h);
+		return h;
+	}
+	
+	final static void removeHandler(final LogHandler h) {
+		if (!handlers.contains(h))
 			return;
-		if (subLogs.removeLast() != log) {
+		if (handlers.remove() != h) {
 			int i = 1;
-			while (subLogs.removeLast() != log)
+			while (handlers.remove() != h)
 				i++;
-			Bukkit.getLogger().severe("[Skript] " + i + " sub log" + (i == 1 ? " was" : "s were") + " not stopped properly! (at " + getCaller() + ") [if you're a server admin and you see this message please file a bug report at http://dev.bukkit.org/server-mods/skript/tickets/ if there is not already one]");
+			Bukkit.getLogger().severe("[Skript] " + i + " log handler" + (i == 1 ? " was" : "s were") + " not stopped properly! (at " + getCaller() + ") [if you're a server admin and you see this message please file a bug report at http://dev.bukkit.org/server-mods/skript/tickets/ if there is not already one]");
 		}
 	}
 	
@@ -115,7 +120,6 @@ public abstract class SkriptLogger {
 	 * 
 	 * @param level
 	 * @param message
-	 * 
 	 * @see Skript#info(String)
 	 * @see Skript#warning(String)
 	 * @see Skript#error(String)
@@ -129,27 +133,23 @@ public abstract class SkriptLogger {
 	}
 	
 	public static void log(final LogEntry entry) {
-		assert entry != null;
-		if (!subLogs.isEmpty()) {
-			subLogs.getLast().log(entry);
-		} else {
-			Bukkit.getLogger().log(entry.getLevel(), "[Skript] " + entry.getMessage());
-			if (entry.getLevel() == Level.SEVERE)
-				numErrors++;
+		if (entry == null)
+			return;
+		for (final LogHandler h : handlers) {
+			if (!h.log(entry))
+				return;
 		}
+		Bukkit.getLogger().log(entry.getLevel(), "[Skript] " + entry.getMessage());
 	}
 	
 	public static void logAll(final Collection<LogEntry> entries) {
-		if (!subLogs.isEmpty()) {
-			for (final LogEntry e : entries)
-				subLogs.getLast().log(e);
-		} else {
-			for (final LogEntry entry : entries) {
-				assert entry != null;
-				Bukkit.getLogger().log(entry.getLevel(), "[Skript] " + entry.getMessage());
-				if (entry.getLevel() == Level.SEVERE)
-					numErrors++;
+		outer: for (final LogEntry entry : entries) {
+			assert entry != null;
+			for (final LogHandler h : handlers) {
+				if (!h.log(entry))
+					continue outer;
 			}
+			Bukkit.getLogger().log(entry.getLevel(), "[Skript] " + entry.getMessage());
 		}
 	}
 	
@@ -167,27 +167,27 @@ public abstract class SkriptLogger {
 		return debug;
 	}
 	
-	public static int getNumErrors() {
-		int errors = numErrors;
-		for (final SubLog log : subLogs)
-			errors += log.getNumErrors();
-		return errors;
-	}
-	
-	public static void error(final LogEntry error, final ErrorQuality quality) {
-		if (error.getLevel() != Level.SEVERE)
-			throw new IllegalArgumentException("Cannot error anything else than an error");
-		if (!(subLogs.getLast() instanceof ParseLog))
-			throw new SkriptAPIException("Cannot log with a quality if no parsing is in progress");
-		((ParseLog) subLogs.getLast()).error(error, quality);
-	}
-	
-	static void printParseLogError(final LogEntry error, final int quality) {
-		if (subLogs.peekLast() instanceof ParseLog) {
-			((ParseLog) subLogs.getLast()).error(error, quality);
-		} else {
-			log(error);
-		}
-	}
-	
+//	public static int getNumErrors() {
+//		int errors = numErrors;
+//		for (final SubLog log : handlers)
+//			errors += log.getNumErrors();
+//		return errors;
+//	}
+//	
+//	public static void error(final LogEntry error, final ErrorQuality quality) {
+//		if (error.getLevel() != Level.SEVERE)
+//			throw new IllegalArgumentException("Cannot error anything else than an error");
+//		if (!(handlers.getLast() instanceof ParseLog))
+//			throw new SkriptAPIException("Cannot log with a quality if no parsing is in progress");
+//		((ParseLog) handlers.getLast()).error(error, quality);
+//	}
+//	
+//	static void printParseLogError(final LogEntry error, final int quality) {
+//		if (handlers.peekLast() instanceof ParseLog) {
+//			((ParseLog) handlers.getLast()).error(error, quality);
+//		} else {
+//			log(error);
+//		}
+//	}
+//	
 }

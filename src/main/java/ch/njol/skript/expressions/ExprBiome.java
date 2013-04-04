@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,6 +27,10 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
@@ -37,8 +41,16 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Biome")
+@Description("The biome at a certain location. Please note that biomes are only defined for x/z-columns, i.e. the <a href='#ExprAltitude'>altitude</a> (y-coordinate) doesn't matter. ")
+@Examples({"# damage player in deserts constantly",
+		"every real minute:",
+		"	loop all players:",
+		"		biome at loop-player is desert",
+		"		damage the loop-player by 1"})
+@Since("1.4.4")
 public class ExprBiome extends PropertyExpression<Location, Biome> {
-	private static final long serialVersionUID = 664790396177783245L;
 	
 	static {
 		Skript.registerExpression(ExprBiome.class, Biome.class, ExpressionType.PROPERTY, "[the] biome (of|%direction%) %location%", "%location%'[s] biome");

@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,8 +30,8 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class OcelotData extends EntityData<Ocelot> {
-	private static final long serialVersionUID = -7803473515795672650L;
 	
 	static {
 		EntityData.register(OcelotData.class, "ocelot", Ocelot.class,
@@ -105,6 +105,13 @@ public class OcelotData extends EntityData<Ocelot> {
 		} catch (final NumberFormatException e) {
 			return false;
 		}
+	}
+	
+	@Override
+	protected boolean isSupertypeOf_i(final EntityData<? extends Ocelot> e) {
+		if (e instanceof OcelotData)
+			return tamed == 0 || ((OcelotData) e).tamed == tamed;
+		return false;
 	}
 	
 }

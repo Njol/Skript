@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,14 +30,14 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class ExprEventCancelled extends SimpleExpression<Boolean> {
-	private static final long serialVersionUID = -2280930563562488727L;
-	
 	static {
 		Skript.registerExpression(ExprEventCancelled.class, Boolean.class, ExpressionType.SIMPLE, "[is] event cancelled");
 	}
@@ -74,8 +74,8 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 			Skript.error("Can't cancel the event anymore after it has already passed");
 			return null;
 		}
-		if (mode == ChangeMode.SET || mode == ChangeMode.CLEAR)
-			return Skript.array(Boolean.class);
+		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE)
+			return Utils.array(Boolean.class);
 		return null;
 	}
 	
@@ -85,7 +85,7 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 		if (!(e instanceof Cancellable))
 			return;
 		switch (mode) {
-			case CLEAR:
+			case DELETE:
 				((Cancellable) e).setCancelled(false);
 				break;
 			case SET:

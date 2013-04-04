@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -37,10 +37,10 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class SheepData extends EntityData<Sheep> {
-	private static final long serialVersionUID = 5372302375429223571L;
 	
-	static {// FIMXE sheep can't be parsed
+	static {
 		EntityData.register(SheepData.class, "sheep", Sheep.class, "(un|non[-])sheared [%-colors%] sheep[s]", "[%-colors%] sheep[s]", "sheared [%-colors%] sheep[s]");
 	}
 	
@@ -53,7 +53,7 @@ public class SheepData extends EntityData<Sheep> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		sheared = matchedPattern - 1;
-		if (colors != null)
+		if (exprs[0] != null)
 			colors = ((Literal<Color>) exprs[0]).getAll();
 		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
@@ -159,6 +159,13 @@ public class SheepData extends EntityData<Sheep> {
 		} catch (final NumberFormatException e) {
 			return false;
 		}
+	}
+	
+	@Override
+	protected boolean isSupertypeOf_i(final EntityData<? extends Sheep> e) {
+		if (e instanceof SheepData)
+			return colors == null || Utils.isSubset(colors, ((SheepData) e).colors);
+		return false;
 	}
 	
 }

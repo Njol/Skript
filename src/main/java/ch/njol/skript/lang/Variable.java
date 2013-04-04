@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
-import java.util.regex.Pattern;
 
 import org.bukkit.event.Event;
 
@@ -37,31 +36,29 @@ import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Comparator.Relation;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.lang.util.VariableString;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
+import ch.njol.skript.util.Utils;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.Checker;
-import ch.njol.util.StringUtils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.EmptyIterator;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class Variable<T> implements Expression<T> {
-	private static final long serialVersionUID = 6520037767843603724L;
 	
 	public final static String SEPARATOR = "::";
 	public final static String LOCAL_VARIABLE_TOKEN = "_";
-	
-	private final static Pattern variableNameSplitPattern = Pattern.compile(Pattern.quote(SEPARATOR));
-	
-	public final static String[] splitVariableName(final String name) {
-		return variableNameSplitPattern.split(name);
-	}
 	
 	private final VariableString name;
 	
@@ -166,16 +163,17 @@ public class Variable<T> implements Expression<T> {
 	 * @return
 	 */
 	private Object getRaw(final Event e) {
-		final Object val = Skript.getVariables().getVariable(splitVariableName(name.toString(e).toLowerCase()));
+		assert !local;
+		final Object val = Variables.getVariable(name.toString(e).toLowerCase());
 		if (val == null)
-			return Skript.getVariables().getVariable(splitVariableName(name.getDefaultVariableName().toLowerCase()));
+			return Variables.getVariable(name.getDefaultVariableName().toLowerCase());
 		return val;
 	}
 	
 	@SuppressWarnings("unchecked")
 	private Object get(final Event e) {
 		if (local)
-			return Skript.getVariables().getLocalVariable(name.toString(e).toLowerCase(), e);
+			return Variables.getLocalVariable(name.toString(e).toLowerCase(), e);
 		final Object val = getRaw(e);
 		if (!list)
 			return val;
@@ -289,29 +287,29 @@ public class Variable<T> implements Expression<T> {
 	
 	private final void set(final Event e, final Object value) {
 		if (local)
-			Skript.getVariables().setLocalVariable(name.toString(e).toLowerCase(), e, value);
+			Variables.setLocalVariable(name.toString(e).toLowerCase(), e, value);
 		else
-			Skript.getVariables().setVariable(splitVariableName(name.toString(e).toLowerCase()), value);
+			Variables.setVariable(name.toString(e).toLowerCase(), value, null);
 	}
 	
 	private final void setIndex(final Event e, final String index, final Object value) {
 		assert list;
 		final String s = name.toString(e).toLowerCase();
-		Skript.getVariables().setVariable(splitVariableName(s.substring(0, s.length() - 1) + index), value);
+		Variables.setVariable(s.substring(0, s.length() - 1) + index, value, null);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (list)
-			return Skript.array(Object[].class);
-		return Skript.array(Object.class);
+			return Utils.array(Object[].class);
+		return Utils.array(Object.class);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		switch (mode) {
-			case CLEAR:
+			case DELETE:
 				set(e, null);
 				break;
 			case SET:
@@ -343,7 +341,7 @@ public class Variable<T> implements Expression<T> {
 						if (o == null)
 							return;
 						for (final Entry<String, Object> i : o.entrySet()) {
-							if (i.getValue().equals(delta)) {
+							if (Relation.EQUAL.is(Comparators.compare(i.getValue(), delta))) {
 								setIndex(e, i.getKey(), null);
 								break;
 							}
@@ -452,7 +450,7 @@ public class Variable<T> implements Expression<T> {
 	public Expression<?> getSource() {
 		return source == null ? this : source;
 	}
-
+	
 	@Override
 	public Expression<? extends T> simplify() {
 		return this;

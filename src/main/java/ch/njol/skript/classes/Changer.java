@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -39,29 +39,26 @@ import ch.njol.skript.lang.Expression;
 public interface Changer<T, V> {
 	
 	public static enum ChangeMode {
-		ADD, SET, REMOVE, CLEAR;
+		ADD, SET, REMOVE, DELETE; // TODO CLEAR, REMOVE_ALL
 	}
 	
 	/**
-	 * 
 	 * @param e
 	 * @param what The expression to change
 	 * @param delta An expression which returns instances of the class returned by {@link #acceptChange(ChangeMode)} for the given changemode.
 	 * @param mode
-	 * 
 	 * @throws UnsupportedOperationException (optional) if this method was called on an unsupported ChangeMode.
 	 */
 	public abstract void change(T[] what, V delta, ChangeMode mode);
 	
 	/**
 	 * Test whether this changer supports the given mode, and if yes what type it expects the <code>delta</code> to be.
-	 * 
 	 * <p>
 	 * Unlike {@link Expression#acceptChange(ChangeMode)} this method must not print errors
 	 * 
 	 * @param mode
 	 * @return An array of types that {@link #change(Event, Expression, Expression, ChangeMode)} accepts as it's <code>delta</code> parameter's type param,
-	 *         or null if the given mode is not supported. For {@link ChangeMode#CLEAR} this can return any array to mark clear as supported, event an empty one.
+	 *         or null if the given mode is not supported. For {@link ChangeMode#DELETE} this can return any array to mark clear as supported, event an empty one.
 	 */
 	public abstract Class<? extends V>[] acceptChange(ChangeMode mode);
 	

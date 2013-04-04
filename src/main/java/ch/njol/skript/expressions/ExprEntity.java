@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,26 +24,36 @@ package ch.njol.skript.expressions;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Aliases;
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.Aliases;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.util.ItemType;
-import ch.njol.util.StringUtils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Creature/Entity/Player/Projectile/Villager/Powered Creeper/etc.")
+@Description("The entity involved in an event. A 'creature' is any living thing like a zombie, a skeleton or a player. An 'entity' is more general and can be a creature or an inanimate object like ignited TNT, a dropped item or an arrow. ")
+@Examples({"give a diamond sword to the player",
+		"kill the creeper",
+		"kill all powered creepers in the wolf's world",
+		"projectile is an arrow"})
+@Since("1.0")
 public class ExprEntity extends SimpleExpression<Entity> {
-	private static final long serialVersionUID = 6139015110513079985L;
-	
 	static {
 		Skript.registerExpression(ExprEntity.class, Entity.class, ExpressionType.PATTERN_MATCHES_EVERYTHING, "[the] [event-]<.+>");
 	}
@@ -54,15 +64,20 @@ public class ExprEntity extends SimpleExpression<Entity> {
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		final SimpleLog log = SkriptLogger.startSubLog();
-		final ItemType item = Aliases.parseItemType(parseResult.regexes.get(0).group());
-		if (item != null && !StringUtils.startsWithIgnoreCase(parseResult.expr, "the ")) {
+		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		try {
+			if (!StringUtils.startsWithIgnoreCase(parseResult.expr, "the ")) {
+				final ItemType item = Aliases.parseItemType(parseResult.regexes.get(0).group());
+				if (item != null) {
+					log.stop();
+					return false;
+				}
+				log.clear();
+			}
+			type = EntityData.parseWithoutIndefiniteArticle(parseResult.regexes.get(0).group());
+		} finally {
 			log.stop();
-			return false;
 		}
-		log.clear();
-		type = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
-		log.stop();
 		if (type == null || type.isPlural())
 			return false;
 		log.printLog();

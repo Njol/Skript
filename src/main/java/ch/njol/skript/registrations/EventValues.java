@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -35,15 +35,13 @@ import ch.njol.skript.util.Getter;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EventValues {
 	
 	private EventValues() {}
 	
+	@SuppressWarnings("serial")
 	private static final class EventValueInfo<E extends Event, T> implements Serializable {
-		
-		private static final long serialVersionUID = 2208751466806346720L;
 		
 		public final Class<E> event;
 		public final Class<T> c;
@@ -146,7 +144,7 @@ public class EventValues {
 		return EventValues.getEventValueGetter(e, c, time, true);
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "serial"})
 	private static final <T, E extends Event> SerializableGetter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time, final boolean allowDefault) {
 		final List<EventValueInfo<?, ?>> eventValues = getEventValuesList(time);
 		for (final EventValueInfo<?, ?> ev : eventValues) {
@@ -160,9 +158,7 @@ public class EventValues {
 			if (ev.event.isAssignableFrom(e) && ev.c.isAssignableFrom(c)) {
 				if (!EventValues.checkExcludes(ev, e, true))
 					return null;
-				return new SerializableGetter<T, E>() { // TODO bad practice to serialize non-static inner classes
-					private static final long serialVersionUID = 2791282476327758686L;
-					
+				return new SerializableGetter<T, E>() {
 					@Override
 					public T get(final E e) {
 						final Object o = ((Getter<? super T, ? super E>) ev.getter).get(e);
@@ -200,13 +196,12 @@ public class EventValues {
 		return true;
 	}
 	
+	@SuppressWarnings("serial")
 	private final static <E extends Event, F, T> SerializableGetter<? extends T, ? super E> getConvertedGetter(final EventValueInfo<E, F> i, final Class<T> to) {
 		final Converter<? super F, ? extends T> c = Converters.getConverter(i.c, to);
 		if (c == null)
 			return null;
 		return new SerializableGetter<T, E>() {
-			private static final long serialVersionUID = 3284436987168293139L;
-			
 			@Override
 			public T get(final E e) {
 				final F f = i.getter.get(e);

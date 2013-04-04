@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,14 +24,17 @@ package ch.njol.skript.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.bukkit.entity.ThrownPotion;
+import org.bukkit.potion.Potion;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
 
 import ch.njol.skript.localization.Language;
-import ch.njol.skript.localization.Language.LanguageChangeListener;
+import ch.njol.skript.localization.LanguageChangeListener;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class PotionEffectUtils {
 	
@@ -63,5 +66,19 @@ public abstract class PotionEffectUtils {
 	
 	public static String toString(final PotionEffectType t) {
 		return names[t.getId()];
+	}
+	
+	public final static String[] getNames() {
+		return names;
+	}
+	
+	public static short guessData(final ThrownPotion p) {
+		if (p.getEffects().size() == 1) {
+			final PotionEffect e = p.getEffects().iterator().next();
+			final Potion d = new Potion(PotionType.getByEffect(e.getType())).splash();
+			
+			return d.toDamageValue();
+		}
+		return 0;
 	}
 }

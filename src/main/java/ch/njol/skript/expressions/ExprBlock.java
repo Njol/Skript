@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,23 +26,35 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.data.DefaultChangers;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Block")
+@Description({"The block involved in the event, e.g. the clicked block or the placed block.",
+		"Can optionally include a direction as well, e.g. 'block above' or 'block in front of the player'."})
+@Examples({"block is ore",
+		"set block below to air",
+		"spawn a creeper above the block",
+		"loop blocks in radius 4:",
+		"	loop-block is obsidian",
+		"	set loop-block to water",
+		"block is a chest:",
+		"	clear the inventory of the block"})
+@Since("1.0")
 public class ExprBlock extends WrapperExpression<Block> {
-	private static final long serialVersionUID = -2975233846363855942L;
-	
 	static {
 		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.SIMPLE, "[the] [event-]block");
 		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.NORMAL, "[the] block %direction% [%location%]");
@@ -55,7 +67,7 @@ public class ExprBlock extends WrapperExpression<Block> {
 			setExpr(Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]).getConvertedExpression(Block.class));
 		} else {
 			setExpr(new EventValueExpression<Block>(Block.class));
-			return ((EventValueExpression<Block>)getExpr()).init();
+			return ((EventValueExpression<Block>) getExpr()).init();
 		}
 		return true;
 	}
@@ -64,5 +76,5 @@ public class ExprBlock extends WrapperExpression<Block> {
 	public String toString(final Event e, final boolean debug) {
 		return getExpr() instanceof EventValueExpression ? "the block" : "the block " + getExpr().toString(e, debug);
 	}
-		
+	
 }

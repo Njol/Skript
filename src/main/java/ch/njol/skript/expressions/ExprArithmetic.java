@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,6 +26,10 @@ import java.lang.reflect.Array;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -36,8 +40,15 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Arithmetic")
+@Description("Arithmetic expressions, e.g. 1+2, (2 - health of player)/3, etc.")
+@Examples({"set the player's health to 10 - the player's health",
+		"loop (argument + 2)/5 times:",
+		"	message \"Two useless numbers: %loop-num*2 - 5%, %2^loop-num - 1%\"",
+		"message \"You have %health of player * 2% half hearts of HP!\""})
+@Since("1.4.2")
 public class ExprArithmetic extends SimpleExpression<Number> {
-	private static final long serialVersionUID = -8294655361410006842L;
 	
 	private static enum Operator {
 		PLUS('+') {

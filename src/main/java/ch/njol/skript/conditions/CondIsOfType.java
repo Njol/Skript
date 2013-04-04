@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,21 +26,28 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is of Type")
+@Description("Checks whether an item of entity is of the given type. This is mostly useful for variables, as you can use the general 'is' condition otherwise (e.g. 'victim is a creeper').")
+@Examples({"tool is of type {*selected type}",
+		"victim is of type {villager type}"})
+@Since("1.4")
 public class CondIsOfType extends Condition {
-	
-	private static final long serialVersionUID = 4817970930874939124L;
-	
 	static {
 		Skript.registerCondition(CondIsOfType.class,
 				"%itemstacks% (is|are) of type[s] %itemtypes%", "%itemstacks% (isn't|is not|aren't|are not) of type[s] %itemtypes%",
@@ -55,7 +62,7 @@ public class CondIsOfType extends Condition {
 		what = exprs[0];
 		types = exprs[1];
 		item = matchedPattern <= 1;
-		setNegated(matchedPattern % 2 == 1);
+		setNegated(matchedPattern % 2 != 0);
 		return true;
 	}
 	

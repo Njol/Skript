@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -59,8 +59,8 @@ public class UtilsTest {
 		};
 		
 		for (final String[] s : strings) {
-			assertEquals(s[1], Utils.toPlural(s[0]));
-			assertEquals(s[0], Utils.getPlural(s[1]).first);
+			assertEquals(s[1], Utils.toEnglishPlural(s[0]));
+			assertEquals(s[0], Utils.getEnglishPlural(s[1]).first);
 		}
 		
 	}

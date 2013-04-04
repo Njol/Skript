@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,20 +26,27 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.util.StringMode;
 import ch.njol.util.Kleenean;
 
 /**
- * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Command")
+@Description("Executes a command. This can be useful to use other plugins in triggers.")
+@Examples({"make player execute command \"/suicide\"",
+		"execute console command \"/say Hello everyone!\""})
+@Since("1.0")
 public class EffCommand extends Effect {
-	
-	private static final long serialVersionUID = -1751790551384568446L;
-	
 	static {
 		Skript.registerEffect(EffCommand.class,
 				"[execute] [the] command %strings% [by %-commandsenders%]",
@@ -60,7 +67,7 @@ public class EffCommand extends Effect {
 			senders = (Expression<CommandSender>) vars[0];
 			commands = (Expression<String>) vars[1];
 		}
-		VariableString.setStringMode(commands);
+		VariableString.setStringMode(commands, StringMode.COMMAND);
 		return true;
 	}
 	
@@ -81,7 +88,7 @@ public class EffCommand extends Effect {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "let " + senders.toString(e, debug) + " execute " + commands.toString(e, debug);
+		return "make " + (senders == null ? "the console" : senders.toString(e, debug)) + " execute the command " + commands.toString(e, debug);
 	}
 	
 }

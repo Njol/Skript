@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -36,7 +36,6 @@ import ch.njol.util.Pair;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class Comparators {
 	
@@ -54,18 +53,18 @@ public class Comparators {
 	 */
 	public static <T1, T2> void registerComparator(final Class<T1> t1, final Class<T2> t2, final Comparator<T1, T2> c) {
 		Skript.checkAcceptRegistrations();
-		if (t1 == Object.class || t2 == Object.class)
-			throw new IllegalArgumentException("must not add a comparator for Object");
+		if (t1 == Object.class && t2 == Object.class)
+			throw new IllegalArgumentException("You must not add a comparator for Objects");
 		comparators.add(new ComparatorInfo<T1, T2>(t1, t2, c));
 	}
 	
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public final static Relation compare(final Object o1, final Object o2) {
 		assert o1 != null && o2 != null;
-		final Comparator<?, ?> c = Comparators.getComparator(o1.getClass(), o2.getClass());
+		final Comparator c = getComparator(o1.getClass(), o2.getClass());
 		if (c == null)
 			return null;
-		return ((Comparator) c).compare(o1, o2);
+		return c.compare(o1, o2);
 	}
 	
 	private final static Map<Pair<Class<?>, Class<?>>, Comparator<?, ?>> comparatorsQuickAccess = new HashMap<Pair<Class<?>, Class<?>>, Comparator<?, ?>>();
@@ -85,14 +84,16 @@ public class Comparators {
 		
 		// perfect match
 		for (final ComparatorInfo<?, ?> info : comparators) {
-			if (info.c1.isAssignableFrom(f) && info.c2.isAssignableFrom(s) || info.c1.isAssignableFrom(s) && s.isAssignableFrom(info.c2)) {
-				return ((info.c1.isAssignableFrom(f) && info.c2.isAssignableFrom(s)) ? info.c : new InverseComparator<F, S>((Comparator<? super S, ? super F>) info.c));
+			if (info.c1.isAssignableFrom(f) && info.c2.isAssignableFrom(s)) {
+				return info.c;
+			} else if (info.c1.isAssignableFrom(s) && info.c2.isAssignableFrom(f)) {
+				return new InverseComparator<F, S>((Comparator<? super S, ? super F>) info.c);
 			}
 		}
 		
 		// same class but no comparator
-		if (f != Object.class && s != Object.class && (f.isAssignableFrom(s) || s.isAssignableFrom(f))) {
-			return (s.isAssignableFrom(f) ? Comparator.equalsComparator : new InverseComparator<F, S>((Comparator<? super S, ? super F>) Comparator.equalsComparator));
+		if (s == f && f != Object.class && s != Object.class) {
+			return Comparator.equalsComparator;
 		}
 		
 		final boolean[] trueFalse = {true, false};
@@ -111,7 +112,7 @@ public class Comparators {
 				if (info.getType(first).isAssignableFrom(s)) {
 					c1 = Converters.getConverter(f, info.getType(!first));
 					if (c1 != null) {
-						return first ? new ConvertedComparator<F, S>(c1, info.c) : new InverseComparator<F, S>(new ConvertedComparator<S, F>(info.c, c1));
+						return !first ? new ConvertedComparator<F, S>(c1, info.c) : new InverseComparator<F, S>(new ConvertedComparator<S, F>(info.c, c1));
 					}
 				}
 			}
@@ -128,25 +129,11 @@ public class Comparators {
 			}
 		}
 		
-		// different convertible classes and no comparator
-		if (f != Object.class) {
-			c2 = Converters.getConverter(s, f);
-			if (c2 != null) {
-				return new ConvertedComparator<F, S>(Comparator.equalsComparator, c2);
-			}
-		}
-		if (s != Object.class) {
-			c1 = Converters.getConverter(f, s);
-			if (c1 != null) {
-				return new ConvertedComparator<F, S>(c1, Comparator.equalsComparator);
-			}
-		}
-		
 		return null;
 	}
 	
+	@SuppressWarnings("serial")
 	private final static class ConvertedComparator<T1, T2> implements Comparator<T1, T2> {
-		private static final long serialVersionUID = -2067438898833733437L;
 		
 		@SuppressWarnings("rawtypes")
 		private final Comparator c;
@@ -179,6 +166,11 @@ public class Comparators {
 		@Override
 		public boolean supportsOrdering() {
 			return c.supportsOrdering();
+		}
+		
+		@Override
+		public String toString() {
+			return "ConvertedComparator(" + c1 + "," + c + "," + c2 + ")";
 		}
 		
 	}

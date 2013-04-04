@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,12 +29,16 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.ArrayIterator;
@@ -44,8 +48,15 @@ import ch.njol.util.iterator.IteratorIterable;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Items")
+@Description("Items or blocks of a specific type, useful for looping.")
+@Examples({"loop items of type ore and log:",
+		"	block contains loop-item",
+		"	message \"Theres at least one %loop-item% in this block\"",
+		"drop all blocks at the player # drops one of every block at the player"})
+@Since("")
 public class ExprItems extends SimpleExpression<ItemStack> {
-	private static final long serialVersionUID = 4347646855966040096L;
 	
 	static {
 		Skript.registerExpression(ExprItems.class, ItemStack.class, ExpressionType.NORMAL,

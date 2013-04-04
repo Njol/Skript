@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -33,6 +33,10 @@ import org.bukkit.event.entity.EntityEvent;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
@@ -46,8 +50,14 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Attacked")
+@Description("The victim of a damage event, e.g. when a player attacks a zombie this expression represents the zombie.")
+@Examples({"on damage:",
+		"	victim is a creeper",
+		"	damage the attacked by 1 heart"})
+@Since("1.3")
 public class ExprAttacked extends SimpleExpression<Entity> {
-	private static final long serialVersionUID = 2125171894503017326L;
 	
 	static {
 		Skript.registerExpression(ExprAttacked.class, Entity.class, ExpressionType.SIMPLE, "[the] (attacked|damaged|victim) [<(.+)>]");
@@ -78,7 +88,7 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 	@Override
 	protected Entity[] get(final Event e) {
 		final Entity[] one = (Entity[]) Array.newInstance(type.getType(), 1);
-		final Entity entity = Utils.validate(((EntityEvent) e).getEntity());
+		final Entity entity = ((EntityEvent) e).getEntity();
 		if (type.isInstance(entity)) {
 			one[0] = entity;
 			return one;

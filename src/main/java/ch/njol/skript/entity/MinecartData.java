@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -32,8 +32,8 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class MinecartData extends EntityData<Minecart> {
-	private static final long serialVersionUID = 2903518105647442587L;
 	
 	private static enum MinecartType {
 		ANY(Minecart.class, "minecart", "[mine]cart[s]"),
@@ -136,6 +136,13 @@ public class MinecartData extends EntityData<Minecart> {
 		} catch (final IllegalArgumentException e) {
 			return false;
 		}
+	}
+	
+	@Override
+	protected boolean isSupertypeOf_i(final EntityData<? extends Minecart> e) {
+		if (e instanceof MinecartData)
+			return type == MinecartType.ANY || ((MinecartData) e).type == type;
+		return false;
 	}
 	
 }

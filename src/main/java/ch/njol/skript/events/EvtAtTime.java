@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -35,6 +35,8 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
+import ch.njol.skript.events.bukkit.ScheduledEvent;
+import ch.njol.skript.events.bukkit.ScheduledWorldEvent;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -45,11 +47,13 @@ import ch.njol.skript.util.Time;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<EvtAtTime> {
-	private static final long serialVersionUID = 6716577116757409844L;
-	
 	static {
-		Skript.registerEvent(EvtAtTime.class, ScheduledEvent.class, "at %time% [in %worlds%]");
+		Skript.registerEvent("*At Time", EvtAtTime.class, ScheduledWorldEvent.class, "at %time% [in %worlds%]")
+				.description("An event that occurrs at a given <a href='../classes/#time'>minecraft time</a> in every world or only in specific worlds.")
+				.examples("at 18:00", "at 7am in \"world\"")
+				.since("1.3.4");
 	}
 	
 	private final static int CHECKPERIOD = 10;
@@ -122,14 +126,14 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 					i.lastTick = tick;
 				}
 			}
-		}, CHECKPERIOD, CHECKPERIOD);
+		}, 0, CHECKPERIOD);
 	}
 	
 	private void execute(final World w) {
-		final ScheduledEvent e = new ScheduledEvent(w);
+		final ScheduledEvent e = new ScheduledWorldEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerEnd(t);
-		t.start(e);
+		t.execute(e);
 		SkriptEventHandler.logTriggerEnd(t);
 		SkriptEventHandler.logEventEnd();
 	}

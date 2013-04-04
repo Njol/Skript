@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,33 +29,47 @@ import org.bukkit.event.block.SignChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Sign Text")
+@Description("A line of text on a sign. Can be changed, but remember that there is a 16 character limit per line (including colour codes that use 2 characters each).")
+@Examples({"on rightclick on sign:",
+		"	line 2 of the clicked block is \"[Heal]\":",
+		"		heal the player",
+		"	set line 3 to \"%player%\""})
+@Since("1.3")
 public class ExprSignText extends SimpleExpression<String> {
-	private static final long serialVersionUID = -2027328055872524011L;
 	
 	static {
 		Skript.registerExpression(ExprSignText.class, String.class, ExpressionType.PROPERTY,
-				// TODO use %number%
-				"[the] line (1¦1|2¦2|3¦3|4¦4) [of %block%]", "[the] (1¦1st|1¦first|2¦2nd|2¦second|3¦3rd|3¦third|4¦4th|4¦fourth) line [of %block%]");
+				"[the] line %number% [of %block%]", "[the] (1¦1st|1¦first|2¦2nd|2¦second|3¦3rd|3¦third|4¦4th|4¦fourth) line [of %block%]");
 	}
 	
-	private int line;
+	private Expression<Number> line;
 	private Expression<Block> block;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		line = parseResult.mark;
-		block = (Expression<Block>) exprs[0];
+		if (matchedPattern == 0)
+			line = (Expression<Number>) exprs[0];
+		else
+			line = new SimpleLiteral<Number>(parseResult.mark, false);
+		block = (Expression<Block>) exprs[exprs.length - 1];
 		return true;
 	}
 	
@@ -71,56 +85,70 @@ public class ExprSignText extends SimpleExpression<String> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "line " + line + " of " + block.toString(e, debug);
+		return "line " + line.toString(e, debug) + " of " + block.toString(e, debug);
 	}
 	
 	@Override
 	protected String[] get(final Event e) {
+		final Number l = line.getSingle(e);
+		if (l == null)
+			return null;
+		final int line = l.intValue() - 1;
+		if (line < 0 || line > 3)
+			return null;
 		if (getTime() >= 0 && block.isDefault() && e instanceof SignChangeEvent && !Delay.isDelayed(e)) {
-			return new String[] {((SignChangeEvent) e).getLine(line - 1)};
+			return new String[] {((SignChangeEvent) e).getLine(line)};
 		}
 		final Block b = block.getSingle(e);
 		if (b == null)
 			return null;
 		if (b.getType() != Material.SIGN_POST && b.getType() != Material.WALL_SIGN)
 			return null;
-		return new String[] {((Sign) b.getState()).getLine(line - 1)};
+		return new String[] {((Sign) b.getState()).getLine(line)};
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (mode == ChangeMode.CLEAR || mode == ChangeMode.SET)
-			return Skript.array(String.class);
+		if (mode == ChangeMode.DELETE || mode == ChangeMode.SET)
+			return new Class[] {String.class};
 		return null;
 	}
 	
 	@SuppressWarnings("incomplete-switch")
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+		final Number l = line.getSingle(e);
+		if (l == null)
+			return;
+		final int line = l.intValue() - 1;
+		if (line < 0 || line > 3)
+			return;
 		if (getTime() >= 0 && block.isDefault() && e instanceof SignChangeEvent && !Delay.isDelayed(e)) {
 			switch (mode) {
-				case CLEAR:
-					((SignChangeEvent) e).setLine(line - 1, "");
+				case DELETE:
+					((SignChangeEvent) e).setLine(line, "");
 					break;
 				case SET:
-					((SignChangeEvent) e).setLine(line - 1, (String) delta);
+					((SignChangeEvent) e).setLine(line, (String) delta);
 					break;
 			}
+			return;
 		}
 		final Block b = block.getSingle(e);
 		if (b == null)
 			return;
 		if (b.getType() != Material.SIGN_POST && b.getType() != Material.WALL_SIGN)
 			return;
+		final Sign s = (Sign) b.getState();
 		switch (mode) {
-			case CLEAR:
-				((Sign) b.getState()).setLine(line - 1, "");
+			case DELETE:
+				s.setLine(line, "");
 				break;
 			case SET:
-				((Sign) b.getState()).setLine(line - 1, (String) delta);
+				s.setLine(line, (String) delta);
 				break;
 		}
+		s.update();
 	}
 	
 	@Override

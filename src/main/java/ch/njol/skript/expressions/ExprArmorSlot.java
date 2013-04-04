@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,79 +25,92 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.classes.Converter;
-import ch.njol.skript.expressions.base.PropertyExpression;
+import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
+import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.PlayerSlot;
-import ch.njol.skript.util.Slot;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
-public class ExprArmorSlot extends PropertyExpression<Player, Slot> {
-	private static final long serialVersionUID = 5373470689647573757L;
-	
+@SuppressWarnings("serial")
+@Name("Armour Slot")
+@Description("A part of a player's armour, i.e. the boots, leggings, chestplate or helmet.")
+@Examples({"set chestplate of the player to a diamond chestplate",
+		"helmet of player is neither a helmet nor air # player is wearing a block, e.g. from another plugin"})
+@Since("1.0")
+public class ExprArmorSlot extends SimplePropertyExpression<Player, ItemStack> {
 	static {
-		Skript.registerExpression(ExprArmorSlot.class, Slot.class, ExpressionType.PROPERTY,
-				"[the] (boot[s]|shoe[s]) [slot] of %players%", "%player%'[s] (boot[s]|shoe[s])",
-				"[the] leg[ging]s [slot] of %players%", "%player%'[s] leg[ging]s",
-				"[the] chestplate[s] [slot] of %players%", "%player%'[s] chestplate[s]",
-				"[the] helm[et][s] [slot] of %players%", "%player%'[s] helm[et][s]");
+		register(ExprArmorSlot.class, ItemStack.class, "(0¦boot[s]|0¦shoe[s]|1¦leg[ging][s]|2¦chestplate[s]|3¦helm[et][s]) [slot]", "players");
 	}
 	
-	private Expression<Player> players;
 	private int slot;
 	
 	private final static String[] slotNames = {"boots", "leggings", "chestplate", "helmet"};
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		players = (Expression<Player>) vars[0];
-		setExpr(players);
-		slot = matchedPattern / 2;
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		super.init(exprs, matchedPattern, isDelayed, parseResult);
+		slot = parseResult.mark;
 		return true;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return slotNames[slot] + " of " + players.toString(e, debug);
+	public ItemStack convert(final Player p) {
+		return p.getInventory().getArmorContents()[slot];
+//		return new PlayerSlot(p.getInventory()) {
+//			@Override
+//			public ItemStack getItem() {
+//				return p.getInventory().getArmorContents()[slot];
+//			}
+//			
+//			@Override
+//			public void setItem(final ItemStack item) {
+//				final ItemStack[] armour = p.getInventory().getArmorContents();
+//				armour[slot] = item;
+//				p.getInventory().setArmorContents(armour);
+//			}
+//			
+//			@Override
+//			public String toString(final Event e, final boolean debug) {
+//				return slotNames[slot] + " of " + p.getName();
+//			}
+//		};
 	}
 	
 	@Override
-	protected Slot[] get(final Event e, final Player[] source) {
-		return get(source, new Converter<Player, Slot>() {
-			@Override
-			public Slot convert(final Player p) {
-				return new PlayerSlot(p.getInventory()) {
-					@Override
-					public ItemStack getItem() {
-						return p.getInventory().getArmorContents()[slot];
-					}
-					
-					@Override
-					public void setItem(final ItemStack item) {
-						final ItemStack[] armour = p.getInventory().getArmorContents();
-						armour[slot] = item;
-						p.getInventory().setArmorContents(armour);
-					}
-					
-					@Override
-					public String toString(final Event e, final boolean debug) {
-						return slotNames[slot] + " of " + p.getName();
-					}
-				};
-			}
-		});
+	protected String getPropertyName() {
+		return slotNames[slot];
 	}
 	
 	@Override
-	public Class<Slot> getReturnType() {
-		return Slot.class;
+	public Class<ItemStack> getReturnType() {
+		return ItemStack.class;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Class<ItemStack>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE)
+			return Utils.array(ItemStack.class);
+		return null;
+	}
+	
+	@SuppressWarnings("deprecation")
+	@Override
+	public void change(final Event e, final Object delta, final ChangeMode mode) {
+		for (final Player p : getExpr().getArray(e)) {
+			final ItemStack[] armour = p.getInventory().getArmorContents();
+			armour[slot] = (ItemStack) delta; // both SET and DELETE
+			p.getInventory().setArmorContents(armour);
+			p.updateInventory();
+		}
 	}
 	
 }

@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,6 +29,10 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -40,8 +44,12 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Damage")
+@Description("How much damage is done in a damage event, possibly ignoring armour, criticals and/or enchantments. Can be changed (remember that in Skript '1' is one full heart, not half a heart).")
+@Examples({"increase the damage by 2"})
+@Since("1.3.5")
 public class ExprDamage extends SimpleExpression<Float> {
-	private static final long serialVersionUID = 7256625021203923955L;
 	
 	static {
 		Skript.registerExpression(ExprDamage.class, Float.class, ExpressionType.SIMPLE, "[the] damage");
@@ -74,17 +82,17 @@ public class ExprDamage extends SimpleExpression<Float> {
 			Skript.error("Can't change the damage anymore after the event has already passed");
 			return null;
 		}
-		return Skript.array(Number.class);
+		return Utils.array(Number.class);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		if (!(e instanceof EntityDamageEvent))
 			return;
-		final int d = mode == ChangeMode.CLEAR ? 0 : Math.round(2 * ((Number) delta).floatValue());
+		final int d = mode == ChangeMode.DELETE ? 0 : Math.round(2 * ((Number) delta).floatValue());
 		switch (mode) {
 			case SET:
-			case CLEAR:
+			case DELETE:
 				((EntityDamageEvent) e).setDamage(d);
 				break;
 			case ADD:

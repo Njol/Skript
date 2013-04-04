@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,6 +25,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,9 +38,14 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Has Permission")
+@Description("Test whether a player has a certain permission.")
+@Examples({"player has permission \"skript.tree\"",
+		"victim has the permission \"admin\":",
+		"	send \"You're attacking an admin!\" to attacker"})
+@Since("1.0")
 public class CondPermission extends Condition {
-	
-	private static final long serialVersionUID = 5480435441737985507L;
 	
 	static {
 		Skript.registerCondition(CondPermission.class,
@@ -56,6 +65,7 @@ public class CondPermission extends Condition {
 		return true;
 	}
 	
+	// TODO 'player doesn't have permission "a" or "b"' does not work even with both permissions?
 	@Override
 	public boolean check(final Event e) {
 		return senders.check(e, new Checker<CommandSender>() {

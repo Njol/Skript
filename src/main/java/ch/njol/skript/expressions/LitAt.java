@@ -15,17 +15,15 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -35,11 +33,9 @@ import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
- * 
  */
+@SuppressWarnings("serial")
 public class LitAt extends SimpleLiteral<Direction> {
-	private static final long serialVersionUID = -3634800441027284731L;
-	
 	static {
 		Skript.registerExpression(LitAt.class, Direction.class, ExpressionType.SIMPLE, "at");
 	}
@@ -49,7 +45,7 @@ public class LitAt extends SimpleLiteral<Direction> {
 	}
 	
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		return true;
 	}
 	

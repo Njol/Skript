@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,18 +27,20 @@ import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffectType;
 
-import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.SerializableChanger;
 import ch.njol.skript.entity.XpOrbData;
-import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.Experience;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timespan;
+import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
@@ -50,18 +52,17 @@ public class DefaultChangers {
 	/**
 	 * Although this is a Changer&lt;World, ?&gt;, it should not be used for worlds.
 	 */
+	@SuppressWarnings("serial")
 	public final static SerializableChanger<World, Object> timeChanger = new SerializableChanger<World, Object>() {
-		private static final long serialVersionUID = -7723176266948346432L;
-		
 		@SuppressWarnings("unchecked")
 		@Override
 		public Class<?>[] acceptChange(final ChangeMode mode) {
 			switch (mode) {
 				case ADD:
 				case REMOVE:
-					return Skript.array(Timespan.class);
+					return Utils.array(Timespan.class);
 				case SET:
-					return Skript.array(Time.class);
+					return Utils.array(Time.class);
 				default:
 					return null;
 			}
@@ -86,24 +87,22 @@ public class DefaultChangers {
 					for (final World w : worlds) {
 						w.setTime(w.getTime() + mod * ts.getTicks());
 					}
-					break;
 			}
 		}
 	};
 	
+	@SuppressWarnings("serial")
 	public final static SerializableChanger<Entity, Object[]> entityChanger = new SerializableChanger<Entity, Object[]>() {
-		private static final long serialVersionUID = 4191773847489489771L;
-		
 		@SuppressWarnings("unchecked")
 		@Override
 		public Class<? extends Object[]>[] acceptChange(final ChangeMode mode) {
 			switch (mode) {
 				case ADD:
-					return Skript.array(ItemType[].class, XpOrbData[].class);
-				case CLEAR:
-					return Skript.array();
+					return Utils.array(ItemType[].class, Experience[].class);
+				case DELETE:
+					return Utils.array();
 				case REMOVE:
-					return Skript.array(ItemType[].class, PotionEffectType[].class);
+					return Utils.array(ItemType[].class, PotionEffectType[].class);
 				case SET:
 					return null;
 			}
@@ -124,16 +123,16 @@ public class DefaultChangers {
 			} else {
 				for (final Entity e : entities) {
 					if (!(e instanceof Player)) {
-						if (mode == ChangeMode.CLEAR)
+						if (mode == ChangeMode.DELETE)
 							e.remove();
 						continue;
 					}
-					if (mode == ChangeMode.CLEAR)
+					if (mode == ChangeMode.DELETE)
 						continue;
-					if (delta instanceof XpOrbData[]) {
+					if (delta instanceof Experience[]) {
 						int xp = 0;
-						for (final XpOrbData x : (XpOrbData[]) delta)
-							xp += x.getExperience();
+						for (final Experience x : (Experience[]) delta)
+							xp += x.getXP();
 						((Player) e).giveExp(xp);
 					} else {
 						final PlayerInventory invi = ((Player) e).getInventory();
@@ -150,14 +149,13 @@ public class DefaultChangers {
 		}
 	};
 	
+	@SuppressWarnings("serial")
 	public final static SerializableChanger<Entity, Object> nonLivingEntityChanger = new SerializableChanger<Entity, Object>() {
-		private static final long serialVersionUID = 2080340413775243075L;
-		
 		@SuppressWarnings("unchecked")
 		@Override
 		public Class<Object>[] acceptChange(final ChangeMode mode) {
-			if (mode == ChangeMode.CLEAR)
-				return Skript.array();
+			if (mode == ChangeMode.DELETE)
+				return Utils.array();
 			return null;
 		}
 		
@@ -171,15 +169,17 @@ public class DefaultChangers {
 		}
 	};
 	
+	@SuppressWarnings("serial")
 	public final static SerializableChanger<Player, Object> playerChanger = new SerializableChanger<Player, Object>() {
-		private static final long serialVersionUID = 9048165091425550382L;
-		
 		@SuppressWarnings("unchecked")
 		@Override
 		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
-			if (mode == ChangeMode.SET || mode == ChangeMode.CLEAR)
+			if (mode == ChangeMode.SET || mode == ChangeMode.DELETE)
 				return null;
-			return Skript.array(ItemType[].class, Inventory.class);
+			if (mode == ChangeMode.ADD)
+				return Utils.array(ItemType[].class, Inventory.class, XpOrbData.class);
+			else
+				return Utils.array(ItemType[].class, Inventory.class);
 		}
 		
 		@SuppressWarnings("deprecation")
@@ -192,6 +192,10 @@ public class DefaultChangers {
 						invi.addItem(((Inventory) delta).getContents());
 					else
 						invi.removeItem(((Inventory) delta).getContents());
+				} else if (delta instanceof XpOrbData) {
+					final int xp = ((XpOrbData) delta).getExperience();
+					assert mode == ChangeMode.ADD;
+					p.giveExp(xp);
 				} else {
 					for (final ItemType type : (ItemType[]) delta) {
 						if (mode == ChangeMode.ADD)
@@ -205,13 +209,12 @@ public class DefaultChangers {
 		}
 	};
 	
+	@SuppressWarnings("serial")
 	public final static SerializableChanger<Inventory, Object> inventoryChanger = new SerializableChanger<Inventory, Object>() {
-		private static final long serialVersionUID = -8150546084341399001L;
-		
 		@SuppressWarnings("unchecked")
 		@Override
 		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
-			return Skript.array(ItemType[].class, Inventory.class);
+			return Utils.array(ItemType[].class, Inventory.class);
 		}
 		
 		@SuppressWarnings("deprecation")
@@ -219,14 +222,21 @@ public class DefaultChangers {
 		public void change(final Inventory[] invis, final Object delta, final ChangeMode mode) {
 			for (final Inventory invi : invis) {
 				switch (mode) {
-					case CLEAR:
-					case SET:
+					case DELETE:
 						invi.clear();
 						if (invi instanceof PlayerInventory) {
 							((PlayerInventory) invi).setArmorContents(new ItemStack[4]);
+							if (((PlayerInventory) invi).getHolder() instanceof Player) {
+								final Player p = (Player) ((PlayerInventory) invi).getHolder();
+								if (invi.equals(p.getOpenInventory().getBottomInventory()))
+									p.getOpenInventory().setCursor(null);
+								if (p.getOpenInventory().getTopInventory() instanceof CraftingInventory)
+									p.getOpenInventory().getTopInventory().clear();
+							}
 						}
-						if (mode == ChangeMode.CLEAR)
-							break;
+						break;
+					case SET:
+						invi.clear();
 						//$FALL-THROUGH$
 					case ADD:
 						if (delta instanceof Inventory) {
@@ -254,15 +264,14 @@ public class DefaultChangers {
 		}
 	};
 	
+	@SuppressWarnings("serial")
 	public final static SerializableChanger<Block, Object> blockChanger = new SerializableChanger<Block, Object>() {
-		private static final long serialVersionUID = -490468386085652881L;
-		
 		@SuppressWarnings("unchecked")
 		@Override
 		public Class<?>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.SET)
-				return Skript.array(ItemType.class);
-			return Skript.array(ItemType[].class, Inventory.class);
+				return Utils.array(ItemType.class);
+			return Utils.array(ItemType[].class, Inventory.class);
 		}
 		
 		@Override
@@ -270,9 +279,9 @@ public class DefaultChangers {
 			for (final Block block : blocks) {
 				switch (mode) {
 					case SET:
-						((ItemType) delta).setBlock(block, true);
+						((ItemType) delta).getBlock().setBlock(block, true);
 						break;
-					case CLEAR:
+					case DELETE:
 						block.setTypeId(0, true);
 						break;
 					case ADD:
@@ -280,7 +289,7 @@ public class DefaultChangers {
 						final BlockState state = block.getState();
 						if (!(state instanceof InventoryHolder))
 							break;
-						Inventory invi = ((InventoryHolder) state).getInventory();
+						final Inventory invi = ((InventoryHolder) state).getInventory();
 						if (mode == ChangeMode.ADD) {
 							if (delta instanceof Inventory) {
 								invi.addItem(((Inventory) delta).getContents());

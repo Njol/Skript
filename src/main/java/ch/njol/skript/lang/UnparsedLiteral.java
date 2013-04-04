@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,8 +25,6 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
@@ -41,8 +39,8 @@ import ch.njol.util.iterator.NonNullIterator;
  * @author Peter Güttinger
  * @see SimpleLiteral
  */
+@SuppressWarnings("serial")
 public class UnparsedLiteral implements Literal<Object> {
-	private static final long serialVersionUID = 6106827630431089311L;
 	
 	private final String data;
 	
@@ -73,8 +71,8 @@ public class UnparsedLiteral implements Literal<Object> {
 	public <R> Literal<? extends R> getConvertedExpression(final ParseContext context, final Class<? extends R>... to) {
 		assert to != null && to.length > 0;
 		assert to.length == 1 || !Utils.contains(to, Object.class);
-		for (Class<? extends R> t : to) {
-			R r = Classes.parse(data, t, context);
+		for (final Class<? extends R> t : to) {
+			final R r = Classes.parse(data, t, context);
 			if (r != null)
 				return new SimpleLiteral<R>(r, false);
 		}
@@ -233,7 +231,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	public boolean isSingle() {
 		return true;
 	}
-
+	
 	@Override
 	public Expression<? extends Object> simplify() {
 		return this;
@@ -322,5 +320,5 @@ public class UnparsedLiteral implements Literal<Object> {
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		throw invalidAccessException();
 	}
-
+	
 }

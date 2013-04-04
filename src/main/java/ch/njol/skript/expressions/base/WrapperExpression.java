@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -23,7 +23,6 @@ package ch.njol.skript.expressions.base;
 
 import java.util.Iterator;
 
-import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -42,8 +41,8 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public abstract class WrapperExpression<T> extends SimpleExpression<T> {
-	private static final long serialVersionUID = 674656422946139080L;
 	private Expression<? extends T> expr;
 	
 	protected WrapperExpression() {}
@@ -127,7 +126,7 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	public boolean isDefault() {
 		return expr.isDefault();
 	}
-
+	
 	@Override
 	public Expression<? extends T> simplify() {
 		return expr;

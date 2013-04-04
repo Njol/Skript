@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,38 +27,67 @@ import java.util.Map.Entry;
 
 import org.bukkit.command.CommandSender;
 
+import ch.njol.skript.localization.ArgsMessage;
+import ch.njol.skript.localization.Message;
+
 /**
  * @author Peter Güttinger
  */
 public class CommandHelp {
 	
+	private final static String DEFAULTENTRY = "description";
+	
+	private final static ArgsMessage m_invalid_argument = new ArgsMessage("commands.invalid argument");
+	private final static Message m_usage = new Message("commands.usage");
+	
 	private String command;
-	private final String description;
+	private Message description = null;
 	private final String argsColor;
+	
+	private String langNode;
 	
 	private final Map<String, Object> arguments = new LinkedHashMap<String, Object>();
 	
 	private Object wildcardArg = null;
 	
-	public CommandHelp(final String command, final String description, final String argsColor) {
+	public CommandHelp(final String command, final String argsColor, final String langNode) {
 		this.command = command;
-		this.description = description;
+		this.argsColor = argsColor;
+		this.langNode = langNode;
+		description = new Message(langNode + "." + DEFAULTENTRY);
+	}
+	
+	public CommandHelp(final String command, final String argsColor) {
+		this.command = command;
 		this.argsColor = argsColor;
 	}
 	
-	public CommandHelp add(String argument, final String description) {
+	public CommandHelp add(String argument) {
 		if (argument.startsWith("<") && argument.endsWith(">")) {
 			argument = "<gray><<" + argsColor + ">" + argument.substring(1, argument.length() - 1) + "<gray>>";
-			wildcardArg = description;
+			wildcardArg = new Message(langNode + "." + argument);
 		}
-		arguments.put(argument, description);
+		arguments.put(argument, new Message(langNode + "." + argument));
 		return this;
 	}
 	
 	public CommandHelp add(final CommandHelp help) {
 		arguments.put(help.command, help);
-		help.command = command + " <" + argsColor + ">" + help.command;
+		help.onAdd(this);
 		return this;
+	}
+	
+	protected void onAdd(final CommandHelp parent) {
+		langNode = parent.langNode + "." + command;
+		description = new Message(langNode + "." + DEFAULTENTRY);
+		command = parent.command + " <" + parent.argsColor + ">" + command;
+		for (final Entry<String, Object> e : arguments.entrySet()) {
+			if (e.getValue() instanceof CommandHelp) {
+				((CommandHelp) e.getValue()).onAdd(this);
+			} else {
+				e.setValue(new Message(langNode + "." + e.getKey()));
+			}
+		}
 	}
 	
 	private final static void message(final CommandSender recipient, final String message) {
@@ -76,7 +105,7 @@ public class CommandHelp {
 		}
 		final Object help = arguments.get(args[index].toLowerCase());
 		if (help == null && wildcardArg == null) {
-			showHelp(sender, "Invalid argument <gray>'<" + argsColor + ">" + args[index] + "<gray>'<reset>. Correct usage:");
+			showHelp(sender, m_invalid_argument.toString(argsColor, args[index]));
 			return false;
 		}
 		if (help instanceof CommandHelp)
@@ -85,7 +114,7 @@ public class CommandHelp {
 	}
 	
 	public void showHelp(final CommandSender sender) {
-		showHelp(sender, "Usage:");
+		showHelp(sender, m_usage.toString());
 	}
 	
 	private void showHelp(final CommandSender sender, final String pre) {
@@ -97,7 +126,7 @@ public class CommandHelp {
 	
 	@Override
 	public String toString() {
-		return description;
+		return description.toString();
 	}
 	
 }

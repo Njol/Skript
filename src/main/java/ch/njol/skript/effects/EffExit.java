@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,6 +25,10 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Conditional;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
@@ -38,15 +42,24 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Exit")
+@Description("Exits a given amount of loops and conditionals, or the entire trigger.")
+@Examples({"if player has any ore:",
+		"	stop",
+		"message \"%player% has no ores!\"",
+		"loop blocks above the player:",
+		"	loop-block is not air:",
+		"		exit 2 sections",
+		"	set loop-block to water"})
+@Since("")
 public class EffExit extends Effect {
-	
-	private static final long serialVersionUID = -5403936517942163172L;
 	
 	static {
 		Skript.registerEffect(EffExit.class,
 				"(exit|stop) [trigger]",
 				"(exit|stop) [(1|a|the|this)] (0¦section|1¦loop|2¦conditional)",
-				"(exit|stop) <\\d+> (0¦section|1¦loop|2¦conditional)",
+				"(exit|stop) <\\d+> (0¦section|1¦loop|2¦conditional)s",
 				"(exit|stop) all (0¦section|1¦loop|2¦conditional)s");
 	}
 	
@@ -105,11 +118,7 @@ public class EffExit extends Effect {
 		for (int i = breakLevels; i > 0;) {
 			n = n.getParent();
 			assert n != null;
-			if (type == EVERYTHING)
-				i--;
-			else if (type == CONDITIONALS && n instanceof Conditional)
-				i--;
-			else if (type == LOOPS && n instanceof Loop)
+			if (type == EVERYTHING || type == CONDITIONALS && n instanceof Conditional || type == LOOPS && n instanceof Loop)
 				i--;
 		}
 		return n instanceof Loop ? ((Loop) n).getActualNext() : n.getNext();

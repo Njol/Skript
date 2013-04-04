@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -23,16 +23,16 @@ package ch.njol.skript.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.bukkit.enchantments.Enchantment;
 
-import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.localization.Language;
-import ch.njol.skript.localization.Language.LanguageChangeListener;
+import ch.njol.skript.localization.LanguageChangeListener;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public class EnchantmentType {
 	
@@ -79,6 +79,10 @@ public class EnchantmentType {
 		return Language.get("enchantments.names." + type.getName()) + (level == -1 ? "" : " " + level);
 	}
 	
+	public static String toString(final Enchantment e) {
+		return Language.get("enchantments.names." + e.getName());
+	}
+	
 	private final static Map<String, Enchantment> enchantmentNames = new HashMap<String, Enchantment>();
 	static {
 		Language.addListener(new LanguageChangeListener() {
@@ -96,11 +100,20 @@ public class EnchantmentType {
 			final Enchantment ench = enchantmentNames.get(s.substring(0, s.lastIndexOf(' ')).toLowerCase());
 			if (ench == null)
 				return null;
-			return new EnchantmentType(ench, Skript.parseInt(s.substring(s.lastIndexOf(' ') + 1)));
+			return new EnchantmentType(ench, Utils.parseInt(s.substring(s.lastIndexOf(' ') + 1)));
 		}
 		final Enchantment ench = enchantmentNames.get(s.toLowerCase());
 		if (ench == null)
 			return null;
 		return new EnchantmentType(ench, -1);
 	}
+	
+	public static Enchantment parseEnchantment(final String s) {
+		return enchantmentNames.get(s.toLowerCase());
+	}
+	
+	public final static Set<String> getNames() {
+		return enchantmentNames.keySet();
+	}
+	
 }

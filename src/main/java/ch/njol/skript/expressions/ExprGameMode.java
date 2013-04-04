@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,41 +29,48 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Game Mode")
+@Description("The gamemode of a player.")
+@Examples({"player's gamemode is survival",
+		"set the player's gamemode to creative"})
+@Since("1.0")
 public class ExprGameMode extends PropertyExpression<Player, GameMode> {
-	private static final long serialVersionUID = 715080620914863107L;
 	
 	static {
 		Skript.registerExpression(ExprGameMode.class, GameMode.class, ExpressionType.PROPERTY, "[the] game[ ]mode of %players%", "%players%'[s] game[ ]mode");
 	}
 	
-	private Expression<Player> players;
-	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		players = (Expression<Player>) vars[0];
-		setExpr(players);
+		setExpr((Expression<Player>) vars[0]);
 		return true;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "the gamemode of " + players.toString(e, debug);
+		return "the gamemode of " + getExpr().toString(e, debug);
 	}
 	
 	@Override
 	protected GameMode[] get(final Event e, final Player[] source) {
-		if (e instanceof PlayerGameModeChangeEvent && getTime() >= 0 && players.isDefault() && !Delay.isDelayed(e)) {
+		if (e instanceof PlayerGameModeChangeEvent && getTime() >= 0 && getExpr().isDefault() && !Delay.isDelayed(e)) {
 			return new GameMode[] {((PlayerGameModeChangeEvent) e).getNewGameMode()};
 		}
 		return get(source, new Converter<Player, GameMode>() {
@@ -83,19 +90,19 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
-			return Skript.array(GameMode.class);
+			return Utils.array(GameMode.class);
 		return null;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		final GameMode m = (GameMode) delta;
-		for (final Player p : players.getArray(e))
+		for (final Player p : getExpr().getArray(e))
 			p.setGameMode(m);
 	}
 	
 	@Override
 	public boolean setTime(final int time) {
-		return super.setTime(time, PlayerGameModeChangeEvent.class, players);
+		return super.setTime(time, PlayerGameModeChangeEvent.class, getExpr());
 	}
 }

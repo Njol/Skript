@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,19 +26,27 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is Wearing")
+@Description("Checks whether a player is wearing some armour.")
+@Examples({"player is wearing an iron chestplate and iron leggings",
+		"player is wearing all diamond armour"})
+@Since("1.0")
 public class CondIsWearing extends Condition {
-	
-	private static final long serialVersionUID = 5321022094554217823L;
 	
 	static {
 		Skript.registerCondition(CondIsWearing.class, "%players% (is|are) wearing %itemtypes%", "%players% (isn't|is not|aren't|are not) wearing %itemtypes%");
@@ -70,10 +78,10 @@ public class CondIsWearing extends Condition {
 					@Override
 					public boolean check(final ItemType t) {
 						for (final ItemStack is : p.getInventory().getArmorContents()) {
-							if (t.isOfType(is))
-								return true;
+							if (t.isOfType(is) ^ t.isAll())
+								return !t.isAll();
 						}
-						return false;
+						return t.isAll();
 					}
 				}, isNegated());
 			}

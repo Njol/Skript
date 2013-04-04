@@ -15,13 +15,15 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.events;
 
 import org.bukkit.Material;
+import org.bukkit.entity.ItemFrame;
+import org.bukkit.entity.Painting;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
@@ -29,6 +31,9 @@ import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.hanging.HangingBreakEvent;
+import org.bukkit.event.hanging.HangingEvent;
+import org.bukkit.event.hanging.HangingPlaceEvent;
 import org.bukkit.event.painting.PaintingBreakEvent;
 import org.bukkit.event.painting.PaintingEvent;
 import org.bukkit.event.painting.PaintingPlaceEvent;
@@ -37,26 +42,40 @@ import org.bukkit.event.player.PlayerBucketEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.ItemType;
 import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"deprecation", "unchecked"})
+@SuppressWarnings({"deprecation", "unchecked", "serial"})
 public class EvtBlock extends SkriptEvent {
-	private static final long serialVersionUID = 1975641867786762510L;
 	
 	static {
-		Skript.registerEvent(EvtBlock.class, new Class[] {BlockBreakEvent.class, PaintingBreakEvent.class, PlayerBucketFillEvent.class}, "(break[ing]|min(e|ing)) [[of] %itemtypes%]");
-		Skript.registerEvent(EvtBlock.class, BlockBurnEvent.class, "burn[ing] [[of] %itemtypes%]");
-		Skript.registerEvent(EvtBlock.class, new Class[] {BlockPlaceEvent.class, PaintingPlaceEvent.class, PlayerBucketEmptyEvent.class}, "plac(e|ing) [[of] %itemtypes%]");
-		Skript.registerEvent(EvtBlock.class, BlockFadeEvent.class, "fad(e|ing) [[of] %itemtypes%]");
-		Skript.registerEvent(EvtBlock.class, BlockFormEvent.class, "form[ing] [[of] %itemtypes%]");
+		Skript.registerEvent("Break / Mine", EvtBlock.class, new Class[] {BlockBreakEvent.class, PlayerBucketFillEvent.class, Skript.isRunningMinecraft(1, 4, 3) ? HangingBreakEvent.class : PaintingBreakEvent.class}, "(break[ing]|1¦min(e|ing)) [[of] %itemtypes%]")
+				.description("Called when a block is broken by a player. If you use 'on mine', only events where the broken block dropped something will call the trigger.")
+				.examples("on mine", "on break of stone", "on mine of any ore")
+				.since("1.0 (break), <i>unknown</i> (mine)");
+		Skript.registerEvent("Burn", EvtBlock.class, BlockBurnEvent.class, "burn[ing] [[of] %itemtypes%]")
+				.description("Called when a block is destroyed by fire.")
+				.examples("on burn", "on burn of wood, fences, or chests")
+				.since("1.0");
+		Skript.registerEvent("Place", EvtBlock.class, new Class[] {BlockPlaceEvent.class, PlayerBucketEmptyEvent.class, Skript.isRunningMinecraft(1, 4, 3) ? HangingPlaceEvent.class : PaintingPlaceEvent.class}, "plac(e|ing) [[of] %itemtypes%]")
+				.description("Called when a player places a block.")
+				.examples("on place", "on place of a furnace, workbench or chest")
+				.since("1.0");
+		Skript.registerEvent("Fade", EvtBlock.class, BlockFadeEvent.class, "fad(e|ing) [[of] %itemtypes%]")
+				.description("Called when a block 'fades away', e.g. ice or snow melts.")
+				.examples("on fade of snow or ice")
+				.since("1.0");
+		Skript.registerEvent("Form", EvtBlock.class, BlockFormEvent.class, "form[ing] [[of] %itemtypes%]")
+				.description("Called when a block is created, but not by a player, e.g. snow forms due to snowfall, water freezes in cold biomes, or a block spreads (see <a href='#spread'>spread event</a>).")
+				.examples("on form of snow", "on form of a mushroom")
+				.since("1.0");
 	}
 	
 	private Literal<ItemType> types;
@@ -66,7 +85,7 @@ public class EvtBlock extends SkriptEvent {
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		types = (Literal<ItemType>) args[0];
-		mine = parser.expr.toLowerCase().startsWith("min");
+		mine = parser.mark == 1;
 		return true;
 	}
 	
@@ -95,7 +114,14 @@ public class EvtBlock extends SkriptEvent {
 		} else if (e instanceof PaintingEvent) {
 			id = Material.PAINTING.getId();
 			durability = 0;
-			//((PaintingEvent) e).getPainting().getArt().getId();
+		} else if (Skript.isRunningMinecraft(1, 4, 3) && e instanceof HangingEvent) {
+			if (((HangingEvent) e).getEntity() instanceof Painting)
+				id = Material.PAINTING.getId();
+			else if (((HangingEvent) e).getEntity() instanceof ItemFrame)
+				id = Material.ITEM_FRAME.getId();
+			else
+				return false;
+			durability = 0;
 		} else {
 			throw new IllegalStateException();
 		}

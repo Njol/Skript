@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -35,14 +35,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.lang.util.SimpleLiteral;
-import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.log.BlockingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
@@ -52,14 +55,20 @@ import ch.njol.util.iterator.NonNullIterator;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Entities")
+@Description("all entities in all world, in a specific world or in a radius around a certain location, e.g. 'all players', 'all creepers in the player's world', or 'players in radius 100 of the player'.")
+@Examples({"kill all creepers in the player's world",
+		"send \"Psst!\" to all players witin 100 meters of the player",
+		"give a diamond to all ops",
+		"heal all tamed wolves in radius 2000 around {town center}"})
+@Since("1.2.1")
 public class ExprEntities extends SimpleExpression<Entity> {
-	private static final long serialVersionUID = 2659125624066080969L;
-	
 	static {
 		Skript.registerExpression(ExprEntities.class, Entity.class, ExpressionType.PATTERN_MATCHES_EVERYTHING,
-				"[all] <.+> [(in|of) [world[s]] %-worlds%]",
+				"[all] %*entitydatas% [(in|of) [world[s]] %-worlds%]",
 				"[all] entities of type[s] %entitydatas% [(in|of) [world[s]] %-worlds%]",
-				"[all] <.+> in radius %number% (of|around) %location%",
+				"[all] %*entitydatas% (within|[with]in radius) %number% [(block[s]|meter[s])] (of|around) %location%",
 				"[all] entities of type[s] %entitydatas% in radius %number% (of|around) %location%");
 	}
 	
@@ -79,25 +88,24 @@ public class ExprEntities extends SimpleExpression<Entity> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		this.matchedPattern = matchedPattern;
-		if (!parseResult.regexes.isEmpty()) {
-			final SimpleLog log = SkriptLogger.startSubLog();
-			final EntityData<?> d = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
-			log.stop();
-			if (d == null || !d.isPlural())
-				return false;
-			types = new SimpleLiteral<EntityData<?>>(d, false);
-			log.printLog();
-		} else {
-			types = (Expression<? extends EntityData<?>>) exprs[0];
+		types = (Expression<? extends EntityData<?>>) exprs[0];
+		if (matchedPattern % 2 == 0) {
+			for (final EntityData<?> d : types.getAll(null)) {
+				if (!d.isPlural())
+					return false;
+			}
 		}
 		if (matchedPattern < 2) {
 			worlds = (Expression<World>) exprs[exprs.length - 1];
 		} else {
 			radius = (Expression<Number>) exprs[exprs.length - 2];
 			center = (Expression<Location>) exprs[exprs.length - 1];
-			final SimpleLog log = SkriptLogger.startSubLog();
-			centerEntity = center.getSource().getConvertedExpression(Entity.class);
-			log.stop();
+			final BlockingLogHandler log = SkriptLogger.startLogHandler(new BlockingLogHandler());
+			try {
+				centerEntity = center.getSource().getConvertedExpression(Entity.class);
+			} finally {
+				log.stop();
+			}
 		}
 		if (types instanceof Literal && ((Literal<EntityData<?>>) types).getAll().length == 1) {
 			returnType = ((Literal<EntityData<?>>) types).getSingle().getType();
@@ -201,7 +209,7 @@ public class ExprEntities extends SimpleExpression<Entity> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "all entities of types " + types.toString(e, debug) + (worlds != null ? " in " + worlds.toString(e, debug) : radius != null ? "in radius " + radius.toString(e, debug) + " around " + center.toString(e, debug) : "");
+		return "all entities of types " + types.toString(e, debug) + (worlds != null ? " in " + worlds.toString(e, debug) : radius != null ? " in radius " + radius.toString(e, debug) + " around " + center.toString(e, debug) : "");
 	}
 	
 	@Override

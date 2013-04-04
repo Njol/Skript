@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,6 +27,10 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -35,10 +39,16 @@ import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
- * 
  */
+@SuppressWarnings("serial")
+@Name("Potion Effects")
+@Description("Apply or remove potion effects to/from entities.")
+@Examples({"apply swiftness 2 to the player",
+		"remove haste from the victim",
+		"on join:",
+		"	apply potion of strength of tier {strength.%player%} to the player for 999 days"})
+@Since("2.0")
 public class EffPotion extends Effect {
-	private static final long serialVersionUID = 1515902809488915494L;
 	
 	static {
 		Skript.registerEffect(EffPotion.class,

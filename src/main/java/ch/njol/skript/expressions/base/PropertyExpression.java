@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -37,11 +37,14 @@ import ch.njol.util.Kleenean;
  * {@link #init(Expression[], int, Kleenean, ParseResult)}.
  * 
  * @author Peter Güttinger
+ * @see SimplePropertyExpression
+ * @see #register(Class, Class, String, String)
  */
+@SuppressWarnings("serial")
 public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
-	private static final long serialVersionUID = 8485116870998540931L;
 	
 	/**
+	 * Registers an expression as {@link ExpressionType#PROPERTY} with the two default property patterns "property of %types%" and "%types%'[s] property"
 	 * 
 	 * @param c
 	 * @param type
@@ -54,11 +57,16 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	
 	private Expression<? extends F> expr;
 	
-	protected void setExpr(final Expression<? extends F> expr) {
+	/**
+	 * Sets the expression this expression represents a property of. No reference to the expression should be kept.
+	 * 
+	 * @param expr
+	 */
+	protected final void setExpr(final Expression<? extends F> expr) {
 		this.expr = expr;
 	}
 	
-	public Expression<? extends F> getExpr() {
+	public final Expression<? extends F> getExpr() {
 		return expr;
 	}
 	
@@ -67,13 +75,15 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 		return get(e, expr.getArray(e));
 	}
 	
-	//TODO remove null elements
 	@Override
 	public final T[] getAll(final Event e) {
 		return get(e, expr.getAll(e));
 	}
 	
 	/**
+	 * Converts the given source object(s) to the correct type.
+	 * <p>
+	 * Please note that the returned array must not contain any null elements!
 	 * 
 	 * @param e
 	 * @param source
@@ -83,7 +93,6 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	protected abstract T[] get(Event e, F[] source);
 	
 	/**
-	 * 
 	 * @param source
 	 * @param converter must return instances of {@link #getReturnType()}
 	 * @return
@@ -101,6 +110,12 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	@Override
 	public final boolean getAnd() {
 		return expr.getAnd();
+	}
+	
+	@Override
+	public Expression<? extends T> simplify() {
+		expr = expr.simplify();
+		return this;
 	}
 	
 }

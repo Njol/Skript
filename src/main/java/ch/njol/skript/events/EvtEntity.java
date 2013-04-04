@@ -15,13 +15,15 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.events;
 
+import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -32,18 +34,31 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.Utils;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "serial"})
 public final class EvtEntity extends SkriptEvent {
-	private static final long serialVersionUID = -3815181540108737521L;
 	
 	static {
-		Skript.registerEvent(EvtEntity.class, Skript.array(EntityDeathEvent.class, PlayerDeathEvent.class), "death [of %entitydatas%]");
-		Skript.registerEvent(EvtEntity.class, CreatureSpawnEvent.class, "spawn[ing] [of %entitydatas%]");
+		Skript.registerEvent("Death", EvtEntity.class, Utils.array(EntityDeathEvent.class, PlayerDeathEvent.class), "death [of %entitydatas%]")
+				.description("Called when a living entity (including players) dies.")
+				.examples("on death",
+						"on death of player",
+						"on death of a wither or ender dragon:",
+						"	broadcast \"A %entity% has been slain in %world%!\"")
+				.since("1.0");
+		Skript.registerEvent("Spawn", EvtEntity.class, CreatureSpawnEvent.class, "spawn[ing] [of %entitydatas%]")
+				.description("Called when an creature spawns.")
+				.examples("on spawn of a zombie",
+						"on spawn of an ender dragon:",
+						"	broadcast \"A dragon has been sighted in %world%!\"")
+				.since("1.0");
 	}
 	
 	private EntityData<?>[] types;
@@ -51,6 +66,23 @@ public final class EvtEntity extends SkriptEvent {
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		types = args[0] == null ? null : ((Literal<EntityData<?>>) args[0]).getAll();
+		if (types != null) {
+			if (StringUtils.startsWithIgnoreCase(parser.expr, "spawn")) {
+				for (final EntityData<?> d : types) {
+					if (!Creature.class.isAssignableFrom(d.getType())) {
+						Skript.error("The spawn event only works for creatures", ErrorQuality.SEMANTIC_ERROR);
+						return false;
+					}
+				}
+			} else {
+				for (final EntityData<?> d : types) {
+					if (!LivingEntity.class.isAssignableFrom(d.getType())) {
+						Skript.error("The death event only works for living entities", ErrorQuality.SEMANTIC_ERROR);
+						return false;
+					}
+				}
+			}
+		}
 		return true;
 	}
 	

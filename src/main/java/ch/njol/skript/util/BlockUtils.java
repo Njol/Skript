@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,10 +27,13 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.material.Directional;
 
 import ch.njol.skript.Skript;
 
 /**
+ * TODO !Update with every version [blocks]
+ * 
  * @author Peter Güttinger
  */
 public abstract class BlockUtils {
@@ -74,8 +77,12 @@ public abstract class BlockUtils {
 		attached[Material.WALL_SIGN.getId()] = wallSign;
 		attached[Material.TRAP_DOOR.getId()] = trapdoor;
 		attached[Material.LEVER.getId()] = lever;
-		attached[Material.COCOA.getId()] = cocoa;
-		attached[Material.TRIPWIRE_HOOK.getId()] = tripwireHook;
+		if (Skript.isRunningMinecraft(1, 3)) {
+			attached[Material.COCOA.getId()] = cocoa;
+			attached[Material.TRIPWIRE_HOOK.getId()] = tripwireHook;
+		}
+		if (Skript.isRunningMinecraft(1, 4))
+			attached[Material.WOOD_BUTTON.getId()] = button;
 	}
 	
 	private final static BlockFace[] bed = new BlockFace[] {
@@ -83,7 +90,6 @@ public abstract class BlockUtils {
 	};
 	
 	/**
-	 * 
 	 * @param b
 	 * @param type
 	 * @param dataMin The miminum data value from 0 to 15, can be -1
@@ -186,8 +192,14 @@ public abstract class BlockUtils {
 		return true;
 	}
 	
-	// TODO update with every version
-	private final static int[] solid = {1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29, 33, 35, 41, 42, 43, 45, 46, 47, 48, 49, 52, 54, 56, 57, 58, 60, 61, 62, 73, 74, 79, 80, 82, 84, 86, 87, 88, 89, 91, 95, 97, 98, 99, 100, 103, 110, 112, 120, 121, 123, 124, 125, 129, 130, 133, 137, 138};
+	// Material.isSolid() treats e.g. steps as solid...
+	// TODO !Update with every version [blocks]
+	private final static int[] solid = {
+			1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29, 33, 35, 41, 42, 43, 45, 46, 47, 48, 49,
+			52, 54, 56, 57, 58, 60, 61, 62, 73, 74, 79, 80, 82, 84, 86, 87, 88, 89, 91, 95, 97, 98, 99,
+			100, 103, 110, 112, 120, 121, 123, 124, 125, 129, 130, 133, 137, 138, 146,
+			152, 153, 155, 158
+	};
 	private final static boolean[] isSolid = new boolean[Skript.MAXBLOCKID + 1];
 	static {
 		for (final int i : solid)
@@ -207,10 +219,16 @@ public abstract class BlockUtils {
 	public static Iterable<BlockFace> getFaces() {
 		return Arrays.asList(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST);
 	}
-
-	public static Location getLocation(Block b) {
-		// TODO include direction (required for relative directions to work)
-		return b.getLocation().add(0.5,0.5,0.5);
+	
+	public static Location getLocation(final Block b) {
+		final Location l = b.getLocation().add(0.5, 0.5, 0.5);
+		final Material m = b.getType();
+		if (Directional.class.isAssignableFrom(m.getData())) {
+			final BlockFace f = ((Directional) m.getNewData(b.getData())).getFacing();
+			l.setPitch(Direction.getPitch(Math.sin(f.getModY())));
+			l.setYaw(Direction.getYaw(Math.atan2(f.getModZ(), f.getModX())));
+		}
+		return l;
 	}
 	
 }

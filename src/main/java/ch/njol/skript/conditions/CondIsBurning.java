@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,14 +24,22 @@ package ch.njol.skript.conditions;
 import org.bukkit.entity.Entity;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is Burning")
+@Description("Checks whether an entity is on fire, e.g. a zombie due to being in sunlight, or any entity after falling into lava.")
+@Examples({"# increased attack against buring targets",
+		"victim is burning:",
+		"	increase damage by 2"})
+@Since("1.4.4")
 public class CondIsBurning extends PropertyCondition<Entity> {
-	
-	private static final long serialVersionUID = 696041723474529334L;
-	
 	static {
 		register(CondIsBurning.class, "(burning|ignited|on fire)", "entities");
 	}

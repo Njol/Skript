@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,6 +25,10 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -32,12 +36,17 @@ import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
 
 /**
- * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Explosion")
+@Description({"Creates an explosion of a given force. The Minecraft Wiki has an <a href='http://www.minecraftwiki.net/wiki/Explosion'>article on explosions</a> " +
+		"which contains the explosion forces of TNT, creepers, etc.",
+		"Hint: use a force of 0 to create a fake explosion that does not damage whatsoever."})
+@Examples({"create an explosion of force 10 at the player",
+		"create an explosion of force 0 at the victim"})
+@Since("1.0")
 public class EffExplosion extends Effect {
-	
-	private static final long serialVersionUID = -8064905811905989142L;
 	
 	static {
 		Skript.registerEffect(EffExplosion.class, "[create] [an] explosion (of|with) (force|strength|power) %number% [%directions% %locations%]");

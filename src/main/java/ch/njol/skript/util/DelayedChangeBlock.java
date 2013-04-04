@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -359,6 +359,19 @@ public class DelayedChangeBlock implements Block {
 	@Override
 	public Collection<ItemStack> getDrops(final ItemStack tool) {
 		return b.getDrops(tool);
+	}
+	
+	@Override
+	public Location getLocation(final Location loc) {
+		if (loc != null) {
+			loc.setWorld(getWorld());
+			loc.setX(getX());
+			loc.setY(getY());
+			loc.setZ(getZ());
+			loc.setPitch(0);
+			loc.setYaw(0);
+		}
+		return loc;
 	}
 	
 }

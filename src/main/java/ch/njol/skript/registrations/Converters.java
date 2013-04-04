@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -40,7 +40,6 @@ import ch.njol.util.Pair;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class Converters {
 	
@@ -60,7 +59,7 @@ public abstract class Converters {
 	 * @param converter
 	 */
 	public static <F, T> void registerConverter(final Class<F> from, final Class<T> to, final SerializableConverter<F, T> converter) {
-		Converters.registerConverter(from, to, converter, 0);
+		registerConverter(from, to, converter, 0);
 	}
 	
 	public static <F, T> void registerConverter(final Class<F> from, final Class<T> to, final SerializableConverter<F, T> converter, final int options) {
@@ -204,8 +203,7 @@ public abstract class Converters {
 	 * @return
 	 */
 	public final static boolean converterExists(final Class<?> from, final Class<?> to) {
-		assert from != null;
-		assert to != null;
+		assert from != null && to != null;
 		if (to.isAssignableFrom(from) || from.isAssignableFrom(to))
 			return true;
 		return getConverter(from, to) != null;
@@ -221,10 +219,10 @@ public abstract class Converters {
 	public final static <F, T> SerializableConverter<? super F, ? extends T> getConverter(final Class<F> from, final Class<T> to) {
 		assert from != null && to != null;
 		final Pair<Class<?>, Class<?>> p = new Pair<Class<?>, Class<?>>(from, to);
-		if (Converters.convertersQuickAccess.containsKey(p)) // can contain null to denote nonexistence of a converter
-			return (SerializableConverter<? super F, ? extends T>) Converters.convertersQuickAccess.get(p);
-		final SerializableConverter<? super F, ? extends T> c = Converters.getConverter_i(from, to);
-		Converters.convertersQuickAccess.put(p, c);
+		if (convertersQuickAccess.containsKey(p)) // can contain null to denote nonexistence of a converter
+			return (SerializableConverter<? super F, ? extends T>) convertersQuickAccess.get(p);
+		final SerializableConverter<? super F, ? extends T> c = getConverter_i(from, to);
+		convertersQuickAccess.put(p, c);
 		return c;
 	}
 	
@@ -250,7 +248,6 @@ public abstract class Converters {
 	}
 	
 	/**
-	 * 
 	 * @param from
 	 * @param to
 	 * @param conv

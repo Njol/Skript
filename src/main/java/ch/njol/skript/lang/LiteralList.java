@@ -15,29 +15,28 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
 
 import ch.njol.skript.lang.util.SimpleLiteral;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
-	private static final long serialVersionUID = -5054176694578441222L;
 	
-	public LiteralList(final Literal<? extends T>[] literals, final boolean and) {
-		super(literals, and);
+	public LiteralList(final Literal<? extends T>[] literals, final Class<T> returnType, final boolean and) {
+		super(literals, returnType, and);
 	}
 	
-	public LiteralList(final Literal<? extends T>[] literals, final boolean and, final LiteralList<?> source) {
-		super(literals, and, source);
+	public LiteralList(final Literal<? extends T>[] literals, final Class<T> returnType, final boolean and, final LiteralList<?> source) {
+		super(literals, returnType, and, source);
 	}
 	
 	@Override
@@ -62,21 +61,21 @@ public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 		for (int i = 0; i < exprs.length; i++)
 			if ((exprs[i] = (Literal<? extends R>) expressions[i].getConvertedExpression(to)) == null)
 				return null;
-		return new LiteralList<R>(exprs, and, this);
+		return new LiteralList<R>(exprs, to, and, this);
 	}
 	
 	@Override
 	public Literal<? extends T>[] getExpressions() {
 		return (Literal<? extends T>[]) super.getExpressions();
 	}
-
+	
 	@Override
 	public Expression<T> simplify() {
 		boolean isSimpleList = true;
 		for (int i = 0; i < expressions.length; i++)
 			isSimpleList &= expressions[i].isSingle();
 		if (isSimpleList) {
-			T[] values = (T[]) Array.newInstance(getReturnType(), expressions.length);
+			final T[] values = (T[]) Array.newInstance(getReturnType(), expressions.length);
 			for (int i = 0; i < values.length; i++)
 				values[i] = ((Literal<? extends T>) expressions[i]).getSingle();
 			return new SimpleLiteral<T>(values, getReturnType(), and);

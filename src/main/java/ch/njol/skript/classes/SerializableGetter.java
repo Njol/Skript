@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,6 +26,5 @@ import ch.njol.skript.util.Getter;
 /**
  * @author Peter Güttinger
  */
-public abstract class SerializableGetter<R, A> extends Getter<R, A> implements SerializableConverter<A, R> {
-	private static final long serialVersionUID = 6879186408590490250L;
-}
+@SuppressWarnings("serial")
+public abstract class SerializableGetter<R, A> extends Getter<R, A> implements SerializableConverter<A, R> {}

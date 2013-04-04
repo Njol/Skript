@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,9 +24,8 @@ package ch.njol.skript.classes;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class IntegerArithmetic<T extends Number> implements Arithmetic<T, Integer> {
-	
-	private static final long serialVersionUID = 1395512586628132626L;
 	
 	@Override
 	public Integer difference(final T first, final T second) {

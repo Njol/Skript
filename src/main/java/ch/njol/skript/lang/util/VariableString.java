@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -44,25 +44,23 @@ import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.UnparsedLiteral;
-import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
-import ch.njol.util.StringUtils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**
- * 
  * represents a string that may contain expressions.
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class VariableString implements Expression<String> {
-	private static final long serialVersionUID = -2456868967246699395L;
 	
 	private final String name;
 	
@@ -99,7 +97,27 @@ public class VariableString implements Expression<String> {
 	
 	public final static Map<String, Pattern> variableNames = new HashMap<String, Pattern>();
 	
-	private final static Pattern loneQuotePattern = Pattern.compile("(?<!\")\"(?!\")");
+	/**
+	 * Tests whether a string is correctly quoted, i.e. only has doubled double quotes in it.
+	 * 
+	 * @param s The string
+	 * @param withQuotes Whether s must be surrounded by double quotes or not
+	 * @return
+	 */
+	public final static boolean isQuotedCorrectly(final String s, final boolean withQuotes) {
+		if (withQuotes && (!s.startsWith("\"") || !s.endsWith("\"")))
+			return false;
+		boolean quote = false;
+		for (int i = withQuotes ? 1 : 0; i < (withQuotes ? s.length() - 1 : s.length()); i++) {
+			if (s.charAt(i) != '"') {
+				if (quote)
+					return false;
+			} else {
+				quote = !quote;
+			}
+		}
+		return !quote;
+	}
 	
 	/**
 	 * Prints errors
@@ -109,9 +127,9 @@ public class VariableString implements Expression<String> {
 	 * @return
 	 */
 	public static VariableString newInstance(String s, final StringMode mode) {
-		if (loneQuotePattern.matcher(s).find())
+		if (!isQuotedCorrectly(s, false))
 			return null;
-		s = s.replace("\"\"", "\"");
+		s = Utils.replaceChatStyles(s.replace("\"\"", "\""));
 		final ArrayList<Object> string = new ArrayList<Object>();
 		int c = s.indexOf('%');
 		if (c != -1) {
@@ -134,14 +152,18 @@ public class VariableString implements Expression<String> {
 				if (c + 1 == c2) {
 					string.add("%");
 				} else {
-					SimpleLog log = SkriptLogger.startSubLog();
-					@SuppressWarnings("unchecked")
-					final Expression<?> expr = SkriptParser.parseExpression(s.substring(c + 1, c2), false, ParseContext.DEFAULT, Object.class).getConvertedExpression(Object.class);
-					if (expr == null) {
-						log.printErrors("Can't understand this expression: " + s.substring(c + 1, c2));
-						return null;
-					} else {
-						string.add(expr);
+					final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+					try {
+						@SuppressWarnings("unchecked")
+						final Expression<?> expr = SkriptParser.parseExpression(s.substring(c + 1, c2), SkriptParser.PARSE_EXPRESSIONS, ParseContext.DEFAULT, Object.class);
+						if (expr == null) {
+							log.printErrors("Can't understand this expression: " + s.substring(c + 1, c2));
+							return null;
+						} else {
+							string.add(expr);
+						}
+					} finally {
+						log.stop();
 					}
 					log.printLog();
 				}
@@ -177,7 +199,7 @@ public class VariableString implements Expression<String> {
 								continue stringLoop;
 							}
 						}
-						p.append("[^%](.*[^%])?");
+						p.append("[^%*](.*[^%])?"); // [^*] to not report {var::%index%}/{var::*} as conflict
 					} else {
 						p.append(Pattern.quote(o.toString()));
 					}
@@ -186,7 +208,7 @@ public class VariableString implements Expression<String> {
 			} else {
 				pattern = Pattern.compile(Pattern.quote(name));
 			}
-			if (!SkriptConfig.disableVariableConflictWarnings) {
+			if (!SkriptConfig.disableVariableConflictWarnings.value()) {
 				for (final Entry<String, Pattern> e : variableNames.entrySet()) {
 					if (e.getValue().matcher(name).matches() || pattern.matcher(e.getKey()).matches()) {
 						Skript.warning("Possible name conflict of variables {" + name + "} and {" + e.getKey() + "} (there might be more conflicts).");
@@ -240,7 +262,6 @@ public class VariableString implements Expression<String> {
 	}
 	
 	/**
-	 * 
 	 * @param args Quoted strings - This is not checked!
 	 * @return
 	 */
@@ -278,7 +299,7 @@ public class VariableString implements Expression<String> {
 					b.append(o);
 			}
 		}
-		return Utils.replaceChatStyles(b.toString());
+		return b.toString();
 	}
 	
 	@Override
@@ -384,13 +405,13 @@ public class VariableString implements Expression<String> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		throw new UnsupportedOperationException();
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		return null;
 	}
 	
 	@Override
-	public Class<?>[] acceptChange(final ChangeMode mode) {
-		return null;
+	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
@@ -428,17 +449,17 @@ public class VariableString implements Expression<String> {
 		return this;
 	}
 	
-	public final static void setStringMode(final Expression<?> e) {
+	public final static void setStringMode(final Expression<?> e, final StringMode mode) {
 		if (e instanceof ExpressionList) {
 			for (final Expression<?> ex : ((ExpressionList<?>) e).getExpressions()) {
 				if (ex instanceof VariableString)
-					((VariableString) ex).setMode(StringMode.COMMAND);
+					((VariableString) ex).setMode(mode);
 			}
 		} else if (e instanceof VariableString) {
-			((VariableString) e).setMode(StringMode.COMMAND);
+			((VariableString) e).setMode(mode);
 		}
 	}
-
+	
 	@Override
 	public Expression<String> simplify() {
 		return this;

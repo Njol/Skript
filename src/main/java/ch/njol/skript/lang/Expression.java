@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,10 +30,8 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Checker;
-import ch.njol.util.Kleenean;
 
 /**
  * Represents an expression. Expressions are used within conditions, effects and other expressions.
@@ -79,7 +77,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public T[] getAll(final Event e);
 	
 	/**
-	 * 
 	 * @return true if this expression will ever only return one value at most, false if it can return multiple values
 	 */
 	public abstract boolean isSingle();
@@ -97,7 +94,8 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public boolean check(final Event e, final Checker<? super T> c, final boolean negated);
 	
 	/**
-	 * Checks this expression against the given checker. This method must only be used around other checks, use {@link #check(Event, Checker, boolean)} for a simple ckeck or the innermost check of a nested check.
+	 * Checks this expression against the given checker. This method must only be used around other checks, use {@link #check(Event, Checker, boolean)} for a simple ckeck or the
+	 * innermost check of a nested check.
 	 * 
 	 * @param e The event
 	 * @param c A checker
@@ -127,31 +125,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public abstract Class<? extends T> getReturnType();
 	
 	/**
-	 * Changes the expression value by the given amount. This will only be called on supported modes and with the desired <code>delta</code> type as returned by
-	 * {@link #acceptChange(ChangeMode)}
-	 * 
-	 * @param e
-	 * @param delta The amount to vary this expression by or null for {@link ChangeMode#CLEAR}. Can also be null if {@link #acceptChange(ChangeMode)} didn't return an array class,
-	 *            otherwise it cannot be null but an empty array.
-	 * @param mode
-	 * @throws UnsupportedOperationException (optional) if this method was called on an unsupported ChangeMode.
-	 */
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException;
-	
-	/**
-	 * Tests whether this expression supports the given mode, and if yes what type it expects the <code>delta</code> to be.
-	 * <p>
-	 * Please note that if a changer is registered for this expression's {@link #getReturnType() returnType} this method does not have to be overridden.
-	 * <p>
-	 * Unlike {@link Changer#acceptChange(ChangeMode)} this method may print errors.
-	 * 
-	 * @param mode
-	 * @return An array of types that {@link #change(Event, Expression, Expression, ChangeMode)} accepts as it's <code>delta</code> parameter (which can be arrays),
-	 *         or null if the given mode is not supported. For {@link ChangeMode#CLEAR} this can return any array to mark clear as supported, even an empty one.
-	 */
-	public Class<?>[] acceptChange(final ChangeMode mode);
-	
-	/**
 	 * Returns true if this expression returns all possible values, false if it only returns one.
 	 * <p>
 	 * This method significantly influences {@link #check(Event, Checker)} and {@link #check(Event, Checker, boolean)} and thus breaks conditions that use this expression if it
@@ -169,15 +142,16 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * This method will <b>not</b> be called if this expression is <i>guaranteed</i> to be used after a delay (an error will be printed immediately), but <b>will</b> be called if
 	 * it only <i>can be</i> after a delay (e.g. if the preceding delay is in an if or a loop) as well as if there's no delay involved.
 	 * 
-	 * @param time -1 for past, 0 for default or 1 for future respectively (this is not the same as the <tt>isDelayed</tt> parameter of
-	 *            {@link SyntaxElement#init(Expression[], int, Kleenean, ParseResult) init}!)
-	 * @return whether this expression has distinct states, e.g. a player never changes but a block can. This should also be sensitive for the event (using
+	 * @param time -1 for past or 1 for future. 0 is never passed to this method as it represents the default state.
+	 * @return Whether this expression has distinct time states, e.g. a player never changes but a block can. This should also be sensitive for the event (using
 	 *         {@link ScriptLoader#currentEvents}).
+	 * @see SimpleExpression#setTime(int, Class, Expression...)
+	 * @see SimpleExpression#setTime(int, Expression, Class...)
 	 */
 	public boolean setTime(int time);
 	
 	/**
-	 * @return The value passed to {@link #setTime(int)} iff it returned true (TODO SimpleExpression violates this rule which doesn't matter yet tough)
+	 * @return The value passed to {@link #setTime(int)} or 0 if it was never changed.
 	 * @see #setTime(int)
 	 */
 	public int getTime();
@@ -195,7 +169,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	/**
 	 * Returns the same as {@link #getArray(Event)} but as an iterator. This method should be overriden by expressions intended to be looped to increase performance.
 	 * 
-	 * @param e the event
+	 * @param e The event
 	 * @return An iterator to iterate over all values of this expression which may be empty and/or null, but must not return null elements.
 	 */
 	public Iterator<? extends T> iterator(Event e);
@@ -206,29 +180,55 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * <p>
 	 * You should usually just return false as e.g. loop-block will automatically match the expression if it's returnType is Block or a subtype of it.
 	 * 
-	 * @param s the entered string
-	 * @return whether this loop matches the given string
+	 * @param s The entered string
+	 * @return Whether this loop matches the given string
 	 */
 	public boolean isLoopOf(String s);
 	
 	/**
 	 * Returns the original expression that was parsed, i.e. without any conversions done.
 	 * <p>
-	 * This method is undefined for simplyfied expressions.
+	 * This method is undefined for simplified expressions.
 	 * 
 	 * @return The unconverted source expression of this expression or this expression itself if it was never converted.
 	 */
 	public Expression<?> getSource();
 	
 	/**
-	 * Simplyfies the expression, e.g. if it only contains literals the expression may be simplified to a literal, and wrapped expressions are unwrapped.
+	 * Simplifies the expression, e.g. if it only contains literals the expression may be simplified to a literal, and wrapped expressions are unwrapped.
 	 * <p>
 	 * After this method was used the toString methods are likely not useful anymore.
 	 * <p>
 	 * This method is not yet used but will be used to improve efficiency in the future.
 	 * 
-	 * @return A reference to a simpler version of this expression. Can change this expression directly and return itself if applicable, i.e. no references to the expression before this method call should be kept!
+	 * @return A reference to a simpler version of this expression. Can change this expression directly and return itself if applicable, i.e. no references to the expression before
+	 *         this method call should be kept!
 	 */
 	public Expression<? extends T> simplify();
+	
+	/**
+	 * Tests whether this expression supports the given mode, and if yes what type it expects the <code>delta</code> to be.
+	 * <p>
+	 * Please note that if a changer is registered for this expression's {@link #getReturnType() returnType} this method does not have to be overridden.
+	 * <p>
+	 * Unlike {@link Changer#acceptChange(ChangeMode)} this method may print errors.
+	 * 
+	 * @param mode
+	 * @return An array of types that {@link #change(Event, Object, ChangeMode)} accepts as it's <code>delta</code> parameter (which can be arrays),
+	 *         or null if the given mode is not supported. For {@link ChangeMode#DELETE} this can return any array to mark clear as supported, even an empty one.
+	 */
+	public Class<?>[] acceptChange(ChangeMode mode);
+	
+	/**
+	 * Changes the expression value by the given amount. This will only be called on supported modes and with the desired <code>delta</code> type as returned by
+	 * {@link #acceptChange(ChangeMode)}
+	 * 
+	 * @param e
+	 * @param delta The amount to vary this expression by or null for {@link ChangeMode#DELETE}. Can also be null if {@link #acceptChange(ChangeMode)} didn't return an array class,
+	 *            otherwise it cannot be null but an empty array.
+	 * @param mode
+	 * @throws UnsupportedOperationException (optional) if this method was called on an unsupported ChangeMode.
+	 */
+	public void change(Event e, final Object delta, final ChangeMode mode);
 	
 }

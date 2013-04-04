@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,6 +27,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -36,9 +40,14 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is Banned")
+@Description("Checks whether a player or IP is banned.")
+@Examples({"player is banned",
+		"victim is not IP-banned",
+		"\"127.0.0.1\" is banned"})
+@Since("1.4")
 public class CondIsBanned extends Condition {
-	
-	private static final long serialVersionUID = -2253265799057608926L;
 	
 	static {
 		Skript.registerCondition(CondIsBanned.class,

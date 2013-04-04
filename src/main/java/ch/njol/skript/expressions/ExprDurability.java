@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,36 +26,38 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.Converter;
-import ch.njol.skript.expressions.base.PropertyExpression;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.log.SimpleLog;
-import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.util.Slot;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
+import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.util.Utils;
-import ch.njol.util.Kleenean;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
  */
-public class ExprDurability extends PropertyExpression<ItemStack, Short> {
-	private static final long serialVersionUID = -774982996815756186L;
+@SuppressWarnings("serial")
+@Name("Data Value")
+@Description({"The data value of an item.",
+		"You usually don't need this expression as you can check and set items with aliases easily, " +
+				"but this expression can e.g. be used to \"add 1 to data of &lt;item&gt;\", e.g. for cycling through all wool colours."})
+@Examples({"add 1 to the data value of the clicked block"})
+@Since("1.2")
+public class ExprDurability extends SimplePropertyExpression<ItemStack, Short> {
 	
 	static {
-		Skript.registerExpression(ExprDurability.class, Short.class, ExpressionType.PROPERTY,
-				"[the] ((data|damage)[s] [value[s]]|durabilit(y|ies)) of %itemstacks%", "%itemstacks%'[s] ((data|damage)[s] [value[s]]|durabilit(y|ies))");
+		register(ExprDurability.class, Short.class, "((data|damage)[s] [value[s]]|durabilit(y|ies))", "itemstacks");
 	}
 	
-	private Expression<ItemStack> types;
-	
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		types = (Expression<ItemStack>) exprs[0];
-		setExpr(types);
-		return true;
+	public Short convert(final ItemStack is) {
+		return is.getDurability();
+	}
+	
+	@Override
+	public String getPropertyName() {
+		return "data";
 	}
 	
 	@Override
@@ -63,78 +65,74 @@ public class ExprDurability extends PropertyExpression<ItemStack, Short> {
 		return Short.class;
 	}
 	
-	@Override
-	protected Short[] get(final Event e, final ItemStack[] source) {
-		return get(source, new Converter<ItemStack, Short>() {
-			@Override
-			public Short convert(final ItemStack is) {
-				return is.getDurability();
-			}
-		});
-	}
+//	@Override
+//	public void change(Event e, final Changer2<Number> changer) throws UnsupportedOperationException {
+//		getExpr().change(e, new Changer2<ItemStack>() {
+//			@Override
+//			public ItemStack change(ItemStack i) {
+//				i.setDurability(changer.change(i.getDurability()).shortValue());
+//				return i;
+//			}
+//		});
+//	}
 	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "data of " + types.toString(e, debug);
-	}
-	
-	private Expression<? extends Slot> slots = null;
+//	private Expression<? extends Slot> slots = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		final SimpleLog log = SkriptLogger.startSubLog();
-		if ((slots = types.getConvertedExpression(Slot.class)) != null) {
-			log.stop();
-			return Skript.array(Number.class);
-		}
-		log.stop();
-		if (types.isSingle() && Utils.contains(types.acceptChange(ChangeMode.SET), ItemStack.class))
-			return Skript.array(Number.class);
+//		final SimpleLog log = SkriptLogger.startSubLog();
+//		if ((slots = getExpr().getConvertedExpression(Slot.class)) != null) {
+//			log.stop();
+//			return Skript.array(Number.class);
+//		}
+//		log.stop();
+		if (getExpr().isSingle() && Utils.contains(getExpr().acceptChange(ChangeMode.SET), ItemStack.class))
+			return Utils.array(Number.class);
 		return null;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		int a = 0;
-		if (mode != ChangeMode.CLEAR)
+		if (mode != ChangeMode.DELETE)
 			a = ((Number) delta).intValue();
 		switch (mode) {
 			case REMOVE:
 				a = -a;
 				//$FALL-THROUGH$
 			case ADD:
-				if (slots != null) {
-					for (final Slot slot : slots.getArray(e)) {
-						final ItemStack item = slot.getItem();
-						item.setDurability((short) (item.getDurability() + a));
-						slot.setItem(item);
-					}
-				} else {
-					final ItemStack is = types.getSingle(e);
-					if (is == null)
-						return;
-					is.setDurability((short) (is.getDurability() + a));
-					types.change(e, is, ChangeMode.SET);
-				}
+//				if (slots != null) {
+//					for (final Slot slot : slots.getArray(e)) {
+//						final ItemStack item = slot.getItem();
+//						item.setDurability((short) Math2.fit(0, item.getDurability() + a, Skript.MAXDATAVALUE));
+//						slot.setItem(item);
+//					}
+//				} else {
+				final ItemStack is = getExpr().getSingle(e);
+				if (is == null)
+					return;
+				is.setDurability((short) Math2.fit(0, is.getDurability() + a, Skript.MAXDATAVALUE));
+				getExpr().change(e, is, ChangeMode.SET);
+//				}
 				break;
-			case CLEAR:
+			case DELETE:
 				a = 0;
 				//$FALL-THROUGH$
 			case SET:
-				if (slots != null) {
-					for (final Slot slot : slots.getArray(e)) {
-						final ItemStack item = slot.getItem();
-						item.setDurability((short) a);
-						slot.setItem(item);
-					}
-				} else {
-					final ItemStack is = types.getSingle(e);
-					if (is == null)
-						return;
-					is.setDurability((short) a);
-					types.change(e, is, ChangeMode.SET);
-				}
+//				if (slots != null) {
+//					for (final Slot slot : slots.getArray(e)) {
+//						final ItemStack item = slot.getItem();
+//						item.setDurability((short) a);
+//						slot.setItem(item);
+//					}
+//				} else {
+				final ItemStack is2 = getExpr().getSingle(e);
+				if (is2 == null)
+					return;
+				is2.setDurability((short) a);
+				getExpr().change(e, is2, ChangeMode.SET);
+//				}
 				break;
 		}
 	}

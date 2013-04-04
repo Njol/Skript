@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,46 +27,44 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.EffSpawn;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.log.SimpleLog;
-import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Last Spawned Entity")
+@Description("Holds the entity that was spawned most recently with the <a href='../effects/#EffSpawn'>spawn effect</a>. " +
+		"Please note that even though you can spawn multiple mobs simultaneously (e.g. with 'spawn 5 creepers'), only the last spawned mob is saved and can be used.")
+@Examples({"spawn a priest",
+		"set {%spawned priest%.healer} to true"})
+@Since("1.3")
 public class ExprLastSpawnedEntity extends SimpleExpression<Entity> {
-	private static final long serialVersionUID = 5097807652181025015L;
-	
 	static {
-		Skript.registerExpression(ExprLastSpawnedEntity.class, Entity.class, ExpressionType.SIMPLE, "[the] [last[ly]] spawned <.+>");
+		Skript.registerExpression(ExprLastSpawnedEntity.class, Entity.class, ExpressionType.SIMPLE, "[the] [last[ly]] spawned %*entitydata%");
 	}
 	
 	private EntityData<?> type;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		final SimpleLog log = SkriptLogger.startSubLog();
-		type = EntityData.parseWithoutAnOrAny(parseResult.regexes.get(0).group());
-		log.stop();
-		if (type == null) {
-			Skript.error("'" + parseResult.regexes.get(0).group() + "' is not an entity type", ErrorQuality.NOT_AN_EXPRESSION);
-			return false;
-		}
-		log.printLog();
+		type = (EntityData<?>) exprs[0].getSingle(null);
 		return true;
 	}
 	
 	@Override
 	protected Entity[] get(final Event e) {
-		final Entity en = Utils.validate(EffSpawn.lastSpawned);
+		final Entity en = EffSpawn.lastSpawned;
 		if (en == null)
 			return null;
 		if (!type.isInstance(en))

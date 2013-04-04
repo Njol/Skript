@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,8 +26,11 @@ import java.util.Random;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
@@ -36,9 +39,13 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Random Number")
+@Description("A random number or integer between two given numbers. Use 'number' if you want any number with decimal parts, or use use 'integer' if you only want whole numbers.")
+@Examples({"set the player's health to a random number between 5 and 10",
+		"send \"You rolled a %random integer from 1 to 6%!\" to the player"})
+@Since("1.4")
 public class ExprRandomNumber extends SimpleExpression<Number> {
-	private static final long serialVersionUID = -9204174109547211339L;
-	
 	static {
 		Skript.registerExpression(ExprRandomNumber.class, Number.class, ExpressionType.NORMAL,
 				"[a] random (1¦integer|2¦number) (from|between) %number% (to|and) %number%");

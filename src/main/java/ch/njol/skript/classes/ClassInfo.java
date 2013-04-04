@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,22 +27,23 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.bukkit.event.Event;
+
 import ch.njol.skript.expressions.base.EventValueExpression;
+import ch.njol.skript.lang.Debuggable;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.util.SimpleLiteral;
-import ch.njol.skript.localization.Language;
-import ch.njol.skript.localization.Language.LanguageChangeListener;
+import ch.njol.skript.localization.Noun;
 
 /**
  * @author Peter Güttinger
- * 
  * @param <T> The class this info is for
  */
-public class ClassInfo<T> {
+public class ClassInfo<T> implements Debuggable {
 	
 	private final Class<T> c;
 	private final String codeName;
-	private String name;
+	private final Noun name;
 	
 	private DefaultExpression<T> defaultExpression = null;
 	
@@ -58,23 +59,22 @@ public class ClassInfo<T> {
 	private Arithmetic<T, ?> math = null;
 	private Class<?> mathRelativeType = null;
 	
+	private String docName = null;
+	private String[] description = null;
+	private String[] usage = null;
+	private String[] examples = null;
+	private String since = null;
+	
 	/**
 	 * @param c The class
 	 * @param codeName The name used in patterns
-	 * @param name This class' name as displayed to the user
 	 */
-	public ClassInfo(final Class<T> c, final String codeName, final String name) {
+	public ClassInfo(final Class<T> c, final String codeName) {
 		this.c = c;
 		if (!codeName.matches("[a-z0-9]+"))
 			throw new IllegalArgumentException("Code names for classes must be lowercase and only consist of latin letters and arabic numbers");
 		this.codeName = codeName;
-		this.name = name;
-		Language.addListener(new LanguageChangeListener() {
-			@Override
-			public void onLanguageChange() {
-				ClassInfo.this.name = Language.get("types." + codeName);
-			}
-		});
+		name = new Noun("types." + codeName);
 	}
 	
 	// === FACTORY METHODS ===
@@ -89,15 +89,15 @@ public class ClassInfo<T> {
 	}
 	
 	/**
-	 * @param name The name of this class as it is displayed to players
-	 * @param userInputPatterns <u>Regex</u> patterns to match &lt;arg type&gt;s in commands. These patterns must match singular and plural.
+	 * @param userInputPatterns <u>Regex</u> patterns to match this class, e.g. in the expressions loop-[type], random [type] out of ..., or as command arguments. These patterns
+	 *            must be english and match singular and plural.
 	 * @throws PatternSyntaxException If any of the patterns' syntaxes is invalid
 	 */
 	public ClassInfo<T> user(final String... userInputPatterns) throws PatternSyntaxException {
 		assert this.userInputPatterns == null;
 		this.userInputPatterns = new Pattern[userInputPatterns.length];
 		for (int i = 0; i < userInputPatterns.length; i++) {
-			this.userInputPatterns[i] = Pattern.compile("^" + userInputPatterns[i] + "$");
+			this.userInputPatterns[i] = Pattern.compile(userInputPatterns[i]);
 		}
 		return this;
 	}
@@ -144,13 +144,85 @@ public class ClassInfo<T> {
 		return this;
 	}
 	
+	/**
+	 * Only used for Skript's documentation.
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public ClassInfo<T> name(final String name) {
+		assert this.docName == null;
+		this.docName = name;
+		return this;
+	}
+	
+	/**
+	 * Only used for Skript's documentation.
+	 * 
+	 * @param description
+	 * @return
+	 */
+	public ClassInfo<T> description(final String... description) {
+		assert this.description == null;
+		this.description = description;
+		return this;
+	}
+	
+	public final static String ENUM_USAGE = new String();
+	
+	/**
+	 * Only used for Skript's documentation.
+	 * 
+	 * @param usage
+	 * @return
+	 */
+	public ClassInfo<T> usage(final String... usage) {
+		assert this.usage == null;
+		if (usage != null && usage.length == 1 && usage[0] == ENUM_USAGE) {
+			final Object[] os = c.getEnumConstants();
+			final StringBuilder b = new StringBuilder(os[0].toString().toLowerCase().replace('_', ' '));
+			for (int i = 1; i < os.length; i++) {
+				b.append(", ");
+				b.append(os[i].toString().toLowerCase());
+			}
+			this.usage = new String[] {b.toString()};
+		} else {
+			this.usage = usage;
+		}
+		return this;
+	}
+	
+	/**
+	 * Only used for Skript's documentation.
+	 * 
+	 * @param examples
+	 * @return
+	 */
+	public ClassInfo<T> examples(final String... examples) {
+		assert this.examples == null;
+		this.examples = examples;
+		return this;
+	}
+	
+	/**
+	 * Only used for Skript's documentation.
+	 * 
+	 * @param since
+	 * @return
+	 */
+	public ClassInfo<T> since(final String since) {
+		assert this.since == null;
+		this.since = since;
+		return this;
+	}
+	
 	// === GETTERS ===
 	
 	public Class<T> getC() {
 		return c;
 	}
 	
-	public String getName() {
+	public Noun getName() {
 		return name;
 	}
 	
@@ -190,6 +262,26 @@ public class ClassInfo<T> {
 		return mathRelativeType;
 	}
 	
+	public String[] getDescription() {
+		return description;
+	}
+	
+	public String[] getUsage() {
+		return usage;
+	}
+	
+	public String[] getExamples() {
+		return examples;
+	}
+	
+	public String getSince() {
+		return since;
+	}
+	
+	public String getDocName() {
+		return docName;
+	}
+	
 	// === ORDERING ===
 	
 	private final Set<String> before = new HashSet<String>();
@@ -198,10 +290,8 @@ public class ClassInfo<T> {
 	/**
 	 * Sets one or more classes that should occur before this class in the class infos list. This only affects the order in which classes are parsed if it's unknown of which type
 	 * the parsed string is.
-	 * 
 	 * <p>
 	 * Please note that subclasses will always be registered before superclasses, no matter what is defined here or in {@link #after(String...)}.
-	 * 
 	 * <p>
 	 * This list can safely contain classes that may not exist.
 	 * 
@@ -216,10 +306,8 @@ public class ClassInfo<T> {
 	/**
 	 * Sets one or more classes that should occur after this class in the class infos list. This only affects the order in which classes are parsed if it's unknown of which type
 	 * the parsed string is.
-	 * 
 	 * <p>
 	 * Please note that subclasses will always be registered before superclasses, no matter what is defined here or in {@link #before(String...)}.
-	 * 
 	 * <p>
 	 * This list can safely contain classes that may not exist.
 	 * 
@@ -233,7 +321,6 @@ public class ClassInfo<T> {
 	}
 	
 	/**
-	 * 
 	 * @return never null
 	 */
 	public Set<String> before() {
@@ -241,7 +328,6 @@ public class ClassInfo<T> {
 	}
 	
 	/**
-	 * 
 	 * @return maybe null
 	 */
 	public Set<String> after() {
@@ -252,6 +338,14 @@ public class ClassInfo<T> {
 	
 	@Override
 	public String toString() {
-		return codeName + " (" + c.getName() + ")";
+		return getName().getSingular();
 	}
+	
+	@Override
+	public String toString(final Event e, final boolean debug) {
+		if (debug)
+			return codeName + " (" + c.getCanonicalName() + ")";
+		return getName().getSingular();
+	}
+	
 }

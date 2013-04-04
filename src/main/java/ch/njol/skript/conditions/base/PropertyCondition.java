@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -33,9 +33,8 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public abstract class PropertyCondition<T> extends Condition implements Checker<T> {
-	
-	private static final long serialVersionUID = 7450779043764578921L;
 	
 	private Expression<? extends T> expr;
 	

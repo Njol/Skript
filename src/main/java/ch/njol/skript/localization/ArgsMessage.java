@@ -15,18 +15,20 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.localization;
 
+import java.util.IllegalFormatException;
 
-public final class ArgsMessage {
-	private final String key;
+import ch.njol.skript.Skript;
+
+public final class ArgsMessage extends Message {
 	
 	public ArgsMessage(final String key) {
-		this.key = key;
+		super(key);
 	}
 	
 	@Override
@@ -35,7 +37,15 @@ public final class ArgsMessage {
 	}
 	
 	public String toString(final Object... args) {
-		return Language.format(key, args);
+		try {
+			return getValue() == null ? key : String.format(getValue(), args);
+		} catch (final IllegalFormatException e) {
+			final String m = "The formatted message '" + key + "' uses an illegal format: " + e.getLocalizedMessage();
+			Skript.adminBroadcast("<red>" + m);
+			System.err.println("[Skript] " + m);
+			e.printStackTrace();
+			return "[ERROR]";
+		}
 	}
 	
 }

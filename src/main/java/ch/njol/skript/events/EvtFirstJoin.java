@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -32,11 +32,14 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class EvtFirstJoin extends SkriptEvent {
-	private static final long serialVersionUID = -6457374984148760334L;
 	
 	static {
-		Skript.registerEvent(EvtFirstJoin.class, PlayerJoinEvent.class, "first (join|login)");
+		Skript.registerEvent("First Join", EvtFirstJoin.class, PlayerJoinEvent.class, "first (join|login)")
+				.description("Called when a player joins the server for the first time.")
+				.examples("")
+				.since("1.3.7");
 	}
 	
 	@Override

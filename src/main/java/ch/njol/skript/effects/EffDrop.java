@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,68 +28,66 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Direction;
-import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.Experience;
 import ch.njol.util.Kleenean;
 
 /**
- * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Drop")
+@Description("Drops one or more items.")
+@Examples({"on death of creeper:",
+		"	drop 1 TNT"})
+@Since("1.0")
 public class EffDrop extends Effect {
-	
-	private static final long serialVersionUID = -3561531766438040547L;
-	
 	static {
-		Skript.registerEffect(EffDrop.class, "drop %integer% ([e]xp|experience) [orb[s]] [%directions% %locations%]", "drop %itemtypes% [%directions% %locations%]");
+		Skript.registerEffect(EffDrop.class, "drop %itemtypes/experience% [%directions% %locations%]");
 	}
 	
-	private Expression<Integer> xp = null;
-	private Expression<ItemType> items = null;
+	private Expression<?> drops = null;
 	private Expression<Location> locations;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		if (matchedPattern == 0)
-			xp = (Expression<Integer>) exprs[0];
-		else
-			items = (Expression<ItemType>) exprs[0];
+		drops = exprs[0];
 		locations = Direction.combine((Expression<? extends Direction>) exprs[1], (Expression<? extends Location>) exprs[2]);
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		final ItemType[] types = items == null ? null : items.getArray(e);
-		if (locations.isDefault() && e instanceof EntityDeathEvent && !Delay.isDelayed(e)) {
-			if (xp != null) {
-				final Integer exp = xp.getSingle(e);
-				if (exp != null)
-					((EntityDeathEvent) e).setDroppedExp(((EntityDeathEvent) e).getDroppedExp() + exp);
-				return;
-			}
-			for (final ItemType type : types) {
-				type.addTo(((EntityDeathEvent) e).getDrops());
+		final Object[] os = drops.getArray(e);
+		if (e instanceof EntityDeathEvent && ((EntityDeathEvent) e).getEntity().getLocation().equals(locations.getSingle(e)) && !Delay.isDelayed(e)) {
+			for (Object o : os) {
+				if (o instanceof Experience) {
+					((EntityDeathEvent) e).setDroppedExp(((EntityDeathEvent) e).getDroppedExp() + ((Experience) o).getXP());
+				} else {
+					((ItemType) o).addTo(((EntityDeathEvent) e).getDrops());
+				}
 			}
 			return;
 		}
 		for (final Location l : locations.getArray(e)) {
-			if (xp != null) {
-				final Integer exp = xp.getSingle(e);
-				if (exp != null) {
+			for (Object o : os) {
+				if (o instanceof Experience) {
 					final ExperienceOrb orb = l.getWorld().spawn(l, ExperienceOrb.class);
-					orb.setExperience(exp);
-				}
-				continue;
-			}
-			for (final ItemType type : types) {
-				for (final ItemStack is : type.getItem().getAll()) {
-					if (is.getTypeId() != 0)
-						l.getWorld().dropItemNaturally(l, is);
+					orb.setExperience(((Experience) o).getXP());
+				} else {
+					for (final ItemStack is : ((ItemType) o).getItem().getAll()) {
+						if (is.getTypeId() != 0)
+							l.getWorld().dropItemNaturally(l, is);
+					}
 				}
 			}
 		}
@@ -97,7 +95,7 @@ public class EffDrop extends Effect {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "drop " + items.toString(e, debug) + " " + locations.toString(e, debug);
+		return "drop " + drops.toString(e, debug) + " " + locations.toString(e, debug);
 	}
 	
 }

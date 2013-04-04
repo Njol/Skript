@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,43 +27,49 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Getter;
-import ch.njol.util.Math2;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Food Level")
+@Description("The food level of a player from 0 to 10. Has several aliases: food/hunger level/meter/bar. ")
+@Examples({"set the player's food level to 10"})
+@Since("1.0")
 public class ExprFoodLevel extends PropertyExpression<Player, Float> {
-	private static final long serialVersionUID = -8189707370394201162L;
 	
 	static {
 		Skript.registerExpression(ExprFoodLevel.class, Float.class, ExpressionType.PROPERTY, "[the] (food|hunger)[[ ](level|meter|bar)] [of %player%]", "%player%'[s] (food|hunger)[[ ](level|meter|bar)]");
 	}
 	
-	private Expression<Player> players;
-	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		players = (Expression<Player>) vars[0];
-		setExpr(players);
+		setExpr((Expression<Player>) vars[0]);
 		return true;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "the food level of " + players.toString(e, debug);
+		return "the food level of " + getExpr().toString(e, debug);
 	}
 	
 	@Override
 	protected Float[] get(final Event e, final Player[] source) {
-		if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
+		if (getTime() >= 0 && getExpr().isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
 			return new Float[] {0.5f * ((FoodLevelChangeEvent) e).getFoodLevel()};
 		}
 		return get(source, new Getter<Float, Player>() {
@@ -77,40 +83,40 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		return Skript.array(Number.class);
+		return Utils.array(Number.class);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
 		int s = 0;
-		if (mode != ChangeMode.CLEAR)
+		if (mode != ChangeMode.DELETE)
 			s = Math.round(((Number) delta).floatValue() * 2);
 		switch (mode) {
 			case SET:
-			case CLEAR:
-				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
+			case DELETE:
+				if (getTime() >= 0 && getExpr().isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
 					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, s, 20));
 					return;
 				}
-				for (final Player player : players.getArray(e)) {
+				for (final Player player : getExpr().getArray(e)) {
 					player.setFoodLevel(Math2.fit(0, s, 20));
 				}
 				return;
 			case ADD:
-				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
+				if (getTime() >= 0 && getExpr().isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
 					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, ((FoodLevelChangeEvent) e).getFoodLevel() + s, 20));
 					return;
 				}
-				for (final Player player : players.getArray(e)) {
+				for (final Player player : getExpr().getArray(e)) {
 					player.setFoodLevel(Math2.fit(0, player.getFoodLevel() + s, 20));
 				}
 				return;
 			case REMOVE:
-				if (getTime() >= 0 && players.isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
+				if (getTime() >= 0 && getExpr().isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
 					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, ((FoodLevelChangeEvent) e).getFoodLevel() - s, 20));
 					return;
 				}
-				for (final Player player : players.getArray(e)) {
+				for (final Player player : getExpr().getArray(e)) {
 					player.setFoodLevel(Math2.fit(0, player.getFoodLevel() - s, 20));
 				}
 				return;
@@ -124,6 +130,6 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 	
 	@Override
 	public boolean setTime(final int time) {
-		return super.setTime(time, FoodLevelChangeEvent.class, players);
+		return super.setTime(time, FoodLevelChangeEvent.class, getExpr());
 	}
 }

@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -23,7 +23,6 @@ package ch.njol.skript.lang;
 
 /**
  * @author Peter Güttinger
- * 
  * @param <E> the syntax element this info is for
  */
 public class SyntaxElementInfo<E extends SyntaxElement> {

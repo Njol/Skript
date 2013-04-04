@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -33,9 +33,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,7 +63,9 @@ import ch.njol.skript.config.validate.SectionValidator;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
-import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.localization.ArgsMessage;
+import ch.njol.skript.localization.Message;
+import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
@@ -78,6 +77,10 @@ import ch.njol.util.StringUtils;
  */
 @SuppressWarnings("deprecation")
 public abstract class Commands {
+	
+	public final static ArgsMessage m_too_many_arguments = new ArgsMessage("commands.too many arguments");
+	public final static Message m_correct_usage = new Message("commands.correct usage");
+//	private final static Message m_internal_error = new Message("commands.internal error");
 	
 	private final static Map<String, ScriptCommand> commands = new HashMap<String, ScriptCommand>();
 	
@@ -122,63 +125,65 @@ public abstract class Commands {
 	private final static String escape = Pattern.quote("(|)<>%\\");
 	
 	private final static String escape(final String s) {
-		return s.replaceAll("([" + escape + "])", "\\\\$1");
+		return s.replaceAll("[" + escape + "]", "\\\\$0");
 	}
 	
 	private final static String unescape(final String s) {
-		return s.replaceAll("\\\\([" + escape + "])", "$1");
+		return s.replaceAll("\\\\[" + escape + "]", "$0");
 	}
 	
 	private final static Listener commandListener = new Listener() {
-		@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+		@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 		public void onPlayerCommand(final PlayerCommandPreprocessEvent e) {
 			if (handleCommand(e.getPlayer(), e.getMessage().substring(1)))
 				e.setCancelled(true);
 		}
 		
-		@EventHandler(priority = EventPriority.LOW)
+		@EventHandler(priority = EventPriority.HIGHEST)
 		public void onServerCommand(final ServerCommandEvent e) {
 			if (e.getCommand() == null || e.getCommand().isEmpty())
 				return;
-			if (SkriptConfig.enableEffectCommands && e.getCommand().startsWith(SkriptConfig.effectCommandToken)) {
+			if (SkriptConfig.enableEffectCommands.value() && e.getCommand().startsWith(SkriptConfig.effectCommandToken.value())) {
 				if (handleEffectCommand(e.getSender(), e.getCommand())) {
 					e.setCommand("");
-					suppressUnknownCommandMessage = true;
+//					suppressUnknownCommandMessage = true;
 				}
 				return;
 			}
 			if (handleCommand(e.getSender(), e.getCommand())) {
 				e.setCommand("");
-				suppressUnknownCommandMessage = true;
+//				suppressUnknownCommandMessage = true;
 			}
 		}
 	};
-	private static boolean suppressUnknownCommandMessage = false;
-	static {
-		Bukkit.getLogger().addHandler(new Handler() {
-			@Override
-			public void publish(final LogRecord lr) {
-				if (suppressUnknownCommandMessage && lr.getMessage().equalsIgnoreCase("Unknown command. Type \"help\" for help.")) {
-					lr.setLevel(Level.ALL);
-					lr.setMessage(null);
-					suppressUnknownCommandMessage = false;
-				}
-			}
-			
-			@Override
-			public void flush() {}
-			
-			@Override
-			public void close() throws SecurityException {
-				throw new SecurityException("wtf are you doing?");
-			}
-		});
-	}
+	
+	// doesn't work
+//	private static boolean suppressUnknownCommandMessage = false;
+//	static {
+//		Bukkit.getLogger().addHandler(new Handler() {
+//			@Override
+//			public void publish(final LogRecord lr) {
+//				if (suppressUnknownCommandMessage && lr.getMessage().equalsIgnoreCase("Unknown command. Type \"help\" for help.")) {
+//					lr.setLevel(Level.ALL);
+//					lr.setMessage(null);
+//					suppressUnknownCommandMessage = false;
+//				}
+//			}
+//			
+//			@Override
+//			public void flush() {}
+//			
+//			@Override
+//			public void close() throws SecurityException {
+//				throw new SecurityException("wtf are you doing?");
+//			}
+//		});
+//	}
 	
 	private final static Listener pre1_3chatListener = new Listener() {
 		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 		public void onPlayerChat(final PlayerChatEvent e) {
-			if (!SkriptConfig.enableEffectCommands || !e.getMessage().startsWith(SkriptConfig.effectCommandToken))
+			if (!SkriptConfig.enableEffectCommands.value() || !e.getMessage().startsWith(SkriptConfig.effectCommandToken.value()))
 				return;
 			if (handleEffectCommand(e.getPlayer(), e.getMessage()))
 				e.setCancelled(true);
@@ -187,7 +192,7 @@ public abstract class Commands {
 	private final static Listener post1_3chatListener = new Listener() {
 		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 		public void onPlayerChat(final AsyncPlayerChatEvent e) {
-			if (!SkriptConfig.enableEffectCommands || !e.getMessage().startsWith(SkriptConfig.effectCommandToken))
+			if (!SkriptConfig.enableEffectCommands.value() || !e.getMessage().startsWith(SkriptConfig.effectCommandToken.value()))
 				return;
 			if (!e.isAsynchronous()) {
 				if (handleEffectCommand(e.getPlayer(), e.getMessage()))
@@ -215,7 +220,6 @@ public abstract class Commands {
 	};
 	
 	/**
-	 * 
 	 * @param sender
 	 * @param command full command string without the slash
 	 * @return whether to cancel the event
@@ -236,7 +240,7 @@ public abstract class Commands {
 				c.sendHelp(sender);
 				return true;
 			}
-			if (SkriptConfig.logPlayerCommands && !(sender instanceof ConsoleCommandSender))
+			if (SkriptConfig.logPlayerCommands.value() && !(sender instanceof ConsoleCommandSender))
 				Bukkit.getLogger().info(sender.getName() + ": /" + command);
 			c.execute(sender, cmd[0], cmd.length == 1 ? "" : cmd[1]);
 			return true;
@@ -249,32 +253,36 @@ public abstract class Commands {
 		if (!sender.hasPermission("skript.effectcommands"))
 			return false;
 		try {
-			command = command.substring(SkriptConfig.effectCommandToken.length()).trim();
-			final SimpleLog log = SkriptLogger.startSubLog();
-			ScriptLoader.currentEvents = Skript.array(CommandEvent.class);
-			final Effect e = Effect.parse(command, null);
-			ScriptLoader.currentEvents = null;
-			log.stop();
+			command = command.substring(SkriptConfig.effectCommandToken.value().length()).trim();
+			final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+			final Effect e;
+			try {
+				ScriptLoader.currentEvents = Utils.array(CommandEvent.class);
+				e = Effect.parse(command, null);
+				ScriptLoader.currentEvents = null;
+			} finally {
+				log.stop();
+			}
 			if (e != null) {
 				sender.sendMessage(ChatColor.GRAY + "executing '" + ChatColor.stripColor(command) + "'");
-				if (SkriptConfig.logPlayerCommands && !(sender instanceof ConsoleCommandSender))
+				if (SkriptConfig.logPlayerCommands.value() && !(sender instanceof ConsoleCommandSender))
 					Skript.info(sender.getName() + " issued effect command: " + command);
 				e.run(new CommandEvent(sender, "effectcommand", new String[0]));
 			} else {
 				sender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + ChatColor.stripColor(command));
-				log.printErrors(sender, "Can't understand this effect");
+				log.printErrors(sender, "(No specific information is available)");
 			}
 			return true;
 		} catch (final Exception e) {
-			Skript.exception(e, "Unexpected error while executing effect command '" + command + "' by '" + sender + "'");
-			sender.sendMessage(ChatColor.RED + "An internal error occurred while executing this effect. See the server log for details.");
+			Skript.exception(e, "Unexpected error while executing effect command '" + command + "' by '" + sender.getName() + "'");
+			sender.sendMessage(ChatColor.RED + "An internal error occurred while executing this effect. Please refer to the server log for details.");
 			return true;
 		}
 	}
 	
 	public final static ScriptCommand loadCommand(final SectionNode node) {
 		
-		final String s = node.getName();
+		final String s = ScriptLoader.replaceOptions(node.getName());
 		
 		int level = 0;
 		for (int i = 0; i < s.length(); i++) {
@@ -298,8 +306,9 @@ public abstract class Commands {
 		assert a;
 		
 		final String command = m.group(1);
-		if (skriptCommandExists(command)) {
-			Skript.error("A command with the name /" + command + " is already defined");
+		final ScriptCommand existingCommand = commands.get(command);
+		if (existingCommand != null && existingCommand.getName().equals(command)) {
+			Skript.error("A command with the name /" + command + " is already defined in " + existingCommand.getScript().getName());
 			return null;
 		}
 		
@@ -319,7 +328,7 @@ public abstract class Commands {
 			
 			ClassInfo<?> c;
 			c = Classes.getClassInfoFromUserInput(m.group(1));
-			final Pair<String, Boolean> p = Utils.getPlural(m.group(1));
+			final Pair<String, Boolean> p = Utils.getEnglishPlural(m.group(1));
 			if (c == null)
 				c = Classes.getClassInfoFromUserInput(p.first);
 			if (c == null) {
@@ -340,7 +349,7 @@ public abstract class Commands {
 				pattern.append('[');
 				optionals++;
 			}
-			pattern.append("%" + (arg.isOptional() ? "-" : "") + Utils.toPlural(c.getCodeName(), p.second) + "%");
+			pattern.append("%" + (arg.isOptional() ? "-" : "") + Utils.toEnglishPlural(c.getCodeName(), p.second) + "%");
 		}
 		
 		pattern.append(escape(arguments.substring(lastEnd)));
@@ -355,17 +364,17 @@ public abstract class Commands {
 			return null;
 		
 		final String desc = "/" + command + " " + unescape(pattern.toString().replaceAll("%-?(.+?)%", "<$1>"));
-		final String usage = node.get("usage", desc);
-		final String description = node.get("description", "");
-		List<String> aliases = Arrays.asList(node.get("aliases", "").split("\\s*,\\s*/?"));
+		final String usage = ScriptLoader.replaceOptions(node.get("usage", desc));
+		final String description = ScriptLoader.replaceOptions(node.get("description", ""));
+		List<String> aliases = Arrays.asList(ScriptLoader.replaceOptions(node.get("aliases", "")).split("\\s*,\\s*/?"));
 		if (aliases.get(0).startsWith("/"))
 			aliases.set(0, aliases.get(0).substring(1));
 		else if (aliases.get(0).isEmpty())
 			aliases = new ArrayList<String>(0);
-		final String permission = node.get("permission", null);
-		final String permissionMessage = node.get("permission message", null);
+		final String permission = ScriptLoader.replaceOptions(node.get("permission", null));
+		final String permissionMessage = ScriptLoader.replaceOptions(node.get("permission message", null));
 		final SectionNode trigger = (SectionNode) node.get("trigger");
-		final String[] by = node.get("executable by", "console,players").split("\\s*,\\s*|\\s+(and|or)\\s+");
+		final String[] by = ScriptLoader.replaceOptions(node.get("executable by", "console,players")).split("\\s*,\\s*|\\s+(and|or)\\s+");
 		int executableBy = 0;
 		for (final String b : by) {
 			if (b.equalsIgnoreCase("console") || b.equalsIgnoreCase("the console")) {
@@ -384,7 +393,7 @@ public abstract class Commands {
 		if (Skript.debug())
 			Skript.info("command " + desc + ":");
 		
-		final ScriptCommand c = new ScriptCommand(node.getConfig().getFile(), command, pattern.toString().replaceAll("[<>]", "\\\\$0"), currentArguments, description, usage, aliases, permission, permissionMessage, executableBy, ScriptLoader.loadItems(trigger));
+		final ScriptCommand c = new ScriptCommand(node.getConfig().getFile(), command, pattern.toString(), currentArguments, description, usage, aliases, permission, permissionMessage, executableBy, ScriptLoader.loadItems(trigger));
 		registerCommand(c);
 		
 		if (Skript.logVeryHigh() && !Skript.debug())
@@ -393,10 +402,10 @@ public abstract class Commands {
 		return c;
 	}
 	
-	public static boolean skriptCommandExists(final String command) {
-		final ScriptCommand c = commands.get(command);
-		return c != null && c.getName().equals(command);
-	}
+//	public static boolean skriptCommandExists(final String command) {
+//		final ScriptCommand c = commands.get(command);
+//		return c != null && c.getName().equals(command);
+//	}
 	
 	public static void registerCommand(final ScriptCommand command) {
 		if (commandMap != null)
@@ -429,7 +438,7 @@ public abstract class Commands {
 	public final static void registerListener() {
 		if (!registeredListener) {
 			Bukkit.getPluginManager().registerEvents(commandListener, Skript.getInstance());
-			if (Skript.isRunningBukkit(1, 3))
+			if (Skript.isRunningMinecraft(1, 3))
 				Bukkit.getPluginManager().registerEvents(post1_3chatListener, Skript.getInstance());
 			else
 				Bukkit.getPluginManager().registerEvents(pre1_3chatListener, Skript.getInstance());

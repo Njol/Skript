@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,6 +25,8 @@ import org.bukkit.event.Event;
 
 /**
  * Effects which can be tested implement this interface.
+ * <p>
+ * TODO implement this
  * 
  * @author Peter Güttinger
  */

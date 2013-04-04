@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -30,6 +30,10 @@ import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
@@ -40,9 +44,14 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Shoot")
+@Description("Shoots a projectile (or any other entity) from a given entity.")
+@Examples({"shoot an arrow",
+		"make the player shoot a creeper at speed 10",
+		"shoot a pig from the creeper"})
+@Since("1.4")
 public class EffShoot extends Effect {
-	
-	private static final long serialVersionUID = 7878514863545530061L;
 	
 	static {
 		Skript.registerEffect(EffShoot.class,
@@ -104,7 +113,7 @@ public class EffShoot extends Effect {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "shoot " + types.toString(e, debug) + " from " + shooters.toString(e, debug);
+		return "shoot " + types.toString(e, debug) + " from " + shooters.toString(e, debug) + (velocity == null ? "" : " at speed " + velocity.toString(e, debug)) + (direction == null ? "" : " " + direction.toString(e, debug));
 	}
 	
 }

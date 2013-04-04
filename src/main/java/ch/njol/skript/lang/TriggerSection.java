@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -35,14 +35,14 @@ import ch.njol.skript.config.SectionNode;
  * @see Conditional
  * @see Loop
  */
+@SuppressWarnings("serial")
 public abstract class TriggerSection extends TriggerItem {
-	private static final long serialVersionUID = -6022270709339418778L;
 	
 	private TriggerItem first = null;
 	protected TriggerItem last = null;
 	
 	/**
-	 * reserved for new Trigger(...)
+	 * Reserved for new Trigger(...)
 	 */
 	protected TriggerSection(final List<TriggerItem> items) {
 		setTriggerItems(items);
@@ -59,6 +59,17 @@ public abstract class TriggerSection extends TriggerItem {
 	 */
 	protected TriggerSection() {}
 	
+	/**
+	 * Remember to add this section to {@link ScriptLoader#currentSections} before parsing child elements!
+	 * 
+	 * <pre>
+	 * ScriptLoader.currentSections.add(this);
+	 * setTriggerItems(ScriptLoader.loadItems(node));
+	 * ScriptLoader.currentSections.remove(ScriptLoader.currentSections.size() - 1);
+	 * </pre>
+	 * 
+	 * @param items
+	 */
 	protected void setTriggerItems(final List<TriggerItem> items) {
 		if (!items.isEmpty()) {
 			first = items.get(0);

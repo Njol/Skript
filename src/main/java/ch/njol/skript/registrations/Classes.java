@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -35,20 +35,19 @@ import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.Converter.ConverterInfo;
-import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.ParseContext;
-import ch.njol.skript.log.SimpleLog;
+import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Pair;
 import ch.njol.util.iterator.ArrayIterator;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public abstract class Classes {
 	
@@ -74,6 +73,9 @@ public abstract class Classes {
 		tempClassInfos.add(info);
 	}
 	
+	/**
+	 * Sorts the class infos according to sub/superclasses and relations set with {@link ClassInfo#before(String...)} and {@link ClassInfo#after(String...)}.
+	 */
 	public final static void sortClassInfos() {
 		assert classInfos == null;
 		
@@ -119,7 +121,7 @@ public abstract class Classes {
 		Classes.classInfos = classInfos.toArray(new ClassInfo[classInfos.size()]);
 		if (!tempClassInfos.isEmpty())
 			throw new IllegalStateException("ClassInfos with circular dependencies detected: " + tempClassInfos);
-		if (Skript.debug()) {
+		if (Skript.testing()) {
 			for (final ClassInfo<?> ci : classInfos) {
 				if (ci.before() != null && !ci.before().isEmpty() || ci.after() != null && !ci.after().isEmpty()) {
 					final Set<String> s = new HashSet<String>();
@@ -149,7 +151,6 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * 
 	 * @param codeName
 	 * @return
 	 * @throws SkriptAPIException If the given class was not registered
@@ -168,13 +169,14 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * Gets the class info for the given class
+	 * Gets the class info for the given class.
+	 * <p>
+	 * This method can be called even while Skript is loading.
 	 * 
 	 * @param c The exact class to get the class info for
 	 * @return The class info for the given class of null if no info was found.
 	 */
 	public static <T> ClassInfo<T> getExactClassInfo(final Class<T> c) {
-		checkAllowClassInfoInteraction();
 		return (ClassInfo<T>) exactClassInfos.get(c);
 	}
 	
@@ -245,21 +247,6 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * Gets a class by it's name (not code name)
-	 * 
-	 * @param name
-	 * @return the class or null if the name was not recognized
-	 */
-	public static Class<?> getClassByName(final String name) {
-		checkAllowClassInfoInteraction();
-		for (final ClassInfo<?> ci : classInfos) {
-			if (ci.getName().equalsIgnoreCase(name))
-				return ci.getC();
-		}
-		return null;
-	}
-	
-	/**
 	 * Gets the default of a class
 	 * 
 	 * @param codeName
@@ -304,19 +291,21 @@ public abstract class Classes {
 	 * @return
 	 */
 	public static <T> T parseSimple(final String s, final Class<T> c, final ParseContext context) {
-		final SimpleLog log = SkriptLogger.startSubLog();
-		for (final ClassInfo<?> info : classInfos) {
-			if (info.getParser() == null || !info.getParser().canParse(context) || !c.isAssignableFrom(info.getC()))
-				continue;
-			log.clear();
-			final T t = (T) info.getParser().parse(s, context);
-			if (t != null) {
-				log.stop();
-				log.printLog();
-				return t;
+		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		try {
+			for (final ClassInfo<?> info : classInfos) {
+				if (info.getParser() == null || !info.getParser().canParse(context) || !c.isAssignableFrom(info.getC()))
+					continue;
+				log.clear();
+				final T t = (T) info.getParser().parse(s, context);
+				if (t != null) {
+					log.printLog();
+					return t;
+				}
 			}
+		} finally {
+			log.stop();
 		}
-		log.stop();
 		return null;
 	}
 	
@@ -334,22 +323,25 @@ public abstract class Classes {
 		T t = parseSimple(s, c, context);
 		if (t != null)
 			return t;
-		final SimpleLog log = SkriptLogger.startSubLog();
-		for (final ConverterInfo<?, ?> conv : Converters.getConverters()) {
-			if (c.isAssignableFrom(conv.to)) {
-				log.clear();
-				final Object o = parseSimple(s, conv.from, context);
-				if (o != null) {
-					t = (T) ((Converter)conv.converter).convert(o);
-					if (t != null) {
-						log.stop();
-						log.printLog();
-						return t;
+		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		try {
+			for (final ConverterInfo<?, ?> conv : Converters.getConverters()) {
+				if (c.isAssignableFrom(conv.to)) {
+					log.clear();
+					final Object o = parseSimple(s, conv.from, context);
+					if (o != null) {
+						t = (T) ((Converter) conv.converter).convert(o);
+						if (t != null) {
+							log.stop();
+							log.printLog();
+							return t;
+						}
 					}
 				}
 			}
+		} finally {
+			log.stop();
 		}
-		log.stop();
 		return null;
 	}
 	
@@ -465,12 +457,12 @@ public abstract class Classes {
 		}
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getParser() != null && ci.getC().isAssignableFrom(o.getClass())) {
-				final String s = code ? ((Parser<T>) ci.getParser()).toVariableNameString(o) : Utils.toPlural(((Parser<T>) ci.getParser()).toString(o, mode), plural);
+				final String s = code ? ((Parser<T>) ci.getParser()).toVariableNameString(o) : Utils.toEnglishPlural(((Parser<T>) ci.getParser()).toString(o, mode), plural);
 				if (s != null)
 					return s;
 			}
 		}
-		return code ? "object:" + o : String.valueOf(o);
+		return code ? "object:" + o : "" + o;
 	}
 	
 	public static final String toString(final Object[] os, final boolean and, final StringMode mode, final boolean plural) {
@@ -492,7 +484,7 @@ public abstract class Classes {
 	}
 	
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public final static String[] serialize(final Object o) {
+	public final static Pair<String, String> serialize(final Object o) {
 		final ClassInfo<?> ci = getSuperClassInfo(o.getClass());
 		if (ci == null)
 			return null;
@@ -503,9 +495,9 @@ public abstract class Classes {
 			final Object s = Converters.convert(o, as.getC());
 			if (s == null)
 				return null;
-			return new String[] {as.getCodeName(), ((Serializer) as.getSerializer()).serialize(s)};
+			return new Pair<String, String>(as.getCodeName(), ((Serializer) as.getSerializer()).serialize(s));
 		} else if (ci.getSerializer() != null) {
-			return new String[] {ci.getCodeName(), ((Serializer) ci.getSerializer()).serialize(o)};
+			return new Pair<String, String>(ci.getCodeName(), ((Serializer) ci.getSerializer()).serialize(o));
 		}
 		return null;
 	}

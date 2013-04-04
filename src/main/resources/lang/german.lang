@@ -1,36 +1,126 @@
-# Which version of Skript this language file was written for
-version: 2.0 beta 3
+# Default German language file by Peter Güttinger (Njol)
+version: 2.0 beta 8
 
 # -- General --
 and: und
 or: oder
-a: ein, einer, eines
+a: ein, eine
 is: ist
 are: sind
+not: nicht
+not a: kein(e) # @m:kein @f:keine @n:kein @x:keine
+neither: weder
+nor: noch
 
-# -- Commands --
-commands:
-	no_permission_message: Du hast nicht die Erlaubnis, diesen Befehl zu benutzen!
-	executable_by_players: Dieser Befehl kann nur von Spielern benutzt werden
-	executable_by_console: Dieser Befehl kann nur von der Konsole benutzt werden
-	usage: Richtige Benutzung: %s
+genders:
+	0:
+		name: n
+		definite article: das
+		indefinite article: ein
+	1:
+		name: m
+		definite article: der
+		indefinite article: ein
+	2:
+		name: f
+		definite article: die
+		indefinite article: eine
+	plural:
+		# name: x
+		definite article: die
+
+# -- Skript --
+skript:
+	copyright: ~ erstellt von & © Peter Güttinger alias Njol ~
+	quotes error: Unerlaubte Verwendung von Anführungszeichen ("). Wenn du solche in "Text mit Anführungszeichen" einfügen willst, verdopple sie: "".
+	invalid reload: Skript darf nur mittles Bukkits '/reload' oder Skripts '/skript reload' neu geladen werden
+
+# -- Skript command --
+skript command:
+	description: Skript-Hauptbefehl
+	help: Zeigt diese Hilfe an. Benutze '/skript reload/enable/disable/update' um mehr Infos zu erhalten
+	reload:
+		description: Lädt die Konfigurationen, Skripte, alles oder nur bestimmte Skripte erneut
+		all: Lädt alle Konfigurationen und Skripte neu
+		config: Lädt alle Konfigurationen erneut
+		aliases: Lädt nur die Itemnamen neu (aliases.sk)
+		scripts: Lädt alle Skripte neu
+		<script>: Lädt ein bestimmtes Skript neu
+	enable:
+		description: Aktiviert alle Skripte oder nur bestimmte
+		all: Aktiviert alle Skripte im 'scripts' Ordner
+		<script>: Aktiviert ein bestimmtes Skript
+	disable:
+		description: Deaktiviert alle Skripte oder nur bestimmte
+		all: Deaktiviert alle Skripte
+		<script>: Deaktiviert ein bestimmtes Skript
+	update:
+		description: Überprüft auf eine neue Version, listet Änderungen dieser auf, und kann sie auch gleich herunterladen
+		check: Überprüft, ob eine neue Version von Skript verfügbar ist
+		changes: Listet alle Änderungen seit der aktuellen Version auf
+		download: Lädt die neueste Version herunter
 
 # -- Updater --
 updater:
-	not_started: Es wurde noch nicht geprüft, ob eine neue Version verfügbar ist. Benutze <gold>/skript update check<reset> um die Überprüfung zu starten.
+	not started: Es wurde noch nicht geprüft, ob eine neue Version verfügbar ist. Benutze <gold>/skript update check<reset> um die Überprüfung zu starten.
 	checking: Es wird geprüft, ob eine neue Version verfügbar ist...
-	check_in_progress: Es wird gerade geprüft, ob eine neue Version verfügbar ist.
-	check_error: <red>Beim Prüfen auf eine neue Version ist ein Fehler aufgetreten:<light red> %s
-	running_latest_version: Auf diesem Server läuft die neueste Version von Skript.
-	update_available: Eine neue Version von Skript ist verfügbar: <gold>%s<reset> (Auf diesem Server läuft Version <gold>%s<reset>)
-	downloading: Lade Skript <gold>%s<reset> herunter...
-	download_in_progress: Die neueste Version wird gerade heruntergeladen.
-	download_error: <red>Beim Herunterladen der neuesten Version ist ein Fehler aufgetreten:<light red> %s
-	downloaded: Die neueste Version von Skript wurde heruntergeladen! Starte den Server neu oder benutze /reload um die Änderungen zu übernehmen.
+	check in progress: Es wird gerade geprüft, ob eine neue Version verfügbar ist.
+	check error: <red>Beim Prüfen auf eine neue Version ist ein Fehler aufgetreten:<light red> %s
+	running latest version: Auf diesem Server läuft die neueste Version von Skript.
+	running latest version (beta): Auf diesem Server läuft eine <i>Beta<r>-Version von Skript, und es is keine neue <i>stabile<r> Version verfügbar. Auf neuere Beta-Versionen muss manuell aktualisiert werden!
+	update available: Eine neue Version von Skript ist verfügbar: <gold>%s<reset> (Auf diesem Server läuft Version <gold>%s<reset>)
+	downloading: Lädt Skript <gold>%s<reset> herunter...
+	download in progress: Die neueste Version wird gerade heruntergeladen.
+	download error: <red>Beim Herunterladen der neuesten Version ist ein Fehler aufgetreten:<light red> %s
+	downloaded: Die neueste Version von Skript wurde heruntergeladen! Starte den Server neu oder benutze /reload um die Änderungen zu übernehmen. Die (möglicherweise unveränderten) neuen config.sk und aliases.sk wurden als config-%s$1.sk und aliases-%s$1.sk heruntergeladen.
+	internal error: Während der Überprüfung auf eine neue Version ist ein interner Fehler aufgetreten. Im Server-Log finden sich weitere Informationen.
+
+# -- Commands --
+commands:
+	no permission message: Du hast nicht die Erlaubnis, diesen Befehl zu verwenden!
+	executable by players: Dieser Befehl kann nur von Spielern verwendet werden.
+	executable by console: Dieser Befehl kann nur von der Konsole verwendet werden.
+	usage: Syntax:
+	correct usage: Richtige Benutzung:
+	invalid argument: Unbekanntes Argument <gray>'<%s>%s<gray>'<reset>. Erlaubt sind:
+	too many arguments: Dieser Befehl akzeptiert nur %s %s.
+	internal error: Während der Ausführung des Befehls ist ein interner Fehler aufgetreten.
+
+# -- Hooks --
+hooks:
+	hooked: Erfolgreich in %s eingehängt
+
+# -- Aliases --
+aliases:
+	# regexes
+	any: irgendein(?:es?)?
+	every: jede[rs]?
+	of every: von jede[mr]
+	of: von(?: irgendeine[mr])?
+	# messages
+	brackets error: Klammern haben eine spezielle Bedeutung in Itemnamen und können nicht normal benutzt werden
+	empty alias: '%s' resultiert in einem leeren Item (d.h. es repräsentiert keine ID/Werte), es wird deshalb ignoriert
+	unknown variation: unbekannte Variation {%s}
+	starting with number: itemnamen dürfen nicht mit einer Nummer beginnen
+	missing aliases: Für folgende IDs sind keine Itemnamen definiert:
+	empty string: '' ist kein Itemtyp
+	invalid item data: '%s' ist kein Itemwert
+	invalid id: Es gibt kein Material mit ID %s!
+	invalid block data: Blöcke können nur Werte von 0 bis 15 haben
+	invalid item type: '%s' ist kein Itemtyp
+	out of data range: Itemwerte müssen zwischen 0 und %s (inklusive) liegen
+	invalid range: Die erste Nummer eines Itemwertepaars muss kleiner als die Zweite sein
+	invalid section: Ungültiger Abschnitt '%s'. Falls dies ein Itemnamenabschnitt ist, füge ihn zu 'aliases' hinzu damit er geladen wird.
+	section not found: Abschnitt '%s' nicht gefunden!
+	not a section: Itemnamen müssen in Abschnitten unterteilt sein, aber '%s' ist kein Abschnitt!
+	unexpected non-variation section: unerwarteter nicht-Variations-Abschnitt
+	unexpected section: unerwarteter Abschnitt
+	loaded x aliases from: %s Itemnamen von %s geladen
+	loaded x aliases: %s Itemnamen geladen
 
 # -- Enchantments --
 enchantments:
-	of: # FIXME funktionniert nicht!
+	of: #-#
 	names:
 		protection_environmental: des Schutzes
 		protection_fire: des Feuerschutzes
@@ -90,7 +180,7 @@ weather:
 		adjective: aufgewühlt
 
 # -- Tree Types --
-treetypes:
+tree types:
 	tree:
 		name: B¦aum¦äume
 		pattern: B(aum|äume) 
@@ -164,7 +254,7 @@ colors:
 	light_purple: magenta, hellviolett
 
 # -- Chat Styles -
-chatstyles:
+chat styles:
 	bold: fett, f, b
 	italic: schräg, s, i
 	strikethrough: durchgestrichen, gestrichen, d, g
@@ -174,12 +264,12 @@ chatstyles:
 
 # -- Directions --
 directions:
-	meter: Meter
+	meter: Meter @m
 	
 	at: bei
 	
-	up: oben
-	down: unten
+	up: über
+	down: unter
 	north: nördlich
 	east: östlich
 	south: südlich
@@ -192,55 +282,73 @@ directions:
 	right: rechts
 	left: links
 
+damage causes:
+	contact: Kaktus @m
+	entity_attack: Angriff @m
+	projectile: Projektil @n
+	suffocation: Ersticken @n
+	fall: Fall @m
+	fire: Feuer @n
+	fire_tick: Brennen @n
+	melting: Schmelzen @n
+	lava: Lava @f
+	drowning: Ertrinken @n
+	block_explosion: TNT @n
+	entity_explosion: Creeper @m
+	void: Leere @f
+	lightning: Blitz @m
+	starvation: Verhungern @n
+	poison: Gift @n
+	magic: Trank @m
+	wither: Wither @m
+	falling_block: Amboss @m
+	custom: unbekannt
+
 # -- Types --
 types:
-	not_a: kein(e)
-	neither: weder
-	nor: noch
-	
 	# Java
-	object: Objekt¦e
-	number: Nummer¦n
-	integer: ganze Zahl¦en
-	long: ganze Zahl¦en
-	short: ganze Zahl¦en
-	byte: ganze Zahl¦en
-	double: Nummer¦n
-	float: Nummer¦n
-	boolean: boolesche¦r Wert (ja/nein)¦e Werte (ja/nein)
-	string: Text¦e
+	object: Objekt¦e @n
+	number: Nummer¦n @f
+	integer: ganze Zahl¦en @f
+	long: ganze Zahl¦en @f
+	short: ganze Zahl¦en @f
+	byte: ganze Zahl¦en @f
+	double: Nummer¦n @f
+	float: Nummer¦n @f
+	boolean: boolesche¦r Wert (ja/nein)¦e Werte (ja/nein) @m
+	string: Text¦e @m
 	
 	# Bukkit
-	entity: Wesen
-	livingentity: Lebewesen
-	projectile: Projektil¦e
-	block: ¦Block¦Blöcke
-	location: Ort¦e
-	world: Welt¦en
-	inventory: Inventar¦e
-	player: Spieler
-	offlineplayer: Spieler
-	commandsender: Spieler/Konsole¦n
-	blockface: Richtung¦en
-	inventoryholder: Inventarbesitzer # wird eh nie benutzt
-	gamemode: Spiel¦modus¦modi
-	itemstack: Material¦ien
-	biome: Biom¦e
-	potioneffecttype: ¦Trank¦Tränke
+	entity: Wesen @n
+	livingentity: Lebewesen @n
+	projectile: Projektil¦e @n
+	block: ¦Block¦Blöcke @m
+	location: Ort¦e @m
+	world: Welt¦en @f
+	inventory: Inventar¦e @n
+	player: Spieler @m
+	offlineplayer: Spieler @m
+	commandsender: Spieler/Konsole @m
+	inventoryholder: Inventarbesitzer @m # wird eh nie benutzt
+	gamemode: Spiel¦modus¦modi @n
+	itemstack: Gegen¦stand¦stände @m
+	biome: Biom¦e @m
+	potioneffecttype: ¦Trank¦Tränke @m
+	enchantment: Verzauberung¦en @f
 	
 	# Skript
-	weathertype: Wettertyp¦en
-	entitytype: Kreaturentyp|en
-	entitydata: Kreaturentyp|en
-	itemtype: Gegen¦stand¦stände
-	time: Zeit¦en
-	timespan: Zeitdauer¦n
-	timeperiod: Zeitspanne¦n
-	date: ¦Datum¦Daten
-	direction: Richtung¦en
-	slot: Inventar¦platz¦plätze
-	color: Farbe¦n
-	structuretype: Baumtyp¦en
-	enchantmenttype: Verzauberung¦en
-	experience: Erfahrungspunkt|e
-	
+	weathertype: Wettertyp¦en @m
+	entitytype: Kreaturentyp¦en @m
+	entitydata: Kreaturentyp¦en @m
+	itemtype: Gegenstandstyp¦en @n
+	time: Zeit¦en @f
+	timespan: Zeitdauer¦n @f
+	timeperiod: Zeitspanne¦n @f
+	date: ¦Datum¦Daten @n
+	direction: Richtung¦en @f
+	slot: Inventar¦platz¦plätze @m
+	color: Farbe¦n @f
+	structuretype: Baumtyp¦en @m
+	enchantmenttype: Verzauberungstyp¦en @f
+	experience: Erfahrungspunkt¦e @m
+	classinfo: Typ¦en @der

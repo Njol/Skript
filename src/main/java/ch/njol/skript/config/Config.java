@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,13 +24,14 @@ package ch.njol.skript.config;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.config.validate.SectionValidator;
 
 /**
  * Represents a config file.
@@ -125,16 +126,19 @@ public class Config {
 		return fileName;
 	}
 	
-	public synchronized void save() throws IOException {
-		if (!modified)
-			return;
-		separator = defaultSeparator;
-		file.createNewFile();
-		final PrintWriter w = new PrintWriter(new FileWriter(file));
-		main.save(w);
-		w.flush();
-		w.close();
-		modified = false;
+	@SuppressWarnings("unused")
+	public void save() throws IOException {
+		throw new UnsupportedOperationException();
+		// fix SectionNode.convertToEntries first!
+//		if (!modified)
+//			return;
+//		separator = defaultSeparator;
+//		file.createNewFile();
+//		final PrintWriter w = new PrintWriter(new FileWriter(file));
+//		main.save(w);
+//		w.flush();
+//		w.close();
+//		modified = false;
 	}
 	
 	public boolean isEnabled() {
@@ -153,17 +157,28 @@ public class Config {
 	}
 	
 	/**
-	 * 
 	 * @return The separator last used. Only useful while the file is loading.
 	 */
 	public String getSeparator() {
 		return separator;
 	}
 	
+	/**
+	 * Splits the given path at the dot character and passes the result to {@link #get(String...)}.
+	 * 
+	 * @param path
+	 * @return
+	 */
 	public String getByPath(final String path) {
 		return get(path.split("\\."));
 	}
 	
+	/**
+	 * Gets an entry node's value at the designated path
+	 * 
+	 * @param path
+	 * @return The entry node's value at the location defined by path or null if it either doesn't exist or is not an entry.
+	 */
 	public String get(final String... path) {
 		SectionNode section = main;
 		for (int i = 0; i < path.length; i++) {
@@ -175,7 +190,7 @@ public class Config {
 					return null;
 				section = (SectionNode) n;
 			} else {
-				if (i == path.length - 1)
+				if (n instanceof EntryNode && i == path.length - 1)
 					return ((EntryNode) n).getValue();
 				else
 					return null;
@@ -190,6 +205,37 @@ public class Config {
 	
 	public HashMap<String, String> toMap(final String separator) {
 		return main.toMap("", separator);
+	}
+	
+	public boolean validate(final SectionValidator validator) {
+		return validator.validate(getMainNode());
+	}
+	
+	private void load(final Class<?> c, final Object o, final String path) {
+		for (final Field f : c.getDeclaredFields()) {
+			f.setAccessible(true);
+			if (o != null || Modifier.isStatic(f.getModifiers())) {
+				try {
+					if (Section.class.isAssignableFrom(f.getType())) {
+						load(f.get(o).getClass(), f.get(o), path + ((Section) f.get(o)).name + ".");
+					} else if (Option.class.isAssignableFrom(f.getType())) {
+						((Option<?>) f.get(o)).set(this, path);
+					}
+				} catch (final IllegalArgumentException e) {
+					assert false;
+				} catch (final IllegalAccessException e) {
+					assert false;
+				}
+			}
+		}
+	}
+	
+	public void load(final Object o) {
+		load(o.getClass(), o, "");
+	}
+	
+	public void load(final Class<?> c) {
+		load(c, null, "");
 	}
 	
 }

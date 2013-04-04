@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,13 +26,16 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.classes.Comparator.Relation;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.BlockingLogHandler;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.log.SubLog;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.util.Patterns;
@@ -43,9 +46,18 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Comparision")
+@Description({"A very general condition, it simply compares two values. Usually you can only compare for equality (e.g. block is/isn't of &lt;type&gt;), " +
+		"but some values can also be compared using greater than/less than. In that case you can also test for whether an object is between two others.",
+		"Note: This is the only element where not all patterns are shown. It has actually another two sets of similar patters, " +
+				"but with <code>(was|were)</code> or <code>will be</code> instead of <code>(is|are)</code> respectively, " +
+				"which check different <a href='../expressions/#ExprTimeState'>time states</a> of the first expression."})
+@Examples({"the clicked block is a stone slab or a double stone slab",
+		"time in the player's world is greater than 8:00",
+		"the creature is not an enderman or an ender dragon"})
+@Since("1.0")
 public class CondIs extends Condition {
-	
-	private static final long serialVersionUID = 6336144625887239693L;
 	
 	private final static Patterns<Relation> patterns = new Patterns<Relation>(new Object[][] {
 			{"%objects% ((is|are) ((greater|more|higher|bigger) than|above)|\\>) %objects%", Relation.GREATER},
@@ -120,7 +132,7 @@ public class CondIs extends Condition {
 	public final static String f(final Expression<?> e) {
 		if (e.getReturnType() == Object.class)
 			return e.toString(null, false);
-		return Utils.a(Classes.getSuperClassInfo(e.getReturnType()).getName());
+		return Classes.getSuperClassInfo(e.getReturnType()).getName().withIndefiniteArticle();
 	}
 	
 	/**
@@ -129,32 +141,35 @@ public class CondIs extends Condition {
 	 * @return
 	 */
 	private boolean init() {
-		final SubLog log = SkriptLogger.startSubLog();
-		if (first.getReturnType() == Object.class) {
-			final Expression<?> e = first.getConvertedExpression(Object.class);
-			if (e == null) {
-				log.stop();
-				return false;
+		final BlockingLogHandler log = SkriptLogger.startLogHandler(new BlockingLogHandler());
+		try {
+			if (first.getReturnType() == Object.class) {
+				final Expression<?> e = first.getConvertedExpression(Object.class);
+				if (e == null) {
+					log.stop();
+					return false;
+				}
+				first = e;
 			}
-			first = e;
-		}
-		if (second.getReturnType() == Object.class) {
-			final Expression<?> e = second.getConvertedExpression(Object.class);
-			if (e == null) {
-				log.stop();
-				return false;
+			if (second.getReturnType() == Object.class) {
+				final Expression<?> e = second.getConvertedExpression(Object.class);
+				if (e == null) {
+					log.stop();
+					return false;
+				}
+				second = e;
 			}
-			second = e;
-		}
-		if (third != null && third.getReturnType() == Object.class) {
-			final Expression<?> e = third.getConvertedExpression(Object.class);
-			if (e == null) {
-				log.stop();
-				return false;
+			if (third != null && third.getReturnType() == Object.class) {
+				final Expression<?> e = third.getConvertedExpression(Object.class);
+				if (e == null) {
+					log.stop();
+					return false;
+				}
+				third = e;
 			}
-			third = e;
+		} finally {
+			log.stop();
 		}
-		log.stop();
 		
 		final Class<?> f = first.getReturnType(), s = third == null ? second.getReturnType() : Utils.getSuperType(second.getReturnType(), third.getReturnType());
 		if (f == Object.class || s == Object.class)
@@ -191,7 +206,7 @@ public class CondIs extends Condition {
 	 *  a !# x and y === a !# x || a !# y  === !(a # x && a # y) === !(a # x and y)
 	 *  a and/or b !# x is normal
 	 *  This does not apply to 'is not greater/smaller than'
-	 *  TODO: check whether any other condition should behave the same
+	 *  TODO check whether any other condition should behave the same
 	 * 
 	 */
 	@Override

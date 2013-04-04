@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,6 +25,5 @@ import java.io.Serializable;
 
 /**
  * @author Peter Güttinger
- * 
  */
 public interface SerializableConverter<F, T> extends Converter<F, T>, Serializable {}

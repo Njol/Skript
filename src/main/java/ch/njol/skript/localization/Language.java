@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,12 +27,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.bukkit.plugin.Plugin;
@@ -40,9 +38,9 @@ import org.bukkit.plugin.Plugin;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.Config;
-import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
 import ch.njol.util.ExceptionUtils;
+import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
 /**
@@ -52,12 +50,11 @@ public class Language {
 	
 	private static String name = "english";
 	
-	private static HashMap<String, String> english = new HashMap<String, String>();
-	private static HashMap<String, String> englishPlurals = new HashMap<String, String>();
-	
-	private static HashMap<String, String> localized;
-	private static HashMap<String, String> localizedPlurals;
-	
+	static HashMap<String, String> english = new HashMap<String, String>();
+	/**
+	 * Must never be null but set to {@link #english} instead.
+	 */
+	static HashMap<String, String> localized = english;
 	private static boolean useLocal = false;
 	
 	private static HashMap<Plugin, Version> langVersion = new HashMap<Plugin, Version>();
@@ -67,7 +64,7 @@ public class Language {
 	}
 	
 	private final static String get_i(final String key) {
-		if (useLocal && localized != null) {
+		if (useLocal) {
 			final String s = localized.get(key);
 			if (s != null)
 				return s;
@@ -76,8 +73,8 @@ public class Language {
 	}
 	
 	/**
-	 * Gets a string from the language file with the given key, or the english variant if the string is missing from the chosen language's file, or the key itself if the key is
-	 * invalid.
+	 * Gets a string from the language file with the given key, or the english variant if the string is missing from the chosen language's file, or the key itself if the key does
+	 * not exist.
 	 * 
 	 * @param key
 	 * @return
@@ -90,38 +87,13 @@ public class Language {
 	}
 	
 	/**
-	 * Gets the plural of a word, or the singular if no plural is defined for the given key, or the key itself if it's invalid.
+	 * Equal to {@link #get(String)}, but returns null instead of the key if the key cannot be found.
 	 * 
 	 * @param key
 	 * @return
 	 */
-	public static String getPlural(final String key) {
-		if (useLocal && localized != null) {
-			String s = localizedPlurals.get(key);
-			if (s != null)
-				return s;
-			s = localized.get(key);
-			if (s != null)
-				return s;
-		}
-		String s = englishPlurals.get(key);
-		if (s != null)
-			return s;
-		s = english.get(key);
-		if (s != null)
-			return s;
-		return key;
-	}
-	
-	/**
-	 * Gets either the plural or singular version of a word, i.e. returns {@link #getPlural(String)} if <tt>plural</tt> is <tt>true</tt> and {@link #get(String)} otherwise.
-	 * 
-	 * @param key
-	 * @param plural
-	 * @return
-	 */
-	public static String get(final String key, final boolean plural) {
-		return plural ? getPlural(key) : get(key);
+	public static String get_(final String key) {
+		return get_i(key.toLowerCase(Locale.ENGLISH));
 	}
 	
 	/**
@@ -172,25 +144,24 @@ public class Language {
 	}
 	
 	/**
-	 * 
 	 * @param key
 	 * @return Whether the given key exists in the <b>english</b> language file.
 	 */
-	public static boolean keyExists(String key) {
-		return english.containsKey(key);
+	public static boolean keyExists(final String key) {
+		return english.containsKey(key.toLowerCase(Locale.ENGLISH));
 	}
 	
-	public static void loadDefault(SkriptAddon addon) {
+	public static void loadDefault(final SkriptAddon addon) {
 		if (addon.getLanguageFileDirectory() == null)
 			return;
-		final InputStream din = addon.plugin.getResource(addon.getLanguageFileDirectory()+"/english.lang");
+		final InputStream din = addon.plugin.getResource(addon.getLanguageFileDirectory() + "/english.lang");
 		if (din == null)
-			throw new IllegalStateException(addon.getFile().getName()+" is missing the required english.lang file!");
-		HashMap<String, String> en; 
+			throw new IllegalStateException(addon.getFile().getName() + " is missing the required english.lang file!");
+		HashMap<String, String> en;
 		try {
 			en = new Config(din, "english.lang", false, false, ":").toMap(".");
 		} catch (final Exception e) {
-			throw Skript.exception(e, "Could not load "+addon.name+"'s default language file!");
+			throw Skript.exception(e, "Could not load " + addon + "'s default language file!");
 		} finally {
 			try {
 				din.close();
@@ -198,20 +169,22 @@ public class Language {
 		}
 		langVersion.put(addon.plugin, new Version(en.get("version")));
 		en.remove("version");
-		makePlurals(en, englishPlurals);
 		english.putAll(en);
-		for (LanguageChangeListener l : listeners)
+		for (final LanguageChangeListener l : listeners)
 			l.onLanguageChange();
 	}
-
+	
 	public static boolean load(String name) {
 		name = name.toLowerCase();
-		localizedPlurals = new HashMap<String, String>();
+		localized = new HashMap<String, String>();
 		boolean exists = load(Skript.getAddonInstance(), name);
-		for (SkriptAddon addon : Skript.getAddons())
+		for (final SkriptAddon addon : Skript.getAddons())
 			exists |= load(addon, name);
-		if (!exists)
+		if (!exists) {
+			localized = english;
+			Language.name = "english";
 			return false;
+		}
 		Language.name = name;
 		validateLocalized();
 		if (useLocal) {
@@ -221,10 +194,10 @@ public class Language {
 		return true;
 	}
 	
-	private static boolean load(SkriptAddon addon, String name) {
+	private static boolean load(final SkriptAddon addon, final String name) {
 		if (addon.getLanguageFileDirectory() == null)
 			return false;
-		HashMap<String, String> l = load(addon.plugin.getResource(addon.getLanguageFileDirectory()+"/" + name + ".lang"), name);
+		final HashMap<String, String> l = load(addon.plugin.getResource(addon.getLanguageFileDirectory() + "/" + name + ".lang"), name);
 		final File f = new File(addon.plugin.getDataFolder(), addon.getLanguageFileDirectory() + File.separator + name + ".lang");
 		try {
 			if (f.exists())
@@ -235,23 +208,22 @@ public class Language {
 		if (l.isEmpty())
 			return false;
 		if (!l.containsKey("version")) {
-			Skript.error(addon.name+"'s language file "+name+".lang does not provide a version number!");
+			Skript.error(addon + "'s language file " + name + ".lang does not provide a version number!");
 		} else {
 			try {
-				Version v = new Version(l.get("version"));
+				final Version v = new Version(l.get("version"));
 				if (v.isSmallerThan(langVersion.get(addon.plugin)))
-					Skript.warning(addon.name+"'s language file "+name+".lang is outdated, some messages will be english.");
-			} catch (IllegalArgumentException e) {
-				Skript.error("Illegal version syntax in "+addon.name+"'s language file "+name+".lang: "+e.getLocalizedMessage());
+					Skript.warning(addon + "'s language file " + name + ".lang is outdated, some messages will be english.");
+			} catch (final IllegalArgumentException e) {
+				Skript.error("Illegal version syntax in " + addon + "'s language file " + name + ".lang: " + e.getLocalizedMessage());
 			}
 		}
 		l.remove("version");
-		makePlurals(l, localizedPlurals);
 		localized.putAll(l);
 		return true;
 	}
 	
-	private static HashMap<String, String> load(InputStream in, String name) {
+	private static HashMap<String, String> load(final InputStream in, final String name) {
 		if (in == null)
 			return new HashMap<String, String>();
 		try {
@@ -266,51 +238,39 @@ public class Language {
 		}
 	}
 	
-	private static final void makePlurals(final HashMap<String, String> lang, final HashMap<String, String> plurals) {
-		for (final Entry<String, String> e : lang.entrySet()) {
-			final String s = e.getValue();
-			final int c = s.indexOf("¦");
-			if (c == -1)
-				continue;
-			final int c2 = s.indexOf("¦", c + 1);
-			if (c2 == -1) {
-				e.setValue(s.substring(0, c));
-			} else {
-				e.setValue(s.substring(0, c) + s.substring(c + 1, c2));
-			}
-			plurals.put(e.getKey(), s.substring(0, c) + s.substring((c2 == -1 ? c : c2) + 1));
-		}
-	}
-	
 	private static void validateLocalized() {
 		HashSet<String> s = new HashSet<String>(english.keySet());
 		s.removeAll(localized.keySet());
 		if (!s.isEmpty() && Skript.logNormal())
-			Skript.error(name+".lang is missing the following entries: "+StringUtils.join(s));
+			Skript.error("The following messages have not been translated to " + name + ": " + StringUtils.join(s));
 		s = new HashSet<String>(localized.keySet());
 		s.removeAll(english.keySet());
 		if (!s.isEmpty() && Skript.logHigh())
-			Skript.warning(name+".lang has superfluous entries: "+StringUtils.join(s));
+			Skript.warning("The localized language file(s) have superfluous entries: " + StringUtils.join(s));
 	}
+	
+	private final static List<LanguageChangeListener> listeners = new ArrayList<LanguageChangeListener>();
+	
+	public static enum LanguageListenerPriority {
+		EARLIEST, NORMAL;
+	}
+	
+	private final static int[] priorityStartIndices = new int[LanguageListenerPriority.values().length];
 	
 	/**
-	 * Registers new default strings. Use this if you need to register some strings to Skript's locatization system, e.g. class names.
-	 * <p>
-	 * There's no method to register localized strings as they can simply be added to the respective language file.
-	 * @param m
+	 * Registers a listener. The listener will immediately be called if a language has already been loaded.
+	 * 
+	 * @param l
 	 */
-	public void addDefaults(Map<String, String> m) {
-		english.putAll(m);
-	}
-	
-	private final static Collection<LanguageChangeListener> listeners = new ArrayList<LanguageChangeListener>();
-	
-	public static interface LanguageChangeListener {
-		public void onLanguageChange();
-	}
-	
 	public static void addListener(final LanguageChangeListener l) {
-		listeners.add(l);
+		addListener(l, LanguageListenerPriority.NORMAL);
+	}
+	
+	static void addListener(final LanguageChangeListener l, final LanguageListenerPriority priority) {
+		assert priority != null;
+		listeners.add(priorityStartIndices[priority.ordinal()], l);
+		for (int i = priority.ordinal() + 1; i < LanguageListenerPriority.values().length; i++)
+			priorityStartIndices[i]++;
 		if (english != null)
 			l.onLanguageChange();
 	}
@@ -319,12 +279,37 @@ public class Language {
 //		listeners.remove(l);
 //	}
 	
+	// some general words - down here so that 'listeners' is initialized
+	public final static Message m_and = new Message("and");
+	public final static Message m_or = new Message("or");
+	
 	public static void setUseLocal(final boolean b) {
 		if (useLocal == b)
 			return;
 		useLocal = b;
 		for (final LanguageChangeListener l : listeners)
 			l.onLanguageChange();
+	}
+	
+	/**
+	 * @param s String with ¦ plural markers
+	 * @return (singular, plural)
+	 */
+	public static Pair<String, String> getPlural(final String s) {
+		final int c = s.indexOf("¦");
+		if (c == -1) // common
+			return new Pair<String, String>(s, s);
+		final int c2 = s.indexOf("¦", c + 1);
+		if (c2 == -1) { // common¦plural
+			return new Pair<String, String>(s.substring(0, c), s.substring(0, c) + s.substring(c + 1));
+		} else {
+			final int c3 = s.indexOf("¦", c2 + 1);
+			if (c3 == -1) { // common¦singular¦plural
+				return new Pair<String, String>(s.substring(0, c) + s.substring(c + 1, c2), s.substring(0, c) + s.substring(c2 + 1));
+			} else { // common¦singular¦plural¦common
+				return new Pair<String, String>(s.substring(0, c) + s.substring(c + 1, c2) + s.substring(c3 + 1), s.substring(0, c) + s.substring(c2 + 1, c3) + s.substring(c3 + 1));
+			}
+		}
 	}
 	
 }

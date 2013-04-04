@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,13 +25,22 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffectType;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is Poisoned")
+@Description("Checks whether an entity is poisoned.")
+@Examples({"player is poisoned:",
+		"	cure the player from posion",
+		"	message \"You have been cured!\""})
+@Since("1.4.4")
 public class CondIsPoisoned extends PropertyCondition<LivingEntity> {
-	
-	private static final long serialVersionUID = -6101877450207975485L;
 	
 	static {
 		register(CondIsPoisoned.class, "poisoned", "livingentities");

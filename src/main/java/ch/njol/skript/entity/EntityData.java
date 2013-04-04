@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -45,15 +45,16 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.localization.Noun;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes", "serial"})
 public abstract class EntityData<E extends Entity> implements SyntaxElement {
-	private static final long serialVersionUID = -6293365728916055466L;
 	
 	// must be here to be initialized before 'new SimpleLiteral' is called in the register block below
 	private static final List<EntityDataInfo<?>> infos = new ArrayList<EntityDataInfo<?>>();
@@ -86,10 +87,16 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	};
 	
 	static {
-		Classes.registerClass(new ClassInfo<EntityData>(EntityData.class, "entitydata", "entity type")
-				.user("entity ?types?", "entit(y|ies)")
+		Classes.registerClass(new ClassInfo<EntityData>(EntityData.class, "entitydata")
+				.user("entity ?types?")
+				.name("Entity Type")
+				.description("The type of an <a href='#entity'>entity</a>, e.g. player, wolf, powered creeper, etc.")
+				.usage("<i>Detailled usage will be added eventually</i>")
+				.examples("victim is a cow",
+						"spawn a creeper")
+				.since("1.3")
 				.defaultExpression(new SimpleLiteral<EntityData>(new SimpleEntityData(Entity.class), true))
-				.before("itemtype", "entitytype")
+				.before("entitytype")
 				.parser(new Parser<EntityData>() {
 					@Override
 					public String toString(final EntityData d) {
@@ -163,15 +170,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	 * @param s
 	 * @return
 	 */
-	public final static EntityData<?> parse(String s) {
-		final String lower = s.toLowerCase();
-		if (lower.startsWith("a "))
-			s = s.substring(2);
-		else if (lower.startsWith("an "))
-			s = s.substring(3);
-		else if (lower.startsWith("any "))
-			s = s.substring(4);
-		return SkriptParser.parseStatic(s, infos.iterator(), null);
+	public final static EntityData<?> parse(final String s) {
+		return SkriptParser.parseStatic(Noun.stripIndefiniteArticle(s), infos.iterator(), null);
 	}
 	
 	/**
@@ -180,7 +180,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	 * @param s
 	 * @return
 	 */
-	public final static EntityData<?> parseWithoutAnOrAny(final String s) {
+	public final static EntityData<?> parseWithoutIndefiniteArticle(final String s) {
 		return SkriptParser.parseStatic(s, infos.iterator(), null);
 	}
 	
@@ -191,7 +191,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 			set(e);
 			return e;
 		} catch (final IllegalArgumentException e) {
-			if (Skript.debug())
+			if (Skript.testing())
 				Skript.error("Can't spawn " + getType().getName());
 			return null;
 		}
@@ -209,15 +209,29 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	}
 	
 	/**
-	 * 
 	 * @param types
 	 * @param type
-	 * @param worlds world or null for all
+	 * @param worlds worlds or null for all
 	 * @return
 	 */
 	public final static <E extends Entity> E[] getAll(final EntityData<?>[] types, final Class<E> type, World[] worlds) {
-		if (worlds == null && type == Player.class)
-			return (E[]) Bukkit.getOnlinePlayers();
+		assert types.length > 0;
+		if (type == Player.class) {
+			if (worlds == null && types.length == 1 && types[0] instanceof PlayerData && ((PlayerData) types[0]).op == 0)
+				return (E[]) Bukkit.getOnlinePlayers();
+			final List<Player> list = new ArrayList<Player>();
+			for (final Player p : Bukkit.getOnlinePlayers()) {
+				if (worlds != null && !Utils.contains(worlds, p.getWorld()))
+					continue;
+				for (final EntityData<?> t : types) {
+					if (t.isInstance(p)) {
+						list.add(p);
+						break;
+					}
+				}
+			}
+			return (E[]) list.toArray(new Player[list.size()]);
+		}
 		final List<E> list = new ArrayList<E>();
 		if (worlds == null)
 			worlds = Bukkit.getWorlds().toArray(new World[0]);
@@ -234,7 +248,16 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 		return list.toArray((E[]) Array.newInstance(type, list.size()));
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static <E extends Entity> EntityData<? super E> fromClass(final Class<E> c) {
+		assert c != null;
+		if (!c.isInterface()) {
+			for (final Class<?> i : c.getInterfaces()) {
+				if (Entity.class.isAssignableFrom(i))
+					return fromClass((Class<E>) i);
+			}
+			return null;
+		}
 		for (final EntityDataInfo<?> info : infos) {
 			if (info.entityClass != Entity.class && info.entityClass.isAssignableFrom(c)) {
 				try {
@@ -261,9 +284,20 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public boolean isInstance(final Entity e) {
+	public final boolean isInstance(final Entity e) {
+		if (e == null)
+			return false;
 		return getType().isInstance(e) && match((E) e);
 	}
+	
+	@SuppressWarnings("unchecked")
+	public boolean isSupertypeOf(final EntityData<?> e) {
+		if (!this.getType().isAssignableFrom(e.getType()))
+			return false;
+		return isSupertypeOf_i((EntityData<? extends E>) e);
+	}
+	
+	protected abstract boolean isSupertypeOf_i(EntityData<? extends E> e);
 	
 	public abstract String serialize();
 	

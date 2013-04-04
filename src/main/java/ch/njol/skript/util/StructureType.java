@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -31,7 +31,8 @@ import org.bukkit.TreeType;
 import org.bukkit.block.Block;
 
 import ch.njol.skript.localization.Language;
-import ch.njol.skript.localization.Language.LanguageChangeListener;
+import ch.njol.skript.localization.LanguageChangeListener;
+import ch.njol.skript.localization.Noun;
 
 /**
  * @author Peter Güttinger
@@ -48,11 +49,12 @@ public enum StructureType {
 	MUSHROOM(TreeType.RED_MUSHROOM, TreeType.BROWN_MUSHROOM),
 	RED_MUSHROOM(TreeType.RED_MUSHROOM), BROWN_MUSHROOM(TreeType.BROWN_MUSHROOM), ;
 	
-	String name;
+	private Noun name;
 	private final TreeType[] types;
 	
 	private StructureType(final TreeType... types) {
 		this.types = types;
+		name = new Noun("tree types." + name() + ".name");
 	}
 	
 	public void grow(final Location loc) {
@@ -69,6 +71,10 @@ public enum StructureType {
 	
 	@Override
 	public String toString() {
+		return name.toString();
+	}
+	
+	public Noun getName() {
 		return name;
 	}
 	
@@ -93,9 +99,8 @@ public enum StructureType {
 	public static StructureType fromName(String s) {
 		if (parseMap.isEmpty()) {
 			for (final StructureType t : values()) {
-				t.name = Language.get("treetypes." + t.name() + ".name");
-				final String pattern = Language.get("treetypes." + t.name() + ".pattern");
-				parseMap.put(Pattern.compile(pattern.toLowerCase()), t);
+				final String pattern = Language.get("tree types." + t.name() + ".pattern");
+				parseMap.put(Pattern.compile(pattern, Pattern.CASE_INSENSITIVE), t);
 			}
 		}
 		s = s.toLowerCase();

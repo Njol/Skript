@@ -15,46 +15,51 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.conditions;
 
-import org.bukkit.event.Event;
+import org.bukkit.inventory.Inventory;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.lang.Condition;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.Kleenean;
+import ch.njol.skript.conditions.base.PropertyCondition;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
+import ch.njol.skript.util.Slot;
 
 /**
  * @author Peter Güttinger
- * 
  */
-public class CondIsEmpty extends Condition {
+@SuppressWarnings("serial")
+@Name("Is Empty")
+@Description("Checks whether an inventory, an inventory slot, or a text is empty.")
+@Examples("player's inventory is empty")
+@Since("")
+public class CondIsEmpty extends PropertyCondition<Object> {
 	
 	static {
-		Skript.registerCondition(CondIsEmpty.class, "%objects% is empty");
+		register(CondIsEmpty.class, "empty", "inventories/slots/strings");
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		// TODO Auto-generated method stub
+	public boolean check(final Object o) {
+		if (o instanceof String)
+			return ((String) o).isEmpty();
+		if (o instanceof Inventory)
+			return !((Inventory) o).iterator().hasNext();
+		if (o instanceof Slot) {
+			final Slot s = (Slot) o;
+			return s.getItem() == null || s.getItem().getTypeId() == 0;
+		}
 		return false;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	@Override
-	public boolean check(final Event e) {
-		// TODO Auto-generated method stub
-		return false;
+	protected String getPropertyName() {
+		return "empty";
 	}
 	
 }

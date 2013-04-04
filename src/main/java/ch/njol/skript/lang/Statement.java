@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -32,8 +32,8 @@ import ch.njol.skript.Skript;
  * @see Condition
  * @see Effect
  */
+@SuppressWarnings("serial")
 public abstract class Statement extends TriggerItem implements SyntaxElement {
-	private static final long serialVersionUID = 8814775079484841441L;
 	
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static Statement parse(final String s, final String defaultError) {

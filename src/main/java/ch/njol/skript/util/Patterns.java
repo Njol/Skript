@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -37,7 +37,6 @@ public class Patterns<T> {
 	private final Object[] ts;
 	
 	/**
-	 * 
 	 * @param info An array which must be like {{String, T}, {String, T}, ...}
 	 */
 	public Patterns(final Object[][] info) {
@@ -56,7 +55,6 @@ public class Patterns<T> {
 	}
 	
 	/**
-	 * 
 	 * @param matchedPattern The pattern to get the data to as given in {@link SyntaxElement#init(Expression[], int, Kleenean, ParseResult)}
 	 * @return
 	 * @throws ClassCastException If the item in the source array is not of the requested type

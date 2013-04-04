@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,20 +29,40 @@ import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
- * 
  */
+@SuppressWarnings("serial")
+@Name("Direction")
+@Description("A helper expression for the <a href='../classes/#direction'>direction type</a>.")
+@Examples({"thrust the player upwards",
+		"set the block behind the player to water",
+		"loop blocks above the player:",
+		"	set {_rand} to a random integer between 1 and 10",
+		"	set the block {_rand} meters south east of the loop-block to stone",
+		"block in horizontal facing of the clicked entity from the player is air",
+		"spawn a creeper 1.5 meters horizontally behind the player",
+		"spawn a TNT 5 meters above and 2 meters horizontally behind the player",
+		"thrust the last spawned TNT in the horizontal direction of the player with speed 0.2",
+		"push the player upwards and horizontally forward at speed 0.5",
+		"push the clicked entity in in the direction of the player at speed -0.5",
+		"open the inventory of the block 2 blocks below the player to the player",
+		"teleport the clicked entity behind the player",
+		"grow a regular tree 2 meters horizontally behind the player"})
+@Since("1.0 (basic), 2.0 (extended)")
 public class ExprDirection extends SimpleExpression<Direction> {
-	private static final long serialVersionUID = -2703003572226455590L;
-	
 	static {
 		// TODO think about parsing statically & dynamically (also in general)
 		// "at": see LitAt
@@ -54,7 +74,9 @@ public class ExprDirection extends SimpleExpression<Direction> {
 						"|0¦above|0¦over|(0¦up|1¦down)[ward(s|ly|)]|1¦below|1¦under[neath]|1¦beneath" +
 						") [%-direction%]",
 				"[%-number% [(block|meter)[s]]] in [the] (0¦direction|1¦horizontal direction|2¦facing|3¦horizontal facing) of %entity/block% (of|from|)",
-				"[%-number% [(block|meter)[s]]] (0¦in[ ]front [of]|0¦forward[s]|2¦behind|2¦backwards|to the (1¦right|-1¦left) [of])");
+				"[%-number% [(block|meter)[s]]] in %entity/block%'[s] (0¦direction|1¦horizontal direction|2¦facing|3¦horizontal facing) (of|from|)",
+				"[%-number% [(block|meter)[s]]] (0¦in[ ]front [of]|0¦forward[s]|2¦behind|2¦backwards|[to the] (1¦right|-1¦left) [of])",
+				"[%-number% [(block|meter)[s]]] horizontal[ly] (0¦in[ ]front [of]|0¦forward[s]|2¦behind|2¦backwards|to the (1¦right|-1¦left) [of])");
 	}
 	
 	private final static BlockFace[] byMark = new BlockFace[] {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST,
@@ -63,6 +85,7 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	private Expression<Number> amount;
 	
 	private Vector direction;
+	private ExprDirection next;
 	
 	private Expression<?> relativeTo;
 	boolean horizontal;
@@ -80,16 +103,19 @@ public class ExprDirection extends SimpleExpression<Direction> {
 				if (exprs[1] != null) {
 					if (!(exprs[1] instanceof ExprDirection) || ((ExprDirection) exprs[1]).direction == null)
 						return false;
-					direction.add(((ExprDirection) exprs[1]).direction);
+					next = (ExprDirection) exprs[1];
 				}
 				break;
 			case 1:
+			case 2:
 				relativeTo = exprs[1];
 				horizontal = parseResult.mark % 2 != 0;
 				facing = parseResult.mark >= 2;
 				break;
-			case 2:
+			case 3:
+			case 4:
 				yaw = Math.PI / 2 * parseResult.mark;
+				horizontal = matchedPattern == 4;
 		}
 		return true;
 	}
@@ -99,8 +125,18 @@ public class ExprDirection extends SimpleExpression<Direction> {
 		final Number n = amount == null ? 1 : amount.getSingle(e);
 		if (n == null)
 			return null;
+		final double ln = n.doubleValue();
 		if (direction != null) {
-			return new Direction[] {new Direction(direction.clone().multiply(n.doubleValue()))};
+			final Vector v = direction.clone().multiply(ln);
+			ExprDirection d = next;
+			while (d != null) {
+				final Number n2 = d.amount == null ? 1 : d.amount.getSingle(e);
+				if (n2 == null)
+					return null;
+				v.add(d.direction.clone().multiply(n2.doubleValue()));
+				d = d.next;
+			}
+			return new Direction[] {new Direction(v)};
 		} else if (relativeTo != null) {
 			final Object o = relativeTo.getSingle(e);
 			if (o == null)
@@ -109,33 +145,35 @@ public class ExprDirection extends SimpleExpression<Direction> {
 				final BlockFace f = Direction.getFacing((Block) o);
 				if (f == BlockFace.SELF || horizontal && (f == BlockFace.UP || f == BlockFace.DOWN))
 					return new Direction[] {Direction.ZERO};
-				return new Direction[] {new Direction(f)};
+				return new Direction[] {new Direction(f, ln)};
 			} else {
 				final Location l = ((Entity) o).getLocation();
-				if (!horizontal && !facing)
-					return new Direction[] {new Direction(l.getDirection())};
-				final double yaw = Direction.yawToRadians(l.getYaw());
-				if (horizontal && !facing) {
-					return new Direction[] {new Direction(Math.cos(yaw), 0, Math.sin(yaw))};
+				if (!horizontal) {
+					if (!facing)
+						return new Direction[] {new Direction(l.getDirection().normalize().multiply(ln))};
+					final double pitch = Direction.pitchToRadians(l.getPitch());
+					assert pitch >= -Math.PI / 2 && pitch <= Math.PI / 2;
+					if (pitch > Math.PI / 4)
+						return new Direction[] {new Direction(new double[] {0, ln, 0})};
+					if (pitch < -Math.PI / 4)
+						return new Direction[] {new Direction(new double[] {0, -ln, 0})};
 				}
-				final double pitch = Direction.pitchToRadians(l.getPitch());
-				assert yaw >= -Math.PI && yaw <= Math.PI;
-				assert pitch > -Math.PI / 2 && pitch < Math.PI / 2;
-				if (!horizontal && pitch > Math.PI / 4)
-					return new Direction[] {new Direction(0, 1, 0)};
-				if (!horizontal && pitch < -Math.PI / 4)
-					return new Direction[] {new Direction(0, -1, 0)};
-				if (yaw > -Math.PI / 4 && yaw < Math.PI / 4)
-					return new Direction[] {new Direction(1, 0, 0)};
+				double yaw = Direction.yawToRadians(l.getYaw());
+				if (horizontal && !facing) {
+					return new Direction[] {new Direction(new double[] {Math.cos(yaw) * ln, 0, Math.sin(yaw) * ln})};
+				}
+				yaw = Math2.mod(yaw, 2 * Math.PI);
 				if (yaw >= Math.PI / 4 && yaw < 3 * Math.PI / 4)
-					return new Direction[] {new Direction(0, 0, 1)};
-				if (yaw <= -Math.PI / 4 && yaw > -3 * Math.PI / 4)
-					return new Direction[] {new Direction(0, 0, -1)};
-				assert yaw >= 3 * Math.PI / 4 && yaw <= -3 * Math.PI / 4;
-				return new Direction[] {new Direction(-1, 0, 0)};
+					return new Direction[] {new Direction(new double[] {0, 0, ln})};
+				if (yaw >= 3 * Math.PI / 4 && yaw < 5 * Math.PI / 4)
+					return new Direction[] {new Direction(new double[] {-ln, 0, 0})};
+				if (yaw >= 5 * Math.PI / 4 && yaw < 7 * Math.PI / 4)
+					return new Direction[] {new Direction(new double[] {0, 0, -ln})};
+				assert yaw >= 0 && yaw < Math.PI / 4 || yaw >= 7 * Math.PI / 4 && yaw < 2 * Math.PI;
+				return new Direction[] {new Direction(new double[] {ln, 0, 0})};
 			}
 		} else {
-			return new Direction[] {new Direction(0, yaw, n.doubleValue())};
+			return new Direction[] {new Direction(horizontal ? Direction.IGNORE_PITCH : 0, yaw, ln)};
 		}
 	}
 	
@@ -156,10 +194,9 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return (amount == null ? "" : amount.toString(e, debug) + " ") + (direction != null ?
-				Direction.toString(direction) : relativeTo != null ?
-						" in " + (horizontal ? "horizontal " : "") + (facing ? "facing" : "direction") + " of " + relativeTo.toString(e, debug) :
-						Direction.toString(0, yaw, 1));
+		return (amount == null ? "" : amount.toString(e, debug) + " meter(s) ") + (direction != null ? Direction.toString(direction) :
+				relativeTo != null ? " in " + (horizontal ? "horizontal " : "") + (facing ? "facing" : "direction") + " of " + relativeTo.toString(e, debug) :
+						(horizontal ? "horizontally " : "") + Direction.toString(0, yaw, 1));
 	}
 	
 }

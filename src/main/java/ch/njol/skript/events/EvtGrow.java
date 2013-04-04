@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -33,13 +33,15 @@ import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
- * 
  */
+@SuppressWarnings("serial")
 public class EvtGrow extends SkriptEvent {
-	private static final long serialVersionUID = 964391392827257502L;
 	
 	static {
-		Skript.registerEvent(EvtGrow.class, StructureGrowEvent.class, "grow [of %-structuretype%]");
+		Skript.registerEvent("Grow", EvtGrow.class, StructureGrowEvent.class, "grow [of %-structuretype%]")
+				.description("Called when a tree or giant mushroom grows to full size.")
+				.examples("on grow", "on grow of a tree", "on grow of a huge jungle tree")
+				.since("1.0");
 	}
 	
 	private Literal<StructureType> types;

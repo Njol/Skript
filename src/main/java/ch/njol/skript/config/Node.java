@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -118,7 +118,7 @@ public abstract class Node {
 	}
 	
 	protected String getComment() {
-		final Matcher m = Pattern.compile("\\s*(?<!#)#[^#].*$").matcher(getOrig());
+		final Matcher m = Pattern.compile("\\s*(?<!#)#(?!#).*$").matcher(getOrig());
 		if (!m.find())
 			return "";
 		return m.group();

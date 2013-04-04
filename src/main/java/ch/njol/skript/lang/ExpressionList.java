@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,10 +29,12 @@ import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
@@ -42,8 +44,8 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class ExpressionList<T> implements Expression<T> {
-	private static final long serialVersionUID = -9121024064780836522L;
 	
 	protected final Expression<? extends T>[] expressions;
 	protected final boolean and;
@@ -51,19 +53,15 @@ public class ExpressionList<T> implements Expression<T> {
 	private final Class<T> returnType;
 	private ExpressionList<?> source;
 	
-	public ExpressionList(final Expression<? extends T>[] expressions, final boolean and) {
-		this(expressions, and, null);
+	public ExpressionList(final Expression<? extends T>[] expressions, final Class<T> returnType, final boolean and) {
+		this(expressions, returnType, and, null);
 	}
 	
-	protected ExpressionList(final Expression<? extends T>[] expressions, final boolean and, final ExpressionList<?> source) {
+	protected ExpressionList(final Expression<? extends T>[] expressions, final Class<T> returnType, final boolean and, final ExpressionList<?> source) {
 		assert expressions != null && expressions.length > 1;
 		this.expressions = expressions;
-		this.and = and;
-		final Class<?>[] cs = new Class[expressions.length];
-		for (int i = 0; i < cs.length; i++)
-			cs[i] = expressions[i].getReturnType();
-		final Class<T> returnType = (Class<T>) Utils.getSuperType(cs);
 		this.returnType = returnType;
+		this.and = and;
 		if (and) {
 			single = false;
 		} else {
@@ -162,8 +160,8 @@ public class ExpressionList<T> implements Expression<T> {
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super T> c, final boolean negated) {
-		for (Expression<? extends T> expr : expressions) {
-			Boolean b = expr.check(e, c, negated);
+		for (final Expression<? extends T> expr : expressions) {
+			final Boolean b = expr.check(e, c, negated);
 			if (and && !b)
 				return false;
 			if (!and && b)
@@ -174,8 +172,8 @@ public class ExpressionList<T> implements Expression<T> {
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super T> c) {
-		for (Expression<? extends T> expr : expressions) {
-			Boolean b = expr.check(e, c);
+		for (final Expression<? extends T> expr : expressions) {
+			final Boolean b = expr.check(e, c);
 			if (and && !b)
 				return false;
 			if (!and && b)
@@ -191,7 +189,7 @@ public class ExpressionList<T> implements Expression<T> {
 		for (int i = 0; i < exprs.length; i++)
 			if ((exprs[i] = expressions[i].getConvertedExpression(to)) == null)
 				return null;
-		return new ExpressionList<R>(exprs, and, this);
+		return new ExpressionList<R>(exprs, to, and, this);
 	}
 	
 	@Override
@@ -204,24 +202,36 @@ public class ExpressionList<T> implements Expression<T> {
 		return and;
 	}
 	
+	private ClassInfo<? super T> returnTypeInfo;
+	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		return null; // TODO change?
+		if (returnTypeInfo == null)
+			returnTypeInfo = Classes.getSuperClassInfo(getReturnType());
+		return returnTypeInfo.getChanger() == null ? null : returnTypeInfo.getChanger().acceptChange(mode);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		throw new UnsupportedOperationException();
+		((Changer<T, Object>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
 	}
+	
+	private int time = 0;
 	
 	@Override
 	public boolean setTime(final int time) {
-		return false; // TODO change?
+		boolean ok = false;
+		for (final Expression<?> e : expressions) {
+			ok |= e.setTime(time);
+		}
+		if (ok)
+			this.time = time;
+		return ok;
 	}
 	
 	@Override
 	public int getTime() {
-		return 0;
+		return time;
 	}
 	
 	@Override
@@ -265,7 +275,7 @@ public class ExpressionList<T> implements Expression<T> {
 	public Expression<? extends T>[] getExpressions() {
 		return expressions;
 	}
-
+	
 	@Override
 	public Expression<T> simplify() {
 		boolean isLiteralList = true;
@@ -276,13 +286,13 @@ public class ExpressionList<T> implements Expression<T> {
 			isSimpleList &= expressions[i].isSingle();
 		}
 		if (isLiteralList && isSimpleList) {
-			T[] values = (T[]) Array.newInstance(returnType, expressions.length);
+			final T[] values = (T[]) Array.newInstance(returnType, expressions.length);
 			for (int i = 0; i < values.length; i++)
 				values[i] = ((Literal<? extends T>) expressions[i]).getSingle();
 			return new SimpleLiteral<T>(values, returnType, and);
 		}
 		if (isLiteralList)
-			return new LiteralList<T>(Arrays.copyOf(expressions, expressions.length, Literal[].class), and);
+			return new LiteralList<T>(Arrays.copyOf(expressions, expressions.length, Literal[].class), returnType, and);
 		return this;
 	}
 	

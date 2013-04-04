@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,14 +25,12 @@ import org.bukkit.event.Event;
 
 /**
  * @author Peter Güttinger
- * 
  */
+@SuppressWarnings("serial")
 public abstract class SelfRegisteringSkriptEvent extends SkriptEvent {
 	
-	private static final long serialVersionUID = -7298240404614782607L;
-	
 	/**
-	 * This method is called after the whole trigger is loaded for events that fire themselves. THis is also called when the script is deserialized.
+	 * This method is called after the whole trigger is loaded for events that fire themselves. This is also called when the script is deserialized.
 	 * 
 	 * @param t the trigger to register to this event
 	 */

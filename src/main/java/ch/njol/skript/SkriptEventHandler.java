@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -32,6 +32,7 @@ import org.bukkit.event.Event.Result;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.EventExecutor;
 
 import ch.njol.skript.lang.Trigger;
@@ -54,8 +55,6 @@ public abstract class SkriptEventHandler {
 	private static Event last = null;
 	
 	static void check(final Event e) {
-		if (!Skript.listenerEnabled)
-			return;
 		if (last == e)
 			return;
 		last = e;
@@ -78,7 +77,8 @@ public abstract class SkriptEventHandler {
 		logEventStart(e);
 		
 		if (e instanceof Cancellable && ((Cancellable) e).isCancelled() &&
-				!(e instanceof PlayerInteractEvent && (((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_AIR) && ((PlayerInteractEvent) e).useItemInHand() != Result.DENY)) {
+				!(e instanceof PlayerInteractEvent && (((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_AIR) && ((PlayerInteractEvent) e).useItemInHand() != Result.DENY)
+				|| e instanceof ServerCommandEvent && (((ServerCommandEvent) e).getCommand() == null || ((ServerCommandEvent) e).getCommand().isEmpty())) {
 			if (Skript.logVeryHigh())
 				Skript.info(" -x- was cancelled");
 			return;
@@ -88,12 +88,9 @@ public abstract class SkriptEventHandler {
 			if (!t.getEvent().check(e))
 				continue;
 			logTriggerStart(t);
-			t.start(e);
+			t.execute(e);
 			logTriggerEnd(t);
 		}
-		
-		// in case it got forgotten somewhere (you must not rely on this, as you will disable Skript's listener for all events triggered by any effects/conditions following yours!)
-		Skript.enableListener();
 		
 		logEventEnd();
 	}

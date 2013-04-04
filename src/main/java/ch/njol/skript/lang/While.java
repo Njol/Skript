@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,8 +28,8 @@ import ch.njol.skript.config.SectionNode;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class While extends TriggerSection {
-	private static final long serialVersionUID = 7418569480021905083L;
 	
 	private final Condition c;
 	

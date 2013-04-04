@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,19 +27,25 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
 import ch.njol.util.Kleenean;
 
 /**
- * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Broadcast")
+@Description("Broadcasts a message to the server.")
+@Examples({"broadcast \"Welcome %player% to the server!\"",
+		"broadcast \"Woah! It's a message!\""})
+@Since("1.0")
 public class EffBroadcast extends Effect {
-	
-	private static final long serialVersionUID = -4691934406392042247L;
 	
 	static {
 		Skript.registerEffect(EffBroadcast.class, "broadcast %strings% [(to|in) %-worlds%]");
@@ -58,8 +64,8 @@ public class EffBroadcast extends Effect {
 	
 	@Override
 	public void execute(final Event e) {
-		for (String m : messages.getArray(e)) {
-			m = StringUtils.fixCapitalization(m);
+		for (final String m : messages.getArray(e)) {
+//			m = StringUtils.fixCapitalization(m);
 			if (worlds == null) {
 				Bukkit.broadcastMessage(m);
 			} else {

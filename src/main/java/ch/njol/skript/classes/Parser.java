@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -29,7 +29,6 @@ import ch.njol.skript.util.StringMode;
  * A parser used to parse data from a string or turn data into a string.
  * 
  * @author Peter Güttinger
- * 
  * @param <T> the type of this parser
  * @see Classes#registerClass(ClassInfo)
  * @see ClassInfo
@@ -39,6 +38,8 @@ public abstract class Parser<T> {
 	
 	/**
 	 * Parses the input. This method may print an error prior to returning null if the input couldn't be parsed.
+	 * <p>
+	 * Remember to override {@link #canParse(ParseContext)} if this parser doesn't parse at all (i.e. you only use it's toString methods) or only parses for certain contexts.
 	 * 
 	 * @param s The String to parse. This string is already trim()med.
 	 * @param context Context of parsing, may not be null

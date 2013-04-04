@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -32,8 +32,8 @@ import ch.njol.skript.config.SectionNode;
  * @see TriggerSection
  * @see Condition
  */
+@SuppressWarnings("serial")
 public class Conditional extends TriggerSection {
-	private static final long serialVersionUID = -4697142217876371099L;
 	
 	private final Condition cond;
 	
@@ -62,9 +62,12 @@ public class Conditional extends TriggerSection {
 	}
 	
 	public void loadElseClause(final SectionNode node) {
+		assert elseClause == null || elseClause instanceof Conditional;
+		if (elseClause != null) {
+			((Conditional) elseClause).loadElseClause(node);
+			return;
+		}
 		elseClause = new TriggerSection(node) {
-			private static final long serialVersionUID = -7199203950275667534L;
-			
 			@Override
 			public TriggerItem walk(final Event e) {
 				return walk(e, true);
@@ -77,6 +80,21 @@ public class Conditional extends TriggerSection {
 		};
 		elseClause.setParent(getParent());
 		elseClause.setNext(getNext());
+	}
+	
+	public void loadElseIf(final Condition cond, final SectionNode n) {
+		assert elseClause == null || elseClause instanceof Conditional;
+		if (elseClause != null) {
+			((Conditional) elseClause).loadElseIf(cond, n);
+			return;
+		}
+		elseClause = new Conditional(cond, n);
+		elseClause.setParent(getParent());
+		elseClause.setNext(getNext());
+	}
+	
+	public boolean hasElseClause() {
+		return elseClause != null && !(elseClause instanceof Conditional);
 	}
 	
 	@Override

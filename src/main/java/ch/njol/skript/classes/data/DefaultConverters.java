@@ -15,98 +15,70 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.classes.data;
 
+import java.util.HashMap;
+
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.command.CommandSender;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Boat;
+import org.bukkit.entity.Egg;
+import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Fish;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.ItemFrame;
+import org.bukkit.entity.Minecart;
+import org.bukkit.entity.Painting;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.PoweredMinecart;
+import org.bukkit.entity.Snowball;
+import org.bukkit.entity.StorageMinecart;
+import org.bukkit.entity.TNTPrimed;
+import org.bukkit.entity.ThrownExpBottle;
+import org.bukkit.entity.ThrownPotion;
+import org.bukkit.entity.WitherSkull;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
+import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Converter.ConverterOptions;
 import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.entity.EntityType;
+import ch.njol.skript.entity.XpOrbData;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.BlockUtils;
-import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.EnchantmentType;
+import ch.njol.skript.util.Experience;
+import ch.njol.skript.util.PotionEffectUtils;
 import ch.njol.skript.util.Slot;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes", "serial"})
 public class DefaultConverters {
 	
 	public DefaultConverters() {}
 	
 	static {
 		
-		//Numbers
-//		Skript.registerConverter(Number.class, Double.class, new SerializableConverter<Number, Double>() {
-//			private static final long serialVersionUID = 961604740292695669L;
-//			
-//			@Override
-//			public Double convert(final Number n) {
-//				return n.doubleValue();
-//			}
-//		});
-//		Skript.registerConverter(Number.class, Float.class, new SerializableConverter<Number, Float>() {
-//			private static final long serialVersionUID = -3957430418305715186L;
-//			
-//			@Override
-//			public Float convert(final Number n) {
-//				return n.floatValue();
-//			}
-//		});
-//		Skript.registerConverter(Integer.class, Long.class, new SerializableConverter<Integer, Long>() {
-//			private static final long serialVersionUID = -2281206164098922538L;
-//			
-//			@Override
-//			public Long convert(final Integer i) {
-//				return i.longValue();
-//			}
-//		});
-//		Skript.registerConverter(Short.class, Long.class, new SerializableConverter<Short, Long>() {
-//			private static final long serialVersionUID = -2281206164098922538L;
-//			
-//			@Override
-//			public Long convert(final Short s) {
-//				return Long.valueOf(s.longValue());
-//			}
-//		});
-//		Skript.registerConverter(Byte.class, Long.class, new SerializableConverter<Byte, Long>() {
-//			private static final long serialVersionUID = -3514663025279567196L;
-//			
-//			@Override
-//			public Long convert(final Byte b) {
-//				return Long.valueOf(b.longValue());
-//			}
-//		});
-//		Skript.registerConverter(Byte.class, Short.class, new SerializableConverter<Byte, Short>() {
-//			private static final long serialVersionUID = -3715377159539354118L;
-//			
-//			@Override
-//			public Short convert(final Byte b) {
-//				return Short.valueOf(b.shortValue());
-//			}
-//		});
-		
 		// OfflinePlayer - PlayerInventory
 		Converters.registerConverter(OfflinePlayer.class, PlayerInventory.class, new SerializableConverter<OfflinePlayer, PlayerInventory>() {
-			private static final long serialVersionUID = 1406259567778884904L;
-			
 			@Override
 			public PlayerInventory convert(final OfflinePlayer p) {
 				if (!p.isOnline())
@@ -116,18 +88,15 @@ public class DefaultConverters {
 		});
 		// OfflinePlayer - Player
 		Converters.registerConverter(OfflinePlayer.class, Player.class, new SerializableConverter<OfflinePlayer, Player>() {
-			private static final long serialVersionUID = 1784932642233241204L;
-			
 			@Override
 			public Player convert(final OfflinePlayer p) {
 				return p.getPlayer();
 			}
 		});
 		
+		// TODO improve handling of interfaces
 		// CommandSender - Player
 		Converters.registerConverter(CommandSender.class, Player.class, new SerializableConverter<CommandSender, Player>() {
-			private static final long serialVersionUID = -1461407582063991942L;
-			
 			@Override
 			public Player convert(final CommandSender s) {
 				if (s instanceof Player)
@@ -136,10 +105,7 @@ public class DefaultConverters {
 			}
 		});
 		// Entity - Player
-		// TODO improve handling of interfaces
 		Converters.registerConverter(Entity.class, Player.class, new SerializableConverter<Entity, Player>() {
-			private static final long serialVersionUID = 6892053559153452238L;
-			
 			@Override
 			public Player convert(final Entity e) {
 				if (e instanceof Player)
@@ -150,8 +116,6 @@ public class DefaultConverters {
 		
 		// Block - Inventory
 		Converters.registerConverter(Block.class, Inventory.class, new SerializableConverter<Block, Inventory>() {
-			private static final long serialVersionUID = -720656618540060571L;
-			
 			@Override
 			public Inventory convert(final Block b) {
 				if (b.getState() instanceof InventoryHolder)
@@ -162,8 +126,6 @@ public class DefaultConverters {
 		
 		// Block - ItemStack
 		Converters.registerConverter(Block.class, ItemStack.class, new SerializableConverter<Block, ItemStack>() {
-			private static final long serialVersionUID = 1919746367202352251L;
-			
 			@Override
 			public ItemStack convert(final Block b) {
 				return new ItemStack(b.getTypeId(), 1, b.getData());
@@ -172,16 +134,12 @@ public class DefaultConverters {
 		
 		// Location - Block
 		Converters.registerConverter(Location.class, Block.class, new SerializableConverter<Location, Block>() {
-			private static final long serialVersionUID = -5292388902665009733L;
-			
 			@Override
 			public Block convert(final Location l) {
 				return l.getBlock();
 			}
 		});
 		Converters.registerConverter(Block.class, Location.class, new SerializableConverter<Block, Location>() {
-			private static final long serialVersionUID = -8082270387051361765L;
-			
 			@Override
 			public Location convert(final Block b) {
 				return BlockUtils.getLocation(b);
@@ -190,19 +148,13 @@ public class DefaultConverters {
 		
 		// Entity - Location
 		Converters.registerConverter(Entity.class, Location.class, new SerializableConverter<Entity, Location>() {
-			private static final long serialVersionUID = 4290287600480149382L;
-			
 			@Override
 			public Location convert(final Entity e) {
-				if (e == null)
-					return null;
 				return e.getLocation();
 			}
 		});
 		// Entity - EntityData
 		Converters.registerConverter(Entity.class, EntityData.class, new SerializableConverter<Entity, EntityData>() {
-			private static final long serialVersionUID = -4840228378205738178L;
-			
 			@Override
 			public EntityData convert(final Entity e) {
 				return EntityData.fromEntity(e);
@@ -210,8 +162,6 @@ public class DefaultConverters {
 		});
 		// EntityData - EntityType
 		Converters.registerConverter(EntityData.class, EntityType.class, new SerializableConverter<EntityData, EntityType>() {
-			private static final long serialVersionUID = -8509228303455103889L;
-			
 			@Override
 			public EntityType convert(final EntityData data) {
 				return new EntityType(data, -1);
@@ -231,33 +181,76 @@ public class DefaultConverters {
 //		});
 		
 		// ItemType - ItemStack
-//		Skript.addSerializableConverter(ItemType.class, ItemStack.class, new SerializableConverter<ItemType, ItemStack>() {
-//			@Override
-//			public ItemStack convert(final ItemType i) {
-//				if (i == null)
-//					return null;
-//				return i.getRandom();
-//			}
-//		});
+		Converters.registerConverter(ItemType.class, ItemStack.class, new SerializableConverter<ItemType, ItemStack>() {
+			@Override
+			public ItemStack convert(final ItemType i) {
+				return i.getRandom();
+			}
+		});
 		Converters.registerConverter(ItemStack.class, ItemType.class, new SerializableConverter<ItemStack, ItemType>() {
-			private static final long serialVersionUID = -5693219418938859295L;
-			
 			@Override
 			public ItemType convert(final ItemStack i) {
-				if (i == null)
-					return null;
 				return new ItemType(i);
+			}
+		});
+		
+		// to fix comparisions of eggs, arrows, etc. (e.g. 'projectile is an arrow'), but also allows to add these entities to inventories as items
+		// TODO !Update with every version [entities]
+		final HashMap<Class<? extends Entity>, Material> entityMaterials = new HashMap<Class<? extends Entity>, Material>();
+		entityMaterials.put(Boat.class, Material.BOAT);
+		entityMaterials.put(StorageMinecart.class, Material.STORAGE_MINECART);
+		entityMaterials.put(PoweredMinecart.class, Material.POWERED_MINECART);
+		entityMaterials.put(Minecart.class, Material.MINECART);
+		entityMaterials.put(Painting.class, Material.PAINTING);
+		entityMaterials.put(Arrow.class, Material.ARROW);
+		entityMaterials.put(Egg.class, Material.EGG);
+		entityMaterials.put(EnderPearl.class, Material.ENDER_PEARL);
+		entityMaterials.put(Snowball.class, Material.SNOW_BALL);
+		entityMaterials.put(ThrownExpBottle.class, Material.EXP_BOTTLE);
+		entityMaterials.put(Fish.class, Material.RAW_FISH);
+		entityMaterials.put(TNTPrimed.class, Material.TNT);
+		if (Skript.isRunningMinecraft(1, 4))
+			entityMaterials.put(ItemFrame.class, Material.ITEM_FRAME);
+//		if (Skript.isRunningMinecraft(1, 5)) {
+//			entityMaterials.put(HopperMinecart.class, Material.HOPPER_MINECART);
+//			entityMaterials.put(TntMinecart.class, Material.TNT_MINECART);
+//		}
+		Converters.registerConverter(Entity.class, ItemStack.class, new SerializableConverter<Entity, ItemStack>() {
+			@Override
+			public ItemStack convert(final Entity e) {
+				for (final Class<?> i : e.getClass().getInterfaces()) {
+					final Material m = entityMaterials.get(i);
+					if (m != null)
+						return new ItemStack(m);
+				}
+				if (e instanceof Item)
+					return ((Item) e).getItemStack();
+				if (e instanceof ThrownPotion)
+					return new ItemStack(Material.POTION, 1, PotionEffectUtils.guessData((ThrownPotion) e));
+				if (Skript.isRunningMinecraft(1, 4) && e instanceof WitherSkull)
+					return new ItemStack(Material.SKULL_ITEM, 1, (short) 1);
+				return null;
+			}
+		});
+		
+		// Experience - XpOrbData
+		Converters.registerConverter(Experience.class, XpOrbData.class, new SerializableConverter<Experience, XpOrbData>() {
+			@Override
+			public XpOrbData convert(final Experience e) {
+				return new XpOrbData(e.getXP());
+			}
+		});
+		Converters.registerConverter(XpOrbData.class, Experience.class, new SerializableConverter<XpOrbData, Experience>() {
+			@Override
+			public Experience convert(final XpOrbData e) {
+				return new Experience(e.getExperience());
 			}
 		});
 		
 		// Slot - ItemStack
 		Converters.registerConverter(Slot.class, ItemStack.class, new SerializableConverter<Slot, ItemStack>() {
-			private static final long serialVersionUID = -8985272066421244801L;
-			
 			@Override
 			public ItemStack convert(final Slot s) {
-				if (s == null)
-					return null;
 				final ItemStack i = s.getItem();
 				if (i == null)
 					return new ItemStack(0, 1);
@@ -274,25 +267,11 @@ public class DefaultConverters {
 //			}
 //		});
 		
-		// Item - ItemStack
-		Converters.registerConverter(Item.class, ItemStack.class, new SerializableConverter<Item, ItemStack>() {
-			private static final long serialVersionUID = 7259092571473789525L;
-			
+		// OfflinePlayer - Player
+		Converters.registerConverter(OfflinePlayer.class, Player.class, new SerializableConverter<OfflinePlayer, Player>() {
 			@Override
-			public ItemStack convert(final Item i) {
-				if (i == null)
-					return null;
-				return i.getItemStack();
-			}
-		});
-		
-		// OfflinePlayer - InventoryHolder
-		Converters.registerConverter(OfflinePlayer.class, InventoryHolder.class, new SerializableConverter<OfflinePlayer, InventoryHolder>() {
-			private static final long serialVersionUID = 767824297432714799L;
-			
-			@Override
-			public InventoryHolder convert(final OfflinePlayer p) {
-				if (p == null || !p.isOnline())
+			public Player convert(final OfflinePlayer p) {
+				if (!p.isOnline())
 					return null;
 				return p.getPlayer();
 			}
@@ -300,11 +279,9 @@ public class DefaultConverters {
 		
 		// Block - InventoryHolder
 		Converters.registerConverter(Block.class, InventoryHolder.class, new SerializableConverter<Block, InventoryHolder>() {
-			private static final long serialVersionUID = -9025690640371588378L;
-			
 			@Override
 			public InventoryHolder convert(final Block b) {
-				if (b == null || b.getState() == null)
+				if (b.getState() == null)
 					return null;
 				final BlockState s = b.getState();
 				if (s instanceof InventoryHolder)
@@ -332,6 +309,14 @@ public class DefaultConverters {
 //				return new Time((int) w.getTime());
 //			}
 //		});
+		
+		// Enchantment - EnchantmentType
+		Converters.registerConverter(Enchantment.class, EnchantmentType.class, new SerializableConverter<Enchantment, EnchantmentType>() {
+			@Override
+			public EnchantmentType convert(final Enchantment e) {
+				return new EnchantmentType(e, -1);
+			}
+		});
 		
 	}
 }

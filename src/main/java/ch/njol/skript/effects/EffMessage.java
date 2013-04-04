@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,17 +25,28 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Message")
+@Description("Sends a message to the given player.")
+@Examples({"message \"A wild %player% appeared!\"",
+		"message \"This message is a distraction. Mwahaha!\"",
+		"send \"Your kill streak is %{kill streak.%player%}%.\" to player",
+		"if the targeted entity exists:",
+		"	message \"You're currently looking at a %type of the targeted entity%!\""})
+@Since("1.0")
 public class EffMessage extends Effect {
-	private static final long serialVersionUID = -3885693386533277658L;
 	
 	static {
 		Skript.registerEffect(EffMessage.class, "(message|send [message]) %strings% [to %commandsenders%]");
@@ -54,8 +65,8 @@ public class EffMessage extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
-		for (String message : messages.getArray(e)) {
-			message = StringUtils.fixCapitalization(message);
+		for (final String message : messages.getArray(e)) {
+//			message = StringUtils.fixCapitalization(message);
 			for (final CommandSender s : recipients.getArray(e)) {
 				s.sendMessage(message);
 			}

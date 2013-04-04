@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,13 +24,24 @@ package ch.njol.skript.conditions;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Is Sleeping")
+@Description("Checks whether a player is sleeping.")
+@Examples({"# cut your enemies' throats in their sleep >=)",
+		"on attack:",
+		"	attacker is holding a sword",
+		"	victim is sleeping",
+		"	increase the damage by 1000"})
+@Since("1.4.4")
 public class CondIsSleeping extends PropertyCondition<Player> {
-	
-	private static final long serialVersionUID = -7926770715467447915L;
 	
 	static {
 		register(CondIsSleeping.class, "sleeping", "players");

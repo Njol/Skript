@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,16 +24,15 @@ package ch.njol.skript.util;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class Timespan implements Serializable {
-	
-	private static final long serialVersionUID = -6991526817985173927L;
 	
 	static final HashMap<String, Integer> parseValues = new HashMap<String, Integer>();
 	static {
@@ -51,11 +50,12 @@ public class Timespan implements Serializable {
 		int t = 0;
 		boolean minecraftTime = false;
 		boolean isMinecraftTimeSet = false;
-		if (s.matches("^\\d+:\\d\\d$")) {
-			final String[] ss = s.split(":");
-			final int[] times = {1000 * 60, 1000};
+		if (s.matches("^\\d+:\\d\\d(:\\d\\d)?(\\.\\d{1,4})?$")) {
+			final String[] ss = s.split("[:.]");
+			final int[] times = {1000 * 60 * 60, 1000 * 60, 1000, 1};
+			final int offset = ss.length == 3 && !s.contains(".") || ss.length == 4 ? 1 : 0;
 			for (int i = 0; i < ss.length; i++) {
-				t += times[i] * Skript.parseInt(ss[i]);
+				t += times[offset + i] * Utils.parseInt(ss[i]);
 			}
 		} else {
 			final String[] subs = s.toLowerCase().split("\\s+");
@@ -98,7 +98,7 @@ public class Timespan implements Serializable {
 				if (sub.endsWith(","))
 					sub = sub.substring(0, sub.length() - 1);
 				
-				final Pair<String, Boolean> p = Utils.getPlural(sub);
+				final Pair<String, Boolean> p = Utils.getEnglishPlural(sub);
 				sub = p.first;
 				
 				if (!parseValues.containsKey(sub))
@@ -163,7 +163,7 @@ public class Timespan implements Serializable {
 	}
 	
 	private static String toString(final double amount, final Pair<String, Integer> p) {
-		return StringUtils.toString(amount, Skript.NUMBERACCURACY) + " " + Utils.toPlural(p.first, amount != 1);
+		return StringUtils.toString(amount, SkriptConfig.numberAccuracy.value()) + " " + Utils.toEnglishPlural(p.first, amount != 1);
 	}
 	
 }

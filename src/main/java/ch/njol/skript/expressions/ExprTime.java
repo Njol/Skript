@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,6 +27,10 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.data.DefaultChangers;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
@@ -37,23 +41,23 @@ import ch.njol.skript.util.Time;
 import ch.njol.util.Kleenean;
 
 /**
- * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Time")
+@Description("The <a href='../classes/#time'>time</a> of a world.")
+@Examples({"time in world is between 18:00 and 6:00:",
+		"	broadcast \"It's night-time, watch out for monsters!\""})
+@Since("1.0")
 public class ExprTime extends PropertyExpression<World, Time> {
-	private static final long serialVersionUID = 5470906768109932892L;
-	
 	static {
-		Skript.registerExpression(ExprTime.class, Time.class, ExpressionType.PROPERTY, "[the] time [(in|of) %worlds%]");
+		Skript.registerExpression(ExprTime.class, Time.class, ExpressionType.PROPERTY, "[the] time [(in|of) %worlds%]", "%worlds%'[s] time");
 	}
-	
-	private Expression<World> worlds = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		worlds = (Expression<World>) vars[0];
-		setExpr(worlds);
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		setExpr((Expression<World>) exprs[0]);
 		return true;
 	}
 	
@@ -74,7 +78,7 @@ public class ExprTime extends PropertyExpression<World, Time> {
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		DefaultChangers.timeChanger.change(worlds.getArray(e), delta, mode);
+		DefaultChangers.timeChanger.change(getExpr().getArray(e), delta, mode);
 	}
 	
 	@Override
@@ -85,7 +89,7 @@ public class ExprTime extends PropertyExpression<World, Time> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "the time in " + worlds.toString(e, debug);
+			return "the time in " + getExpr().toString(e, debug);
 		return Classes.getDebugMessage(getAll(e));
 	}
 	

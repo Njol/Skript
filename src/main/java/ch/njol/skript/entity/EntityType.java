@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,7 +25,6 @@ import java.io.Serializable;
 
 import org.bukkit.entity.Entity;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
@@ -35,14 +34,18 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 
 /**
- * 
  * @author Peter Güttinger
  */
-public class EntityType implements Serializable {
-	private static final long serialVersionUID = 7309746195257258341L;
+@SuppressWarnings("serial")
+public class EntityType implements Serializable, Cloneable {
 	
 	static {
-		Classes.registerClass(new ClassInfo<EntityType>(EntityType.class, "entitytype", "entity type")
+		Classes.registerClass(new ClassInfo<EntityType>(EntityType.class, "entitytype")
+				.name("Entity Type with Amount")
+				.description("An <a href='#entitydata'>entity type</a> with an amount, e.g. '2 zombies'. I might remove this type in the future and make a more general 'type' type, i.e. a type that has a number and a type.")
+				.usage("&lt;<a href='#number'>number</a>&gt; &lt;entity type&gt;")
+				.examples("spawn 5 creepers behind the player")
+				.since("1.3")
 				.defaultExpression(new SimpleLiteral<EntityType>(new EntityType(Entity.class, 1), true))
 				.parser(new Parser<EntityType>() {
 					@Override
@@ -114,7 +117,7 @@ public class EntityType implements Serializable {
 	
 	@Override
 	public String toString() {
-		return getAmount() == 1 ? data.toString() : amount + " " + Utils.toPlural(data.toString());
+		return getAmount() == 1 ? data.toString() : amount + " " + Utils.toEnglishPlural(data.toString());
 	}
 	
 	public int getAmount() {
@@ -131,17 +134,28 @@ public class EntityType implements Serializable {
 		assert s != null && s.length() != 0;
 		int amount = -1;
 		if (s.matches("\\d+ .+")) {
-			amount = Skript.parseInt(s.split(" ", 2)[0]);
+			amount = Utils.parseInt(s.split(" ", 2)[0]);
 			s = s.split(" ", 2)[1];
 		} else if (s.matches("(?i)an? .+")) {
 			s = s.split(" ", 2)[1];
 		}
 //		final Pair<String, Boolean> p = Utils.getPlural(s, amount != 1 && amount != -1);
 //		s = p.first;
-		final EntityData<?> data = EntityData.parseWithoutAnOrAny(s);
+		final EntityData<?> data = EntityData.parseWithoutIndefiniteArticle(s);
 		if (data == null)
 			return null;
 		return new EntityType(data, amount);
+	}
+	
+	@Override
+	public EntityType clone() {
+		try {
+			final EntityType t = (EntityType) super.clone();
+			return t;
+		} catch (final CloneNotSupportedException e) {
+			assert false : e;
+			return null;
+		}
 	}
 	
 }

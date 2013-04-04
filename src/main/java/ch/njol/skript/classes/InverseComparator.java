@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,9 +24,8 @@ package ch.njol.skript.classes;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class InverseComparator<T1, T2> implements Comparator<T1, T2> {
-	
-	private static final long serialVersionUID = 161128650692535501L;
 	
 	private final Comparator<? super T2, ? super T1> comp;
 	
@@ -42,6 +41,11 @@ public class InverseComparator<T1, T2> implements Comparator<T1, T2> {
 	@Override
 	public boolean supportsOrdering() {
 		return comp.supportsOrdering();
+	}
+	
+	@Override
+	public String toString() {
+		return "InverseComparator(" + comp + ")";
 	}
 	
 }

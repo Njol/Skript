@@ -15,13 +15,14 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.effects;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -31,12 +32,13 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.server.PluginDisableEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -46,29 +48,29 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Log")
+@Description({"Writes text into a .log file. Skript will write these files to /plugins/Skript/logs.",
+		"NB: Using 'server.log' as the log file will write to the default server log."})
+@Examples({"on place of TNT:",
+		"	log \"%player% placed TNT in %world% at %location of block%\" to \"tnt/placement\""})
+@Since("2.0")
 public class EffLog extends Effect {
-	private static final long serialVersionUID = 8213269874498098037L;
-	
 	static {
 		Skript.registerEffect(EffLog.class, "log %strings% [(to|in) [file[s]] %-strings%]");
 	}
 	
 	private final static File logsFolder = new File(Skript.getInstance().getDataFolder(), "logs");
-	static {
-		logsFolder.mkdirs();
-	}
 	
 	private final static HashMap<String, PrintWriter> writers = new HashMap<String, PrintWriter>();
 	static {
-		Bukkit.getPluginManager().registerEvents(new Listener() {
-			@EventHandler
-			public void onPluginDisable(final PluginDisableEvent e) {
-				if (e.getPlugin() == Skript.getInstance()) {
-					for (final PrintWriter pw : writers.values())
-						pw.close();
-				}
+		Skript.closeOnDisable(new Closeable() {
+			@Override
+			public void close() throws IOException {
+				for (final PrintWriter pw : writers.values())
+					pw.close();
 			}
-		}, Skript.getInstance());
+		});
 	}
 	
 	private Expression<String> messages;
@@ -99,15 +101,17 @@ public class EffLog extends Effect {
 					@SuppressWarnings("resource")
 					PrintWriter w = writers.get(s);
 					if (w == null) {
+						final File f = new File(logsFolder, s);
 						try {
-							w = new PrintWriter(new BufferedWriter(new FileWriter(new File(logsFolder, s), true)));
+							f.mkdirs();
+							w = new PrintWriter(new BufferedWriter(new FileWriter(f, true)));
 							writers.put(s, w);
-						} catch (final IOException e1) {
-							Skript.error("Cannot write to log file '" + s + "': " + ExceptionUtils.toString(e1));
+						} catch (final IOException ex) {
+							Skript.error("Cannot write to log file '" + s + "' (" + f.getPath() + "): " + ExceptionUtils.toString(ex));
 							return;
 						}
 					}
-					w.println("[" + SkriptConfig.getDateFormat().format(System.currentTimeMillis()) + "] " + message);
+					w.println("[" + SkriptConfig.formatDate(System.currentTimeMillis()) + "] " + message);
 					w.flush();
 				}
 			}

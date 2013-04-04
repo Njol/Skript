@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -26,13 +26,24 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Compass Target")
+@Description("The location a player's compass is pointing at.")
+@Examples({"# make all player's compasses target a player stored in {compass target.%player%}",
+		"every 5 seconds:",
+		"	loop all players:",
+		"		set the loop-player's compass target to location of {compass target.%loop-player%}"})
+@Since("2.0")
 public class ExprCompassTarget extends SimplePropertyExpression<Player, Location> {
-	private static final long serialVersionUID = -1807483603722971666L;
 	
 	static {
 		register(ExprCompassTarget.class, Location.class, "compass target", "players");

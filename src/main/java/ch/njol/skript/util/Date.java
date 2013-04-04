@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -28,9 +28,8 @@ import ch.njol.skript.SkriptConfig;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class Date implements Serializable, Comparable<Date> {
-	
-	private static final long serialVersionUID = -1539462104112834389L;
 	
 	private long timestamp;
 	
@@ -53,7 +52,7 @@ public class Date implements Serializable, Comparable<Date> {
 	
 	@Override
 	public String toString() {
-		return SkriptConfig.getDateFormat().format(timestamp);
+		return SkriptConfig.formatDate(timestamp);
 	}
 	
 	public long getTimestamp() {

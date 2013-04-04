@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -34,13 +34,16 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
 public class EvtPressurePlate extends SkriptEvent {
-	private static final long serialVersionUID = -5459891389086610473L;
 	
 	static {
-		Skript.registerEvent(EvtPressurePlate.class, PlayerInteractEvent.class,
+		Skript.registerEvent("Pressure Plate / Trip", EvtPressurePlate.class, PlayerInteractEvent.class,
 				"[step[ping] on] [a] [pressure] plate",
-				"(trip|[step[ping] on] [a] tripwire)");
+				"(trip|[step[ping] on] [a] tripwire)")
+				.description("Called when a <i>player</i> steps on a pressure plate or tripwire respectively.")
+				.examples("")
+				.since("1.0 (pressure plate), 1.4.4 (tripwire)");
 	}
 	
 	private boolean tripwire;

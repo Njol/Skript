@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -24,12 +24,12 @@ package ch.njol.skript.classes.data;
 import java.util.Locale;
 import java.util.Map.Entry;
 
-import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 
-import ch.njol.skript.Aliases;
-import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.Aliases;
+import ch.njol.skript.aliases.ItemData;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Arithmetic;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.EnumSerializer;
@@ -39,30 +39,89 @@ import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.localization.Noun;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Color;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.Direction;
 import ch.njol.skript.util.EnchantmentType;
-import ch.njol.skript.util.ItemData;
-import ch.njol.skript.util.ItemType;
+import ch.njol.skript.util.Experience;
 import ch.njol.skript.util.Slot;
 import ch.njol.skript.util.StructureType;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
+import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.WeatherType;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings({"serial", "rawtypes"})
 public class SkriptClasses {
-	
 	public SkriptClasses() {}
 	
 	static {
-		Classes.registerClass(new ClassInfo<WeatherType>(WeatherType.class, "weathertype", "weather type")
+		Classes.registerClass(new ClassInfo<ClassInfo>(ClassInfo.class, "classinfo")
+				.user("types?")
+				.name("Type")
+				.description("Represents a type, e.g. number, object, item type, location, block, world, entity type, etc.",
+						"This is mostly used for expressions like 'event-&lt;type&gt;', '&lt;type&gt;-argument', 'loop-&lt;type&gt;', etc., e.g. event-world, number-argument and loop-player.")
+				.usage("See the type name patterns of all types - including this one")
+				.examples("{variable} is a number # check whether the variable contains a number, e.g. -1 or 5.5",
+						"{variable} is a type # check whether the variable contains a type, e.g. number or player",
+						"{variable} is an object # will always succeed if the variable is set as everything is an object, even types.",
+						"disable PvP in the event-world",
+						"kill the loop-entity")
+				.since("2.0")
+				.after("entitydata", "entitytype", "itemtype")
+				.parser(new Parser<ClassInfo>() {
+					@Override
+					public ClassInfo parse(final String s, final ParseContext context) {
+						return Classes.getClassInfoFromUserInput(Noun.stripIndefiniteArticle(s));
+					}
+					
+					@Override
+					public String toString(final ClassInfo c) {
+						return c.toString();
+					}
+					
+					@Override
+					public String toVariableNameString(final ClassInfo c) {
+						return c.getCodeName();
+					}
+					
+					@Override
+					public String getDebugMessage(final ClassInfo c) {
+						return c.getCodeName();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "\\S+";
+					}
+				})
+				.serializer(new Serializer<ClassInfo>() {
+					@Override
+					public String serialize(final ClassInfo c) {
+						return c.getCodeName();
+					}
+					
+					@Override
+					public ClassInfo deserialize(final String s) {
+						return Classes.getClassInfoNoError(s);
+					}
+				}));
+		
+		Classes.registerClass(new ClassInfo<WeatherType>(WeatherType.class, "weathertype")
 				.user("weather ?types?", "weather conditions?", "weathers?")
+				.name("Weather Type")
+				.description("The weather types sunny, rainy, and thundering.")
+				.usage("clear/sun/sunny, rain/rainy/raining, and thunder/thundering/thunderstorm")
+				.examples("is raining",
+						"is sunny in the player's world",
+						"message \"It is %weather in the argument's world% in %world of the argument%\"")
+				.since("1.0")
 				.defaultExpression(new SimpleLiteral<WeatherType>(WeatherType.CLEAR, true))
 				.parser(new Parser<WeatherType>() {
 					
@@ -89,10 +148,23 @@ public class SkriptClasses {
 				})
 				.serializer(new EnumSerializer<WeatherType>(WeatherType.class)));
 		
-		Classes.registerClass(new ClassInfo<ItemType>(ItemType.class, "itemtype", "item type")
+		Classes.registerClass(new ClassInfo<ItemType>(ItemType.class, "itemtype")
 				.user("item ?types?", "items", "materials")
-				.before("itemstack")
-				.after("number")
+				.name("Item Type")
+				.description("An item type is an alias, e.g. 'a pickaxe', 'all plants', etc., and can result in different items when added to an inventory, " +
+						"and unlike <a href='#itemstack'>items</a> they are well suited for checking whether an inventory contains a certain item or whether a certain item is of a certain type.",
+						"An item type can also have one or more <a href='#enchantmenttype'>enchantments</a> with or without a specific level defined, " +
+								"and can optionally start with 'all' or 'every' to make this item type represent <i>all</i> types that the alias represents, including data ranges.")
+				.usage("<code>[&lt;number&gt; [of]] [all/every] &lt;alias&gt; [of &lt;enchantment&gt; [&lt;level&gt;] [,/and &lt;more enchantments...&gt;]]</code>")
+				.examples("give 4 torches to the player",
+						"add all slabs to the inventory of the block",
+						"player's tool is a diamond sword of sharpness",
+						"remove a pickaxes of fortune 4 from {stored items::*}",
+						"set {_item} to 10 of every upside-down stair",
+						"block is dirt or farmland")
+				.since("1.0")
+				.before("itemstack", "entitydata", "entitytype")
+				.after("number", "integer", "long", "time")
 				.parser(new Parser<ItemType>() {
 					@Override
 					public ItemType parse(final String s, final ParseContext context) {
@@ -204,11 +276,19 @@ public class SkriptClasses {
 					}
 				}));
 		
-		Classes.registerClass(new ClassInfo<Time>(Time.class, "time", "time")
+		Classes.registerClass(new ClassInfo<Time>(Time.class, "time")
 				.user("times?")
+				.name("Time")
+				.description("A time is a point in a minecraft day's time (i.e. ranges from 0:00 to 23:59), which can vary per world.",
+						"See <a href='#date'>date</a> and <a href='#timespan'>timespan</a> for the other time types of Skript.")
+				.usage("<code>##:##</code>",
+						"<code>##[:##][ ]am/pm</code>")
+				.examples("at 20:00:",
+						"	time is 8 pm",
+						"	broadcast \"It's %time%\"")
+				.since("1.0")
 				.defaultExpression(new EventValueExpression<Time>(Time.class))
 				.parser(new Parser<Time>() {
-					
 					@Override
 					public Time parse(final String s, final ParseContext context) {
 						return Time.parse(s);
@@ -228,7 +308,6 @@ public class SkriptClasses {
 					public String getVariableNamePattern() {
 						return "time:\\d+";
 					}
-					
 				}).serializer(new Serializer<Time>() {
 					@Override
 					public String serialize(final Time t) {
@@ -245,8 +324,18 @@ public class SkriptClasses {
 					}
 				}));
 		
-		Classes.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan", "time span")
+		Classes.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan")
 				.user("time ?spans?")
+				.name("Timespan")
+				.description("A timespan is a difference of two different dates or times, e.g '10 minutes'. Timespans are always displayed as real life time, but can be defined as minecraft time, e.g. '5 minecraft days and 12 hours'.",
+						"See <a href='#date'>date</a> and <a href='#time'>time</a> for the other time types of Skript.")
+				.usage("<code>&lt;number&gt; [minecraft/mc/real/rl/irl] ticks/seconds/minutes/hours/days [[,/and] &lt;more...&gt;</code>]",
+						"<code>[###:]##:##[.####]</code> ([hours:]minutes:seconds[.milliseconds])")
+				.examples("every 5 minecraft days:",
+						"	wait a minecraft second and 5 ticks",
+						"every 10 mc days and 12 hours:",
+						"	halt for 12.7 irl minutes, 12 hours and 120.5 seconds")
+				.since("1.0")
 				.parser(new Parser<Timespan>() {
 					@Override
 					public Timespan parse(final String s, final ParseContext context) {
@@ -283,16 +372,21 @@ public class SkriptClasses {
 					}
 				})
 				.math(Timespan.class, new Arithmetic<Timespan, Timespan>() {
-					private static final long serialVersionUID = -6433286220445847658L;
-					
 					@Override
 					public Timespan difference(final Timespan t1, final Timespan t2) {
 						return new Timespan(Math.abs(t1.getMilliSeconds() - t2.getMilliSeconds()));
 					}
 				}));
 		
-		Classes.registerClass(new ClassInfo<Timeperiod>(Timeperiod.class, "timeperiod", "time period")
+		Classes.registerClass(new ClassInfo<Timeperiod>(Timeperiod.class, "timeperiod")
 				.user("time ?periods?", "durations?")
+				.name("Timeperiod")
+				.description("A period of time between two <a href='#time'>times</a>. Mostly useful since you can use this to test for whether it's day, night, dusk or dawn in a specific world.",
+						"This type might be removed in the future as you can use 'time of world is between x and y' as a replacement.")
+				.usage("<code>##:## - ##:##</code>",
+						"dusk/day/dawn/night")
+				.examples("time in world is night")
+				.since("1.0")
 				.defaultExpression(new SimpleLiteral<Timeperiod>(new Timeperiod(0, 23999), true))
 				.parser(new Parser<Timeperiod>() {
 					@Override
@@ -353,7 +447,16 @@ public class SkriptClasses {
 					}
 				}));
 		
-		Classes.registerClass(new ClassInfo<Date>(Date.class, "date", "date")
+		Classes.registerClass(new ClassInfo<Date>(Date.class, "date")
+				.user("dates?")
+				.name("Date")
+				.description("A date is a certain point in the real world's time which can currently only be obtained with <a href='../expressions/#ExprNow'>now</a>.",
+						"See <a href='#time'>time</a> and <a href='#timespan'>timespan</a> for the other time types of Skript.")
+				.usage("")
+				.examples("set {_yesterday} to now",
+						"subtract a day from {_yesterday}",
+						"# now {_yesterday} represents the date 24 hours before now")
+				.since("1.4")
 				.serializer(new Serializer<Date>() {
 					@Override
 					public String serialize(final Date d) {
@@ -369,15 +472,11 @@ public class SkriptClasses {
 						}
 					}
 				}).math(Timespan.class, new Arithmetic<Date, Timespan>() {
-					private static final long serialVersionUID = 1335999541703875909L;
-					
 					@Override
 					public Timespan difference(final Date first, final Date second) {
 						return first.difference(second);
 					}
 				}).changer(new SerializableChanger<Date, Timespan>() {
-					private static final long serialVersionUID = 5598732197804454663L;
-					
 					@SuppressWarnings("incomplete-switch")
 					@Override
 					public void change(final Date[] what, final Timespan delta, final ChangeMode mode) {
@@ -396,17 +495,25 @@ public class SkriptClasses {
 					@SuppressWarnings("unchecked")
 					@Override
 					public Class<? extends Timespan>[] acceptChange(final ChangeMode mode) {
-						if (mode == ChangeMode.CLEAR || mode == ChangeMode.SET)
-							return null;
-						return Skript.array(Timespan.class);
+						if (mode == ChangeMode.ADD || mode == ChangeMode.REMOVE)
+							return Utils.array(Timespan.class);
+						return null;
 					}
 				}));
 		
-		Classes.registerClass(new ClassInfo<Direction>(Direction.class, "direction", "direction")
-				.user("direction")
-				.defaultExpression(new SimpleLiteral<Direction>(new Direction(new double[] {0,0,0}), true))
+		Classes.registerClass(new ClassInfo<Direction>(Direction.class, "direction")
+				.user("directions?")
+				.name("Direction")
+				.description("A direction, e.g. north, east, behind, 5 south east, 1.3 meters to the right, etc.",
+						"<a href='#location'>Locations</a> and some <a href='#block'>blocks</a> also have a direction, but without a length.",
+						"Please note that directions have changed extensively in the betas and might not work perfectly. They can also not be used as command arguments.")
+				.usage("see <a href='../expressions/#ExprDirection'>direction (expression)</a>")
+				.examples("set the block below the victim to a chest",
+						"loop blocks from the block infront of the player to the block 10 below the player:",
+						"	set the block behind the loop-block to water")
+				.since("2.0")
+				.defaultExpression(new SimpleLiteral<Direction>(new Direction(new double[] {0, 0, 0}), true))
 				.parser(new Parser<Direction>() {
-					
 					@Override
 					public Direction parse(final String s, final ParseContext context) {
 						return null;
@@ -444,21 +551,33 @@ public class SkriptClasses {
 					}
 				}));
 		
-		Classes.registerClass(new ClassInfo<Slot>(Slot.class, "slot", "slot")
+		Classes.registerClass(new ClassInfo<Slot>(Slot.class, "slot")
+				.user("(inventory )?slots?")
+				.name("Inventory Slot")
+				.description("Represents a single slot of an <a href='#inventory'>inventory</a>. " +
+						"Notable slots are the <a href='../expressions/#ExprArmorSlot'>armour slots</a> and <a href='../expressions/#ExprFurnaceSlot'>furnace slots</a>. ",
+						"The most important property that distinguishes a slot from an <a href='#itemstack'>item</a> is its ability to be changed, e.g. it can be set, deleted, enchanted, etc. " +
+								"(Some item expressions can be changed as well, e.g. items stored in variables. " +
+								"For that matter: slots are never saved to variables, only the items they represent at the time when the variable is set).",
+						"Please note that <a href='../expressions/#ExprTool'>tool</a> can be regarded a slot, but it can actually change it's position, i.e. doesn't represent always the same slot.")
+				.usage("")
+				.examples("set tool of player to dirt",
+						"delete helmet of the victim",
+						"set the colour of the player's tool to green",
+						"enchant the player's chestplate with projectile protection 5")
+				.since("")
 				.defaultExpression(new EventValueExpression<Slot>(Slot.class))
 				.changer(new SerializableChanger<Slot, ItemType>() {
-					private static final long serialVersionUID = 392597470786335167L;
-					
 					@SuppressWarnings("unchecked")
 					@Override
 					public Class<ItemType>[] acceptChange(final ch.njol.skript.classes.Changer.ChangeMode mode) {
-						return Skript.array(ItemType.class);
+						return Utils.array(ItemType.class);
 					}
 					
 					@Override
 					public void change(final Slot[] slots, final ItemType delta, final ch.njol.skript.classes.Changer.ChangeMode mode) {
 						final ItemType type = delta;
-						if (type == null && mode != ChangeMode.CLEAR)
+						if (type == null && mode != ChangeMode.DELETE)
 							return;
 						for (final Slot slot : slots) {
 							switch (mode) {
@@ -471,7 +590,7 @@ public class SkriptClasses {
 								case REMOVE:
 									slot.setItem(type.removeFrom(slot.getItem()));
 									break;
-								case CLEAR:
+								case DELETE:
 									slot.setItem(null);
 							}
 						}
@@ -479,8 +598,15 @@ public class SkriptClasses {
 					
 				}).serializeAs(ItemStack.class));
 		
-		Classes.registerClass(new ClassInfo<Color>(Color.class, "color", "color")
+		Classes.registerClass(new ClassInfo<Color>(Color.class, "color")
 				.user("colou?rs?")
+				.name("Colour")
+				.description("Wool, dye and chat colours. A complete list can be found on the article on <a href='../strings'>Text and Variable Names</a>.")
+				.usage("see <a href='../strings'>here</a>")
+				.examples("color of the sheep is red or black",
+						"set the colour of the block to green",
+						"message \"You're holding a <%color of tool%>%color of tool%<reset> wool block\"")
+				.since("")
 				.parser(new Parser<Color>() {
 					@Override
 					public String toString(final Color c) {
@@ -503,10 +629,15 @@ public class SkriptClasses {
 					}
 				}).serializer(new EnumSerializer<Color>(Color.class)));
 		
-		Classes.registerClass(new ClassInfo<StructureType>(StructureType.class, "structuretype", "tree type")
+		Classes.registerClass(new ClassInfo<StructureType>(StructureType.class, "structuretype")
 				.user("tree ?types?", "trees?")
+				.name("Tree Type")
+				.description("A tree type represents a tree species or a huge mushroom species. These can be generated in a world with the <a href='../effects/#EffTree'>generate tree</a> effect.")
+				.usage("<code>[any] &lt;general tree/mushroom type&gt;</code>, e.g. tree/any jungle tree/etc.", "<code>&lt;specific tree/mushroom species&gt;</code>, e.g. red mushroom/small jungle tree/big regular tree/etc.")
+				.examples("grow any regular tree at the block",
+						"grow a huge red mushroom above the block")
+				.since("")
 				.parser(new Parser<StructureType>() {
-					
 					@Override
 					public StructureType parse(final String s, final ParseContext context) {
 						return StructureType.fromName(s);
@@ -514,22 +645,28 @@ public class SkriptClasses {
 					
 					@Override
 					public String toString(final StructureType o) {
-						return o.toString().toLowerCase().replace('_', ' ');
+						return o.toString();
 					}
 					
 					@Override
 					public String toVariableNameString(final StructureType o) {
-						return o.toString().toLowerCase().replace('_', ' ');
+						return o.name().toLowerCase();
 					}
 					
 					@Override
 					public String getVariableNamePattern() {
 						return "[a-z ]+";
 					}
-					
 				}).serializer(new EnumSerializer<StructureType>(StructureType.class)));
 		
-		Classes.registerClass(new ClassInfo<EnchantmentType>(EnchantmentType.class, "enchantmenttype", "enchantment")
+		Classes.registerClass(new ClassInfo<EnchantmentType>(EnchantmentType.class, "enchantmenttype")
+				.user("enchant(ing|ment) types?")
+				.name("Enchantment Type")
+				.description("An enchantment with an optional level, e.g. 'sharpness 2' or 'fortune'.")
+				.usage("<code>&lt;enchantment&gt; [&lt;level&gt;]</code>")
+				.examples("enchant the player's tool with sharpness 5",
+						"helmet is enchanted with waterbreathing")
+				.since("1.4.6")
 				.parser(new Parser<EnchantmentType>() {
 					@Override
 					public EnchantmentType parse(final String s, final ParseContext context) {
@@ -571,6 +708,58 @@ public class SkriptClasses {
 							return null;
 						}
 					}
+				}));
+		
+		Classes.registerClass(new ClassInfo<Experience>(Experience.class, "experience")
+				.name("Experience")
+				.description("Experience points. Please note that Bukkit only allows to give XP, but not remove XP from players. " +
+						"You can however change a player's <a href='../expressions/#ExprLevel'>level</a> and <a href='../expressions/#ExprLevelProgress'>level progress</a> freely.")
+				.usage("<code>[&lt;number&gt;] ([e]xp|experience)</code>")
+				.examples("give 10 xp to the player")
+				.since("2.0")
+				.parser(new Parser<Experience>() {
+					@Override
+					public Experience parse(String s, final ParseContext context) {
+						int xp = 1;
+						if (s.matches("\\d+ .+")) {
+							xp = Utils.parseInt(s.substring(0, s.indexOf(' ')));
+							s = s.substring(s.indexOf(' ') + 1);
+						}
+						if (s.matches("(e?xp|experience)"))
+							return new Experience(xp);
+						return null;
+					}
+					
+					@Override
+					public String toString(final Experience xp) {
+						return xp.toString();
+					}
+					
+					@Override
+					public String toVariableNameString(final Experience xp) {
+						return "" + xp.getXP();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "\\d+";
+					}
+				})
+				.serializer(new Serializer<Experience>() {
+					@Override
+					public String serialize(final Experience xp) {
+						return "" + xp;
+					}
+					
+					@Override
+					public Experience deserialize(final String s) {
+						try {
+							return new Experience(Integer.parseInt(s));
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
+					
 				}));
 		
 	}

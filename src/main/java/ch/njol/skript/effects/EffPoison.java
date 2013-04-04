@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -27,6 +27,10 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -36,14 +40,18 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Poison/Cure")
+@Description("Poison or cure a creature.")
+@Examples({"poison the player",
+		"poison the victim for 20 seconds",
+		"cure the player from poison"})
+@Since("1.3.2")
 public class EffPoison extends Effect {
-	
-	private static final long serialVersionUID = -1525181862499679238L;
-	
 	static {
 		Skript.registerEffect(EffPoison.class,
 				"poison %livingentities% [for %-timespan%]",
-				"(cure|unpoison) %livingentities% [from poison]");
+				"(cure|unpoison) %livingentities% [(from|of) poison]");
 	}
 	
 	private final static int DEFAULT_DURATION = 15 * 20; // 15 seconds on hard difficulty

@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -34,8 +34,16 @@ import ch.njol.util.iterator.StoppableIterator;
  */
 public class BlockLineIterator extends StoppableIterator<Block> {
 	
-	public BlockLineIterator(final Block start, final Block end) {
-		super(new BlockIterator(start.getWorld(), start.getLocation().add(0.5, 0.5, 0.5).toVector(), end.getLocation().subtract(start.getLocation()).toVector(), 0, 0), new Checker<Block>() {
+	/**
+	 * 
+	 * @param start
+	 * @param end
+	 * @throws IllegalStateException randomly (Bukkit bug)
+	 */
+	public BlockLineIterator(final Block start, final Block end) throws IllegalStateException {
+		super(new BlockIterator(start.getWorld(), start.getLocation().add(0.5, 0.5, 0.5).toVector(),
+				end.equals(start) ? new Vector(1, 0, 0) : end.getLocation().subtract(start.getLocation()).toVector(), 0, 0), // should prevent an error if start = end
+		new Checker<Block>() {
 			private final double overshotSq = Math.pow(start.getLocation().distance(end.getLocation()) + 2, 2);
 			
 			@Override
@@ -47,7 +55,14 @@ public class BlockLineIterator extends StoppableIterator<Block> {
 		}, true);
 	}
 	
-	public BlockLineIterator(final Location start, final Vector dir, final double dist) {
+	/**
+	 * 
+	 * @param start
+	 * @param dir
+	 * @param dist
+	 * @throws IllegalStateException randomly (Bukkit bug)
+	 */
+	public BlockLineIterator(final Location start, final Vector dir, final double dist) throws IllegalStateException  {
 		super(new BlockIterator(start.getWorld(), start.toVector(), dir, 0, 0), new Checker<Block>() {
 			private final double distSq = dist * dist;
 			
@@ -58,7 +73,14 @@ public class BlockLineIterator extends StoppableIterator<Block> {
 		}, false);
 	}
 	
-	public BlockLineIterator(final Block start, final Vector dir, final double dist) {
+	/**
+	 * 
+	 * @param start
+	 * @param dir
+	 * @param dist
+	 * @throws IllegalStateException randomly (Bukkit bug)
+	 */
+	public BlockLineIterator(final Block start, final Vector dir, final double dist) throws IllegalStateException  {
 		this(start.getLocation().add(0.5, 0.5, 0.5), dir, dist);
 	}
 }

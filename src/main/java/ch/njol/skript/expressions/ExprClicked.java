@@ -15,7 +15,7 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
@@ -25,35 +25,39 @@ import java.lang.reflect.Array;
 
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
-import ch.njol.skript.Aliases;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.log.SimpleLog;
-import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.util.ItemType;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("serial")
+@Name("Clicked Block/Entity")
+@Description("The clicked block or entity - only useful in click events")
+@Examples({"message \"You clicked on a %type of clicked entity%!\"",
+		"clicked block is a chest:",
+		"	show the inventory of the clicked block to the player"})
+@Since("1.0")
 public class ExprClicked extends SimpleExpression<Object> {
-	private static final long serialVersionUID = -133125615663535001L;
-	
 	static {
-		Skript.registerExpression(ExprClicked.class, Object.class, ExpressionType.SIMPLE, "[the] clicked <.+>");
+		Skript.registerExpression(ExprClicked.class, Object.class, ExpressionType.SIMPLE, "[the] clicked (block|%-*itemtype/entitydata%)");
 	}
 	
 	private EntityData<?> entityType = null;
@@ -64,30 +68,17 @@ public class ExprClicked extends SimpleExpression<Object> {
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		final String s = parseResult.regexes.get(0).group();
-		final SimpleLog log = SkriptLogger.startSubLog();
-		entityType = EntityData.parse(s);
-		if (entityType == null) {
-			log.clear();
-			if (!(s.equalsIgnoreCase("block") || s.equalsIgnoreCase("any block") || s.equalsIgnoreCase("a block"))) {
-				itemType = Aliases.parseItemType(s);
-				log.stop();
-				if (itemType == null) {
-					Skript.error("'" + s + "' is neither an entity type nor an item type", ErrorQuality.NOT_AN_EXPRESSION);
-					return false;
-				}
-			}
-			log.stop();
-			log.printLog();
-			if (!Utils.contains(ScriptLoader.currentEvents, PlayerInteractEvent.class)) {
-				Skript.error("The expression 'clicked block' can only be used in a click event", ErrorQuality.SEMANTIC_ERROR);
+		final Object type = exprs[0] == null ? null : exprs[0].getSingle(null);
+		if (type instanceof EntityData) {
+			entityType = (EntityData<?>) type;
+			if (!Utils.contains(ScriptLoader.currentEvents, PlayerInteractEntityEvent.class)) {
+				Skript.error("The expression 'clicked entity' can only be used in a click event", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 		} else {
-			log.stop();
-			log.printLog();
-			if (!Utils.contains(ScriptLoader.currentEvents, PlayerInteractEntityEvent.class)) {
-				Skript.error("The expression '" + parseResult.expr + "' can only be used in a click event", ErrorQuality.SEMANTIC_ERROR);
+			itemType = (ItemType) type;
+			if (!Utils.contains(ScriptLoader.currentEvents, PlayerInteractEvent.class)) {
+				Skript.error("The expression 'clicked block' can only be used in a click event", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 		}
@@ -113,17 +104,17 @@ public class ExprClicked extends SimpleExpression<Object> {
 			if (itemType == null || itemType.isOfType(b))
 				return new Block[] {b};
 			return null;
-		} else {
+		} else if (e instanceof PlayerInteractEntityEvent) {
 			if (entityType == null)
 				return null;
 			final Entity en;
-			if (e instanceof PlayerInteractEntityEvent) {
-				en = Utils.validate(((PlayerInteractEntityEvent) e).getRightClicked());
-			} else {
-				if (!(((EntityDamageByEntityEvent) e).getDamager() instanceof Player))
-					return null;
-				en = Utils.validate(((EntityDamageByEntityEvent) e).getEntity());
-			}
+//			if (e instanceof PlayerInteractEntityEvent) {
+			en = ((PlayerInteractEntityEvent) e).getRightClicked();
+//			} else {
+//				if (!(((EntityDamageByEntityEvent) e).getDamager() instanceof Player))
+//					return null;
+//				en = ((EntityDamageByEntityEvent) e).getEntity();
+//			}
 			if (entityType.isInstance(en)) {
 				final Entity[] one = (Entity[]) Array.newInstance(entityType.getType(), 1);
 				one[0] = en;
@@ -131,11 +122,12 @@ public class ExprClicked extends SimpleExpression<Object> {
 			}
 			return null;
 		}
+		return null;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "clicked " + (entityType != null ? entityType : itemType != null ? itemType : "block");
+		return "the clicked " + (entityType != null ? entityType : itemType != null ? itemType : "block");
 	}
 	
 	@Override
