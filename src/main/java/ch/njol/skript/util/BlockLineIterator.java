@@ -35,7 +35,6 @@ import ch.njol.util.iterator.StoppableIterator;
 public class BlockLineIterator extends StoppableIterator<Block> {
 	
 	/**
-	 * 
 	 * @param start
 	 * @param end
 	 * @throws IllegalStateException randomly (Bukkit bug)
@@ -56,13 +55,12 @@ public class BlockLineIterator extends StoppableIterator<Block> {
 	}
 	
 	/**
-	 * 
 	 * @param start
 	 * @param dir
 	 * @param dist
 	 * @throws IllegalStateException randomly (Bukkit bug)
 	 */
-	public BlockLineIterator(final Location start, final Vector dir, final double dist) throws IllegalStateException  {
+	public BlockLineIterator(final Location start, final Vector dir, final double dist) throws IllegalStateException {
 		super(new BlockIterator(start.getWorld(), start.toVector(), dir, 0, 0), new Checker<Block>() {
 			private final double distSq = dist * dist;
 			
@@ -74,13 +72,12 @@ public class BlockLineIterator extends StoppableIterator<Block> {
 	}
 	
 	/**
-	 * 
 	 * @param start
 	 * @param dir
 	 * @param dist
 	 * @throws IllegalStateException randomly (Bukkit bug)
 	 */
-	public BlockLineIterator(final Block start, final Vector dir, final double dist) throws IllegalStateException  {
+	public BlockLineIterator(final Block start, final Vector dir, final double dist) throws IllegalStateException {
 		this(start.getLocation().add(0.5, 0.5, 0.5), dir, dist);
 	}
 }

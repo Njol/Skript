@@ -31,6 +31,8 @@ import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.Experience;
 
 /**
+ * TODO test
+ * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
@@ -75,7 +77,6 @@ public class ExperienceSpawnEvent extends Event implements Cancellable {
 	
 	@Override
 	public boolean isCancelled() {
-		// TODO Auto-generated method stub
 		return cancelled;
 	}
 	

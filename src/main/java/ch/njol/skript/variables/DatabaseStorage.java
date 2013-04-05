@@ -154,7 +154,7 @@ public class DatabaseStorage extends VariablesStorage {
 				((Database) db).query("CREATE TABLE IF NOT EXISTS variables (" +
 						"name         VARCHAR(500)   NOT NULL  PRIMARY KEY," +
 						"type         VARCHAR(50)    ," +
-						"value        VARCHAR(1000)  ," +
+						"value        VARCHAR(5000)  ," +
 						"update_guid  CHAR(36)       NOT NULL" +
 						")");
 			} else {
@@ -162,7 +162,7 @@ public class DatabaseStorage extends VariablesStorage {
 						"rowid        BIGINT         NOT NULL  AUTO_INCREMENT PRIMARY KEY," +
 						"name         VARCHAR(500)   NOT NULL  UNIQUE," +
 						"type         VARCHAR(50)    ," +
-						"value        VARCHAR(1000)  ," +
+						"value        VARCHAR(5000)  ," +
 						"update_guid  CHAR(36)       NOT NULL" +
 						")");
 			}

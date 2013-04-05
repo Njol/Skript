@@ -51,6 +51,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.ConfigurationSerializer;
 import ch.njol.skript.classes.EnumParser;
 import ch.njol.skript.classes.EnumSerializer;
 import ch.njol.skript.classes.Parser;
@@ -449,7 +450,7 @@ public class BukkitClasses {
 					@Override
 					public OfflinePlayer parse(final String s, final ParseContext context) {
 						if (context == ParseContext.COMMAND) {
-							if (!s.matches("\\S+"))
+							if (!s.matches("\\S+") || s.length() > 16)
 								return null;
 							return Bukkit.getOfflinePlayer(s);
 						}
@@ -637,19 +638,28 @@ public class BukkitClasses {
 				}).serializer(new Serializer<ItemStack>() {
 					@Override
 					public String serialize(final ItemStack i) {
-						final StringBuilder b = new StringBuilder();
-						b.append(i.getTypeId());
-						b.append(":" + i.getDurability());
-						b.append("*" + i.getAmount());
-						for (final Entry<Enchantment, Integer> e : i.getEnchantments().entrySet()) {
-							b.append("#" + e.getKey().getId());
-							b.append(":" + e.getValue());
-						}
-						return b.toString();
+						return ConfigurationSerializer.serializeCS(i);
+						// old
+//						final StringBuilder b = new StringBuilder();
+//						b.append(i.getTypeId());
+//						b.append(":" + i.getDurability());
+//						b.append("*" + i.getAmount());
+//						for (final Entry<Enchantment, Integer> e : i.getEnchantments().entrySet()) {
+//							b.append("#" + e.getKey().getId());
+//							b.append(":" + e.getValue());
+//						}
+//						return b.toString();
 					}
 					
 					@Override
 					public ItemStack deserialize(final String s) {
+						final ItemStack i = deserializeOld(s);
+						if (i != null)
+							return i;
+						return ConfigurationSerializer.deserializeCS(s, ItemStack.class);
+					}
+					
+					private ItemStack deserializeOld(final String s) {
 						final String[] split = s.split("[:*#]");
 						if (split.length < 3 || split.length % 2 != 1)
 							return null;

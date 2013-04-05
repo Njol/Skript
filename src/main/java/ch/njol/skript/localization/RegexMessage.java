@@ -48,22 +48,22 @@ public class RegexMessage extends Message {
 		this(key, prefix, suffix, 0);
 	}
 	
-	@Override
-	protected String getValue() {
-		return prefix + super.getValue() + suffix;
-	}
-	
 	public Pattern getPattern() {
 		validate();
 		return pattern;
 	}
 	
 	@Override
+	public String toString() {
+		return prefix + getValue() + suffix;
+	}
+	
+	@Override
 	protected void onValueChange() {
 		try {
-			pattern = Pattern.compile(getValue(), flags);
+			pattern = Pattern.compile(prefix + getValue() + suffix, flags);
 		} catch (final PatternSyntaxException e) {
-			Skript.error("Invalid RegEx pattern '" + getValue() + "' found in language entry '" + key + "': " + e.getLocalizedMessage());
+			Skript.error("Invalid Regex pattern '" + getValue() + "' found in language entry '" + key + "': " + e.getLocalizedMessage());
 		}
 	}
 	

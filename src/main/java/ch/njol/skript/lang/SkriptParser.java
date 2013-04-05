@@ -741,9 +741,9 @@ public class SkriptParser {
 	 * Prints errors
 	 * 
 	 * @param pattern
-	 * @param i
-	 * @param j
-	 * @return
+	 * @param i Position in the input string
+	 * @param j Position in the pattern
+	 * @return Parsed result or null on error (which does not imply that an error was printed)
 	 */
 	private final ParseResult parse_i(final String pattern, int i, int j) {
 		ParseResult res;

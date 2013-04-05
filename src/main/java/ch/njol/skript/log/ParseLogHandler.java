@@ -48,7 +48,8 @@ public class ParseLogHandler extends LogHandler {
 	public void stop(final boolean error) {
 		SkriptLogger.removeHandler(this);
 		if (error) {
-			SkriptLogger.log(this.error);
+			if (this.error != null)
+				SkriptLogger.log(this.error);
 		} else {
 			for (final LogEntry e : log)
 				SkriptLogger.log(e);

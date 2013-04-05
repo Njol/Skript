@@ -27,6 +27,8 @@ import java.util.Locale;
 
 /**
  * Basic class to get text from the language file(s).
+ * <p>
+ * TODO generate warnings for missing english values
  * 
  * @author Peter Güttinger
  */
@@ -65,7 +67,7 @@ public class Message {
 	 * 
 	 * @return This message's value or null if it doesn't exist.
 	 */
-	protected String getValue() {
+	protected final String getValue() {
 		validate();
 		return value;
 	}
@@ -75,7 +77,7 @@ public class Message {
 	 * 
 	 * @return
 	 */
-	public boolean isSet() {
+	public final boolean isSet() {
 		validate();
 		return value != null;
 	}

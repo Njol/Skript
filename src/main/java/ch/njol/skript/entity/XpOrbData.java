@@ -29,8 +29,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.StringUtils;
 
 /**
- * FIXME don't work at all
- * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")

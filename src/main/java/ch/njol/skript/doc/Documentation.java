@@ -173,7 +173,7 @@ public class Documentation {
 								b.append("/");
 							first = false;
 							final Pair<String, Boolean> p = Utils.getEnglishPlural(c);
-							ClassInfo<?> ci = Classes.getClassInfo(p.first);
+							final ClassInfo<?> ci = Classes.getClassInfo(p.first);
 							if (ci.getDocName() != null && ci.getName().isSet()) {
 								b.append("<a href='../classes/#").append(p.first).append("'>").append(ci.getName().toString(p.second)).append("</a>");
 							} else {

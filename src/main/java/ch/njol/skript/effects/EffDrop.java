@@ -41,6 +41,8 @@ import ch.njol.skript.util.Experience;
 import ch.njol.util.Kleenean;
 
 /**
+ * FIXME
+ * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
@@ -69,7 +71,7 @@ public class EffDrop extends Effect {
 	public void execute(final Event e) {
 		final Object[] os = drops.getArray(e);
 		if (e instanceof EntityDeathEvent && ((EntityDeathEvent) e).getEntity().getLocation().equals(locations.getSingle(e)) && !Delay.isDelayed(e)) {
-			for (Object o : os) {
+			for (final Object o : os) {
 				if (o instanceof Experience) {
 					((EntityDeathEvent) e).setDroppedExp(((EntityDeathEvent) e).getDroppedExp() + ((Experience) o).getXP());
 				} else {
@@ -79,7 +81,7 @@ public class EffDrop extends Effect {
 			return;
 		}
 		for (final Location l : locations.getArray(e)) {
-			for (Object o : os) {
+			for (final Object o : os) {
 				if (o instanceof Experience) {
 					final ExperienceOrb orb = l.getWorld().spawn(l, ExperienceOrb.class);
 					orb.setExperience(((Experience) o).getXP());

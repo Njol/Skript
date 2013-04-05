@@ -59,6 +59,7 @@ import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SimpleEvent;
 import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Message;
 import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
@@ -73,6 +74,8 @@ import ch.njol.util.Validate;
  */
 @SuppressWarnings("serial")
 public class ScriptCommand implements CommandExecutor, Serializable {
+	public final static Message m_executable_by_players = new Message("commands.executable by players");
+	public final static Message m_executable_by_console = new Message("commands.executable by console");
 	
 	private final String name, label;
 	private final List<String> aliases;
@@ -158,12 +161,12 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 	public boolean execute(final CommandSender sender, final String commandLabel, final String rest) {
 		if (sender instanceof Player) {
 			if ((executableBy & PLAYERS) == 0) {
-				sender.sendMessage(Language.get("commands.executable by players"));
+				sender.sendMessage("" + m_executable_by_players);
 				return false;
 			}
 		} else {
 			if ((executableBy & CONSOLE) == 0) {
-				sender.sendMessage(Language.get("commands.executable by console"));
+				sender.sendMessage("" + m_executable_by_console);
 				return false;
 			}
 		}

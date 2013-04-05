@@ -40,7 +40,6 @@ import ch.njol.util.Kleenean;
  */
 @SuppressWarnings("serial")
 public class EffParse extends Effect {
-	
 	static {
 //		Skript.registerEffect(EffParse.class, "?");
 		//ideas:
@@ -71,7 +70,7 @@ public class EffParse extends Effect {
 		try {
 			final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 			try {
-//			SkriptParser.parseStatic(s, new SingleItemIterator<SyntaxElementInfo<?>>(new SyntaxElementInfo(new String[] {p}, )), null);
+//				SkriptParser.parseStatic(s, new SingleItemIterator<SyntaxElementInfo<?>>(new SyntaxElementInfo(new String[] {p}, )), null);
 			} finally {
 				log.stop();
 			}

@@ -496,16 +496,15 @@ public final class Skript extends JavaPlugin implements Listener {
 											f.set(null, null);
 										}
 									}
-								} catch (final Throwable ex) {
-									assert ex instanceof NoClassDefFoundError; // soft-dependency not loaded
-								}
+								} catch (final Throwable ex) {}
 							}
 						}
 					} finally {
 						jar.close();
 					}
 				} catch (final Throwable ex) {
-					assert false;
+					if (testing())
+						ex.printStackTrace();
 				}
 			}
 		}).start();

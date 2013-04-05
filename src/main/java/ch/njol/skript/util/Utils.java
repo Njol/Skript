@@ -37,6 +37,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.effects.EffTeleport;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.localization.Language;
@@ -261,7 +262,8 @@ public abstract class Utils {
 	public static boolean itemStacksEqual(final ItemStack is1, final ItemStack is2) {
 		if (is1 == null || is2 == null)
 			return is1 == is2;
-		return is1.getTypeId() == is2.getTypeId() && is1.getDurability() == is2.getDurability() && is1.getEnchantments().equals(is2.getEnchantments());
+		return is1.getTypeId() == is2.getTypeId() && is1.getDurability() == is2.getDurability()
+				&& (Skript.isRunningMinecraft(1, 4, 5) ? is1.getItemMeta().equals(is2.getItemMeta()) : is1.getEnchantments().equals(is2.getEnchantments()));
 	}
 	
 	/**

@@ -36,6 +36,8 @@ import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
 
 /**
+ * TODO explosion without block damage (1.4.5)
+ * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")

@@ -21,6 +21,7 @@
 
 package ch.njol.skript.classes;
 
+
 /**
  * @author Peter Güttinger
  */

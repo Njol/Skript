@@ -26,12 +26,15 @@ import java.util.Map.Entry;
 
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemData;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Arithmetic;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.ConfigurationSerializer;
 import ch.njol.skript.classes.EnumSerializer;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.SerializableChanger;
@@ -224,6 +227,10 @@ public class SkriptClasses {
 								b.append(":" + e.getValue());
 							}
 						}
+						if (t.getItemMeta() != null) {
+							b.append("¦");
+							b.append(ConfigurationSerializer.serializeCS((ItemMeta) t.getItemMeta()).replace("¦", "¦¦"));
+						}
 						return b.toString();
 					}
 					
@@ -251,10 +258,11 @@ public class SkriptClasses {
 							return null;
 						}
 						if (ss.length == 2) {
-							if (ss[1].isEmpty()) {
+							final String[] sss = ss[1].split("¦", 2);
+							if (sss[0].isEmpty()) {
 								t.emptyEnchantments();
 							} else {
-								final String[] es = ss[1].split("#");
+								final String[] es = sss[0].split("#");
 								for (final String e : es) {
 									if (e.isEmpty())
 										continue;
@@ -270,6 +278,14 @@ public class SkriptClasses {
 										return null;
 									}
 								}
+							}
+							if (sss.length == 2) {
+								if (!Skript.isRunningMinecraft(1, 4, 5))
+									return null;
+								final ItemMeta m = ConfigurationSerializer.deserializeCS(sss[1].replace("¦¦", "¦"), ItemMeta.class);
+								if (m == null)
+									return null;
+								t.setItemMeta(m);
 							}
 						}
 						return t;

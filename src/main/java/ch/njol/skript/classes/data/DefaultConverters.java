@@ -48,6 +48,9 @@ import org.bukkit.entity.TNTPrimed;
 import org.bukkit.entity.ThrownExpBottle;
 import org.bukkit.entity.ThrownPotion;
 import org.bukkit.entity.WitherSkull;
+import org.bukkit.entity.minecart.ExplosiveMinecart;
+import org.bukkit.entity.minecart.HopperMinecart;
+import org.bukkit.entity.minecart.RideableMinecart;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -70,7 +73,7 @@ import ch.njol.skript.util.Slot;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"rawtypes", "serial"})
+@SuppressWarnings({"rawtypes", "serial", "deprecation"})
 public class DefaultConverters {
 	
 	public DefaultConverters() {}
@@ -198,8 +201,6 @@ public class DefaultConverters {
 		// TODO !Update with every version [entities]
 		final HashMap<Class<? extends Entity>, Material> entityMaterials = new HashMap<Class<? extends Entity>, Material>();
 		entityMaterials.put(Boat.class, Material.BOAT);
-		entityMaterials.put(StorageMinecart.class, Material.STORAGE_MINECART);
-		entityMaterials.put(PoweredMinecart.class, Material.POWERED_MINECART);
 		entityMaterials.put(Minecart.class, Material.MINECART);
 		entityMaterials.put(Painting.class, Material.PAINTING);
 		entityMaterials.put(Arrow.class, Material.ARROW);
@@ -211,10 +212,16 @@ public class DefaultConverters {
 		entityMaterials.put(TNTPrimed.class, Material.TNT);
 		if (Skript.isRunningMinecraft(1, 4))
 			entityMaterials.put(ItemFrame.class, Material.ITEM_FRAME);
-//		if (Skript.isRunningMinecraft(1, 5)) {
-//			entityMaterials.put(HopperMinecart.class, Material.HOPPER_MINECART);
-//			entityMaterials.put(TntMinecart.class, Material.TNT_MINECART);
-//		}
+		if (Skript.isRunningMinecraft(1, 5)) {
+			entityMaterials.put(org.bukkit.entity.minecart.StorageMinecart.class, Material.STORAGE_MINECART);
+			entityMaterials.put(org.bukkit.entity.minecart.PoweredMinecart.class, Material.POWERED_MINECART);
+			entityMaterials.put(RideableMinecart.class, Material.MINECART);
+			entityMaterials.put(HopperMinecart.class, Material.HOPPER_MINECART);
+			entityMaterials.put(ExplosiveMinecart.class, Material.EXPLOSIVE_MINECART);
+		} else {
+			entityMaterials.put(StorageMinecart.class, Material.STORAGE_MINECART);
+			entityMaterials.put(PoweredMinecart.class, Material.POWERED_MINECART);
+		}
 		Converters.registerConverter(Entity.class, ItemStack.class, new SerializableConverter<Entity, ItemStack>() {
 			@Override
 			public ItemStack convert(final Entity e) {

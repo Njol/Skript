@@ -311,6 +311,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	
 	public abstract Class<? extends E> getType();
 	
+	// TODO localize
 	@Override
 	public abstract String toString();
 	

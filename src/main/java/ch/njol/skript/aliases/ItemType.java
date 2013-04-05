@@ -43,6 +43,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.localization.GeneralWords;
@@ -74,6 +75,11 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	private int numItems = 0;
 	
 	private transient Map<Enchantment, Integer> enchantments = null;
+	
+	/**
+	 * Guaranteed to be of type ItemMeta.
+	 */
+	private Object meta = null;
 	
 	/**
 	 * ItemTypes to use intead of this one if adding to an inventory or setting a block.
@@ -132,11 +138,10 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		add(new ItemData(i));
 		if (!i.getEnchantments().isEmpty())
 			enchantments = new HashMap<Enchantment, Integer>(i.getEnchantments());
-	}
-	
-	public ItemType(final Block block) {
-		amount = 1;
-		add(new ItemData(block.getTypeId(), block.getData()));
+		if (Skript.isRunningMinecraft(1, 4, 5)) {
+			meta = i.getItemMeta();
+			unsetItemMetaEnchs((ItemMeta) meta);
+		}
 	}
 	
 	private ItemType(final ItemType i) {
@@ -146,6 +151,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		numItems = i.numItems;
 		block = i.block == null ? null : i.block.clone();
 		item = i.item == null ? null : i.item.clone();
+		meta = i.meta == null ? null : ((ItemMeta) i.meta).clone();
 		for (final ItemData d : i) {
 			types.add(d.clone());
 		}
@@ -192,10 +198,47 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		this.all = all;
 	}
 	
+	public Object getItemMeta() {
+		return meta;
+	}
+	
+	public void setItemMeta(final Object meta) {
+		if (!Skript.isRunningMinecraft(1, 4, 5) || !(meta instanceof ItemMeta))
+			throw new IllegalStateException();
+		this.meta = meta;
+	}
+	
+	private final static void unsetItemMetaEnchs(final ItemMeta meta) {
+		if (meta == null)
+			return;
+		for (final Enchantment e : meta.getEnchants().keySet())
+			meta.removeEnchant(e);
+	}
+	
+	/**
+	 * @param item
+	 * @return Whether the given item has correct enchantments & ItemMeta, but doesn't check it's type
+	 */
+	private boolean hasMeta(final ItemStack item) {
+		if (enchantments != null) {
+			for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
+				if (e.getValue() == -1 ? item.getEnchantmentLevel(e.getKey()) == 0 : item.getEnchantmentLevel(e.getKey()) != e.getValue())
+					return false;
+			}
+		}
+		if (meta != null) {
+			final ItemMeta m = item.getItemMeta();
+			unsetItemMetaEnchs(m);
+			if (!meta.equals(m))
+				return false;
+		}
+		return true;
+	}
+	
 	public boolean isOfType(final ItemStack item) {
 		if (item == null)
 			return isOfType(0, (short) 0);
-		if (enchantments != null && !enchantments.equals(item.getEnchantments()))
+		if (!hasMeta(item))
 			return false;
 		return isOfType(item.getTypeId(), item.getDurability());
 	}
@@ -228,6 +271,8 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 					return false;
 			}
 		}
+		if (meta != null && !meta.equals(other.meta))
+			return false;
 		outer: for (final ItemData o : other.types) {
 			for (final ItemData t : types) {
 				if (t.isSupertypeOf(o))
@@ -282,6 +327,9 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 			b.append(" ");
 			b.append(e.getValue());
 			i++;
+		}
+		if (meta != null && debug) {
+			b.append(" meta=[").append(meta).append("]");
 		}
 		return b.toString();
 	}
@@ -431,6 +479,8 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 				is.setAmount(getAmount());
 				if (enchantments != null)
 					is.addUnsafeEnchantments(enchantments);
+				if (meta != null)
+					is.setItemMeta((ItemMeta) meta);
 				return is;
 			}
 			
@@ -473,12 +523,8 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	public ItemStack removeFrom(final ItemStack item) {
 		if (item == null)
 			return null;
-		if (enchantments != null && !enchantments.equals(item.getEnchantments()))
-			return item;
-		for (final ItemData type : types) {
-			if (type.isOfType(item))
-				item.setAmount(Math.max(item.getAmount() - getAmount(), 0));
-		}
+		if (isOfType(item))
+			item.setAmount(Math.max(item.getAmount() - getAmount(), 0));
 		return item;
 	}
 	
@@ -491,14 +537,8 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	public ItemStack addTo(final ItemStack item) {
 		if (item == null || item.getTypeId() == 0)
 			return getRandom();
-		if (enchantments != null && !enchantments.equals(item.getEnchantments()))
-			return item;
-		for (final ItemData type : types) {
-			if (type.isOfType(item)) {
-				item.setAmount(Math.min(item.getAmount() + getAmount(), item.getMaxStackSize()));
-				return item;
-			}
-		}
+		if (isOfType(item))
+			item.setAmount(Math.min(item.getAmount() + getAmount(), item.getMaxStackSize()));
 		return item;
 	}
 	
@@ -530,6 +570,8 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		is.setAmount(getAmount());
 		if (enchantments != null)
 			is.addUnsafeEnchantments(enchantments);
+		if (meta != null)
+			is.setItemMeta((ItemMeta) meta);
 		return is;
 	}
 	
@@ -589,7 +631,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		for (final ItemData d : types) {
 			int found = 0;
 			for (final ItemStack i : items) {
-				if (d.isOfType(i) && (enchantments == null || enchantments.equals(i.getEnchantments()))) {
+				if (d.isOfType(i) && hasMeta(i)) {
 					found += i == null ? 1 : i.getAmount();
 					if (found >= getAmount()) {
 						if (!all)
@@ -608,7 +650,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		for (final ItemData d : types) {
 			int found = 0;
 			for (final ItemStack i : list) {
-				if (d.isOfType(i) && (enchantments == null || enchantments.equals(i.getEnchantments()))) {
+				if (d.isOfType(i) && hasMeta(i)) {
 					found += i == null ? 1 : i.getAmount();
 					if (found >= getAmount()) {
 						if (!all)
@@ -659,7 +701,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 					continue;
 				for (int i = 0; i < list.size(); i++) {
 					final ItemStack is = list.get(i);
-					if (is != null && d.isOfType(is) && (enchantments == null || enchantments.equals(is.getEnchantments()))) {
+					if (is != null && d.isOfType(is) && hasMeta(is)) {
 						if (all && amount == -1) {
 							list.set(i, null);
 							removed = 1;

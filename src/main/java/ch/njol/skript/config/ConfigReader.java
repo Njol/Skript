@@ -57,9 +57,7 @@ public class ConfigReader extends BufferedReader {
 	private final String stripUTF8BOM(final String line) {
 		if (!hasNonEmptyLine && line != null && !line.isEmpty()) {
 			hasNonEmptyLine = true;
-			if (line.startsWith("ï»¿")) {
-				return line.substring(3);
-			} else if (line.startsWith("﻿")) {// <- that's the BOM there as actual bytes
+			if (line.startsWith("\uFEFF")) {
 				return line.substring(1);
 			}
 		}
