@@ -21,7 +21,6 @@
 
 package ch.njol.skript.classes;
 
-
 /**
  * @author Peter Güttinger
  */
@@ -40,11 +39,18 @@ public interface Serializer<T> {
 	/**
 	 * Deserializes an object from a string returned by this serializer or an earlier version thereof.
 	 * <p>
-	 * This method must be thread-safe and should only return null if the input is invalid (i.e. not produced by {@link #serialize(Object)} or an older version of that method)
+	 * This method should only return null if the input is invalid (i.e. not produced by {@link #serialize(Object)} or an older version of that method)
+	 * <p>
+	 * This method must only be called from Bukkit's main thread if {@link #mustSyncDeserialization()} returned true.
 	 * 
 	 * @param s
 	 * @return The deserialized object or null if the input is invalid. An error message may be logged to specify the cause.
 	 */
 	public T deserialize(String s);
+	
+	/**
+	 * @return Whether deserialization must be done on Bukkit's main thread
+	 */
+	public boolean mustSyncDeserialization();
 	
 }

@@ -52,9 +52,9 @@ public class Language {
 	
 	static HashMap<String, String> english = new HashMap<String, String>();
 	/**
-	 * Must never be null but set to {@link #english} instead.
+	 * May be null.
 	 */
-	static HashMap<String, String> localized = english;
+	static HashMap<String, String> localized = null;
 	private static boolean useLocal = false;
 	
 	private static HashMap<Plugin, Version> langVersion = new HashMap<Plugin, Version>();
@@ -64,7 +64,7 @@ public class Language {
 	}
 	
 	private final static String get_i(final String key) {
-		if (useLocal) {
+		if (useLocal && localized != null) {
 			final String s = localized.get(key);
 			if (s != null)
 				return s;
@@ -156,7 +156,7 @@ public class Language {
 			return;
 		final InputStream din = addon.plugin.getResource(addon.getLanguageFileDirectory() + "/english.lang");
 		if (din == null)
-			throw new IllegalStateException(addon.getFile().getName() + " is missing the required english.lang file!");
+			throw new IllegalStateException(addon + " is missing the required english.lang file!");
 		HashMap<String, String> en;
 		try {
 			en = new Config(din, "english.lang", false, false, ":").toMap(".");
@@ -176,12 +176,14 @@ public class Language {
 	
 	public static boolean load(String name) {
 		name = name.toLowerCase();
+		if (name.equals("english"))
+			return true;
 		localized = new HashMap<String, String>();
 		boolean exists = load(Skript.getAddonInstance(), name);
 		for (final SkriptAddon addon : Skript.getAddons())
 			exists |= load(addon, name);
 		if (!exists) {
-			localized = english;
+			localized = null;
 			Language.name = "english";
 			return false;
 		}
@@ -274,10 +276,6 @@ public class Language {
 		if (english != null)
 			l.onLanguageChange();
 	}
-	
-//	public static void removeListener(final LanguageChangeListener l) {
-//		listeners.remove(l);
-//	}
 	
 	// some general words - down here so that 'listeners' is initialized
 	public final static Message m_and = new Message("and");

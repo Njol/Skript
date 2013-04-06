@@ -41,7 +41,7 @@ import ch.njol.skript.util.Experience;
 import ch.njol.util.Kleenean;
 
 /**
- * FIXME
+ * FIXME drops items at a wrong location (at least when dropping at a block's location)
  * 
  * @author Peter Güttinger
  */

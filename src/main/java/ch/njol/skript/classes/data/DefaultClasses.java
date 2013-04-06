@@ -106,6 +106,11 @@ public class DefaultClasses {
 							return null;
 						}
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<Long>(Long.class, "long")
@@ -151,6 +156,11 @@ public class DefaultClasses {
 							return null;
 						}
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}).math(Double.class, new NumberArithmetic<Long>()));
 		
 		Classes.registerClass(new ClassInfo<Integer>(Integer.class, "integer")
@@ -180,7 +190,6 @@ public class DefaultClasses {
 						return "-?\\d+";
 					}
 				}).serializer(new Serializer<Integer>() {
-					
 					@Override
 					public String serialize(final Integer i) {
 						return "" + i;
@@ -193,6 +202,11 @@ public class DefaultClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				}).math(Integer.class, new IntegerArithmetic<Integer>()));
 		
@@ -225,7 +239,6 @@ public class DefaultClasses {
 						return "-?\\d+(\\.\\d+)?";
 					}
 				}).serializer(new Serializer<Double>() {
-					
 					@Override
 					public String serialize(final Double d) {
 						return "" + d;
@@ -238,6 +251,11 @@ public class DefaultClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				}).math(Double.class, new NumberArithmetic<Double>()));
 		
@@ -280,6 +298,11 @@ public class DefaultClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				}).math(Double.class, new NumberArithmetic<Float>()));
 		
@@ -328,6 +351,11 @@ public class DefaultClasses {
 							return Boolean.FALSE;
 						return null;
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<Short>(Short.class, "short")
@@ -357,7 +385,6 @@ public class DefaultClasses {
 						return "-?\\d+";
 					}
 				}).serializer(new Serializer<Short>() {
-					
 					@Override
 					public String serialize(final Short s) {
 						return "" + s;
@@ -370,6 +397,11 @@ public class DefaultClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				}).math(Integer.class, new IntegerArithmetic<Short>()));
 		
@@ -400,7 +432,6 @@ public class DefaultClasses {
 						return "-?\\d+";
 					}
 				}).serializer(new Serializer<Byte>() {
-					
 					@Override
 					public String serialize(final Byte b) {
 						return "" + b;
@@ -413,6 +444,11 @@ public class DefaultClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				}).math(Integer.class, new IntegerArithmetic<Byte>()));
 		
@@ -485,6 +521,11 @@ public class DefaultClasses {
 					@Override
 					public String deserialize(final String s) {
 						return s;
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				}));
 	}

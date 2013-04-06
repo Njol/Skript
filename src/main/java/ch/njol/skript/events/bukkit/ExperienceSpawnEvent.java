@@ -31,7 +31,7 @@ import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.Experience;
 
 /**
- * TODO test
+ * FIXME test this
  * 
  * @author Peter Güttinger
  */

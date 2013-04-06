@@ -66,4 +66,9 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> implem
 		return (T) o;
 	}
 	
+	@Override
+	public boolean mustSyncDeserialization() {
+		return false;
+	}
+	
 }

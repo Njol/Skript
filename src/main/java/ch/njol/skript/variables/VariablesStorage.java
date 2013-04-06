@@ -33,7 +33,9 @@ import ch.njol.util.Pair;
  */
 public abstract class VariablesStorage implements Closeable {
 	
-	private final LinkedBlockingQueue<Pair<String, Object>> changesQueue = new LinkedBlockingQueue<Pair<String, Object>>();
+	private final static int QUEUE_SIZE = 1000;
+	
+	private final LinkedBlockingQueue<Pair<String, Object>> changesQueue = new LinkedBlockingQueue<Pair<String, Object>>(QUEUE_SIZE);
 	
 	protected boolean closed = false;
 	
@@ -68,8 +70,21 @@ public abstract class VariablesStorage implements Closeable {
 		}
 	});
 	
+	private long lastWarning = Long.MIN_VALUE;
+	
 	final void save(final String name, final Object value) {
-		changesQueue.add(new Pair<String, Object>(name, value));
+		if (!changesQueue.offer(new Pair<String, Object>(name, value))) {
+			if (lastWarning < System.currentTimeMillis() - 10000) {
+				Skript.warning("Cannot write variables to the " + type() + " at sufficient speed; server performance will suffer and many variables will be lost if the server crashes. (this warning will be repeated at most once every 10 seconds)");
+				lastWarning = System.currentTimeMillis();
+			}
+			while (true) {
+				try {
+					changesQueue.put(new Pair<String, Object>(name, value));
+					break;
+				} catch (final InterruptedException e) {}
+			}
+		}
 	}
 	
 	@Override
@@ -97,5 +112,7 @@ public abstract class VariablesStorage implements Closeable {
 	 * @param value
 	 */
 	protected abstract void save(String name, String type, String value);
+	
+	protected abstract String type();
 	
 }

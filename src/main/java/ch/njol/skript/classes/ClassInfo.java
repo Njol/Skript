@@ -54,7 +54,7 @@ public class ClassInfo<T> implements Debuggable {
 	private SerializableChanger<? super T, ?> changer = null;
 	
 	private Serializer<? super T> serializer = null;
-	private Class<?> serializeAs = null;
+	private Class<?> serializeAs = null; // TODO check this immediately after all classes are registered
 	
 	private Arithmetic<T, ?> math = null;
 	private Class<?> mathRelativeType = null;
@@ -183,7 +183,7 @@ public class ClassInfo<T> implements Debuggable {
 			final StringBuilder b = new StringBuilder(os[0].toString().toLowerCase().replace('_', ' '));
 			for (int i = 1; i < os.length; i++) {
 				b.append(", ");
-				b.append(os[i].toString().toLowerCase());
+				b.append(os[i].toString().toLowerCase().replace('_', ' '));
 			}
 			this.usage = new String[] {b.toString()};
 		} else {

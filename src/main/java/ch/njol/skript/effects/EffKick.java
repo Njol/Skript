@@ -23,6 +23,8 @@ package ch.njol.skript.effects;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerLoginEvent.Result;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -45,7 +47,6 @@ import ch.njol.util.Kleenean;
 		"	cancel the event"})
 @Since("1.0")
 public class EffKick extends Effect {
-	
 	static {
 		Skript.registerEffect(EffKick.class, "kick %players% [(by reason of|because [of]|on account of|due to) %-string%]");
 	}
@@ -68,9 +69,15 @@ public class EffKick extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
-		final String r = reason == null ? null : reason.getSingle(e);
+		final String r = reason == null ? "" : reason.getSingle(e);
+		if (r == null)
+			return;
 		for (final Player p : players.getArray(e)) {
-			p.kickPlayer(r);
+			if (e instanceof PlayerLoginEvent && p.equals(((PlayerLoginEvent) e).getPlayer())) {
+				((PlayerLoginEvent) e).disallow(Result.KICK_OTHER, r);
+			} else {
+				p.kickPlayer(r);
+			}
 		}
 	}
 	

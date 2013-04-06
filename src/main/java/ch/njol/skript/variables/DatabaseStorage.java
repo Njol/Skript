@@ -27,7 +27,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.LinkedList;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -41,6 +43,7 @@ import org.bukkit.plugin.Plugin;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
@@ -203,9 +206,18 @@ public class DatabaseStorage extends VariablesStorage {
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
+					long lastWarning = Long.MIN_VALUE;
+					
 					while (!closed) {
-						checkDatabase();
 						final long target = System.currentTimeMillis() + DatabaseStorage.this.monitor_interval;
+						checkDatabase();
+						final long now = System.currentTimeMillis();
+						if (target < now && lastWarning < now - 10000) {
+							Skript.warning("Cannot load variables from the database fast enough (loading took " + ((now - target + DatabaseStorage.this.monitor_interval) / 1000.) + "s, monitor interval = " + (DatabaseStorage.this.monitor_interval / 1000.) + "s). " +
+									"Please increase your monitor interval or reduce usage of variables. " +
+									"(this warning will be repeated at most once every 10 seconds)");
+							lastWarning = now;
+						}
 						do {
 							try {
 								Thread.sleep(target - System.currentTimeMillis());
@@ -285,22 +297,64 @@ public class DatabaseStorage extends VariablesStorage {
 		}
 	}
 	
+	private final static class VariableInfo {
+		final String name;
+		final String value;
+		final ClassInfo<?> ci;
+		
+		public VariableInfo(final String name, final String value, final ClassInfo<?> ci) {
+			this.name = name;
+			this.value = value;
+			this.ci = ci;
+		}
+	}
+	
+	private final static LinkedList<VariableInfo> syncDeserializing = new LinkedList<VariableInfo>();
+	
 	private void loadVariables(final ResultSet r) throws SQLException {
-		while (r.next()) {
-			int i = 1;
-			final String name = r.getString(i++);
-			final String type = r.getString(i++);
-			final String value = r.getString(i++);
-			lastRowID = r.getLong(i++);
-			if (type == null) {
-				Variables.setVariable(name, null, this);
-			} else {
-				final Object d = Classes.deserialize(type, value);
-				if (d == null) {
-					Skript.error("Cannot load the variable {" + name + "} from the database, because '" + value + "' cannot be parsed as a " + type);
-					return;
+		synchronized (syncDeserializing) {
+			while (r.next()) {
+				int i = 1;
+				final String name = r.getString(i++);
+				final String type = r.getString(i++);
+				final String value = r.getString(i++);
+				lastRowID = r.getLong(i++);
+				if (type == null) {
+					Variables.setVariable(name, null, this);
+				} else {
+					final ClassInfo<?> c = Classes.getClassInfo(type);
+					if (c == null || c.getSerializer() == null) {
+						Skript.error("Cannot load the variable {" + name + "} from the database, because the type '" + type + "' cannot be recognized or not stored in variables");
+						continue;
+					}
+					if (c.getSerializer().mustSyncDeserialization()) {
+						syncDeserializing.add(new VariableInfo(name, value, c));
+					} else {
+						final Object d = c.getSerializer().deserialize(value);
+						if (d == null) {
+							Skript.error("Cannot load the variable {" + name + "} from the database, because '" + value + "' cannot be parsed as a " + type);
+							continue;
+						}
+						Variables.setVariable(name, d, this);
+					}
 				}
-				Variables.setVariable(name, d, this);
+			}
+			if (!syncDeserializing.isEmpty()) {
+				Task.callSync(new Callable<Void>() {
+					@Override
+					public Void call() throws Exception {
+						for (final VariableInfo o : syncDeserializing) {
+							final Object d = o.ci.getSerializer().deserialize(o.value);
+							if (d == null) {
+								Skript.error("Cannot load the variable {" + o.name + "} from the database, because '" + o.value + "' cannot be parsed as a " + o.ci.getCodeName());
+								continue;
+							}
+							Variables.setVariable(o.name, d, DatabaseStorage.this);
+						}
+						syncDeserializing.clear();
+						return null;
+					}
+				});
 			}
 		}
 	}
@@ -309,6 +363,11 @@ public class DatabaseStorage extends VariablesStorage {
 		Skript.error("database error: " + e.getLocalizedMessage());
 		if (Skript.testing())
 			e.printStackTrace();
+	}
+	
+	@Override
+	protected String type() {
+		return "database";
 	}
 	
 }

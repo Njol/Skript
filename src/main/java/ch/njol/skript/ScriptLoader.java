@@ -557,6 +557,7 @@ final public class ScriptLoader {
 		});
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static ArrayList<TriggerItem> loadItems(final SectionNode node) {
 		
 		if (Skript.debug())
@@ -588,10 +589,18 @@ final public class ScriptLoader {
 				
 				if (StringUtils.startsWithIgnoreCase(name, "loop ")) {
 					final String l = name.substring("loop ".length());
-					@SuppressWarnings("unchecked")
-					final Expression<?> loopedExpr = SkriptParser.parseExpression(l, SkriptParser.PARSE_EXPRESSIONS | SkriptParser.PARSE_LITERALS, ParseContext.DEFAULT, Object.class).getConvertedExpression(Object.class);
-					if (loopedExpr == null)
+					final RetainingLogHandler h = SkriptLogger.startRetainingLog();
+					final Expression<?> loopedExpr;
+					try {
+						loopedExpr = SkriptParser.parseExpression(l, SkriptParser.PARSE_EXPRESSIONS | SkriptParser.PARSE_LITERALS, ParseContext.DEFAULT, Object.class).getConvertedExpression(Object.class);
+					} finally {
+						h.stop();
+					}
+					if (loopedExpr == null) {
+						h.printErrors("Can't understand this loop: '" + name + "'");
 						continue;
+					}
+					h.printLog();
 					if (loopedExpr.isSingle()) {
 						Skript.error("Can't loop " + loopedExpr + " because it's only a single value");
 						continue;

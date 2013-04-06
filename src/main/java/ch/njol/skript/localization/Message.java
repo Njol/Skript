@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Locale;
 
+import ch.njol.skript.Skript;
+
 /**
  * Basic class to get text from the language file(s).
  * <p>
@@ -33,16 +35,22 @@ import java.util.Locale;
  * @author Peter Güttinger
  */
 public class Message {
-	private final static String EMPTYTOKEN = "---"; // if a message's value is exactly this it's replaced with the empty string
 	
 	// this is most likely faster than registering a listener for each Message
 	private final static Collection<Message> messages = new ArrayList<Message>(50);
+	private static boolean firstChange = true;
 	static {
 		Language.addListener(new LanguageChangeListener() {
 			@Override
 			public void onLanguageChange() {
-				for (final Message m : messages)
+				for (final Message m : messages) {
 					m.revalidate = true;
+					if (firstChange) {
+						if (m.value == null)
+							Skript.error("Missing entry '" + m.key + "' in the default english language file!");
+					}
+				}
+				firstChange = false;
 			}
 		});
 	}
@@ -54,6 +62,11 @@ public class Message {
 	public Message(final String key) {
 		this.key = key.toLowerCase(Locale.ENGLISH);
 		messages.add(this);
+//		if (!Language.english.isEmpty()) {
+//			validate();
+//			if (value == null)
+//				Skript.warning("Missing entry '" + key + "' in the default english language file!");
+//		}
 	}
 	
 	@Override
@@ -89,8 +102,6 @@ public class Message {
 		if (revalidate) {
 			revalidate = false;
 			value = Language.get_(key);
-			if (value != null && value.equals(EMPTYTOKEN))
-				value = "";
 			onValueChange();
 		}
 	}

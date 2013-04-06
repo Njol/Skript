@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.bukkit.Bukkit;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.ClassInfo;
@@ -502,7 +504,17 @@ public abstract class Classes {
 		return null;
 	}
 	
+	/**
+	 * Deserializes an object.
+	 * <p>
+	 * This method must only be called from Bukkits main thread!
+	 * 
+	 * @param type
+	 * @param value
+	 * @return
+	 */
 	public final static Object deserialize(final String type, final String value) {
+		assert Bukkit.isPrimaryThread();
 		final ClassInfo<?> ci = getClassInfo(type);
 		if (ci == null || ci.getSerializer() == null)
 			return null;

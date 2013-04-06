@@ -50,7 +50,7 @@ import ch.njol.util.iterator.IteratorIterable;
 public class Documentation {
 	
 	public final static void generate() {
-		if (!Skript.testing())
+		if (!generate)
 			return;
 		try {
 			final PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(Skript.getInstance().getDataFolder(), "doc.sql")), "UTF-8"));
@@ -65,6 +65,8 @@ public class Documentation {
 			return;
 		}
 	}
+	
+	public final static boolean generate = Skript.testing() && new File(Skript.getInstance().getDataFolder(), "generate-doc").exists(); // don't generate the documentation on normal servers
 	
 	private final static void asSql(final PrintWriter pw) {
 		pw.println("-- syntax elements");

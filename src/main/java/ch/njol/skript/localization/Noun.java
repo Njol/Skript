@@ -24,6 +24,7 @@ package ch.njol.skript.localization;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.localization.Language.LanguageListenerPriority;
@@ -135,17 +136,18 @@ public class Noun extends Message {
 		Language.addListener(new LanguageChangeListener() {
 			@Override
 			public void onLanguageChange() {
+				final Map<String, String> lang = Language.localized == null ? Language.english : Language.localized;
 				genders.clear();
 				indefiniteArticles.clear();
 				definiteArticles.clear();
 				for (int i = 0; i < 100; i++) {
-					final String g = Language.localized.get("genders." + i + ".name");
+					final String g = lang.get("genders." + i + ".name");
 					if (g == null)
 						break;
 					genders.put(g, i);
-					final String ia = Language.localized.get("genders." + i + ".indefinite article");
+					final String ia = lang.get("genders." + i + ".indefinite article");
 					indefiniteArticles.add(ia == null ? "" : ia);
-					final String da = Language.localized.get("genders." + i + ".definite article");
+					final String da = lang.get("genders." + i + ".definite article");
 					definiteArticles.add(da == null ? "" : da);
 				}
 				if (genders.isEmpty()) {
@@ -153,7 +155,7 @@ public class Noun extends Message {
 					indefiniteArticles.add("");
 					definiteArticles.add("");
 				}
-				final String dpa = Language.localized.get("gender.plural.definite article");
+				final String dpa = lang.get("gender.plural.definite article");
 				definitePluralArticle = dpa == null ? "" : dpa;
 			}
 		}, LanguageListenerPriority.EARLIEST);

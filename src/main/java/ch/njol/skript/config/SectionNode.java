@@ -181,7 +181,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 			if (line.endsWith(":") && (config.simple
 					|| line.indexOf(config.separator) == -1
 					|| config.separator.endsWith(":") && line.indexOf(config.separator) == line.length() - config.separator.length()
-					) && !r.getLine().matches("([^#]|##)*#-#([^#].*)?")) {
+					) && !r.getLine().matches("([^#]|##)*#-#(\\s.*)?")) {
 				nodes.add(SectionNode.load(line.substring(0, line.length() - 1), this, r));
 				continue;
 			}

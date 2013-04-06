@@ -46,4 +46,9 @@ public class EnumSerializer<T extends Enum<T>> implements Serializer<T> {
 		}
 	}
 	
+	@Override
+	public boolean mustSyncDeserialization() {
+		return false;
+	}
+	
 }

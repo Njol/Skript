@@ -23,6 +23,7 @@ package ch.njol.skript.log;
 
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
 /**
@@ -38,13 +39,16 @@ public class RedirectingLogHandler extends LogHandler {
 	private int numErrors = 0;
 	
 	public RedirectingLogHandler(final CommandSender recipient, final String prefix) {
-		this.recipient = recipient;
+		this.recipient = recipient == Bukkit.getConsoleSender() ? null : recipient;
 		this.prefix = prefix == null ? "" : prefix;
 	}
 	
 	@Override
 	public boolean log(final LogEntry entry) {
-		recipient.sendMessage(prefix + entry.message);
+		if (recipient != null)
+			recipient.sendMessage(prefix + entry.toString());
+		else
+			Bukkit.getLogger().log(entry.getLevel(), prefix + entry.toString());
 		if (entry.level == Level.SEVERE)
 			numErrors++;
 		return false;

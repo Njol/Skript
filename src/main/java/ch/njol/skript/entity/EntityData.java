@@ -84,6 +84,11 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 				return null;
 			return d;
 		}
+		
+		@Override
+		public boolean mustSyncDeserialization() {
+			return false;
+		}
 	};
 	
 	static {

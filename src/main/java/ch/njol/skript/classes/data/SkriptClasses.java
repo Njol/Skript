@@ -114,6 +114,11 @@ public class SkriptClasses {
 					public ClassInfo deserialize(final String s) {
 						return Classes.getClassInfoNoError(s);
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<WeatherType>(WeatherType.class, "weathertype")
@@ -290,6 +295,11 @@ public class SkriptClasses {
 						}
 						return t;
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<Time>(Time.class, "time")
@@ -338,6 +348,11 @@ public class SkriptClasses {
 							return null;
 						}
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<Timespan>(Timespan.class, "timespan")
@@ -385,6 +400,11 @@ public class SkriptClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				})
 				.math(Timespan.class, new Arithmetic<Timespan, Timespan>() {
@@ -461,6 +481,11 @@ public class SkriptClasses {
 							return null;
 						}
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<Date>(Date.class, "date")
@@ -486,6 +511,11 @@ public class SkriptClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				}).math(Timespan.class, new Arithmetic<Date, Timespan>() {
 					@Override
@@ -565,6 +595,11 @@ public class SkriptClasses {
 					public Direction deserialize(final String s) {
 						return Direction.deserialize(s);
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<Slot>(Slot.class, "slot")
@@ -617,8 +652,8 @@ public class SkriptClasses {
 		Classes.registerClass(new ClassInfo<Color>(Color.class, "color")
 				.user("colou?rs?")
 				.name("Colour")
-				.description("Wool, dye and chat colours. A complete list can be found on the article on <a href='../strings'>Text and Variable Names</a>.")
-				.usage("see <a href='../strings'>here</a>")
+				.description("Wool, dye and chat colours.")
+				.usage("black, dark grey/dark gray, grey/light grey/gray/light gray/silver, white, blue/dark blue, cyan/aqua/dark cyan/dark aqua, light blue/light cyan/light aqua, green/dark green, light green/lime/lime green, yellow/light yellow, orange/gold/dark yellow, red/dark red, pink/light red, purple/dark purple, magenta/light purple, brown/indigo")
 				.examples("color of the sheep is red or black",
 						"set the colour of the block to green",
 						"message \"You're holding a <%color of tool%>%color of tool%<reset> wool block\"")
@@ -724,6 +759,11 @@ public class SkriptClasses {
 							return null;
 						}
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<Experience>(Experience.class, "experience")
@@ -776,6 +816,10 @@ public class SkriptClasses {
 						}
 					}
 					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 	}

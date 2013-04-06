@@ -74,6 +74,10 @@ public final class SkriptAddon {
 		return name;
 	}
 	
+	public String getName() {
+		return name;
+	}
+	
 	/**
 	 * Loads classes of the plugin by package. Useful for registering many syntax elements like Skript does it.
 	 * 

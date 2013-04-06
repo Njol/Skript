@@ -361,4 +361,9 @@ public class FlatFileStorage extends VariablesStorage {
 		}
 	}
 	
+	@Override
+	protected String type() {
+		return "file";
+	}
+	
 }

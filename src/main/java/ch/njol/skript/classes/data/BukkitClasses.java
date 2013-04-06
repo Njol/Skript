@@ -24,7 +24,6 @@ package ch.njol.skript.classes.data;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -64,7 +63,6 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.PotionEffectUtils;
 import ch.njol.skript.util.StringMode;
-import ch.njol.skript.util.Task;
 import ch.njol.util.StringUtils;
 
 /**
@@ -190,23 +188,23 @@ public class BukkitClasses {
 						final String[] split = s.split("[:,]");
 						if (split.length != 4)
 							return null;
-						return Task.callSync(new Callable<Block>() {
-							@Override
-							public Block call() throws Exception {
-								final World w = Bukkit.getWorld(split[0]);
-								if (w == null) {
-									return null;
-								}
-								try {
-									final int[] l = new int[3];
-									for (int i = 0; i < 3; i++)
-										l[i] = Integer.parseInt(split[i + 1]);
-									return w.getBlockAt(l[0], l[1], l[2]);
-								} catch (final NumberFormatException e) {
-									return null;
-								}
-							}
-						});
+						final World w = Bukkit.getWorld(split[0]);
+						if (w == null) {
+							return null;
+						}
+						try {
+							final int[] l = new int[3];
+							for (int i = 0; i < 3; i++)
+								l[i] = Integer.parseInt(split[i + 1]);
+							return w.getBlockAt(l[0], l[1], l[2]);
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return true;
 					}
 				}));
 		
@@ -260,22 +258,22 @@ public class BukkitClasses {
 						final String[] split = s.split("[:,|/]");
 						if (split.length != 6)
 							return null;
-						return Task.callSync(new Callable<Location>() {
-							@Override
-							public Location call() throws Exception {
-								final World w = Bukkit.getWorld(split[0]);
-								if (w == null)
-									return null;
-								try {
-									final double[] l = new double[5];
-									for (int i = 0; i < 5; i++)
-										l[i] = Double.parseDouble(split[i + 1]);
-									return new Location(w, l[0], l[1], l[2], (float) l[3], (float) l[4]);
-								} catch (final NumberFormatException e) {
-									return null;
-								}
-							}
-						});
+						final World w = Bukkit.getWorld(split[0]);
+						if (w == null)
+							return null;
+						try {
+							final double[] l = new double[5];
+							for (int i = 0; i < 5; i++)
+								l[i] = Double.parseDouble(split[i + 1]);
+							return new Location(w, l[0], l[1], l[2], (float) l[3], (float) l[4]);
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return true;
 					}
 				}));
 		
@@ -292,6 +290,7 @@ public class BukkitClasses {
 				.parser(new Parser<World>() {
 					@Override
 					public World parse(final String s, final ParseContext context) {
+						// TODO allow shortcuts '[over]world', 'nether' and '[the_]end' (server.properties: 'level-name=world')
 						if (context == ParseContext.COMMAND)
 							return Bukkit.getWorld(s);
 						if (s.matches("\".+\""))
@@ -305,8 +304,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toVariableNameString(final World o) {
-						return o.getName();
+					public String toVariableNameString(final World w) {
+						return w.getName();
 					}
 					
 					@Override
@@ -321,12 +320,12 @@ public class BukkitClasses {
 					
 					@Override
 					public World deserialize(final String s) {
-						return Task.callSync(new Callable<World>() {
-							@Override
-							public World call() throws Exception {
-								return Bukkit.getWorld(s);
-							}
-						});
+						return Bukkit.getWorld(s);
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return true;
 					}
 				}));
 		
@@ -501,12 +500,12 @@ public class BukkitClasses {
 					
 					@Override
 					public OfflinePlayer deserialize(final String s) {
-						return Task.callSync(new Callable<OfflinePlayer>() {
-							@Override
-							public OfflinePlayer call() throws Exception {
-								return Bukkit.getOfflinePlayer(s);
-							}
-						});
+						return Bukkit.getOfflinePlayer(s);
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return true;
 					}
 				}));
 		
@@ -685,6 +684,11 @@ public class BukkitClasses {
 							return null;
 						}
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<Biome>(Biome.class, "biome")
@@ -735,6 +739,11 @@ public class BukkitClasses {
 					@Override
 					public PotionEffectType deserialize(final String s) {
 						return PotionEffectType.getByName(s);
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				}));
 		
@@ -788,21 +797,21 @@ public class BukkitClasses {
 						final String[] split = s.split("[:,]");
 						if (split.length != 3)
 							return null;
-						return Task.callSync(new Callable<Chunk>() {
-							@Override
-							public Chunk call() throws Exception {
-								final World w = Bukkit.getWorld(split[0]);
-								if (w == null)
-									return null;
-								try {
-									final int x = Integer.parseInt(split[1]);
-									final int z = Integer.parseInt(split[1]);
-									return w.getChunkAt(x, z);
-								} catch (final NumberFormatException e) {
-									return null;
-								}
-							}
-						});
+						final World w = Bukkit.getWorld(split[0]);
+						if (w == null)
+							return null;
+						try {
+							final int x = Integer.parseInt(split[1]);
+							final int z = Integer.parseInt(split[1]);
+							return w.getChunkAt(x, z);
+						} catch (final NumberFormatException e) {
+							return null;
+						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return true;
 					}
 				}));
 		
@@ -848,6 +857,11 @@ public class BukkitClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
 					}
 				}));
 		

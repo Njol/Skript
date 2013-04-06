@@ -87,7 +87,7 @@
 		<!-- <repository> <id>Plugin Metrics Repo</id> <url>http://repo.mcstats.org/content/repositories/public</url> 
 			</repository> -->
 	</repositories>
-	<url>http://njol.ch/projects/skript</url>
+	<url>http://njol.ch/projects/skript/</url>
 	<build>
 		<finalName>../../../testserver/plugins/Skript</finalName>
 		<resources>

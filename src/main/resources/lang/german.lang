@@ -1,5 +1,5 @@
 # Default German language file by Peter Güttinger (Njol)
-version: 2.0 beta 8
+version: 2.0 beta 9
 
 # -- General --
 and: und
@@ -43,7 +43,7 @@ skript command:
 		description: Lädt die Konfigurationen, Skripte, alles oder nur bestimmte Skripte erneut
 		all: Lädt alle Konfigurationen und Skripte neu
 		config: Lädt alle Konfigurationen erneut
-		aliases: Lädt nur die Itemnamen neu (aliases.sk)
+		aliases: Lädt die Itemnamen neu (aliases.sk)
 		scripts: Lädt alle Skripte neu
 		<script>: Lädt ein bestimmtes Skript neu
 	enable:
@@ -143,6 +143,7 @@ enchantments:
 		arrow_knockback: des Schlags
 		arrow_fire: des Feuers
 		arrow_infinite: der Unendlichkeit
+		thorns: der Dornen
 
 # -- Potion Effects --
 potions:
@@ -315,8 +316,9 @@ types:
 	byte: ganze Zahl¦en @f
 	double: Nummer¦n @f
 	float: Nummer¦n @f
-	boolean: boolesche¦r Wert (ja/nein)¦e Werte (ja/nein) @m
+	boolean: boolesche¦r Wert (ja/nein)¦ Werte (ja/nein) @m
 	string: Text¦e @m
+	chunk: Chunk¦s @der
 	
 	# Bukkit
 	entity: Wesen @n

@@ -236,6 +236,10 @@ public final class Skript extends JavaPlugin implements Listener {
 									Skript.exception(err.getCause(), "Class " + c + " generated an exception while loading");
 								}
 								continue;
+							} else if (Documentation.generate) {
+								try {
+									Class.forName(e.getName().replace('/', '.').substring(0, e.getName().length() - ".class".length()), true, getClassLoader());
+								} catch (final Exception ex) {}
 							}
 						}
 					} finally {

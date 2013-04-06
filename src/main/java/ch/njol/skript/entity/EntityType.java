@@ -88,6 +88,11 @@ public class EntityType implements Serializable, Cloneable {
 							return null;
 						}
 					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return false;
+					}
 				}));
 	}
 	

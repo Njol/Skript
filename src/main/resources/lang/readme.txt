@@ -6,6 +6,7 @@ and then modify the 'language' entry in your config.sk accordingly.
 
 You can either put language files into the lang folder in the jar or into the plugins/Skript/lang/ folder, but files in the latter folder take precedence
 (If there are two files for the same language both will be loaded but the file in the folder will overwrite values from the file in the jar)
+The exception to this rule is the default english file which is only loaded from the jar.
 
 Strings that have arguments use Java's formatter syntax, see http://docs.oracle.com/javase/6/docs/api/java/util/Formatter.html#syntax.
 

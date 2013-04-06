@@ -1,7 +1,7 @@
 # Default English language file
 
 # Which version of Skript this language file was written for
-version: 2.0 beta 8
+version: 2.0 beta 9
 
 # -- General --
 and: and
@@ -10,7 +10,7 @@ a: a, an
 is: is
 are: are
 not: not
-not a: not a # @a:not a @an:not an @x:not
+not a: not a(n) # @a:not a @an:not an @x:not
 neither: neither
 nor: nor
 
@@ -141,6 +141,7 @@ enchantments:
 		arrow_knockback: Punch
 		arrow_fire: Flame
 		arrow_infinite: Infinity
+		thorns: thorns
 
 # -- Potion Effects --
 potions:
@@ -397,6 +398,7 @@ types:
 	float: number¦s @a
 	boolean: boolean¦ (yes/no)¦s (yes/no) @a
 	string: text¦s @a
+	chunk: chunk¦s @a
 	
 	# Bukkit
 	entity: entit¦y¦ies @an

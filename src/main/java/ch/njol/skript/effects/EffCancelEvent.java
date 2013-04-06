@@ -23,6 +23,7 @@ package ch.njol.skript.effects;
 
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerLoginEvent;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -34,6 +35,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -66,7 +68,10 @@ public class EffCancelEvent extends Effect {
 			if (Cancellable.class.isAssignableFrom(e))
 				return true;
 		}
-		Skript.error("This event can't be cancelled", ErrorQuality.SEMANTIC_ERROR);
+		if (Utils.contains(ScriptLoader.currentEvents, PlayerLoginEvent.class))
+			Skript.error("A connect event cannot be cancelled, but the player may be kicked ('kick player on account of \"...\"')", ErrorQuality.SEMANTIC_ERROR);
+		else
+			Skript.error("This event can't be cancelled", ErrorQuality.SEMANTIC_ERROR);
 		return false;
 	}
 	

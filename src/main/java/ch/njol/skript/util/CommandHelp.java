@@ -22,7 +22,6 @@
 package ch.njol.skript.util;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bukkit.command.CommandSender;
@@ -46,9 +45,9 @@ public class CommandHelp {
 	
 	private String langNode;
 	
-	private final Map<String, Object> arguments = new LinkedHashMap<String, Object>();
+	private final LinkedHashMap<String, Object> arguments = new LinkedHashMap<String, Object>();
 	
-	private Object wildcardArg = null;
+	private Message wildcardArg = null;
 	
 	public CommandHelp(final String command, final String argsColor, final String langNode) {
 		this.command = command;
@@ -62,12 +61,13 @@ public class CommandHelp {
 		this.argsColor = argsColor;
 	}
 	
-	public CommandHelp add(String argument) {
+	public CommandHelp add(final String argument) {
 		if (argument.startsWith("<") && argument.endsWith(">")) {
-			argument = "<gray><<" + argsColor + ">" + argument.substring(1, argument.length() - 1) + "<gray>>";
-			wildcardArg = new Message(langNode + "." + argument);
+			final String carg = "<gray><<" + argsColor + ">" + argument.substring(1, argument.length() - 1) + "<gray>>";
+			arguments.put(carg, argument);
+		} else {
+			arguments.put(argument, null);
 		}
-		arguments.put(argument, new Message(langNode + "." + argument));
 		return this;
 	}
 	
@@ -85,7 +85,12 @@ public class CommandHelp {
 			if (e.getValue() instanceof CommandHelp) {
 				((CommandHelp) e.getValue()).onAdd(this);
 			} else {
-				e.setValue(new Message(langNode + "." + e.getKey()));
+				if (e.getValue() != null) { // wildcard arg
+					wildcardArg = new Message(langNode + "." + e.getValue());
+					e.setValue(wildcardArg);
+				} else {
+					e.setValue(new Message(langNode + "." + e.getKey()));
+				}
 			}
 		}
 	}

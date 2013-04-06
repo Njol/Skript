@@ -56,6 +56,7 @@ import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -227,10 +228,19 @@ public class SimpleEvents {
 				.description("Called whenever a player changes his held item by selecting a different slot (e.g. the keys 1-9 or the mouse wheel), <i>not</i> by dropping or replacing the item in the current slot.")
 				.examples("")
 				.since("1.0");
-		Skript.registerEvent("Login", SimpleEvent.class, PlayerJoinEvent.class, "(login|logging in|join[ing]|connect[ing])")
-				.description("Called when the player joins the server. The player is already in a world when this event is called.")
-				.examples("")
+		Skript.registerEvent("Join", SimpleEvent.class, PlayerJoinEvent.class, "[player] (login|logging in|join[ing])")
+				.description("Called when the player joins the server. The player is already in a world when this event is called, so if you want to prevent players from joining you should prefer <a href='#connect'>on connect</a> over this event.")
+				.examples("on join:",
+						"	message \"Welcome on our awesome server!\"",
+						"	broadcast \"%player% just joined the server!\"")
 				.since("1.0");
+		Skript.registerEvent("Connect", SimpleEvent.class, PlayerLoginEvent.class, "[player] connect[ing]")
+				.description("Called when the player connects to the server. This event is called before the player actually joins the server, so if you want to prevent players from joining you should prefer this event over <a href='#join'>on join</a>.")
+				.examples("on connect:",
+						"	player doesn't have permission \"VIP\"",
+						"	number of players is larger than 20," +
+								"	kick the player due to \"The last 5 slots are reserved for VIP players.\"")
+				.since("2.0");
 		Skript.registerEvent("Kick", SimpleEvent.class, PlayerKickEvent.class, "(kick|being kicked)")
 				.description("Called when a player is kicked from the server.")
 				.examples("")
