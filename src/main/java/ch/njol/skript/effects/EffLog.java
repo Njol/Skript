@@ -42,7 +42,7 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.ExceptionUtils;
+import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -103,7 +103,7 @@ public class EffLog extends Effect {
 					if (w == null) {
 						final File f = new File(logsFolder, s);
 						try {
-							f.mkdirs();
+							f.getParentFile().mkdirs();
 							w = new PrintWriter(new BufferedWriter(new FileWriter(f, true)));
 							writers.put(s, w);
 						} catch (final IOException ex) {

@@ -34,6 +34,7 @@ import ch.njol.skript.events.bukkit.ScheduledEvent;
 import ch.njol.skript.events.bukkit.ScheduledWorldEvent;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
+import ch.njol.skript.lang.SkriptEventInfo;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.util.Timespan;
@@ -44,7 +45,8 @@ import ch.njol.skript.util.Timespan;
 @SuppressWarnings("serial")
 public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 	static {
-		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledEvent.class, "every %timespan%");
+		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledEvent.class, "every %timespan%")
+				.description(SkriptEventInfo.NO_DOC);
 		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledWorldEvent.class, "every %timespan% in [world[s]] %worlds%")
 				.description("An event that is called periodically. The event is used like 'every &lt;<a href='../classes/#timespan'>timespan</a>&gt;', e.g. 'every second' or 'every 5 minutes'.")
 				.examples("every second", "every minecraft hour", "every tick # warning: lag!", "every minecraft day in \"world\"")

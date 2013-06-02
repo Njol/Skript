@@ -30,6 +30,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.material.Directional;
 
 import ch.njol.skript.Skript;
+import ch.njol.util.CollectionUtils;
 
 /**
  * TODO !Update with every version [blocks]
@@ -115,13 +116,13 @@ public abstract class BlockUtils {
 				return false;
 			dataMax = (byte) Math.min(dataMax, attach.length - 1);
 			byte down; // TODO randomize preferred face?
-			if ((down = (byte) Utils.indexOf(attach, BlockFace.DOWN, dataMin, dataMax)) != -1) {
+			if ((down = (byte) CollectionUtils.indexOf(attach, BlockFace.DOWN, dataMin, dataMax)) != -1) {
 				if (isSolid(b.getRelative(BlockFace.DOWN).getTypeId())) {
 					b.setTypeIdAndData(type, down, applyPhysics);
 					return true;
 				}
 			}
-			for (final int data : Utils.permutation(dataMin, dataMax)) {
+			for (final int data : CollectionUtils.permutation(dataMin, dataMax)) {
 				final BlockFace f = attach[data];
 				if (f == null)
 					continue;
@@ -165,7 +166,7 @@ public abstract class BlockUtils {
 		
 		// BED
 		if (type == Material.BED_BLOCK.getId()) {
-			for (final int data : Utils.permutation(dataMin, dataMax)) {
+			for (final int data : CollectionUtils.permutation(dataMin, dataMax)) {
 				final boolean head = (data & 0x8) == 0x8;
 				final BlockFace f = bed[data & 0x3];
 				if (head) {
@@ -207,7 +208,7 @@ public abstract class BlockUtils {
 	}
 	
 	public static final boolean isSolid(final int type) {
-		if (type < 0 || type > Skript.MAXBLOCKID)
+		if (type < 0 || type >= isSolid.length)
 			throw new IllegalArgumentException(type + " is not a block id");
 		return isSolid[type];
 	}
@@ -220,7 +221,13 @@ public abstract class BlockUtils {
 		return Arrays.asList(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST);
 	}
 	
+	/**
+	 * @param b A block
+	 * @return Location of the block, including it's direction
+	 */
 	public static Location getLocation(final Block b) {
+		if (b == null)
+			return null;
 		final Location l = b.getLocation().add(0.5, 0.5, 0.5);
 		final Material m = b.getType();
 		if (Directional.class.isAssignableFrom(m.getData())) {

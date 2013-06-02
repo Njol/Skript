@@ -343,16 +343,18 @@ public class DatabaseStorage extends VariablesStorage {
 				Task.callSync(new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
-						for (final VariableInfo o : syncDeserializing) {
-							final Object d = o.ci.getSerializer().deserialize(o.value);
-							if (d == null) {
-								Skript.error("Cannot load the variable {" + o.name + "} from the database, because '" + o.value + "' cannot be parsed as a " + o.ci.getCodeName());
-								continue;
+						synchronized (syncDeserializing) {
+							for (final VariableInfo o : syncDeserializing) {
+								final Object d = o.ci.getSerializer().deserialize(o.value);
+								if (d == null) {
+									Skript.error("Cannot load the variable {" + o.name + "} from the database, because '" + o.value + "' cannot be parsed as a " + o.ci.getCodeName());
+									continue;
+								}
+								Variables.setVariable(o.name, d, DatabaseStorage.this);
 							}
-							Variables.setVariable(o.name, d, DatabaseStorage.this);
+							syncDeserializing.clear();
+							return null;
 						}
-						syncDeserializing.clear();
-						return null;
 					}
 				});
 			}

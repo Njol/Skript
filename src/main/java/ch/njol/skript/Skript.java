@@ -43,11 +43,14 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventException;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerCommandEvent;
+import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import ch.njol.skript.Metrics.Graph;
@@ -72,12 +75,10 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionInfo;
 import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptEventInfo;
 import ch.njol.skript.lang.Statement;
 import ch.njol.skript.lang.SyntaxElementInfo;
-import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.lang.util.VariableString;
@@ -100,20 +101,22 @@ import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Checker;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.CheckedIterator;
 import ch.njol.util.iterator.EnumerationIterable;
 
 /**
- * <b>Skript</b> - A Bukkit plugin to modify how Minecraft behaves without having to write a single line of code (You'll likely be writing some code though =P)
+ * <b>Skript</b> - A Bukkit plugin to modify how Minecraft behaves without having to write a single line of code (You'll likely be writing some code though if you're reading this
+ * =P)
  * <p>
  * Use this class to extend this plugin's functionality by adding more {@link Condition conditions}, {@link Effect effects}, {@link SimpleExpression expressions}, etc.
  * <p>
  * If your plugin.yml contains <tt>'depend: [Skript]'</tt> then your plugin will not start at all if Skript is not present. Add <tt>'softdepend: [Skript]'</tt> to your plugin.yml
  * if you want your plugin to work even if Skript isn't present, but want to make sure that it's loaded after Skript.
  * <p>
- * If you use 'softdepend' you can test whether Skript is loaded using <tt>'Bukkit.getPluginManager().getPlugin(&quot;Skript&quot;) != null'</tt>
+ * If you use 'softdepend' you can test whether Skript is loaded with <tt>'Bukkit.getPluginManager().getPlugin(&quot;Skript&quot;) != null'</tt>
  * <p>
  * Once you made sure that Skript is loaded you can use <code>Skript.getInstance()</code> whenever you need a reference to the plugin, but you likely won't need it since all API
  * methods are static.
@@ -131,7 +134,6 @@ import ch.njol.util.iterator.EnumerationIterable;
  */
 public final class Skript extends JavaPlugin implements Listener {
 	
-	private final static Message m_copyright = new Message("skript.copyright");
 	public static final Message m_quotes_error = new Message("skript.quotes error");
 	public static final Message m_invalid_reload = new Message("skript.invalid reload");
 	
@@ -166,7 +168,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 		
 		Language.loadDefault(getAddonInstance());
-		getFile();
 		
 		version = new Version(getDescription().getVersion());
 		runningCraftBukkit = Bukkit.getServer().getClass().getName().equals("org.bukkit.craftbukkit.CraftServer");
@@ -192,7 +193,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		try {
 			getAddonInstance().loadClasses("ch.njol.skript", "conditions", "effects", "events", "expressions", "entity");
 		} catch (final Exception e) {
-			exception(e, "could not load required .class files: " + e.getLocalizedMessage());
+			exception(e, "Could not load required .class files: " + e.getLocalizedMessage());
 			setEnabled(false);
 			return;
 		}
@@ -201,17 +202,44 @@ public final class Skript extends JavaPlugin implements Listener {
 			getDataFolder().mkdirs();
 		
 		SkriptConfig.load();
+		Language.setUseLocal(true);
 		
-		if (SkriptConfig.checkForNewVersion.value())
-			Updater.check(Bukkit.getConsoleSender(), SkriptConfig.automaticallyDownloadNewVersion.value(), true);
+		Updater.start();
 		
 		Aliases.load();
 		
-		Commands.registerListener();
+		Commands.registerListeners();
 		
 		if (logNormal())
-			info(" " + m_copyright);
+			info(" " + Language.get("skript.copyright"));
 		
+		if (Skript.testing()) {
+			// TODO check whether any events occur before scripts are loaded
+			final EventExecutor executor = new EventExecutor() {
+				private boolean check = true;
+				{
+					Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.this, new Runnable() {
+						@Override
+						public void run() {
+							check = false;
+						}
+					});
+				}
+				
+				@Override
+				public void execute(final Listener listener, final Event event) throws EventException {
+					if (check) {
+						error("missed event: " + event.getEventName());
+					}
+				}
+			};
+			for (final SkriptEventInfo<?> event : events) {
+				for (final Class<? extends Event> e : event.events)
+					Bukkit.getPluginManager().registerEvent(e, new Listener() {}, EventPriority.LOWEST, executor, this);
+			}
+		}
+		
+		// TODO make this execute just after the last plugin is loaded
 		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 			@Override
 			public void run() {
@@ -402,13 +430,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * Clears triggers, aliases, commands, variable names, etc.
 	 */
 	final static void disableScripts() {
-		for (final Trigger t : ScriptLoader.selfRegisteredTriggers)
-			((SelfRegisteringSkriptEvent) t.getEvent()).unregisterAll();
-		ScriptLoader.selfRegisteredTriggers.clear();
-		
 		VariableString.variableNames.clear();
-		
-		SkriptEventHandler.triggers.clear();
+		SkriptEventHandler.removeAllTriggers();
 		Commands.clearCommands();
 	}
 	
@@ -572,7 +595,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		acceptRegistrations = false;
 		Converters.createMissingConverters();
 		
-		Classes.sortClassInfos();
+		Classes.onRegistrationsStop();
 		if (debug()) {
 			final StringBuilder b = new StringBuilder();
 			for (final ClassInfo<?> ci : Classes.getClassInfos()) {
@@ -686,6 +709,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	public static <E extends Expression<T>, T> void registerExpression(final Class<E> c, final Class<T> returnType, final ExpressionType type, final String... patterns) throws IllegalArgumentException {
 		checkAcceptRegistrations();
+		if (returnType.isAnnotation() || returnType.isArray() || returnType.isPrimitive())
+			throw new IllegalArgumentException("returnType must be a normal type");
 		final ExpressionInfo<?, ?> info = new ExpressionInfo<E, T>(patterns, returnType, c);
 		for (int i = type.ordinal() + 1; i < ExpressionType.values().length; i++) {
 			expressionTypesStartIndices[i]++;
@@ -719,7 +744,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	@SuppressWarnings("unchecked")
 	public static <E extends SkriptEvent> SkriptEventInfo<E> registerEvent(final String name, final Class<E> c, final Class<? extends Event> event, final String... patterns) throws IllegalArgumentException {
 		checkAcceptRegistrations();
-		final SkriptEventInfo<E> r = new SkriptEventInfo<E>(name, patterns, c, Utils.array(event));
+		final SkriptEventInfo<E> r = new SkriptEventInfo<E>(name, patterns, c, CollectionUtils.array(event));
 		events.add(r);
 		return r;
 	}

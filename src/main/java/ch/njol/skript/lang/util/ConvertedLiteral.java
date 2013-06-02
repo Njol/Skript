@@ -32,8 +32,8 @@ import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
 
 /**
@@ -109,7 +109,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	public T getSingle() {
 		if (getAnd() && data.length > 1)
 			throw new SkriptAPIException("Call to getSingle on a non-single expression");
-		return Utils.random(data);
+		return CollectionUtils.random(data);
 	}
 	
 	@Override

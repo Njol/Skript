@@ -31,6 +31,8 @@ import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.localization.Message;
+import ch.njol.skript.localization.RegexMessage;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
@@ -56,7 +58,7 @@ public class DefaultClasses {
 				.name("Number")
 				.description("A number, e.g. 2.5, 3, or -9812454.",
 						"Please note that many expressions only need integers, i.e. will discard any frational parts of any numbers without producing an error.")
-				.usage("<code>[-]###[.###]</code> (any amount of digits, very big numbers will be truncated though)")
+				.usage("<code>[-]###[.###]</code> (any amount of digits; very large numbers will be truncated though)")
 				.examples("set the player's health to 5.5",
 						"set {_temp} to 2*{_temp} - 2.5")
 				.since("1.0")
@@ -65,7 +67,7 @@ public class DefaultClasses {
 					@Override
 					public Number parse(final String s, final ParseContext context) {
 						try {
-							return Integer.valueOf(s);
+							return Long.valueOf(s);
 						} catch (final NumberFormatException e) {}
 						try {
 							return s.endsWith("%") ? Double.parseDouble(s.substring(0, s.length() - 1)) / 100 : Double.valueOf(s);
@@ -75,7 +77,7 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Number n) {
+					public String toString(final Number n, final int flags) {
 						return StringUtils.toString(n.doubleValue(), SkriptConfig.numberAccuracy.value());
 					}
 					
@@ -89,7 +91,6 @@ public class DefaultClasses {
 						return "-?\\d+(\\.\\d+)?";
 					}
 				}).serializer(new Serializer<Number>() {
-					
 					@Override
 					public String serialize(final Number n) {
 						return "" + n;
@@ -115,6 +116,7 @@ public class DefaultClasses {
 		
 		Classes.registerClass(new ClassInfo<Long>(Long.class, "long")
 				.user("int(eger)?s?")
+				.name(ClassInfo.NO_DOC)
 				.before("integer", "short", "byte")
 				.defaultExpression(new SimpleLiteral<Long>((long) 1, true))
 				.parser(new Parser<Long>() {
@@ -128,7 +130,7 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Long l) {
+					public String toString(final Long l, final int flags) {
 						return "" + l;
 					}
 					
@@ -142,7 +144,6 @@ public class DefaultClasses {
 						return "-?\\d+";
 					}
 				}).serializer(new Serializer<Long>() {
-					
 					@Override
 					public String serialize(final Long l) {
 						return "" + l;
@@ -164,6 +165,7 @@ public class DefaultClasses {
 				}).math(Double.class, new NumberArithmetic<Long>()));
 		
 		Classes.registerClass(new ClassInfo<Integer>(Integer.class, "integer")
+				.name(ClassInfo.NO_DOC)
 				.defaultExpression(new SimpleLiteral<Integer>(1, true))
 				.parser(new Parser<Integer>() {
 					@Override
@@ -176,7 +178,7 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Integer i) {
+					public String toString(final Integer i, final int flags) {
 						return "" + i;
 					}
 					
@@ -211,6 +213,7 @@ public class DefaultClasses {
 				}).math(Integer.class, new IntegerArithmetic<Integer>()));
 		
 		Classes.registerClass(new ClassInfo<Double>(Double.class, "double")
+				.name(ClassInfo.NO_DOC)
 				.defaultExpression(new SimpleLiteral<Double>(1., true))
 				.after("long")
 				.before("float", "integer", "short", "byte")
@@ -225,7 +228,7 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Double d) {
+					public String toString(final Double d, final int flags) {
 						return StringUtils.toString(d, SkriptConfig.numberAccuracy.value());
 					}
 					
@@ -260,6 +263,7 @@ public class DefaultClasses {
 				}).math(Double.class, new NumberArithmetic<Double>()));
 		
 		Classes.registerClass(new ClassInfo<Float>(Float.class, "float")
+				.name(ClassInfo.NO_DOC)
 				.defaultExpression(new SimpleLiteral<Float>(1f, true))
 				.parser(new Parser<Float>() {
 					@Override
@@ -272,7 +276,7 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Float f) {
+					public String toString(final Float f, final int flags) {
 						return StringUtils.toString(f, SkriptConfig.numberAccuracy.value());
 					}
 					
@@ -314,18 +318,24 @@ public class DefaultClasses {
 				.examples("set {config.%player%.use mod} to false")
 				.since("1.0")
 				.parser(new Parser<Boolean>() {
+					private final RegexMessage truePattern = new RegexMessage("boolean.true.pattern");
+					private final RegexMessage falsePattern = new RegexMessage("boolean.false.pattern");
+					
 					@Override
 					public Boolean parse(final String s, final ParseContext context) {
-						if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("yes") || s.equalsIgnoreCase("on"))
+						if (truePattern.getPattern().matcher(s).matches())
 							return Boolean.TRUE;
-						if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("no") || s.equalsIgnoreCase("off"))
+						if (falsePattern.getPattern().matcher(s).matches())
 							return Boolean.FALSE;
 						return null;
 					}
 					
+					private final Message trueName = new Message("boolean.true.name");
+					private final Message falseName = new Message("boolean.false.name");
+					
 					@Override
-					public String toString(final Boolean b) {
-						return b.toString();
+					public String toString(final Boolean b, final int flags) {
+						return b ? trueName.toString() : falseName.toString();
 					}
 					
 					@Override
@@ -359,6 +369,7 @@ public class DefaultClasses {
 				}));
 		
 		Classes.registerClass(new ClassInfo<Short>(Short.class, "short")
+				.name(ClassInfo.NO_DOC)
 				.defaultExpression(new SimpleLiteral<Short>((short) 1, true))
 				.parser(new Parser<Short>() {
 					@Override
@@ -371,7 +382,7 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Short s) {
+					public String toString(final Short s, final int flags) {
 						return "" + s;
 					}
 					
@@ -406,6 +417,7 @@ public class DefaultClasses {
 				}).math(Integer.class, new IntegerArithmetic<Short>()));
 		
 		Classes.registerClass(new ClassInfo<Byte>(Byte.class, "byte")
+				.name(ClassInfo.NO_DOC)
 				.defaultExpression(new SimpleLiteral<Byte>((byte) 1, true))
 				.parser(new Parser<Byte>() {
 					@Override
@@ -418,7 +430,7 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final Byte b) {
+					public String toString(final Byte b, final int flags) {
 						return "" + b;
 					}
 					
@@ -494,7 +506,7 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toString(final String s) {
+					public String toString(final String s, final int flags) {
 						return s;
 					}
 					

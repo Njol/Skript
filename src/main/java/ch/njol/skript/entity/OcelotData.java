@@ -25,7 +25,6 @@ import org.bukkit.entity.Ocelot;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -34,18 +33,14 @@ import ch.njol.util.StringUtils;
 public class OcelotData extends EntityData<Ocelot> {
 	
 	static {
-		EntityData.register(OcelotData.class, "ocelot", Ocelot.class,
-				"(wild|untamed|unowned) ocelot[s]", "ocelot[s]", "([(tamed|owned)] cat|(tamed|owned) ocelot)[s]");
+		EntityData.register(OcelotData.class, "ocelot", Ocelot.class, "wild ocelot", "ocelot", "cat");
 	}
 	
 	int tamed = 0;
 	
-	private boolean plural;
-	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		tamed = matchedPattern - 1;
-		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -63,16 +58,6 @@ public class OcelotData extends EntityData<Ocelot> {
 	@Override
 	public Class<? extends Ocelot> getType() {
 		return Ocelot.class;
-	}
-	
-	@Override
-	public String toString() {
-		return tamed == -1 ? "wild ocelot" : tamed == 1 ? "cat" : "ocelot";
-	}
-	
-	@Override
-	public boolean isPlural() {
-		return plural;
 	}
 	
 	@Override

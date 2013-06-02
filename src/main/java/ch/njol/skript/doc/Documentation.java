@@ -40,6 +40,7 @@ import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Callback;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.IteratorIterable;
@@ -116,6 +117,8 @@ public class Documentation {
 				");");
 		pw.println();
 		for (final ClassInfo<?> c : Classes.getClassInfos()) {
+			if (c.getDocName() == ClassInfo.NO_DOC)
+				continue;
 			if (c.getDocName() == null || c.getDescription() == null || c.getUsage() == null || c.getExamples() == null || c.getSince() == null) {
 				Skript.warning("Class " + c.getCodeName() + " is missing information");
 				continue;
@@ -176,7 +179,7 @@ public class Documentation {
 							first = false;
 							final Pair<String, Boolean> p = Utils.getEnglishPlural(c);
 							final ClassInfo<?> ci = Classes.getClassInfo(p.first);
-							if (ci.getDocName() != null && ci.getName().isSet()) {
+							if (ci.getDocName() != null && ci.getDocName() != ClassInfo.NO_DOC) {
 								b.append("<a href='../classes/#").append(p.first).append("'>").append(ci.getName().toString(p.second)).append("</a>");
 							} else {
 								b.append(c);
@@ -189,6 +192,8 @@ public class Documentation {
 	}
 	
 	private final static void insertSyntaxElement(final PrintWriter pw, final SyntaxElementInfo<?> info, final String type) {
+		if (info.c.getAnnotation(NoDoc.class) != null)
+			return;
 		if (info.c.getAnnotation(Name.class) == null || info.c.getAnnotation(Description.class) == null || info.c.getAnnotation(Examples.class) == null || info.c.getAnnotation(Since.class) == null) {
 			Skript.warning("" + info.c.getSimpleName() + " is missing information");
 			return;
@@ -213,6 +218,8 @@ public class Documentation {
 	}
 	
 	private final static void insertEvent(final PrintWriter pw, final SkriptEventInfo<?> info) {
+		if (info.getDescription() == SkriptEventInfo.NO_DOC)
+			return;
 		if (info.getDescription() == null || info.getExamples() == null || info.getSince() == null) {
 			Skript.warning("" + info.getName() + " (" + info.c.getSimpleName() + ") is missing information");
 			return;
@@ -287,7 +294,7 @@ public class Documentation {
 							continue linkLoop;
 					}
 				} else {
-					final int i = Utils.indexOf(urls, s[0].substring("../".length(), s[0].length() - 1));
+					final int i = CollectionUtils.indexOf(urls, s[0].substring("../".length(), s[0].length() - 1));
 					if (i != -1) {
 						try {
 							Class.forName("ch.njol.skript." + urls[i] + "." + s[1]);

@@ -26,7 +26,6 @@ import org.bukkit.entity.Player;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -35,18 +34,15 @@ import ch.njol.util.StringUtils;
 public class PlayerData extends EntityData<Player> {
 	
 	static {
-		EntityData.register(PlayerData.class, "player", Player.class, "non-op[s]", "player[s]", "op[s]");
+		EntityData.register(PlayerData.class, "player", Player.class, "non-op", "player", "op");
 	}
 	
 	// used by EntityData.getAll
 	int op = 0;
 	
-	private boolean plural;
-	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		op = matchedPattern - 1;
-		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -67,18 +63,8 @@ public class PlayerData extends EntityData<Player> {
 	}
 	
 	@Override
-	public String toString() {
-		return op == -1 ? "non-op" : op == 1 ? "op" : "player";
-	}
-	
-	@Override
 	public Player spawn(final Location loc) {
 		return null;
-	}
-	
-	@Override
-	public boolean isPlural() {
-		return plural;
 	}
 	
 	@Override

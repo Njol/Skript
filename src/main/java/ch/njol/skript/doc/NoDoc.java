@@ -15,25 +15,26 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011-2013 Peter Güttinger
+ * Copyright 2011, 2012 Peter Güttinger
  * 
  */
 
-package ch.njol.skript.log;
+package ch.njol.skript.doc;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
+ * Prevents warnings about missing documentation.
+ * 
  * @author Peter Güttinger
  */
-public interface SubLog {
-	
-	public void log(LogEntry entry);
-	
-	public void clear();
-	
-	public void stop();
-	
-	public void printLog();
-	
-	public int getNumErrors();
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface NoDoc {
 	
 }

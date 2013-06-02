@@ -33,7 +33,7 @@ import ch.njol.util.Setter;
  */
 public class Option<T> {
 	
-	public final String name;
+	public final String key;
 	private boolean optional = false;
 	
 	private String value = null;
@@ -43,8 +43,8 @@ public class Option<T> {
 	
 	private Setter<? super T> setter;
 	
-	public Option(final String name, final Class<T> c) {
-		this.name = name;
+	public Option(final String key, final Class<T> c) {
+		this.key = key;
 		if (c == String.class) {
 			parser = new Converter<String, T>() {
 				@SuppressWarnings("unchecked")
@@ -70,10 +70,10 @@ public class Option<T> {
 		}
 	}
 	
-	public Option(final String name, final Converter<String, ? extends T> parser) {
+	public Option(final String key, final Converter<String, ? extends T> parser) {
 		if (parser == null)
 			throw new IllegalArgumentException();
-		this.name = name;
+		this.key = key;
 		this.parser = parser;
 	}
 	
@@ -95,9 +95,9 @@ public class Option<T> {
 	
 	public final void set(final Config config, final String path) {
 		final String oldValue = value;
-		value = config.getByPath(path + name);
+		value = config.getByPath(path + key);
 		if (value == null && !optional)
-			Skript.error("Required entry '" + path + name + "' is missing in " + config.getFileName() + ". Please make sure that you have the latest version of the config.");
+			Skript.error("Required entry '" + path + key + "' is missing in " + config.getFileName() + ". Please make sure that you have the latest version of the config.");
 		if ((value == null ^ oldValue == null) || value != null && !value.equals(oldValue)) {
 			parsedValue = value == null ? defaultValue : parser.convert(value);
 			if (parsedValue == null)

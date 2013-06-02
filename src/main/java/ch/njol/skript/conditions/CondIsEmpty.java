@@ -39,7 +39,6 @@ import ch.njol.skript.util.Slot;
 @Examples("player's inventory is empty")
 @Since("")
 public class CondIsEmpty extends PropertyCondition<Object> {
-	
 	static {
 		register(CondIsEmpty.class, "empty", "inventories/slots/strings");
 	}

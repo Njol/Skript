@@ -38,6 +38,7 @@ import ch.njol.skript.config.Section;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
+import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Setter;
@@ -54,6 +55,10 @@ public abstract class SkriptConfig {
 	static Config mainConfig;
 	static Collection<Config> configs = new ArrayList<Config>();
 	
+	final static Option<String> version = new Option<String>("version", String.class)
+			.optional(true)
+			.defaultValue(null);
+	
 	public final static Option<Boolean> keepConfigsLoaded = new Option<Boolean>("keep configs loaded", Boolean.class)
 			.optional(true)
 			.defaultValue(false);
@@ -65,6 +70,15 @@ public abstract class SkriptConfig {
 	
 	static final Option<Boolean> checkForNewVersion = new Option<Boolean>("check for new version", Boolean.class)
 			.defaultValue(false);
+	static final Option<Timespan> updateCheckInterval = new Option<Timespan>("update check interval", Timespan.class)
+			.defaultValue(new Timespan(12 * 60 * 60 * 1000))
+			.setter(new Setter<Timespan>() {
+				@Override
+				public void set(final Timespan t) {
+					if (t.getTicks() != 0 && Updater.checkerTask != null && !Updater.checkerTask.isAlive())
+						Updater.checkerTask.setNextExecution(t.getTicks());
+				}
+			});
 	static final Option<Boolean> automaticallyDownloadNewVersion = new Option<Boolean>("automatically download new version", Boolean.class)
 			.defaultValue(false);
 	
@@ -96,7 +110,6 @@ public abstract class SkriptConfig {
 					return null;
 				return new SimpleDateFormat(s);
 			} catch (final IllegalArgumentException e) {
-				// TODO shorten URL?
 				Skript.error("'" + s + "' is not a valid date format. Please refer to http://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html for instructions on the format.");
 			}
 			return null;
@@ -156,6 +169,7 @@ public abstract class SkriptConfig {
 			.defaultValue(2);
 	
 	public final static Section database = new Section("database") {
+		// no default values, everything is handled by VariablesStorage
 		private final Option<String> type = new Option<String>("type", String.class);
 		private final Option<String> pattern = new Option<String>("pattern", String.class);
 		private final Option<Boolean> monitor_changes = new Option<Boolean>("monitor changes", Boolean.class);
@@ -194,6 +208,24 @@ public abstract class SkriptConfig {
 			} catch (final IOException e) {
 				Skript.error("Could not load the main config: " + e.getLocalizedMessage());
 				return false;
+			}
+			
+			if (!Skript.getVersion().toString().equals(mainConfig.get(version.key))) {
+				try {
+					final Config newConfig = new Config(Skript.getInstance().getResource("config.sk"), "Skript.jar/config.sk", false, false, ":");
+					if (newConfig.setValues(mainConfig)) {
+						final File bu = FileUtils.backup(config);
+						mainConfig = newConfig;
+						mainConfig.getMainNode().set("version", Skript.getVersion().toString());
+						mainConfig.save(config);
+						Skript.info("Your configuration has been updated to the latest version. A backup of your old config file has been created as " + bu.getName());
+					} else {
+						mainConfig.getMainNode().set("version", Skript.getVersion().toString());
+						mainConfig.save(config);
+					}
+				} catch (final IOException e) {
+					Skript.error("Could not load the new config from the jar file: " + e.getLocalizedMessage());
+				}
 			}
 			
 			mainConfig.load(SkriptConfig.class);

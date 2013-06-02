@@ -50,9 +50,8 @@ import ch.njol.util.Kleenean;
 		"	cancel the event"})
 @Since("1.0")
 public class EffCancelEvent extends Effect {
-	
 	static {
-		Skript.registerEffect(EffCancelEvent.class, "cancel [the] event");//, "uncancel event");
+		Skript.registerEffect(EffCancelEvent.class, "cancel [the] event", "uncancel [the] event");
 	}
 	
 	private boolean cancel;
@@ -66,12 +65,12 @@ public class EffCancelEvent extends Effect {
 		cancel = matchedPattern == 0;
 		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
 			if (Cancellable.class.isAssignableFrom(e))
-				return true;
+				return true; // TODO warning if some event(s) cannot be cancelled even though some can (needs a way to be suppressed)
 		}
-		if (Utils.contains(ScriptLoader.currentEvents, PlayerLoginEvent.class))
-			Skript.error("A connect event cannot be cancelled, but the player may be kicked ('kick player on account of \"...\"')", ErrorQuality.SEMANTIC_ERROR);
+		if (ScriptLoader.isCurrentEvent(PlayerLoginEvent.class))
+			Skript.error("A connect event cannot be cancelled, but the player may be kicked ('kick player by reason of \"...\"')", ErrorQuality.SEMANTIC_ERROR);
 		else
-			Skript.error("This event can't be cancelled", ErrorQuality.SEMANTIC_ERROR);
+			Skript.error(Utils.A(ScriptLoader.currentEventName) + " event cannot be cancelled", ErrorQuality.SEMANTIC_ERROR);
 		return false;
 	}
 	

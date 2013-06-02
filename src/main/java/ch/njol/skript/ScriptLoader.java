@@ -34,18 +34,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EmptyStackException;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 
-import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
-import org.bukkit.event.Listener;
 
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemType;
@@ -81,9 +76,9 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.Date;
-import ch.njol.skript.util.Utils;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Callback;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
@@ -146,86 +141,100 @@ final public class ScriptLoader {
 	
 	private static String indentation = "";
 	
-	final static List<Trigger> selfRegisteredTriggers = new ArrayList<Trigger>();
-	
-	/**
-	 * As it's difficult to unregister events with Bukkit this set is used to prevent that any event will ever be registered more than once when reloading.
-	 */
-	private final static Set<Class<? extends Event>> registeredEvents = new HashSet<Class<? extends Event>>();
-	
 	static ScriptInfo loadScripts() {
 		final File scriptsFolder = new File(Skript.getInstance().getDataFolder(), Skript.SCRIPTSFOLDER + File.separator);
 		if (!scriptsFolder.isDirectory())
 			scriptsFolder.mkdirs();
 		
 		final ScriptInfo i;
-		final Date start = new Date();
 		
-		final ErrorDescLogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler(null, null, "All scripts loaded without errors!"));
+		Language.setUseLocal(false);
 		try {
-			Language.setUseLocal(false);
+			
+			final Date start = new Date();
+			
+			final ErrorDescLogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler(null, null, "All scripts loaded without errors!"));
 			try {
 				i = loadScripts(scriptsFolder);
+				
+				synchronized (loadedScripts) {
+					loadedScripts.add(i);
+				}
 			} finally {
-				Language.setUseLocal(true);
+				h.stop();
 			}
 			
-			synchronized (loadedScripts) {
-				loadedScripts.add(i);
+			if (i.files == 0)
+				Skript.warning("No scripts were found, maybe you should write some ;)");
+			if (Skript.logNormal() && i.files > 0)
+				Skript.info("loaded " + i.files + " script" + (i.files == 1 ? "" : "s")
+						+ " with a total of " + i.triggers + " trigger" + (i.triggers == 1 ? "" : "s")
+						+ " and " + i.commands + " command" + (i.commands == 1 ? "" : "s")
+						+ " in " + start.difference(new Date()));
+		} finally {
+			Language.setUseLocal(true);
+		}
+		
+		SkriptEventHandler.registerBukkitEvents();
+		
+		return i;
+	}
+	
+	/**
+	 * loads enabled scripts from the specified directory and it's subdirectories.
+	 * 
+	 * @param directory
+	 * @return
+	 */
+	public final static ScriptInfo loadScripts(final File directory) {
+		final ScriptInfo i = new ScriptInfo();
+		final boolean wasLocal = Language.setUseLocal(false);
+		try {
+			final File[] files = directory.listFiles(new FileFilter() {
+				@Override
+				public boolean accept(final File f) {
+					return (f.isDirectory() || f.getName().endsWith(".sk")) && !f.getName().startsWith("-");
+				}
+			});
+			Arrays.sort(files);
+			for (final File f : files) {
+				if (f.isDirectory()) {
+					i.add(loadScripts(f));
+				} else {
+					i.add(loadScript(f));
+				}
 			}
 		} finally {
-			h.stop();
-		}
-		
-		if (i.files == 0)
-			Skript.warning("No scripts were found, maybe you should write some ;)");
-		if (Skript.logNormal() && i.files > 0)
-			Skript.info("loaded " + i.files + " script" + (i.files == 1 ? "" : "s")
-					+ " with a total of " + i.triggers + " trigger" + (i.triggers == 1 ? "" : "s")
-					+ " and " + i.commands + " command" + (i.commands == 1 ? "" : "s")
-					+ " in " + start.difference(new Date()));
-		
-		registerBukkitEvents();
-		
-		return i;
-	}
-	
-	private final static ScriptInfo loadScripts(final File directory) {
-		final ScriptInfo i = new ScriptInfo();
-		final File[] files = directory.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(final File f) {
-				return (f.isDirectory() || f.getName().endsWith(".sk")) && !f.getName().startsWith("-");
-			}
-		});
-		Arrays.sort(files);
-		for (final File f : files) {
-			if (f.isDirectory()) {
-				i.add(loadScripts(f));
-			} else {
-				i.add(loadScript(f));
-			}
+			if (wasLocal)
+				Language.setUseLocal(true);
 		}
 		return i;
 	}
 	
+	/**
+	 * Loads the specified scripts.
+	 * 
+	 * @param files
+	 * @return
+	 */
 	public final static ScriptInfo loadScripts(final File[] files) {
 		Arrays.sort(files);
 		final ScriptInfo i = new ScriptInfo();
-		Language.setUseLocal(false);
+		final boolean wasLocal = Language.setUseLocal(false);
 		try {
 			for (final File f : files) {
 				i.add(loadScript(f));
 			}
 		} finally {
-			Language.setUseLocal(true);
+			if (wasLocal)
+				Language.setUseLocal(true);
 		}
 		
 		synchronized (loadedScripts) {
 			loadedScripts.add(i);
 		}
 		
-		registerBukkitEvents();
+		SkriptEventHandler.registerBukkitEvents();
 		
 		return i;
 	}
@@ -246,7 +255,7 @@ final public class ScriptLoader {
 						triggersLoop: for (final Trigger t : script.triggers) {
 							if (t.getEvent() instanceof SelfRegisteringSkriptEvent) {
 								((SelfRegisteringSkriptEvent) t.getEvent()).register(t);
-								selfRegisteredTriggers.add(t);
+								SkriptEventHandler.addSelfRegisteringTrigger(t);
 							} else {
 								for (final SkriptEventInfo<?> e : Skript.getEvents()) {
 									if (e.c == t.getEvent().getClass()) {
@@ -310,7 +319,7 @@ final public class ScriptLoader {
 					}
 					
 					final SectionNode node = ((SectionNode) cnode);
-					String event = node.getName();
+					String event = node.getKey();
 					
 					if (event.equalsIgnoreCase("aliases")) {
 						node.convertToEntries(0, "=");
@@ -339,7 +348,7 @@ final public class ScriptLoader {
 						node.convertToEntries(0, "=");
 						for (final Node n : node) {
 							if (!(n instanceof EntryNode)) {
-								Skript.error("invalid line in variables");
+								Skript.error("Invalid line in variables section");
 								continue;
 							}
 							String name = ((EntryNode) n).getKey();
@@ -361,7 +370,10 @@ final public class ScriptLoader {
 									return "<" + ci.getCodeName() + ">";
 								}
 							});
-							if (name == null || name.contains("%")) {
+							if (name == null) {
+								continue;
+							} else if (name.contains("%")) {
+								Skript.error("Invalid use of percent signs in variable name");
 								continue;
 							}
 							if (Variables.getVariable(name) != null)
@@ -375,11 +387,7 @@ final public class ScriptLoader {
 							}
 							final ClassInfo<?> ci = Classes.getSuperClassInfo(o.getClass());
 							if (ci.getSerializeAs() != null) {
-								final ClassInfo<?> as = Classes.getSuperClassInfo(ci.getSerializeAs());
-								if (as == null) {
-									Skript.error("Missing class info for " + ci.getSerializeAs().getName() + ", the class to serialize " + ci.getC().getName() + " as");
-									continue;
-								}
+								final ClassInfo<?> as = Classes.getExactClassInfo(ci.getSerializeAs());
 								o = Converters.convert(o, as.getC());
 								if (o == null) {
 									Skript.error("Can't save '" + ((EntryNode) n).getValue() + "' in a variable");
@@ -399,7 +407,7 @@ final public class ScriptLoader {
 					if (event.toLowerCase().startsWith("command ")) {
 						currentEvent = null;
 						currentEventName = "command";
-						currentEvents = Utils.array(CommandEvent.class);
+						currentEvents = CollectionUtils.array(CommandEvent.class);
 						hasDelayBefore = Kleenean.FALSE;
 						
 						final ScriptCommand c = Commands.loadCommand(node);
@@ -423,7 +431,7 @@ final public class ScriptLoader {
 					event = replaceOptions(event);
 					if (event == null)
 						continue;
-					final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getName() + "'");
+					final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getKey() + "'");
 					if (parsedEvent == null) {
 						continue;
 					}
@@ -445,7 +453,7 @@ final public class ScriptLoader {
 					
 					if (parsedEvent.second instanceof SelfRegisteringSkriptEvent) {
 						((SelfRegisteringSkriptEvent) parsedEvent.second).register(trigger);
-						selfRegisteredTriggers.add(trigger);
+						SkriptEventHandler.addSelfRegisteringTrigger(trigger);
 					} else {
 						SkriptEventHandler.addTrigger(parsedEvent.first.events, trigger);
 					}
@@ -499,45 +507,42 @@ final public class ScriptLoader {
 		return new ScriptInfo();
 	}
 	
-	private final static void registerBukkitEvents() {
-		for (final Class<? extends Event> e : SkriptEventHandler.triggers.keySet()) {
-			if (!registeredEvents.contains(e)) {
-				Bukkit.getPluginManager().registerEvent(e, new Listener() {}, SkriptConfig.defaultEventPriority.value(), SkriptEventHandler.ee, Skript.getInstance());
-				registeredEvents.add(e);
+	/**
+	 * Unloads enabled scripts from the specified directory and it's subdirectories.
+	 * 
+	 * @param folder
+	 * @return
+	 */
+	final static ScriptInfo unloadScripts(final File folder) {
+		final ScriptInfo info = new ScriptInfo();
+		final File[] files = folder.listFiles(new FileFilter() {
+			@Override
+			public boolean accept(final File f) {
+				return (f.isDirectory() || f.getName().endsWith(".sk")) && !f.getName().startsWith("-");
+			}
+		});
+		for (final File f : files) {
+			if (f.isDirectory()) {
+				;
+				info.add(unloadScripts(f));
+			} else if (f.getName().endsWith(".sk")) {
+				info.add(unloadScript(f));
 			}
 		}
+		return info;
 	}
 	
+	/**
+	 * Unloads the specified script.
+	 * 
+	 * @param script
+	 * @return
+	 */
 	final static ScriptInfo unloadScript(final File script) {
-		final ScriptInfo info = new ScriptInfo();
-		final Iterator<List<Trigger>> triggersIter = SkriptEventHandler.triggers.values().iterator();
-		while (triggersIter.hasNext()) {
-			final List<Trigger> ts = triggersIter.next();
-			for (int i = 0; i < ts.size(); i++) {
-				if (ts.get(i).getScript().equals(script)) {
-					info.triggers++;
-					ts.remove(i);
-					i--;
-					if (ts.isEmpty())
-						triggersIter.remove();
-				}
-			}
-		}
-		for (int i = 0; i < ScriptLoader.selfRegisteredTriggers.size(); i++) {
-			final Trigger t = ScriptLoader.selfRegisteredTriggers.get(i);
-			if (t.getScript().equals(script)) {
-				info.triggers++;
-				((SelfRegisteringSkriptEvent) t.getEvent()).unregister(t);
-				ScriptLoader.selfRegisteredTriggers.remove(i);
-				i--;
-			}
-		}
-		info.commands = Commands.unregisterCommands(script);
-		
+		final ScriptInfo info = SkriptEventHandler.removeTriggers(script);
 		synchronized (loadedScripts) {
 			loadedScripts.subtract(info);
 		}
-		
 		return info;
 	}
 	
@@ -571,10 +576,10 @@ final public class ScriptLoader {
 			SkriptLogger.setNode(n);
 			if (n instanceof SimpleNode) {
 				final SimpleNode e = (SimpleNode) n;
-				final String s = replaceOptions(e.getName());
+				final String s = replaceOptions(e.getKey());
 				if (s == null)
 					continue;
-				final Statement stmt = Statement.parse(s, "can't understand this condition/effect: " + s);
+				final Statement stmt = Statement.parse(s, "Can't understand this condition/effect: " + s);
 				if (stmt == null)
 					continue;
 				if (Skript.debug())
@@ -583,16 +588,18 @@ final public class ScriptLoader {
 				if (stmt instanceof Delay)
 					hasDelayBefore = Kleenean.TRUE;
 			} else if (n instanceof SectionNode) {
-				String name = replaceOptions(n.getName());
+				String name = replaceOptions(n.getKey());
 				if (name == null)
 					continue;
 				
 				if (StringUtils.startsWithIgnoreCase(name, "loop ")) {
 					final String l = name.substring("loop ".length());
 					final RetainingLogHandler h = SkriptLogger.startRetainingLog();
-					final Expression<?> loopedExpr;
+					Expression<?> loopedExpr;
 					try {
-						loopedExpr = SkriptParser.parseExpression(l, SkriptParser.PARSE_EXPRESSIONS | SkriptParser.PARSE_LITERALS, ParseContext.DEFAULT, Object.class).getConvertedExpression(Object.class);
+						loopedExpr = SkriptParser.parseExpression(l, SkriptParser.PARSE_EXPRESSIONS | SkriptParser.PARSE_LITERALS, ParseContext.DEFAULT, Object.class);
+						if (loopedExpr != null)
+							loopedExpr = loopedExpr.getConvertedExpression(Object.class);
 					} finally {
 						h.stop();
 					}
@@ -682,11 +689,11 @@ final public class ScriptLoader {
 	 * @return
 	 */
 	static Trigger loadTrigger(final SectionNode node) {
-		String event = node.getName();
+		String event = node.getKey();
 		if (event.toLowerCase().startsWith("on "))
 			event = event.substring("on ".length());
 		
-		final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getName() + "'");
+		final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getKey() + "'");
 		
 		currentEvent = parsedEvent.second;
 		currentEvents = parsedEvent.first.events;
@@ -716,4 +723,13 @@ final public class ScriptLoader {
 			return loadedScripts.triggers;
 		}
 	}
+	
+	public final static boolean isCurrentEvent(final Class<? extends Event> event) {
+		return CollectionUtils.containsSuperclass(currentEvents, event);
+	}
+	
+	public final static boolean isCurrentEvent(final Class<? extends Event>... events) {
+		return CollectionUtils.containsAnySuperclass(currentEvents, events);
+	}
+	
 }

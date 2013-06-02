@@ -27,7 +27,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.entity.EntityData;
@@ -36,7 +35,6 @@ import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
 
 /**
@@ -46,7 +44,7 @@ import ch.njol.util.StringUtils;
 public final class EvtEntity extends SkriptEvent {
 	
 	static {
-		Skript.registerEvent("Death", EvtEntity.class, Utils.array(EntityDeathEvent.class, PlayerDeathEvent.class), "death [of %entitydatas%]")
+		Skript.registerEvent("Death", EvtEntity.class, EntityDeathEvent.class, "death [of %entitydatas%]")
 				.description("Called when a living entity (including players) dies.")
 				.examples("on death",
 						"on death of player",

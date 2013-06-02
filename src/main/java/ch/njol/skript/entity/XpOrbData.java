@@ -26,7 +26,7 @@ import org.bukkit.entity.ExperienceOrb;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
+import ch.njol.skript.localization.ArgsMessage;
 
 /**
  * @author Peter Güttinger
@@ -34,12 +34,10 @@ import ch.njol.util.StringUtils;
 @SuppressWarnings("serial")
 public class XpOrbData extends EntityData<ExperienceOrb> {
 	static {
-		register(XpOrbData.class, "xporb", ExperienceOrb.class, "([e]xp|experience)( |-)orb[s]");
+		register(XpOrbData.class, "xporb", ExperienceOrb.class, "xp-orb");
 	}
 	
 	private int xp = -1;
-	
-	private boolean plural;
 	
 	public XpOrbData() {}
 	
@@ -49,7 +47,6 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
-		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -77,21 +74,18 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 		return orb;
 	}
 	
-	@Override
-	public String toString() {
-		return xp == -1 ? "experience orb" : xp + "-xp orb";
-	}
+	private final static ArgsMessage format = new ArgsMessage("entities.xp-orb.format");
 	
 	@Override
-	public boolean isPlural() {
-		return plural;
+	public String toString() {
+		return xp == -1 ? super.toString() : format.toString(super.toString(), xp);
 	}
 	
 	public int getExperience() {
 		return xp == -1 ? 1 : xp;
 	}
 	
-	public int getInternExperience() {
+	public int getInternalExperience() {
 		return xp;
 	}
 	
@@ -133,4 +127,5 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 			return xp == -1 || ((XpOrbData) e).xp == xp;
 		return false;
 	}
+	
 }

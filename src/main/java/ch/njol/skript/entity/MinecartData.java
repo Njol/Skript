@@ -40,52 +40,46 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 public class MinecartData extends EntityData<Minecart> {
 	
 	private static enum MinecartType {
-		ANY(Minecart.class, "minecart", "[mine]cart(1¦s|)"),
-		NORMAL(Skript.isRunningMinecraft(1, 5) ? RideableMinecart.class : Minecart.class, "regular minecart", "(normal|regular) [mine]cart(1¦s|)"),
-		STORAGE(Skript.isRunningMinecraft(1, 5) ? org.bukkit.entity.minecart.StorageMinecart.class : StorageMinecart.class, "storage minecart", "(storage [mine]cart(1¦s|)|minecart(1¦s|) with chest[s])"),
-		POWERED(Skript.isRunningMinecraft(1, 5) ? org.bukkit.entity.minecart.PoweredMinecart.class : PoweredMinecart.class, "powered minecart", "(powered [mine]cart(1¦s|)|minecart(1¦s|) with furnace[s])"),
+		ANY(Minecart.class, "minecart"),
+		NORMAL(Skript.isRunningMinecraft(1, 5) ? RideableMinecart.class : Minecart.class, "regular minecart"),
+		STORAGE(Skript.isRunningMinecraft(1, 5) ? org.bukkit.entity.minecart.StorageMinecart.class : StorageMinecart.class, "storage minecart"),
+		POWERED(Skript.isRunningMinecraft(1, 5) ? org.bukkit.entity.minecart.PoweredMinecart.class : PoweredMinecart.class, "powered minecart"),
 		// 1.5
-		HOPPER(Skript.isRunningMinecraft(1, 5) ? HopperMinecart.class : null, "hopper minecart", "(hopper [mine]cart(1¦s|)|minecart(1¦s|) with hopper[s])"),
-		EXPLOSIVE(Skript.isRunningMinecraft(1, 5) ? ExplosiveMinecart.class : null, "explosive minecart", "((explosive|TNT) [mine]cart(1¦s|)|minecart(1¦s|) with TNT[s])"),
-		SPAWNER(Skript.isRunningMinecraft(1, 5) ? SpawnerMinecart.class : null, "spawner minecart", "(spawner [mine]cart(1¦s|)|minecart(1¦s|) with (mob|monster|) spawner[s])");
+		HOPPER(Skript.isRunningMinecraft(1, 5) ? HopperMinecart.class : null, "hopper minecart"),
+		EXPLOSIVE(Skript.isRunningMinecraft(1, 5) ? ExplosiveMinecart.class : null, "explosive minecart"),
+		SPAWNER(Skript.isRunningMinecraft(1, 5) ? SpawnerMinecart.class : null, "spawner minecart");
 		
 		final Class<? extends Minecart> c;
-		private final String name;
-		final String pattern;
+		private final String codeName;
 		
-		MinecartType(final Class<? extends Minecart> c, final String name, final String pattern) {
+		MinecartType(final Class<? extends Minecart> c, final String codeName) {
 			this.c = c;
-			this.name = name;
-			this.pattern = pattern;
-		}
-		
-		static String[] patterns = new String[values().length - (Skript.isRunningMinecraft(1, 5) ? 0 : 3)];
-		static MinecartType[] byPattern = values();
-		static {
-			for (int i = 0; i < patterns.length; i++) {
-				patterns[i] = byPattern[i].pattern;
-			}
+			this.codeName = codeName;
 		}
 		
 		@Override
 		public String toString() {
-			return name;
+			return codeName;
 		}
 		
+		public static String[] codeNames;
+		static {
+			codeNames = new String[values().length - (Skript.isRunningMinecraft(1, 5) ? 0 : 3)];
+			for (int i = 0; i < codeNames.length; i++) {
+				codeNames[i] = values()[i].codeName;
+			}
+		}
 	}
 	
 	static {
-		register(MinecartData.class, "minecart", Minecart.class, MinecartType.patterns);
+		register(MinecartData.class, "minecart", Minecart.class, MinecartType.codeNames);
 	}
 	
 	private MinecartType type = MinecartType.ANY;
 	
-	private boolean plural;
-	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
-		type = MinecartType.byPattern[matchedPattern];
-		plural = parseResult.mark == 1;
+		type = MinecartType.values()[matchedPattern];
 		return true;
 	}
 	
@@ -102,16 +96,6 @@ public class MinecartData extends EntityData<Minecart> {
 	@Override
 	public Class<? extends Minecart> getType() {
 		return type.c;
-	}
-	
-	@Override
-	public String toString() {
-		return type.name;
-	}
-	
-	@Override
-	public boolean isPlural() {
-		return plural;
 	}
 	
 	@Override

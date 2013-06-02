@@ -25,6 +25,8 @@ import java.util.Locale;
 
 import org.bukkit.event.Event;
 
+import ch.njol.skript.SkriptAPIException;
+
 public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementInfo<E> {
 	
 	public Class<? extends Event>[] events;
@@ -36,18 +38,24 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 	private String since;
 	
 	/**
-	 * @param name
+	 * @param name Capitalized name of the event without leading "On" which is added automatically (Start the name with an asterisk to prevent this).
 	 * @param patterns
-	 * @param c
-	 * @param events
-	 * @throws IllegalArgumentException
+	 * @param c The SkriptEvent's class
+	 * @param events The Bukkit-Events this SkriptEvent listens to
 	 */
-	public SkriptEventInfo(String name, final String[] patterns, final Class<E> c, final Class<? extends Event>[] events) throws IllegalArgumentException {
+	public SkriptEventInfo(String name, final String[] patterns, final Class<E> c, final Class<? extends Event>[] events) {
 		super(patterns, c);
 		assert name != null;
 		assert patterns != null && patterns.length > 0;
 		assert c != null;
 		assert events != null && events.length > 0;
+		
+		for (int i = 0; i < events.length; i++) {
+			for (int j = i + 1; j < events.length; j++) {
+				if (events[i].isAssignableFrom(events[j]) || events[j].isAssignableFrom(events[i]))
+					throw new SkriptAPIException("The event " + name + " (" + c.getName() + ") registers with super/subclasses " + events[i].getName() + " and " + events[j].getName());
+			}
+		}
 		
 		this.events = events;
 		
@@ -58,6 +66,11 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 		}
 		this.id = name.toLowerCase(Locale.ENGLISH).replaceAll("[#'\"<>/&]", "").replaceAll("\\s+", "_");
 	}
+	
+	/**
+	 * Use this as {@link #description(String...)} to prevent warnings about missing documentation.
+	 */
+	public final static String[] NO_DOC = new String[0];
 	
 	/**
 	 * Only used for Skript's documentation.

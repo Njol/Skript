@@ -29,11 +29,11 @@ import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -41,26 +41,23 @@ import ch.njol.util.StringUtils;
 @SuppressWarnings("serial")
 public class EndermanData extends EntityData<Enderman> {
 	static {
-		EntityData.register(EndermanData.class, "enderman", Enderman.class, "enderm(a|e)n [(carrying|holding) %-itemtypes%]");
+		EntityData.register(EndermanData.class, "enderman", Enderman.class, "enderman");
 	}
 	
 	private ItemType[] hand = null;
-	
-	private boolean plural;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (exprs[0] != null)
 			hand = ((Literal<ItemType>) exprs[0]).getAll();
-		plural = StringUtils.startsWithIgnoreCase(parseResult.expr, "endermen");
 		return true;
 	}
 	
 	@Override
 	public void set(final Enderman entity) {
 		if (hand != null)
-			entity.setCarriedMaterial(Utils.random(hand).getBlock().getRandom().getData());
+			entity.setCarriedMaterial(CollectionUtils.random(hand).getBlock().getRandom().getData());
 	}
 	
 	@Override
@@ -78,14 +75,13 @@ public class EndermanData extends EntityData<Enderman> {
 		return Enderman.class;
 	}
 	
-	@Override
-	public String toString() {
-		return "enderman" + (hand == null ? "" : " carrying " + Classes.toString(hand, false));
-	}
+	private final static ArgsMessage format = new ArgsMessage("entities.enderman.format");
 	
 	@Override
-	public boolean isPlural() {
-		return plural;
+	public String toString() {
+		if (hand == null)
+			return super.toString();
+		return format.toString(super.toString(), Classes.toString(hand, false));
 	}
 	
 	@Override

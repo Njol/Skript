@@ -21,11 +21,17 @@
 
 package ch.njol.skript;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
+import org.bukkit.Bukkit;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Result;
@@ -35,6 +41,9 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.EventExecutor;
 
+import ch.njol.skript.ScriptLoader.ScriptInfo;
+import ch.njol.skript.command.Commands;
+import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.Trigger;
 
 /**
@@ -43,38 +52,72 @@ import ch.njol.skript.lang.Trigger;
 public abstract class SkriptEventHandler {
 	private SkriptEventHandler() {}
 	
-	static Map<Class<? extends Event>, List<Trigger>> triggers = new HashMap<Class<? extends Event>, List<Trigger>>();
+	private final static Map<Class<? extends Event>, List<Trigger>> triggers = new HashMap<Class<? extends Event>, List<Trigger>>();
+	
+	private final static List<Trigger> selfRegisteredTriggers = new ArrayList<Trigger>();
+	
+	private final static Iterator<Trigger> getTriggers(final Class<? extends Event> event) {
+		return new Iterator<Trigger>() {
+			private Class<?> e = event;
+			private Iterator<Trigger> current = null;
+			
+			@Override
+			public boolean hasNext() {
+				while (current == null || !current.hasNext()) {
+					if (e == null || !Event.class.isAssignableFrom(e))
+						return false;
+					final List<Trigger> l = triggers.get(e);
+					current = l == null ? null : l.iterator();
+					e = e.getSuperclass();
+				}
+				return true;
+			}
+			
+			@Override
+			public Trigger next() {
+				if (!hasNext())
+					throw new NoSuchElementException();
+				return current.next();
+			}
+			
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+	
+	private static Event last = null;
 	
 	final static EventExecutor ee = new EventExecutor() {
 		@Override
 		public void execute(final Listener l, final Event e) {
+			if (last == e) // an event is received multiple times if multiple superclasses of it are registered
+				return;
+			last = e;
 			check(e);
 		}
 	};
 	
-	private static Event last = null;
-	
 	static void check(final Event e) {
-		if (last == e)
-			return;
-		last = e;
-		final List<Trigger> ts = triggers.get(e.getClass());
-		if (ts == null)
+		Iterator<Trigger> ts = getTriggers(e.getClass());
+		if (!ts.hasNext())
 			return;
 		
 		if (Skript.logVeryHigh()) {
 			boolean hasTrigger = false;
-			for (final Trigger t : ts) {
-				if (t.getEvent().check(e)) {
+			while (ts.hasNext()) {
+				if (ts.next().getEvent().check(e)) {
 					hasTrigger = true;
 					break;
 				}
 			}
 			if (!hasTrigger)
 				return;
+			ts = getTriggers(e.getClass());
+			
+			logEventStart(e);
 		}
-		
-		logEventStart(e);
 		
 		if (e instanceof Cancellable && ((Cancellable) e).isCancelled() &&
 				!(e instanceof PlayerInteractEvent && (((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_AIR) && ((PlayerInteractEvent) e).useItemInHand() != Result.DENY)
@@ -84,7 +127,8 @@ public abstract class SkriptEventHandler {
 			return;
 		}
 		
-		for (final Trigger t : ts) {
+		while (ts.hasNext()) {
+			final Trigger t = ts.next();
 			if (!t.getEvent().check(e))
 				continue;
 			logTriggerStart(t);
@@ -133,6 +177,79 @@ public abstract class SkriptEventHandler {
 				triggers.put(e, ts = new ArrayList<Trigger>());
 			ts.add(trigger);
 		}
+	}
+	
+	/**
+	 * Stores a self registered trigger to allow for it to be unloaded later on.
+	 * 
+	 * @param t Trigger that has already been registered to its event
+	 */
+	static void addSelfRegisteringTrigger(final Trigger t) {
+		assert t.getEvent() instanceof SelfRegisteringSkriptEvent;
+		selfRegisteredTriggers.add(t);
+	}
+	
+	static ScriptInfo removeTriggers(final File script) {
+		final ScriptInfo info = new ScriptInfo();
+		final Iterator<List<Trigger>> triggersIter = SkriptEventHandler.triggers.values().iterator();
+		while (triggersIter.hasNext()) {
+			final List<Trigger> ts = triggersIter.next();
+			for (int i = 0; i < ts.size(); i++) {
+				if (ts.get(i).getScript().equals(script)) {
+					info.triggers++;
+					ts.remove(i);
+					i--;
+					if (ts.isEmpty())
+						triggersIter.remove();
+				}
+			}
+		}
+		for (int i = 0; i < selfRegisteredTriggers.size(); i++) {
+			final Trigger t = selfRegisteredTriggers.get(i);
+			if (t.getScript().equals(script)) {
+				info.triggers++;
+				((SelfRegisteringSkriptEvent) t.getEvent()).unregister(t);
+				selfRegisteredTriggers.remove(i);
+				i--;
+			}
+		}
+		info.commands = Commands.unregisterCommands(script);
+		
+		return info;
+	}
+	
+	static void removeAllTriggers() {
+		triggers.clear();
+		for (final Trigger t : selfRegisteredTriggers) {
+			((SelfRegisteringSkriptEvent) t.getEvent()).unregisterAll();
+		}
+		selfRegisteredTriggers.clear();
+	}
+	
+	/**
+	 * As it's difficult to unregister events with Bukkit this set is used to prevent that any event will ever be registered more than once when reloading.
+	 * <p>
+	 * Subclasses of these events will not be registered, but superclasses can, resulting in a few superflouous registrations. //TODO improve?
+	 */
+	private final static Set<Class<? extends Event>> registeredEvents = new HashSet<Class<? extends Event>>();
+	
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	final static void registerBukkitEvents() {
+		final Listener l = new Listener() {};
+		for (final Class<? extends Event> e : triggers.keySet()) {
+			if (!containsSuperclass((Set) registeredEvents, e)) { // I just love Java's generics
+				Bukkit.getPluginManager().registerEvent(e, l, SkriptConfig.defaultEventPriority.value(), ee, Skript.getInstance());
+				registeredEvents.add(e);
+			}
+		}
+	}
+	
+	public final static boolean containsSuperclass(final Set<Class<?>> classes, final Class<?> c) {
+		for (final Class<?> cl : classes) {
+			if (cl.isAssignableFrom(c))
+				return true;
+		}
+		return false;
 	}
 	
 }

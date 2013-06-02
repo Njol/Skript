@@ -27,6 +27,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import ch.njol.skript.ScriptLoader;
@@ -41,7 +42,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -68,6 +69,7 @@ import ch.njol.util.Kleenean;
 @Since("1.4.6 (chat message), 1.4.9 (join & quit messages), 2.0 (death message)")
 public class ExprMessage extends SimpleExpression<String> {
 	
+	@SuppressWarnings("unchecked")
 	private static enum MessageType {
 		CHAT("chat", "[chat( |-)]message", Skript.isRunningMinecraft(1, 3) ? AsyncPlayerChatEvent.class : PlayerChatEvent.class) {
 			@Override
@@ -97,15 +99,21 @@ public class ExprMessage extends SimpleExpression<String> {
 				((PlayerJoinEvent) e).setJoinMessage(message);
 			}
 		},
-		QUIT("quit", "(quit|leave|log[ ]out)( |-)message", PlayerQuitEvent.class) {
+		QUIT("quit", "(quit|leave|log[ ]out|kick)( |-)message", PlayerQuitEvent.class, PlayerKickEvent.class) {
 			@Override
 			String get(final Event e) {
-				return ((PlayerQuitEvent) e).getQuitMessage();
+				if (e instanceof PlayerKickEvent)
+					return ((PlayerKickEvent) e).getLeaveMessage();
+				else
+					return ((PlayerQuitEvent) e).getQuitMessage();
 			}
 			
 			@Override
 			void set(final Event e, final String message) {
-				((PlayerQuitEvent) e).setQuitMessage(message);
+				if (e instanceof PlayerKickEvent)
+					((PlayerKickEvent) e).setLeaveMessage(message);
+				else
+					((PlayerQuitEvent) e).setQuitMessage(message);
 			}
 		},
 		DEATH("death", "death( |-)message", EntityDeathEvent.class) {
@@ -124,12 +132,12 @@ public class ExprMessage extends SimpleExpression<String> {
 		};
 		
 		private final String name, pattern;
-		private final Class<? extends Event> event;
+		private final Class<? extends Event>[] events;
 		
-		MessageType(final String name, final String pattern, final Class<? extends Event> event) {
+		MessageType(final String name, final String pattern, final Class<? extends Event>... events) {
 			this.name = name;
 			this.pattern = "[the] " + pattern;
-			this.event = event;
+			this.events = events;
 		}
 		
 		static String[] patterns;
@@ -154,7 +162,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		type = MessageType.values()[matchedPattern];
-		if (!Utils.contains(ScriptLoader.currentEvents, type.event)) {
+		if (!ScriptLoader.isCurrentEvent(type.events)) {
 			Skript.error("The " + type.name + " message can only be used in a " + type.name + " event", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
@@ -163,24 +171,27 @@ public class ExprMessage extends SimpleExpression<String> {
 	
 	@Override
 	protected String[] get(final Event e) {
-		if (!type.event.isInstance(e))
-			return new String[0];
-		return new String[] {type.get(e)};
+		for (final Class<? extends Event> c : type.events) {
+			if (c.isInstance(e))
+				return new String[] {type.get(e)};
+		}
+		return new String[0];
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
-			return Utils.array(String.class);
+			return CollectionUtils.array(String.class);
 		return null;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		if (!type.event.isInstance(e))
-			return;
-		type.set(e, (String) delta);
+		for (final Class<? extends Event> c : type.events) {
+			if (c.isInstance(e))
+				type.set(e, (String) delta);
+		}
 	}
 	
 	@Override

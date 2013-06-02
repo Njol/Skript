@@ -63,27 +63,46 @@ public abstract class Task implements Runnable {
 		}
 	}
 	
+	/**
+	 * @return Whether this task is still running, i.e. whether it will run later or is currently running.
+	 */
 	public final boolean isAlive() {
 		return Bukkit.getScheduler().isQueued(taskID) || Bukkit.getScheduler().isCurrentlyRunning(taskID);
 	}
 	
+	/**
+	 * Cancels this task.
+	 */
 	public final void cancel() {
 		Bukkit.getScheduler().cancelTask(taskID);
 	}
 	
+	/**
+	 * Re-schedules the task to run next after the given delay.
+	 * 
+	 * @param delay
+	 */
 	public void setNextExecution(final long delay) {
 		assert delay >= 0;
 		Bukkit.getScheduler().cancelTask(taskID);
 		schedule(delay);
 	}
 	
+	/**
+	 * Sets the period of this task. This will re-schedule the task to be run next after the given period if the task is still running.
+	 * 
+	 * @param period Period in ticks or -1 to cancel the task and make it non-repeating
+	 */
 	public void setPeriod(final long period) {
 		assert period == -1 || period > 0;
 		if (period == this.period)
 			return;
-		Bukkit.getScheduler().cancelTask(taskID);
 		this.period = period;
-		schedule(period);
+		if (isAlive()) {
+			Bukkit.getScheduler().cancelTask(taskID);
+			if (period != -1)
+				schedule(period);
+		}
 	}
 	
 	/**

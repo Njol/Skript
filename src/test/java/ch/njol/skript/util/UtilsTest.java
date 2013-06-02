@@ -23,14 +23,12 @@ package ch.njol.skript.util;
 
 import static org.junit.Assert.*;
 
-import org.junit.Test;
-
 /**
  * @author Peter Güttinger
  */
 public class UtilsTest {
 	
-	@Test
+//	@Test
 	public void testPlural() {
 		
 		final String[][] strings = {

@@ -62,7 +62,9 @@ public class CondContains extends Condition {
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		containers = exprs[0];
+		containers = exprs[0].getConvertedExpression(Object.class);
+		if (containers == null)
+			return false;
 		items = exprs[1];
 		setNegated(matchedPattern >= 2);
 		return true;

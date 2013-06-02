@@ -38,8 +38,8 @@ public class EconomyHook extends Hook {
 	private static Vault vault = null;
 	public static Economy economy = null;
 	
-	public static String plural = null;
 	public static String singular = null;
+	public static String plural = null;
 	
 	@Override
 	protected boolean init() {
@@ -49,8 +49,8 @@ public class EconomyHook extends Hook {
 			final RegisteredServiceProvider<Economy> e = Bukkit.getServicesManager().getRegistration(Economy.class);
 			if (e != null) {
 				economy = e.getProvider();
-				plural = economy.currencyNamePlural();
 				singular = economy.currencyNameSingular();
+				plural = economy.currencyNamePlural();
 				return true;
 			}
 		}

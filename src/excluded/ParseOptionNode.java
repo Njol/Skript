@@ -21,9 +21,9 @@
 
 package ch.njol.skript.config;
 
-import java.io.PrintWriter;
-
 /**
+ * Not used anymore
+ * 
  * @author Peter Güttinger
  */
 public class ParseOptionNode extends Node {
@@ -33,13 +33,12 @@ public class ParseOptionNode extends Node {
 	}
 	
 	@Override
-	void save(final PrintWriter w) {
+	String save() {
 		final String option = orig.substring(getOrig().indexOf('[') + 1, orig.indexOf(']'));
-		w.println(getIndentation() + orig.trim());
 		if (orig.startsWith("!separator[")) {
 			config.separator = option;
 		}
-		modified = false;
+		return orig.trim();
 	}
 	
 }

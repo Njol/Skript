@@ -23,6 +23,7 @@ package ch.njol.skript.lang.util;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,6 +45,8 @@ import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Noun;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
@@ -55,12 +58,21 @@ import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**
- * represents a string that may contain expressions.
+ * Represents a string that may contain expressions.
  * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
 public class VariableString implements Expression<String> {
+	
+	private final static class ExpressionInfo implements Serializable {
+		ExpressionInfo(final Expression<?> expr) {
+			this.expr = expr;
+		}
+		
+		final Expression<?> expr;
+		int flags = 0;
+	}
 	
 	private final String name;
 	
@@ -129,11 +141,17 @@ public class VariableString implements Expression<String> {
 	public static VariableString newInstance(String s, final StringMode mode) {
 		if (!isQuotedCorrectly(s, false))
 			return null;
+		final int n = StringUtils.count(s, '%');
+		if (n % 2 != 0) {
+			Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a '%' type it twice: %%.");
+			return null;
+		}
 		s = Utils.replaceChatStyles(s.replace("\"\"", "\""));
-		final ArrayList<Object> string = new ArrayList<Object>();
+		final ArrayList<Object> string = new ArrayList<Object>(n / 2 + 2);
 		int c = s.indexOf('%');
 		if (c != -1) {
-			string.add(s.substring(0, c));
+			if (c != 0)
+				string.add(s.substring(0, c));
 			while (c != s.length()) {
 				int c2 = s.indexOf('%', c + 1);
 				int a = c, b;
@@ -146,11 +164,15 @@ public class VariableString implements Expression<String> {
 					c2 = s.indexOf('%', a + 1);
 				}
 				if (c2 == -1) {
-					Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a '%' type it twice: %%.");
+					assert false;
 					return null;
 				}
 				if (c + 1 == c2) {
-					string.add("%");
+					if (string.size() > 0 && string.get(string.size() - 1) instanceof String) {
+						string.set(string.size() - 1, (String) string.get(string.size() - 1) + "%");
+					} else {
+						string.add("%");
+					}
 				} else {
 					final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 					try {
@@ -160,7 +182,28 @@ public class VariableString implements Expression<String> {
 							log.printErrors("Can't understand this expression: " + s.substring(c + 1, c2));
 							return null;
 						} else {
-							string.add(expr);
+							if (mode != StringMode.MESSAGE) {
+								string.add(expr);
+							} else {
+								final ExpressionInfo i = new ExpressionInfo(expr);
+								if (c2 == s.length() - 2 && s.charAt(c2 + 1) == 's' || c2 < s.length() - 2 && s.charAt(c2 + 1) == 's' && Character.isWhitespace(s.charAt(c2 + 2))) {
+									i.flags |= Language.F_PLURAL;
+								}
+								if (string.size() > 0 && string.get(string.size() - 1) instanceof String) {
+									final String last = (String) string.get(string.size() - 1);
+									final int l = last.lastIndexOf(' ', last.endsWith(" ") ? last.length() - 1 : last.length());
+									if (l != -1) {
+										final String lastWord = last.substring(l + 1).trim();
+										if (Noun.isIndefiniteArticle(lastWord))
+											i.flags |= Language.F_INDEFINITE_ARTICLE;
+										else if (Noun.isDefiniteArticle(lastWord))
+											i.flags |= Language.F_DEFINITE_ARTICLE;
+										if ((i.flags & (Language.F_INDEFINITE_ARTICLE | Language.F_DEFINITE_ARTICLE)) != 0)
+											string.set(string.size() - 1, last.substring(0, l));
+									}
+								}
+								string.add(i);
+							}
 						}
 					} finally {
 						log.stop();
@@ -170,7 +213,19 @@ public class VariableString implements Expression<String> {
 				c = s.indexOf('%', c2 + 1);
 				if (c == -1)
 					c = s.length();
-				string.add(s.substring(c2 + 1, c));
+				final Object last = string.get(string.size() - 1);
+				final String l;
+				if (last instanceof ExpressionInfo && (((ExpressionInfo) last).flags & Language.F_PLURAL) != 0)
+					l = s.substring(c2 + 2, c); //strip 's'
+				else
+					l = s.substring(c2 + 1, c);
+				if (!l.isEmpty()) {
+					if (string.size() > 0 && string.get(string.size() - 1) instanceof String) {
+						string.set(string.size() - 1, (String) string.get(string.size() - 1) + l);
+					} else {
+						string.add(l);
+					}
+				}
 			}
 		} else {
 			string.add(s);
@@ -178,46 +233,46 @@ public class VariableString implements Expression<String> {
 		
 		checkVariableConflicts(s, mode, string);
 		
-		if (c == -1)
-			return new VariableString(s, mode);
+		if (string.size() == 1 && string.get(0) instanceof String)
+			return new VariableString((String) string.get(0), mode);
 		return new VariableString(s, string.toArray(), mode);
 	}
 	
 	private static void checkVariableConflicts(final String name, final StringMode mode, final Iterable<Object> string) {
-		if (mode == StringMode.VARIABLE_NAME && !variableNames.containsKey(name)) {
-			if (name.startsWith("%")) // inside the if to only print this message once per variable
-				Skript.warning("Starting a variable's name with an expression is discouraged ({" + name + "}). You could prefix it with the script's name: {" + StringUtils.substring(ScriptLoader.currentScript.getFileName(), 0, -3) + "." + name + "}");
-			
-			final Pattern pattern;
-			if (string != null) {
-				final StringBuilder p = new StringBuilder();
-				stringLoop: for (final Object o : string) {
-					if (o instanceof Expression) {
-						for (final ClassInfo<?> ci : Classes.getClassInfos()) {
-							if (ci.getParser() != null && ci.getC().isAssignableFrom(((Expression<?>) o).getReturnType())) {
-								p.append("(?!%)" + ci.getParser().getVariableNamePattern() + "(?<!%)");
-								continue stringLoop;
-							}
+		if (mode != StringMode.VARIABLE_NAME || variableNames.containsKey(name))
+			return;
+		if (name.startsWith("%")) // inside the if to only print this message once per variable
+			Skript.warning("Starting a variable's name with an expression is discouraged ({" + name + "}). You could prefix it with the script's name: {" + StringUtils.substring(ScriptLoader.currentScript.getFileName(), 0, -3) + "." + name + "}");
+		
+		final Pattern pattern;
+		if (string != null) {
+			final StringBuilder p = new StringBuilder();
+			stringLoop: for (final Object o : string) {
+				if (o instanceof Expression) {
+					for (final ClassInfo<?> ci : Classes.getClassInfos()) {
+						if (ci.getParser() != null && ci.getC().isAssignableFrom(((Expression<?>) o).getReturnType())) {
+							p.append("(?!%)" + ci.getParser().getVariableNamePattern() + "(?<!%)");
+							continue stringLoop;
 						}
-						p.append("[^%*](.*[^%])?"); // [^*] to not report {var::%index%}/{var::*} as conflict
-					} else {
-						p.append(Pattern.quote(o.toString()));
 					}
-				}
-				pattern = Pattern.compile(p.toString());
-			} else {
-				pattern = Pattern.compile(Pattern.quote(name));
-			}
-			if (!SkriptConfig.disableVariableConflictWarnings.value()) {
-				for (final Entry<String, Pattern> e : variableNames.entrySet()) {
-					if (e.getValue().matcher(name).matches() || pattern.matcher(e.getKey()).matches()) {
-						Skript.warning("Possible name conflict of variables {" + name + "} and {" + e.getKey() + "} (there might be more conflicts).");
-						break;
-					}
+					p.append("[^%*](.*[^%])?"); // [^*] to not report {var::%index%}/{var::*} as conflict
+				} else {
+					p.append(Pattern.quote(o.toString()));
 				}
 			}
-			variableNames.put(name, pattern);
+			pattern = Pattern.compile(p.toString());
+		} else {
+			pattern = Pattern.compile(Pattern.quote(name));
 		}
+		if (!SkriptConfig.disableVariableConflictWarnings.value()) {
+			for (final Entry<String, Pattern> e : variableNames.entrySet()) {
+				if (e.getValue().matcher(name).matches() || pattern.matcher(e.getKey()).matches()) {
+					Skript.warning("Possible name conflict of variables {" + name + "} and {" + e.getKey() + "} (there might be more conflicts).");
+					break;
+				}
+			}
+		}
+		variableNames.put(name, pattern);
 	}
 	
 	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
@@ -229,9 +284,7 @@ public class VariableString implements Expression<String> {
 	 * Copied from {@link SkriptParser#nextBracket(String, char, char, int)}, but removed escaping & returns -1 on error.
 	 * 
 	 * @param s
-	 * @param closingBracket
-	 * @param openingBracket
-	 * @param start
+	 * @param start Index after the opening bracket
 	 * @return
 	 */
 	public static int nextVariableBracket(final String s, final int start) {
@@ -289,14 +342,18 @@ public class VariableString implements Expression<String> {
 		final StringBuilder b = new StringBuilder();
 		for (int i = 0; i < string.length; i++) {
 			final Object o = string[i];
-			if (o instanceof Expression) {
-				b.append(Classes.toString(((Expression<?>) o).getArray(e), ((Expression<?>) o).getAnd(), mode, mode == StringMode.MESSAGE &&
-						(Math.abs(StringUtils.numberBefore(b, b.length() - 1)) != 1 || i + 1 < string.length && string[i + 1] instanceof String && StringUtils.startsWithIgnoreCase((String) string[i + 1], "s"))));
+			if (o instanceof Expression<?>) {
+				assert mode != StringMode.MESSAGE;
+				b.append(Classes.toString(((Expression<?>) o).getArray(e), true, mode));
+			} else if (o instanceof ExpressionInfo) {
+				assert mode == StringMode.MESSAGE;
+				final ExpressionInfo info = (ExpressionInfo) o;
+				int flags = info.flags;
+				if ((flags & Language.F_PLURAL) == 0 && b.length() > 0 && Math.abs(StringUtils.numberBefore(b, b.length() - 1)) != 1)
+					flags |= Language.F_PLURAL;
+				b.append(Classes.toString(info.expr.getArray(e), flags));
 			} else {
-				if (mode == StringMode.MESSAGE && i != 0 && string[i - 1] instanceof Expression && StringUtils.startsWithIgnoreCase((String) o, "s"))
-					b.append(((String) o).substring(1));
-				else
-					b.append(o);
+				b.append(o);
 			}
 		}
 		return b.toString();
@@ -321,7 +378,9 @@ public class VariableString implements Expression<String> {
 		final StringBuilder b = new StringBuilder("\"");
 		for (final Object o : string) {
 			if (o instanceof Expression) {
-				b.append("%" + ((Expression<?>) o).toString(e, debug) + "%");
+				b.append("%").append(((Expression<?>) o).toString(e, debug)).append("%");
+			} else if (o instanceof ExpressionInfo) {
+				b.append("%").append(((ExpressionInfo) o).expr.toString(e, debug)).append("%");
 			} else {
 				b.append(o);
 			}

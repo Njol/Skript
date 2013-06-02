@@ -28,8 +28,8 @@ import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.NonNullIterator;
 
@@ -70,7 +70,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	
 	public <R> Literal<? extends R> getConvertedExpression(final ParseContext context, final Class<? extends R>... to) {
 		assert to != null && to.length > 0;
-		assert to.length == 1 || !Utils.contains(to, Object.class);
+		assert to.length == 1 || !CollectionUtils.contains(to, Object.class);
 		for (final Class<? extends R> t : to) {
 			final R r = Classes.parse(data, t, context);
 			if (r != null)

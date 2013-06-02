@@ -23,6 +23,7 @@ package ch.njol.skript.log;
 
 import java.util.Collection;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 
@@ -40,9 +41,8 @@ public abstract class SkriptLogger {
 	
 	static boolean debug;
 	
-	/**
-	 * use addFirst and pollFirst
-	 */
+	public final static Logger LOGGER = Bukkit.getServer() != null ? Bukkit.getLogger() : Logger.getGlobal(); // cannot use Bukkit in tests
+	
 	private final static HandlerList handlers = new HandlerList();
 	
 	/**
@@ -52,8 +52,11 @@ public abstract class SkriptLogger {
 	 * 
 	 * <pre>
 	 * RetainingLogHandler log = SkriptLogger.startRetainingLog();
-	 * doSomethingThatLogsMessages();
-	 * log.stop();
+	 * try {
+	 * 	doSomethingThatLogsMessages();
+	 * } finally {
+	 * 	log.stop();
+	 * }
 	 * // do something with the logged messages
 	 * </pre>
 	 * 
@@ -84,7 +87,7 @@ public abstract class SkriptLogger {
 			int i = 1;
 			while (handlers.remove() != h)
 				i++;
-			Bukkit.getLogger().severe("[Skript] " + i + " log handler" + (i == 1 ? " was" : "s were") + " not stopped properly! (at " + getCaller() + ") [if you're a server admin and you see this message please file a bug report at http://dev.bukkit.org/server-mods/skript/tickets/ if there is not already one]");
+			LOGGER.severe("[Skript] " + i + " log handler" + (i == 1 ? " was" : "s were") + " not stopped properly! (at " + getCaller() + ") [if you're a server admin and you see this message please file a bug report at http://dev.bukkit.org/server-mods/skript/tickets/ if there is not already one]");
 		}
 	}
 	
@@ -139,7 +142,7 @@ public abstract class SkriptLogger {
 			if (!h.log(entry))
 				return;
 		}
-		Bukkit.getLogger().log(entry.getLevel(), "[Skript] " + entry.getMessage());
+		LOGGER.log(entry.getLevel(), "[Skript] " + entry.getMessage());
 	}
 	
 	public static void logAll(final Collection<LogEntry> entries) {
@@ -149,7 +152,7 @@ public abstract class SkriptLogger {
 				if (!h.log(entry))
 					continue outer;
 			}
-			Bukkit.getLogger().log(entry.getLevel(), "[Skript] " + entry.getMessage());
+			LOGGER.log(entry.getLevel(), "[Skript] " + entry.getMessage());
 		}
 	}
 	

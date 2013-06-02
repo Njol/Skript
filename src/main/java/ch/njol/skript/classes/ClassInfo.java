@@ -54,7 +54,7 @@ public class ClassInfo<T> implements Debuggable {
 	private SerializableChanger<? super T, ?> changer = null;
 	
 	private Serializer<? super T> serializer = null;
-	private Class<?> serializeAs = null; // TODO check this immediately after all classes are registered
+	private Class<?> serializeAs = null;
 	
 	private Arithmetic<T, ?> math = null;
 	private Class<?> mathRelativeType = null;
@@ -145,6 +145,11 @@ public class ClassInfo<T> implements Debuggable {
 	}
 	
 	/**
+	 * Use this as {@link #name(String)} to suppress warnings about missing documentation.
+	 */
+	public final static String NO_DOC = new String();
+	
+	/**
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param name
@@ -168,6 +173,9 @@ public class ClassInfo<T> implements Debuggable {
 		return this;
 	}
 	
+	/**
+	 * Use this as {@link #usage(String...)} to generate the usage from the names of the enum constants of this class
+	 */
 	public final static String ENUM_USAGE = new String();
 	
 	/**
@@ -339,6 +347,10 @@ public class ClassInfo<T> implements Debuggable {
 	@Override
 	public String toString() {
 		return getName().getSingular();
+	}
+	
+	public String toString(final int flags) {
+		return getName().toString(flags);
 	}
 	
 	@Override

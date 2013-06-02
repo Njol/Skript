@@ -1,20 +1,23 @@
 package ch.njol.skript;
 
-import static ch.njol.skript.Skript.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.ChatPaginator;
 import org.bukkit.util.ChatPaginator.ChatPage;
 
+import ch.njol.skript.ScriptLoader.ScriptInfo;
 import ch.njol.skript.Updater.UpdateState;
 import ch.njol.skript.Updater.VersionInfo;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.localization.ArgsMessage;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.PluralizingArgsMessage;
 import ch.njol.skript.log.RedirectingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.CommandHelp;
@@ -47,39 +50,62 @@ import ch.njol.util.StringUtils;
  * @author Peter Güttinger
  */
 public class SkriptCommand implements CommandExecutor {
+	private final static String NODE = "skript command";
 	
-	private final static CommandHelp skriptCommandHelp = new CommandHelp("<gray>/<gold>skript", "cyan", "skript command")
-			.add(new CommandHelp("reload", "red")
+	private final static CommandHelp skriptCommandHelp = new CommandHelp("<gray>/<gold>skript", ChatColor.AQUA, NODE + ".help")
+			.add(new CommandHelp("reload", ChatColor.DARK_RED)
 					.add("all")
 					.add("config")
 					.add("aliases")
 					.add("scripts")
 					.add("<script>")
-			).add(new CommandHelp("enable", "red")
+			).add(new CommandHelp("enable", ChatColor.DARK_RED)
 					.add("all")
 					.add("<script>")
-			).add(new CommandHelp("disable", "red")
+			).add(new CommandHelp("disable", ChatColor.DARK_RED)
 					.add("all")
 					.add("<script>")
-			).add(new CommandHelp("update", "red")
+			).add(new CommandHelp("update", ChatColor.DARK_RED)
 					.add("check")
 					.add("changes")
 					.add("download")
-			//			).add(new CommandHelp("variable", "Commands for modifying variables", "red")
+			//			).add(new CommandHelp("variable", "Commands for modifying variables", ChatColor.DARK_RED)
 //					.add("set", "Creates a new variable or changes an existing one")
 //					.add("delete", "Deletes a variable")
 //					.add("find", "Find variables")
 			).add("help");
 	
-	private final static void reloading(final CommandSender sender, final String what) {
-		Skript.info(sender, "Reloading " + what + "...");
+	private final static ArgsMessage m_reloading = new ArgsMessage(NODE + ".reload.reloading");
+	
+	private final static void reloading(final CommandSender sender, String what, final Object... args) {
+		what = args.length == 0 ? Language.get(NODE + ".reload." + what) : Language.format(NODE + ".reload." + what, args);
+		Skript.info(sender, StringUtils.fixCapitalization(m_reloading.toString(what)));
 	}
 	
-	private final static void reloaded(final CommandSender sender, final RedirectingLogHandler r, final String what) {
+	private final static ArgsMessage m_reloaded = new ArgsMessage(NODE + ".reload.reloaded");
+	private final static ArgsMessage m_reload_error = new ArgsMessage(NODE + ".reload.error");
+	
+	private final static void reloaded(final CommandSender sender, final RedirectingLogHandler r, String what, final Object... args) {
+		what = args.length == 0 ? Language.get(NODE + ".reload." + what) : PluralizingArgsMessage.format(Language.format(NODE + ".reload." + what, args));
 		if (r.numErrors() == 0)
-			Skript.info(sender, "Successfully reloaded " + what + ".");
+			Skript.info(sender, StringUtils.fixCapitalization(PluralizingArgsMessage.format(m_reloaded.toString(what))));
 		else
-			Skript.error(sender, "Encountered " + r.numErrors() + " error" + (r.numErrors() == 1 ? "" : "s") + " while reloading " + what + "!");
+			Skript.error(sender, StringUtils.fixCapitalization(PluralizingArgsMessage.format(m_reload_error.toString(what, r.numErrors()))));
+	}
+	
+	private final static void info(final CommandSender sender, String what, final Object... args) {
+		what = args.length == 0 ? Language.get(NODE + "." + what) : PluralizingArgsMessage.format(Language.format(NODE + "." + what, args));
+		Skript.info(sender, StringUtils.fixCapitalization(what));
+	}
+	
+	private final static void message(final CommandSender sender, String what, final Object... args) {
+		what = args.length == 0 ? Language.get(NODE + "." + what) : PluralizingArgsMessage.format(Language.format(NODE + "." + what, args));
+		Skript.message(sender, StringUtils.fixCapitalization(what));
+	}
+	
+	private final static void error(final CommandSender sender, String what, final Object... args) {
+		what = args.length == 0 ? Language.get(NODE + "." + what) : PluralizingArgsMessage.format(Language.format(NODE + "." + what, args));
+		Skript.error(sender, StringUtils.fixCapitalization(what));
 	}
 	
 	@Override
@@ -90,102 +116,154 @@ public class SkriptCommand implements CommandExecutor {
 		try {
 			if (args[0].equalsIgnoreCase("reload")) {
 				if (args[1].equalsIgnoreCase("all")) {
-					reloading(sender, "the config and all scripts");
-					reload();
-					reloaded(sender, r, "the config and all scripts");
+					reloading(sender, "config and scripts");
+					Skript.reload();
+					reloaded(sender, r, "config and scripts");
 				} else if (args[1].equalsIgnoreCase("scripts")) {
-					reloading(sender, "all scripts");
-					reloadScripts();
-					reloaded(sender, r, "all scripts");
+					reloading(sender, "scripts");
+					Skript.reloadScripts();
+					reloaded(sender, r, "scripts");
 				} else if (args[1].equalsIgnoreCase("config")) {
-					reloading(sender, "the main configuration");
-					reloadMainConfig();
-					reloaded(sender, r, "the main configuration");
+					reloading(sender, "main config");
+					Skript.reloadMainConfig();
+					reloaded(sender, r, "main config");
 				} else if (args[1].equalsIgnoreCase("aliases")) {
-					reloading(sender, "the aliases");
-					reloadAliases();
-					reloaded(sender, r, "the aliases");
+					reloading(sender, "aliases");
+					Skript.reloadAliases();
+					reloaded(sender, r, "aliases");
 				} else {
 					final File f = getScriptFromArgs(sender, args, 1);
 					if (f == null)
 						return true;
-					if (f.getName().startsWith("-")) {
-						info(sender, "This script is currently disabled. Use <gray>/<gold>skript <cyan>enable <red>" + StringUtils.join(args, " ", 1, args.length) + "<reset> to enable it.");
-						return true;
+					if (!f.isDirectory()) {
+						if (f.getName().startsWith("-")) {
+							info(sender, "reload.script disabled", f.getName().substring(1));
+							return true;
+						}
+						reloading(sender, "script", f.getName());
+						ScriptLoader.unloadScript(f);
+						ScriptLoader.loadScripts(new File[] {f});
+						reloaded(sender, r, "script", f.getName());
+					} else {
+						reloading(sender, "scripts in folder", f.getName());
+						final int disabled = ScriptLoader.unloadScripts(f).files;
+						final int enabled = ScriptLoader.loadScripts(f).files;
+						if (Math.max(disabled, enabled) == 0)
+							info(sender, "reload.empty folder", f.getName());
+						else
+							reloaded(sender, r, "x scripts in folder", f.getName(), Math.max(disabled, enabled));
 					}
-					reloading(sender, "<gold>" + f.getName() + "<reset>");
-					ScriptLoader.unloadScript(f);
-					ScriptLoader.loadScripts(new File[] {f});
-					reloaded(sender, r, "<gold>" + f.getName() + "<reset>");
 				}
 			} else if (args[0].equalsIgnoreCase("enable")) {
 				if (args[1].equals("all")) {
 					try {
-						info(sender, "Enabling all disabled scripts...");
-						final Collection<File> files = toggleScripts(true);
+						info(sender, "enable.all.enabling");
+						final Collection<File> files = toggleScripts(new File(Skript.getInstance().getDataFolder(), Skript.SCRIPTSFOLDER), true);
 						ScriptLoader.loadScripts(files.toArray(new File[0]));
 						if (r.numErrors() == 0) {
-							info(sender, "Successfully enabled & parsed all previously disabled scripts.");
+							info(sender, "enable.all.enabled");
 						} else {
-							Skript.error(sender, "Encountered " + r.numErrors() + " error" + (r.numErrors() == 1 ? "" : "s") + " while parsing disabled scripts!");
+							error(sender, "enable.all.error", r.numErrors());
 						}
 					} catch (final IOException e) {
-						error(sender, "Could not load any scripts (some scripts might have been renamed already and will be enabled when the server restarts): " + e.getLocalizedMessage());
+						error(sender, "enable.all.io error", e.getLocalizedMessage());
 					}
 				} else {
 					File f = getScriptFromArgs(sender, args, 1);
 					if (f == null)
 						return true;
-					if (!f.getName().startsWith("-")) {
-						info(sender, "<gold>" + f.getName() + "<reset> is already enabled! Use <gray>/<gold>skript <cyan>reload <red>" + StringUtils.join(args, " ", 1, args.length) + "<reset> to reload it if it was changed.");
+					if (!f.isDirectory()) {
+						if (!f.getName().startsWith("-")) {
+							info(sender, "enable.single.already enabled", f.getName(), StringUtils.join(args, " ", 1, args.length));
+							return true;
+						}
+						
+						try {
+							f = FileUtils.move(f, new File(f.getParentFile(), f.getName().substring(1)), false);
+						} catch (final IOException e) {
+							error(sender, "enable.single.io error", f.getName().substring(1), e.getLocalizedMessage());
+							return true;
+						}
+						
+						info(sender, "enable.single.enabling", f.getName());
+						ScriptLoader.loadScripts(new File[] {f});
+						if (r.numErrors() == 0) {
+							info(sender, "enable.single.enabled", f.getName());
+						} else {
+							error(sender, "enable.single.error", f.getName(), r.numErrors());
+						}
 						return true;
-					}
-					
-					try {
-						FileUtils.move(f, new File(f.getParentFile(), f.getName().substring(1)), false);
-					} catch (final IOException e) {
-						error(sender, "Could not enable <gold>" + f.getName().substring(1) + "<red>:<reset> " + e.getLocalizedMessage());
-						return true;
-					}
-					f = new File(f.getParentFile(), f.getName().substring(1));
-					
-					info(sender, "Enabling <gold>" + f.getName() + "<red>...");
-					ScriptLoader.loadScripts(new File[] {f});
-					if (r.numErrors() == 0) {
-						info(sender, "Successfully enabled & parsed <gold>" + f.getName() + "<reset>.");
 					} else {
-						Skript.error(sender, "Encountered " + r.numErrors() + " error" + (r.numErrors() == 1 ? "" : "s") + " while parsing <gold>" + f.getName() + "<red>!");
+						final Collection<File> scripts;
+						try {
+							scripts = toggleScripts(f, true);
+						} catch (final IOException e) {
+							error(sender, "enable.folder.io error", f.getName(), e.getLocalizedMessage());
+							return true;
+						}
+						if (scripts.isEmpty()) {
+							info(sender, "enable.folder.empty", f.getName());
+							return true;
+						}
+						info(sender, "enable.folder.enabling", f.getName(), scripts.size());
+						final ScriptInfo i = ScriptLoader.loadScripts(scripts.toArray(new File[scripts.size()]));
+						assert i.files == scripts.size();
+						if (r.numErrors() == 0) {
+							info(sender, "enable.folder.enabled", f.getName(), i.files);
+						} else {
+							error(sender, "enable.folder.error", f.getName(), r.numErrors());
+						}
+						return true;
 					}
-					return true;
 				}
 			} else if (args[0].equalsIgnoreCase("disable")) {
 				if (args[1].equals("all")) {
-					disableScripts();
+					Skript.disableScripts();
 					try {
-						toggleScripts(false);
-						info(sender, "Successfully disabled all scripts!");
+						toggleScripts(new File(Skript.getInstance().getDataFolder(), Skript.SCRIPTSFOLDER), false);
+						info(sender, "disable.all.disabled");
 					} catch (final IOException e) {
-						error(sender, "Could not rename all scripts - some scripts will be enabled again when you restart the server:<reset> " + e.getLocalizedMessage());
+						error(sender, "disable.all.io error", e.getLocalizedMessage());
 					}
 				} else {
 					final File f = getScriptFromArgs(sender, args, 1);
-					if (f == null)
+					if (f == null) // TODO allow disabling deleted/renamed scripts
 						return true;
-					if (f.getName().startsWith("-")) {
-						info(sender, "<gold>" + f.getName().substring(1) + "<reset> is already disabled!");
+					if (!f.isDirectory()) {
+						if (f.getName().startsWith("-")) {
+							info(sender, "disable.single.already disabled", f.getName().substring(1));
+							return true;
+						}
+						
+						ScriptLoader.unloadScript(f);
+						
+						try {
+							FileUtils.move(f, new File(f.getParentFile(), "-" + f.getName()), false);
+						} catch (final IOException e) {
+							error(sender, "disable.single.io error", f.getName(), e.getLocalizedMessage());
+							return true;
+						}
+						info(sender, "disable.single.disabled", f.getName());
+						return true;
+					} else {
+						final Collection<File> scripts;
+						try {
+							scripts = toggleScripts(f, false);
+						} catch (final IOException e) {
+							error(sender, "disable.folder.io error", f.getName(), e.getLocalizedMessage());
+							return true;
+						}
+						if (scripts.isEmpty()) {
+							info(sender, "disable.folder.empty", f.getName());
+							return true;
+						}
+						
+						for (final File script : scripts)
+							ScriptLoader.unloadScript(script);
+						
+						info(sender, "disable.folder.disabled", f.getName(), scripts.size());
 						return true;
 					}
-					
-					ScriptLoader.unloadScript(f);
-					
-					try {
-						FileUtils.move(f, new File(f.getParentFile(), "-" + f.getName()), false);
-					} catch (final IOException e) {
-						error(sender, "Could not rename <gold>" + f.getName() + "<red>, it will be enabled again when you restart the server:<reset> " + e.getLocalizedMessage());
-						return true;
-					}
-					info(sender, "Successfully disabled <gold>" + f.getName() + "<reset>!");
-					return true;
 				}
 			} else if (args[0].equalsIgnoreCase("update")) {
 				Updater.stateLock.writeLock().lock();
@@ -197,43 +275,43 @@ public class SkriptCommand implements CommandExecutor {
 								Updater.check(sender, false, false);
 								break;
 							case CHECK_IN_PROGRESS:
-								info(sender, "" + Updater.m_check_in_progress);
+								Skript.info(sender, "" + Updater.m_check_in_progress);
 								break;
 							case CHECK_ERROR:
 								Updater.check(sender, false, false);
 								break;
 							case CHECKED_FOR_UPDATE:
 								if (Updater.latest.get() == null)
-									info(sender, Skript.getVersion().isStable() ? "" + Updater.m_running_latest_version : "" + Updater.m_running_latest_version_beta);
+									Skript.info(sender, Skript.getVersion().isStable() ? "" + Updater.m_running_latest_version : "" + Updater.m_running_latest_version_beta);
 								else
-									info(sender, "" + Updater.m_update_available);
+									Skript.info(sender, "" + Updater.m_update_available);
 								break;
 							case DOWNLOAD_IN_PROGRESS:
-								info(sender, "" + Updater.m_download_in_progress);
+								Skript.info(sender, "" + Updater.m_download_in_progress);
 								break;
 							case DOWNLOAD_ERROR:
-								info(sender, "" + Updater.m_download_error);
+								Skript.info(sender, "" + Updater.m_download_error);
 								break;
 							case DOWNLOADED:
-								info(sender, "" + Updater.m_downloaded);
+								Skript.info(sender, "" + Updater.m_downloaded);
 								break;
 						}
 					} else if (args[1].equalsIgnoreCase("changes")) {
 						if (state == UpdateState.NOT_STARTED) {
-							info(sender, "" + Updater.m_not_started);
+							Skript.info(sender, "" + Updater.m_not_started);
 						} else if (state == UpdateState.CHECK_IN_PROGRESS) {
-							info(sender, "" + Updater.m_check_in_progress);
+							Skript.info(sender, "" + Updater.m_check_in_progress);
 						} else if (state == UpdateState.CHECK_ERROR) {
-							info(sender, "" + Updater.m_check_error);
+							Skript.info(sender, "" + Updater.m_check_error);
 						} else if (Updater.latest.get() == null) {
-							info(sender, Skript.getVersion().isStable() ? "" + Updater.m_running_latest_version : "" + Updater.m_running_latest_version_beta);
+							Skript.info(sender, Skript.getVersion().isStable() ? "" + Updater.m_running_latest_version : "" + Updater.m_running_latest_version_beta);
 						} else if (args.length == 2 && Updater.infos.size() != 1) {
-							info(sender, "There have been " + Updater.infos.size() + " updates since your version:");
+							info(sender, "update.changes.multiple versions.title", Updater.infos.size(), Skript.getVersion());
 							String versions = Updater.infos.get(0).version.toString();
 							for (int i = Updater.infos.size() - 1; i >= 0; i--)
 								versions += ", " + Updater.infos.get(i).version.toString();
-							message(sender, "  " + versions);
-							message(sender, "To show the changelog of a version type <gold>/skript update changes <version><reset>");
+							Skript.message(sender, "  " + versions);
+							message(sender, "update.changes.multiple versions.footer");
 						} else {
 							VersionInfo info = null;
 							int pageNum = 1;
@@ -250,17 +328,17 @@ public class SkriptCommand implements CommandExecutor {
 									}
 								}
 								if (info == null) {
-									error(sender, "No changelog for the version <gold>" + version + "<red> available");
+									error(sender, "update.changes.invalid version", version);
 									return true;
 								}
 								if (args.length >= 4 && args[3].matches("\\d+"))
 									pageNum = Utils.parseInt(args[3]);
 							}
 							final ChatPage page = ChatPaginator.paginate(info.changelog, pageNum, ChatPaginator.GUARANTEED_NO_WRAP_CHAT_PAGE_WIDTH, ChatPaginator.CLOSED_CHAT_PAGE_HEIGHT - 2);
-							info(sender, "<bold><cyan>" + info.version + "<reset> (" + info.date + ") <grey>[page " + pageNum + " of " + page.getTotalPages() + "]");
+							info(sender, "update.changes.title", info.version, info.date, pageNum, page.getTotalPages());
 							sender.sendMessage(page.getLines());
 							if (pageNum < page.getTotalPages())
-								message(sender, "<gray>type <gold>/skript update changes " + (Updater.infos.size() == 1 ? "" : info.version + " ") + (pageNum + 1) + "<gray> for the next page (hint: use the up arrow key)");
+								message(sender, "update.changes.next page", (Updater.infos.size() == 1 ? "" : info.version + " ") + (pageNum + 1));
 						}
 					} else if (args[1].equalsIgnoreCase("download")) {
 						switch (state) {
@@ -268,27 +346,28 @@ public class SkriptCommand implements CommandExecutor {
 								Updater.check(sender, true, false);
 								break;
 							case CHECK_IN_PROGRESS:
-								info(sender, "" + Updater.m_check_in_progress);
+								Skript.info(sender, "" + Updater.m_check_in_progress);
 								break;
 							case CHECK_ERROR:
 								Updater.check(sender, true, false);
-//						info(sender, Language.format("updater.check_error", updater.error));
+//								info(sender, Language.format("updater.check_error", updater.error));
 								break;
 							case CHECKED_FOR_UPDATE:
 								if (Updater.latest.get() == null) {
-									info(sender, Skript.getVersion().isStable() ? "" + Updater.m_running_latest_version : "" + Updater.m_running_latest_version_beta);
+									Skript.info(sender, Skript.getVersion().isStable() ? "" + Updater.m_running_latest_version : "" + Updater.m_running_latest_version_beta);
 								} else {
 									Updater.download(sender, false);
 								}
 								break;
 							case DOWNLOAD_IN_PROGRESS:
-								info(sender, "" + Updater.m_download_in_progress);
+								Skript.info(sender, "" + Updater.m_download_in_progress);
 								break;
 							case DOWNLOADED:
-								info(sender, "" + Updater.m_downloaded);
+								Skript.info(sender, "" + Updater.m_downloaded);
 								break;
 							case DOWNLOAD_ERROR:
-								info(sender, "" + Updater.m_download_error);
+//								Skript.info(sender, "" + Updater.m_download_error);
+								Updater.download(sender, false);
 								break;
 						}
 					}
@@ -298,34 +377,43 @@ public class SkriptCommand implements CommandExecutor {
 			} else if (args[0].equalsIgnoreCase("help")) {
 				skriptCommandHelp.showHelp(sender);
 			}
+		} catch (final Exception e) {
+			Skript.exception(e, "Exception occurred in Skript's main command", "Used command: /" + label + " " + StringUtils.join(args, " "));
 		} finally {
 			r.stop();
 		}
 		return true;
 	}
 	
+	private final static ArgsMessage m_invalid_script = new ArgsMessage(NODE + ".invalid script");
+	private final static ArgsMessage m_invalid_folder = new ArgsMessage(NODE + ".invalid folder");
+	
 	private static File getScriptFromArgs(final CommandSender sender, final String[] args, final int start) {
 		String script = StringUtils.join(args, " ", start, args.length);
-		if (!script.endsWith(".sk"))
+		final boolean isFolder = script.endsWith("/") || script.endsWith("\\");
+		if (isFolder) {
+			script = script.replace('/', File.separatorChar).replace('\\', File.separatorChar);
+		} else if (!script.endsWith(".sk")) {
 			script = script + ".sk";
+		}
 		if (script.startsWith("-"))
 			script = script.substring(1);
-		File f = new File(Skript.getInstance().getDataFolder(), SCRIPTSFOLDER + File.separator + script);
+		File f = new File(Skript.getInstance().getDataFolder(), Skript.SCRIPTSFOLDER + File.separator + script);
 		if (!f.exists()) {
-			f = new File(Skript.getInstance().getDataFolder(), SCRIPTSFOLDER + File.separator + "-" + script);
+			f = new File(f.getParentFile(), "-" + f.getName());
 			if (!f.exists()) {
-				error(sender, "Can't find the script <grey>'<gold>" + script + "<grey>'<red> in the scripts folder!");
+				Skript.error(sender, (isFolder ? m_invalid_folder : m_invalid_script).toString(script));
 				return null;
 			}
 		}
 		return f;
 	}
 	
-	private final static Collection<File> toggleScripts(final boolean enable) throws IOException {
-		return FileUtils.renameAll(new File(Skript.getInstance().getDataFolder(), SCRIPTSFOLDER), new Converter<String, String>() {
+	private final static Collection<File> toggleScripts(final File folder, final boolean enable) throws IOException {
+		return FileUtils.renameAll(folder, new Converter<String, String>() {
 			@Override
 			public String convert(final String name) {
-				if (name.startsWith("-") == enable)
+				if (StringUtils.endsWithIgnoreCase(name, ".sk") && name.startsWith("-") == enable)
 					return enable ? name.substring(1) : "-" + name;
 				return null;
 			}

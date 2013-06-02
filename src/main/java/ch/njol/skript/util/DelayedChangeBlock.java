@@ -41,7 +41,7 @@ import org.bukkit.plugin.Plugin;
 import ch.njol.skript.Skript;
 
 /**
- * A block that either delays any changes by 1 tick of reflects them on a given BlockState depending on the constructor that is used.
+ * A block that gets all data from the world, but either delays any changes by 1 tick of reflects them on a given BlockState depending on which constructor is used.
  * 
  * @author Peter Güttinger
  */
@@ -51,11 +51,13 @@ public class DelayedChangeBlock implements Block {
 	private final BlockState newState;
 	
 	public DelayedChangeBlock(final Block b) {
+		assert b != null;
 		this.b = b;
 		newState = null;
 	}
 	
 	public DelayedChangeBlock(final Block b, final BlockState newState) {
+		assert b != null;
 		this.b = b;
 		this.newState = newState;
 	}

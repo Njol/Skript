@@ -42,7 +42,6 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -71,13 +70,13 @@ public class ExprClicked extends SimpleExpression<Object> {
 		final Object type = exprs[0] == null ? null : exprs[0].getSingle(null);
 		if (type instanceof EntityData) {
 			entityType = (EntityData<?>) type;
-			if (!Utils.contains(ScriptLoader.currentEvents, PlayerInteractEntityEvent.class)) {
+			if (!ScriptLoader.isCurrentEvent(PlayerInteractEntityEvent.class)) {
 				Skript.error("The expression 'clicked entity' can only be used in a click event", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 		} else {
 			itemType = (ItemType) type;
-			if (!Utils.contains(ScriptLoader.currentEvents, PlayerInteractEvent.class)) {
+			if (!ScriptLoader.isCurrentEvent(PlayerInteractEvent.class)) {
 				Skript.error("The expression 'clicked block' can only be used in a click event", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}

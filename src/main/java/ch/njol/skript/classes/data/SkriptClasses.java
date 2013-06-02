@@ -23,6 +23,7 @@ package ch.njol.skript.classes.data;
 
 import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -43,6 +44,7 @@ import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.localization.Noun;
+import ch.njol.skript.localization.RegexMessage;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Color;
 import ch.njol.skript.util.Date;
@@ -56,6 +58,7 @@ import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.WeatherType;
+import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -85,8 +88,8 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public String toString(final ClassInfo c) {
-						return c.toString();
+					public String toString(final ClassInfo c, final int flags) {
+						return c.toString(flags);
 					}
 					
 					@Override
@@ -139,8 +142,8 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public String toString(final WeatherType o) {
-						return o.toString();
+					public String toString(final WeatherType o, final int flags) {
+						return o.toString(flags);
 					}
 					
 					@Override
@@ -180,8 +183,8 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public String toString(final ItemType t) {
-						return t.toString();
+					public String toString(final ItemType t, final int flags) {
+						return t.toString(flags);
 					}
 					
 					@Override
@@ -321,7 +324,7 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public String toString(final Time t) {
+					public String toString(final Time t, final int flags) {
 						return t.toString();
 					}
 					
@@ -374,8 +377,8 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public String toString(final Timespan t) {
-						return t.toString();
+					public String toString(final Timespan t, final int flags) {
+						return t.toString(flags);
 					}
 					
 					@Override
@@ -414,6 +417,7 @@ public class SkriptClasses {
 					}
 				}));
 		
+		// TODO remove?
 		Classes.registerClass(new ClassInfo<Timeperiod>(Timeperiod.class, "timeperiod")
 				.user("time ?periods?", "durations?")
 				.name("Timeperiod")
@@ -451,7 +455,7 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public String toString(final Timeperiod o) {
+					public String toString(final Timeperiod o, final int flags) {
 						return o.toString();
 					}
 					
@@ -542,7 +546,7 @@ public class SkriptClasses {
 					@Override
 					public Class<? extends Timespan>[] acceptChange(final ChangeMode mode) {
 						if (mode == ChangeMode.ADD || mode == ChangeMode.REMOVE)
-							return Utils.array(Timespan.class);
+							return CollectionUtils.array(Timespan.class);
 						return null;
 					}
 				}));
@@ -571,7 +575,7 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public String toString(final Direction o) {
+					public String toString(final Direction o, final int flags) {
 						return o.toString();
 					}
 					
@@ -618,28 +622,48 @@ public class SkriptClasses {
 						"enchant the player's chestplate with projectile protection 5")
 				.since("")
 				.defaultExpression(new EventValueExpression<Slot>(Slot.class))
-				.changer(new SerializableChanger<Slot, ItemType>() {
+				.changer(new SerializableChanger<Slot, Object>() {
 					@SuppressWarnings("unchecked")
 					@Override
-					public Class<ItemType>[] acceptChange(final ch.njol.skript.classes.Changer.ChangeMode mode) {
-						return Utils.array(ItemType.class);
+					public Class<Object>[] acceptChange(final ch.njol.skript.classes.Changer.ChangeMode mode) {
+						return new Class[] {ItemType.class, ItemStack.class};
 					}
 					
 					@Override
-					public void change(final Slot[] slots, final ItemType delta, final ch.njol.skript.classes.Changer.ChangeMode mode) {
-						final ItemType type = delta;
-						if (type == null && mode != ChangeMode.DELETE)
+					public void change(final Slot[] slots, final Object delta, final ch.njol.skript.classes.Changer.ChangeMode mode) {
+						if (delta == null && mode != ChangeMode.DELETE)
 							return;
 						for (final Slot slot : slots) {
 							switch (mode) {
 								case SET:
-									slot.setItem(type.getItem().getRandom());
+									slot.setItem(delta instanceof ItemStack ? (ItemStack) delta : ((ItemType) delta).getItem().getRandom());
 									break;
 								case ADD:
-									slot.setItem(type.getItem().addTo(slot.getItem()));
+									if (delta instanceof ItemStack) {
+										final ItemStack i = slot.getItem();
+										if (Utils.itemStacksEqual(i, (ItemStack) delta)) {
+											i.setAmount(i.getAmount() + ((ItemStack) delta).getAmount());
+											slot.setItem(i);
+										}
+									} else {
+										slot.setItem(((ItemType) delta).getItem().addTo(slot.getItem()));
+									}
 									break;
 								case REMOVE:
-									slot.setItem(type.removeFrom(slot.getItem()));
+									if (delta instanceof ItemStack) {
+										final ItemStack i = slot.getItem();
+										if (Utils.itemStacksEqual(i, (ItemStack) delta)) {
+											final int a = i.getAmount() - ((ItemStack) delta).getAmount();
+											if (a <= 0) {
+												slot.setItem(null);
+											} else {
+												i.setAmount(a);
+												slot.setItem(i);
+											}
+										}
+									} else {
+										slot.setItem(((ItemType) delta).removeFrom(slot.getItem()));
+									}
 									break;
 								case DELETE:
 									slot.setItem(null);
@@ -660,13 +684,13 @@ public class SkriptClasses {
 				.since("")
 				.parser(new Parser<Color>() {
 					@Override
-					public String toString(final Color c) {
-						return c.toString();
+					public Color parse(final String s, final ParseContext context) {
+						return Color.byName(s);
 					}
 					
 					@Override
-					public Color parse(final String s, final ParseContext context) {
-						return Color.byName(s);
+					public String toString(final Color c, final int flags) {
+						return c.toString();
 					}
 					
 					@Override
@@ -695,8 +719,8 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public String toString(final StructureType o) {
-						return o.toString();
+					public String toString(final StructureType o, final int flags) {
+						return o.toString(flags);
 					}
 					
 					@Override
@@ -725,7 +749,7 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public String toString(final EnchantmentType t) {
+					public String toString(final EnchantmentType t, final int flags) {
 						return t.toString();
 					}
 					
@@ -774,6 +798,8 @@ public class SkriptClasses {
 				.examples("give 10 xp to the player")
 				.since("2.0")
 				.parser(new Parser<Experience>() {
+					private final RegexMessage pattern = new RegexMessage("types.experience.pattern", Pattern.CASE_INSENSITIVE);
+					
 					@Override
 					public Experience parse(String s, final ParseContext context) {
 						int xp = 1;
@@ -781,13 +807,13 @@ public class SkriptClasses {
 							xp = Utils.parseInt(s.substring(0, s.indexOf(' ')));
 							s = s.substring(s.indexOf(' ') + 1);
 						}
-						if (s.matches("(e?xp|experience)"))
+						if (pattern.getPattern().matcher(s).matches())
 							return new Experience(xp);
 						return null;
 					}
 					
 					@Override
-					public String toString(final Experience xp) {
+					public String toString(final Experience xp, final int flags) {
 						return xp.toString();
 					}
 					

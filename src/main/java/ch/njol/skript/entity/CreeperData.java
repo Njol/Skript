@@ -25,7 +25,6 @@ import org.bukkit.entity.Creeper;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -34,17 +33,14 @@ import ch.njol.util.StringUtils;
 public class CreeperData extends EntityData<Creeper> {
 	
 	static {
-		EntityData.register(CreeperData.class, "creeper", Creeper.class, "unpowered creeper[s]", "creeper[s]", "powered creeper[s]");
+		EntityData.register(CreeperData.class, "creeper", Creeper.class, "unpowered creeper", "creeper", "powered creeper");
 	}
 	
 	private int powered = 0;
 	
-	private boolean plural;
-	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		powered = matchedPattern - 1;
-		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -62,16 +58,6 @@ public class CreeperData extends EntityData<Creeper> {
 	@Override
 	public Class<Creeper> getType() {
 		return Creeper.class;
-	}
-	
-	@Override
-	public String toString() {
-		return (powered == 1 ? "powered " : powered == -1 ? "unpowered " : "") + "creeper";
-	}
-	
-	@Override
-	public boolean isPlural() {
-		return plural;
 	}
 	
 	@Override

@@ -29,7 +29,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.StringUtils;
 
 /**
@@ -38,7 +38,7 @@ import ch.njol.util.StringUtils;
 @SuppressWarnings({"unchecked", "serial"})
 public class EvtCommand extends SkriptEvent { // TODO condition to check whether a given command exists, & a conditon to check whether it's a custom skript command
 	static {
-		Skript.registerEvent("Command", EvtCommand.class, Utils.array(PlayerCommandPreprocessEvent.class, ServerCommandEvent.class), "command [%-string%]")
+		Skript.registerEvent("Command", EvtCommand.class, CollectionUtils.array(PlayerCommandPreprocessEvent.class, ServerCommandEvent.class), "command [%-string%]")
 				.description("Called when a player enters a command (not neccessarily a Skript command).")
 				.examples("on command", "on command \"/stop\"", "on command \"pm Njol \"")
 				.since("2.0");

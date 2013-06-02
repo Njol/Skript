@@ -57,16 +57,15 @@ import ch.njol.util.Kleenean;
 @Name("Loop value")
 @Description("The currently looped value.")
 @Examples({"# countdown:",
-		"loop 5 times:",
-		"	message \"%6 - loop-number%\"",
+		"loop 10 times:",
+		"	message \"%11 - loop-number%\"",
 		"	wait a second",
-		"# renerate a 10x10 floor made of randomly coloured wool below the player:",
+		"# generate a 10x10 floor made of randomly coloured wool below the player:",
 		"loop blocks from the block below the player to the block 10 east of the block below the player:",
 		"	loop blocks from the loop-block to the block 10 north of the loop-block:",
 		"		set loop-block-2 to any wool"})
 @Since("1.0")
 public class ExprLoopValue extends SimpleExpression<Object> {
-	
 	static {
 		Skript.registerExpression(ExprLoopValue.class, Object.class, ExpressionType.SIMPLE, "[the] loop-<.+>");
 	}

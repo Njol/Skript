@@ -43,7 +43,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Experience;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.IteratorIterable;
 
@@ -66,8 +66,8 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		if (!Utils.contains(ScriptLoader.currentEvents, EntityDeathEvent.class)) {
-			Skript.error("'drops' can only be used in death events", ErrorQuality.SEMANTIC_ERROR);
+		if (!ScriptLoader.isCurrentEvent(EntityDeathEvent.class)) {
+			Skript.error("The expression 'drops' can only be used in death events", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
 		delayed = isDelayed;
@@ -88,7 +88,7 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 			Skript.error("Can't change the drops anymore after the event has already passed");
 			return null;
 		}
-		return Utils.array(ItemType[].class, Inventory.class, Experience.class);
+		return CollectionUtils.array(ItemType[].class, Inventory.class, Experience.class);
 	}
 	
 	@SuppressWarnings("unchecked")

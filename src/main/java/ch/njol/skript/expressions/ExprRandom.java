@@ -35,7 +35,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -68,7 +68,7 @@ public class ExprRandom extends SimpleExpression<Object> {
 		if (set.length <= 1)
 			return set;
 		final Object[] one = (Object[]) Array.newInstance(set.getClass().getComponentType(), 1);
-		one[0] = Utils.random(set);
+		one[0] = CollectionUtils.random(set);
 		return one;
 	}
 	

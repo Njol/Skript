@@ -42,4 +42,12 @@ public abstract class LogHandler {
 		onStop();
 	}
 	
+//	/**
+//	 * Will be useful should Skript ever be written in Java 7
+//	 */
+//	@Override
+//	public final void close() throws Exception {
+//		stop();
+//	}
+	
 }

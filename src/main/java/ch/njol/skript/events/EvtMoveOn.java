@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.block.BlockFace;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
 import org.bukkit.event.Listener;
@@ -113,10 +114,10 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 //				}
 //			}
 			if (!itemTypeTriggers.isEmpty()) {
-				final int id = to.getWorld().getBlockTypeIdAt(to.getBlockX(), to.getBlockY(), to.getBlockZ());
+				final int id = to.getWorld().getBlockTypeIdAt(to.getBlockX(), to.getBlockY() - 1, to.getBlockZ());
 				final List<Trigger> ts = itemTypeTriggers.get(id);
 				if (ts != null) {
-					final byte data = to.getBlock().getData();
+					final byte data = to.getBlock().getRelative(BlockFace.DOWN).getData();
 					triggersLoop: for (final Trigger t : ts) {
 						final EvtMoveOn se = (EvtMoveOn) t.getEvent();
 						for (final ItemType i : se.types) {
@@ -136,8 +137,8 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		if (parser.regexes.get(0).group().equalsIgnoreCase("<block>")/* && isValidatingInput*/)
-			return true;
+//		if (parser.regexes.get(0).group().equalsIgnoreCase("<block>")/* && isValidatingInput*/)
+//			return true;
 //		final Matcher m = Pattern.compile("<block:(.+)>").matcher(parser.regexes.get(0).group());
 //		if (m.matches()) {
 //			final Block b = (Block) Skript.deserialize("block", m.group(1));

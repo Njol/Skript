@@ -47,7 +47,7 @@ import ch.njol.util.Kleenean;
 public class EffLightning extends Effect {
 	
 	static {
-		Skript.registerEffect(EffLightning.class, "(create|strike) lightning %directions% %locations%", "(create|strike) lightning[ ]effect %directions% %locations%");
+		Skript.registerEffect(EffLightning.class, "(create|strike) lightning(1¦[ ]effect|) %directions% %locations%");
 	}
 	
 	private Expression<Location> locations;
@@ -58,7 +58,7 @@ public class EffLightning extends Effect {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		locations = Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]);
-		effectOnly = matchedPattern == 1;
+		effectOnly = parseResult.mark == 1;
 		return true;
 	}
 	

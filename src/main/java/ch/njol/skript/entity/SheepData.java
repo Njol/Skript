@@ -28,11 +28,11 @@ import org.bukkit.entity.Sheep;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Color;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
-import ch.njol.util.StringUtils;
+import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -41,13 +41,11 @@ import ch.njol.util.StringUtils;
 public class SheepData extends EntityData<Sheep> {
 	
 	static {
-		EntityData.register(SheepData.class, "sheep", Sheep.class, "(un|non[-])sheared [%-colors%] sheep[s]", "[%-colors%] sheep[s]", "sheared [%-colors%] sheep[s]");
+		EntityData.register(SheepData.class, "sheep", Sheep.class, "unsheared sheep", "sheep", "sheared sheep");
 	}
 	
 	private Color[] colors = null;
 	private int sheared = 0;
-	
-	private boolean plural;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -55,14 +53,13 @@ public class SheepData extends EntityData<Sheep> {
 		sheared = matchedPattern - 1;
 		if (exprs[0] != null)
 			colors = ((Literal<Color>) exprs[0]).getAll();
-		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
 	@Override
 	public void set(final Sheep entity) {
 		if (colors != null)
-			entity.setColor(Utils.random(colors).getWoolColor());
+			entity.setColor(CollectionUtils.random(colors).getWoolColor());
 	}
 	
 	@Override
@@ -81,14 +78,13 @@ public class SheepData extends EntityData<Sheep> {
 		return Sheep.class;
 	}
 	
-	@Override
-	public String toString() {
-		return (sheared == -1 ? "unsheared " : sheared == 1 ? "sheared " : "") + (colors == null ? "" : Classes.toString(colors, false) + " ") + "sheep";
-	}
+	private final static ArgsMessage format = new ArgsMessage("entities.sheep.format");
 	
 	@Override
-	public boolean isPlural() {
-		return plural;
+	public String toString() {
+		if (colors == null)
+			return super.toString();
+		return format.toString(super.toString(), Classes.toString(colors, false));
 	}
 	
 	@Override
@@ -164,7 +160,7 @@ public class SheepData extends EntityData<Sheep> {
 	@Override
 	protected boolean isSupertypeOf_i(final EntityData<? extends Sheep> e) {
 		if (e instanceof SheepData)
-			return colors == null || Utils.isSubset(colors, ((SheepData) e).colors);
+			return colors == null || CollectionUtils.isSubset(colors, ((SheepData) e).colors);
 		return false;
 	}
 	

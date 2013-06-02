@@ -72,7 +72,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	@Override
 	protected Number[] get(final Event e) {
 		final Number s = start.getSingle(e), f = end.getSingle(e);
-		if (s == null || f == null || f.doubleValue() < s.doubleValue())
+		if (s == null || f == null || s.doubleValue() > f.doubleValue())
 			return null;
 		final Number[] array = integer ? new Integer[(int) (Math.floor(f.doubleValue()) - Math.ceil(s.doubleValue()) + 1)] : new Double[(int) Math.floor(f.doubleValue() - s.doubleValue() + 1)];
 		final double low = integer ? Math.ceil(s.doubleValue()) : s.doubleValue();
@@ -88,7 +88,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	@Override
 	public Iterator<Number> iterator(final Event e) {
 		final Number s = start.getSingle(e), f = end.getSingle(e);
-		if (s == null || f == null)
+		if (s == null || f == null || s.doubleValue() > f.doubleValue())
 			return null;
 		return new Iterator<Number>() {
 			double i = integer ? Math.ceil(s.doubleValue()) : s.doubleValue(), max = integer ? Math.floor(f.doubleValue()) : f.doubleValue();

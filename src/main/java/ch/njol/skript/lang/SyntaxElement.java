@@ -23,7 +23,7 @@ package ch.njol.skript.lang;
 
 import java.io.Serializable;
 
-import ch.njol.skript.Skript;
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
 
@@ -42,8 +42,9 @@ public interface SyntaxElement extends Serializable {
 	 * @param matchedPattern The index of the pattern which matched
 	 * @param isDelayed Whether this expression is used after a delay or not (i.e. if the event has already passed when this expression will be called)
 	 * @param parseResult Additional information about the match.
-	 * @return Whether this expression was initialized successfully. Can print an error prior to returning false to specity the cause (can use
-	 *         {@link Skript#error(String, ch.njol.skript.log.ErrorQuality)})
+	 * @return Whether this expression was initialized successfully. An error should be printed prior to returning false to specity the cause.
+	 * @see ScriptLoader#isCurrentEvent(Class...)
 	 */
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult);
+	
 }

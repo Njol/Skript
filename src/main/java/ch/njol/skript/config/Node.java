@@ -33,11 +33,11 @@ import ch.njol.skript.log.SkriptLogger;
  */
 public abstract class Node {
 	
-	protected String name;
+	protected String key;
 	
 	protected final int lineNum;
 	/**
-	 * "original" String. This is not final as void nodes directly change this if they are modified.
+	 * "original", untrimmed String. This is not final as void nodes directly change this if they are modified.
 	 */
 	protected String orig;
 	protected boolean modified = false;
@@ -45,8 +45,8 @@ public abstract class Node {
 	protected final SectionNode parent;
 	protected final Config config;
 	
-	protected Node(final String name, final SectionNode parent, final String orig, final int lineNum) {
-		this.name = name;
+	protected Node(final String key, final SectionNode parent, final String orig, final int lineNum) {
+		this.key = key;
 		config = parent.getConfig();
 		this.parent = parent;
 		this.orig = orig;
@@ -54,14 +54,8 @@ public abstract class Node {
 		SkriptLogger.setNode(this);
 	}
 	
-	/**
-	 * creates an empty node
-	 * 
-	 * @param name
-	 * @param parent
-	 */
-	protected Node(final String name, final SectionNode parent, final ConfigReader r) {
-		this.name = name;
+	protected Node(final String key, final SectionNode parent, final ConfigReader r) {
+		this.key = key;
 		config = parent.getConfig();
 		this.parent = parent;
 		orig = r.getLine();
@@ -70,13 +64,14 @@ public abstract class Node {
 	}
 	
 	/**
-	 * main node constructor.<br/>
-	 * never use except in {@link SectionNode#ConfigSection(Config) new ConfigSection(Config)}
+	 * Main node constructor.
+	 * <p>
+	 * Reserved for {@link SectionNode#SectionNode(Config)}
 	 * 
 	 * @param c
 	 */
 	protected Node(final Config c) {
-		name = null;
+		key = null;
 		orig = null;
 		lineNum = -1;
 		config = c;
@@ -84,20 +79,29 @@ public abstract class Node {
 		SkriptLogger.setNode(this);
 	}
 	
-	public String getName() {
-		return name;
+	protected Node(final String key, final SectionNode parent) {
+		this.key = key;
+		config = parent.getConfig();
+		this.parent = parent;
+		orig = null;
+		lineNum = -1;
+		SkriptLogger.setNode(this);
 	}
 	
-	public Config getConfig() {
+	public final String getKey() {
+		return key;
+	}
+	
+	public final Config getConfig() {
 		return config;
 	}
 	
 	public void rename(final String newname) {
-		if (name == null) {
+		if (key == null) {
 			Skript.error("can't rename an anonymous node!");
 			return;
 		}
-		name = newname;
+		key = newname;
 		modified();
 	}
 	
@@ -117,8 +121,10 @@ public abstract class Node {
 		config.modified = true;
 	}
 	
+	private final static Pattern commentPattern = Pattern.compile("\\s*(?<!#)#(?!#).*$");
+	
 	protected String getComment() {
-		final Matcher m = Pattern.compile("\\s*(?<!#)#(?!#).*$").matcher(getOrig());
+		final Matcher m = commentPattern.matcher(orig);
 		if (!m.find())
 			return "";
 		return m.group();
@@ -127,31 +133,27 @@ public abstract class Node {
 	protected String getIndentation() {
 		String s = "";
 		Node n = this;
-		while ((n = n.parent) != null) {
+		while ((n = n.parent) != config.getMainNode()) {
 			s += config.getIndentation();
 		}
 		return s;
 	}
 	
-	abstract void save(final PrintWriter w);
+	void save(final PrintWriter w) {
+		if (!modified)
+			w.println(getIndentation() + orig.trim());
+		else
+			w.println(getIndentation() + save() + getComment());
+	}
+	
+	abstract String save();
 	
 	public SectionNode getParent() {
 		return parent;
 	}
 	
-	public void move(final int index) {
-		parent.getNodeList().remove(this);
-		parent.getNodeList().add(index, this);
-		config.modified = true;
-	}
-	
-	public void moveDelta(final int deltaIndex) {
-		move(parent.getNodeList().indexOf(this) + deltaIndex);
-	}
-	
 	public void delete() {
-		parent.getNodeList().remove(this);
-		config.modified = true;
+		parent.remove(this);
 	}
 	
 	public String getOrig() {
@@ -163,10 +165,10 @@ public abstract class Node {
 	}
 	
 	/**
-	 * @return Whether this node does not hold information (i.e. is not empty, invalid or a parse option)
+	 * @return Whether this node does not hold information (i.e. is empty or invalid)
 	 */
 	public boolean isVoid() {
-		return this instanceof VoidNode || this instanceof ParseOptionNode;
+		return this instanceof VoidNode;// || this instanceof ParseOptionNode;
 	}
 	
 	/**
@@ -176,51 +178,51 @@ public abstract class Node {
 	 * @param path
 	 * @return the node at the given path or null if the path is invalid
 	 */
-	public Node getNode(final String path) {
-		return getNode(path, false);
-	}
-	
-	public Node getNode(String path, final boolean create) {
-		Node n;
-		if (path.startsWith(":")) {
-			path = path.substring(1);
-			n = this;
-		} else {
-			n = config.getMainNode();
-		}
-		for (final String s : path.split(":")) {
-			if (s.isEmpty()) {
-				n = n.getParent();
-				if (n == null) {
-					n = config.getMainNode();
-				}
-				continue;
-			}
-			if (!(n instanceof SectionNode)) {
-				return null;
-			}
-			if (s.startsWith("#")) {
-				int i = -1;
-				try {
-					i = Integer.parseInt(s.substring(1));
-				} catch (final NumberFormatException e) {
-					return null;
-				}
-				if (i <= 0 || i > ((SectionNode) n).getNodeList().size())
-					return null;
-				n = ((SectionNode) n).getNodeList().get(i - 1);
-			} else {
-				final Node oldn = n;
-				n = ((SectionNode) n).get(s);
-				if (n == null) {
-					if (!create)
-						return null;
-					((SectionNode) oldn).getNodeList().add(n = new SectionNode(s, (SectionNode) oldn, "", -1));
-				}
-			}
-		}
-		return n;
-	}
+//	public Node getNode(final String path) {
+//		return getNode(path, false);
+//	}
+//	
+//	public Node getNode(String path, final boolean create) {
+//		Node n;
+//		if (path.startsWith(":")) {
+//			path = path.substring(1);
+//			n = this;
+//		} else {
+//			n = config.getMainNode();
+//		}
+//		for (final String s : path.split(":")) {
+//			if (s.isEmpty()) {
+//				n = n.getParent();
+//				if (n == null) {
+//					n = config.getMainNode();
+//				}
+//				continue;
+//			}
+//			if (!(n instanceof SectionNode)) {
+//				return null;
+//			}
+//			if (s.startsWith("#")) {
+//				int i = -1;
+//				try {
+//					i = Integer.parseInt(s.substring(1));
+//				} catch (final NumberFormatException e) {
+//					return null;
+//				}
+//				if (i <= 0 || i > ((SectionNode) n).getNodeList().size())
+//					return null;
+//				n = ((SectionNode) n).getNodeList().get(i - 1);
+//			} else {
+//				final Node oldn = n;
+//				n = ((SectionNode) n).get(s);
+//				if (n == null) {
+//					if (!create)
+//						return null;
+//					((SectionNode) oldn).getNodeList().add(n = new SectionNode(s, (SectionNode) oldn, "", -1));
+//				}
+//			}
+//		}
+//		return n;
+//	}
 	
 	/**
 	 * returns information about this node which looks like the following:<br/>

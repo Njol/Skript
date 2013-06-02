@@ -21,11 +21,15 @@
 
 package ch.njol.skript.util;
 
+import static org.bukkit.ChatColor.*;
+
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.localization.Message;
 
@@ -43,30 +47,40 @@ public class CommandHelp {
 	private Message description = null;
 	private final String argsColor;
 	
-	private String langNode;
+	private String langNode = null;
 	
 	private final LinkedHashMap<String, Object> arguments = new LinkedHashMap<String, Object>();
 	
 	private Message wildcardArg = null;
 	
-	public CommandHelp(final String command, final String argsColor, final String langNode) {
+	public CommandHelp(final String command, final ChatColor argsColor, final String langNode) {
 		this.command = command;
-		this.argsColor = argsColor;
+		this.argsColor = argsColor.toString();
 		this.langNode = langNode;
 		description = new Message(langNode + "." + DEFAULTENTRY);
 	}
 	
-	public CommandHelp(final String command, final String argsColor) {
+	public CommandHelp(final String command, final ChatColor argsColor) {
 		this.command = command;
-		this.argsColor = argsColor;
+		this.argsColor = argsColor.toString();
 	}
 	
 	public CommandHelp add(final String argument) {
-		if (argument.startsWith("<") && argument.endsWith(">")) {
-			final String carg = "<gray><<" + argsColor + ">" + argument.substring(1, argument.length() - 1) + "<gray>>";
-			arguments.put(carg, argument);
+		if (langNode == null) {
+			if (argument.startsWith("<") && argument.endsWith(">")) {
+				final String carg = GRAY + "<" + argsColor + argument.substring(1, argument.length() - 1) + GRAY + ">";
+				arguments.put(carg, argument);
+			} else {
+				arguments.put(argument, null);
+			}
 		} else {
-			arguments.put(argument, null);
+			if (argument.startsWith("<") && argument.endsWith(">")) {
+				final String carg = GRAY + "<" + argsColor + argument.substring(1, argument.length() - 1) + GRAY + ">";
+				wildcardArg = new Message(langNode + "." + argument);
+				arguments.put(carg, wildcardArg);
+			} else {
+				arguments.put(argument, new Message(langNode + "." + argument));
+			}
 		}
 		return this;
 	}
@@ -80,7 +94,7 @@ public class CommandHelp {
 	protected void onAdd(final CommandHelp parent) {
 		langNode = parent.langNode + "." + command;
 		description = new Message(langNode + "." + DEFAULTENTRY);
-		command = parent.command + " <" + parent.argsColor + ">" + command;
+		command = parent.command + " " + parent.argsColor + command;
 		for (final Entry<String, Object> e : arguments.entrySet()) {
 			if (e.getValue() instanceof CommandHelp) {
 				((CommandHelp) e.getValue()).onAdd(this);
@@ -95,10 +109,6 @@ public class CommandHelp {
 		}
 	}
 	
-	private final static void message(final CommandSender recipient, final String message) {
-		recipient.sendMessage(Utils.prepareMessage(message));
-	}
-	
 	public boolean test(final CommandSender sender, final String[] args) {
 		return test(sender, args, 0);
 	}
@@ -110,7 +120,7 @@ public class CommandHelp {
 		}
 		final Object help = arguments.get(args[index].toLowerCase());
 		if (help == null && wildcardArg == null) {
-			showHelp(sender, m_invalid_argument.toString(argsColor, args[index]));
+			showHelp(sender, m_invalid_argument.toString(argsColor + args[index]));
 			return false;
 		}
 		if (help instanceof CommandHelp)
@@ -123,9 +133,9 @@ public class CommandHelp {
 	}
 	
 	private void showHelp(final CommandSender sender, final String pre) {
-		message(sender, pre + " " + command + " <" + argsColor + ">...");
+		Skript.message(sender, pre + " " + command + " " + argsColor + "...");
 		for (final Entry<String, Object> e : arguments.entrySet()) {
-			message(sender, "  <" + argsColor + ">" + e.getKey() + " <gray>-<reset> " + e.getValue());
+			Skript.message(sender, "  " + argsColor + e.getKey() + " " + GRAY + "-" + RESET + " " + e.getValue());
 		}
 	}
 	

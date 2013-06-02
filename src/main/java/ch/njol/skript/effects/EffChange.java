@@ -219,7 +219,7 @@ public class EffChange extends Effect {
 	@Override
 	protected void execute(final Event e) {
 		final Object delta = changer == null ? null : single ? changer.getSingle(e) : changer.getArray(e);
-		if (delta == null && mode != ChangeMode.DELETE)
+		if (delta == null && changer != null)
 			return;
 		changed.change(e, delta, mode);
 //		changed.change(e, new Changer2<Object>() {

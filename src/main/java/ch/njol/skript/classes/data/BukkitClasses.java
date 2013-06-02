@@ -51,7 +51,6 @@ import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.ConfigurationSerializer;
-import ch.njol.skript.classes.EnumParser;
 import ch.njol.skript.classes.EnumSerializer;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
@@ -59,7 +58,9 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.localization.Message;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.BiomeUtils;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.PotionEffectUtils;
 import ch.njol.skript.util.StringMode;
@@ -108,8 +109,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final Entity e) {
-						return EntityData.toString(e);
+					public String toString(final Entity e, final int flags) {
+						return EntityData.toString(e, flags);
 					}
 				})
 				.changer(DefaultChangers.entityChanger));
@@ -157,8 +158,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final Block b) {
-						return ItemType.toString(new ItemStack(b.getTypeId(), 1, b.getState().getRawData()));
+					public String toString(final Block b, final int flags) {
+						return ItemType.toString(new ItemStack(b.getTypeId(), 1, b.getState().getRawData()), flags);
 					}
 					
 					@Override
@@ -173,7 +174,7 @@ public class BukkitClasses {
 					
 					@Override
 					public String getDebugMessage(final Block b) {
-						return toString(b) + " block (" + b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ() + ")";
+						return toString(b, 0) + " block (" + b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ() + ")";
 					}
 				})
 				.changer(DefaultChangers.blockChanger)
@@ -229,7 +230,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final Location l) {
+					public String toString(final Location l, final int flags) {
 						return "x: " + Skript.toString(l.getX()) + ", y: " + Skript.toString(l.getY()) + ", z: " + Skript.toString(l.getZ());
 					}
 					
@@ -290,8 +291,8 @@ public class BukkitClasses {
 				.parser(new Parser<World>() {
 					@Override
 					public World parse(final String s, final ParseContext context) {
-						// TODO allow shortcuts '[over]world', 'nether' and '[the_]end' (server.properties: 'level-name=world')
-						if (context == ParseContext.COMMAND)
+						// TODO allow shortcuts '[over]world', 'nether' and '[the_]end' (server.properties: 'level-name=world') // inconsistent with 'world is "..."'
+						if (context == ParseContext.COMMAND || context == ParseContext.CONFIG)
 							return Bukkit.getWorld(s);
 						if (s.matches("\".+\""))
 							return Bukkit.getWorld(s.substring(1, s.length() - 1));
@@ -299,7 +300,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final World w) {
+					public String toString(final World w, final int flags) {
 						return w.getName();
 					}
 					
@@ -351,7 +352,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final Inventory i) {
+					public String toString(final Inventory i, final int flags) {
 						return "inventory of " + Classes.toString(i.getHolder());
 					}
 					
@@ -361,8 +362,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toVariableNameString(final Inventory o) {
-						return "inventory of " + Classes.toString(o.getHolder(), StringMode.VARIABLE_NAME, false);
+					public String toVariableNameString(final Inventory i) {
+						return "inventory of " + Classes.toString(i.getHolder(), StringMode.VARIABLE_NAME);
 					}
 					
 					@Override
@@ -409,7 +410,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final Player p) {
+					public String toString(final Player p, final int flags) {
 						return p.getDisplayName() + ChatColor.RESET;
 					}
 					
@@ -465,7 +466,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final OfflinePlayer p) {
+					public String toString(final OfflinePlayer p, final int flags) {
 						if (p.isOnline())
 							return p.getPlayer().getDisplayName() + ChatColor.RESET;
 						return p.getName();
@@ -510,6 +511,7 @@ public class BukkitClasses {
 				}));
 		
 		Classes.registerClass(new ClassInfo<CommandSender>(CommandSender.class, "commandsender")
+				.name(ClassInfo.NO_DOC)
 				.defaultExpression(new EventValueExpression<CommandSender>(CommandSender.class))
 				.parser(new Parser<CommandSender>() {
 					@Override
@@ -523,7 +525,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final CommandSender s) {
+					public String toString(final CommandSender s, final int flags) {
 						return s.getName();
 					}
 					
@@ -539,6 +541,7 @@ public class BukkitClasses {
 				}));
 		
 		Classes.registerClass(new ClassInfo<InventoryHolder>(InventoryHolder.class, "inventoryholder")
+				.name(ClassInfo.NO_DOC)
 				.defaultExpression(new EventValueExpression<InventoryHolder>(InventoryHolder.class)));
 		
 		Classes.registerClass(new ClassInfo<GameMode>(GameMode.class, "gamemode")
@@ -551,18 +554,26 @@ public class BukkitClasses {
 				.since("1.0")
 				.defaultExpression(new SimpleLiteral<GameMode>(GameMode.SURVIVAL, true))
 				.parser(new Parser<GameMode>() {
-					@Override
-					public GameMode parse(final String s, final ParseContext context) {
-						try {
-							return GameMode.valueOf(s.toUpperCase());
-						} catch (final IllegalArgumentException e) {
-							return null;
+					private final Message[] names = new Message[GameMode.values().length];
+					{
+						int i = 0;
+						for (final GameMode m : GameMode.values()) {
+							names[i++] = new Message("game modes." + m.name());
 						}
 					}
 					
 					@Override
-					public String toString(final GameMode m) {
-						return m.toString().toLowerCase();
+					public GameMode parse(final String s, final ParseContext context) {
+						for (int i = 0; i < names.length; i++) {
+							if (s.equalsIgnoreCase(names[i].toString()))
+								return GameMode.values()[i];
+						}
+						return null;
+					}
+					
+					@Override
+					public String toString(final GameMode m, final int flags) {
+						return names[m.ordinal()].toString();
 					}
 					
 					@Override
@@ -613,8 +624,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final ItemStack i) {
-						return ItemType.toString(i);
+					public String toString(final ItemStack i, final int flags) {
+						return ItemType.toString(i, flags);
 					}
 					
 					@Override
@@ -698,7 +709,27 @@ public class BukkitClasses {
 				.usage(ClassInfo.ENUM_USAGE)
 				.examples("biome at the player is desert")
 				.since("1.4.4")
-				.parser(new EnumParser<Biome>(Biome.class))
+				.parser(new Parser<Biome>() {
+					@Override
+					public Biome parse(final String s, final ParseContext context) {
+						return BiomeUtils.parse(s);
+					}
+					
+					@Override
+					public String toString(final Biome b, final int flags) {
+						return BiomeUtils.toString(b);
+					}
+					
+					@Override
+					public String toVariableNameString(final Biome o) {
+						return o.name();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "\\S+";
+					}
+				})
 				.serializer(new EnumSerializer<Biome>(Biome.class)));
 		
 		Classes.registerClass(new ClassInfo<PotionEffectType>(PotionEffectType.class, "potioneffecttype")
@@ -716,8 +747,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final PotionEffectType o) {
-						return PotionEffectUtils.toString(o);
+					public String toString(final PotionEffectType o, final int flags) {
+						return PotionEffectUtils.toString(o, flags);
 					}
 					
 					@Override
@@ -772,7 +803,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final Chunk c) {
+					public String toString(final Chunk c, final int flags) {
 						return "chunk (" + c.getX() + "," + c.getZ() + ") of " + c.getWorld().getName();
 					}
 					
@@ -830,8 +861,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toString(final Enchantment e) {
-						return EnchantmentType.toString(e);
+					public String toString(final Enchantment e, final int flags) {
+						return EnchantmentType.toString(e, flags);
 					}
 					
 					@Override

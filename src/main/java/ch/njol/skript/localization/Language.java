@@ -38,9 +38,8 @@ import org.bukkit.plugin.Plugin;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.config.Config;
+import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.Version;
-import ch.njol.util.ExceptionUtils;
-import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
 /**
@@ -48,19 +47,24 @@ import ch.njol.util.StringUtils;
  */
 public class Language {
 	
+	/**
+	 * Some flags
+	 */
+	public final static int F_PLURAL = 1, F_DEFINITE_ARTICLE = 2, F_INDEFINITE_ARTICLE = 4;
+	
 	private static String name = "english";
 	
-	static HashMap<String, String> english = new HashMap<String, String>();
+	static final HashMap<String, String> english = new HashMap<String, String>();
 	/**
 	 * May be null.
 	 */
 	static HashMap<String, String> localized = null;
-	private static boolean useLocal = false;
+	static boolean useLocal = false;
 	
 	private static HashMap<Plugin, Version> langVersion = new HashMap<Plugin, Version>();
 	
 	public static String getName() {
-		return name;
+		return useLocal ? name : "english";
 	}
 	
 	private final static String get_i(final String key) {
@@ -69,7 +73,10 @@ public class Language {
 			if (s != null)
 				return s;
 		}
-		return english.get(key);
+		final String s = english.get(key);
+		if (s == null && Skript.testing())
+			missingEntryError(key);
+		return s;
 	}
 	
 	/**
@@ -81,9 +88,7 @@ public class Language {
 	 */
 	public static String get(final String key) {
 		final String s = get_i(key.toLowerCase(Locale.ENGLISH));
-		if (s == null)
-			return key.toLowerCase(Locale.ENGLISH);
-		return s;
+		return s == null ? key.toLowerCase(Locale.ENGLISH) : s;
 	}
 	
 	/**
@@ -94,6 +99,10 @@ public class Language {
 	 */
 	public static String get_(final String key) {
 		return get_i(key.toLowerCase(Locale.ENGLISH));
+	}
+	
+	public final static void missingEntryError(final String key) {
+		Skript.error("Missing entry '" + key.toLowerCase(Locale.ENGLISH) + "' in the default english language file");
 	}
 	
 	/**
@@ -119,7 +128,7 @@ public class Language {
 	 * Gets a localized string surrounded by spaces, or a space if the string is empty
 	 * 
 	 * @param key
-	 * @return The spaced string or " "+key+" " if the entry is missing from the file.
+	 * @return The message surrounded by spaces, a space if the entry is empty, or " "+key+" " if the entry is missing.
 	 */
 	public static String getSpaced(final String key) {
 		final String s = get(key.toLowerCase(Locale.ENGLISH));
@@ -128,7 +137,7 @@ public class Language {
 		return " " + s + " ";
 	}
 	
-	private final static Pattern split = Pattern.compile("\\s*,\\s*");
+	private final static Pattern listSplitPattern = Pattern.compile("\\s*,\\s*");
 	
 	/**
 	 * Gets a list of strings.
@@ -140,7 +149,7 @@ public class Language {
 		final String s = get_i(key.toLowerCase(Locale.ENGLISH));
 		if (s == null)
 			return new String[] {key.toLowerCase(Locale.ENGLISH)};
-		return split.split(s);
+		return listSplitPattern.split(s);
 	}
 	
 	/**
@@ -240,15 +249,16 @@ public class Language {
 		}
 	}
 	
+	// TODO genders do not have to be 'translated'
 	private static void validateLocalized() {
 		HashSet<String> s = new HashSet<String>(english.keySet());
 		s.removeAll(localized.keySet());
 		if (!s.isEmpty() && Skript.logNormal())
-			Skript.error("The following messages have not been translated to " + name + ": " + StringUtils.join(s));
+			Skript.warning("The following messages have not been translated to " + name + ": " + StringUtils.join(s, ", "));
 		s = new HashSet<String>(localized.keySet());
 		s.removeAll(english.keySet());
 		if (!s.isEmpty() && Skript.logHigh())
-			Skript.warning("The localized language file(s) have superfluous entries: " + StringUtils.join(s));
+			Skript.warning("The localized language file(s) have superfluous entries: " + StringUtils.join(s, ", "));
 	}
 	
 	private final static List<LanguageChangeListener> listeners = new ArrayList<LanguageChangeListener>();
@@ -261,6 +271,8 @@ public class Language {
 	
 	/**
 	 * Registers a listener. The listener will immediately be called if a language has already been loaded.
+	 * <p>
+	 * The first call to a listener is guaranteed to be english even if another language is active, in which case the listener is called twice when registered.
 	 * 
 	 * @param l
 	 */
@@ -273,41 +285,33 @@ public class Language {
 		listeners.add(priorityStartIndices[priority.ordinal()], l);
 		for (int i = priority.ordinal() + 1; i < LanguageListenerPriority.values().length; i++)
 			priorityStartIndices[i]++;
-		if (english != null)
+		if (!english.isEmpty()) {
+			if (localized != null && useLocal) {
+				useLocal = false;
+				l.onLanguageChange();
+				useLocal = true;
+			}
 			l.onLanguageChange();
-	}
-	
-	// some general words - down here so that 'listeners' is initialized
-	public final static Message m_and = new Message("and");
-	public final static Message m_or = new Message("or");
-	
-	public static void setUseLocal(final boolean b) {
-		if (useLocal == b)
-			return;
-		useLocal = b;
-		for (final LanguageChangeListener l : listeners)
-			l.onLanguageChange();
+		}
 	}
 	
 	/**
-	 * @param s String with ¦ plural markers
-	 * @return (singular, plural)
+	 * @param b Whether to enable localization or not
+	 * @return Previous state
 	 */
-	public static Pair<String, String> getPlural(final String s) {
-		final int c = s.indexOf("¦");
-		if (c == -1) // common
-			return new Pair<String, String>(s, s);
-		final int c2 = s.indexOf("¦", c + 1);
-		if (c2 == -1) { // common¦plural
-			return new Pair<String, String>(s.substring(0, c), s.substring(0, c) + s.substring(c + 1));
-		} else {
-			final int c3 = s.indexOf("¦", c2 + 1);
-			if (c3 == -1) { // common¦singular¦plural
-				return new Pair<String, String>(s.substring(0, c) + s.substring(c + 1, c2), s.substring(0, c) + s.substring(c2 + 1));
-			} else { // common¦singular¦plural¦common
-				return new Pair<String, String>(s.substring(0, c) + s.substring(c + 1, c2) + s.substring(c3 + 1), s.substring(0, c) + s.substring(c2 + 1, c3) + s.substring(c3 + 1));
-			}
-		}
+	public static boolean setUseLocal(final boolean b) {
+		if (useLocal == b)
+			return b;
+		if (localized == null)
+			return false;
+		useLocal = b;
+		for (final LanguageChangeListener l : listeners)
+			l.onLanguageChange();
+		return !b;
+	}
+	
+	public static boolean isUsingLocal() {
+		return useLocal;
 	}
 	
 }

@@ -79,7 +79,7 @@ public abstract class FileUtils {
 		return backup;
 	}
 	
-	public final static void move(final File from, final File to, final boolean replace) throws IOException {
+	public final static File move(final File from, final File to, final boolean replace) throws IOException {
 		if (!replace && to.exists())
 			throw new IOException("Can't rename " + from.getName() + " to " + to.getName() + ": The target file already exists");
 		if (!RUNNINGJAVA6) {
@@ -105,6 +105,7 @@ public abstract class FileUtils {
 			if (moveTo != null)
 				moveTo.delete();
 		}
+		return to;
 	}
 	
 	public final static void copy(final File from, final File to) throws IOException {
@@ -141,7 +142,7 @@ public abstract class FileUtils {
 	 * @param directory
 	 * @param renamer Renames files. Return null to leave a file as-is.
 	 * @return A collection of all changed files (with their new names)
-	 * @throws IOException
+	 * @throws IOException If renaming one of the files caused an IOException. Some files might have been renamed already.
 	 */
 	public final static Collection<File> renameAll(final File directory, final Converter<String, String> renamer) throws IOException {
 		final Collection<File> changed = new ArrayList<File>();

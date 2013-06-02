@@ -76,7 +76,7 @@ public class SkriptTest {
 	
 	private final static SectionNode nodeFromString(final String s) {
 		try {
-			return (SectionNode) new Config(s, "test.sk", true, false, ":").getMainNode().getNodeList().get(0);
+			return new Config(s, "test.sk", true, false, ":").getMainNode();//.getNode(0);
 		} catch (final IOException e) {
 			e.printStackTrace();
 			return null;

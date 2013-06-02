@@ -90,7 +90,7 @@ public class SectionValidator implements NodeValidator {
 		for (final Entry<String, NodeInfo> e : nodes.entrySet()) {
 			final Node n = ((SectionNode) node).get(e.getKey());
 			if (n == null && !e.getValue().optional) {
-				Skript.error("Required entry '" + e.getKey() + "' is missing in " + (node.getParent() == null ? node.getConfig().getFileName() : "'" + node.getName() + "' (" + node.getConfig().getFileName() + ", starting at line " + node.getLine() + ")"));
+				Skript.error("Required entry '" + e.getKey() + "' is missing in " + (node.getParent() == null ? node.getConfig().getFileName() : "'" + node.getKey() + "' (" + node.getConfig().getFileName() + ", starting at line " + node.getLine() + ")"));
 				ok = false;
 			} else if (n != null) {
 				ok &= e.getValue().v.validate(n);
@@ -100,11 +100,11 @@ public class SectionValidator implements NodeValidator {
 		if (allowUndefinedSections && allowUndefinedEntries)
 			return ok;
 		for (final Node n : (SectionNode) node) {
-			if (!nodes.containsKey(n.getName())) {
+			if (!nodes.containsKey(n.getKey())) {
 				if (n instanceof SectionNode && allowUndefinedSections || n instanceof EntryNode && allowUndefinedEntries)
 					continue;
 				SkriptLogger.setNode(n);
-				Skript.error("Unexpected entry '" + n.getName() + "'. Check whether it's spelled correctly or remove it.");
+				Skript.error("Unexpected entry '" + n.getKey() + "'. Check whether it's spelled correctly or remove it.");
 				ok = false;
 			}
 		}
@@ -114,7 +114,7 @@ public class SectionValidator implements NodeValidator {
 	
 	public static final void notASectionError(final Node node) {
 		SkriptLogger.setNode(node);
-		Skript.error("'" + node.getName() + "' is not a section (like 'name:', followed by one or more indented lines)");
+		Skript.error("'" + node.getKey() + "' is not a section (like 'name:', followed by one or more indented lines)");
 	}
 	
 	public SectionValidator setAllowUndefinedSections(final boolean b) {

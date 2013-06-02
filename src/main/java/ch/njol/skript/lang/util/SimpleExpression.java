@@ -232,7 +232,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 			Skript.error("Can't use time states after the event has already passed");
 			return false;
 		}
-		if (!isCurrentEvent(applicableEvent))
+		if (!ScriptLoader.isCurrentEvent(applicableEvent))
 			return false;
 		for (final Expression<?> var : mustbeDefaultVars) {
 			if (!var.isDefault()) {
@@ -251,18 +251,10 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		if (!mustbeDefaultVar.isDefault())
 			return false;
 		for (final Class<? extends Event> e : applicableEvents) {
-			if (isCurrentEvent(e)) {
+			if (ScriptLoader.isCurrentEvent(e)) {
 				this.time = time;
 				return true;
 			}
-		}
-		return false;
-	}
-	
-	private final static boolean isCurrentEvent(final Class<? extends Event> e) {
-		for (final Class<?> e2 : ScriptLoader.currentEvents) {
-			if (e.isAssignableFrom(e2))
-				return true;
 		}
 		return false;
 	}

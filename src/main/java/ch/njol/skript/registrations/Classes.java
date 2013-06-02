@@ -44,7 +44,6 @@ import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.StringMode;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Pair;
 import ch.njol.util.iterator.ArrayIterator;
 
@@ -75,10 +74,25 @@ public abstract class Classes {
 		tempClassInfos.add(info);
 	}
 	
+	public final static void onRegistrationsStop() {
+		sortClassInfos();
+		
+		for (final ClassInfo<?> ci : classInfos) {
+			if (ci.getSerializeAs() != null) {
+				final ClassInfo<?> sa = getExactClassInfo(ci.getSerializeAs());
+				if (sa == null) {
+					Skript.error(ci.getCodeName() + "'s 'serializeAs' class is not registered");
+				} else if (sa.getSerializer() == null) {
+					Skript.error(ci.getCodeName() + "'s 'serializeAs' class is not serializable");
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Sorts the class infos according to sub/superclasses and relations set with {@link ClassInfo#before(String...)} and {@link ClassInfo#after(String...)}.
 	 */
-	public final static void sortClassInfos() {
+	private final static void sortClassInfos() {
 		assert classInfos == null;
 		
 		final LinkedList<ClassInfo<?>> classInfos = new LinkedList<ClassInfo<?>>();
@@ -406,7 +420,7 @@ public abstract class Classes {
 			}
 			
 			@Override
-			public String toString(final T o) {
+			public String toString(final T o, final int flags) {
 				throw new UnsupportedOperationException();
 			}
 			
@@ -429,18 +443,19 @@ public abstract class Classes {
 	 * @see Parser
 	 */
 	public static String toString(final Object o) {
-		return Classes.toString(o, StringMode.MESSAGE, false);
+		return toString(o, StringMode.MESSAGE, 0);
 	}
 	
 	public static String getDebugMessage(final Object o) {
-		return Classes.toString(o, StringMode.DEBUG, false);
+		return toString(o, StringMode.DEBUG, 0);
 	}
 	
-	public static final String toString(final Object[] os, final boolean and) {
-		return Classes.toString(os, and, StringMode.MESSAGE, false);
+	public static final <T> String toString(final T o, final StringMode mode) {
+		return toString(o, mode, 0);
 	}
 	
-	public static final <T> String toString(final T o, final StringMode mode, final boolean plural) {
+	private static final <T> String toString(final T o, final StringMode mode, final int flags) {
+		assert flags == 0 || mode == StringMode.MESSAGE;
 		final boolean code = mode == StringMode.VARIABLE_NAME;
 		if (o == null)
 			return "<none>";
@@ -452,14 +467,16 @@ public abstract class Classes {
 			for (final Object i : (Object[]) o) {
 				if (!first)
 					b.append(", ");
-				b.append(toString(i, mode, plural));
+				b.append(toString(i, mode, flags));
 				first = false;
 			}
 			return "[" + b.toString() + "]";
 		}
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getParser() != null && ci.getC().isAssignableFrom(o.getClass())) {
-				final String s = code ? ((Parser<T>) ci.getParser()).toVariableNameString(o) : Utils.toEnglishPlural(((Parser<T>) ci.getParser()).toString(o, mode), plural);
+				final String s = code ? ((Parser<T>) ci.getParser()).toVariableNameString(o) :
+						mode == StringMode.MESSAGE ? ((Parser<T>) ci.getParser()).toString(o, flags) :
+								((Parser<T>) ci.getParser()).toString(o, mode);
 				if (s != null)
 					return s;
 			}
@@ -467,11 +484,23 @@ public abstract class Classes {
 		return code ? "object:" + o : "" + o;
 	}
 	
-	public static final String toString(final Object[] os, final boolean and, final StringMode mode, final boolean plural) {
+	public static final String toString(final Object[] os, final int flags) {
+		return toString(os, true, StringMode.MESSAGE, flags);
+	}
+	
+	public static final String toString(final Object[] os, final boolean and) {
+		return toString(os, and, StringMode.MESSAGE, 0);
+	}
+	
+	public static final String toString(final Object[] os, final boolean and, final StringMode mode) {
+		return toString(os, and, mode, 0);
+	}
+	
+	private static final String toString(final Object[] os, final boolean and, final StringMode mode, final int flags) {
 		if (os.length == 0)
 			return toString(null);
 		if (os.length == 1)
-			return toString(os[0], mode, plural);
+			return toString(os[0], mode, flags);
 		final StringBuilder b = new StringBuilder();
 		for (int i = 0; i < os.length; i++) {
 			if (i != 0) {
@@ -480,7 +509,7 @@ public abstract class Classes {
 				else
 					b.append(", ");
 			}
-			b.append(toString(os[i], mode, plural));
+			b.append(toString(os[i], mode, flags));
 		}
 		return b.toString();
 	}

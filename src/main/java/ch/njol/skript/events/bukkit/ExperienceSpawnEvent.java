@@ -31,8 +31,6 @@ import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.Experience;
 
 /**
- * FIXME test this
- * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")

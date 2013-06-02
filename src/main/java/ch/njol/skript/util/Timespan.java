@@ -24,9 +24,12 @@ package ch.njol.skript.util;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.localization.GeneralWords;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.LanguageChangeListener;
+import ch.njol.skript.localization.Noun;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -34,14 +37,24 @@ import ch.njol.util.StringUtils;
 @SuppressWarnings("serial")
 public class Timespan implements Serializable {
 	
+	private final static Noun m_tick = new Noun("time.tick");
+	private final static Noun m_second = new Noun("time.second");
+	private final static Noun m_minute = new Noun("time.minute");
+	private final static Noun m_hour = new Noun("time.hour");
+	private final static Noun m_day = new Noun("time.day");
+	private final static Noun[] names = {m_tick, m_second, m_minute, m_hour, m_day};
+	private final static int[] times = {50, 1000, 1000 * 60, 1000 * 60 * 60, 1000 * 60 * 60 * 24};
 	static final HashMap<String, Integer> parseValues = new HashMap<String, Integer>();
 	static {
-		parseValues.put("tick", 50);
-		
-		parseValues.put("second", 1000);
-		parseValues.put("minute", 1000 * 60);
-		parseValues.put("hour", 1000 * 60 * 60);
-		parseValues.put("day", 1000 * 60 * 60 * 24);
+		Language.addListener(new LanguageChangeListener() {
+			@Override
+			public void onLanguageChange() {
+				for (int i = 0; i < names.length; i++) {
+					parseValues.put(names[i].getSingular(), times[i]);
+					parseValues.put(names[i].getPlural(), times[i]);
+				}
+			}
+		});
 	}
 	
 	public static final Timespan parse(final String s) {
@@ -62,14 +75,14 @@ public class Timespan implements Serializable {
 			for (int i = 0; i < subs.length; i++) {
 				String sub = subs[i];
 				
-				if (sub.equals("and")) {
+				if (sub.equals(GeneralWords.and.toString())) {
 					if (i == 0 || i == subs.length - 1)
 						return null;
 					continue;
 				}
 				
 				float amount = 1;
-				if (sub.equalsIgnoreCase("a") || sub.equalsIgnoreCase("an")) {
+				if (Noun.isIndefiniteArticle(sub)) {
 					if (i == subs.length - 1)
 						return null;
 					amount = 1;
@@ -81,11 +94,11 @@ public class Timespan implements Serializable {
 					sub = subs[++i];
 				}
 				
-				if (sub.equals("real") || sub.equals("rl") || sub.equals("irl")) {
+				if (CollectionUtils.contains(Language.getList("time.real"), sub)) {
 					if (i == subs.length - 1 || isMinecraftTimeSet && minecraftTime)
 						return null;
 					sub = subs[++i];
-				} else if (sub.equals("mc") || sub.equals("minecraft")) {
+				} else if (CollectionUtils.contains(Language.getList("time.minecraft"), sub)) {
 					if (i == subs.length - 1 || isMinecraftTimeSet && !minecraftTime)
 						return null;
 					minecraftTime = true;
@@ -141,29 +154,37 @@ public class Timespan implements Serializable {
 		return toString(millis);
 	}
 	
+	public String toString(final int flags) {
+		return toString(millis, flags);
+	}
+	
 	@SuppressWarnings("unchecked")
-	final static Pair<String, Integer>[] simpleValues = (Pair<String, Integer>[]) new Pair<?, ?>[] {
-			new Pair<String, Integer>("day", 1000 * 60 * 60 * 24),
-			new Pair<String, Integer>("hour", 1000 * 60 * 60),
-			new Pair<String, Integer>("minute", 1000 * 60),
-			new Pair<String, Integer>("second", 1000)
+	final static Pair<Noun, Integer>[] simpleValues = new Pair[] {
+			new Pair<Noun, Integer>(m_day, 1000 * 60 * 60 * 24),
+			new Pair<Noun, Integer>(m_hour, 1000 * 60 * 60),
+			new Pair<Noun, Integer>(m_minute, 1000 * 60),
+			new Pair<Noun, Integer>(m_second, 1000)
 	};
 	
 	public static String toString(final long millis) {
+		return toString(millis, 0);
+	}
+	
+	public static String toString(final long millis, final int flags) {
 		for (int i = 0; i < simpleValues.length - 1; i++) {
 			if (millis >= simpleValues[i].second) {
 				if (millis % simpleValues[i].second != 0) {
-					return toString(Math.floor(1. * millis / simpleValues[i].second), simpleValues[i]) + " and " + toString(1. * (millis % simpleValues[i].second) / simpleValues[i + 1].second, simpleValues[i + 1]);
+					return toString(Math.floor(1. * millis / simpleValues[i].second), simpleValues[i], flags) + " " + GeneralWords.and + " " + toString(1. * (millis % simpleValues[i].second) / simpleValues[i + 1].second, simpleValues[i + 1], flags);
 				} else {
-					return toString(1. * millis / simpleValues[i].second, simpleValues[i]);
+					return toString(1. * millis / simpleValues[i].second, simpleValues[i], flags);
 				}
 			}
 		}
-		return toString(1. * millis / simpleValues[simpleValues.length - 1].second, simpleValues[simpleValues.length - 1]);
+		return toString(1. * millis / simpleValues[simpleValues.length - 1].second, simpleValues[simpleValues.length - 1], flags);
 	}
 	
-	private static String toString(final double amount, final Pair<String, Integer> p) {
-		return StringUtils.toString(amount, SkriptConfig.numberAccuracy.value()) + " " + Utils.toEnglishPlural(p.first, amount != 1);
+	private static String toString(final double amount, final Pair<Noun, Integer> p, final int flags) {
+		return p.first.withAmount(amount, flags);
 	}
 	
 }

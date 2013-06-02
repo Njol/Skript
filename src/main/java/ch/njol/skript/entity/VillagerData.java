@@ -27,8 +27,7 @@ import org.bukkit.entity.Villager.Profession;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Utils;
-import ch.njol.util.StringUtils;
+import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -40,18 +39,15 @@ public class VillagerData extends EntityData<Villager> {
 		// professions in order!
 		// FARMER(0), LIBRARIAN(1), PRIEST(2), BLACKSMITH(3), BUTCHER(4);
 		register(VillagerData.class, "villager", Villager.class,
-				"villager[s]", "farmer[s]", "librarian[s]", "priest[s]", "[black]smith[s]", "butcher[s]");
+				"villager", "farmer", "librarian", "priest", "blacksmith", "butcher");
 	}
 	
 	private Profession profession = null;
-	
-	private boolean plural;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (matchedPattern > 0)
 			profession = Profession.getProfession(matchedPattern - 1);
-		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -65,7 +61,7 @@ public class VillagerData extends EntityData<Villager> {
 	public Villager spawn(final Location loc) {
 		final Villager v = super.spawn(loc);
 		if (profession == null)
-			v.setProfession(Utils.random(Profession.values()));
+			v.setProfession(CollectionUtils.random(Profession.values()));
 		return v;
 	}
 	
@@ -77,16 +73,6 @@ public class VillagerData extends EntityData<Villager> {
 	@Override
 	public Class<? extends Villager> getType() {
 		return Villager.class;
-	}
-	
-	@Override
-	public String toString() {
-		return profession == null ? "villager" : profession.toString().toLowerCase();
-	}
-	
-	@Override
-	public boolean isPlural() {
-		return plural;
 	}
 	
 	@Override

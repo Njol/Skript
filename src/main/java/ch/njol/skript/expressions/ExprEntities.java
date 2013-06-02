@@ -49,6 +49,7 @@ import ch.njol.skript.log.BlockingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
+import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.CheckedIterator;
 import ch.njol.util.iterator.NonNullIterator;
 
@@ -91,7 +92,7 @@ public class ExprEntities extends SimpleExpression<Entity> {
 		types = (Expression<? extends EntityData<?>>) exprs[0];
 		if (matchedPattern % 2 == 0) {
 			for (final EntityData<?> d : types.getAll(null)) {
-				if (!d.isPlural())
+				if (d.isPlural().isFalse() || d.isPlural().isUnknown() && !StringUtils.startsWithIgnoreCase(parseResult.expr, "all"))
 					return false;
 			}
 		}
@@ -126,8 +127,10 @@ public class ExprEntities extends SimpleExpression<Entity> {
 	@Override
 	protected Entity[] get(final Event e) {
 		if (matchedPattern >= 2) {
-			final List<Entity> l = new ArrayList<Entity>();
 			final Iterator<? extends Entity> iter = iterator(e);
+			if (iter == null || !iter.hasNext())
+				return new Entity[0];
+			final List<Entity> l = new ArrayList<Entity>();
 			while (iter.hasNext())
 				l.add(iter.next());
 			return l.toArray((Entity[]) Array.newInstance(returnType, l.size()));

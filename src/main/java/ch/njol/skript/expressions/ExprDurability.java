@@ -31,7 +31,7 @@ import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Math2;
 
 /**
@@ -87,8 +87,8 @@ public class ExprDurability extends SimplePropertyExpression<ItemStack, Short> {
 //			return Skript.array(Number.class);
 //		}
 //		log.stop();
-		if (getExpr().isSingle() && Utils.contains(getExpr().acceptChange(ChangeMode.SET), ItemStack.class))
-			return Utils.array(Number.class);
+		if (getExpr().isSingle() && CollectionUtils.contains(getExpr().acceptChange(ChangeMode.SET), ItemStack.class))
+			return CollectionUtils.array(Number.class);
 		return null;
 	}
 	

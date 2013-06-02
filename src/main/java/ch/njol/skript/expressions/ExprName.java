@@ -37,7 +37,7 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Slot;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -45,11 +45,12 @@ import ch.njol.util.Kleenean;
  */
 @SuppressWarnings("serial")
 @Name("Name / Display Name")
-@Description("Represents a player's minecraft account name, chat display name, or playerlist name, or the custom name of an item.")
+@Description({"Represents a player's minecraft account name, chat display name, or playerlist name, or the custom name of an item.",
+		"Please note that tab list anmes are limited to 16 characters, including colour codes which are 2 characters each."})
 @Examples({"on join:",
 		"	player has permission \"name.red\"",
-		"	set the player's display name to \"<red>%name of player%\"",
-		"	set the player's tablist name to \"<red>%name of player%\"",
+		"	set the player's display name to \"<red>[admin]<gold>%name of player%\"",
+		"	set the player's tablist name to \"<green>%name of player%\"",
 		"set the name of the player's tool to \"Legendary Sword of Awesomeness\""})
 @Since("1.4.6 (players' name & display name), <i>unknown</i> (player list name), 2.0 (item name)")
 public class ExprName extends SimplePropertyExpression<Object, String> {
@@ -57,6 +58,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	final static int PLAYER = 1, ITEMSTACK = 2;
 	
 	private static enum NameType {
+		// TODO entities
 		NAME("name", "name", PLAYER | ITEMSTACK, ITEMSTACK) {
 			@Override
 			void set(final Object o, final String s) {
@@ -70,6 +72,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 				if (o instanceof Player) {
 					return ((Player) o).getName();
 				} else {
+					if (!((ItemStack) o).hasItemMeta())
+						return null;
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
 					return m.hasDisplayName() ? m.getDisplayName() : null;
 				}
@@ -92,6 +96,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 				if (o instanceof Player) {
 					return ((Player) o).getDisplayName();
 				} else {
+					if (!((ItemStack) o).hasItemMeta())
+						return null;
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
 					return m.hasDisplayName() ? m.getDisplayName() : null;
 				}
@@ -178,11 +184,11 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET && (type.acceptChange & PLAYER) == PLAYER && !ItemStack.class.isAssignableFrom(getExpr().getReturnType())) {
 			changeType = PLAYER;
-			return Utils.array(String.class);
+			return CollectionUtils.array(String.class);
 		} else if (mode == ChangeMode.SET && (type.acceptChange & ITEMSTACK) == ITEMSTACK &&
-				(getExpr().isSingle() && Utils.contains(getExpr().acceptChange(ChangeMode.SET), ItemStack.class) || Slot.class.isAssignableFrom(getExpr().getReturnType()))) {
+				(getExpr().isSingle() && CollectionUtils.contains(getExpr().acceptChange(ChangeMode.SET), ItemStack.class) || Slot.class.isAssignableFrom(getExpr().getReturnType()))) {
 			changeType = ITEMSTACK;
-			return Utils.array(String.class);
+			return CollectionUtils.array(String.class);
 		}
 		return null;
 	}

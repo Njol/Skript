@@ -52,6 +52,7 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
@@ -265,14 +266,14 @@ public class SkriptParser {
 	@SuppressWarnings("unchecked")
 	public final static <T> Expression<? extends T> parseExpression(final String s, final int flags, final ParseContext context, final Class<? extends T>... types) {
 		assert s != null && context != null && types != null && types.length > 0;
-		assert types.length == 1 || !Utils.contains(types, Object.class);
+		assert types.length == 1 || !CollectionUtils.contains(types, Object.class);
 		if (types.length == 1 && types[0] == Object.class)
 			return (Expression<? extends T>) new SkriptParser(s, flags, context).parseObjectExpression();
 		return new SkriptParser(s, flags, context).parseExpression(types);
 	}
 	
 	private final <T> Expression<? extends T> parseExpression(final Class<? extends T>... types) {
-		assert !Utils.contains(types, Object.class);
+		assert !CollectionUtils.contains(types, Object.class);
 		
 		final Deque<Expression<? extends T>> ts = new LinkedList<Expression<? extends T>>();
 		Kleenean and = Kleenean.UNKNOWN;
@@ -355,7 +356,7 @@ public class SkriptParser {
 			}
 		}
 		
-		// Hack as items use '..., ... and ...' for enchantments. Numbers and Times are parsed beforehand as they use the same (deprecated) id[:data] syntax.
+		// Hack as items use '..., ... and ...' for enchantments. Numbers and times are parsed beforehand as they use the same (deprecated) id[:data] syntax.
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			Expression<?> e = parseExpression(Number.class);
@@ -383,7 +384,7 @@ public class SkriptParser {
 		}
 		
 		final Matcher m = listElementPattern.matcher(expr);
-		if (!m.find()) {
+		if (!m.lookingAt()) {
 			return parseSingleExpr(expr, PARSE_LITERALS, Object.class);
 		}
 		
@@ -425,7 +426,7 @@ public class SkriptParser {
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private final <T> Expression<? extends T> parseSingleExpr(final String s, final int flags, final Class<? extends T>... types) {
 		assert types.length > 0;
-		assert types.length == 1 || !Utils.contains(types, Object.class);
+		assert types.length == 1 || !CollectionUtils.contains(types, Object.class);
 		if (s.isEmpty())
 			return null;
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
@@ -444,7 +445,7 @@ public class SkriptParser {
 			log.clear();
 			if ((flags & PARSE_EXPRESSIONS) != 0) {
 				final Expression<?> e;
-				if (s.startsWith("\"") && s.endsWith("\"") && (types[0] == Object.class || Utils.contains(types, String.class))) {
+				if (s.startsWith("\"") && s.endsWith("\"") && (types[0] == Object.class || CollectionUtils.contains(types, String.class))) {
 					e = VariableString.newInstance(s.substring(1, s.length() - 1));
 				} else {
 					e = parse(s, (Iterator) Skript.getExpressions(types), null);
@@ -636,7 +637,7 @@ public class SkriptParser {
 	 * @param openingBracket A bracket that opens another group, e.g. '('
 	 * @param start This must not be the index of the opening bracket!
 	 * @return
-	 * @throws MalformedPatternException
+	 * @throws MalformedPatternException If the group is not closed
 	 */
 	private static int nextBracket(final String pattern, final char closingBracket, final char openingBracket, final int start) throws MalformedPatternException {
 		int n = 0;
@@ -661,7 +662,7 @@ public class SkriptParser {
 	 * @param pattern
 	 * @param c The character to search for
 	 * @param from The index to start searching from
-	 * @return
+	 * @return The next index where the character occurs unescaped or -1 if it doesn't occur.
 	 */
 	private static int nextUnescaped(final String pattern, final char c, final int from) {
 		for (int i = from; i < pattern.length(); i++) {
@@ -674,6 +675,13 @@ public class SkriptParser {
 		return -1;
 	}
 	
+	/**
+	 * Counts how often the given character ocurs in the given string, ignoring any escaped occurrences of the character.
+	 * 
+	 * @param pattern
+	 * @param c The character to search for
+	 * @return
+	 */
 	private static int countUnescaped(final String pattern, final char c) {
 		int r = 0;
 		for (int i = 0; i < pattern.length(); i++) {
@@ -686,6 +694,13 @@ public class SkriptParser {
 		return r;
 	}
 	
+	/**
+	 * Find the next unescaped (i.e. single) double quote in the string.
+	 * 
+	 * @param s
+	 * @param from Index after the starting quote
+	 * @return
+	 */
 	private static int nextQuote(final String s, final int from) {
 		for (int i = from; i < s.length(); i++) {
 			if (s.charAt(i) == '"') {
@@ -735,6 +750,26 @@ public class SkriptParser {
 			}
 			return b.toString();
 		}
+	}
+	
+	/**
+	 * Returns the next character in the expression, skipping strings and variables.
+	 * 
+	 * @param expr The expression
+	 * @param i The last index
+	 * @return The next index, or -1 if an invalid string or variable is found or if <tt>i</tt> is >= <tt>expr.length()</tt>.
+	 */
+	private final static int next(final String expr, final int i) {
+		if (i >= expr.length())
+			return -1;
+		if (expr.charAt(i) == '"') {
+			final int i2 = nextQuote(expr, i + 1) + 1;
+			return i2 == 0 ? -1 : i2;
+		} else if (expr.charAt(i) == '{') {
+			final int i2 = VariableString.nextVariableBracket(expr, i + 1) + 1;
+			return i2 == 0 ? -1 : i2;
+		}
+		return i + 1;
 	}
 	
 	/**
@@ -817,20 +852,14 @@ public class SkriptParser {
 					final ExprInfo vi = getExprInfo(name);
 					if (end == pattern.length() - 1) {
 						i2 = expr.length();
-					} else if (expr.charAt(i) == '"') {
-						i2 = nextQuote(expr, i + 1) + 1;
-						if (i2 == 0)
-							return null;
-					} else if (expr.charAt(i) == '{') {
-						i2 = VariableString.nextVariableBracket(expr, i + 1) + 1;
-						if (i2 == 0)
-							return null;
 					} else {
-						i2 = i + 1;
+						i2 = next(expr, i);
+						if (i2 == -1)
+							return null;
 					}
 					final ParseLogHandler log1 = SkriptLogger.startParseLogHandler();
 					try {
-						for (; i2 <= expr.length(); i2++) {
+						for (; i2 != -1; i2 = next(expr, i2)) {
 							log1.clear();
 							res = parse_i(pattern, i2, end + 1);
 							if (res != null) {
@@ -892,7 +921,7 @@ public class SkriptParser {
 						throw new MalformedPatternException(pattern, "missing closing regex bracket '>'");
 					final ParseLogHandler log2 = SkriptLogger.startParseLogHandler();
 					try {
-						for (i2 = i + 1; i2 <= expr.length(); i2++) {
+						for (i2 = next(expr, i); i2 != -1; i2 = next(expr, i2)) {
 							log2.clear();
 							res = parse_i(pattern, i2, end + 1);
 							if (res != null) {

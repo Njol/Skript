@@ -47,7 +47,8 @@ import ch.njol.util.StringUtils;
  */
 @SuppressWarnings("serial")
 @Name("Creature/Entity/Player/Projectile/Villager/Powered Creeper/etc.")
-@Description("The entity involved in an event. A 'creature' is any living thing like a zombie, a skeleton or a player. An 'entity' is more general and can be a creature or an inanimate object like ignited TNT, a dropped item or an arrow. ")
+@Description({"The entity involved in an event (an entity is a player, a creature or an inanimate object like ignited TNT, a dropped item or an arrow).",
+		"You can use the specific type of the entity that's involved in the event, e.g. in a 'death of a creeper' event you can use 'the creeper' instead of 'the entity'."})
 @Examples({"give a diamond sword to the player",
 		"kill the creeper",
 		"kill all powered creepers in the wolf's world",
@@ -78,7 +79,7 @@ public class ExprEntity extends SimpleExpression<Entity> {
 		} finally {
 			log.stop();
 		}
-		if (type == null || type.isPlural())
+		if (type == null || type.isPlural().isTrue())
 			return false;
 		log.printLog();
 		entity = new EventValueExpression<Entity>(type.getType());

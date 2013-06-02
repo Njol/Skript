@@ -36,8 +36,8 @@ import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.StringUtils;
 
 /**
@@ -51,7 +51,7 @@ public class EvtClick extends SkriptEvent {
 	private static final long serialVersionUID = -5935656107417409014L;
 	
 	static {
-		Skript.registerEvent("Click", EvtClick.class, Utils.array(PlayerInteractEvent.class, PlayerInteractEntityEvent.class),
+		Skript.registerEvent("Click", EvtClick.class, CollectionUtils.array(PlayerInteractEvent.class, PlayerInteractEntityEvent.class),
 				"[(left|right)[ ]][mouse[ ]]click[ing] [on %-entitydata/itemtype%] [(with|using|holding) %itemtype%]",
 				"[(left|right)[ ]][mouse[ ]]click[ing] (with|using|holding) %itemtype% on %entitydata/itemtype%")
 				.description("Called when a user clicks on a block, an entity or air with or without an item in their hand.",

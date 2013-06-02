@@ -69,6 +69,7 @@ import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
@@ -257,7 +258,7 @@ public abstract class Commands {
 			final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 			final Effect e;
 			try {
-				ScriptLoader.currentEvents = Utils.array(CommandEvent.class);
+				ScriptLoader.currentEvents = CollectionUtils.array(CommandEvent.class);
 				e = Effect.parse(command, null);
 				ScriptLoader.currentEvents = null;
 			} finally {
@@ -282,7 +283,7 @@ public abstract class Commands {
 	
 	public final static ScriptCommand loadCommand(final SectionNode node) {
 		
-		final String s = ScriptLoader.replaceOptions(node.getName());
+		final String s = ScriptLoader.replaceOptions(node.getKey());
 		
 		int level = 0;
 		for (int i = 0; i < s.length(); i++) {
@@ -433,16 +434,16 @@ public abstract class Commands {
 		return numCommands;
 	}
 	
-	private static boolean registeredListener = false;
+	private static boolean registeredListeners = false;
 	
-	public final static void registerListener() {
-		if (!registeredListener) {
+	public final static void registerListeners() {
+		if (!registeredListeners) {
 			Bukkit.getPluginManager().registerEvents(commandListener, Skript.getInstance());
 			if (Skript.isRunningMinecraft(1, 3))
 				Bukkit.getPluginManager().registerEvents(post1_3chatListener, Skript.getInstance());
 			else
 				Bukkit.getPluginManager().registerEvents(pre1_3chatListener, Skript.getInstance());
-			registeredListener = true;
+			registeredListeners = true;
 		}
 	}
 	

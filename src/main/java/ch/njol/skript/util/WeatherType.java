@@ -109,6 +109,11 @@ public enum WeatherType {
 		return names[0];
 	}
 	
+	// TODO flags?
+	public String toString(final int flags) {
+		return names[0];
+	}
+	
 	public String adjective() {
 		return adjective;
 	}

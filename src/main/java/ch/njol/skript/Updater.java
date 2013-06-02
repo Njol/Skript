@@ -52,8 +52,10 @@ import org.bukkit.command.CommandSender;
 import ch.njol.skript.localization.FormattedMessage;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.util.Date;
+import ch.njol.skript.util.ExceptionUtils;
+import ch.njol.skript.util.Task;
+import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Version;
-import ch.njol.util.ExceptionUtils;
 import ch.njol.util.SynchronizedReference;
 
 /**
@@ -105,9 +107,23 @@ public final class Updater {
 	public final static FormattedMessage m_downloaded = new FormattedMessage("updater.downloaded", latest);
 	public final static Message m_internal_error = new Message("updater.internal error");
 	
+	static Task checkerTask = null;
+	
+	static void start() {
+		checkerTask = new Task(Skript.getInstance(), 0, true) {
+			@Override
+			public void run() {
+				if (!SkriptConfig.checkForNewVersion.value())
+					return;
+				check(Bukkit.getConsoleSender(), SkriptConfig.automaticallyDownloadNewVersion.value(), true);
+				final Timespan t = SkriptConfig.updateCheckInterval.value();
+				if (t.getTicks() != 0)
+					setNextExecution(t.getTicks());
+			}
+		};
+	}
+	
 	/**
-	 * Must only be called if {@link #state} == {@link UpdateState#NOT_STARTED} or {@link UpdateState#CHECK_ERROR}
-	 * 
 	 * @param sender Sender to recieve messages
 	 * @param download Whether to directly download the newest version if one is found
 	 * @param isAutomatic
@@ -116,13 +132,14 @@ public final class Updater {
 		assert sender != null;
 		stateLock.writeLock().lock();
 		try {
-			if (state != UpdateState.NOT_STARTED && state != UpdateState.CHECK_ERROR)
-				throw new IllegalStateException("Cannot check for an update twice");
+			if (state == UpdateState.CHECK_IN_PROGRESS || state == UpdateState.DOWNLOAD_IN_PROGRESS)
+				return;
 			state = UpdateState.CHECK_IN_PROGRESS;
 		} finally {
 			stateLock.writeLock().unlock();
 		}
-		Skript.info(sender, "" + m_checking);
+		if (!isAutomatic || Skript.logNormal())
+			Skript.info(sender, "" + m_checking);
 		new Thread(new Runnable() {
 			@SuppressWarnings("resource")
 			@Override
@@ -184,6 +201,8 @@ public final class Updater {
 							}
 						});
 						latest.set(infos.get(0));
+					} else {
+						latest.set(null);
 					}
 					
 					final String message = infos.isEmpty() ? (Skript.getVersion().isStable() ? "" + m_running_latest_version : "" + m_running_latest_version_beta) : "" + m_update_available;
@@ -314,26 +333,27 @@ public final class Updater {
 			final URLConnection conn = new URL(getFileURL(latest.get().pageURL)).openConnection();
 			zip = new ZipInputStream(conn.getInputStream());
 			ZipEntry entry;
-			boolean hasConfig = false, hasAliases = false;
+//			boolean hasConfig = false, hasAliases = false;
 			while ((entry = zip.getNextEntry()) != null) {
 				if (entry.getName().endsWith("Skript.jar")) {
 					assert !hasJar;
 					saveZipEntry(zip, new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
 					hasJar = true;
-				} else if (entry.getName().endsWith("config.sk")) {
-//					TODO automagically update new config options
+				}// else if (entry.getName().endsWith("config.sk")) {
+//					TODO automagically update new config options - use new config and insert old values or insert new entries into the old config?
 //					important: only update config if the jar was successfully extracted!
-					assert !hasConfig;
-					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "config-" + latest.get().version + ".sk"));
-					hasConfig = true;
-				} else if (entry.getName().endsWith("aliases.sk")) {
-					assert !hasAliases;
-					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "aliases-" + latest.get().version + ".sk"));
-					hasAliases = true;
-				}
-				if (hasJar && hasConfig && hasAliases)
-					break;
+//					 --> config could be included in the new jar and updated when the server restarts
+//					assert !hasConfig;
+//					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "config-" + latest.get().version + ".sk"));
+//					hasConfig = true;
+//				} else if (entry.getName().endsWith("aliases.sk")) {
+//					assert !hasAliases;
+//					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "aliases-" + latest.get().version + ".sk"));
+//					hasAliases = true;
+//				}
 				zip.closeEntry();
+				if (hasJar)// && hasConfig && hasAliases)
+					break;
 			}
 			if (isAutomatic)
 				Skript.adminBroadcast("" + m_downloaded);

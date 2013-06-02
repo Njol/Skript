@@ -36,11 +36,10 @@ import org.bukkit.potion.PotionEffectType;
 
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.SerializableChanger;
-import ch.njol.skript.entity.XpOrbData;
 import ch.njol.skript.util.Experience;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timespan;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -60,9 +59,9 @@ public class DefaultChangers {
 			switch (mode) {
 				case ADD:
 				case REMOVE:
-					return Utils.array(Timespan.class);
+					return CollectionUtils.array(Timespan.class);
 				case SET:
-					return Utils.array(Time.class);
+					return CollectionUtils.array(Time.class);
 				default:
 					return null;
 			}
@@ -98,11 +97,11 @@ public class DefaultChangers {
 		public Class<? extends Object[]>[] acceptChange(final ChangeMode mode) {
 			switch (mode) {
 				case ADD:
-					return Utils.array(ItemType[].class, Experience[].class);
+					return CollectionUtils.array(ItemType[].class, Experience[].class);
 				case DELETE:
-					return Utils.array();
+					return CollectionUtils.array();
 				case REMOVE:
-					return Utils.array(ItemType[].class, PotionEffectType[].class);
+					return CollectionUtils.array(ItemType[].class, PotionEffectType[].class);
 				case SET:
 					return null;
 			}
@@ -155,7 +154,7 @@ public class DefaultChangers {
 		@Override
 		public Class<Object>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.DELETE)
-				return Utils.array();
+				return CollectionUtils.array();
 			return null;
 		}
 		
@@ -177,9 +176,9 @@ public class DefaultChangers {
 			if (mode == ChangeMode.SET || mode == ChangeMode.DELETE)
 				return null;
 			if (mode == ChangeMode.ADD)
-				return Utils.array(ItemType[].class, Inventory.class, XpOrbData.class);
+				return CollectionUtils.array(ItemType[].class, Inventory.class, Experience.class);
 			else
-				return Utils.array(ItemType[].class, Inventory.class);
+				return CollectionUtils.array(ItemType[].class, Inventory.class);
 		}
 		
 		@SuppressWarnings("deprecation")
@@ -192,10 +191,10 @@ public class DefaultChangers {
 						invi.addItem(((Inventory) delta).getContents());
 					else
 						invi.removeItem(((Inventory) delta).getContents());
-				} else if (delta instanceof XpOrbData) {
-					final int xp = ((XpOrbData) delta).getExperience();
+					p.updateInventory();
+				} else if (delta instanceof Experience) {
 					assert mode == ChangeMode.ADD;
-					p.giveExp(xp);
+					p.giveExp(((Experience) delta).getXP());
 				} else {
 					for (final ItemType type : (ItemType[]) delta) {
 						if (mode == ChangeMode.ADD)
@@ -203,8 +202,8 @@ public class DefaultChangers {
 						else
 							type.removeFrom(invi);
 					}
+					p.updateInventory();
 				}
-				p.updateInventory();
 			}
 		}
 	};
@@ -214,7 +213,7 @@ public class DefaultChangers {
 		@SuppressWarnings("unchecked")
 		@Override
 		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
-			return Utils.array(ItemType[].class, Inventory.class);
+			return CollectionUtils.array(ItemType[].class, Inventory.class);
 		}
 		
 		@SuppressWarnings("deprecation")
@@ -240,7 +239,7 @@ public class DefaultChangers {
 						//$FALL-THROUGH$
 					case ADD:
 						if (delta instanceof Inventory) {
-							invi.addItem(((Inventory) delta).getContents());
+							invi.addItem(((Inventory) delta).getContents()); // TODO test
 						} else {
 							for (final ItemType type : (ItemType[]) delta) {
 								type.addTo(invi);
@@ -270,8 +269,8 @@ public class DefaultChangers {
 		@Override
 		public Class<?>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.SET)
-				return Utils.array(ItemType.class);
-			return Utils.array(ItemType[].class, Inventory.class);
+				return CollectionUtils.array(ItemType.class);
+			return CollectionUtils.array(ItemType[].class, Inventory.class);
 		}
 		
 		@Override

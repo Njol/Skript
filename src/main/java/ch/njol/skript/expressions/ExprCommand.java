@@ -35,7 +35,6 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -47,8 +46,8 @@ import ch.njol.util.Kleenean;
 @Examples({"# prevent any commands except for the /exit command during some game",
 		"on command:",
 		"{game.%player%.is playing} is true",
-		"command is not \"exit\"" +
-				"message \"You're not allowed to use commands during the game\"",
+		"command is not \"exit\"",
+		"message \"You're not allowed to use commands during the game\"",
 		"cancel the event"})
 @Since("2.0")
 public class ExprCommand extends SimpleExpression<String> {
@@ -59,8 +58,8 @@ public class ExprCommand extends SimpleExpression<String> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		if (!Utils.containsAny(ScriptLoader.currentEvents, PlayerCommandPreprocessEvent.class, ServerCommandEvent.class)) {
-			Skript.error("You cannot use the 'command' expression outside of a command event");
+		if (!ScriptLoader.isCurrentEvent(PlayerCommandPreprocessEvent.class, ServerCommandEvent.class)) {
+			Skript.error("The 'command' expression can only be used in a command event");
 			return false;
 		}
 		return true;

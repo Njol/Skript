@@ -31,6 +31,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.hooks.economy.EconomyHook;
+import ch.njol.skript.hooks.economy.classes.Money;
 
 /**
  * @author Peter Güttinger
@@ -64,7 +65,7 @@ public class ExprBalance extends SimplePropertyExpression<OfflinePlayer, Money> 
 	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		return new Class[] {Number.class, Money.class};
+		return new Class[] {Money.class, Number.class};
 	}
 	
 	@SuppressWarnings("incomplete-switch")

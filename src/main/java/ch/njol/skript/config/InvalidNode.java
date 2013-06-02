@@ -22,6 +22,8 @@
 package ch.njol.skript.config;
 
 /**
+ * A line of a config that could not be parsed.
+ * 
  * @author Peter Güttinger
  */
 public class InvalidNode extends VoidNode {

@@ -36,6 +36,8 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 
 /**
+ * TODO should 'amount of [item]' return the size of the stack?
+ * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
@@ -55,6 +57,10 @@ public class ExprAmount extends SimpleExpression<Integer> {
 		expr = exprs[0];
 		if (expr instanceof Literal<?>)
 			return false;
+		if (expr.isSingle()) {
+			Skript.error("'" + expr.toString(null, false) + "' can only ever have one value at most, thus the 'amount of ...' expression is useless. Use '... exists' instead to find out whether the expression has a value.");
+			return false;
+		}
 		return true;
 	}
 	

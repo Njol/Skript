@@ -36,42 +36,55 @@ import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
 
 /**
- * TODO explosion without block damage (1.4.5)
- * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
 @Name("Explosion")
 @Description({"Creates an explosion of a given force. The Minecraft Wiki has an <a href='http://www.minecraftwiki.net/wiki/Explosion'>article on explosions</a> " +
-		"which contains the explosion forces of TNT, creepers, etc.",
-		"Hint: use a force of 0 to create a fake explosion that does not damage whatsoever."})
+		"which lists the explosion forces of TNT, creepers, etc.",
+		"Hint: use a force of 0 to create a fake explosion that does no damage whatsoever, or use the explosion effect introduced in Skript 2.0.",
+		"Starting with Bukkit 1.4.5 and Skript 2.0 you can use safe explosions which will damage entities but won't destroy any blocks."})
 @Examples({"create an explosion of force 10 at the player",
 		"create an explosion of force 0 at the victim"})
 @Since("1.0")
 public class EffExplosion extends Effect {
 	
 	static {
-		Skript.registerEffect(EffExplosion.class, "[create] [an] explosion (of|with) (force|strength|power) %number% [%directions% %locations%]");
+		Skript.registerEffect(EffExplosion.class,
+				"[(create|make)] [an] explosion (of|with) (force|strength|power) %number% [%directions% %locations%]",
+				"[(create|make)] [a] safe explosion (of|with) (force|strength|power) %number% [%directions% %locations%]",
+				"[(create|make)] [a] fake explosion [%directions% %locations%]",
+				"[(create|make)] [an] explosion[ ]effect [%directions% %locations%]");
 	}
 	
 	private Expression<Number> force;
 	private Expression<Location> locations;
 	
+	private boolean blockDamage;
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		force = (Expression<Number>) exprs[0];
-		locations = Direction.combine((Expression<? extends Direction>) exprs[1], (Expression<? extends Location>) exprs[2]);
+		force = matchedPattern <= 1 ? (Expression<Number>) exprs[0] : null;
+		blockDamage = matchedPattern != 1;
+		if (!blockDamage && !Skript.isRunningMinecraft(1, 4, 5)) {
+			Skript.error("Explosions which do not destroy blocks are only available in Bukkit 1.4.5+");
+			return false;
+		}
+		locations = Direction.combine((Expression<? extends Direction>) exprs[exprs.length - 2], (Expression<? extends Location>) exprs[exprs.length - 1]);
 		return true;
 	}
 	
 	@Override
 	public void execute(final Event e) {
-		final Number power = force.getSingle(e);
+		final Number power = force == null ? 0 : force.getSingle(e);
 		if (power == null)
 			return;
 		for (final Location l : locations.getArray(e)) {
-			l.getWorld().createExplosion(l, power.floatValue());
+			if (!blockDamage)
+				l.getWorld().createExplosion(l.getX(), l.getY(), l.getZ(), power.floatValue(), false, false);
+			else
+				l.getWorld().createExplosion(l, power.floatValue());
 		}
 	}
 	

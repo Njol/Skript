@@ -53,7 +53,7 @@ public abstract class PotionEffectUtils {
 					final String[] ls = Language.getList("potions." + t.getName());
 					names[t.getId()] = ls[0];
 					for (final String l : ls) {
-						types.put(l, t);
+						types.put(l.toLowerCase(), t);
 					}
 				}
 			}
@@ -61,10 +61,15 @@ public abstract class PotionEffectUtils {
 	}
 	
 	public static PotionEffectType parse(final String s) {
-		return types.get(s);
+		return types.get(s.toLowerCase());
 	}
 	
 	public static String toString(final PotionEffectType t) {
+		return names[t.getId()];
+	}
+	
+	// TODO flags
+	public static String toString(final PotionEffectType t, final int flags) {
 		return names[t.getId()];
 	}
 	

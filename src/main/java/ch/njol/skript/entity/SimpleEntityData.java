@@ -21,11 +21,8 @@
 
 package ch.njol.skript.entity;
 
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Bat;
@@ -48,6 +45,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.ItemFrame;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.MagmaCube;
 import org.bukkit.entity.MushroomCow;
 import org.bukkit.entity.Painting;
@@ -71,8 +69,7 @@ import org.bukkit.entity.Zombie;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Utils;
-import ch.njol.util.Pair;
+import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -82,107 +79,107 @@ public class SimpleEntityData extends EntityData<Entity> {
 	
 	// TODO falling blocks
 	
-	private final static Map<String, Class<? extends Entity>> names = new LinkedHashMap<String, Class<? extends Entity>>();
-	private final static Set<Class<?>> superTypes = new HashSet<Class<?>>();
+	private final static class SimpleEntityDataInfo {
+		final String codeName;
+		final Class<? extends Entity> c;
+		final boolean isSupertype;
+		
+		SimpleEntityDataInfo(final String codeName, final Class<? extends Entity> c) {
+			this(codeName, c, false);
+		}
+		
+		SimpleEntityDataInfo(final String codeName, final Class<? extends Entity> c, final boolean isSupertype) {
+			this.codeName = codeName;
+			this.c = c;
+			this.isSupertype = isSupertype;
+		}
+	}
+	
+	private final static List<SimpleEntityDataInfo> types = new ArrayList<SimpleEntityDataInfo>();
 	static {
-		names.put("arrow", Arrow.class);
-		names.put("boat", Boat.class);
-		names.put("blaze", Blaze.class);
-		names.put("chicken", Chicken.class);
-		names.put("cow", Cow.class);
-		names.put("cave spider", CaveSpider.class);
-		names.put("cavespider", CaveSpider.class);
-		names.put("egg", Egg.class);
-		names.put("ender crystal", EnderCrystal.class);
-		names.put("ender dragon", EnderDragon.class);
-		names.put("ender pearl", EnderPearl.class);
-		names.put("fireball", Fireball.class);
-		names.put("ghast fireball", Fireball.class);
-		names.put("small fireball", SmallFireball.class);
-		names.put("blaze fireball", SmallFireball.class);
-		names.put("fish", Fish.class);
-		names.put("ghast", Ghast.class);
-		names.put("giant", Giant.class);
-		names.put("giant zombie", Giant.class);
-		names.put("iron golem", IronGolem.class);
-		names.put("item entity", Item.class);
-		names.put("dropped item", Item.class);
-		names.put("magma cube", MagmaCube.class);
-		names.put("magma slime", MagmaCube.class);
-		names.put("mooshroom", MushroomCow.class);
-		names.put("painting", Painting.class);
-		names.put("zombie pigman", PigZombie.class);
-		names.put("pig zombie", PigZombie.class);
-		names.put("pigzombie", PigZombie.class);
-		names.put("silverfish", Silverfish.class);
-		names.put("slime", Slime.class);
-		names.put("snowball", Snowball.class);
-		names.put("snow golem", Snowman.class);
-		names.put("snowgolem", Snowman.class);
-		names.put("snowman", Snowman.class);
-		names.put("spider", Spider.class);
-		names.put("squid", Squid.class);
-		names.put("bottle o' enchanting", ThrownExpBottle.class);
-		names.put("bottle of enchanting", ThrownExpBottle.class);
-		names.put("thrown potion", ThrownPotion.class);
-		names.put("primed TNT", TNTPrimed.class);
-		names.put("tnt", TNTPrimed.class);
-		names.put("primed tnt", TNTPrimed.class);
-		names.put("zombie", Zombie.class);
+		types.add(new SimpleEntityDataInfo("arrow", Arrow.class));
+		types.add(new SimpleEntityDataInfo("boat", Boat.class));
+		types.add(new SimpleEntityDataInfo("blaze", Blaze.class));
+		types.add(new SimpleEntityDataInfo("chicken", Chicken.class));
+		types.add(new SimpleEntityDataInfo("cow", Cow.class));
+		types.add(new SimpleEntityDataInfo("cave spider", CaveSpider.class));
+		types.add(new SimpleEntityDataInfo("egg", Egg.class));
+		types.add(new SimpleEntityDataInfo("ender crystal", EnderCrystal.class));
+		types.add(new SimpleEntityDataInfo("ender dragon", EnderDragon.class));
+		types.add(new SimpleEntityDataInfo("ender pearl", EnderPearl.class));
+		types.add(new SimpleEntityDataInfo("fireball", Fireball.class));
+		types.add(new SimpleEntityDataInfo("small fireball", SmallFireball.class));
+		types.add(new SimpleEntityDataInfo("fish", Fish.class));
+		types.add(new SimpleEntityDataInfo("ghast", Ghast.class));
+		types.add(new SimpleEntityDataInfo("giant", Giant.class));
+		types.add(new SimpleEntityDataInfo("iron golem", IronGolem.class));
+		types.add(new SimpleEntityDataInfo("dropped item", Item.class));
+		types.add(new SimpleEntityDataInfo("magma cube", MagmaCube.class));
+		types.add(new SimpleEntityDataInfo("mooshroom", MushroomCow.class));
+		types.add(new SimpleEntityDataInfo("painting", Painting.class));
+		types.add(new SimpleEntityDataInfo("zombie pigman", PigZombie.class));
+		types.add(new SimpleEntityDataInfo("silverfish", Silverfish.class));
+		types.add(new SimpleEntityDataInfo("slime", Slime.class));
+		types.add(new SimpleEntityDataInfo("snowball", Snowball.class));
+		types.add(new SimpleEntityDataInfo("snow golem", Snowman.class));
+		types.add(new SimpleEntityDataInfo("spider", Spider.class));
+		types.add(new SimpleEntityDataInfo("squid", Squid.class));
+		types.add(new SimpleEntityDataInfo("bottle of enchanting", ThrownExpBottle.class));
+		types.add(new SimpleEntityDataInfo("thrown potion", ThrownPotion.class));
+		types.add(new SimpleEntityDataInfo("tnt", TNTPrimed.class));
+		types.add(new SimpleEntityDataInfo("zombie", Zombie.class));
 		
 		if (Skript.isRunningMinecraft(1, 4)) {
-			names.put("item frame", ItemFrame.class);
-			names.put("bat", Bat.class);
-			names.put("witch", Witch.class);
-			names.put("wither", Wither.class);
-			names.put("wither skull", WitherSkull.class);
+			types.add(new SimpleEntityDataInfo("item frame", ItemFrame.class));
+			types.add(new SimpleEntityDataInfo("bat", Bat.class));
+			types.add(new SimpleEntityDataInfo("witch", Witch.class));
+			types.add(new SimpleEntityDataInfo("wither", Wither.class));
+			types.add(new SimpleEntityDataInfo("wither skull", WitherSkull.class));
 		}
 		
 		// TODO !Update with every version [entities]
 		
 		// supertypes
-		names.put("human", HumanEntity.class);
-		superTypes.add(HumanEntity.class);
-		names.put("creature", Creature.class);
-		superTypes.add(Creature.class);
-		names.put("projectile", Projectile.class);
-		superTypes.add(Projectile.class);
-		names.put("entity", Entity.class);
-		superTypes.add(Entity.class);
+		types.add(new SimpleEntityDataInfo("human", HumanEntity.class, true));
+		types.add(new SimpleEntityDataInfo("creature", Creature.class, true));
+		types.add(new SimpleEntityDataInfo("projectile", Projectile.class, true));
+		types.add(new SimpleEntityDataInfo("living entity", LivingEntity.class, true));
+		types.add(new SimpleEntityDataInfo("entity", Entity.class, true));
 	}
 	
 	static {
-		final String[] patterns = new String[names.size() * 2];
+		final String[] codeNames = new String[types.size()];
 		int i = 0;
-		for (final String name : names.keySet()) {
-			patterns[i++] = name;
-			patterns[i++] = Utils.toEnglishPlural(name);
+		for (final SimpleEntityDataInfo info : types) {
+			codeNames[i++] = info.codeName;
 		}
-		EntityData.register(SimpleEntityData.class, "simple", Entity.class, patterns);
+		EntityData.register(SimpleEntityData.class, "simple", Entity.class, codeNames);
 	}
 	
-	public SimpleEntityData() {}
+	public SimpleEntityData() {
+		this(Entity.class);
+	}
 	
 	public SimpleEntityData(final Class<? extends Entity> c) {
 		assert c != null && c.isInterface() : c;
-		this.c = c;
-		isSupertype = superTypes.contains(c);
+		super.info = getInfo(getClass());
+		int i = 0;
+		for (final SimpleEntityDataInfo info : types) {
+			if (info.c == c || info.isSupertype && info.c.isAssignableFrom(c)) {
+				this.info = info;
+				matchedPattern = i;
+				return;
+			}
+			i++;
+		}
+		assert false;
 	}
 	
-	private Class<? extends Entity> c = Entity.class;
-	boolean isSupertype = true;
-	
-	private boolean plural;
+	private SimpleEntityDataInfo info;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
-		final Pair<String, Boolean> p = Utils.getEnglishPlural(parseResult.expr.toLowerCase());
-		final String s = p.first;
-		c = names.get(s);
-		if (c == null)
-			return false;
-		isSupertype = superTypes.contains(c);
-		plural = p.second;
+		info = types.get(matchedPattern);
 		return true;
 	}
 	
@@ -191,38 +188,17 @@ public class SimpleEntityData extends EntityData<Entity> {
 	
 	@Override
 	public boolean match(final Entity e) {
-		return isSupertype ? c.isAssignableFrom(e.getClass()) : Utils.contains(e.getClass().getInterfaces(), c);
+		return info.isSupertype ? info.c.isAssignableFrom(e.getClass()) : CollectionUtils.contains(e.getClass().getInterfaces(), info.c);
 	}
 	
 	@Override
 	public Class<? extends Entity> getType() {
-		return c;
-	}
-	
-	private transient String name = null;
-	
-	@Override
-	public String toString() {
-		if (name == null) {
-			for (final Entry<String, Class<? extends Entity>> e : names.entrySet()) {
-				if (isSupertype ? e.getValue().isAssignableFrom(c) : e.getValue() == c) {
-					return name = e.getKey();
-				}
-			}
-			assert false : c;
-			return name = "[ERROR]";
-		}
-		return name;
-	}
-	
-	@Override
-	public boolean isPlural() {
-		return plural;
+		return info.c;
 	}
 	
 	@Override
 	public int hashCode() {
-		return c.hashCode();
+		return info.c.hashCode();
 	}
 	
 	@Override
@@ -234,20 +210,25 @@ public class SimpleEntityData extends EntityData<Entity> {
 		if (!(obj instanceof SimpleEntityData))
 			return false;
 		final SimpleEntityData other = (SimpleEntityData) obj;
-		return c == other.c;
+		return info.c == other.info.c;
 	}
 	
 	@Override
 	public String serialize() {
-		return c.getName();
+		return info.c.getName();
 	}
 	
 	@Override
 	protected boolean deserialize(final String s) {
 		try {
-			c = (Class<? extends Entity>) Class.forName(s);
-			isSupertype = superTypes.contains(c);
-			return true;
+			final Class<?> c = Class.forName(s);
+			for (final SimpleEntityDataInfo i : types) {
+				if (i.c == c) {
+					info = i;
+					return true;
+				}
+			}
+			return false;
 		} catch (final ClassNotFoundException e) {
 			return false;
 		}
@@ -255,7 +236,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 	
 	@Override
 	protected boolean isSupertypeOf_i(final EntityData<? extends Entity> e) {
-		return e.getType() == getType() || superTypes.contains(c);
+		return e.getType() == info.c || info.isSupertype && info.c.isAssignableFrom(e.getType());
 	}
 	
 }

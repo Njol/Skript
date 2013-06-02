@@ -50,12 +50,12 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 		"			increase level progress of the loop-player by 0.1",
 		"		else:",
 		"			set level progress of the loop-player to 0.99",
-		"on spawn of experience:",
+		"on xp spawn:",
 		"	cancel event"})
 @Since("2.0")
 public class ExprLevelProgress extends SimplePropertyExpression<Player, Float> {
 	static {
-		register(ExprLevelProgress.class, float.class, "level progress", "players");
+		register(ExprLevelProgress.class, Float.class, "level progress", "players");
 	}
 	
 	@Override

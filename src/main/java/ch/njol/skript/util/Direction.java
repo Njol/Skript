@@ -38,6 +38,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.localization.GeneralWords;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.localization.Noun;
@@ -138,7 +139,7 @@ public class Direction implements Serializable {
 		final Material m = b.getType();
 		if (!Directional.class.isAssignableFrom(m.getData()))
 			return new Vector();
-		final BlockFace f = ((Directional) m.getNewData(b.getData())).getFacing(); // TODO costly? instantiation of the MaterialData using reflection
+		final BlockFace f = ((Directional) m.getNewData(b.getData())).getFacing();
 		return getDirection(pitch == IGNORE_PITCH ? 0 : f.getModZ() * Math.PI / 2 /* only up and down have a z mod */, Math.atan2(f.getModZ(), f.getModX()));
 	}
 	
@@ -213,7 +214,7 @@ public class Direction implements Serializable {
 		final Material m = b.getType();
 		if (!Directional.class.isAssignableFrom(m.getData()))
 			return BlockFace.SELF;
-		return ((Directional) m.getNewData(b.getData())).getFacing(); // TODO costly? instantiation of the MaterialData using reflection
+		return ((Directional) m.getNewData(b.getData())).getFacing();
 	}
 	
 	public final static BlockFace getFacing(final Location l, final boolean horizontal) {
@@ -314,9 +315,9 @@ public class Direction implements Serializable {
 		if (d == 0)
 			return;
 		if (prependAnd)
-			b.append(" ").append(Language.m_and).append(" ");
+			b.append(" ").append(GeneralWords.and).append(" ");
 		if (d != 1 && d != -1) {
-			b.append(m_meter.toString(Math.abs(d)));
+			b.append(m_meter.withAmount(Math.abs(d)));
 			b.append(" ");
 		}
 		b.append(d > 0 ? direction : oppositeDirection);

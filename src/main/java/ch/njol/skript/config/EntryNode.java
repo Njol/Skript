@@ -21,7 +21,6 @@
 
 package ch.njol.skript.config;
 
-import java.io.PrintWriter;
 import java.util.Map.Entry;
 
 /**
@@ -41,9 +40,9 @@ public class EntryNode extends Node implements Entry<String, String> {
 		this.value = value;
 	}
 	
-	@Override
-	public String getKey() {
-		return name;
+	public EntryNode(final String key, final String value, final SectionNode parent) {
+		super(key, parent);
+		this.value = value;
 	}
 	
 	@Override
@@ -60,13 +59,8 @@ public class EntryNode extends Node implements Entry<String, String> {
 	}
 	
 	@Override
-	void save(final PrintWriter w) {
-		if (!modified) {
-			w.println(getIndentation() + orig);
-			return;
-		}
-		w.append(getIndentation() + name + config.separator + value + getComment());
-		modified = false;
+	String save() {
+		return key + config.separator + " " + value;
 	}
 	
 }

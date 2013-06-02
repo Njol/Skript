@@ -29,9 +29,9 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.WeatherType;
 import ch.njol.util.Checker;
+import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -39,7 +39,7 @@ import ch.njol.util.Checker;
 @SuppressWarnings({"unchecked", "serial"})
 public class EvtWeatherChange extends SkriptEvent {
 	static {
-		Skript.registerEvent("Weather Change", EvtWeatherChange.class, Utils.array(WeatherChangeEvent.class, ThunderChangeEvent.class), "weather change [to %weathertypes%]")
+		Skript.registerEvent("Weather Change", EvtWeatherChange.class, CollectionUtils.array(WeatherChangeEvent.class, ThunderChangeEvent.class), "weather change [to %weathertypes%]")
 				.description("Called when a world's weather changes.")
 				.examples("on weather change", "on weather change to sunny")
 				.since("1.0");

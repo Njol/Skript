@@ -24,8 +24,6 @@ package ch.njol.skript.lang;
 import org.bukkit.event.Event;
 
 /**
- * Used for debugging.
- * 
  * @author Peter Güttinger
  */
 public interface Debuggable {
@@ -33,7 +31,7 @@ public interface Debuggable {
 	/**
 	 * @param e The event to get information to. This is always null if debug == false.
 	 * @param debug If true this should print more information, if false this should print what is shown to the end user
-	 * @return string representation of this object
+	 * @return String representation of this object
 	 */
 	public String toString(Event e, boolean debug);
 	

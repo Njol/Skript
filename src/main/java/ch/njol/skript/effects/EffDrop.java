@@ -41,8 +41,6 @@ import ch.njol.skript.util.Experience;
 import ch.njol.util.Kleenean;
 
 /**
- * FIXME drops items at a wrong location (at least when dropping at a block's location)
- * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
@@ -70,7 +68,7 @@ public class EffDrop extends Effect {
 	@Override
 	public void execute(final Event e) {
 		final Object[] os = drops.getArray(e);
-		if (e instanceof EntityDeathEvent && ((EntityDeathEvent) e).getEntity().getLocation().equals(locations.getSingle(e)) && !Delay.isDelayed(e)) {
+		if (e instanceof EntityDeathEvent && locations.isSingle() && ((EntityDeathEvent) e).getEntity().getLocation().equals(locations.getSingle(e)) && !Delay.isDelayed(e)) {
 			for (final Object o : os) {
 				if (o instanceof Experience) {
 					((EntityDeathEvent) e).setDroppedExp(((EntityDeathEvent) e).getDroppedExp() + ((Experience) o).getXP());
@@ -81,6 +79,7 @@ public class EffDrop extends Effect {
 			return;
 		}
 		for (final Location l : locations.getArray(e)) {
+			final Location itemDropLoc = l.clone().subtract(0.5, 0.5, 0.5); // dropItemNaturally adds 0.15 to 0.85 randomly to all coordinates
 			for (final Object o : os) {
 				if (o instanceof Experience) {
 					final ExperienceOrb orb = l.getWorld().spawn(l, ExperienceOrb.class);
@@ -88,7 +87,7 @@ public class EffDrop extends Effect {
 				} else {
 					for (final ItemStack is : ((ItemType) o).getItem().getAll()) {
 						if (is.getTypeId() != 0)
-							l.getWorld().dropItemNaturally(l, is);
+							l.getWorld().dropItemNaturally(itemDropLoc, is);
 					}
 				}
 			}

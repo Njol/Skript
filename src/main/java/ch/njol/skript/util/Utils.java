@@ -24,13 +24,11 @@ package ch.njol.skript.util;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -56,161 +54,7 @@ public abstract class Utils {
 	
 	private Utils() {}
 	
-	private final static Random random = new Random();
-	
-	/**
-	 * Finds an object in an array using {@link Object#equals(Object)}.
-	 * 
-	 * @param array the array to search in
-	 * @param o the object to search for
-	 * @return the index of the first occurrence of the given object or -1 if not found
-	 */
-	public static <T> int indexOf(final T[] array, final T t) {
-		if (array == null)
-			return -1;
-		return indexOf(array, t, 0, array.length);
-	}
-	
-	public static <T> int indexOf(final T[] array, final T t, final int start, final int end) {
-		if (array == null)
-			return -1;
-		for (int i = start; i < end; i++) {
-			if (array[i] == null ? t == null : array[i].equals(t))
-				return i;
-		}
-		return -1;
-	}
-	
-	public static <T> boolean contains(final T[] array, final T o) {
-		return indexOf(array, o) != -1;
-	}
-	
-	public static <T> boolean containsAny(final T[] array, final T... os) {
-		if (array == null || os == null)
-			return false;
-		for (final T o : os) {
-			if (indexOf(array, o) != -1)
-				return true;
-		}
-		return false;
-	}
-	
-	public static <T> boolean containsAll(final T[] array, final T... os) {
-		if (array == null || os == null)
-			return false;
-		for (final T o : os) {
-			if (indexOf(array, o) == -1)
-				return false;
-		}
-		return true;
-	}
-	
-	public static int indexOf(final int[] array, final int num) {
-		if (array == null)
-			return -1;
-		return indexOf(array, num, 0, array.length);
-	}
-	
-	public static int indexOf(final int[] array, final int num, final int start) {
-		if (array == null)
-			return -1;
-		return indexOf(array, num, start, array.length);
-	}
-	
-	public static int indexOf(final int[] array, final int num, final int start, final int end) {
-		if (array == null)
-			return -1;
-		for (int i = start; i < end; i++) {
-			if (array[i] == num)
-				return i;
-		}
-		return -1;
-	}
-	
-	public static final boolean contains(final int[] array, final int num) {
-		return indexOf(array, num) != -1;
-	}
-	
-	public static boolean containsIgnoreCase(final String[] array, final String s) {
-		return indexOfIgnoreCase(array, s) != -1;
-	}
-	
-	/**
-	 * finds a string in an array of strings (ignoring case).
-	 * 
-	 * @param array the array to search in
-	 * @param s the string to search for
-	 * @return the index of the first occurrence of the given string or -1 if not found
-	 */
-	public static int indexOfIgnoreCase(final String[] array, final String s) {
-		if (array == null)
-			return -1;
-		int i = 0;
-		for (final String a : array) {
-			if (a.equalsIgnoreCase(s))
-				return i;
-			i++;
-		}
-		return -1;
-	}
-	
-	/**
-	 * Finds an object in an iterable using {@link Object#equals(Object)}.
-	 * 
-	 * @param iter the iterable to search in
-	 * @param o the object to search for
-	 * @return the index of the first occurrence of the given object or -1 if not found
-	 */
-	public static <T> int indexOf(final Iterable<T> iter, final T o) {
-		assert iter != null;
-		int i = 0;
-		for (final T a : iter) {
-			if (a.equals(o))
-				return i;
-			i++;
-		}
-		return -1;
-	}
-	
-	/**
-	 * Finds a string in a collection of strings (ignoring case).
-	 * 
-	 * @param iter the iterable to search in
-	 * @param s the string to search for
-	 * @return the index of the first occurrence of the given string or -1 if not found
-	 */
-	public static int indexOfIgnoreCase(final Iterable<String> iter, final String s) {
-		assert iter != null;
-		int i = 0;
-		for (final String a : iter) {
-			if (a.equalsIgnoreCase(s))
-				return i;
-			i++;
-		}
-		return -1;
-	}
-	
-	/**
-	 * @param map
-	 * @param key
-	 * @return a new entry object
-	 */
-	public static <T, U> Entry<T, U> containsKey(final Map<T, U> map, final T key) {
-		assert map != null;
-		final U u = map.get(key);
-		if (u == null)
-			return null;
-		return new Pair<T, U>(key, u);
-	}
-	
-	public static <U> Entry<String, U> containsKeyIgnoreCase(final Map<String, U> map, final String key) {
-		assert map != null;
-		for (final Entry<String, U> e : map.entrySet()) {
-			if (e.getKey().equalsIgnoreCase(key))
-				return e;
-		}
-		return null;
-	}
+	public final static Random random = new Random();
 	
 	public static String join(final Object[] objects) {
 		assert objects != null;
@@ -235,21 +79,6 @@ public abstract class Utils {
 			b.append(Classes.toString(o));
 		}
 		return b.toString();
-	}
-	
-	public static <T> T random(final T[] os) {
-		assert os != null && os.length != 0;
-		return os[random.nextInt(os.length)];
-	}
-	
-	public static <T> T getRandom(final T[] os, final int start) {
-		assert os != null && os.length != 0;
-		return os[random.nextInt(os.length - start) + start];
-	}
-	
-	public static <T> T getRandom(final List<T> os) {
-		assert os != null && !os.isEmpty();
-		return os.get(random.nextInt(os.size()));
 	}
 	
 	/**
@@ -482,39 +311,54 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * Gets the approximate collision height of non-transparent blocks at the center of the block. This is mostly for use in the {@link EffTeleport teleport effect}.
+	 * Gets the collision height of solid or partially-solid blocks at the center of the block. This is mostly for use in the {@link EffTeleport teleport effect}.
+	 * <p>
+	 * TODO !Update with every version [blocks]
 	 * 
 	 * @param type
 	 * @return
 	 */
-	public static double getBlockHeight(final Material type) {
-		assert type != null;
+	public static double getBlockHeight(final int type, final byte data) {
 		switch (type) {
-			case DIODE_BLOCK_OFF:
-			case DIODE_BLOCK_ON:
-				return 2. / 16;
-			case TRAP_DOOR:
-				return 3. / 16;
-			case CAKE_BLOCK:
-				return 7. / 16;
-			case STEP:
-				return 0.5;
-			case BED_BLOCK:
+			case 26: //bed
 				return 9. / 16;
-			case ENCHANTMENT_TABLE:
-				return 12. / 16;
-			case ENDER_PORTAL_FRAME:
-				return 13. / 16;
-			case SOUL_SAND:
-				return 14. / 16;
-			case BREWING_STAND:
-				return 14. / 16;
-			case FENCE:
-			case FENCE_GATE:
-			case NETHER_FENCE:
+			case 44: //slabs
+			case 126:
+				return 0.5;
+			case 78: //snow layer
+				return data == 0 ? 1 : (data % 8) * 2. / 16;
+			case 85: //fences & gates
+			case 107:
+			case 113:
+			case 139: //cobblestone wall
 				return 1.5;
-			case CAULDRON:
+			case 88: //soul sand
+				return 14. / 16;
+			case 92: //cake
+				return 7. / 16;
+			case 93: //redstone repeater
+			case 94:
+			case 149: //redstone comparator
+			case 150:
+				return 2. / 16;
+			case 96: //trapdoor
+				return 3. / 16;
+			case 116: //enchantment table
+				return 12. / 16;
+			case 117: //brewing stand
+				return 14. / 16;
+			case 118: //cauldron
 				return 5. / 16;
+			case 120: //end portal frame
+				return (data & 0x4) == 0 ? 13. / 16 : 1;
+			case 154: //hopper
+				return 10. / 16;
+			case 144: //mob head
+				return 0.5;
+			case 151: //daylight sensor
+				return 6. / 16;
+			case 140: //flower pot
+				return 6. / 16;
 			default:
 				return 1;
 		}
@@ -538,19 +382,6 @@ public abstract class Utils {
 				}
 			}
 		});
-	}
-	
-	/**
-	 * Replaces &lt;chat styles&gt; in the message and fixes capitalization
-	 * 
-	 * @param message
-	 * @return
-	 */
-	public static final String prepareMessage(String message) {
-		assert message != null;
-		message = replaceChatStyles(message);
-		message = StringUtils.fixCapitalization(message);
-		return message;
 	}
 	
 	private final static Pattern stylePattern = Pattern.compile("<([^<>]+)>");
@@ -582,7 +413,7 @@ public abstract class Utils {
 	
 	/**
 	 * Replaces english &lt;chat styles&gt; in the message. This is used for messages in the language file as the language of colour codes is not well defined while the language is
-	 * changing.
+	 * changing, and for some hardcoded messages.
 	 * 
 	 * @param message
 	 * @return
@@ -593,10 +424,10 @@ public abstract class Utils {
 		message = StringUtils.replaceAll(message, stylePattern, new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
-				final Color c = Color.byName(m.group(1));
+				final Color c = Color.byEnglishName(m.group(1));
 				if (c != null)
 					return c.getChat();
-				final String f = chat.get(m.group(1).toLowerCase());
+				final String f = englishChat.get(m.group(1).toLowerCase());
 				if (f != null)
 					return f;
 				return m.group();
@@ -604,37 +435,6 @@ public abstract class Utils {
 		});
 		message = ChatColor.translateAlternateColorCodes('&', message);
 		return message;
-	}
-	
-	/**
-	 * Creates a permutation of all integers in the interval [start, end]
-	 * 
-	 * @param start The lowest number which will be included in the permutation
-	 * @param end The highest number which will be included in the permutation
-	 * @return an array of length end - start + 1
-	 */
-	public static final int[] permutation(final int start, final int end) {
-		final int length = end - start + 1;
-		final int[] r = new int[length];
-		for (int i = 0; i < length; i++)
-			r[i] = start + i;
-		for (int i = 0; i < length; i++) {
-			final int j = random.nextInt(length);
-			final int b = r[i];
-			r[i] = r[j];
-			r[j] = b;
-		}
-		return r;
-	}
-	
-	/**
-	 * Shorthand for <code>{@link #permutation(int, int) permutation}(0, length - 1)</code>
-	 * 
-	 * @param length
-	 * @return
-	 */
-	public static final int[] permutation(final int length) {
-		return permutation(0, length - 1);
 	}
 	
 	/**
@@ -682,19 +482,6 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * @param set The set of elements
-	 * @param sub The set to test for being a subset of <tt>set</tt>
-	 * @return Whether <tt>sub</tt> only contains elements out of <tt>set</tt> or not
-	 */
-	public static boolean isSubset(final Object[] set, final Object[] sub) {
-		for (final Object s : set) {
-			if (!contains(sub, s))
-				return false;
-		}
-		return true;
-	}
-	
-	/**
 	 * Parses a number that was validated to be an integer but might still result in a {@link NumberFormatException} when parsed with {@link Integer#parseInt(String)} due to
 	 * overflow.
 	 * This method will return {@link Integer#MIN_VALUE} or {@link Integer#MAX_VALUE} respectively if that happens.
@@ -726,10 +513,6 @@ public abstract class Utils {
 		} catch (final NumberFormatException e) {
 			return s.startsWith("-") ? Long.MIN_VALUE : Long.MAX_VALUE;
 		}
-	}
-	
-	public static <T> T[] array(final T... array) {
-		return array;
 	}
 	
 }

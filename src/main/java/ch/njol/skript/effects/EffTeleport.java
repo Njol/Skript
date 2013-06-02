@@ -51,7 +51,6 @@ import ch.njol.util.Kleenean;
 		"teleport the attacker to the victim"})
 @Since("1.0")
 public class EffTeleport extends Effect {
-	
 	static {
 		Skript.registerEffect(EffTeleport.class, "teleport %entities% (to|%direction%) %location%");
 	}
@@ -74,18 +73,22 @@ public class EffTeleport extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
-		final Location to = location.getSingle(e);
+		Location to = location.getSingle(e);
 		if (to == null)
 			return;
-		final Block on = to.getBlock().getRelative(BlockFace.DOWN);
-		if (Math.abs(to.getX() - to.getBlockX() - 0.5) < Skript.EPSILON && Math.abs(to.getZ() - to.getBlockZ() - 0.5) < Skript.EPSILON && on.getType() != Material.AIR)
-			to.setY(on.getY() + Utils.getBlockHeight(on.getType()));
+		if (Math.abs(to.getX() - to.getBlockX() - 0.5) < Skript.EPSILON && Math.abs(to.getZ() - to.getBlockZ() - 0.5) < Skript.EPSILON) {
+			final Block on = to.getBlock().getRelative(BlockFace.DOWN);
+			if (on.getType() != Material.AIR) {
+				to = to.clone();
+				to.setY(on.getY() + Utils.getBlockHeight(on.getTypeId(), on.getData()));
+			}
+		}
 		if (e instanceof PlayerRespawnEvent && entities.isDefault() && !Delay.isDelayed(e)) {
 			((PlayerRespawnEvent) e).setRespawnLocation(to);
 			return;
 		}
 		for (final Entity entity : entities.getArray(e)) {
-			if (to.getYaw() == 0 && to.getPitch() == 0) {
+			if (ignoreDirection(to.getYaw(), to.getPitch())) {
 				final Location loc = to.clone();
 				loc.setPitch(entity.getLocation().getPitch());
 				loc.setYaw(entity.getLocation().getYaw());
@@ -96,6 +99,17 @@ public class EffTeleport extends Effect {
 				entity.teleport(to);
 			}
 		}
+	}
+	
+	/**
+	 * 
+	 * @param yaw Notch-yaw
+	 * @param pitch Notch-pitch
+	 * @return
+	 */
+	private final static boolean ignoreDirection(final float yaw, final float pitch) {
+		return (pitch == 0 || Math.abs(pitch - 90) < Skript.EPSILON || Math.abs(pitch + 90) < Skript.EPSILON)
+				&& (yaw == 0 || Math.abs(Math.sin(Math.toRadians(yaw))) < Skript.EPSILON || Math.abs(Math.cos(Math.toRadians(yaw))) < Skript.EPSILON);
 	}
 	
 }

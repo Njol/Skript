@@ -64,6 +64,7 @@ public class ExprChunk extends PropertyExpression<Location, Chunk> {
 		} else {
 			locations = (Expression<Location>) exprs[0];
 		}
+		setExpr(locations);
 		return true;
 	}
 	

@@ -46,11 +46,13 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.ConfigurationSerializer;
 import ch.njol.skript.localization.GeneralWords;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.util.BlockUtils;
 import ch.njol.skript.util.Container;
 import ch.njol.skript.util.Container.ContainerType;
+import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.iterator.SingleItemIterator;
 
@@ -87,8 +89,11 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	private ItemType item = null, block = null;
 	
 	void setItem(final ItemType item) {
-		if (item != this) {
+		if (item == this) {
+			this.item = null;
+		} else {
 			if (item != null) {
+				assert item.item == null && item.block == null : this + "; item=" + item + ", item.item=" + item.item + ", item.block=" + item.block;
 				item.setAmount(amount);
 			}
 			this.item = item;
@@ -96,8 +101,11 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	}
 	
 	void setBlock(final ItemType block) {
-		if (block != this) {
+		if (block == this) {
+			this.block = null;
+		} else {
 			if (block != null) {
+				assert block.item == null && block.block == null : this + "; block=" + block + ", block.item=" + block.item + ", block.block=" + block.block;
 				block.setAmount(amount);
 			}
 			this.block = block;
@@ -118,6 +126,10 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 			}
 			out.writeObject(enchs);
 		}
+		if (meta == null)
+			out.writeObject(null);
+		else
+			out.writeObject(ConfigurationSerializer.serializeCS((ItemMeta) meta));
 	}
 	
 	private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -129,6 +141,9 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		enchantments = new HashMap<Enchantment, Integer>(enchs.length);
 		for (final Integer[] e : enchs)
 			enchantments.put(Enchantment.getById(e[0]), e[1]);
+		final String m = (String) in.readObject();
+		if (m != null)
+			meta = ConfigurationSerializer.deserializeCS(m, ItemMeta.class);
 	}
 	
 	public ItemType() {}
@@ -285,10 +300,14 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	
 	@Override
 	public String toString() {
-		return toString(false);
+		return toString(false, 0);
 	}
 	
-	private String toString(final boolean debug) {
+	public String toString(final int flags) {
+		return toString(false, flags);
+	}
+	
+	private String toString(final boolean debug, final int flags) {
 		final StringBuilder b = new StringBuilder();
 //		if (types.size() == 1 && !types.get(0).hasDataRange()) {
 //			if (getAmount() != 1)
@@ -302,6 +321,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 //		}
 		if (amount != -1 && amount != 1)
 			b.append(amount + " ");
+		final int f = amount == 1 || amount == -1 ? flags : Language.F_PLURAL;
 		for (int i = 0; i < types.size(); i++) {
 			if (i != 0) {// this belongs here as size-1 can be 0
 				if (i == types.size() - 1)
@@ -309,8 +329,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 				else
 					b.append(", ");
 			}
-			final String p = types.get(i).toString(debug, amount != 1 && amount != -1);
-			b.append(amount > 1 ? Utils.toEnglishPlural(p) : p);
+			b.append(types.get(i).toString(debug, f));
 		}
 		if (enchantments == null)
 			return b.toString();
@@ -323,7 +342,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 				else
 					b.append(" " + GeneralWords.and + " ");
 			}
-			b.append(Language.get("enchantments.names." + e.getKey().getName()));
+			b.append(EnchantmentType.toString(e.getKey()));
 			b.append(" ");
 			b.append(e.getValue());
 			i++;
@@ -338,8 +357,12 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		return new ItemType(i).toString();
 	}
 	
+	public static String toString(final ItemStack i, final int flags) {
+		return new ItemType(i).toString(flags);
+	}
+	
 	public String getDebugMessage() {
-		return toString(true);
+		return toString(true, 0);
 	}
 	
 	public ItemType getItem() {
@@ -518,13 +541,17 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	 * Removes this type from the item stack if appropriate
 	 * 
 	 * @param item
-	 * @return The passed ItemStack
+	 * @return The passed ItemStack or null if the resulting amount is <= 0
 	 */
 	public ItemStack removeFrom(final ItemStack item) {
 		if (item == null)
 			return null;
-		if (isOfType(item))
-			item.setAmount(Math.max(item.getAmount() - getAmount(), 0));
+		if (!isOfType(item))
+			return item;
+		final int a = item.getAmount() - getAmount();
+		if (a <= 0)
+			return null;
+		item.setAmount(a);
 		return item;
 	}
 	
@@ -673,14 +700,13 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	 */
 	public boolean removeFrom(final Inventory invi) {
 		final ItemStack[] buf = invi.getContents();
-		final boolean isPlayerInvi = invi instanceof PlayerInventory;
-		final ItemStack[] armour = isPlayerInvi ? ((PlayerInventory) invi).getArmorContents() : null;
+		final ItemStack[] armour = invi instanceof PlayerInventory ? ((PlayerInventory) invi).getArmorContents() : null;
 		
 		@SuppressWarnings("unchecked")
 		final boolean ok = removeFrom(Arrays.asList(buf), armour == null ? null : Arrays.asList(armour));
 		
 		invi.setContents(buf);
-		if (isPlayerInvi)
+		if (armour != null)
 			((PlayerInventory) invi).setArmorContents(armour);
 		return ok;
 	}
@@ -699,6 +725,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 			for (final List<ItemStack> list : lists) {
 				if (list == null)
 					continue;
+				assert list instanceof RandomAccess;
 				for (int i = 0; i < list.size(); i++) {
 					final ItemStack is = list.get(i);
 					if (is != null && d.isOfType(is) && hasMeta(is)) {

@@ -30,6 +30,7 @@ import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 
@@ -54,8 +55,8 @@ public class EntityType implements Serializable, Cloneable {
 					}
 					
 					@Override
-					public String toString(final EntityType t) {
-						return t.toString();
+					public String toString(final EntityType t, final int flags) {
+						return t.toString(flags);
 					}
 					
 					@Override
@@ -122,7 +123,11 @@ public class EntityType implements Serializable, Cloneable {
 	
 	@Override
 	public String toString() {
-		return getAmount() == 1 ? data.toString() : amount + " " + Utils.toEnglishPlural(data.toString());
+		return getAmount() == 1 ? data.toString(0) : amount + " " + data.toString(Language.F_PLURAL);
+	}
+	
+	public String toString(final int flags) {
+		return getAmount() == 1 ? data.toString(flags) : amount + " " + data.toString(flags | Language.F_PLURAL);
 	}
 	
 	public int getAmount() {

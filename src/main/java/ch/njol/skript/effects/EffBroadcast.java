@@ -65,9 +65,12 @@ public class EffBroadcast extends Effect {
 	@Override
 	public void execute(final Event e) {
 		for (final String m : messages.getArray(e)) {
-//			m = StringUtils.fixCapitalization(m);
 			if (worlds == null) {
-				Bukkit.broadcastMessage(m);
+				// not Bukkit.broadcastMessage to ignore permissions
+				for (final Player p : Bukkit.getOnlinePlayers()) {
+					p.sendMessage(m);
+				}
+				Bukkit.getConsoleSender().sendMessage(m);
 			} else {
 				for (final World w : worlds.getArray(e)) {
 					for (final Player p : w.getPlayers()) {

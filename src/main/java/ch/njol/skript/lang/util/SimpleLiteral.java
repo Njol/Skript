@@ -41,8 +41,8 @@ import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import ch.njol.util.iterator.NonNullIterator;
@@ -143,7 +143,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	@Override
 	public T getSingle() {
-		return Utils.random(data);
+		return CollectionUtils.random(data);
 	}
 	
 	@Override
@@ -173,7 +173,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (debug)
-			return "[" + Classes.toString(data, getAnd(), StringMode.DEBUG, false) + "]";
+			return "[" + Classes.toString(data, getAnd(), StringMode.DEBUG) + "]";
 		return Classes.toString(data, getAnd());
 	}
 	

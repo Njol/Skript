@@ -81,14 +81,12 @@ import org.bukkit.event.world.WorldUnloadEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.util.SimpleEvent;
-import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("unchecked")
 public class SimpleEvents {
-	
 	static {
 		Skript.registerEvent("Can Build Check", SimpleEvent.class, BlockCanBuildEvent.class, "can build check")
 				.description("Called when a player rightclicks with a block. This event is of no use yet, but you'll be able to control block placement with this in the future.")
@@ -109,8 +107,12 @@ public class SimpleEvents {
 				.since("1.0");
 		Skript.registerEvent("Physics", SimpleEvent.class, BlockPhysicsEvent.class, "[block] physics")
 				.description("Called when a physics check is done on a block. By cancelling this event you can prevent some things from happening, " +
-						"but it might cause quite some lag since this event gets called extremely often.")
-				.examples("")
+						"e.g. sand falling, dirt turning into grass, torches dropping if their supporting block is destroyed, etc." +
+						"Please notet that using this event might cause quite some lag since it gets called extremely often.")
+				.examples("# prevents sand from falling",
+						"on block physics:",
+						"	block is sand",
+						"	cencel event")
 				.since("1.4.6");
 		Skript.registerEvent("Piston Extend", SimpleEvent.class, BlockPistonExtendEvent.class, "piston extend")
 				.description("Called when a piston is about to extend.")
@@ -245,29 +247,32 @@ public class SimpleEvents {
 				.description("Called when a player is kicked from the server.")
 				.examples("")
 				.since("1.0");
-		Skript.registerEvent("Level Change", SimpleEvent.class, PlayerLevelChangeEvent.class, "level [up]")
-				.description("Called when a player's level changes, e.g. by gathering experience or by enchanting something.")
+		Skript.registerEvent("Level Change", SimpleEvent.class, PlayerLevelChangeEvent.class, "level") // TODO level up/down
+		.description("Called when a player's level changes, e.g. by gathering experience or by enchanting something.")
 				.examples("")
 				.since("");
 		Skript.registerEvent("Portal", SimpleEvent.class, PlayerPortalEvent.class, "portal")
 				.description("Called when a player uses a nether or end portal. Cancel the event to prevent the player from teleporting.")
 				.examples("")
 				.since("1.0");
-		Skript.registerEvent("Quit", SimpleEvent.class, PlayerQuitEvent.class, "(quit[ting]|disconnect[ing]|log[ ]out|logging out)")
-				.description("Called when a player leaves the server.")
+		Skript.registerEvent("Quit", SimpleEvent.class, new Class[] {PlayerQuitEvent.class, PlayerKickEvent.class}, "(quit[ting]|disconnect[ing]|log[ ]out|logging out)")
+				.description("Called when a player leaves the server. Starting with Skript 2.0 this also includes kicked players.")
 				.examples("")
 				.since("1.0");
 		Skript.registerEvent("Respawn", SimpleEvent.class, PlayerRespawnEvent.class, "respawn[ing]")
 				.description("Called when a player respawns. You should prefer this event over the <a href='#death'>death event</a> as the player is technically alive when this event is called.")
 				.examples("")
 				.since("1.0");
-		Skript.registerEvent("Teleport", SimpleEvent.class, Utils.array(PlayerPortalEvent.class, PlayerTeleportEvent.class), "teleport[ing]")
+		Skript.registerEvent("Teleport", SimpleEvent.class, PlayerTeleportEvent.class, "teleport[ing]")
 				.description("Called whenever a player is teleported, either by a nether/end portal or other means (e.g. by plugins).")
 				.examples("")
 				.since("1.0");
 		Skript.registerEvent("Sneak Toggle", SimpleEvent.class, PlayerToggleSneakEvent.class, "toggl(e|ing) sneak", "sneak toggle")
 				.description("Called when a player starts or stops sneaking. Use <a href='../conditions/#CondIsSneaking'>is sneaking</a> to get whether the player was sneaking before the event was called.")
-				.examples("")
+				.examples("# make players that stop sneaking jump",
+						"on sneak toggle:",
+						"	player was sneaking",
+						"	push the player upwards at speed 0.5")
 				.since("1.0");
 		Skript.registerEvent("Sprint Toggle", SimpleEvent.class, PlayerToggleSprintEvent.class, "sprint toggle", "toggl(e|ing) sprint")
 				.description("Called when a player starts or stops sprinting. Use <a href='../conditions/#CondIsSprinting'>is sprinting</a> to get whether the player was sprinting before the event was called.")
@@ -281,7 +286,7 @@ public class SimpleEvents {
 		Skript.registerEvent("Projectile Hit", SimpleEvent.class, ProjectileHitEvent.class, "projectile hit")
 				.description("Called when a projectile hits an entity or a block.",
 						"Use the <a href='#damage'>damage event</a> with a <a href='../conditions/#CondIsSet'>check</a> for a <a href='../expressions/#ExprEntity'>projectile</a> " +
-								"to be able to use the <a href='../expressions/#ExprAttacked'>entity that got hit</a> in case the projectile hit a living entity.",
+								"to be able to use the <a href='../expressions/#ExprAttacked'>entity that got hit</a> in the case when the projectile hit a living entity.",
 						"A damage event will even be called if the damage is 0, e.g. when throwing snowballs at non-nether mobs.")
 				.examples("")
 				.since("1.0");
@@ -339,5 +344,4 @@ public class SimpleEvents {
 				.since("1.0");
 		
 	}
-	
 }

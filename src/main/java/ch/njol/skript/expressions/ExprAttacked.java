@@ -25,8 +25,6 @@ import java.lang.reflect.Array;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
-import org.bukkit.event.entity.EntityDamageByBlockEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityEvent;
@@ -44,7 +42,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -68,8 +65,8 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		if (!Utils.containsAny(ScriptLoader.currentEvents, EntityDamageEvent.class, EntityDamageByBlockEvent.class, EntityDamageByEntityEvent.class, EntityDeathEvent.class)) {
-			Skript.error("Cannot use 'damaged'/'victim' outside of a damage or death event", ErrorQuality.SEMANTIC_ERROR);
+		if (!ScriptLoader.isCurrentEvent(EntityDamageEvent.class, EntityDeathEvent.class)) {
+			Skript.error("The expression 'victim' can only be used in a damage or death event", ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
 		final String type = parser.regexes.size() == 0 ? null : parser.regexes.get(0).group();

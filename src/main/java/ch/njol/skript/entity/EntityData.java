@@ -45,9 +45,10 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -104,8 +105,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 				.before("entitytype")
 				.parser(new Parser<EntityData>() {
 					@Override
-					public String toString(final EntityData d) {
-						return d.toString();
+					public String toString(final EntityData d, final int flags) {
+						return d.toString(flags);
 					}
 					
 					@Override
@@ -126,19 +127,28 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	}
 	
 	private final static class EntityDataInfo<T extends EntityData<?>> extends SyntaxElementInfo<T> {
-		
 		final String codeName;
 		final Class<? extends Entity> entityClass;
+		final Noun[] names;
 		
-		public EntityDataInfo(final Class<T> dataClass, final String codeName, final Class<? extends Entity> entityClass, final String[] patterns) throws IllegalArgumentException {
+		public EntityDataInfo(final Class<T> dataClass, final String codeName, final Class<? extends Entity> entityClass, final String[] patterns, final Noun[] names) throws IllegalArgumentException {
 			super(patterns, dataClass);
+			assert codeName != null && entityClass != null && names != null && names.length > 0;
 			this.codeName = codeName;
 			this.entityClass = entityClass;
+			this.names = names;
 		}
 	}
 	
-	static <E extends Entity, T extends EntityData<E>> void register(final Class<T> dataClass, final String name, final Class<E> entityClass, final String... patterns) throws IllegalArgumentException {
-		final EntityDataInfo<T> info = new EntityDataInfo<T>(dataClass, name, entityClass, patterns);
+	static <E extends Entity, T extends EntityData<E>> void register(final Class<T> dataClass, final String name, final Class<E> entityClass, final String... codeNames) throws IllegalArgumentException {
+		final String[] patterns = new String[codeNames.length];
+		final Noun[] names = new Noun[codeNames.length];
+		for (int i = 0; i < codeNames.length; i++) {
+			assert codeNames[i] != null;
+			patterns[i] = Language.get("entities." + codeNames[i] + ".pattern");
+			names[i] = new Noun("entities." + codeNames[i] + ".name");
+		}
+		final EntityDataInfo<T> info = new EntityDataInfo<T>(dataClass, name, entityClass, patterns, names);
 		for (int i = 0; i < infos.size(); i++) {
 			if (infos.get(i).entityClass.isAssignableFrom(entityClass)) {
 				infos.add(i, info);
@@ -162,11 +172,6 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 				return i;
 		}
 		return null;
-	}
-	
-	@Override
-	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		return init(Arrays.copyOf(exprs, exprs.length, Literal[].class), matchedPattern, parseResult);
 	}
 	
 	/**
@@ -226,7 +231,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 				return (E[]) Bukkit.getOnlinePlayers();
 			final List<Player> list = new ArrayList<Player>();
 			for (final Player p : Bukkit.getOnlinePlayers()) {
-				if (worlds != null && !Utils.contains(worlds, p.getWorld()))
+				if (worlds != null && !CollectionUtils.contains(worlds, p.getWorld()))
 					continue;
 				for (final EntityData<?> t : types) {
 					if (t.isInstance(p)) {
@@ -288,6 +293,14 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 		return fromClass(c).toString();
 	}
 	
+	public static final String toString(final Entity e, final int flags) {
+		return fromEntity(e).toString(flags);
+	}
+	
+	public static final String toString(final Class<? extends Entity> c, final int flags) {
+		return fromClass(c).toString(flags);
+	}
+	
 	@SuppressWarnings("unchecked")
 	public final boolean isInstance(final Entity e) {
 		if (e == null)
@@ -308,7 +321,28 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	
 	protected abstract boolean deserialize(final String s);
 	
-	protected abstract boolean init(Literal<?>[] exprs, int matchedPattern, ParseResult parseResult);
+	protected EntityDataInfo<?> info;
+	protected int matchedPattern = 0;
+	private Kleenean plural = Kleenean.UNKNOWN;
+	
+	public EntityData() {
+		for (final EntityDataInfo<?> i : infos) {
+			if (getClass() == i.c) {
+				info = i;
+				break;
+			}
+		}
+		assert info != null;
+	}
+	
+	@Override
+	public final boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		this.matchedPattern = matchedPattern;
+		this.plural = Kleenean.get(parseResult.mark);
+		return init(Arrays.copyOf(exprs, exprs.length, Literal[].class), matchedPattern, parseResult);
+	}
+	
+	protected abstract boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult);
 	
 	public abstract void set(E entity);
 	
@@ -316,11 +350,18 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	
 	public abstract Class<? extends E> getType();
 	
-	// TODO localize
 	@Override
-	public abstract String toString();
+	public String toString() {
+		return info.names[matchedPattern].getSingular();
+	}
 	
-	public abstract boolean isPlural();
+	public String toString(final int flags) {
+		return info.names[matchedPattern].toString(flags);
+	}
+	
+	public Kleenean isPlural() {
+		return plural;
+	}
 	
 	@Override
 	public abstract boolean equals(Object obj);

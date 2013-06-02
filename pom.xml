@@ -84,6 +84,13 @@
 			<id>sk89q-repo</id>
 			<url>http://maven.sk89q.com/repo/</url>
 		</repository>
+		<repository>
+			<!-- added by WorldGuard, but doesn't seem to exist anymore -->
+			<id>zml-repo</id>
+			<url>http://files.zachsthings.com/repo/</url>
+			<releases><updatePolicy>never</updatePolicy><enabled>false</enabled></releases>
+			<snapshots><updatePolicy>never</updatePolicy><enabled>false</enabled></snapshots>
+		</repository>
 		<!-- <repository> <id>Plugin Metrics Repo</id> <url>http://repo.mcstats.org/content/repositories/public</url> 
 			</repository> -->
 	</repositories>
@@ -92,7 +99,7 @@
 		<finalName>../../../testserver/plugins/Skript</finalName>
 		<resources>
 			<resource>
-				<directory>src/main/resources</directory>
+				<directory>src/main/resources/</directory>
 				<filtering>true</filtering>
 				<includes>
 					<include>plugin.yml</include>
@@ -100,7 +107,7 @@
 				</includes>
 			</resource>
 			<resource>
-				<directory>src/main/resources</directory>
+				<directory>src/main/resources/</directory>
 				<filtering>false</filtering>
 				<includes>
 					<include>**/*</include>
@@ -115,6 +122,13 @@
 				<filtering>false</filtering>
 				<includes>
 					<include>gpl.txt</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>../../testserver/plugins/Skript/</directory>
+				<filtering>false</filtering>
+				<includes>
+					<include>config.sk</include>
 				</includes>
 			</resource>
 		</resources>

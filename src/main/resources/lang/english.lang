@@ -16,15 +16,19 @@ nor: nor
 
 genders:
 	0:
-		name: a
+		id: a
 		definite article: the
 		indefinite article: a
 	1:
-		name: an
+		id: an
 		definite article: the
 		indefinite article: an
+	# none:
+		# id: -
+		# definite article: #-#
+		# indefinite article: #-#
 	plural:
-		# name: x
+		# id: x
 		definite article: the
 
 # -- Skript --
@@ -35,28 +39,85 @@ skript:
 
 # -- Skript command --
 skript command:
-	description: Skript's main command
-	help: Prints this help message. Use '/skript reload/enable/disable/update' to get more info
+	help:
+		description: Skript's main command
+		help: Prints this help message. Use '/skript reload/enable/disable/update' to get more info
+		reload:
+			description: Reloads the config, all scripts, everything, or a specific script
+			all: Reloads all configs and all scripts
+			config: Reloads the main config
+			aliases: Reloads the aliases config (aliases.sk)
+			scripts: Reloads all scripts
+			<script>: Reloads a specific script or a folder of scripts
+		enable:
+			description: Enables all scripts or a specific one
+			all: Enables all scripts in the 'scripts' folder
+			<script>: Enables a specific script or a folder of scripts
+		disable:
+			description: Disables all scripts or a specific one
+			all: Disables all scripts
+			<script>: Disables a specific script or a folder of scripts
+		update:
+			description: Check for updates, read the changelog, or download the latest version of Skript
+			check: Checks for a new version
+			changes: Lists all changes since the current version
+			download: Download the newest version
+	
+	invalid script: Can't find the script <grey>'<gold>%s<grey>'<red> in the scripts folder!
+	invalid folder: Can't find the folder <grey>'<gold>%s<grey>'<red> in the scripts folder!
 	reload:
-		description: Reloads the config, all scripts, everything, or a specific script
-		all: Reloads all configs and all scripts
-		config: Reloads the main config
-		aliases: Reloads the aliases config (aliases.sk)
-		scripts: Reloads all scripts
-		<script>: Reloads a specific script
+		reloading: Reloading %s...
+		reloaded: Successfully reloaded %s.
+		error: Encountered %2$s error¦¦s¦ while reloading %1$s!
+		script disabled: <gold>%s<reset> is currently disabled. Use <gray>/<gold>skript <cyan>enable <red>%s<reset> to enable it.
+		
+		config and scripts: the config and all scripts
+		scripts: all scripts
+		main config: the main configuration
+		aliases: the aliases
+		script: <gold>%s<reset>
+		scripts in folder: all scripts in <gold>%s<reset>
+		x scripts in folder: <gold>%2$s <reset>script¦¦s¦ in <gold>%1$s<reset>
+		empty folder: <gold>%s<reset>r does not contain any enabled scripts.
 	enable:
-		description: Enables all scripts or a specific one
-		all: Enables all scripts in the 'scripts' folder
-		<script>: Enables a specific script
+		all:
+			enabling: Enabling all disabled scripts...
+			enabled: Successfully enabled & parsed all previously disabled scripts.
+			error: Encountered %s error¦¦s¦ while parsing disabled scripts!
+			io error: Could not load any scripts (some scripts might have been renamed already and will be enabled when the server restarts): %s
+		single:
+			already enabled: <gold>%s<reset> is already enabled! Use <gray>/<gold>skript <cyan>reload <red>%s<reset> to reload it if it was changed.
+			enabling: Enabling <gold>%s<reset>...
+			enabled: Successfully enabled & parsed <gold>%s<reset>.
+			error: Encountered %2$s error¦¦s¦ while parsing <gold>%1$s<red>!
+			io error: Could not enable <gold>%s<red>: %s
+		folder:
+			empty: <gold>%s<reset> does not contain any disabled scripts.
+			enabling: Enabling <gold>%2$s <reset>script¦¦s¦ in <gold>%1$s<reset>...
+			enabled: Successfully enabled & parsed <gold>%2$s<reset> previously disabled scripts in <gold>%1$s<reset>.
+			error: Encountered %2$s error¦¦s¦ while parsing scripts in <gold>%1$s<red>!
+			io error: Error while enabling scripts in <gold>%s<red> (some scripts might get enabled when the server restarts): %s
 	disable:
-		description: Disables all scripts or a specific one
-		all: Disables all scripts
-		<script>: Disables a specific script
+		all:
+			disabled: Successfully disabled all scripts.
+			io error: Could not rename all scripts - some scripts will be enabled again when you restart the server: %s
+		single:
+			already disabled: <gold>%s<reset> is already disabled!
+			disabled: Successfully disabled <gold>%s<reset>.
+			io error: Could not rename <gold>%s<red>, it will be enabled again when you restart the server: %s
+		folder:
+			empty: <gold>%s<reset> does not contain any enabled scripts,
+			disabled: Successfully disabled <gold>%2$s<reset> script(s) in <gold>%1$s<reset>.
+			io error: Could not disable any script in <gold>%s<red> (some scripts might get disabled when the server restarts): %s
 	update:
-		description: Check for updates, read the changelog, or download the latest version of Skript
-		check: Checks for a new version
-		changes: Lists all changes since the current version
-		download: Download the newest version
+		# check/download: see Updater
+		changes:
+			multiple versions:
+				title: <gold>%s<r> update¦ has¦s have¦ been released since this version (<gold>%s<r>) of Skript:
+				footer: To show the changelog of a version type <gold>/skript update changes <version><reset>
+			invalid version: No changelog for the version <gold>%s<red> available
+			title: <bold><cyan>%s<reset> (%s) <grey>[page %s of %s]
+			next page: <gray>type <gold>/skript update changes %s<gray> for the next page (hint: use the up arrow key)
 
 # -- Updater --
 updater:
@@ -70,18 +131,18 @@ updater:
 	downloading: Downloading Skript <gold>%s<reset>...
 	download in progress: The latest version of Skript is currently being downloaded.
 	download error: <red>There was an error downloading the latest version of Skript:<light red> %s
-	downloaded: The latest version of Skript has been downloaded! Restart the server or use /reload to apply the changes. The (possibly unchanged) new config.sk and aliases.sk have been downloaded as config-%s$1.sk and aliases-%s$1-sk.
+	downloaded: The latest version of Skript has been downloaded! Restart the server or use /reload to apply the changes. The (possibly unchanged) new config.sk and aliases.sk have been downloaded as config-%1$s.sk and aliases-%1$s-sk.
 	internal error: An internal error occurred while checking for the latest version of Skript. Please refer to the server log for details.
 
 # -- Commands --
 commands:
 	no permission message: You don't have the required permission to use this command
-	executable by players: This command can only be used by players.
-	executable by console: This command can only be used by the console.
+	executable by players: This command can only be used by players
+	executable by console: This command can only be used by the console
 	usage: Usage:
 	correct usage: Correct usage:
-	invalid argument: Invalid argument <gray>'<%s>%s<gray>'<reset>. Correct usage:
-	too many arguments: This command can only accept a single %s$2.
+	invalid argument: Invalid argument <gray>'%s<gray>'<reset>. Allowed are:
+	too many arguments: This command can only accept a single %2$s.
 	internal error: An internal error occurred while attempting to perform this command.
 
 # -- Hooks --
@@ -92,14 +153,15 @@ hooks:
 aliases:
 	# regexes
 	any: any
+	any-skp: any # the same as 'any', but as a Skript pattern
 	every: (?:every|all)
 	of every: of (?:every|all)
 	of: of(?: any)?
 	# messages
-	brackets error: brackets have a special meaning in aliases and cannot be used as usual
+	brackets error: Brackets have a special meaning in aliases and cannot be used as usual
 	empty alias: '%s' results in an empty alias (i.e. it doesn't map to any id/data), it will thus be ignored
-	unknown variation: unknown variation {%s}
-	starting with number: aliases must not start with a number
+	unknown variation: The variation {%s} was never defined
+	starting with number: Aliases must not start with a number
 	missing aliases: There are no aliases defined for the following ids:
 	empty string: '' is not an item type
 	invalid item data: '%s' is no a valid item data
@@ -109,12 +171,13 @@ aliases:
 	out of data range: Item datas must be between 0 and %s (inclusive)
 	invalid range: The first number of a data range must be smaller than the second
 	invalid section: Invalid section '%s'. If this is an alias section add it to 'aliases' so it will be loaded
-	section not found: alias section '%s' not found!
-	not a section: aliases have to be in sections, but '%s' is not a section!
-	unexpected non-variation section: unexpected non-variation section
-	unexpected section: unexpected section
-	loaded x aliases from: loaded %s aliases from %s
-	loaded x aliases: loaded a total of %s aliases
+	section not found: Alias section '%s' not found!
+	not a section: Aliases have to be in sections, but '%s' is not a section!
+	unexpected non-variation section: Unexpected non-variation section
+	unexpected section: Unexpected section
+	loaded x aliases from: Loaded %s english aliases from %s
+	loaded x aliases: Loaded a total of %s english aliases
+	anything: anything
 
 # -- Enchantments --
 enchantments:
@@ -141,7 +204,7 @@ enchantments:
 		arrow_knockback: Punch
 		arrow_fire: Flame
 		arrow_infinite: Infinity
-		thorns: thorns
+		thorns: Thorns
 
 # -- Potion Effects --
 potions:
@@ -177,6 +240,32 @@ weather:
 	thunder:
 		name: thunder, thundering, thunderstorm
 		adjective: thundering
+
+# -- Biomes --
+biomes:
+	swampland: swampland
+	forest: forest
+	taiga: taiga
+	desert: desert
+	plains: plains
+	hell: hell
+	sky: sky
+	ocean: ocean
+	river: river
+	extreme_hills: extreme hills
+	frozen_ocean: frozen ocean
+	frozen_river: frozen river
+	ice_plains: ice plains
+	ice_mountains: ice mountains
+	mushroom_island: mushroom island
+	mushroom_shore: mushroom shore
+	beach: beach
+	desert_hills: desert hills
+	forest_hills: forest hills
+	taiga_hills: taiga hills
+	small_mountains: small mountains
+	jungle: jungle
+	jungle_hills: jungle hills
 
 # -- Tree Types --
 tree types:
@@ -226,16 +315,23 @@ tree types:
 		name: huge brown mushroom¦s
 		pattern: (huge|giant|large|big) brown mushrooms?
 
-# -- Time -- (not used yet)
+# -- Time --
 time:
+	tick: tick¦s
 	second: second¦s
 	minute: minute¦s
 	hour: hour¦s
 	day: day¦s
+	real: real, rl, irl
+	minecraft: mc, minecraft
+	errors:
+		24 hours: A day only has 24 hours
+		12 hours: Using 12-hour format does not allow more than 12 hours
+		60 minutes: An hour only has 60 minutes
 
 # -- Chat and Wool Colours --
 colors:
-	black: black
+	black: black 
 	dark_grey: dark grey, dark gray
 	light_grey: grey, light grey, gray, light gray, silver
 	white: white
@@ -281,88 +377,248 @@ directions:
 	right: to the right of
 	left: to the left of
 
-# -- Entities -- (not yet used)
+# -- Entities --
+# about patterns: the marks (1¦..) are only required in the english file, i.e. you can use (..|..) or [..] for plurals.
 entities:
-	arrow: arrow¦s @an
-	bat: bat¦s
-	boat: boat¦s
-	blaze: blaze¦s
-	chicken: chicken¦s
-	cow: cow¦s
-	cave spider: cave spider¦s
-	creeper: creeper¦s
-	unpowered creeper: unpowered creeper¦s
-	powered creeper: powered creeper¦s
-	egg: egg¦s @an
+	entity:
+		name: entit¦y¦ies @an
+		pattern: entit(y|1¦ies)
+	living entity:
+		name: living entit¦y¦ies
+		pattern: living entit(y|1¦ies)
+	projectile:
+		name: projectile¦s
+		pattern: projectile(|1¦s)
+	creature:
+		name: creature¦s
+		pattern: creature(|1¦s)
+	human:
+		name: human¦s
+		pattern: human(|1¦s)
+	arrow:
+		name: arrow¦s @an
+		pattern: arrow(|1¦s)
+	bat:
+		name: bat¦s
+		pattern: bat(|1¦s)
+	boat:
+		name: boat¦s
+		pattern: boat(|1¦s)
+	blaze:
+		name: blaze¦s
+		pattern: blaze(|1¦s)
+	chicken:
+		name: chicken¦s
+		pattern: chicken(|1¦s)
+	cow:
+		name: cow¦s
+		pattern: cow(|1¦s)
+	cave spider:
+		name: cave spider¦s
+		pattern: cave[ ]spider(|1¦s)
+	creeper:
+		name: creeper¦s
+		pattern: creeper(|1¦s)
+	unpowered creeper:
+		name: unpowered creeper¦s @an
+		pattern: unpowered creeper(|1¦s)
+	powered creeper:
+		name: powered creeper¦s
+		pattern: powered creeper(|1¦s)
+	egg:
+		name: egg¦s @an
+		pattern: egg(|1¦s)
 	enderman:
 		name: ender¦man¦men @an
-		pattern: enderm(a|e)n [(carrying|holding) %-itemtype%]
-		format: %s$1 holding %s$2
-	ender crystal: ender crystal¦s @an
-	ender dragon: ender dragon¦s @an
-	ender pearl: ender pearl¦s @an
-	fireball: fireball¦s
-	small fireball: small fireball¦s
-	fish: fish¦es
-	ghast: ghast¦s
-	giant: giant¦s
-	iron golem: iron golems¦s
-	dropped item: dropped item¦s
-	item frame: item frame¦s @an
+		pattern: enderm(a|1¦e)n [(carrying|holding) %-itemtype%]
+		format: %1$s holding %2$s
+	ender crystal:
+		name: ender crystal¦s @an
+		pattern: end[er][ ]crystal(|1¦s)
+	ender dragon:
+		name: ender dragon¦s @an
+		pattern: ender[ ]dragon(|1¦s)
+	ender pearl:
+		name: ender pearl¦s @an
+		pattern: ender[ ]pearl(|1¦s)
+	fireball:
+		name: fireball¦s
+		pattern: [ghast] fire[ ]ball(|1¦s)
+	small fireball:
+		name: small fireball¦s
+		pattern: (small|blaze) fire[ ]ball(|1¦s)
+	fish:
+		name: fish¦es
+		pattern: fish(|1¦es)
+	ghast:
+		name: ghast¦s
+		pattern: ghast(|1¦s)
+	giant:
+		name: giant¦s
+		pattern: giant(|1¦s)
+	iron golem:
+		name: iron golems¦s @an
+		pattern: iron golem(|1¦s)
+	dropped item:
+		name: dropped item¦s
+		pattern: (dropped item(|1¦s)|item entit(y|1¦ies))
+	item frame:
+		name: item frame¦s @an
+		pattern: item[ ]frame(|1¦s)
 	magma cube:
 		name: magma cube¦s
-		pattern: magma (cube|slime)[s]
-	minecart: minecart¦s
-	regular minecart: regular minecart¦s
-	storage minecart: storage minecart¦s
-	powered minecart: powered minecart¦s
-	mooshroom: mooshroom¦s
-	ocelot: ocelot¦s @an
-	wild ocelot: wild ocelot¦s
-	cat: cat¦s
-	painting: painting¦s
-	pig: pig¦s
-	saddled pig: saddled pig¦s
-	unsaddled pig: unsaddled pig¦s @an
-	player: player¦s
-	op: op¦s @an
-	non-op: non-op¦s
-	zombie pigman: zombie pig¦man¦men
+		pattern: magma (cube|slime)(|1¦s)
+	minecart:
+		name: minecart¦s
+		pattern: [mine]cart(|1¦s)
+	regular minecart:
+		name: regular minecart¦s
+		pattern: regular [mine]cart(|1¦s)
+	storage minecart:
+		name: storage minecart¦s
+		pattern: (storage [mine]cart(|1¦s)|[mine]cart(|1¦s) with chest[s])
+	powered minecart:
+		name: powered minecart¦s
+		pattern: (powered [mine]cart(|1¦s)|[mine]cart(|1¦s) with furnace[s])
+	hopper minecart:
+		name: hopper minecart¦s
+		pattern: (hopper [mine]cart(|1¦s)|[mine]cart(|1¦s) with hopper[s])
+	explosive minecart:
+		name: explosive minecart¦s
+		pattern: (explosive [mine]cart(|1¦s)|[mine]cart(|1¦s) with TNT[s])
+	spawner minecart:
+		name: spawner minecart¦s
+		pattern: ((monster|mob|) spawner [mine]cart(|1¦s)|[mine]cart(|1¦s) with (monster|mob|) spawner[s])
+	mooshroom:
+		name: mooshroom¦s
+		pattern: mooshroom(|1¦s)
+	ocelot:
+		name: ocelot¦s @an
+		pattern: ocelot(|1¦s)
+	wild ocelot:
+		name: wild ocelot¦s
+		pattern: (wild|untamed) ocelot(|1¦s)
+	cat:
+		name: cat¦s
+		pattern: (cat(|1¦s)|tamed ocelot(|1¦s))
+	painting:
+		name: painting¦s
+		pattern: painting(|1¦s)
+	pig:
+		name: pig¦s
+		pattern: pig(|1¦s)
+	saddled pig:
+		name: saddled pig¦s
+		pattern: saddled pig(|1¦s)
+	unsaddled pig:
+		name: unsaddled pig¦s @an
+		pattern: unsaddled pig(|1¦s)
+	player:
+		name: player¦s
+		pattern: player(|1¦s)
+	op:
+		name: op¦s @an
+		pattern: op(|1¦s)
+	non-op:
+		name: non-op¦s
+		pattern: non(-| |)op(|1¦s)
+	zombie pigman:
+		name: zombie pig¦man¦men
+		pattern: zombie pigm(an|1¦en)
 	sheep:
 		name: sheep
-		pattern: [%-colors%] sheep[s] # while sheep is unclear, sheeps is plural (even though it's wrong)
-		format: %s$2 %s$1
-	silverfish: silverfish¦es
-	skeleton: skeleton¦s
-	slime: slime¦s
-	snowball: snowball¦s
-	snow golem: snow golem¦s
-	spider: spider¦s
-	squid: squid¦s
-	bottle of enchanting: bottle¦ of enchanting¦s of enchanting
-	potion: thrown potions¦s
-	TNT: TNT
-	villager: villager¦s
-	farmer: farmer¦s
-	librarian: librarian¦s
-	priest: priest¦s
-	blacksmith: blacksmith¦s
-	butcher: butcher¦s
-	witch: witch¦es
-	wither: wither¦s
-	wither zkeleton: wither skeleton¦s
-	wither skull: wither skull¦s
-	wolf: wol¦f¦ves
-	tamed wolf: tamed wol¦f¦ves
-	wild wolf: wild wol¦f¦ves
-	angry wolf: angry wol¦f¦ves @an
-	peaceful wolf: peaceful wol¦f¦ves
-	zombie: zombie¦s
+		pattern: [%-colors%] sheep(0¦|1¦s) # while sheep is unclear, sheeps is plural (even though it's wrong)
+		format: %2$s %1$s
+	unsheared sheep:
+		name: unsheared sheep @an
+		pattern: unsheared [%-colors%] sheep(0¦|1¦s)
+	sheared sheep:
+		name: sheared sheep
+		pattern: sheared [%-colors%] sheep(0¦|1¦s)
+	silverfish:
+		name: silverfish¦es
+		pattern: silverfish(|1¦es)
+	skeleton:
+		name: skeleton¦s
+		pattern: skeleton(|1¦s)
+	slime:
+		name: slime¦s
+		pattern: slime(|1¦s)
+	snowball:
+		name: snowball¦s
+		pattern: snowball(|1¦s)
+	snow golem:
+		name: snow golem¦s
+		pattern: snow[ ](golem(|1¦s)|m(an|1¦en))
+	spider:
+		name: spider¦s
+		pattern: spider(|1¦s)
+	squid:
+		name: squid¦s
+		pattern: squid(|1¦s)
+	bottle of enchanting:
+		name: bottle¦ of enchanting¦s of enchanting
+		pattern: (bottle(|1¦s) o(f|') enchanting|[e]xp[erience] bottle(|1¦s))
+	thrown potion:
+		name: thrown potions¦s
+		pattern: thrown potion(|1¦s)
+	tnt:
+		name: TNT
+		pattern: ([primed] TNT(0¦|1¦s)|TNT entit(y|1¦ies))
+	villager:
+		name: villager¦s
+		pattern: villager(|1¦s)
+	farmer:
+		name: farmer¦s
+		pattern: farmer(|1¦s)
+	librarian:
+		name: librarian¦s
+		pattern: librarian(|1¦s)
+	priest:
+		name: priest¦s
+		pattern: priest(|1¦s)
+	blacksmith:
+		name: blacksmith¦s
+		pattern: [black]smith(|1¦s)
+	butcher:
+		name: butcher¦s
+		pattern: butcher(|1¦s)
+	witch:
+		name: witch¦es
+		pattern: witch(|1¦es)
+	wither:
+		name: wither¦s
+		pattern: wither(|1¦s)
+	wither skeleton:
+		name: wither skeleton¦s
+		pattern: wither skeleton(|1¦s)
+	wither skull:
+		name: wither skull¦s
+		pattern: wither skull((|1¦s)| projectile(|1¦s))
+	wolf:
+		name: wol¦f¦ves
+		pattern: wol(f|1¦ves)
+	tamed wolf:
+		name: tamed wol¦f¦ves
+		pattern: (dog(|1¦s)|tamed wol(f|1¦ves))
+	wild wolf:
+		name: wild wol¦f¦ves
+		pattern: (wild|untamed) wol(f|1¦ves)
+	angry wolf:
+		name: angry wol¦f¦ves @an
+		pattern: (angry|aggressive) wol(f|1¦ves)
+	peaceful wolf:
+		name: peaceful wol¦f¦ves
+		pattern: (peaceful|neutral|unaggressive) wol(f|1¦ves)
+	zombie:
+		name: zombie¦s
+		pattern: zombie(|1¦s)
 	xp-orb:
-		name: exprerience orb¦s
-		pattern: [<\\d+>] ([e]xp|experience)[( |-)orb[s]]
-		format: %s$2 %s$1
+		name: exprerience orb¦s @an
+		pattern: ([e]xp|experience)( |-)orb(|1¦s)
+		format: %2$s-%1$s
 
+# -- Damage Causes -- (not used yet)
 damage causes:
 	contact: cactus
 	entity_attack: attack @an
@@ -383,7 +639,24 @@ damage causes:
 	magic: potion
 	wither: wither
 	falling_block: anvil @an
+	suicide: suicide
+	thorns: thorns @x
 	custom: unknown
+
+# -- Game Modes --
+game modes:
+	survival: survival
+	creative: creative
+	adventure: adventure
+
+# -- Boolean --
+boolean:
+	true:
+		name: true
+		pattern: (true|yes|on)
+	false:
+		name: false
+		pattern: (false|no|off)
 
 # -- Types --
 types:
@@ -433,4 +706,12 @@ types:
 	structuretype: tree type¦s @a
 	enchantmenttype: enchantment type¦s @an
 	experience: experience point¦s @an
+	experience.pattern: (e?xp|experience( points?)?)
 	classinfo: type¦s @a
+	
+	# Hooks
+	money: money
+
+# -- IO Exceptions --
+io exceptions:
+	unknownhostexception: Cannot connect to %s

@@ -83,6 +83,7 @@ import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.BlockStateBlock;
+import ch.njol.skript.util.BlockUtils;
 import ch.njol.skript.util.DelayedChangeBlock;
 
 /**
@@ -151,7 +152,7 @@ public final class BukkitEventValues {
 		EventValues.registerEventValue(BlockEvent.class, Location.class, new SerializableGetter<Location, BlockEvent>() {
 			@Override
 			public Location get(final BlockEvent e) {
-				return e.getBlock().getLocation().add(0.5, 0.5, 0.5);
+				return BlockUtils.getLocation(e.getBlock());
 			}
 		}, 0);
 		// BlockPlaceEvent

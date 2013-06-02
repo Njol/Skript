@@ -39,13 +39,21 @@ public class RegexMessage extends Message {
 	
 	public RegexMessage(final String key, final String prefix, final String suffix, final int flags) {
 		super(key);
-		this.prefix = prefix;
-		this.suffix = suffix;
+		this.prefix = prefix == null ? "" : prefix;
+		this.suffix = suffix == null ? "" : suffix;
 		this.flags = flags;
 	}
 	
 	public RegexMessage(final String key, final String prefix, final String suffix) {
 		this(key, prefix, suffix, 0);
+	}
+	
+	public RegexMessage(final String key) {
+		this(key, "", "", 0);
+	}
+	
+	public RegexMessage(final String key, final int flags) {
+		this(key, "", "", flags);
 	}
 	
 	public Pattern getPattern() {

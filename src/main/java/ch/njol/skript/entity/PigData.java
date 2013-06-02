@@ -25,7 +25,6 @@ import org.bukkit.entity.Pig;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -34,16 +33,14 @@ import ch.njol.util.StringUtils;
 public class PigData extends EntityData<Pig> {
 	
 	static {
-		register(PigData.class, "pig", Pig.class, "unsaddled pig[s]", "pig[s]", "saddled pig[s]");
+		register(PigData.class, "pig", Pig.class, "unsaddled pig", "pig", "saddled pig");
 	}
 	
 	private int saddled;
-	private boolean plural;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		saddled = matchedPattern - 1;
-		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -76,16 +73,6 @@ public class PigData extends EntityData<Pig> {
 	@Override
 	public Class<? extends Pig> getType() {
 		return Pig.class;
-	}
-	
-	@Override
-	public String toString() {
-		return (saddled == 1 ? "saddled " : saddled == -1 ? "unsaddled " : "") + "pig";
-	}
-	
-	@Override
-	public boolean isPlural() {
-		return plural;
 	}
 	
 	@Override

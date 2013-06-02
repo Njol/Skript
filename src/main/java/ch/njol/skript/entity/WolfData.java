@@ -25,7 +25,6 @@ import org.bukkit.entity.Wolf;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -37,12 +36,10 @@ public class WolfData extends EntityData<Wolf> {
 //	private String owner = null;
 	private int tamed = 0;
 	
-	private boolean plural;
-	
 	static {
 		EntityData.register(WolfData.class, "wolf", Wolf.class,
-				"angry wol(f|ves)", "wol(f|ves)", "(peaceful|non-angry) wol(f|ves)",
-				"(wild|untamed|unowned) wol(f|ves)", "(tamed|owned) wol(f|ves)");
+				"angry wolf", "wolf", "peaceful wolf",
+				"wild wolf", "tamed wolf");
 	}
 	
 	@Override
@@ -51,7 +48,6 @@ public class WolfData extends EntityData<Wolf> {
 			angry = matchedPattern - 1;
 		else
 			tamed = matchedPattern == 3 ? -1 : 1;
-		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "ves");
 		return true;
 	}
 	
@@ -78,16 +74,6 @@ public class WolfData extends EntityData<Wolf> {
 	@Override
 	public Class<Wolf> getType() {
 		return Wolf.class;
-	}
-	
-	@Override
-	public String toString() {
-		return (angry == 1 ? "angry " : angry == -1 ? "non-angry " : "") + (tamed == 1 ? "tamed " : tamed == -1 ? "untamed " : "") + "wolf";
-	}
-	
-	@Override
-	public boolean isPlural() {
-		return plural;
 	}
 	
 	@Override

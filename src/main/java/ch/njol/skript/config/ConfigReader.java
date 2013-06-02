@@ -65,9 +65,9 @@ public class ConfigReader extends BufferedReader {
 	}
 	
 	@Override
-	public void reset() throws IOException {
+	public void reset() {
 		if (reset)
-			throw new IOException("reset was called twice without a readLine inbetween");
+			throw new RuntimeException("reset was called twice without a readLine inbetween");
 		reset = true;
 	}
 	

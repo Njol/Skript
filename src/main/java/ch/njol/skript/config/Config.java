@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -41,8 +42,16 @@ import ch.njol.skript.config.validate.SectionValidator;
 public class Config {
 	
 	boolean simple = false;
+	
+	/**
+	 * One level of the indentation, e.g. a tab or 4 spaces.
+	 */
 	private String indentation = null;
+	/**
+	 * The indentation's name, i.e. 'tab' or 'space'.
+	 */
 	private String indentationName = null;
+	
 	final String defaultSeparator;
 	String separator;
 	
@@ -61,27 +70,30 @@ public class Config {
 	File file = null;
 	
 	public Config(final InputStream source, final String fileName, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
-		
-		this.fileName = fileName;
-		this.simple = simple;
-		this.allowEmptySections = allowEmptySections;
-		this.defaultSeparator = defaultSeparator;
-		separator = defaultSeparator;
-		
-		if (source.available() == 0) {
-			main = new SectionNode(this);
-			Skript.warning("'" + getFileName() + "' is empty");
-			return;
-		}
-		
-		if (Skript.logVeryHigh())
-			Skript.info("loading '" + fileName + "'");
-		
-		final ConfigReader r = new ConfigReader(source);
 		try {
-			main = SectionNode.load(this, r);
+			this.fileName = fileName;
+			this.simple = simple;
+			this.allowEmptySections = allowEmptySections;
+			this.defaultSeparator = defaultSeparator;
+			separator = defaultSeparator;
+			
+			if (source.available() == 0) {
+				main = new SectionNode(this);
+				Skript.warning("'" + getFileName() + "' is empty");
+				return;
+			}
+			
+			if (Skript.logVeryHigh())
+				Skript.info("loading '" + fileName + "'");
+			
+			final ConfigReader r = new ConfigReader(source);
+			try {
+				main = SectionNode.load(this, r);
+			} finally {
+				r.close();
+			}
 		} finally {
-			r.close();
+			source.close();
 		}
 	}
 	
@@ -126,30 +138,39 @@ public class Config {
 		return fileName;
 	}
 	
-	@SuppressWarnings("unused")
-	public void save() throws IOException {
-		throw new UnsupportedOperationException();
-		// fix SectionNode.convertToEntries first!
+	/**
+	 * Saves the config to a file.
+	 * <p>
+	 * Please note that the behaviour of this method is undefined if any nodes have been added, renamed, deleted or moved, or {@link SectionNode#convertToEntries(int)} has been
+	 * used. // TODO fix this?
+	 * 
+	 * @param f The file to save to
+	 * @throws IOException If the file could not be written to.
+	 */
+	public void save(final File f) throws IOException {
 //		if (!modified)
 //			return;
-//		separator = defaultSeparator;
-//		file.createNewFile();
-//		final PrintWriter w = new PrintWriter(new FileWriter(file));
-//		main.save(w);
-//		w.flush();
-//		w.close();
-//		modified = false;
-	}
-	
-	public boolean isEnabled() {
-		return !file.getName().startsWith("-");
-	}
-	
-	public boolean setEnabled(final boolean b) {
-		if (isEnabled() == b) {
-			return false;
+		separator = defaultSeparator;
+		final PrintWriter w = new PrintWriter(f, "UTF-8");
+		try {
+			main.save(w);
+			modified = false;
+		} finally {
+			w.flush();
+			w.close();
 		}
-		return file.renameTo(new File(file, b ? file.getName().substring(1) : "-" + file.getName()));
+	}
+	
+	/**
+	 * Sets this config's values to those in the given config.
+	 * <p>
+	 * Used by Skript to import old settings into the updated config. The return value is used to not modify the config if no new options were added.
+	 * 
+	 * @param other
+	 * @return Whether the configs' keys differ, i.e. false == configs only differ in values, not keys.
+	 */
+	public boolean setValues(final Config other) {
+		return getMainNode().setValues(other.getMainNode());
 	}
 	
 	public File getFile() {
@@ -157,7 +178,7 @@ public class Config {
 	}
 	
 	/**
-	 * @return The separator last used. Only useful while the file is loading.
+	 * @return The most recent separator. Only useful while the file is loading.
 	 */
 	public String getSeparator() {
 		return separator;

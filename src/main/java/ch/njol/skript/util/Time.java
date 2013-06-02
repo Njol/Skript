@@ -26,6 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.localization.Message;
 
 /**
  * @author Peter Güttinger
@@ -36,8 +37,8 @@ public class Time implements Serializable {
 	private final int time;
 	
 	public Time(final int time) {
-		assert time >= -24000 && time <= 24000 : time;
-		this.time = (time + 24000) % 24000;
+		this.time = (time % 24000 + 24000) % 24000;
+		assert this.time >= 0 && this.time < 24000 : time;
 	}
 	
 	public int getTicks() {
@@ -50,11 +51,20 @@ public class Time implements Serializable {
 	}
 	
 	public static String toString(final int ticks) {
+		assert 0 <= ticks && ticks < 24000;
 		final int t = (ticks + 6000) % 24000;
-		final int hours = (int) Math.floor(t / 1000);
-		final int minutes = (int) (Math.floor((t % 1000) / 16.666666667)); // floor to prevent ':60'
+		int hours = (int) Math.floor(t / 1000);
+		int minutes = (int) (Math.round((t % 1000) / 16.666666667));
+		if (minutes >= 60) {
+			hours = (hours + 1) % 24;
+			minutes -= 60;
+		}
 		return "" + hours + ":" + (minutes < 10 ? "0" : "") + minutes;
 	}
+	
+	private final static Message m_error_24_hours = new Message("time.errors.24 hours");
+	private final static Message m_error_12_hours = new Message("time.errors.12 hours");
+	private final static Message m_error_60_minutes = new Message("time.errors.60 minutes");
 	
 	/**
 	 * @param s The trim()med string to parse
@@ -69,12 +79,12 @@ public class Time implements Serializable {
 			if (hours == 24) { // allows to write 24:00 - 24:59 instead of 0:00-0:59
 				hours = 0;
 			} else if (hours > 24) {
-				Skript.error("a day only has 24 hours");
+				Skript.error("" + m_error_24_hours);
 				return null;
 			}
 			final int minutes = Utils.parseInt(s.split(":")[1]);
 			if (minutes >= 60) {
-				Skript.error("an hour only has 60 minutes");
+				Skript.error("" + m_error_60_minutes);
 				return null;
 			}
 			return new Time((int) Math.round(hours * 1000 - 6000 + minutes * 16.6666667));
@@ -85,14 +95,14 @@ public class Time implements Serializable {
 				if (hours == 12) {
 					hours = 0;
 				} else if (hours > 12) {
-					Skript.error("using 12-hour format does not allow more than 12 hours");
+					Skript.error("" + m_error_12_hours);
 					return null;
 				}
 				int minutes = 0;
 				if (m.group(3) != null)
 					minutes = Utils.parseInt(m.group(3));
 				if (minutes >= 60) {
-					Skript.error("an hour only has 60 minutes");
+					Skript.error("" + m_error_60_minutes);
 					return null;
 				}
 				if (m.group(4).equalsIgnoreCase("pm"))

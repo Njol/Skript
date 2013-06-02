@@ -32,7 +32,7 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -77,7 +77,7 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Double> {
 	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (mode != ChangeMode.DELETE && getExpr().isSingle() && Utils.contains(getExpr().acceptChange(ChangeMode.SET), Location.class))
+		if (mode != ChangeMode.DELETE && getExpr().isSingle() && CollectionUtils.contains(getExpr().acceptChange(ChangeMode.SET), Location.class))
 			return new Class[] {Number.class};
 		return null;
 	}

@@ -24,6 +24,7 @@ package ch.njol.skript.util;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.bukkit.enchantments.Enchantment;
 
@@ -83,6 +84,11 @@ public class EnchantmentType {
 		return Language.get("enchantments.names." + e.getName());
 	}
 	
+	// TODO flags
+	public static String toString(final Enchantment e, final int flags) {
+		return Language.get("enchantments.names." + e.getName());
+	}
+	
 	private final static Map<String, Enchantment> enchantmentNames = new HashMap<String, Enchantment>();
 	static {
 		Language.addListener(new LanguageChangeListener() {
@@ -95,8 +101,10 @@ public class EnchantmentType {
 		});
 	}
 	
+	private final static Pattern pattern = Pattern.compile(".+ \\d+");
+	
 	public static EnchantmentType parse(final String s) {
-		if (s.matches(".+ \\d+")) {
+		if (pattern.matcher(s).matches()) {
 			final Enchantment ench = enchantmentNames.get(s.substring(0, s.lastIndexOf(' ')).toLowerCase());
 			if (ench == null)
 				return null;

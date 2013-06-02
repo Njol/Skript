@@ -161,12 +161,12 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 	public boolean execute(final CommandSender sender, final String commandLabel, final String rest) {
 		if (sender instanceof Player) {
 			if ((executableBy & PLAYERS) == 0) {
-				sender.sendMessage("" + m_executable_by_players);
+				sender.sendMessage("" + m_executable_by_console);
 				return false;
 			}
 		} else {
 			if ((executableBy & CONSOLE) == 0) {
-				sender.sendMessage("" + m_executable_by_console);
+				sender.sendMessage("" + m_executable_by_players);
 				return false;
 			}
 		}

@@ -58,6 +58,7 @@ public class FlatFileStorage extends VariablesStorage {
 	
 	private File file;
 	private volatile PrintWriter changesWriter;
+	private final Object changesWriterLock = new Object();
 	
 	private volatile int changes = 0;
 	private final int REQUIRED_CHANGES_FOR_RESAVE = 50;
@@ -72,18 +73,21 @@ public class FlatFileStorage extends VariablesStorage {
 		backupTask = new Task(Skript.getInstance(), t.getTicks(), t.getTicks(), true) {
 			@Override
 			public void run() {
-				try {
-					Variables.getReadLock().lock();
-					closeChangesWriter();
+				synchronized (changesWriterLock) {
 					try {
-						FileUtils.backup(file);
-					} catch (final IOException e) {
-						Skript.error("Automatic variables backup failed: " + e.getLocalizedMessage());
+						Variables.getReadLock().lock();
+						closeChangesWriter();
+						try {
+							FileUtils.backup(file);
+						} catch (final IOException e) {
+							Skript.error("Automatic variables backup failed: " + e.getLocalizedMessage());
+						} finally {
+							setupChangesWriter();
+							changesWriterLock.notifyAll();
+						}
 					} finally {
-						setupChangesWriter();
+						Variables.getReadLock().unlock();
 					}
-				} finally {
-					Variables.getReadLock().unlock();
 				}
 			}
 		};
@@ -245,9 +249,16 @@ public class FlatFileStorage extends VariablesStorage {
 	
 	@Override
 	protected void save(final String name, final String type, final String value) {
+		synchronized (changesWriterLock) {
+			while (changesWriter == null) {
+				try {
+					changesWriterLock.wait();
+				} catch (final InterruptedException e) {}
+			}
+		}
 		writeCSV(changesWriter, name, "" + type, "" + value);
 		changesWriter.flush();
-		final int c = changes; // FindBugs workaround - 'changes' is only changed here and on a full save and only acts as a lead to not save if not many modifications were done.
+		final int c = changes; // FindBugs workaround - 'changes' is only changed here and on a full save and only acts as a hint to not save if not many modifications were done, so lost increments do not matter.
 		changes = c + 1;
 	}
 	
@@ -264,6 +275,7 @@ public class FlatFileStorage extends VariablesStorage {
 	}
 	
 	final void closeChangesWriter() {
+		assert Thread.holdsLock(changesWriterLock);
 		clearChangesQueue();
 		if (changesWriter != null) {
 			changesWriter.close();
@@ -271,7 +283,7 @@ public class FlatFileStorage extends VariablesStorage {
 		}
 	}
 	
-	final void setupChangesWriter() {
+	private final void setupChangesWriter() {
 		try {
 			changesWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
 		} catch (final FileNotFoundException e) {
@@ -294,44 +306,48 @@ public class FlatFileStorage extends VariablesStorage {
 			if (backupTask != null)
 				backupTask.cancel();
 		}
-		try {
-			Variables.getReadLock().lock();
-			closeChangesWriter();
-			if (loadError) {
+		synchronized (changesWriterLock) {
+			try {
+				Variables.getReadLock().lock();
+				closeChangesWriter();
+				if (loadError) {
+					try {
+						final File backup = FileUtils.backup(file);
+						Skript.info("Created a backup of your old variables.csv as " + backup.getName());
+						loadError = false;
+					} catch (final IOException e) {
+						Skript.error("Could not backup the old variables.csv: " + e.getLocalizedMessage());
+						Skript.error("No variables are saved!");
+						return;
+					}
+				}
+				final File tempFile = new File(Skript.getInstance().getDataFolder(), "variables.csv.temp");
+				PrintWriter pw = null;
 				try {
-					final File backup = FileUtils.backup(file);
-					Skript.info("Created a backup of your old variables.csv as " + backup.getName());
-					loadError = false;
+					pw = new PrintWriter(tempFile, "UTF-8");
+					pw.println("# === Skript's variable storage ===");
+					pw.println("# Please do not modify this file manually!");
+					pw.println("#");
+					pw.println("# version: " + Skript.getInstance().getDescription().getVersion());
+					pw.println();
+					save(pw, "", Variables.getVariables());
+					pw.println();
+					pw.flush();
+					pw.close();
+					FileUtils.move(tempFile, file, true);
 				} catch (final IOException e) {
-					Skript.error("Could not backup the old variables.csv: " + e.getLocalizedMessage());
-					Skript.error("No variables are saved!");
-					return;
+					Skript.error("Unable to save variables: " + e.getLocalizedMessage());
+				} finally {
+					if (pw != null)
+						pw.close();
+				}
+			} finally {
+				Variables.getReadLock().unlock();
+				if (!finalSave) {
+					setupChangesWriter();
+					changesWriterLock.notifyAll();
 				}
 			}
-			final File tempFile = new File(Skript.getInstance().getDataFolder(), "variables.csv.temp");
-			PrintWriter pw = null;
-			try {
-				pw = new PrintWriter(tempFile, "UTF-8");
-				pw.println("# === Skript's variable storage ===");
-				pw.println("# Please do not modify this file manually!");
-				pw.println("#");
-				pw.println("# version: " + Skript.getInstance().getDescription().getVersion());
-				pw.println();
-				save(pw, "", Variables.getVariables());
-				pw.println();
-				pw.flush();
-				pw.close();
-				FileUtils.move(tempFile, file, true);
-			} catch (final IOException e) {
-				Skript.error("Unable to save variables: " + e.getLocalizedMessage());
-			} finally {
-				if (pw != null)
-					pw.close();
-			}
-		} finally {
-			Variables.getReadLock().unlock();
-			if (!finalSave)
-				setupChangesWriter();
 		}
 	}
 	

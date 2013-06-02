@@ -35,7 +35,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -84,7 +84,7 @@ public class ExprElement extends SimpleExpression<Object> {
 			final Object[] os = expr.getArray(e);
 			if (os.length == 0)
 				return null;
-			o = Utils.random(os);
+			o = CollectionUtils.random(os);
 		}
 		final Object[] r = (Object[]) Array.newInstance(getReturnType(), 1);
 		r[0] = o;

@@ -26,13 +26,13 @@ import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
 
 import ch.njol.skript.ScriptLoader;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
-import ch.njol.skript.util.Utils;
 
 /**
  * @author Peter Güttinger
@@ -68,9 +68,37 @@ public class ExprLevel extends SimplePropertyExpression<Player, Integer> {
 	}
 	
 	@Override
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (getTime() == -1)
+			return null;
+		return new Class[] {Number.class};
+	}
+	
+	@Override
+	public void change(final Event e, final Object delta, final ChangeMode mode) {
+		final int l = delta == null ? 0 : ((Number) delta).intValue();
+		for (final Player p : getExpr().getArray(e)) {
+			switch (mode) {
+				case SET:
+					p.setLevel(l);
+					break;
+				case ADD:
+					p.setLevel(p.getLevel() + l);
+					break;
+				case REMOVE:
+					p.setLevel(p.getLevel() - l);
+					break;
+				case DELETE:
+					p.setLevel(0);
+					break;
+			}
+		}
+	}
+	
+	@Override
 	public boolean setTime(final int time) {
 		super.setTime(time);
-		return getExpr().isDefault() && Utils.contains(ScriptLoader.currentEvents, PlayerLevelChangeEvent.class);
+		return getExpr().isDefault() && ScriptLoader.isCurrentEvent(PlayerLevelChangeEvent.class);
 	}
 	
 	@Override

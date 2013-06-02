@@ -35,8 +35,8 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -86,7 +86,7 @@ public class ExpressionList<T> implements Expression<T> {
 	public T getSingle(final Event e) {
 		if (!single)
 			throw new UnsupportedOperationException();
-		for (final int i : Utils.permutation(expressions.length)) {
+		for (final int i : CollectionUtils.permutation(expressions.length)) {
 			final T t = expressions[i].getSingle(e);
 			if (t != null)
 				return t;
@@ -102,7 +102,7 @@ public class ExpressionList<T> implements Expression<T> {
 				r.addAll(Arrays.asList(expr.getArray(e)));
 			return r.toArray((T[]) Array.newInstance(returnType, r.size()));
 		}
-		for (final int i : Utils.permutation(expressions.length)) {
+		for (final int i : CollectionUtils.permutation(expressions.length)) {
 			final T[] t = expressions[i].getArray(e);
 			if (t.length > 0)
 				return t;
@@ -121,7 +121,7 @@ public class ExpressionList<T> implements Expression<T> {
 	@Override
 	public Iterator<? extends T> iterator(final Event e) {
 		if (!and) {
-			for (final int i : Utils.permutation(expressions.length)) {
+			for (final int i : CollectionUtils.permutation(expressions.length)) {
 				final Iterator<? extends T> t = expressions[i].iterator(e);
 				if (t.hasNext())
 					return t;

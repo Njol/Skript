@@ -42,7 +42,7 @@ import ch.njol.util.Kleenean;
 @Since("2.0")
 public class ExprYawPitch extends SimplePropertyExpression<Location, Float> {
 	static {
-		register(ExprYawPitch.class, float.class, "(0¦yaw|1¦pitch)", "locations");
+		register(ExprYawPitch.class, Float.class, "(0¦yaw|1¦pitch)", "locations");
 	}
 	
 	private boolean yaw;

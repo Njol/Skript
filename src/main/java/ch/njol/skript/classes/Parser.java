@@ -61,7 +61,7 @@ public abstract class Parser<T> {
 	 * @return The String representation of the object.
 	 * @see #getDebugMessage(Object)
 	 */
-	public abstract String toString(T o);
+	public abstract String toString(T o, int flags);
 	
 	/**
 	 * Gets a string representation of this object for the given mode
@@ -73,7 +73,7 @@ public abstract class Parser<T> {
 	public final String toString(final T o, final StringMode mode) {
 		switch (mode) {
 			case MESSAGE:
-				return toString(o);
+				return toString(o, 0);
 			case DEBUG:
 				return getDebugMessage(o);
 			case VARIABLE_NAME:
@@ -86,7 +86,7 @@ public abstract class Parser<T> {
 	}
 	
 	public String toCommandString(final T o) {
-		return toString(o);
+		return toString(o, 0);
 	}
 	
 	/**
@@ -115,7 +115,7 @@ public abstract class Parser<T> {
 	 * @return
 	 */
 	public String getDebugMessage(final T o) {
-		return toString(o);
+		return toString(o, 0);
 	}
 	
 }

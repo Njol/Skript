@@ -24,8 +24,9 @@ package ch.njol.skript.config;
 import java.io.PrintWriter;
 
 /**
- * An empty line or a comment.<br/>
- * The subclass {@link InvalidNode} is for invalid non-empty nodes, i.e. where a parsing error ocurred.
+ * An empty line or a comment.
+ * <p>
+ * The subclass {@link InvalidNode} is used for invalid non-empty nodes, i.e. where a parsing error ocurred.
  * 
  * @author Peter Güttinger
  */
@@ -41,10 +42,20 @@ public class VoidNode extends Node {
 	
 	public void set(final String s) {
 		orig = s;
+		modified();
 	}
 	
+	/**
+	 * Overridden to use the original indentation
+	 */
 	@Override
 	void save(final PrintWriter w) {
 		w.println(orig);
+	}
+	
+	@Override
+	String save() {
+		assert false;
+		return orig.trim();
 	}
 }

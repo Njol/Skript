@@ -21,8 +21,6 @@
 
 package ch.njol.skript.config;
 
-import java.io.PrintWriter;
-
 /**
  * @author Peter Güttinger
  */
@@ -37,12 +35,12 @@ public class SimpleNode extends Node {
 	}
 	
 	@Override
-	void save(final PrintWriter w) {
-		w.print(name);
+	String save() {
+		return key;
 	}
 	
 	public void set(final String s) {
-		orig = name = s;
+		orig = key = s;
 	}
 	
 }

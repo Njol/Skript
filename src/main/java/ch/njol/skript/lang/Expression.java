@@ -31,6 +31,7 @@ import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.log.ErrorQuality;
 import ch.njol.util.Checker;
 
 /**
@@ -58,9 +59,11 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public T getSingle(final Event e);
 	
 	/**
-	 * Get all the values of this expression. The returned array is empty if this expression doesn't have any values for the given event.<br/>
-	 * Do not use this in conditions, use {@link #check(Event, Checker, boolean)} instead.<br/>
-	 * The returned array must not contain any null valuse.
+	 * Get all the values of this expression. The returned array is empty if this expression doesn't have any values for the given event.
+	 * <p>
+	 * The returned array must not contain any null values.
+	 * <p>
+	 * Do not use this in conditions, use {@link #check(Event, Checker, boolean)} instead.
 	 * 
 	 * @param e The event
 	 * @return An array of values of this expression which must neither be null nor contain nulls.
@@ -77,7 +80,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public T[] getAll(final Event e);
 	
 	/**
-	 * @return true if this expression will ever only return one value at most, false if it can return multiple values
+	 * @return true if this expression will ever only return one value at most, false if it can return multiple values.
 	 */
 	public abstract boolean isSingle();
 	
@@ -87,7 +90,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * 
 	 * @param e The event
 	 * @param c A checker
-	 * @param negated The condition's negated state. This is used to invert the output of the ckecker if true (i.e. negated ^ checker.check(...)
+	 * @param negated The cheking condition's negated state. This is used to invert the output of the checker if set to true (i.e. <tt>negated ^ checker.check(...)</tt>)
 	 * @return Whether this expression matches or doesn't match the given checker depending on the condition's negated state.
 	 * @see SimpleExpression#check(Object[], Checker, boolean, boolean)
 	 */
@@ -108,9 +111,9 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * Tries to convert this expression to the given type. This method can print an error prior to returning null to specify the cause.
 	 * <p>
 	 * Please note that expressions whose {@link #getReturnType() returnType} is not Object will not be parsed at all for a certain class if there's no converter from the
-	 * expression's returnType and the desired class. Thus this method should only be overridden if this expression's returnType is Object.
+	 * expression's returnType to the desired class. Thus this method should only be overridden if this expression's returnType is Object.
 	 * 
-	 * @param to the desired return type of the returned expression
+	 * @param to The desired return type of the returned expression //TODO allow multiple types?
 	 * @return Expression with the desired return type or null if the expression can't be converted to the given type. Returns the expression itself if it already returns the
 	 *         desired type.
 	 * @see Converter
@@ -120,7 +123,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	/**
 	 * Gets the return type of this expression.
 	 * 
-	 * @return The type retured by {@link #getSingle(Event)} and {@link #getArray(Event)}
+	 * @return The type returned by {@link #getSingle(Event)} and {@link #getArray(Event)}
 	 */
 	public abstract Class<? extends T> getReturnType();
 	
@@ -141,12 +144,16 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * <p>
 	 * This method will <b>not</b> be called if this expression is <i>guaranteed</i> to be used after a delay (an error will be printed immediately), but <b>will</b> be called if
 	 * it only <i>can be</i> after a delay (e.g. if the preceding delay is in an if or a loop) as well as if there's no delay involved.
+	 * <p>
+	 * If this method returns false the expression will be discarded and an error message is printed. Custom error messages must be of {@link ErrorQuality#SEMANTIC_ERROR} to be
+	 * printed.
 	 * 
 	 * @param time -1 for past or 1 for future. 0 is never passed to this method as it represents the default state.
-	 * @return Whether this expression has distinct time states, e.g. a player never changes but a block can. This should also be sensitive for the event (using
-	 *         {@link ScriptLoader#currentEvents}).
+	 * @return Whether this expression has distinct time states, e.g. a player never changes but a block can. This should be sensitive for the event (using
+	 *         {@link ScriptLoader#isCurrentEvent(Class)}).
 	 * @see SimpleExpression#setTime(int, Class, Expression...)
 	 * @see SimpleExpression#setTime(int, Expression, Class...)
+	 * @see ScriptLoader#isCurrentEvent(Class...)
 	 */
 	public boolean setTime(int time);
 	
@@ -220,14 +227,15 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public Class<?>[] acceptChange(ChangeMode mode);
 	
 	/**
-	 * Changes the expression value by the given amount. This will only be called on supported modes and with the desired <code>delta</code> type as returned by
+	 * Changes the expression's value by the given amount. This will only be called on supported modes and with the desired <code>delta</code> type as returned by
 	 * {@link #acceptChange(ChangeMode)}
 	 * 
 	 * @param e
 	 * @param delta The amount to vary this expression by or null for {@link ChangeMode#DELETE}. Can also be null if {@link #acceptChange(ChangeMode)} didn't return an array class,
 	 *            otherwise it cannot be null but an empty array.
 	 * @param mode
-	 * @throws UnsupportedOperationException (optional) if this method was called on an unsupported ChangeMode.
+	 * @throws UnsupportedOperationException (optional) - If this method was called on an unsupported ChangeMode.
+	 * @throws ClassCastException (automatic) - If the delta parameter is of a wrong type.
 	 */
 	public void change(Event e, final Object delta, final ChangeMode mode);
 	

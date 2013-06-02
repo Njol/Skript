@@ -19,16 +19,19 @@
  * 
  */
 
-package ch.njol.skript.hooks.economy.expressions;
+package ch.njol.skript.hooks.economy.classes;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.Arithmetic;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.classes.Parser;
+import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.hooks.economy.EconomyHook;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Comparators;
+import ch.njol.skript.registrations.Converters;
 import ch.njol.util.StringUtils;
 
 /**
@@ -38,43 +41,77 @@ import ch.njol.util.StringUtils;
 public class Money {
 	
 	static {
-		if (EconomyHook.economy != null) {
-			Classes.registerClass(new ClassInfo<Money>(Money.class, "money")
-					.user("money")
-					.parser(new Parser<Money>() {
-						@Override
-						public Money parse(final String s, final ParseContext context) {
-							return Money.parse(s);
-						}
-						
-						@Override
-						public String toString(final Money m) {
-							return m.toString();
-						}
-						
-						@Override
-						public String toVariableNameString(final Money o) {
-							return "money:" + o.amount;
-						}
-						
-						@Override
-						public String getVariableNamePattern() {
-							return "money:-?\\d+(\\.\\d+)?";
-						}
-					}));
+		Classes.registerClass(new ClassInfo<Money>(Money.class, "money")
+				.user("money")
+				.name("Money")
+				.description("A certain amount of money. Please note that this differs from <a href='#number'>numbers</a> as it includes a currency symbol or name, but usually the two are interchangeable, e.g. you can both <code>add 100$ to the player's balance</code> and <code>add 100 to the player's balance</code>.")
+				.usage("<code>&lt;number&gt; $</code> or <code>$ &lt;number&gt;</code>, where '$' is your server's currency, e.g. '10 rupees' or '£5.00'")
+				.examples("add 10£ to the player's account",
+						"remove Fr. 9.95 from the player's money",
+						"set the victim's money to 0",
+						"increase the attacker's balance by the level of the victim * 100")
+				.since("2.0")
+				.before("itemtype", "itemstack")
+				.parser(new Parser<Money>() {
+					@Override
+					public Money parse(final String s, final ParseContext context) {
+						return Money.parse(s);
+					}
+					
+					@Override
+					public String toString(final Money m, final int flags) {
+						return m.toString();
+					}
+					
+					@Override
+					public String toVariableNameString(final Money o) {
+						return "money:" + o.amount;
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "money:-?\\d+(\\.\\d+)?";
+					}
+				})
+				.math(Money.class, new Arithmetic<Money, Money>() {
+					@Override
+					public Money difference(final Money first, final Money second) {
+						final double d = Math.abs(first.getAmount() - second.getAmount());
+						if (d < Skript.EPSILON)
+							return new Money(0);
+						return new Money(d);
+					}
+				}));
+		
+		Comparators.registerComparator(Money.class, Money.class, new Comparator<Money, Money>() {
+			@Override
+			public Relation compare(final Money m1, final Money m2) {
+				return Relation.get(m1.amount - m2.amount);
+			}
 			
-			Comparators.registerComparator(Money.class, Money.class, new Comparator<Money, Money>() {
-				@Override
-				public Relation compare(final Money m1, final Money m2) {
-					return Relation.get(m1.amount - m2.amount);
-				}
-				
-				@Override
-				public boolean supportsOrdering() {
-					return true;
-				}
-			});
-		}
+			@Override
+			public boolean supportsOrdering() {
+				return true;
+			}
+		});
+		Comparators.registerComparator(Money.class, Number.class, new Comparator<Money, Number>() {
+			@Override
+			public Relation compare(final Money m, final Number n) {
+				return Relation.get(m.amount - n.doubleValue());
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return true;
+			}
+		});
+		
+		Converters.registerConverter(Money.class, Double.class, new SerializableConverter<Money, Double>() {
+			@Override
+			public Double convert(final Money m) {
+				return Double.valueOf(m.getAmount());
+			}
+		});
 	}
 	
 	private final double amount;
@@ -89,7 +126,7 @@ public class Money {
 	
 	public static final Money parse(final String s) {
 		if (EconomyHook.economy == null) {
-			Skript.error("No economy plugin detected");
+//			Skript.error("No economy plugin detected");
 			return null;
 		}
 		if (!EconomyHook.plural.isEmpty()) {

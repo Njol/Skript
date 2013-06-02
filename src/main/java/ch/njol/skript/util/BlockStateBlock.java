@@ -52,11 +52,13 @@ public class BlockStateBlock implements Block {
 	private final boolean delayChanges;
 	
 	public BlockStateBlock(final BlockState state) {
+		assert state != null;
 		this.state = state;
 		delayChanges = false;
 	}
 	
 	public BlockStateBlock(final BlockState state, final boolean delayChanges) {
+		assert state != null;
 		this.state = state;
 		this.delayChanges = delayChanges;
 	}
@@ -358,11 +360,13 @@ public class BlockStateBlock implements Block {
 	
 	@Override
 	public Collection<ItemStack> getDrops() {
+		assert false;
 		return Collections.emptySet();
 	}
 	
 	@Override
 	public Collection<ItemStack> getDrops(final ItemStack tool) {
+		assert false;
 		return Collections.emptySet();
 	}
 	

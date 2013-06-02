@@ -44,6 +44,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -115,7 +116,7 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.DELETE || mode == ChangeMode.SET)
-			return Utils.array(LivingEntity.class);
+			return CollectionUtils.array(LivingEntity.class);
 		return null;
 	}
 	

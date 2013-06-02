@@ -33,7 +33,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.util.Color;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -75,8 +75,8 @@ public class ExprColorOf extends SimplePropertyExpression<ItemStack, Color> {
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode != ChangeMode.SET || !getExpr().isSingle())
 			return null;
-		if (getExpr().acceptChange(mode) != null && Utils.containsAny(getExpr().acceptChange(mode), ItemStack.class, ItemType.class))
-			return Utils.array(Color.class);
+		if (getExpr().acceptChange(mode) != null && CollectionUtils.containsAny(getExpr().acceptChange(mode), ItemStack.class, ItemType.class))
+			return CollectionUtils.array(Color.class);
 		return null;
 	}
 	
@@ -92,7 +92,7 @@ public class ExprColorOf extends SimplePropertyExpression<ItemStack, Color> {
 		else
 			return;
 		
-		if (Utils.contains(getExpr().acceptChange(mode), ItemStack.class))
+		if (CollectionUtils.contains(getExpr().acceptChange(mode), ItemStack.class))
 			getExpr().change(e, is, mode);
 		else
 			getExpr().change(e, new ItemType(is), mode);

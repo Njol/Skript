@@ -33,6 +33,7 @@ import org.bukkit.block.Block;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.skript.localization.Noun;
+import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -58,11 +59,11 @@ public enum StructureType {
 	}
 	
 	public void grow(final Location loc) {
-		loc.getWorld().generateTree(loc, Utils.random(types));
+		loc.getWorld().generateTree(loc, CollectionUtils.random(types));
 	}
 	
 	public void grow(final Block b) {
-		b.getWorld().generateTree(b.getLocation(), Utils.random(types));
+		b.getWorld().generateTree(b.getLocation(), CollectionUtils.random(types));
 	}
 	
 	public TreeType[] getTypes() {
@@ -74,12 +75,16 @@ public enum StructureType {
 		return name.toString();
 	}
 	
+	public String toString(final int flags) {
+		return name.toString(flags);
+	}
+	
 	public Noun getName() {
 		return name;
 	}
 	
 	public boolean is(final TreeType type) {
-		return Utils.contains(types, type);
+		return CollectionUtils.contains(types, type);
 	}
 	
 	/**

@@ -29,8 +29,6 @@ import ch.njol.skript.Skript;
 
 /**
  * Basic class to get text from the language file(s).
- * <p>
- * TODO generate warnings for missing english values
  * 
  * @author Peter Güttinger
  */
@@ -44,10 +42,12 @@ public class Message {
 			@Override
 			public void onLanguageChange() {
 				for (final Message m : messages) {
-					m.revalidate = true;
-					if (firstChange) {
-						if (m.value == null)
-							Skript.error("Missing entry '" + m.key + "' in the default english language file!");
+					synchronized (m) {
+						m.revalidate = true;
+					}
+					if (firstChange && Skript.testing()) {
+						if (!Language.english.containsKey(m.key))
+							Language.missingEntryError(m.key);
 					}
 				}
 				firstChange = false;
@@ -62,11 +62,10 @@ public class Message {
 	public Message(final String key) {
 		this.key = key.toLowerCase(Locale.ENGLISH);
 		messages.add(this);
-//		if (!Language.english.isEmpty()) {
-//			validate();
-//			if (value == null)
-//				Skript.warning("Missing entry '" + key + "' in the default english language file!");
-//		}
+		if (Skript.testing() && !Language.english.isEmpty()) {
+			if (!Language.english.containsKey(this.key))
+				Language.missingEntryError(this.key);
+		}
 	}
 	
 	@Override
@@ -98,7 +97,7 @@ public class Message {
 	/**
 	 * Checks whether this message's value has changed and calls {@link #onValueChange()} if neccessary.
 	 */
-	protected void validate() {
+	protected synchronized void validate() {
 		if (revalidate) {
 			revalidate = false;
 			value = Language.get_(key);

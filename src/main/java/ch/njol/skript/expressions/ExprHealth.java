@@ -35,7 +35,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Getter;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Math2;
 
@@ -104,7 +104,7 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		return Utils.array(Number.class);
+		return CollectionUtils.array(Number.class);
 	}
 	
 	@Override

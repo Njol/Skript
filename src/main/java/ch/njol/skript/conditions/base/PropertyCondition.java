@@ -56,7 +56,7 @@ public abstract class PropertyCondition<T> extends Condition implements Checker<
 	}
 	
 	@Override
-	public boolean check(final Event e) {
+	public final boolean check(final Event e) {
 		return expr.check(e, this, isNegated());
 	}
 	

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.TreeMap;
 
 import org.bukkit.event.Event;
 
@@ -44,10 +45,11 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
-import ch.njol.skript.util.Utils;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Checker;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.EmptyIterator;
 
@@ -178,7 +180,7 @@ public class Variable<T> implements Expression<T> {
 		if (!list)
 			return val;
 		if (val == null)
-			return Array.newInstance(superType, 0);
+			return Array.newInstance(types[0], 0);
 		final List<Object> l = new ArrayList<Object>();
 		for (final Entry<String, ?> v : ((Map<String, ?>) val).entrySet()) {
 			if (v.getKey() != null && v.getValue() != null) {
@@ -188,38 +190,45 @@ public class Variable<T> implements Expression<T> {
 					l.add(v.getValue());
 			}
 		}
-		return l.toArray();
+		return l.toArray((T[]) Array.newInstance(superType, l.size())); // TODO return array of one of the types (can cause CCE currently) // fixed?
 	}
 	
-	public Iterator<Entry<String, Object>> variablesIterator(final Event e) {
+	public Iterator<Pair<String, Object>> variablesIterator(final Event e) {
 		if (!list)
 			throw new SkriptAPIException("");
-		final Object val = getRaw(e);
+		final String name = StringUtils.substring(this.name.toString(e), 0, -1);
+		final Object val = Variables.getVariable(name + "*");
 		if (val == null)
-			return new EmptyIterator<Entry<String, Object>>();
+			return new EmptyIterator<Pair<String, Object>>();
+		assert val instanceof TreeMap;
+		// temporary list to prevent CMEs
 		@SuppressWarnings("unchecked")
-		final Iterator<Entry<String, Object>> iter = ((Map<String, Object>) val).entrySet().iterator();
-		return new Iterator<Entry<String, Object>>() {
-			private Entry<String, Object> next = null;
+		final Iterator<String> keys = new ArrayList<String>(((Map<String, Object>) val).keySet()).iterator();
+		return new Iterator<Pair<String, Object>>() {
+			private String key;
+			private Object next = null;
 			
 			@Override
 			public boolean hasNext() {
 				if (next != null)
 					return true;
-				while (iter.hasNext()) {
-					next = iter.next();
-					if (next.getKey() != null && next.getValue() != null && !(next.getValue() instanceof Map))
-						return true;
+				while (keys.hasNext()) {
+					key = keys.next();
+					if (key != null) {
+						next = Variables.getVariable(name + key);
+						if (next != null)
+							return true;
+					}
 				}
 				next = null;
 				return false;
 			}
 			
 			@Override
-			public Entry<String, Object> next() {
+			public Pair<String, Object> next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
-				final Entry<String, Object> n = next;
+				final Pair<String, Object> n = new Pair<String, Object>(key, next);
 				next = null;
 				return n;
 			}
@@ -302,8 +311,8 @@ public class Variable<T> implements Expression<T> {
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (list)
-			return Utils.array(Object[].class);
-		return Utils.array(Object.class);
+			return CollectionUtils.array(Object[].class);
+		return CollectionUtils.array(Object.class);
 	}
 	
 	@Override

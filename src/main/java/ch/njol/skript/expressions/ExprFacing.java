@@ -38,7 +38,7 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Direction;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -94,7 +94,7 @@ public class ExprFacing extends SimplePropertyExpression<Object, Direction> {
 		if (!Block.class.isAssignableFrom(getExpr().getReturnType()))
 			return null;
 		if (mode == ChangeMode.SET)
-			return Utils.array(Direction.class);
+			return CollectionUtils.array(Direction.class);
 		return null;
 	}
 	

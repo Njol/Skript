@@ -30,6 +30,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**
@@ -110,15 +111,15 @@ public class ItemData implements Serializable, Cloneable {
 	}
 	
 	/**
-	 * Returns <code>Aliases.{@link Aliases#getMaterialName(int, short, short) getMaterialName}(typeid, dataMin, dataMax, false)</code>
+	 * Returns <code>Aliases.{@link Aliases#getMaterialName(int, short, short) getMaterialName}(typeid, dataMin, dataMax, 0)</code>
 	 */
 	@Override
 	public String toString() {
-		return Aliases.getMaterialName(typeid, dataMin, dataMax, false);
+		return Aliases.getMaterialName(typeid, dataMin, dataMax, 0);
 	}
 	
-	public String toString(final boolean debug, final boolean plural) {
-		return debug ? Aliases.getDebugMaterialName(typeid, dataMin, dataMax, plural) : Aliases.getMaterialName(typeid, dataMin, dataMax, plural);
+	public String toString(final boolean debug, final int flags) {
+		return debug ? Aliases.getDebugMaterialName(typeid, dataMin, dataMax, flags) : Aliases.getMaterialName(typeid, dataMin, dataMax, flags);
 	}
 	
 	@Override
@@ -155,9 +156,9 @@ public class ItemData implements Serializable, Cloneable {
 	
 	public ItemStack getRandom() {
 		if (dataMin == -1 && dataMax == -1) {
-			return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid, 1);
+			return new ItemStack(typeid == -1 ? CollectionUtils.getRandom(Material.values(), 1).getId() : typeid, 1);
 		} else {
-			return new ItemStack(typeid == -1 ? Utils.getRandom(Material.values(), 1).getId() : typeid,
+			return new ItemStack(typeid == -1 ? CollectionUtils.getRandom(Material.values(), 1).getId() : typeid,
 					1,
 					(short) (Utils.random(dataMin, dataMax + 1)));
 		}

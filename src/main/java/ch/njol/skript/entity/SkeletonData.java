@@ -27,7 +27,6 @@ import org.bukkit.entity.Skeleton.SkeletonType;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -37,9 +36,9 @@ public class SkeletonData extends EntityData<Skeleton> {
 	
 	static {
 		if (Skript.isRunningMinecraft(1, 4))
-			register(SkeletonData.class, "skeleton", Skeleton.class, "skeleton[s]", "wither skeleton[s]");
+			register(SkeletonData.class, "skeleton", Skeleton.class, "skeleton", "wither skeleton");
 		else
-			register(SkeletonData.class, "skeleton", Skeleton.class, "skeleton[s]");
+			register(SkeletonData.class, "skeleton", Skeleton.class, "skeleton");
 	}
 	
 	private boolean wither;
@@ -48,12 +47,9 @@ public class SkeletonData extends EntityData<Skeleton> {
 		return wither;
 	}
 	
-	private boolean plural;
-	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		wither = matchedPattern == 1;
-		plural = StringUtils.endsWithIgnoreCase(parseResult.expr, "s");
 		return true;
 	}
 	
@@ -86,16 +82,6 @@ public class SkeletonData extends EntityData<Skeleton> {
 	@Override
 	public Class<? extends Skeleton> getType() {
 		return Skeleton.class;
-	}
-	
-	@Override
-	public String toString() {
-		return wither ? "wither skeleton" : "skeleton";
-	}
-	
-	@Override
-	public boolean isPlural() {
-		return plural;
 	}
 	
 	@Override

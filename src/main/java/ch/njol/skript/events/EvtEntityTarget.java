@@ -32,7 +32,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
+@SuppressWarnings({"serial"})
 public class EvtEntityTarget extends SkriptEvent {
 	static {
 		Skript.registerEvent("Target", EvtEntityTarget.class, EntityTargetEvent.class, "[entity] target", "[entity] un[-]target")
@@ -56,7 +56,7 @@ public class EvtEntityTarget extends SkriptEvent {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "entity target";
+		return "entity " + (target ? "" : "un") + "target";
 	}
 	
 }

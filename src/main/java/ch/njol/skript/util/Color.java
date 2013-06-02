@@ -75,15 +75,19 @@ public enum Color {
 	}
 	
 	private final static Map<String, Color> byName = new HashMap<String, Color>();
+	private final static Map<String, Color> byEnglishName = new HashMap<String, Color>();
 	static {
 		Language.addListener(new LanguageChangeListener() {
 			@Override
 			public void onLanguageChange() {
+				final boolean english = byEnglishName.isEmpty();
 				byName.clear();
 				for (final Color c : values()) {
 					c.names = Language.getList("colors." + c.name());
 					for (final String name : c.names) {
 						byName.put(name.toLowerCase(), c);
+						if (english)
+							byEnglishName.put(name.toLowerCase(), c);
 					}
 				}
 			}
@@ -113,6 +117,10 @@ public enum Color {
 	
 	public static final Color byName(final String name) {
 		return byName.get(name.toLowerCase());
+	}
+	
+	public static final Color byEnglishName(final String name) {
+		return byEnglishName.get(name.toLowerCase());
 	}
 	
 	public static final Color byWool(final short data) {

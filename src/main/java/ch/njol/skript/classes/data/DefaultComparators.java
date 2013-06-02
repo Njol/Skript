@@ -38,7 +38,7 @@ import ch.njol.skript.util.StructureType;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -238,7 +238,7 @@ public class DefaultComparators {
 		Comparators.registerComparator(StructureType.class, StructureType.class, new Comparator<StructureType, StructureType>() {
 			@Override
 			public Relation compare(final StructureType s1, final StructureType s2) {
-				return Relation.get(Utils.containsAll(s2.getTypes(), s2.getTypes()));
+				return Relation.get(CollectionUtils.containsAll(s2.getTypes(), s2.getTypes()));
 			}
 			
 			@Override

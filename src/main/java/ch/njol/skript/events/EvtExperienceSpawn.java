@@ -35,6 +35,7 @@ import org.bukkit.plugin.EventExecutor;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.SkriptEventHandler;
 import ch.njol.skript.events.bukkit.ExperienceSpawnEvent;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
@@ -113,9 +114,15 @@ public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 				assert false;
 				return;
 			}
+			
+			SkriptEventHandler.logEventStart(e);
 			for (final Trigger t : triggers) {
+				SkriptEventHandler.logTriggerStart(t);
 				t.execute(es);
+				SkriptEventHandler.logTriggerEnd(t);
 			}
+			SkriptEventHandler.logEventEnd();
+			
 			if (es.isCancelled()) {
 				if (e instanceof BlockExpEvent) {
 					((BlockExpEvent) e).setExpToDrop(0);

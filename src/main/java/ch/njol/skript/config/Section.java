@@ -40,7 +40,7 @@ public class Section {
 			if (Option.class.isAssignableFrom(f.getType())) {
 				try {
 					final Option<?> o = (Option<?>) f.get(this);
-					if (o.name.equals(name))
+					if (o.key.equals(name))
 						return (T) o.value();
 				} catch (final IllegalArgumentException e) {
 					assert false;

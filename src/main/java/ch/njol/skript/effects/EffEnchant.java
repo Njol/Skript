@@ -35,7 +35,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.EnchantmentType;
-import ch.njol.skript.util.Utils;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -61,7 +61,7 @@ public class EffEnchant extends Effect {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		item = (Expression<ItemStack>) exprs[0];
-		if (!Utils.contains(item.acceptChange(ChangeMode.SET), ItemStack.class)) {
+		if (!CollectionUtils.contains(item.acceptChange(ChangeMode.SET), ItemStack.class)) {
 			Skript.error(item + " cannot be changed, thus it cannot be (dis)enchanted");
 			return false;
 		}
