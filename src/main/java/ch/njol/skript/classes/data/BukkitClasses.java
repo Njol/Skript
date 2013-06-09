@@ -440,7 +440,8 @@ public class BukkitClasses {
 		Classes.registerClass(new ClassInfo<OfflinePlayer>(OfflinePlayer.class, "offlineplayer")
 				.user("offline ?players?")
 				.name("Offlineplayer")
-				.description("A player that is possibly offline. See <a href='#player'>player</a> for more information.")
+				.description("A player that is possibly offline. See <a href='#player'>player</a> for more information. " +
+						"Please note that while all effects and conditions that require a player can be used with an offline player as well, they will not work if the player is not actually online.")
 				.usage("")
 				.examples("")
 				.since("")
@@ -738,6 +739,7 @@ public class BukkitClasses {
 				.description("A potion effect, e.g. 'strength' or 'swiftness'.")
 				.usage(StringUtils.join(PotionEffectUtils.getNames(), ", "))
 				.examples("apply swiftness 5 to the player",
+						"apply potion of speed 2 to the player for 60 seconds",
 						"remove invisibility from the victim")
 				.since("")
 				.parser(new Parser<PotionEffectType>() {

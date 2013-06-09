@@ -29,8 +29,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bukkit.plugin.Plugin;
@@ -52,6 +54,9 @@ public class Language {
 	 */
 	public final static int F_PLURAL = 1, F_DEFINITE_ARTICLE = 2, F_INDEFINITE_ARTICLE = 4;
 	
+	/**
+	 * Name of the localized language
+	 */
 	private static String name = "english";
 	
 	static final HashMap<String, String> english = new HashMap<String, String>();
@@ -249,16 +254,25 @@ public class Language {
 		}
 	}
 	
-	// TODO genders do not have to be 'translated'
 	private static void validateLocalized() {
 		HashSet<String> s = new HashSet<String>(english.keySet());
 		s.removeAll(localized.keySet());
+		removeIgnored(s);
 		if (!s.isEmpty() && Skript.logNormal())
 			Skript.warning("The following messages have not been translated to " + name + ": " + StringUtils.join(s, ", "));
 		s = new HashSet<String>(localized.keySet());
 		s.removeAll(english.keySet());
+		removeIgnored(s);
 		if (!s.isEmpty() && Skript.logHigh())
 			Skript.warning("The localized language file(s) have superfluous entries: " + StringUtils.join(s, ", "));
+	}
+	
+	private final static void removeIgnored(final Set<String> keys) {
+		final Iterator<String> i = keys.iterator();
+		while (i.hasNext()) {
+			if (i.next().startsWith(Noun.GENDERS_SECTION))
+				i.remove();
+		}
 	}
 	
 	private final static List<LanguageChangeListener> listeners = new ArrayList<LanguageChangeListener>();
@@ -272,7 +286,9 @@ public class Language {
 	/**
 	 * Registers a listener. The listener will immediately be called if a language has already been loaded.
 	 * <p>
-	 * The first call to a listener is guaranteed to be english even if another language is active, in which case the listener is called twice when registered.
+	 * The first call to a listener is guaranteed to be (pseudo-*)english even if another language is active, in which case the listener is called twice when registered.
+	 * <p>
+	 * * Only this class will be english (i.e. no language listeners are notified) if the current language is not english.
 	 * 
 	 * @param l
 	 */
@@ -296,6 +312,17 @@ public class Language {
 	}
 	
 	/**
+	 * Use this preferably like this:
+	 * 
+	 * <pre>
+	 * final boolean wasLocal = Language.setUseLocal(true / false);
+	 * try {
+	 * 	// whatever
+	 * } finally {
+	 * 	Language.setUseLocal(wasLocal);
+	 * }
+	 * </pre>
+	 * 
 	 * @param b Whether to enable localization or not
 	 * @return Previous state
 	 */

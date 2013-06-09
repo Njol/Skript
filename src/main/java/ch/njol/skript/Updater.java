@@ -333,26 +333,19 @@ public final class Updater {
 			final URLConnection conn = new URL(getFileURL(latest.get().pageURL)).openConnection();
 			zip = new ZipInputStream(conn.getInputStream());
 			ZipEntry entry;
-//			boolean hasConfig = false, hasAliases = false;
+//			boolean hasAliases = false;
 			while ((entry = zip.getNextEntry()) != null) {
 				if (entry.getName().endsWith("Skript.jar")) {
 					assert !hasJar;
 					saveZipEntry(zip, new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
 					hasJar = true;
-				}// else if (entry.getName().endsWith("config.sk")) {
-//					TODO automagically update new config options - use new config and insert old values or insert new entries into the old config?
-//					important: only update config if the jar was successfully extracted!
-//					 --> config could be included in the new jar and updated when the server restarts
-//					assert !hasConfig;
-//					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "config-" + latest.get().version + ".sk"));
-//					hasConfig = true;
-//				} else if (entry.getName().endsWith("aliases.sk")) {
+				}// else if (entry.getName().endsWith("aliases.sk")) {
 //					assert !hasAliases;
 //					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "aliases-" + latest.get().version + ".sk"));
 //					hasAliases = true;
 //				}
 				zip.closeEntry();
-				if (hasJar)// && hasConfig && hasAliases)
+				if (hasJar)// && hasAliases)
 					break;
 			}
 			if (isAutomatic)

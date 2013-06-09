@@ -91,17 +91,17 @@ public class DefaultChangers {
 	};
 	
 	@SuppressWarnings("serial")
-	public final static SerializableChanger<Entity, Object[]> entityChanger = new SerializableChanger<Entity, Object[]>() {
+	public final static SerializableChanger<Entity, Object> entityChanger = new SerializableChanger<Entity, Object>() {
 		@SuppressWarnings("unchecked")
 		@Override
-		public Class<? extends Object[]>[] acceptChange(final ChangeMode mode) {
+		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
 			switch (mode) {
 				case ADD:
-					return CollectionUtils.array(ItemType[].class, Experience[].class);
+					return CollectionUtils.array(ItemType[].class, Inventory.class, Experience[].class);
 				case DELETE:
 					return CollectionUtils.array();
 				case REMOVE:
-					return CollectionUtils.array(ItemType[].class, PotionEffectType[].class);
+					return CollectionUtils.array(PotionEffectType[].class, ItemType[].class, Inventory.class);
 				case SET:
 					return null;
 			}
@@ -111,8 +111,9 @@ public class DefaultChangers {
 		
 		@SuppressWarnings("deprecation")
 		@Override
-		public void change(final Entity[] entities, final Object[] delta, final ChangeMode mode) {
+		public void change(final Entity[] entities, final Object delta, final ChangeMode mode) {
 			if (delta instanceof PotionEffectType[]) {
+				assert mode == ChangeMode.REMOVE;
 				for (final Entity e : entities) {
 					if (!(e instanceof LivingEntity))
 						continue;
@@ -124,27 +125,50 @@ public class DefaultChangers {
 					if (!(e instanceof Player)) {
 						if (mode == ChangeMode.DELETE)
 							e.remove();
-						continue;
-					}
-					if (mode == ChangeMode.DELETE)
-						continue;
-					if (delta instanceof Experience[]) {
-						int xp = 0;
-						for (final Experience x : (Experience[]) delta)
-							xp += x.getXP();
-						((Player) e).giveExp(xp);
 					} else {
-						final PlayerInventory invi = ((Player) e).getInventory();
-						for (final ItemType type : (ItemType[]) delta) {
+						if (mode == ChangeMode.DELETE)
+							continue;
+						Player p = (Player) e;
+						if (delta instanceof Experience[]) {
+							int xp = 0;
+							for (final Experience x : (Experience[]) delta)
+								xp += x.getXP();
+							p.giveExp(xp);
+						} else if (delta instanceof Inventory) {
+							final PlayerInventory invi = p.getInventory();
 							if (mode == ChangeMode.ADD)
-								type.addTo(invi);
+								invi.addItem(((Inventory) delta).getContents());
 							else
-								type.removeFrom(invi);
+								invi.removeItem(((Inventory) delta).getContents());
+							p.updateInventory();
+						} else {
+							final PlayerInventory invi = p.getInventory();
+							for (final ItemType type : (ItemType[]) delta) {
+								if (mode == ChangeMode.ADD)
+									type.addTo(invi);
+								else
+									type.removeFrom(invi);
+							}
+							p.updateInventory();
 						}
-						((Player) e).updateInventory();
 					}
 				}
 			}
+		}
+	};
+	
+	@SuppressWarnings("serial")
+	public final static SerializableChanger<Player, Object> playerChanger = new SerializableChanger<Player, Object>() {
+		@Override
+		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
+			if (mode == ChangeMode.DELETE)
+				return null;
+			return entityChanger.acceptChange(mode);
+		}
+		
+		@Override
+		public void change(final Player[] players, final Object delta, final ChangeMode mode) {
+			entityChanger.change(players, delta, mode);
 		}
 	};
 	
@@ -160,50 +184,11 @@ public class DefaultChangers {
 		
 		@Override
 		public void change(final Entity[] entities, final Object delta, final ChangeMode mode) {
+			assert mode == ChangeMode.DELETE;
 			for (final Entity e : entities) {
 				if (e instanceof Player)
 					continue;
 				e.remove();
-			}
-		}
-	};
-	
-	@SuppressWarnings("serial")
-	public final static SerializableChanger<Player, Object> playerChanger = new SerializableChanger<Player, Object>() {
-		@SuppressWarnings("unchecked")
-		@Override
-		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
-			if (mode == ChangeMode.SET || mode == ChangeMode.DELETE)
-				return null;
-			if (mode == ChangeMode.ADD)
-				return CollectionUtils.array(ItemType[].class, Inventory.class, Experience.class);
-			else
-				return CollectionUtils.array(ItemType[].class, Inventory.class);
-		}
-		
-		@SuppressWarnings("deprecation")
-		@Override
-		public void change(final Player[] players, final Object delta, final ChangeMode mode) {
-			for (final Player p : players) {
-				final PlayerInventory invi = p.getInventory();
-				if (delta instanceof Inventory) {
-					if (mode == ChangeMode.ADD)
-						invi.addItem(((Inventory) delta).getContents());
-					else
-						invi.removeItem(((Inventory) delta).getContents());
-					p.updateInventory();
-				} else if (delta instanceof Experience) {
-					assert mode == ChangeMode.ADD;
-					p.giveExp(((Experience) delta).getXP());
-				} else {
-					for (final ItemType type : (ItemType[]) delta) {
-						if (mode == ChangeMode.ADD)
-							type.addTo(invi);
-						else
-							type.removeFrom(invi);
-					}
-					p.updateInventory();
-				}
 			}
 		}
 	};

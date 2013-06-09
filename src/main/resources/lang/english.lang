@@ -131,7 +131,7 @@ updater:
 	downloading: Downloading Skript <gold>%s<reset>...
 	download in progress: The latest version of Skript is currently being downloaded.
 	download error: <red>There was an error downloading the latest version of Skript:<light red> %s
-	downloaded: The latest version of Skript has been downloaded! Restart the server or use /reload to apply the changes. The (possibly unchanged) new config.sk and aliases.sk have been downloaded as config-%1$s.sk and aliases-%1$s-sk.
+	downloaded: The latest version of Skript has been downloaded! Restart the server or use /reload to apply the changes.
 	internal error: An internal error occurred while checking for the latest version of Skript. Please refer to the server log for details.
 
 # -- Commands --

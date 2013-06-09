@@ -102,7 +102,6 @@ public class EffTeleport extends Effect {
 	}
 	
 	/**
-	 * 
 	 * @param yaw Notch-yaw
 	 * @param pitch Notch-pitch
 	 * @return

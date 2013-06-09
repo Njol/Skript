@@ -37,8 +37,10 @@ import ch.njol.util.StringUtils;
  */
 public class Noun extends Message {
 	
-	public final static int PLURAL = -2, NO_GENDER = -3; // -1 is sometimes used at 'not set'
-	public final static String PLURAL_STRING = "x", NO_GENDER_STRING = "-";
+	public final static String GENDERS_SECTION = "genders.";
+	
+	public final static int PLURAL = -2, NO_GENDER = -3; // -1 is sometimes used as 'not set'
+	public final static String PLURAL_TOKEN = "x", NO_GENDER_TOKEN = "-";
 	
 	private String singular, plural;
 	private int gender = 0;
@@ -214,9 +216,9 @@ public class Noun extends Message {
 	 * @return
 	 */
 	private static int getGender(final String gender, final String key) {
-		if (gender.equalsIgnoreCase(PLURAL_STRING))
+		if (gender.equalsIgnoreCase(PLURAL_TOKEN))
 			return PLURAL;
-		if (gender.equalsIgnoreCase(NO_GENDER_STRING))
+		if (gender.equalsIgnoreCase(NO_GENDER_TOKEN))
 			return NO_GENDER;
 		final Integer i = genders.get(gender);
 		if (i != null)
@@ -227,9 +229,9 @@ public class Noun extends Message {
 	
 	public final static String getGenderID(final int gender) {
 		if (gender == PLURAL)
-			return PLURAL_STRING;
+			return PLURAL_TOKEN;
 		if (gender == NO_GENDER)
-			return NO_GENDER_STRING;
+			return NO_GENDER_TOKEN;
 		return (Language.useLocal && Language.localized != null ? Language.localized : Language.english).get("genders." + gender + ".id");
 	}
 	
@@ -262,17 +264,17 @@ public class Noun extends Message {
 				indefiniteArticles.clear();
 				definiteArticles.clear();
 				for (int i = 0; i < 100; i++) {
-					final String g = lang.get("genders." + i + ".id");
+					final String g = lang.get(GENDERS_SECTION + i + ".id");
 					if (g == null)
 						break;
-					if (g.equalsIgnoreCase(PLURAL_STRING) || g.equalsIgnoreCase(NO_GENDER_STRING)) {
+					if (g.equalsIgnoreCase(PLURAL_TOKEN) || g.equalsIgnoreCase(NO_GENDER_TOKEN)) {
 						Skript.error("gender #" + i + " uses a reserved character as ID, please use something different!");
 						continue;
 					}
 					genders.put(g, i);
-					final String ia = lang.get("genders." + i + ".indefinite article");
+					final String ia = lang.get(GENDERS_SECTION + i + ".indefinite article");
 					indefiniteArticles.add(ia == null ? "" : ia);
-					final String da = lang.get("genders." + i + ".definite article");
+					final String da = lang.get(GENDERS_SECTION + i + ".definite article");
 					definiteArticles.add(da == null ? "" : da);
 				}
 				if (genders.isEmpty()) {
@@ -280,7 +282,9 @@ public class Noun extends Message {
 					indefiniteArticles.add("");
 					definiteArticles.add("");
 				}
-				final String dpa = lang.get("gender.plural.definite article");
+				final String dpa = lang.get(GENDERS_SECTION+"plural.definite article");
+				if (dpa == null)
+					Skript.error("Missing entry '"+GENDERS_SECTION+"plural.definite article' in the "+Language.getName()+" language file!");
 				definitePluralArticle = dpa == null ? "" : dpa;
 			}
 		}, LanguageListenerPriority.EARLIEST);

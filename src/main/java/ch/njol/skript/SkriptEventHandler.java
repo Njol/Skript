@@ -22,6 +22,7 @@
 package ch.njol.skript;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +36,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Result;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -224,32 +226,72 @@ public abstract class SkriptEventHandler {
 			((SelfRegisteringSkriptEvent) t.getEvent()).unregisterAll();
 		}
 		selfRegisteredTriggers.clear();
+//		unregisterEvents();
 	}
 	
 	/**
-	 * As it's difficult to unregister events with Bukkit this set is used to prevent that any event will ever be registered more than once when reloading.
-	 * <p>
-	 * Subclasses of these events will not be registered, but superclasses can, resulting in a few superflouous registrations. //TODO improve?
+	 * Stores which events are currently registered with Bukkit
 	 */
 	private final static Set<Class<? extends Event>> registeredEvents = new HashSet<Class<? extends Event>>();
+	private final static Listener listener = new Listener() {};
 	
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	final static void registerBukkitEvents() {
-		final Listener l = new Listener() {};
 		for (final Class<? extends Event> e : triggers.keySet()) {
 			if (!containsSuperclass((Set) registeredEvents, e)) { // I just love Java's generics
-				Bukkit.getPluginManager().registerEvent(e, l, SkriptConfig.defaultEventPriority.value(), ee, Skript.getInstance());
+				Bukkit.getPluginManager().registerEvent(e, listener, SkriptConfig.defaultEventPriority.value(), ee, Skript.getInstance());
 				registeredEvents.add(e);
+//				for (final Iterator<Class<? extends Event>> i = registeredEvents.iterator(); i.hasNext();) {
+//					final Class<? extends Event> ev = i.next();
+//					if (e.isAssignableFrom(ev)) {
+//						if (unregisterEvent(ev))
+//							i.remove();
+//					}
+//				}
 			}
 		}
 	}
 	
 	public final static boolean containsSuperclass(final Set<Class<?>> classes, final Class<?> c) {
+		if (classes.contains(c))
+			return true;
 		for (final Class<?> cl : classes) {
 			if (cl.isAssignableFrom(c))
 				return true;
 		}
 		return false;
 	}
+	
+//	private final static void unregisterEvents() {
+//		for (final Iterator<Class<? extends Event>> i = registeredEvents.iterator(); i.hasNext();) {
+//			if (unregisterEvent(i.next()))
+//				i.remove();
+//		}
+//	}
+//	
+//	private final static boolean unregisterEvent(Class<? extends Event> event) {
+//		try {
+//			Method m = null;
+//			while (m == null) {
+//				try {
+//					m = event.getDeclaredMethod("getHandlerList");
+//				} catch (NoSuchMethodException e) {
+//					event = (Class<? extends Event>) event.getSuperclass();
+//					if (event == Event.class) {
+//						assert false;
+//						return false;
+//					}
+//				}
+//			}
+//			m.setAccessible(true);
+//			final HandlerList l = (HandlerList) m.invoke(null);
+//			l.unregister(listener);
+//			return true;
+//		} catch (final Exception e) {
+//			if (Skript.testing())
+//				e.printStackTrace();
+//		}
+//		return false;
+//	}
 	
 }

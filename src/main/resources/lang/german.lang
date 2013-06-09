@@ -133,7 +133,7 @@ updater:
 	downloading: Lädt Skript <gold>%s<reset> herunter...
 	download in progress: Die neueste Version wird gerade heruntergeladen.
 	download error: <red>Beim Herunterladen der neuesten Version ist ein Fehler aufgetreten:<light red> %s
-	downloaded: Die neueste Version von Skript wurde heruntergeladen! Starte den Server neu oder benutze /reload um die Änderungen zu übernehmen. Die (möglicherweise unveränderten) neuen config.sk und aliases.sk wurden als config-%1$s.sk und aliases-%1$s.sk heruntergeladen.
+	downloaded: Die neueste Version von Skript wurde heruntergeladen! Starte den Server neu oder benutze /reload um die Änderungen zu übernehmen.
 	internal error: Während der Überprüfung auf eine neue Version ist ein interner Fehler aufgetreten. Im Server-Log finden sich weitere Informationen.
 
 # -- Commands --
@@ -663,13 +663,13 @@ boolean:
 types:
 	# Java
 	object: Objekt¦e @n
-	number: Nummer¦n @f
+	number: Zahl¦en @f
 	integer: ganze Zahl¦en @f
 	long: ganze Zahl¦en @f
 	short: ganze Zahl¦en @f
 	byte: ganze Zahl¦en @f
-	double: Nummer¦n @f
-	float: Nummer¦n @f
+	double: Zahl¦en @f
+	float: Zahl¦en @f
 	boolean: boolesche¦r Wert (ja/nein)¦ Werte (ja/nein) @m
 	string: Text¦e @m
 	chunk: Chunk¦s @m
@@ -689,7 +689,7 @@ types:
 	gamemode: Spiel¦modus¦modi @n
 	itemstack: Gegen¦stand¦stände @m
 	biome: Biom¦e @m
-	potioneffecttype: ¦Trank¦Tränke @m
+	potioneffecttype: Tr¦ank¦änke @m
 	enchantment: Verzauberung¦en @f
 	
 	# Skript

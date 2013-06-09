@@ -64,6 +64,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.localization.ArgsMessage;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
@@ -123,14 +124,10 @@ public abstract class Commands {
 	
 	public static List<Argument<?>> currentArguments = null;
 	
-	private final static String escape = Pattern.quote("(|)<>%\\");
+	private final static Pattern escape = Pattern.compile("["+Pattern.quote("(|)<>%\\")+"]");
 	
 	private final static String escape(final String s) {
-		return s.replaceAll("[" + escape + "]", "\\\\$0");
-	}
-	
-	private final static String unescape(final String s) {
-		return s.replaceAll("\\\\[" + escape + "]", "$0");
+		return escape.matcher(s).replaceAll("\\\\$0");
 	}
 	
 	private final static Listener commandListener = new Listener() {
@@ -306,66 +303,76 @@ public abstract class Commands {
 		final boolean a = m.matches();
 		assert a;
 		
-		final String command = m.group(1);
+		final String command = m.group(1).toLowerCase();
 		final ScriptCommand existingCommand = commands.get(command);
-		if (existingCommand != null && existingCommand.getName().equals(command)) {
+		if (existingCommand != null && existingCommand.getLabel().equals(command)) {
 			Skript.error("A command with the name /" + command + " is already defined in " + existingCommand.getScript().getName());
 			return null;
 		}
 		
 		final String arguments = m.group(3) == null ? "" : m.group(3);
 		final StringBuilder pattern = new StringBuilder();
+		final StringBuilder desc = new StringBuilder("/" + m.group(1) + " ");
 		
 		currentArguments = new ArrayList<Argument<?>>();
 		m = Pattern.compile("<([a-zA-Z -]+?)\\s*(=\\s*(" + SkriptParser.wildcard + "))?>").matcher(arguments);
 		int lastEnd = 0;
 		int optionals = 0;
-		for (int i = 0; m.find(); i++) {
-			pattern.append(escape(arguments.substring(lastEnd, m.start())));
-			optionals += StringUtils.count(arguments, '[', lastEnd, m.start());
-			optionals -= StringUtils.count(arguments, ']', lastEnd, m.start());
-			
-			lastEnd = m.end();
-			
-			ClassInfo<?> c;
-			c = Classes.getClassInfoFromUserInput(m.group(1));
-			final Pair<String, Boolean> p = Utils.getEnglishPlural(m.group(1));
-			if (c == null)
-				c = Classes.getClassInfoFromUserInput(p.first);
-			if (c == null) {
-				Skript.error("unknown type '" + m.group(1) + "'");
-				return null;
+		final boolean wasLocal = Language.setUseLocal(true); // use localized class names in desc
+		try {
+			for (int i = 0; m.find(); i++) {
+				pattern.append(escape(arguments.substring(lastEnd, m.start())));
+				desc.append(arguments.substring(lastEnd, m.start()));
+				optionals += StringUtils.count(arguments, '[', lastEnd, m.start());
+				optionals -= StringUtils.count(arguments, ']', lastEnd, m.start());
+				
+				lastEnd = m.end();
+				
+				ClassInfo<?> c;
+				c = Classes.getClassInfoFromUserInput(m.group(1));
+				final Pair<String, Boolean> p = Utils.getEnglishPlural(m.group(1));
+				if (c == null)
+					c = Classes.getClassInfoFromUserInput(p.first);
+				if (c == null) {
+					Skript.error("unknown type '" + m.group(1) + "'");
+					return null;
+				}
+				if (c.getParser() == null || !c.getParser().canParse(ParseContext.COMMAND)) {
+					Skript.error("can't use " + m.group(1) + " as argument of a command");
+					return null;
+				}
+				
+				final Argument<?> arg = Argument.newInstance(c.getC(), m.group(3), i, !p.second, optionals > 0);
+				if (arg == null)
+					return null;
+				currentArguments.add(arg);
+				
+				if (arg.isOptional() && optionals == 0) {
+					pattern.append('[');
+					desc.append('[');
+					optionals++;
+				}
+				pattern.append("%" + (arg.isOptional() ? "-" : "") + Utils.toEnglishPlural(c.getCodeName(), p.second) + "%");
+				desc.append("<" + c.getName().toString(p.second) + ">");
 			}
-			if (c.getParser() == null || !c.getParser().canParse(ParseContext.COMMAND)) {
-				Skript.error("can't use " + m.group(1) + " as argument of a command");
-				return null;
-			}
-			
-			final Argument<?> arg = Argument.newInstance(c.getC(), m.group(3), i, !p.second, optionals > 0);
-			if (arg == null)
-				return null;
-			currentArguments.add(arg);
-			
-			if (arg.isOptional() && optionals == 0) {
-				pattern.append('[');
-				optionals++;
-			}
-			pattern.append("%" + (arg.isOptional() ? "-" : "") + Utils.toEnglishPlural(c.getCodeName(), p.second) + "%");
+		} finally {
+			Language.setUseLocal(wasLocal);
 		}
 		
 		pattern.append(escape(arguments.substring(lastEnd)));
 		optionals += StringUtils.count(arguments, '[', lastEnd);
 		optionals -= StringUtils.count(arguments, ']', lastEnd);
-		for (int i = 0; i < optionals; i++)
-			pattern.append("]");
+		for (int i = 0; i < optionals; i++) {
+			pattern.append(']');
+			desc.append(']');
+		}
 		
 		node.convertToEntries(0);
 		commandStructure.validate(node);
 		if (!(node.get("trigger") instanceof SectionNode))
 			return null;
 		
-		final String desc = "/" + command + " " + unescape(pattern.toString().replaceAll("%-?(.+?)%", "<$1>"));
-		final String usage = ScriptLoader.replaceOptions(node.get("usage", desc));
+		final String usage = ScriptLoader.replaceOptions(node.get("usage", desc.toString()));
 		final String description = ScriptLoader.replaceOptions(node.get("description", ""));
 		List<String> aliases = Arrays.asList(ScriptLoader.replaceOptions(node.get("aliases", "")).split("\\s*,\\s*/?"));
 		if (aliases.get(0).startsWith("/"))
@@ -383,7 +390,7 @@ public abstract class Commands {
 			} else if (b.equalsIgnoreCase("players") || b.equalsIgnoreCase("player")) {
 				executableBy |= ScriptCommand.PLAYERS;
 			} else {
-				Skript.warning("'executable by' should be either be 'players', 'console' or both, but found '" + b + "'");
+				Skript.warning("'executable by' should be either be 'players', 'console', or both, but found '" + b + "'");
 			}
 		}
 		

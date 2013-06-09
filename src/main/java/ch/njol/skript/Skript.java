@@ -43,14 +43,11 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.bukkit.event.EventException;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerCommandEvent;
-import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import ch.njol.skript.Metrics.Graph;
@@ -213,36 +210,11 @@ public final class Skript extends JavaPlugin implements Listener {
 		if (logNormal())
 			info(" " + Language.get("skript.copyright"));
 		
-		if (Skript.testing()) {
-			// TODO check whether any events occur before scripts are loaded
-			final EventExecutor executor = new EventExecutor() {
-				private boolean check = true;
-				{
-					Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.this, new Runnable() {
-						@Override
-						public void run() {
-							check = false;
-						}
-					});
-				}
-				
-				@Override
-				public void execute(final Listener listener, final Event event) throws EventException {
-					if (check) {
-						error("missed event: " + event.getEventName());
-					}
-				}
-			};
-			for (final SkriptEventInfo<?> event : events) {
-				for (final Class<? extends Event> e : event.events)
-					Bukkit.getPluginManager().registerEvent(e, new Listener() {}, EventPriority.LOWEST, executor, this);
-			}
-		}
-		
-		// TODO make this execute just after the last plugin is loaded
+		final long tick = testing() ? Bukkit.getWorlds().get(0).getFullTime() : 0;
 		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 			@Override
 			public void run() {
+				assert Bukkit.getWorlds().get(0).getFullTime() == tick;
 				
 				// load hooks
 				try {

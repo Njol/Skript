@@ -216,7 +216,7 @@ public class Variable<T> implements Expression<T> {
 					key = keys.next();
 					if (key != null) {
 						next = Variables.getVariable(name + key);
-						if (next != null)
+						if (next != null && !(next instanceof TreeMap))
 							return true;
 					}
 				}
