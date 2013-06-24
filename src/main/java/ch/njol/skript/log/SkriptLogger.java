@@ -41,7 +41,7 @@ public abstract class SkriptLogger {
 	
 	static boolean debug;
 	
-	public final static Logger LOGGER = Bukkit.getServer() != null ? Bukkit.getLogger() : Logger.getGlobal(); // cannot use Bukkit in tests
+	public final static Logger LOGGER = Bukkit.getServer() != null ? Bukkit.getLogger() : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME); // cannot use Bukkit in tests
 	
 	private final static HandlerList handlers = new HandlerList();
 	
