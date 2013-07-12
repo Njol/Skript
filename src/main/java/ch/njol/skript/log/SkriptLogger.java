@@ -48,7 +48,7 @@ public abstract class SkriptLogger {
 		private static final long serialVersionUID = 8959282461654206205L;
 	};
 	
-	public final static Logger LOGGER = Bukkit.getServer() != null ? Bukkit.getLogger() : Logger.getGlobal(); // cannot use Bukkit in tests
+	public final static Logger LOGGER = Bukkit.getServer() != null ? Bukkit.getLogger() : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME); // cannot use Bukkit in tests
 	
 	private final static HandlerList handlers = new HandlerList();
 	

@@ -36,35 +36,38 @@ import ch.njol.skript.localization.LanguageChangeListener;
 @SuppressWarnings("deprecation")
 public enum Color {
 	
-	BLACK(DyeColor.BLACK, ChatColor.BLACK),
-	DARK_GREY(DyeColor.GRAY, ChatColor.DARK_GRAY),
-	LIGHT_GREY(DyeColor.SILVER, ChatColor.GRAY),
-	WHITE(DyeColor.WHITE, ChatColor.WHITE),
+	BLACK(DyeColor.BLACK, ChatColor.BLACK, org.bukkit.Color.BLACK),
+	DARK_GREY(DyeColor.GRAY, ChatColor.DARK_GRAY, org.bukkit.Color.GRAY),
+	LIGHT_GREY(DyeColor.SILVER, ChatColor.GRAY, org.bukkit.Color.SILVER),
+	WHITE(DyeColor.WHITE, ChatColor.WHITE, org.bukkit.Color.WHITE),
 	
-	DARK_BLUE(DyeColor.BLUE, ChatColor.DARK_BLUE),
-	BROWN(DyeColor.BROWN, ChatColor.BLUE),
-	DARK_CYAN(DyeColor.CYAN, ChatColor.DARK_AQUA),
-	LIGHT_CYAN(DyeColor.LIGHT_BLUE, ChatColor.AQUA),
+	DARK_BLUE(DyeColor.BLUE, ChatColor.DARK_BLUE, org.bukkit.Color.BLUE),
+	BROWN(DyeColor.BROWN, ChatColor.BLUE, org.bukkit.Color.MAROON),
+	DARK_CYAN(DyeColor.CYAN, ChatColor.DARK_AQUA, org.bukkit.Color.TEAL),
+	LIGHT_CYAN(DyeColor.LIGHT_BLUE, ChatColor.AQUA, org.bukkit.Color.AQUA),
 	
-	DARK_GREEN(DyeColor.GREEN, ChatColor.DARK_GREEN),
-	LIGHT_GREEN(DyeColor.LIME, ChatColor.GREEN),
+	DARK_GREEN(DyeColor.GREEN, ChatColor.DARK_GREEN, org.bukkit.Color.GREEN),
+	LIGHT_GREEN(DyeColor.LIME, ChatColor.GREEN, org.bukkit.Color.LIME),
 	
-	YELLOW(DyeColor.YELLOW, ChatColor.YELLOW),
-	ORANGE(DyeColor.ORANGE, ChatColor.GOLD),
+	YELLOW(DyeColor.YELLOW, ChatColor.YELLOW, org.bukkit.Color.YELLOW),
+	ORANGE(DyeColor.ORANGE, ChatColor.GOLD, org.bukkit.Color.ORANGE),
 	
-	DARK_RED(DyeColor.RED, ChatColor.DARK_RED),
-	LIGHT_RED(DyeColor.PINK, ChatColor.RED),
+	DARK_RED(DyeColor.RED, ChatColor.DARK_RED, org.bukkit.Color.RED),
+	LIGHT_RED(DyeColor.PINK, ChatColor.RED, org.bukkit.Color.FUCHSIA),
 	
-	DARK_PURPLE(DyeColor.PURPLE, ChatColor.DARK_PURPLE),
-	LIGHT_PURPLE(DyeColor.MAGENTA, ChatColor.LIGHT_PURPLE), ;
+	DARK_PURPLE(DyeColor.PURPLE, ChatColor.DARK_PURPLE, org.bukkit.Color.PURPLE),
+	LIGHT_PURPLE(DyeColor.MAGENTA, ChatColor.LIGHT_PURPLE, org.bukkit.Color.FUCHSIA), 
+	;
 	
 	private final DyeColor wool;
 	private final ChatColor chat;
+	private final org.bukkit.Color bukkit;
 	private String[] names = null;
 	
-	private Color(final DyeColor wool, final ChatColor chat) {
+	private Color(final DyeColor wool, final ChatColor chat, final org.bukkit.Color bukkit) {
 		this.wool = wool;
 		this.chat = chat;
+		this.bukkit = bukkit;
 	}
 	
 	private final static Color[] byWool = new Color[16];
@@ -137,6 +140,10 @@ public enum Color {
 	
 	public static final Color byWoolColor(final DyeColor color) {
 		return byWool(color.getData());
+	}
+	
+	public final org.bukkit.Color getBukkitColor() {
+		return bukkit;
 	}
 	
 }
