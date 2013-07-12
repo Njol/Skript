@@ -33,7 +33,7 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.util.StringMode;
 import ch.njol.util.Kleenean;
 
@@ -67,7 +67,7 @@ public class EffCommand extends Effect {
 			senders = (Expression<CommandSender>) vars[0];
 			commands = (Expression<String>) vars[1];
 		}
-		VariableString.setStringMode(commands, StringMode.COMMAND);
+		commands = VariableString.setStringMode(commands, StringMode.COMMAND);
 		return true;
 	}
 	

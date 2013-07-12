@@ -174,11 +174,6 @@ public class ClassInfo<T> implements Debuggable {
 	}
 	
 	/**
-	 * Use this as {@link #usage(String...)} to generate the usage from the names of the enum constants of this class
-	 */
-	public final static String ENUM_USAGE = new String();
-	
-	/**
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param usage
@@ -186,17 +181,7 @@ public class ClassInfo<T> implements Debuggable {
 	 */
 	public ClassInfo<T> usage(final String... usage) {
 		assert this.usage == null;
-		if (usage != null && usage.length == 1 && usage[0] == ENUM_USAGE) {
-			final Object[] os = c.getEnumConstants();
-			final StringBuilder b = new StringBuilder(os[0].toString().toLowerCase().replace('_', ' '));
-			for (int i = 1; i < os.length; i++) {
-				b.append(", ");
-				b.append(os[i].toString().toLowerCase().replace('_', ' '));
-			}
-			this.usage = new String[] {b.toString()};
-		} else {
-			this.usage = usage;
-		}
+		this.usage = usage;
 		return this;
 	}
 	

@@ -41,6 +41,7 @@ public abstract class Node {
 	 */
 	protected String orig;
 	protected boolean modified = false;
+	private final boolean debug;
 	
 	protected final SectionNode parent;
 	protected final Config config;
@@ -50,6 +51,7 @@ public abstract class Node {
 		config = parent.getConfig();
 		this.parent = parent;
 		this.orig = orig;
+		debug = orig.endsWith("#DEBUG#");
 		this.lineNum = lineNum;
 		SkriptLogger.setNode(this);
 	}
@@ -59,13 +61,12 @@ public abstract class Node {
 		config = parent.getConfig();
 		this.parent = parent;
 		orig = r.getLine();
+		debug = orig.endsWith("#DEBUG#");
 		lineNum = r.getLineNum();
 		SkriptLogger.setNode(this);
 	}
 	
 	/**
-	 * Main node constructor.
-	 * <p>
 	 * Reserved for {@link SectionNode#SectionNode(Config)}
 	 * 
 	 * @param c
@@ -73,6 +74,7 @@ public abstract class Node {
 	protected Node(final Config c) {
 		key = null;
 		orig = null;
+		debug = false;
 		lineNum = -1;
 		config = c;
 		parent = null;
@@ -84,6 +86,7 @@ public abstract class Node {
 		config = parent.getConfig();
 		this.parent = parent;
 		orig = null;
+		debug = false;
 		lineNum = -1;
 		SkriptLogger.setNode(this);
 	}
@@ -234,4 +237,9 @@ public abstract class Node {
 			return config.getFileName();
 		return getOrig().trim() + " (" + getConfig().getFileName() + ", line " + getLine() + ")";
 	}
+	
+	public boolean debug() {
+		return debug;
+	}
+	
 }

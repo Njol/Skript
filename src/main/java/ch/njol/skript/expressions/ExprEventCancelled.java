@@ -102,9 +102,4 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 		return true;
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

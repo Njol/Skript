@@ -34,7 +34,6 @@ import ch.njol.util.CollectionUtils;
  */
 @SuppressWarnings("serial")
 public class VillagerData extends EntityData<Villager> {
-	
 	static {
 		// professions in order!
 		// FARMER(0), LIBRARIAN(1), PRIEST(2), BLACKSMITH(3), BUTCHER(4);
@@ -48,6 +47,12 @@ public class VillagerData extends EntityData<Villager> {
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (matchedPattern > 0)
 			profession = Profession.getProfession(matchedPattern - 1);
+		return true;
+	}
+	
+	@Override
+	protected boolean init(final Class<? extends Villager> c, final Villager e) {
+		profession = e == null ? null : e.getProfession();
 		return true;
 	}
 	
@@ -110,10 +115,15 @@ public class VillagerData extends EntityData<Villager> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Villager> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof VillagerData)
 			return profession == null || ((VillagerData) e).profession == profession;
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new VillagerData();
 	}
 	
 }

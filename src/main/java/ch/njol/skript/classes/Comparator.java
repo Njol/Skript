@@ -172,6 +172,22 @@ public interface Comparator<T1, T2> extends Serializable {
 		public boolean isEqualOrInverse() {
 			return this == Relation.EQUAL || this == Relation.NOT_EQUAL;
 		}
+		
+		public int getRelation() {
+			switch (this) {
+				case EQUAL:
+				case NOT_EQUAL:
+					return 0;
+				case GREATER:
+				case GREATER_OR_EQUAL:
+					return 1;
+				case SMALLER:
+				case SMALLER_OR_EQUAL:
+					return -1;
+			}
+			assert false;
+			return 0;
+		}
 	}
 	
 	/**
@@ -217,8 +233,8 @@ public interface Comparator<T1, T2> extends Serializable {
 	/**
 	 * Compares the given objects which may not be null. Returning GREATER/SMALLER means that the first parameter is greater/smaller.
 	 * 
-	 * @param o1
-	 * @param o2
+	 * @param o1 Non-null object
+	 * @param o2 Non-null object
 	 * @return the relation of the obects.
 	 */
 	public Relation compare(T1 o1, T2 o2);

@@ -55,9 +55,9 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings({"rawtypes", "serial"})
-public abstract class EntityData<E extends Entity> implements SyntaxElement {
-	
-	// must be here to be initialized before 'new SimpleLiteral' is called in the register block below
+public abstract class EntityData<E extends Entity> implements SyntaxElement {// TODO baby animals // TODO unit
+
+	// must be here to be initialised before 'new SimpleLiteral' is called in the register block below
 	private static final List<EntityDataInfo<?>> infos = new ArrayList<EntityDataInfo<?>>();
 	
 	public static Serializer<EntityData> serializer = new Serializer<EntityData>() {
@@ -78,10 +78,10 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 			try {
 				d = i.c.newInstance();
 			} catch (final Exception e) {
-				e.printStackTrace();
+				Skript.exception(e, "Can't create an instance of " + i.c.getCanonicalName());
 				return null;
 			}
-			if (!d.deserialize(s))
+			if (!d.deserialize(split[1]))
 				return null;
 			return d;
 		}
@@ -97,7 +97,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 				.user("entity ?types?")
 				.name("Entity Type")
 				.description("The type of an <a href='#entity'>entity</a>, e.g. player, wolf, powered creeper, etc.")
-				.usage("<i>Detailled usage will be added eventually</i>")
+				.usage("<i>Detailed usage will be added eventually</i>")
 				.examples("victim is a cow",
 						"spawn a creeper")
 				.since("1.3")
@@ -258,35 +258,34 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 		return list.toArray((E[]) Array.newInstance(type, list.size()));
 	}
 	
-	@SuppressWarnings("unchecked")
-	public static <E extends Entity> EntityData<? super E> fromClass(final Class<E> c) {
-		assert c != null;
-		if (!c.isInterface()) {
-			for (final Class<?> i : c.getInterfaces()) {
-				if (Entity.class.isAssignableFrom(i))
-					return fromClass((Class<E>) i);
-			}
-			return null;
-		}
+	private static <E extends Entity> EntityData<? super E> getData(final Class<E> c, final E e) {
+		assert c == null ^ e == null;
+		assert c == null || c.isInterface();
 		for (final EntityDataInfo<?> info : infos) {
-			if (info.entityClass != Entity.class && info.entityClass.isAssignableFrom(c)) {
+			if (info.entityClass != Entity.class && (e == null ? info.entityClass.isAssignableFrom(c) : info.entityClass.isInstance(e))) {
 				try {
-					return (EntityData<E>) info.c.newInstance();
-				} catch (final Exception e) {
-					Skript.exception(e);
+					final EntityData<E> d = (EntityData<E>) info.c.newInstance();
+					if (d.init(c, e))
+						return d;
+				} catch (final Exception ex) {
+					Skript.exception(ex);
 					return null;
 				}
 			}
 		}
-		return new SimpleEntityData(c);
+		return e == null ? new SimpleEntityData(c) : new SimpleEntityData(e);
+	}
+	
+	public static <E extends Entity> EntityData<? super E> fromClass(final Class<E> c) {
+		return getData(c, null);
 	}
 	
 	public static <E extends Entity> EntityData<? super E> fromEntity(final E e) {
-		return fromClass((Class<E>) e.getClass());
+		return getData(null, e);
 	}
 	
 	public static final String toString(final Entity e) {
-		return fromEntity(e).toString();
+		return fromEntity(e).getSuperType().toString();
 	}
 	
 	public static final String toString(final Class<? extends Entity> c) {
@@ -294,7 +293,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	}
 	
 	public static final String toString(final Entity e, final int flags) {
-		return fromEntity(e).toString(flags);
+		return fromEntity(e).getSuperType().toString(flags);
 	}
 	
 	public static final String toString(final Class<? extends Entity> c, final int flags) {
@@ -308,14 +307,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 		return getType().isInstance(e) && match((E) e);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public boolean isSupertypeOf(final EntityData<?> e) {
-		if (!this.getType().isAssignableFrom(e.getType()))
-			return false;
-		return isSupertypeOf_i((EntityData<? extends E>) e);
-	}
-	
-	protected abstract boolean isSupertypeOf_i(EntityData<? extends E> e);
+	public abstract boolean isSupertypeOf(EntityData<?> e);
 	
 	public abstract String serialize();
 	
@@ -344,11 +336,25 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {
 	
 	protected abstract boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult);
 	
+	/**
+	 * @param c null iff e != null
+	 * @param e null iff c != null
+	 * @return
+	 */
+	protected abstract boolean init(Class<? extends E> c, E e);
+	
 	public abstract void set(E entity);
 	
 	protected abstract boolean match(E entity);
 	
 	public abstract Class<? extends E> getType();
+	
+	/**
+	 * Returns the super type of this entity data, e.g. 'wolf' for 'angry wolf'. If this type is already such a supertype it should return itself.
+	 * 
+	 * @return
+	 */
+	public abstract EntityData getSuperType();
 	
 	@Override
 	public String toString() {

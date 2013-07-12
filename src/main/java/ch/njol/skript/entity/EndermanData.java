@@ -55,6 +55,12 @@ public class EndermanData extends EntityData<Enderman> {
 	}
 	
 	@Override
+	protected boolean init(final Class<? extends Enderman> c, final Enderman e) {
+		hand = e == null || e.getCarriedMaterial() == null ? null : new ItemType[] {new ItemType(e.getCarriedMaterial().toItemStack(1))};
+		return true;
+	}
+	
+	@Override
 	public void set(final Enderman entity) {
 		if (hand != null)
 			entity.setCarriedMaterial(CollectionUtils.random(hand).getBlock().getRandom().getData());
@@ -153,10 +159,15 @@ public class EndermanData extends EntityData<Enderman> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Enderman> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof EndermanData)
 			return isSubhand(((EndermanData) e).hand);
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new EndermanData();
 	}
 	
 }

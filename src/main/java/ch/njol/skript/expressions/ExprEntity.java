@@ -49,7 +49,7 @@ import ch.njol.util.StringUtils;
 @Name("Creature/Entity/Player/Projectile/Villager/Powered Creeper/etc.")
 @Description({"The entity involved in an event (an entity is a player, a creature or an inanimate object like ignited TNT, a dropped item or an arrow).",
 		"You can use the specific type of the entity that's involved in the event, e.g. in a 'death of a creeper' event you can use 'the creeper' instead of 'the entity'."})
-@Examples({"give a diamond sword to the player",
+@Examples({"give a diamond sword of sharpness 3 to the player",
 		"kill the creeper",
 		"kill all powered creepers in the wolf's world",
 		"projectile is an arrow"})
@@ -67,24 +67,27 @@ public class ExprEntity extends SimpleExpression<Entity> {
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 		try {
-			if (!StringUtils.startsWithIgnoreCase(parseResult.expr, "the ")) {
+			if (!StringUtils.startsWithIgnoreCase(parseResult.expr, "the ") && !StringUtils.startsWithIgnoreCase(parseResult.expr, "event-")) {
 				final ItemType item = Aliases.parseItemType(parseResult.regexes.get(0).group());
 				if (item != null) {
-					log.stop();
+					log.clear();
+					log.printLog();
 					return false;
 				}
 				log.clear();
 			}
 			type = EntityData.parseWithoutIndefiniteArticle(parseResult.regexes.get(0).group());
+			if (type == null || type.isPlural().isTrue()) {
+				log.clear();
+				log.printLog();
+				return false;
+			}
+			log.printLog();
 		} finally {
 			log.stop();
 		}
-		if (type == null || type.isPlural().isTrue())
-			return false;
-		log.printLog();
 		entity = new EventValueExpression<Entity>(type.getType());
-		entity.init();
-		return true;
+		return entity.init();
 	}
 	
 	@Override
@@ -108,11 +111,6 @@ public class ExprEntity extends SimpleExpression<Entity> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		return "the " + type;
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return true;
 	}
 	
 }

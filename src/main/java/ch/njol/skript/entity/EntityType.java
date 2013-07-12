@@ -72,19 +72,19 @@ public class EntityType implements Serializable, Cloneable {
 				.serializer(new Serializer<EntityType>() {
 					@Override
 					public String serialize(final EntityType t) {
-						return t.amount + "*" + t.data.serialize();
+						return t.amount + "*" + EntityData.serializer.serialize(t.data);
 					}
 					
 					@Override
 					public EntityType deserialize(final String s) {
-						final String[] split = s.split("\\*");
+						final String[] split = s.split("\\*", 2);
 						if (split.length != 2)
 							return null;
 						final EntityData<?> d = EntityData.serializer.deserialize(split[1]);
 						if (d == null)
 							return null;
 						try {
-							return new EntityType(d, Integer.parseInt(split[1]));
+							return new EntityType(d, Integer.parseInt(split[0]));
 						} catch (final NumberFormatException e) {
 							return null;
 						}

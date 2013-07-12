@@ -63,7 +63,8 @@ public interface Converter<F, T> {
 	}
 	
 	/**
-	 * converts an object from the given to the desired type.
+	 * Converts an object from the given to the desired type.
+	 * <p>
 	 * Please note that the given object may be null, thus make sure that you test for null first.
 	 * 
 	 * @param f The object to convert which can be null.

@@ -26,6 +26,7 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -33,7 +34,9 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.HealthUtils;
 import ch.njol.skript.util.Slot;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -50,10 +53,9 @@ public class EffHealth extends Effect {
 	
 	static {
 		Skript.registerEffect(EffHealth.class,
-				"damage %slots% by %number%",
-				"damage %livingentities% by %number% [heart[s]]",
+				"damage %slots/livingentities/itemstack% by %number% [heart[s]]",
 				"heal %livingentities% [by %-number% [heart[s]]]",
-				"repair %slots% [by %-number%]");
+				"repair %slots/itemstack% [by %-number%]");
 	}
 	
 	private Expression<?> damageables;
@@ -64,8 +66,14 @@ public class EffHealth extends Effect {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		damageables = vars[0];
+		if (ItemStack.class.isAssignableFrom(damageables.getReturnType())) {
+			if (!CollectionUtils.contains(damageables.acceptChange(ChangeMode.SET), ItemStack.class)) {
+				Skript.error(damageables + " cannot be changed, thus it cannot be damaged or repaired.");
+				return false;
+			}
+		}
 		damage = (Expression<Number>) vars[1];
-		heal = (matchedPattern >= 2);
+		heal = (matchedPattern >= 1);
 		return true;
 	}
 	
@@ -77,6 +85,18 @@ public class EffHealth extends Effect {
 			if (n == null)
 				return;
 			damage = n.doubleValue();
+		}
+		if (ItemStack.class.isAssignableFrom(damageables.getReturnType())) {
+			ItemStack i = (ItemStack) damageables.getSingle(e);
+			if (this.damage == null) {
+				i.setDurability((short) 0);
+			} else {
+				i.setDurability((short) Math.max(0, i.getDurability() + (heal ? -damage : damage)));
+				if (i.getDurability() >= i.getType().getMaxDurability())
+					i = null;
+			}
+			damageables.change(e, i, ChangeMode.SET);
+			return;
 		}
 		for (final Object damageable : damageables.getArray(e)) {
 			if (damageable instanceof Slot) {
@@ -91,14 +111,9 @@ public class EffHealth extends Effect {
 				((Slot) damageable).setItem(is);
 			} else if (damageable instanceof LivingEntity) {
 				if (this.damage == null) {
-					((LivingEntity) damageable).setHealth(((LivingEntity) damageable).getMaxHealth());
+					HealthUtils.setHealth((LivingEntity) damageable, HealthUtils.getMaxHealth((LivingEntity) damageable));
 				} else {
-					if (!heal) {
-						((LivingEntity) damageable).damage((int) Math.round(2. * damage));
-					} else {
-						((LivingEntity) damageable).setHealth(Math.max(0, Math.min(((LivingEntity) damageable).getMaxHealth(),
-								((LivingEntity) damageable).getHealth() + (int) Math.round(2. * damage))));
-					}
+					HealthUtils.heal((LivingEntity) damageable, (heal ? 1 : -1) * damage);
 				}
 			}
 		}

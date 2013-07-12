@@ -39,9 +39,7 @@ import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.log.LogEntry;
-import ch.njol.skript.log.RetainingLogHandler;
+import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.EventValues;
@@ -116,9 +114,9 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	
 	@Override
 	public boolean init() {
-		boolean hasValue = false;
-		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
+			boolean hasValue = false;
 			for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
 				if (getters.containsKey(e)) {
 					hasValue = true;
@@ -130,17 +128,15 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 					hasValue = true;
 				}
 			}
+			if (!hasValue) {
+				log.printError("There's no " + Classes.getSuperClassInfo(c).getName() + " in " + Utils.a(ScriptLoader.currentEventName) + " event");
+				return false;
+			}
+			log.printLog();
+			return true;
 		} finally {
 			log.stop();
 		}
-		if (!hasValue) {
-			final LogEntry e = log.getFirstError("There's no " + Classes.getSuperClassInfo(c).getName() + " in " + Utils.a(ScriptLoader.currentEventName) + " event");
-			e.quality = ErrorQuality.NOT_AN_EXPRESSION.quality();
-			SkriptLogger.log(e);
-			return false;
-		}
-		log.printLog();
-		return true;
 	}
 	
 	@Override
@@ -190,11 +186,6 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	 */
 	@Override
 	public boolean isDefault() {
-		return true;
-	}
-	
-	@Override
-	public boolean getAnd() {
 		return true;
 	}
 	

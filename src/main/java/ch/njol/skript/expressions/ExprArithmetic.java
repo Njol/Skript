@@ -116,7 +116,8 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 			
 			{"%number%[ ]^[ ]%number%", Operator.EXP},
 			
-			{"\\(%number%\\)", null}
+			// more general in SkriptParser now
+//			{"\\(%number%\\)", null}
 	
 	});
 	
@@ -178,11 +179,6 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	
 	@Override
 	public boolean isSingle() {
-		return true;
-	}
-	
-	@Override
-	public boolean getAnd() {
 		return true;
 	}
 	

@@ -85,11 +85,6 @@ public class ExprLastSpawnedEntity extends SimpleExpression<Entity> {
 	}
 	
 	@Override
-	public boolean getAnd() {
-		return false;
-	}
-	
-	@Override
 	public String toString(final Event e, final boolean debug) {
 		return "last spawned " + type;
 	}

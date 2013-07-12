@@ -34,8 +34,6 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Kleenean;
 
 /**
- * TODO (>2.0)
- * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")

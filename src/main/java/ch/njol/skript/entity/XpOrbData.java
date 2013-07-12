@@ -51,6 +51,12 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 	}
 	
 	@Override
+	protected boolean init(final Class<? extends ExperienceOrb> c, final ExperienceOrb e) {
+		xp = e == null ? -1 : e.getExperience();
+		return true;
+	}
+	
+	@Override
 	public Class<? extends ExperienceOrb> getType() {
 		return ExperienceOrb.class;
 	}
@@ -122,10 +128,15 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends ExperienceOrb> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof XpOrbData)
 			return xp == -1 || ((XpOrbData) e).xp == xp;
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new XpOrbData();
 	}
 	
 }

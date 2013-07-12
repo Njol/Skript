@@ -26,7 +26,6 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.data.DefaultChangers;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -38,6 +37,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Time;
+import ch.njol.skript.util.Timespan;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -71,14 +72,45 @@ public class ExprTime extends PropertyExpression<World, Time> {
 		});
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		return DefaultChangers.timeChanger.acceptChange(mode);
+		switch (mode) {
+			case ADD:
+			case REMOVE:
+				return CollectionUtils.array(Timespan.class);
+			case SET:
+				return CollectionUtils.array(Time.class);
+			default:
+				return null;
+		}
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		DefaultChangers.timeChanger.change(getExpr().getArray(e), delta, mode);
+		final World[] worlds = getExpr().getArray(e);
+		int mod = 1;
+		switch (mode) {
+			case SET:
+				final Time time = (Time) delta;
+				for (final World w : worlds) {
+					w.setTime(time.getTicks());
+				}
+				break;
+			case REMOVE:
+				mod = -1;
+				//$FALL-THROUGH$
+			case ADD:
+				final Timespan ts = (Timespan) delta;
+				for (final World w : worlds) {
+					w.setTime(w.getTime() + mod * ts.getTicks());
+				}
+				break;
+			case DELETE:
+			case REMOVE_ALL:
+			case RESET:
+				assert false;
+		}
 	}
 	
 	@Override

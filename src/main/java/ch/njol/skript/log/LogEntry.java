@@ -70,7 +70,7 @@ public class LogEntry {
 	
 	private static final String skriptLogPackageName = SkriptLogger.class.getPackage().getName();
 	
-	private static String findCaller() {
+	static String findCaller() {
 		final StackTraceElement[] es = new Exception().getStackTrace();
 		for (int i = 0; i < es.length; i++) {
 			if (!es[i].getClassName().startsWith(skriptLogPackageName))

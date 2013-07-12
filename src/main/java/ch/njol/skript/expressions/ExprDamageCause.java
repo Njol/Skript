@@ -24,16 +24,25 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 
+import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.EventValueExpression;
+import ch.njol.skript.lang.ExpressionType;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
+@Name("Damage Cause")
+@Description("The <a href='../classes/#damagecause'>damage cause</a> of a damage event. Please click on the link for more information.")
+@Examples("damage cause is lava, fire or burning")
+@Since("2.0")
 public class ExprDamageCause extends EventValueExpression<DamageCause> {
-	
 	static {
-		//Skript.registerExpression(ExprDamageCause.class, DamageCause.class, ExpressionType.SIMPLE, "[the] damage cause");
+		Skript.registerExpression(ExprDamageCause.class, DamageCause.class, ExpressionType.SIMPLE, "[the] damage (cause|type)");
 	}
 	
 	public ExprDamageCause() {

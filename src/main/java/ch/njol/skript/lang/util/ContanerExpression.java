@@ -99,9 +99,4 @@ public class ContanerExpression extends SimpleExpression<Object> {
 		return expr.toString(e, debug);
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

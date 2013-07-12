@@ -41,7 +41,8 @@ import ch.njol.util.Kleenean;
  */
 @SuppressWarnings("serial")
 @Name("Random Number")
-@Description("A random number or integer between two given numbers. Use 'number' if you want any number with decimal parts, or use use 'integer' if you only want whole numbers.")
+@Description({"A random number or integer between two given numbers. Use 'number' if you want any number with decimal parts, or use use 'integer' if you only want whole numbers.",
+		"Please note that the order of the numbers doesn't matter, i.e. <code>random number between 2 and 1</code> will work as well as <code>random number between 1 and 2</code>."})
 @Examples({"set the player's health to a random number between 5 and 10",
 		"send \"You rolled a %random integer from 1 to 6%!\" to the player"})
 @Since("1.4")
@@ -70,14 +71,14 @@ public class ExprRandomNumber extends SimpleExpression<Number> {
 	protected Number[] get(final Event e) {
 		final Number l = lower.getSingle(e);
 		final Number u = upper.getSingle(e);
-		
 		if (u == null || l == null)
 			return null;
-		
+		final double ll = Math.min(l.doubleValue(), u.doubleValue());
+		final double uu = Math.max(l.doubleValue(), u.doubleValue());
 		if (integer) {
-			return new Integer[] {(int) (Math.ceil(l.doubleValue()) + rand.nextInt((int) (Math.floor(u.doubleValue()) - Math.ceil(l.doubleValue()) + 1)))};
+			return new Integer[] {(int) (Math.ceil(ll) + rand.nextInt((int) (Math.floor(uu) - Math.ceil(ll) + 1)))};
 		} else {
-			return new Double[] {l.doubleValue() + rand.nextDouble() * (u.doubleValue() - l.doubleValue())};
+			return new Double[] {ll + rand.nextDouble() * (uu - ll)};
 		}
 	}
 	
@@ -88,16 +89,11 @@ public class ExprRandomNumber extends SimpleExpression<Number> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "a random number between " + lower + " and " + upper;
+		return "a random " + (integer ? "integer" : "number") + " between " + lower.toString(e, debug) + " and " + upper.toString(e, debug);
 	}
 	
 	@Override
 	public boolean isSingle() {
-		return true;
-	}
-	
-	@Override
-	public boolean getAnd() {
 		return true;
 	}
 	

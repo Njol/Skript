@@ -33,8 +33,8 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.log.BlockingLogHandler;
 import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Comparators;
@@ -47,7 +47,7 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-@Name("Comparision")
+@Name("Comparison")
 @Description({"A very general condition, it simply compares two values. Usually you can only compare for equality (e.g. block is/isn't of &lt;type&gt;), " +
 		"but some values can also be compared using greater than/less than. In that case you can also test for whether an object is between two others.",
 		"Note: This is the only element where not all patterns are shown. It has actually another two sets of similar patters, " +
@@ -57,7 +57,7 @@ import ch.njol.util.Kleenean;
 		"time in the player's world is greater than 8:00",
 		"the creature is not an enderman or an ender dragon"})
 @Since("1.0")
-public class CondIs extends Condition {
+public class CondCompare extends Condition {
 	
 	private final static Patterns<Relation> patterns = new Patterns<Relation>(new Object[][] {
 			{"%objects% ((is|are) ((greater|more|higher|bigger|larger) than|above)|\\>) %objects%", Relation.GREATER},
@@ -89,7 +89,7 @@ public class CondIs extends Condition {
 	});
 	
 	static {
-		Skript.registerCondition(CondIs.class, patterns.getPatterns());
+		Skript.registerCondition(CondCompare.class, patterns.getPatterns());
 	}
 	
 	private Expression<?> first, second, third;
@@ -135,18 +135,13 @@ public class CondIs extends Condition {
 		return Classes.getSuperClassInfo(e.getReturnType()).getName().withIndefiniteArticle();
 	}
 	
-	/**
-	 * Does not print errors
-	 * 
-	 * @return
-	 */
 	private boolean init() {
-		final BlockingLogHandler log = SkriptLogger.startLogHandler(new BlockingLogHandler());
+		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 		try {
 			if (first.getReturnType() == Object.class) {
 				final Expression<?> e = first.getConvertedExpression(Object.class);
 				if (e == null) {
-					log.stop();
+					log.printErrors();
 					return false;
 				}
 				first = e;
@@ -154,7 +149,7 @@ public class CondIs extends Condition {
 			if (second.getReturnType() == Object.class) {
 				final Expression<?> e = second.getConvertedExpression(Object.class);
 				if (e == null) {
-					log.stop();
+					log.printErrors();
 					return false;
 				}
 				second = e;
@@ -162,11 +157,12 @@ public class CondIs extends Condition {
 			if (third != null && third.getReturnType() == Object.class) {
 				final Expression<?> e = third.getConvertedExpression(Object.class);
 				if (e == null) {
-					log.stop();
+					log.printErrors();
 					return false;
 				}
 				third = e;
 			}
+			log.printLog();
 		} finally {
 			log.stop();
 		}
@@ -235,9 +231,15 @@ public class CondIs extends Condition {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
+		String s;
 		if (third == null)
-			return first.toString(e, debug) + " is " + relation + " " + second.toString(e, debug);
-		return first.toString(e, debug) + " is" + (relation == Relation.EQUAL ? "" : " not") + " between " + second.toString(e, debug) + " and " + third.toString(e, debug);
+			s = first.toString(e, debug) + " is " + relation + " " + second.toString(e, debug);
+		else
+			s = first.toString(e, debug) + " is" + (relation == Relation.EQUAL ? "" : " not") + " between " + second.toString(e, debug) + " and " + third.toString(e, debug);
+		if (debug) {
+			s += " (comparator: " + comp + ")";
+		}
+		return s;
 	}
 	
 }

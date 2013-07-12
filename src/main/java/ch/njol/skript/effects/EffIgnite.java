@@ -21,9 +21,11 @@
 
 package ch.njol.skript.effects;
 
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityCombustEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -41,60 +43,63 @@ import ch.njol.util.Kleenean;
  */
 @SuppressWarnings("serial")
 @Name("Ignite/Extinguish")
-@Description("Set a player ablaze, or extinguish them.")
+@Description({"Lights entities on fire or extinguishes them."})
 @Examples({"ignite the player",
 		"extinguish the player"})
 @Since("1.4")
 public class EffIgnite extends Effect {
-	
 	static {
 		Skript.registerEffect(EffIgnite.class,
-				"(ignite|set fire to) %livingentities% [for %-timespan%]", "(set|light) %livingentities% on fire [for %-timespan%]",
-				"extinguish %livingentities%");
+				"(ignite|set fire to) %entities% [for %-timespan%]", "(set|light) %entities% on fire [for %-timespan%]",
+				"extinguish %entities%");
 	}
 	
 	private final static int DEFAULT_DURATION = 8 * 20; // default is 8 seconds for lava and fire, I didn't test other sources
 	
-	private Expression<LivingEntity> entities;
-	private boolean fire;
+	private Expression<Entity> entities;
+	private boolean ignite;
 	private Expression<Timespan> duration = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		entities = (Expression<LivingEntity>) exprs[0];
-		fire = exprs.length > 1;
-		if (fire)
+		entities = (Expression<Entity>) exprs[0];
+		ignite = exprs.length > 1;
+		if (ignite)
 			duration = (Expression<Timespan>) exprs[1];
 		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		if (entities.isDefault() && e instanceof EntityCombustEvent && !Delay.isDelayed(e)) {
-			((EntityCombustEvent) e).setCancelled(true);// can't change the duration, thus simply cancel the event (and create a new one)
-		}
-		if (fire) {
-			int d = DEFAULT_DURATION;
-			if (duration != null) {
-				final Timespan t = duration.getSingle(e);
-				if (t == null)
-					return;
-				d = t.getTicks();
-			}
-			for (final LivingEntity en : entities.getArray(e)) {
-				en.setFireTicks(d);
-			}
+		final int d;
+		if (duration != null) {
+			final Timespan t = duration.getSingle(e);
+			if (t == null)
+				return;
+			d = t.getTicks();
 		} else {
-			for (final LivingEntity en : entities.getArray(e)) {
-				en.setFireTicks(0);
+			d = ignite ? DEFAULT_DURATION : 0;
+		}
+		for (final Entity en : entities.getArray(e)) {
+			if (e instanceof EntityDamageEvent && ((EntityDamageEvent) e).getEntity() == en && !Delay.isDelayed(e)) {
+				Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
+					@Override
+					public void run() {
+						en.setFireTicks(d);
+					}
+				});
+			} else {
+				if (e instanceof EntityCombustEvent && ((EntityCombustEvent) e).getEntity() == en && !Delay.isDelayed(e))
+					((EntityCombustEvent) e).setCancelled(true);// can't change the duration, thus simply cancel the event (and create a new one)
+				en.setFireTicks(d);
 			}
 		}
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return fire ? "set " + entities.toString(e, debug) + " on fire" : "extinguish " + entities.toString(e, debug);
+		return ignite ? "set " + entities.toString(e, debug) + " on fire for " + (duration == null ? Timespan.fromTicks(DEFAULT_DURATION).toString() : duration.toString(e, debug)) : "extinguish " + entities.toString(e, debug);
 	}
 	
 }

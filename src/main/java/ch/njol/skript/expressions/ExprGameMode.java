@@ -21,6 +21,7 @@
 
 package ch.njol.skript.expressions;
 
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -70,12 +71,11 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 	
 	@Override
 	protected GameMode[] get(final Event e, final Player[] source) {
-		if (e instanceof PlayerGameModeChangeEvent && getTime() >= 0 && getExpr().isDefault() && !Delay.isDelayed(e)) {
-			return new GameMode[] {((PlayerGameModeChangeEvent) e).getNewGameMode()};
-		}
 		return get(source, new Converter<Player, GameMode>() {
 			@Override
 			public GameMode convert(final Player p) {
+				if (getTime() >= 0 && e instanceof PlayerGameModeChangeEvent && ((PlayerGameModeChangeEvent) e).getPlayer() == p && !Delay.isDelayed(e))
+					return ((PlayerGameModeChangeEvent) e).getNewGameMode();
 				return p.getGameMode();
 			}
 		});
@@ -89,16 +89,21 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (mode == ChangeMode.SET)
+		if (mode == ChangeMode.SET || mode == ChangeMode.RESET)
 			return CollectionUtils.array(GameMode.class);
 		return null;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		final GameMode m = (GameMode) delta;
-		for (final Player p : getExpr().getArray(e))
+		final GameMode m = delta == null ? Bukkit.getDefaultGameMode() : (GameMode) delta;
+		for (final Player p : getExpr().getArray(e)) {
+			if (getTime() >= 0 && e instanceof PlayerGameModeChangeEvent && ((PlayerGameModeChangeEvent) e).getPlayer() == p && !Delay.isDelayed(e)) {
+				if (((PlayerGameModeChangeEvent) e).getNewGameMode() != m)
+					((PlayerGameModeChangeEvent) e).setCancelled(true);
+			}
 			p.setGameMode(m);
+		}
 	}
 	
 	@Override

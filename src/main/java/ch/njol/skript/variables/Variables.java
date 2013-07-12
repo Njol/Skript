@@ -26,7 +26,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.WeakHashMap;
 import java.util.concurrent.locks.Lock;
@@ -125,7 +124,7 @@ public abstract class Variables {
 	 * 
 	 * @return
 	 */
-	static SortedMap<String, Object> getVariables() {
+	static TreeMap<String, Object> getVariables() {
 		return variables;
 	}
 	
@@ -145,12 +144,15 @@ public abstract class Variables {
 	/**
 	 * Sets a variable.
 	 * 
-	 * @param name The variable's name
-	 * @param value The variable's value
-	 * @param save Whether to save the variable to the database/file or not
+	 * @param name The variable's name. Can be a "list variable::*" (<tt>value</tt> must be <tt>null</tt> in this case)
+	 * @param value The variable's value. Use <tt>null</tt> to delete the variable.
 	 */
+	public final static void setVariable(final String name, final Object value) {
+		setVariable(name, value, null);
+	}
+	
 	@SuppressWarnings("unchecked")
-	public final static void setVariable(final String name, final Object value, final VariablesStorage source) {
+	final static void setVariable(final String name, final Object value, final VariablesStorage source) {
 		try {
 			variablesLock.writeLock().lock();
 			if (!name.endsWith("*")) {
@@ -248,7 +250,7 @@ public abstract class Variables {
 	}
 	
 	/**
-	 * Returns the internal value of the privided variable.
+	 * Returns the internal value of the requested variable.
 	 * <p>
 	 * <b>Do not modify the returned value!</b>
 	 * 

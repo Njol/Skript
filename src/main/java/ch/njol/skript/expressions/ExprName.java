@@ -22,8 +22,6 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.ChatColor;
-import org.bukkit.command.defaults.ClearCommand;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -48,8 +46,13 @@ import ch.njol.util.Kleenean;
  */
 @SuppressWarnings("serial")
 @Name("Name / Display Name")
-@Description({"Represents a player's minecraft account name, chat display name, or playerlist name, or the custom name of an item.",
-		"Please note that tab list anmes are limited to 16 characters, including colour codes which are 2 characters each."})
+@Description({"Represents a player's minecraft account name, chat display name, or playerlist name, or the custom name of an item or <a href='../classes/#livingentity'>a living entity</a>.",
+		"The differences between the different names are:",
+		"<ul>",
+		"<li>name: Minecraft account name of a player (unmodifiable), or the custom name of an item or mob (modifiable).</li>",
+		"<li>display name: The name of a player as displayed in the chat and messages, e.g. when including %player% in a message. This name can be changed freely and can include colour codes, and is shared among all plugins (e.g. chat plugins will use a changed name).</li>",
+		"<li>tab list name: The name of a player used in the player lists that usually opens with the tab key. Please note that this is limited to 16 characters, including colour codes which are counted as 2 characters each, and that no two players can have the same tab list name at the same time.</li>",
+		"</ul>"})
 @Examples({"on join:",
 		"	player has permission \"name.red\"",
 		"	set the player's display name to \"<red>[admin]<gold>%name of player%\"",
@@ -58,22 +61,24 @@ import ch.njol.util.Kleenean;
 @Since("1.4.6 (players' name & display name), <i>unknown</i> (player list name), 2.0 (item name)")
 public class ExprName extends SimplePropertyExpression<Object, String> {
 	
-	final static int PLAYER = 1, ITEMSTACK = 2, ENTITY = 4;
-	final static String[] types = {"players", "slots/itemstacks", "entities"};
+	final static int ITEMSTACK = 1, ENTITY = 2, PLAYER = 4;
+	final static String[] types = {"slots/itemstacks", "livingentities", "players"};
 	
 	private static enum NameType {
 		NAME("name", "name", PLAYER | ITEMSTACK | ENTITY, ITEMSTACK | ENTITY) {
 			@Override
-			void set(final Object o, final String s) {
-				if (o instanceof Entity) {
-					if (o instanceof LivingEntity) {
-						((LivingEntity) o).setCustomName(s);
-						((LivingEntity) o).setCustomNameVisible(s != null);
-					}
+			void set(final Object o, final String s) { // TODO test
+				if (o == null)
+					return;
+				if (o instanceof LivingEntity) {
+					((LivingEntity) o).setCustomName(s);
+					((LivingEntity) o).setCustomNameVisible(s != null);
 				} else if (o instanceof ItemStack) {
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
-					m.setDisplayName(s);
-					((ItemStack) o).setItemMeta(m);
+					if (m != null) {
+						m.setDisplayName(s);
+						((ItemStack) o).setItemMeta(m);
+					}
 				} else {
 					assert false;
 				}
@@ -81,17 +86,17 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			
 			@Override
 			String get(final Object o) {
+				if (o == null)
+					return null;
 				if (o instanceof Player) {
 					return ((Player) o).getName();
-				} else if (o instanceof Entity) {
-					if (o instanceof LivingEntity)
-						return ((LivingEntity) o).getCustomName();
-					return null;
+				} else if (o instanceof LivingEntity) {
+					return ((LivingEntity) o).getCustomName();
 				} else if (o instanceof ItemStack) {
 					if (!((ItemStack) o).hasItemMeta())
 						return null;
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
-					return m.hasDisplayName() ? m.getDisplayName() : null;
+					return m == null || !m.hasDisplayName() ? null : m.getDisplayName();
 				} else {
 					assert false;
 					return null;
@@ -101,17 +106,19 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 		DISPLAY_NAME("display name", "(display|nick)[ ]name", PLAYER | ITEMSTACK | ENTITY, PLAYER | ITEMSTACK | ENTITY) {
 			@Override
 			void set(final Object o, final String s) {
+				if (o == null)
+					return;
 				if (o instanceof Player) {
-					((Player) o).setDisplayName(s + ChatColor.RESET);
-				} else if (o instanceof Entity) {
-					if (o instanceof LivingEntity) {
-						((LivingEntity) o).setCustomName(s);
-						((LivingEntity) o).setCustomNameVisible(s != null);
-					}
+					((Player) o).setDisplayName(s == null ? ((Player) o).getName() : s + ChatColor.RESET);
+				} else if (o instanceof LivingEntity) {
+					((LivingEntity) o).setCustomName(s);
+					((LivingEntity) o).setCustomNameVisible(s != null);
 				} else if (o instanceof ItemStack) {
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
-					m.setDisplayName(s);
-					((ItemStack) o).setItemMeta(m);
+					if (m != null) {
+						m.setDisplayName(s);
+						((ItemStack) o).setItemMeta(m);
+					}
 				} else {
 					assert false;
 				}
@@ -119,17 +126,17 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			
 			@Override
 			String get(final Object o) {
+				if (o == null)
+					return null;
 				if (o instanceof Player) {
 					return ((Player) o).getDisplayName();
-				} else if (o instanceof Entity) {
-					if (o instanceof LivingEntity)
-						return ((LivingEntity) o).getCustomName();
-					return null;
+				} else if (o instanceof LivingEntity) {
+					return ((LivingEntity) o).getCustomName();
 				} else if (o instanceof ItemStack) {
 					if (!((ItemStack) o).hasItemMeta())
 						return null;
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
-					return m.hasDisplayName() ? m.getDisplayName() : null;
+					return m == null || !m.hasDisplayName() ? null : m.getDisplayName();
 				} else {
 					assert false;
 					return null;
@@ -139,6 +146,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 		TABLIST_NAME("player list name", "(player|tab)[ ]list name", PLAYER, PLAYER) {
 			@Override
 			void set(final Object o, final String s) {
+				if (o == null)
+					return;
 				if (o instanceof Player) {
 					try {
 						((Player) o).setPlayerListName(s.length() > 16 ? s.substring(0, 16) : s);
@@ -150,6 +159,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			
 			@Override
 			String get(final Object o) {
+				if (o == null)
+					return null;
 				if (o instanceof Player) {
 					return ((Player) o).getPlayerListName();
 				} else {
@@ -178,9 +189,11 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 		String getFrom() {
 			String r = "";
 			for (int i = 0; i < types.length; i++) {
-				if (i != 0 && !Skript.isRunningMinecraft(1, 4, 5)) // TODO check entity name version
-					continue;
 				if ((from & (1 << i)) == 0)
+					continue;
+				if ((1 << i) == ITEMSTACK && !Skript.isRunningMinecraft(1, 4, 5))
+					continue;
+				if ((1 << i) == ENTITY && !Skript.isRunningMinecraft(1, 5))
 					continue;
 				if (!r.isEmpty())
 					r += "/";
@@ -191,10 +204,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	}
 	
 	static {
-		for (final NameType n : NameType.values()) {
-			if (n.getFrom() != null)
-				register(ExprName.class, String.class, n.pattern, n.getFrom());
-		}
+		for (final NameType n : NameType.values())
+			register(ExprName.class, String.class, n.pattern, n.getFrom());
 	}
 	
 	private NameType type;
@@ -222,11 +233,12 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	
 	private int changeType = 0;
 	
-	// TODO find a better method of handling this (in general)
+	// TODO find a better method of handling changes (in general)
+	// e.g. a Changer that takes an object and returns another which should then be saved if applicable (the Changer includes the ChangeMode)
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (mode == ChangeMode.DELETE && (type.acceptChange & ~PLAYER) != 0)
+		if (mode == ChangeMode.DELETE && (type.acceptChange & ~PLAYER) != 0 || mode == ChangeMode.RESET)
 			return new Class[0];
 		if (mode != ChangeMode.SET)
 			return null;
@@ -234,7 +246,11 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			changeType = PLAYER;
 		} else if ((type.acceptChange & ITEMSTACK) != 0 && (getExpr().isSingle() && CollectionUtils.contains(getExpr().acceptChange(ChangeMode.SET), ItemStack.class) || Slot.class.isAssignableFrom(getExpr().getReturnType()))) {
 			changeType = ITEMSTACK;
-		} else if ((type.acceptChange & ENTITY) != 0 && Entity.class.isAssignableFrom(getExpr().getReturnType())) {
+		} else if ((type.acceptChange & ENTITY) != 0 && LivingEntity.class.isAssignableFrom(getExpr().getReturnType())) {
+			if (type == NameType.NAME && Player.class.isAssignableFrom(getExpr().getReturnType())) {
+				Skript.error("Cannot change the Minecraft name of a player. Change the 'display name of <player>' or 'tablist name of <player>' instead.");
+				return null;
+			}
 			changeType = ENTITY;
 		}
 		return changeType == 0 ? null : CollectionUtils.array(String.class);
@@ -242,20 +258,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		if (mode == ChangeMode.DELETE) {
-			for (final Object o : getExpr().getArray(e)) {
-				if (!(o instanceof Player))
-					type.set(o, null);
-			}
-			return;
-		}
-		assert mode == ChangeMode.SET;
-		if (changeType == PLAYER) {
-			for (final Object o : getExpr().getArray(e)) {
-				if (o instanceof Player)
-					type.set(o, (String) delta);
-			}
-		} else if (changeType == ITEMSTACK) {
+		if (changeType == ITEMSTACK) {
 			if (Slot.class.isAssignableFrom(getExpr().getReturnType())) {
 				for (final Slot s : (Slot[]) getExpr().getArray(e)) {
 					final ItemStack i = s.getItem();
@@ -264,18 +267,20 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 				}
 			} else {
 				final Object i = getExpr().getSingle(e);
-				if (i instanceof Player)
+				if (!(i instanceof ItemStack) && !(i instanceof Slot))
 					return;
-				type.set(i instanceof Slot ? ((Slot) i).getItem() : i, (String) delta);
-				getExpr().change(e, i, ChangeMode.SET);
-			}
-		} else if (changeType == ENTITY) {
-			for (final Object o : getExpr().getArray(e)) {
-				if (o instanceof Entity)
-					type.set(o, (String) delta);
+				final ItemStack is = i instanceof Slot ? ((Slot) i).getItem() : (ItemStack) i;
+				type.set(is, (String) delta);
+				if (i instanceof Slot)
+					((Slot) i).setItem(is);
+				else
+					getExpr().change(e, i, ChangeMode.SET);
 			}
 		} else {
-			assert false;
+			for (final Object o : getExpr().getArray(e)) {
+				if (o instanceof LivingEntity || o instanceof Player)
+					type.set(o, (String) delta);
+			}
 		}
 	}
 }

@@ -41,10 +41,11 @@ import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.ParseContext;
-import ch.njol.skript.log.RetainingLogHandler;
+import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.StringMode;
 import ch.njol.util.Pair;
+import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.ArrayIterator;
 
 /**
@@ -136,7 +137,7 @@ public abstract class Classes {
 		}
 		Classes.classInfos = classInfos.toArray(new ClassInfo[classInfos.size()]);
 		if (!tempClassInfos.isEmpty())
-			throw new IllegalStateException("ClassInfos with circular dependencies detected: " + tempClassInfos);
+			throw new IllegalStateException("ClassInfos with circular dependencies detected: " + StringUtils.join(tempClassInfos, ", "));
 		if (Skript.testing()) {
 			for (final ClassInfo<?> ci : classInfos) {
 				if (ci.before() != null && !ci.before().isEmpty() || ci.after() != null && !ci.after().isEmpty()) {
@@ -175,7 +176,7 @@ public abstract class Classes {
 		checkAllowClassInfoInteraction();
 		final ClassInfo<?> ci = classInfosByCodeName.get(codeName);
 		if (ci == null)
-			throw new SkriptAPIException("no class info found for " + codeName);
+			throw new SkriptAPIException("No class info found for " + codeName);
 		return ci;
 	}
 	
@@ -299,15 +300,16 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * parses without trying to convert anything.<br>
-	 * Can log something if it doesn't return null.
+	 * Parses without trying to convert anything.
+	 * <p>
+	 * Can log an error xor other log messages.
 	 * 
 	 * @param s
 	 * @param c
 	 * @return
 	 */
 	public static <T> T parseSimple(final String s, final Class<T> c, final ParseContext context) {
-		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			for (final ClassInfo<?> info : classInfos) {
 				if (info.getParser() == null || !info.getParser().canParse(context) || !c.isAssignableFrom(info.getC()))
@@ -319,6 +321,7 @@ public abstract class Classes {
 					return t;
 				}
 			}
+			log.printError();
 		} finally {
 			log.stop();
 		}
@@ -326,9 +329,11 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * Parses a string to get an object of the desired type.<br/>
-	 * Instead of repeatedly calling this with the same class argument, you should get a parser with {@link #getParser(Class)} and use it for parsing.<br>
-	 * Can log something if it doesn't return null.
+	 * Parses a string to get an object of the desired type.
+	 * <p>
+	 * Instead of repeatedly calling this with the same class argument, you should get a parser with {@link #getParser(Class)} and use it for parsing.
+	 * <p>
+	 * Can log an error if it returned null.
 	 * 
 	 * @param s The string to parse
 	 * @param c The desired type. The returned value will be of this type or a subclass if it.
@@ -336,11 +341,13 @@ public abstract class Classes {
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static <T> T parse(final String s, final Class<T> c, final ParseContext context) {
-		T t = parseSimple(s, c, context);
-		if (t != null)
-			return t;
-		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
+			T t = parseSimple(s, c, context);
+			if (t != null) {
+				log.printLog();
+				return t;
+			}
 			for (final ConverterInfo<?, ?> conv : Converters.getConverters()) {
 				if (c.isAssignableFrom(conv.to)) {
 					log.clear();
@@ -348,13 +355,13 @@ public abstract class Classes {
 					if (o != null) {
 						t = (T) ((Converter) conv.converter).convert(o);
 						if (t != null) {
-							log.stop();
 							log.printLog();
 							return t;
 						}
 					}
 				}
 			}
+			log.printError();
 		} finally {
 			log.stop();
 		}
@@ -456,7 +463,6 @@ public abstract class Classes {
 	
 	private static final <T> String toString(final T o, final StringMode mode, final int flags) {
 		assert flags == 0 || mode == StringMode.MESSAGE;
-		final boolean code = mode == StringMode.VARIABLE_NAME;
 		if (o == null)
 			return "<none>";
 		if (o.getClass().isArray()) {
@@ -473,15 +479,15 @@ public abstract class Classes {
 			return "[" + b.toString() + "]";
 		}
 		for (final ClassInfo<?> ci : classInfos) {
-			if (ci.getParser() != null && ci.getC().isAssignableFrom(o.getClass())) {
-				final String s = code ? ((Parser<T>) ci.getParser()).toVariableNameString(o) :
-						mode == StringMode.MESSAGE ? ((Parser<T>) ci.getParser()).toString(o, flags) :
-								((Parser<T>) ci.getParser()).toString(o, mode);
+			if (ci.getParser() != null && ci.getC().isInstance(o)) {
+				final String s = mode == StringMode.MESSAGE ? ((Parser<T>) ci.getParser()).toString(o, flags)
+						: mode == StringMode.DEBUG ? "[" + ci.getCodeName() + ":" + ((Parser<T>) ci.getParser()).toString(o, mode) + "]"
+								: ((Parser<T>) ci.getParser()).toString(o, mode);
 				if (s != null)
 					return s;
 			}
 		}
-		return code ? "object:" + o : "" + o;
+		return mode == StringMode.VARIABLE_NAME ? "object:" + o : "" + o;
 	}
 	
 	public static final String toString(final Object[] os, final int flags) {

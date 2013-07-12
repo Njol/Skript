@@ -42,6 +42,10 @@ public abstract class LogHandler {
 		onStop();
 	}
 	
+	public boolean isStopped() {
+		return SkriptLogger.isStopped(this);
+	}
+	
 //	/**
 //	 * Will be useful should Skript ever be written in Java 7
 //	 */

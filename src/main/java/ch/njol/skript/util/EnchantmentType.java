@@ -84,7 +84,7 @@ public class EnchantmentType {
 		return Language.get("enchantments.names." + e.getName());
 	}
 	
-	// TODO flags
+	// TODO flags?
 	public static String toString(final Enchantment e, final int flags) {
 		return Language.get("enchantments.names." + e.getName());
 	}

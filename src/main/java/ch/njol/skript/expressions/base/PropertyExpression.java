@@ -83,7 +83,7 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	/**
 	 * Converts the given source object(s) to the correct type.
 	 * <p>
-	 * Please note that the returned array must not contain any null elements!
+	 * Please note that the returned array must neither be null nor contain any null elements!
 	 * 
 	 * @param e
 	 * @param source

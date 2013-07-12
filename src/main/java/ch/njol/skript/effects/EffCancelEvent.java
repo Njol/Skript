@@ -23,6 +23,9 @@ package ch.njol.skript.effects;
 
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
+import org.bukkit.event.Event.Result;
+import org.bukkit.event.block.BlockCanBuildEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 
 import ch.njol.skript.ScriptLoader;
@@ -64,7 +67,7 @@ public class EffCancelEvent extends Effect {
 		}
 		cancel = matchedPattern == 0;
 		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
-			if (Cancellable.class.isAssignableFrom(e))
+			if (Cancellable.class.isAssignableFrom(e) || BlockCanBuildEvent.class.isAssignableFrom(e))
 				return true; // TODO warning if some event(s) cannot be cancelled even though some can (needs a way to be suppressed)
 		}
 		if (ScriptLoader.isCurrentEvent(PlayerLoginEvent.class))
@@ -78,6 +81,12 @@ public class EffCancelEvent extends Effect {
 	public void execute(final Event e) {
 		if (e instanceof Cancellable)
 			((Cancellable) e).setCancelled(cancel);
+		if (e instanceof PlayerInteractEvent) {
+			((PlayerInteractEvent) e).setUseItemInHand(cancel ? Result.DENY : Result.DEFAULT);
+			((PlayerInteractEvent) e).setUseInteractedBlock(cancel ? Result.DENY : Result.DEFAULT);
+		} else if (e instanceof BlockCanBuildEvent) {
+			((BlockCanBuildEvent) e).setBuildable(!cancel);
+		}
 	}
 	
 	@Override

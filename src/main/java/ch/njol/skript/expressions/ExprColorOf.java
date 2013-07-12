@@ -22,6 +22,9 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.Sheep;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
@@ -40,29 +43,33 @@ import ch.njol.util.CollectionUtils;
  */
 @SuppressWarnings("serial")
 @Name("Colour of")
-@Description("The <a href='../classes/#color'>colour</a> of an item, can also be used to colour chat messages with \"&lt;%color of ...%&gt;this text is coloured!\".")
+@Description("The <a href='../classes/#color'>colour</a> of an item, can also be used to colour chat messages with \"&lt;%colour of ...%&gt;this text is coloured!\".")
 @Examples({"on click on wool:",
-		"	message \"This wool block is <%color of block%>%color of block%<reset>!\"",
+		"	message \"This wool block is <%colour of block%>%colour of block%<reset>!\"",
 		"	set the colour of the block to black"})
 @Since("1.2")
-public class ExprColorOf extends SimplePropertyExpression<ItemStack, Color> {
-	
+public class ExprColorOf extends SimplePropertyExpression<Object, Color> {
 	static {
-		register(ExprColorOf.class, Color.class, "colo[u]r[s]", "itemstacks");
+		register(ExprColorOf.class, Color.class, "colo[u]r[s]", "itemstacks/entities");
 	}
 	
 	@Override
-	public Color convert(final ItemStack is) {
-		if (is.getType() == Material.WOOL)
-			return Color.byWool(is.getDurability());
-		if (is.getType() == Material.INK_SACK)
-			return Color.byDye(is.getDurability());
+	public Color convert(final Object o) {
+		if (o instanceof ItemStack || o instanceof Item) {
+			final ItemStack is = o instanceof ItemStack ? (ItemStack) o : ((Item) o).getItemStack();
+			if (is.getType() == Material.WOOL)
+				return Color.byWool(is.getDurability());
+			if (is.getType() == Material.INK_SACK)
+				return Color.byDye(is.getDurability());
+		} else if (o instanceof Sheep) {
+			return Color.byWoolColor(((Sheep) o).getColor());
+		}
 		return null;
 	}
 	
 	@Override
 	protected String getPropertyName() {
-		return "color";
+		return "colour";
 	}
 	
 	@Override
@@ -73,29 +80,44 @@ public class ExprColorOf extends SimplePropertyExpression<ItemStack, Color> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (mode != ChangeMode.SET || !getExpr().isSingle())
+		if (mode != ChangeMode.SET)
 			return null;
-		if (getExpr().acceptChange(mode) != null && CollectionUtils.containsAny(getExpr().acceptChange(mode), ItemStack.class, ItemType.class))
+		if (Entity.class.isAssignableFrom(getExpr().getReturnType()))
+			return CollectionUtils.array(Color.class);
+		if (!getExpr().isSingle())
+			return null;
+		if (CollectionUtils.containsAny(getExpr().acceptChange(mode), ItemStack.class, ItemType.class))
 			return CollectionUtils.array(Color.class);
 		return null;
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		final ItemStack is = getExpr().getSingle(e);
-		if (is == null)
+		final Object[] os = getExpr().getArray(e);
+		if (os.length == 0)
 			return;
-		if (is.getType() == Material.WOOL)
-			is.setDurability(((Color) delta).getWool());
-		else if (is.getType() == Material.INK_SACK)
-			is.setDurability(((Color) delta).getDye());
-		else
-			return;
-		
-		if (CollectionUtils.contains(getExpr().acceptChange(mode), ItemStack.class))
-			getExpr().change(e, is, mode);
-		else
-			getExpr().change(e, new ItemType(is), mode);
+		for (final Object o : os) {
+			if (o instanceof ItemStack || o instanceof Item) {
+				final ItemStack is = o instanceof ItemStack ? (ItemStack) o : ((Item) o).getItemStack();
+				if (is.getType() == Material.WOOL)
+					is.setDurability(((Color) delta).getWool());
+				else if (is.getType() == Material.INK_SACK)
+					is.setDurability(((Color) delta).getDye());
+				else
+					continue;
+				
+				if (o instanceof ItemStack) {
+					if (CollectionUtils.contains(getExpr().acceptChange(mode), ItemStack.class))
+						getExpr().change(e, is, mode);
+					else
+						getExpr().change(e, new ItemType(is), mode);
+				} else {
+					((Item) o).setItemStack(is);
+				}
+			} else if (o instanceof Sheep) {
+				((Sheep) o).setColor(((Color) delta).getWoolColor());
+			}
+		}
 	}
 	
 }

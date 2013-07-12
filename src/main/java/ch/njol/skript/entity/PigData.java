@@ -31,16 +31,21 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 @SuppressWarnings("serial")
 public class PigData extends EntityData<Pig> {
-	
 	static {
 		register(PigData.class, "pig", Pig.class, "unsaddled pig", "pig", "saddled pig");
 	}
 	
-	private int saddled;
+	private int saddled = 0;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		saddled = matchedPattern - 1;
+		return true;
+	}
+	
+	@Override
+	protected boolean init(final Class<? extends Pig> c, final Pig e) {
+		saddled = e == null ? 0 : e.hasSaddle() ? 1 : -1;
 		return true;
 	}
 	
@@ -93,10 +98,15 @@ public class PigData extends EntityData<Pig> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Pig> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof PigData)
 			return saddled == 0 || ((PigData) e).saddled == saddled;
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new PigData();
 	}
 	
 }

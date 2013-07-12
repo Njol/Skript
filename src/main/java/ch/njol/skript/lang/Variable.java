@@ -23,8 +23,10 @@ package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -34,17 +36,18 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator.Relation;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.lang.util.VariableString;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
+import ch.njol.skript.util.Utils;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Checker;
 import ch.njol.util.CollectionUtils;
@@ -62,6 +65,9 @@ public class Variable<T> implements Expression<T> {
 	public final static String SEPARATOR = "::";
 	public final static String LOCAL_VARIABLE_TOKEN = "_";
 	
+	/**
+	 * The name of this variable, excluding the local variable token, but including the list variable token '::*'.
+	 */
 	private final VariableString name;
 	
 	private final Class<T> superType;
@@ -72,12 +78,11 @@ public class Variable<T> implements Expression<T> {
 	
 	private final Variable<?> source;
 	
-	@SuppressWarnings("unchecked")
 	private Variable(final VariableString name, final Class<? extends T>[] types, final boolean local, final boolean list, final Variable<?> source) {
 		assert name != null;
 		assert types != null && types.length > 0;
 		
-		assert name.getMode() == StringMode.VARIABLE_NAME;
+		assert name.isSimple() || name.getMode() == StringMode.VARIABLE_NAME;
 		
 		this.local = local;
 		this.list = list;
@@ -85,12 +90,7 @@ public class Variable<T> implements Expression<T> {
 		this.name = name;
 		
 		this.types = types;
-		Class<? extends T> superType = types[0];
-		for (int i = 1; i < types.length; i++) {
-			if (types[i].isAssignableFrom(superType))
-				superType = types[i];
-		}
-		this.superType = (Class<T>) superType;
+		this.superType = (Class<T>) Utils.getSuperType(types);
 		
 		this.source = source;
 	}
@@ -104,19 +104,19 @@ public class Variable<T> implements Expression<T> {
 	 */
 	public static <T> Variable<T> newInstance(final String name, final Class<? extends T>[] types) {
 		if (name.startsWith(LOCAL_VARIABLE_TOKEN) && name.contains(SEPARATOR)) {
-			Skript.error("Local variables cannot be lists, i.e. must not contain the separator '" + SEPARATOR + "' (variable: {" + name + "})");
+			Skript.error("Local variables cannot be lists, i.e. must not contain the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
 			return null;
 		} else if (name.startsWith(SEPARATOR) || name.endsWith(SEPARATOR)) {
-			Skript.error("A variable's name must neither start nor end with the separator '" + SEPARATOR + "' (variable: {" + name + "})");
+			Skript.error("A variable's name must neither start nor end with the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
 			return null;
 		} else if (name.contains("*") && (name.indexOf("*") != name.length() - 1 || !name.endsWith(SEPARATOR + "*"))) {
 			if (name.indexOf("*") == 0)
-				Skript.error("[1.5] Local variables now start with an underscore: {_local variable} (variable: {" + name + "})");
+				Skript.error("[2.0] Local variables now start with an underscore, e.g. {_local variable} (error in variable {" + name + "})");
 			else
-				Skript.error("A variable's name must not contain any asterisks except at the end after the separator '" + SEPARATOR + "' to denote a list variable: {variable" + SEPARATOR + "*} (variable: {" + name + "})");
+				Skript.error("A variable's name must not contain any asterisks except at the end after '" + SEPARATOR + "' to denote a list variable, e.g. {variable" + SEPARATOR + "*} (error in variable {" + name + "})");
 			return null;
 		} else if (name.contains(SEPARATOR + SEPARATOR)) {
-			Skript.error("A variable's name must not contain the separator '" + SEPARATOR + "' multiple times in a row (variable: {" + name + "})");
+			Skript.error("A variable's name must not contain the separator '" + SEPARATOR + "' multiple times in a row (error in variable {" + name + "})");
 			return null;
 		}
 		final VariableString vs = VariableString.newInstance(name.startsWith(LOCAL_VARIABLE_TOKEN) ? name.substring(LOCAL_VARIABLE_TOKEN.length()) : name, StringMode.VARIABLE_NAME);
@@ -144,7 +144,7 @@ public class Variable<T> implements Expression<T> {
 	public String toString(final Event e, final boolean debug) {
 		if (e != null)
 			return Classes.toString(get(e));
-		return "{" + StringUtils.substring(name.toString(e, debug), 1, -1) + "}" + (debug ? "(as " + superType.getName() + ")" : "");
+		return "{" + (local ? "_" : "") + StringUtils.substring(name.toString(e, debug), 1, -1) + "}" + (debug ? "(as " + superType.getName() + ")" : "");
 	}
 	
 	@Override
@@ -166,16 +166,16 @@ public class Variable<T> implements Expression<T> {
 	 */
 	private Object getRaw(final Event e) {
 		assert !local;
-		final Object val = Variables.getVariable(name.toString(e).toLowerCase());
+		final Object val = Variables.getVariable(name.toString(e).toLowerCase(Locale.ENGLISH));
 		if (val == null)
-			return Variables.getVariable(name.getDefaultVariableName().toLowerCase());
+			return Variables.getVariable(name.getDefaultVariableName().toLowerCase(Locale.ENGLISH));
 		return val;
 	}
 	
 	@SuppressWarnings("unchecked")
 	private Object get(final Event e) {
 		if (local)
-			return Variables.getLocalVariable(name.toString(e).toLowerCase(), e);
+			return Variables.getLocalVariable(name.toString(e).toLowerCase(Locale.ENGLISH), e);
 		final Object val = getRaw(e);
 		if (!list)
 			return val;
@@ -196,7 +196,7 @@ public class Variable<T> implements Expression<T> {
 	public Iterator<Pair<String, Object>> variablesIterator(final Event e) {
 		if (!list)
 			throw new SkriptAPIException("");
-		final String name = StringUtils.substring(this.name.toString(e), 0, -1);
+		final String name = StringUtils.substring(this.name.toString(e), 0, -1).toLowerCase(Locale.ENGLISH);
 		final Object val = Variables.getVariable(name + "*");
 		if (val == null)
 			return new EmptyIterator<Pair<String, Object>>();
@@ -244,23 +244,27 @@ public class Variable<T> implements Expression<T> {
 	public Iterator<T> iterator(final Event e) {
 		if (!list)
 			throw new SkriptAPIException("");
-		final Object val = getRaw(e);
+		final String name = StringUtils.substring(this.name.toString(e), 0, -1).toLowerCase(Locale.ENGLISH);
+		final Object val = Variables.getVariable(name + "*");
 		if (val == null)
 			return new EmptyIterator<T>();
+		assert val instanceof TreeMap;
+		// temporary list to prevent CMEs
 		@SuppressWarnings("unchecked")
-		final Iterator<Entry<String, Object>> iter = ((Map<String, Object>) val).entrySet().iterator();
+		final Iterator<String> keys = new ArrayList<String>(((Map<String, Object>) val).keySet()).iterator();
 		return new Iterator<T>() {
+			private String key;
 			private T next = null;
 			
 			@Override
 			public boolean hasNext() {
 				if (next != null)
 					return true;
-				while (iter.hasNext()) {
-					final Entry<String, Object> n = iter.next();
-					if (n.getKey() != null && n.getValue() != null && !(n.getValue() instanceof Map)) {
-						next = Converters.convert(n.getValue(), types);
-						if (next != null)
+				while (keys.hasNext()) {
+					key = keys.next();
+					if (key != null) {
+						next = Converters.convert(Variables.getVariable(name + key), types);
+						if (next != null && !(next instanceof TreeMap))
 							return true;
 					}
 				}
@@ -279,7 +283,7 @@ public class Variable<T> implements Expression<T> {
 			
 			@Override
 			public void remove() {
-				iter.remove();
+				throw new UnsupportedOperationException();
 			}
 		};
 	}
@@ -296,15 +300,15 @@ public class Variable<T> implements Expression<T> {
 	
 	private final void set(final Event e, final Object value) {
 		if (local)
-			Variables.setLocalVariable(name.toString(e).toLowerCase(), e, value);
+			Variables.setLocalVariable(name.toString(e).toLowerCase(Locale.ENGLISH), e, value);
 		else
-			Variables.setVariable(name.toString(e).toLowerCase(), value, null);
+			Variables.setVariable(name.toString(e).toLowerCase(Locale.ENGLISH), value);
 	}
 	
 	private final void setIndex(final Event e, final String index, final Object value) {
 		assert list;
-		final String s = name.toString(e).toLowerCase();
-		Variables.setVariable(s.substring(0, s.length() - 1) + index, value, null);
+		final String s = name.toString(e).toLowerCase(Locale.ENGLISH);
+		Variables.setVariable(s.substring(0, s.length() - 1) + index.toLowerCase(Locale.ENGLISH), value);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -315,6 +319,7 @@ public class Variable<T> implements Expression<T> {
 		return CollectionUtils.array(Object.class);
 	}
 	
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		switch (mode) {
@@ -326,36 +331,69 @@ public class Variable<T> implements Expression<T> {
 					set(e, null);
 					int i = 1;
 					for (final Object d : (Object[]) delta) {
-						setIndex(e, "" + i, d);
+						if (d instanceof Object[]) {
+							for (int j = 0; j < ((Object[]) d).length; j++)
+								setIndex(e, "" + i + SEPARATOR + j, ((Object[]) d)[j]);
+						} else {
+							setIndex(e, "" + i, d);
+						}
 						i++;
 					}
 				} else {
-					final ClassInfo<?> ci = delta == null ? null : Classes.getSuperClassInfo(delta.getClass());
-					if (ci != null && ci.getSerializeAs() != null) {
-						set(e, Converters.convert(delta, ci.getSerializeAs()));
-					} else {
-						set(e, delta);
+//					final ClassInfo<?> ci = delta == null ? null : Classes.getSuperClassInfo(delta.getClass());
+//					if (ci != null && ci.getSerializeAs() != null) {
+//						set(e, Converters.convert(delta, ci.getSerializeAs()));
+//					} else {
+					set(e, delta);
+//					}
+				}
+				break;
+			case RESET:
+				final Object x = getRaw(e);
+				for (final Object o : x instanceof Map ? ((Map<?, ?>) x).values() : Arrays.asList(x)) {
+					final ClassInfo<?> ci = Classes.getSuperClassInfo(o.getClass());
+					if (ci.getChanger() != null && ci.getChanger().acceptChange(ChangeMode.RESET) != null) {
+						final Object[] one = (Object[]) Array.newInstance(o.getClass(), 1);
+						one[0] = o;
+						((Changer) ci.getChanger()).change(one, null, ChangeMode.RESET);
 					}
 				}
 				break;
 			case ADD:
 			case REMOVE:
+			case REMOVE_ALL:
 				if (delta == null)
 					break;
 				if (list) {
 					final Object[] ds = (Object[]) delta;
-					@SuppressWarnings("unchecked")
 					final Map<String, Object> o = (Map<String, Object>) getRaw(e);
 					if (mode == ChangeMode.REMOVE) {
 						if (o == null)
 							return;
-						for (final Entry<String, Object> i : o.entrySet()) {
-							if (Relation.EQUAL.is(Comparators.compare(i.getValue(), delta))) {
-								setIndex(e, i.getKey(), null);
-								break;
+						final ArrayList<String> rem = new ArrayList<String>(); // prevents CMEs
+						for (final Object d : ds) {
+							for (final Entry<String, Object> i : o.entrySet()) {
+								if (Relation.EQUAL.is(Comparators.compare(i.getValue(), d))) {
+									rem.add(i.getKey());
+									break;
+								}
 							}
 						}
-					} else {
+						for (final String r : rem)
+							setIndex(e, r, null);
+					} else if (mode == ChangeMode.REMOVE_ALL) {
+						if (o == null)
+							return;
+						final ArrayList<String> rem = new ArrayList<String>(); // prevents CMEs
+						for (final Entry<String, Object> i : o.entrySet()) {
+							for (final Object d : ds) {
+								if (Relation.EQUAL.is(Comparators.compare(i.getValue(), d)))
+									rem.add(i.getKey());
+							}
+						}
+						for (final String r : rem)
+							setIndex(e, r, null);
+					} else { // ADD
 						int i = 1;
 						for (final Object d : ds) {
 							if (o != null)
@@ -367,9 +405,10 @@ public class Variable<T> implements Expression<T> {
 					}
 				} else {
 					final Object o = get(e);
-					if ((o == null || o instanceof Number) && delta instanceof Number) {
+					Number n = null;
+					if ((o == null || o instanceof Number) && (delta instanceof Number || (n = Converters.convert(delta, Number.class)) != null)) {
 						final int i = mode == ChangeMode.ADD ? 1 : -1;
-						set(e, (o == null ? 0 : ((Number) o).doubleValue()) + i * ((Number) delta).doubleValue());
+						set(e, (o == null ? 0 : ((Number) o).doubleValue()) + i * (n != null ? n : (Number) delta).doubleValue());
 					} else if (o != null) {
 						final ClassInfo<?> ci = Classes.getSuperClassInfo(o.getClass());
 						if (ci.getChanger() != null && ci.getChanger().acceptChange(mode) != null) {
@@ -377,12 +416,37 @@ public class Variable<T> implements Expression<T> {
 							final Object[] one = (Object[]) Array.newInstance(o.getClass(), 1);
 							one[0] = o;
 							for (final Class<?> c : cs) {
-								if (c.isAssignableFrom(delta.getClass())) {
+								if (c.isInstance(delta)) {
 									ChangerUtils.change(ci.getChanger(), one, delta, mode);
-								} else if (c.isArray() && c.getComponentType().isAssignableFrom(delta.getClass())) {
+									return;
+								} else if (c.isArray() && c.getComponentType().isInstance(delta)) {
 									final Object[] deltas = (Object[]) Array.newInstance(c.getComponentType(), 1);
 									deltas[0] = delta;
 									ChangerUtils.change(ci.getChanger(), one, deltas, mode);
+									return;
+								}
+							}
+							for (final Class<?> c : cs) {
+								if (delta instanceof Object[]) {
+									if (!c.isArray())
+										continue;
+									final Object[] d = Converters.convertArray((Object[]) delta, c.getComponentType());
+									if (d != null) {
+										ChangerUtils.change(ci.getChanger(), one, d, mode);
+										return;
+									}
+								} else {
+									final Object d = Converters.convert(delta, c.isArray() ? c.getComponentType() : c);
+									if (d != null) {
+										if (c.isArray()) {
+											final Object[] deltas = (Object[]) Array.newInstance(c.getComponentType(), 1);
+											deltas[0] = d;
+											ChangerUtils.change(ci.getChanger(), one, deltas, mode);
+										} else {
+											ChangerUtils.change(ci.getChanger(), one, d, mode);
+										}
+										return;
+									}
 								}
 							}
 						}

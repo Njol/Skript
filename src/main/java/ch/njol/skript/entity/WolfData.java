@@ -31,16 +31,15 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 @SuppressWarnings("serial")
 public class WolfData extends EntityData<Wolf> {
-	
-	private int angry = 0;
-//	private String owner = null;
-	private int tamed = 0;
-	
 	static {
 		EntityData.register(WolfData.class, "wolf", Wolf.class,
 				"angry wolf", "wolf", "peaceful wolf",
 				"wild wolf", "tamed wolf");
 	}
+	
+	private int angry = 0;
+//	private String owner = null;
+	private int tamed = 0;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
@@ -48,6 +47,13 @@ public class WolfData extends EntityData<Wolf> {
 			angry = matchedPattern - 1;
 		else
 			tamed = matchedPattern == 3 ? -1 : 1;
+		return true;
+	}
+	
+	@Override
+	protected boolean init(final Class<? extends Wolf> c, final Wolf e) {
+		angry = e == null ? 0 : e.isAngry() ? 1 : -1;
+		tamed = e == null ? 0 : e.isTamed() ? 1 : -1;
 		return true;
 	}
 	
@@ -121,9 +127,15 @@ public class WolfData extends EntityData<Wolf> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Wolf> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof WolfData)
 			return (angry == 0 || ((WolfData) e).angry == angry) && (tamed == 0 || ((WolfData) e).tamed == tamed);
 		return false;
 	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new WolfData();
+	}
+	
 }

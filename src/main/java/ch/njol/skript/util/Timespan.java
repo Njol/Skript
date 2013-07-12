@@ -35,8 +35,8 @@ import ch.njol.util.Pair;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-public class Timespan implements Serializable {
-	
+public class Timespan implements Serializable { // TODO unit
+
 	private final static Noun m_tick = new Noun("time.tick");
 	private final static Noun m_second = new Noun("time.second");
 	private final static Noun m_minute = new Noun("time.minute");

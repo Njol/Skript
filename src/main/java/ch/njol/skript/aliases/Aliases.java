@@ -46,7 +46,7 @@ import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.localization.RegexMessage;
-import ch.njol.skript.log.RetainingLogHandler;
+import ch.njol.skript.log.BlockingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.Utils;
@@ -133,17 +133,15 @@ public abstract class Aliases {
 			r.putAll(getAliases(m.replaceFirst("$1"), value, variations));
 			r.putAll(getAliases(m.replaceFirst("").replace("  ", " ").trim(), value, variations));
 		} else if ((m = groupPattern.matcher(name)).find()) {
-			final String[] split = m.group(1).split("\\|");
-			if (split.length == 1) {
+			final String[] split = m.group(1).split("\\|", -1);
+			if (split.length == 1)
 				Skript.error(m_brackets_error.toString());
-			}
-			for (final String s : split) {
+			for (final String s : split)
 				r.putAll(getAliases(m.replaceFirst(s).replace("  ", " ").trim(), value, variations));
-			}
 		} else if ((m = variationPattern.matcher(name)).find()) {
 			// TODO lowercase the first letter after the variation, e.g. '{baumtyp}Holz' -> 'Holz', 'Eichenholz', 'normales Holz', etc., but only if there's no whitespace anywhere (at end of var./after var.)
-			// - auch nach [] und ()
-			if (variations.get(m.group(1)) != null) {
+			// - also after [] and ()
+			if (variations.containsKey(m.group(1))) {
 				boolean hasDefault = false;
 				for (final Entry<String, ItemType> v : variations.get(m.group(1)).entrySet()) {
 					final String n;
@@ -155,9 +153,9 @@ public abstract class Aliases {
 						if (c == -1) {
 							n = m.replaceFirst(v.getKey());
 						} else {
-							final String n0 = m.replaceFirst(v.getKey().substring(0, c));
+							final String n0 = m.replaceFirst(v.getKey().substring(0, c).trim());
 							final int c0 = n0.lastIndexOf('@');
-							n = (c0 == -1 ? n0 : n0.substring(0, c0)) + v.getKey().substring(c);
+							n = (c0 == -1 ? n0 : n0.substring(0, c0).trim()) + v.getKey().substring(c);
 						}
 					}
 					final ItemType t = v.getValue().intersection(value);
@@ -436,12 +434,10 @@ public abstract class Aliases {
 		int c = -1;
 		outer: while ((c = lc.indexOf(of, c + 1)) != -1) {
 			final ItemType t2 = t.clone();
-			final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+			final BlockingLogHandler log = SkriptLogger.startLogHandler(new BlockingLogHandler());
 			try {
-				if (parseType(s.substring(0, c), t2, false) == null) {
-					log.stop();
+				if (parseType(s.substring(0, c), t2, false) == null)
 					continue;
-				}
 			} finally {
 				log.stop();
 			}
@@ -507,9 +503,9 @@ public abstract class Aliases {
 				d = d.intersection(data);
 			}
 			if (!isAlias) {
-				Skript.warning("Using an ID instead of an alias is discouraged. " +
+				Skript.warning("Using an ID instead of an alias is discouraged and will likely not be supported in future versions of Skript anymore. " +
 						(d.toString().equals(type) ?
-								"Please crate an alias for '" + type + (type.equals(s) ? "" : " or '" + s + "'") + "' (" + Material.getMaterial(d.getId()).name() + ") in aliases.sk or the script's aliases section and use that instead." :
+								"Please crate an alias for '" + type + (type.equals(s) ? "" : " or '" + s + "'") + "' (" + Material.getMaterial(d.getId()).name() + ") in aliases-english.sk or the script's aliases section and use that instead." :
 								"Please replace '" + s + "' with e.g. '" + d.toString(true, 0) + "'."));
 			}
 			t.add(d);
@@ -535,7 +531,8 @@ public abstract class Aliases {
 			}
 			return t;
 		}
-		Skript.error(m_invalid_item_type.toString(s));
+		if (isAlias)
+			Skript.error(m_invalid_item_type.toString(s));
 		return null;
 	}
 	

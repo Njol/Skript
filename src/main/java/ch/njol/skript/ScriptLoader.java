@@ -71,11 +71,13 @@ import ch.njol.skript.lang.While;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.CountingLogHandler;
 import ch.njol.skript.log.ErrorDescLogHandler;
+import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.Date;
+import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Callback;
 import ch.njol.util.CollectionUtils;
@@ -103,7 +105,7 @@ final public class ScriptLoader {
 	/**
 	 * must be synchronized
 	 */
-	private static volatile ScriptInfo loadedScripts = new ScriptInfo();
+	private static final ScriptInfo loadedScripts = new ScriptInfo();
 	
 	public static Kleenean hasDelayBefore = Kleenean.FALSE;
 	
@@ -181,6 +183,16 @@ final public class ScriptLoader {
 	}
 	
 	/**
+	 * Filter for enabled scripts & folders.
+	 */
+	private final static FileFilter scriptFilter = new FileFilter() {
+		@Override
+		public boolean accept(final File f) {
+			return (f.isDirectory() || StringUtils.endsWithIgnoreCase(f.getName(), ".sk")) && !f.getName().startsWith("-");
+		}
+	};
+	
+	/**
 	 * loads enabled scripts from the specified directory and it's subdirectories.
 	 * 
 	 * @param directory
@@ -190,12 +202,7 @@ final public class ScriptLoader {
 		final ScriptInfo i = new ScriptInfo();
 		final boolean wasLocal = Language.setUseLocal(false);
 		try {
-			final File[] files = directory.listFiles(new FileFilter() {
-				@Override
-				public boolean accept(final File f) {
-					return (f.isDirectory() || f.getName().endsWith(".sk")) && !f.getName().startsWith("-");
-				}
-			});
+			final File[] files = directory.listFiles(scriptFilter);
 			Arrays.sort(files);
 			for (final File f : files) {
 				if (f.isDirectory()) {
@@ -345,13 +352,14 @@ final public class ScriptLoader {
 						}
 						continue;
 					} else if (event.equalsIgnoreCase("variables")) {
+						// TODO allow to make these override existing variables
 						node.convertToEntries(0, "=");
 						for (final Node n : node) {
 							if (!(n instanceof EntryNode)) {
 								Skript.error("Invalid line in variables section");
 								continue;
 							}
-							String name = ((EntryNode) n).getKey();
+							String name = ((EntryNode) n).getKey().toLowerCase(Locale.ENGLISH);
 							if (name.startsWith("{") && name.endsWith("}"))
 								name = name.substring(1, name.length() - 1);
 							final String var = name;
@@ -378,15 +386,18 @@ final public class ScriptLoader {
 							}
 							if (Variables.getVariable(name) != null)
 								continue;
-							final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+							final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 							Object o = Classes.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.CONFIG);
 							log.stop();
 							if (o == null) {
-								log.printErrors("Can't understand the value '" + ((EntryNode) n).getValue() + "'");
+								log.printError("Can't understand the value '" + ((EntryNode) n).getValue() + "'");
 								continue;
 							}
 							final ClassInfo<?> ci = Classes.getSuperClassInfo(o.getClass());
-							if (ci.getSerializeAs() != null) {
+							if (ci.getSerializer() == null) {
+								Skript.error("Can't save '" + ((EntryNode) n).getValue() + "' in a variable");
+								continue;
+							} else if (ci.getSerializeAs() != null) {
 								final ClassInfo<?> as = Classes.getExactClassInfo(ci.getSerializeAs());
 								o = Converters.convert(o, as.getC());
 								if (o == null) {
@@ -394,15 +405,13 @@ final public class ScriptLoader {
 									continue;
 								}
 							}
-							Variables.setVariable(name, o, null);
+							Variables.setVariable(name, o);
 						}
 						continue;
 					}
 					
-					if (StringUtils.count(event, '"') % 2 != 0) {
-						Skript.error(Skript.m_quotes_error.toString());
+					if (!SkriptParser.validateLine(event))
 						continue;
-					}
 					
 					if (event.toLowerCase().startsWith("command ")) {
 						currentEvent = null;
@@ -436,8 +445,8 @@ final public class ScriptLoader {
 						continue;
 					}
 					
-					if (Skript.debug())
-						Skript.info(event + " (" + parsedEvent.second.toString(null, true) + "):");
+					if (Skript.debug() || node.debug())
+						Skript.debug(event + " (" + parsedEvent.second.toString(null, true) + "):");
 					
 					currentEvent = parsedEvent.second;
 					currentEventName = parsedEvent.first.getName().toLowerCase(Locale.ENGLISH);
@@ -498,7 +507,7 @@ final public class ScriptLoader {
 			
 			return new ScriptInfo(1, numTriggers, numCommands);
 		} catch (final IOException e) {
-			Skript.error("Could not load " + f.getName() + ": " + e.getLocalizedMessage());
+			Skript.error("Could not load " + f.getName() + ": " + ExceptionUtils.toString(e));
 		} catch (final Exception e) {
 			Skript.exception(e, "Could not load " + f.getName());
 		} finally {
@@ -515,15 +524,9 @@ final public class ScriptLoader {
 	 */
 	final static ScriptInfo unloadScripts(final File folder) {
 		final ScriptInfo info = new ScriptInfo();
-		final File[] files = folder.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(final File f) {
-				return (f.isDirectory() || f.getName().endsWith(".sk")) && !f.getName().startsWith("-");
-			}
-		});
+		final File[] files = folder.listFiles(scriptFilter);
 		for (final File f : files) {
 			if (f.isDirectory()) {
-				;
 				info.add(unloadScripts(f));
 			} else if (f.getName().endsWith(".sk")) {
 				info.add(unloadScript(f));
@@ -579,11 +582,13 @@ final public class ScriptLoader {
 				final String s = replaceOptions(e.getKey());
 				if (s == null)
 					continue;
+				if (!SkriptParser.validateLine(s))
+					continue;
 				final Statement stmt = Statement.parse(s, "Can't understand this condition/effect: " + s);
 				if (stmt == null)
 					continue;
-				if (Skript.debug())
-					Skript.info(indentation + stmt.toString(null, true));
+				if (Skript.debug() || n.debug())
+					Skript.debug(indentation + stmt.toString(null, true));
 				items.add(stmt);
 				if (stmt instanceof Delay)
 					hasDelayBefore = Kleenean.TRUE;
@@ -591,29 +596,31 @@ final public class ScriptLoader {
 				String name = replaceOptions(n.getKey());
 				if (name == null)
 					continue;
+				if (!SkriptParser.validateLine(name))
+					continue;
 				
 				if (StringUtils.startsWithIgnoreCase(name, "loop ")) {
 					final String l = name.substring("loop ".length());
 					final RetainingLogHandler h = SkriptLogger.startRetainingLog();
 					Expression<?> loopedExpr;
 					try {
-						loopedExpr = SkriptParser.parseExpression(l, SkriptParser.PARSE_EXPRESSIONS | SkriptParser.PARSE_LITERALS, ParseContext.DEFAULT, Object.class);
+						loopedExpr = new SkriptParser(l).parseExpression(Object.class);
 						if (loopedExpr != null)
 							loopedExpr = loopedExpr.getConvertedExpression(Object.class);
+						if (loopedExpr == null) {
+							h.printErrors("Can't understand this loop: '" + name + "'");
+							continue;
+						}
+						h.printLog();
 					} finally {
 						h.stop();
 					}
-					if (loopedExpr == null) {
-						h.printErrors("Can't understand this loop: '" + name + "'");
-						continue;
-					}
-					h.printLog();
 					if (loopedExpr.isSingle()) {
 						Skript.error("Can't loop " + loopedExpr + " because it's only a single value");
 						continue;
 					}
-					if (Skript.debug())
-						Skript.info(indentation + "loop " + loopedExpr.toString(null, true) + ":");
+					if (Skript.debug() || n.debug())
+						Skript.debug(indentation + "loop " + loopedExpr.toString(null, true) + ":");
 					final Kleenean hadDelayBefore = hasDelayBefore;
 					items.add(new Loop(loopedExpr, (SectionNode) n));
 					if (hadDelayBefore != Kleenean.TRUE && hasDelayBefore != Kleenean.FALSE)
@@ -623,8 +630,8 @@ final public class ScriptLoader {
 					final Condition c = Condition.parse(l, "Can't understand this condition: " + l);
 					if (c == null)
 						continue;
-					if (Skript.debug())
-						Skript.info(indentation + "while " + c.toString(null, true) + ":");
+					if (Skript.debug() || n.debug())
+						Skript.debug(indentation + "while " + c.toString(null, true) + ":");
 					final Kleenean hadDelayBefore = hasDelayBefore;
 					items.add(new While(c, (SectionNode) n));
 					if (hadDelayBefore != Kleenean.TRUE && hasDelayBefore != Kleenean.FALSE)
@@ -634,8 +641,8 @@ final public class ScriptLoader {
 						Skript.error("'else' has to be placed just after an 'if' or 'else if' section");
 						continue;
 					}
-					if (Skript.debug())
-						Skript.info(indentation + "else:");
+					if (Skript.debug() || n.debug())
+						Skript.debug(indentation + "else:");
 					final Kleenean hadDelayAfterLastIf = hasDelayBefore;
 					hasDelayBefore = hadDelayBeforeLastIf;
 					((Conditional) items.get(items.size() - 1)).loadElseClause((SectionNode) n);
@@ -649,8 +656,8 @@ final public class ScriptLoader {
 					final Condition cond = Condition.parse(name, "can't understand this condition: '" + name + "'");
 					if (cond == null)
 						continue;
-					if (Skript.debug())
-						Skript.info(indentation + "else if " + cond.toString(null, true));
+					if (Skript.debug() || n.debug())
+						Skript.debug(indentation + "else if " + cond.toString(null, true));
 					final Kleenean hadDelayAfterLastIf = hasDelayBefore;
 					hasDelayBefore = hadDelayBeforeLastIf;
 					((Conditional) items.get(items.size() - 1)).loadElseIf(cond, (SectionNode) n);
@@ -661,8 +668,8 @@ final public class ScriptLoader {
 					final Condition cond = Condition.parse(name, "can't understand this condition: '" + name + "'");
 					if (cond == null)
 						continue;
-					if (Skript.debug())
-						Skript.info(indentation + cond.toString(null, true) + ":");
+					if (Skript.debug() || n.debug())
+						Skript.debug(indentation + cond.toString(null, true) + ":");
 					final Kleenean hadDelayBefore = hasDelayBefore;
 					hadDelayBeforeLastIf = hadDelayBefore;
 					items.add(new Conditional(cond, (SectionNode) n));

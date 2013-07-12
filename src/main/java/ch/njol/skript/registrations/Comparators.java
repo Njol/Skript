@@ -60,11 +60,23 @@ public class Comparators {
 	
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public final static Relation compare(final Object o1, final Object o2) {
-		assert o1 != null && o2 != null;
+		if (o1 == null || o2 == null)
+			return Relation.NOT_EQUAL;
 		final Comparator c = getComparator(o1.getClass(), o2.getClass());
 		if (c == null)
 			return null;
 		return c.compare(o1, o2);
+	}
+	
+	private final static java.util.Comparator<Object> javaComparator = new java.util.Comparator<Object>() {
+		@Override
+		public int compare(final Object o1, final Object o2) {
+			return Comparators.compare(o1, o2).getRelation();
+		}
+	};
+	
+	public final static java.util.Comparator<Object> getJavaComparator() {
+		return javaComparator;
 	}
 	
 	private final static Map<Pair<Class<?>, Class<?>>, Comparator<?, ?>> comparatorsQuickAccess = new HashMap<Pair<Class<?>, Class<?>>, Comparator<?, ?>>();
@@ -160,7 +172,13 @@ public class Comparators {
 		
 		@Override
 		public Relation compare(final T1 o1, final T2 o2) {
-			return c.compare(c1 == null ? o1 : c1.convert(o1), c2 == null ? o2 : c2.convert(o2));
+			final Object t1 = c1 == null ? o1 : c1.convert(o1);
+			if (t1 == null)
+				return Relation.NOT_EQUAL;
+			final Object t2 = c2 == null ? o2 : c2.convert(o2);
+			if (t2 == null)
+				return Relation.NOT_EQUAL;
+			return c.compare(t1, t2);
 		}
 		
 		@Override

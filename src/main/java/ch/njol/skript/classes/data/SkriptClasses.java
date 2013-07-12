@@ -527,6 +527,14 @@ public class SkriptClasses {
 						return first.difference(second);
 					}
 				}).changer(new SerializableChanger<Date, Timespan>() {
+					@SuppressWarnings("unchecked")
+					@Override
+					public Class<? extends Timespan>[] acceptChange(final ChangeMode mode) {
+						if (mode == ChangeMode.ADD || mode == ChangeMode.REMOVE)
+							return CollectionUtils.array(Timespan.class);
+						return null;
+					}
+					
 					@SuppressWarnings("incomplete-switch")
 					@Override
 					public void change(final Date[] what, final Timespan delta, final ChangeMode mode) {
@@ -540,14 +548,6 @@ public class SkriptClasses {
 									d.subtract(delta);
 								break;
 						}
-					}
-					
-					@SuppressWarnings("unchecked")
-					@Override
-					public Class<? extends Timespan>[] acceptChange(final ChangeMode mode) {
-						if (mode == ChangeMode.ADD || mode == ChangeMode.REMOVE)
-							return CollectionUtils.array(Timespan.class);
-						return null;
 					}
 				}));
 		
@@ -625,14 +625,14 @@ public class SkriptClasses {
 				.changer(new SerializableChanger<Slot, Object>() {
 					@SuppressWarnings("unchecked")
 					@Override
-					public Class<Object>[] acceptChange(final ch.njol.skript.classes.Changer.ChangeMode mode) {
+					public Class<Object>[] acceptChange(final ChangeMode mode) {
+						if (mode == ChangeMode.RESET)
+							return null;
 						return new Class[] {ItemType.class, ItemStack.class};
 					}
 					
 					@Override
-					public void change(final Slot[] slots, final Object delta, final ch.njol.skript.classes.Changer.ChangeMode mode) {
-						if (delta == null && mode != ChangeMode.DELETE)
-							return;
+					public void change(final Slot[] slots, final Object delta, final ChangeMode mode) {
 						for (final Slot slot : slots) {
 							switch (mode) {
 								case SET:
@@ -650,10 +650,11 @@ public class SkriptClasses {
 									}
 									break;
 								case REMOVE:
+								case REMOVE_ALL:
 									if (delta instanceof ItemStack) {
 										final ItemStack i = slot.getItem();
 										if (Utils.itemStacksEqual(i, (ItemStack) delta)) {
-											final int a = i.getAmount() - ((ItemStack) delta).getAmount();
+											final int a = mode == ChangeMode.REMOVE_ALL ? 0 : i.getAmount() - ((ItemStack) delta).getAmount();
 											if (a <= 0) {
 												slot.setItem(null);
 											} else {
@@ -662,11 +663,18 @@ public class SkriptClasses {
 											}
 										}
 									} else {
-										slot.setItem(((ItemType) delta).removeFrom(slot.getItem()));
+										if (mode == ChangeMode.REMOVE)
+											slot.setItem(((ItemType) delta).removeFrom(slot.getItem()));
+										else
+											// REMOVE_ALL
+											slot.setItem(((ItemType) delta).removeAll(slot.getItem()));
 									}
 									break;
 								case DELETE:
 									slot.setItem(null);
+									break;
+								case RESET:
+									assert false;
 							}
 						}
 					}

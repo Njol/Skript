@@ -110,9 +110,4 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 		return true;
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

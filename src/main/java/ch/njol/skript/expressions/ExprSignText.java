@@ -152,11 +152,6 @@ public class ExprSignText extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
-	@Override
 	public boolean setTime(final int time) {
 		return super.setTime(time, SignChangeEvent.class, block);
 	}

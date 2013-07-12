@@ -30,6 +30,7 @@ import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
@@ -65,6 +66,8 @@ public class ExprLevelProgress extends SimplePropertyExpression<Player, Float> {
 	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.REMOVE_ALL)
+			return null;
 		return new Class[] {Number.class};
 	}
 	
@@ -84,14 +87,16 @@ public class ExprLevelProgress extends SimplePropertyExpression<Player, Float> {
 					c = p.getExp() - d;
 					break;
 				case DELETE:
+				case RESET:
 					c = 0;
 					break;
+				case REMOVE_ALL:
 				default:
 					assert false;
 					return;
 			}
-			p.setLevel(p.getLevel() + (int) Math.floor(c));
-			p.setExp(c % 1);
+			p.setLevel(Math.max(0, p.getLevel() + (int) Math.floor(c)));
+			p.setExp(Math2.mod(c, 1));
 		}
 	}
 	

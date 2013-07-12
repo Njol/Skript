@@ -36,6 +36,7 @@ import ch.njol.skript.lang.Loop;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.TriggerSection;
+import ch.njol.skript.lang.While;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.util.Kleenean;
 
@@ -54,7 +55,6 @@ import ch.njol.util.Kleenean;
 		"	set loop-block to water"})
 @Since("")
 public class EffExit extends Effect {
-	
 	static {
 		Skript.registerEffect(EffExit.class,
 				"(exit|stop) [trigger]",
@@ -105,7 +105,7 @@ public class EffExit extends Effect {
 			return ScriptLoader.currentSections.size();
 		int r = 0;
 		for (final TriggerSection s : ScriptLoader.currentSections) {
-			if (type == CONDITIONALS ? s instanceof Conditional : s instanceof Loop)
+			if (type == CONDITIONALS ? s instanceof Conditional : s instanceof Loop || s instanceof While)
 				r++;
 		}
 		return r;
@@ -118,10 +118,10 @@ public class EffExit extends Effect {
 		for (int i = breakLevels; i > 0;) {
 			n = n.getParent();
 			assert n != null;
-			if (type == EVERYTHING || type == CONDITIONALS && n instanceof Conditional || type == LOOPS && n instanceof Loop)
+			if (type == EVERYTHING || type == CONDITIONALS && n instanceof Conditional || type == LOOPS && (n instanceof Loop || n instanceof While))
 				i--;
 		}
-		return n instanceof Loop ? ((Loop) n).getActualNext() : n.getNext();
+		return n instanceof Loop ? ((Loop) n).getActualNext() : n instanceof While ? ((While) n).getActualNext() : n.getNext();
 	}
 	
 	@Override

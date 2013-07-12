@@ -83,9 +83,4 @@ public class ExprWorlds extends SimpleExpression<World> {
 		return "worlds";
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

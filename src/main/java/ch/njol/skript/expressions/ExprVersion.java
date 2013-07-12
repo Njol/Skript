@@ -112,9 +112,4 @@ public class ExprVersion extends SimpleExpression<String> {
 		return String.class;
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

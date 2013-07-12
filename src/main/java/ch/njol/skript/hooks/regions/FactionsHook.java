@@ -27,19 +27,24 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import com.massivecraft.factions.P;
+import com.massivecraft.factions.listeners.FactionsListenerMain;
+import com.massivecraft.mcore.ps.PS;
 
 /**
  * @author Peter Güttinger
  */
 public class FactionsHook extends RegionsPlugin {
 	
-	private static P factions = null;
+	private static Plugin factions = null;
+	
+	boolean factions2 = false;
 	
 	@Override
 	protected boolean init() {
 		final Plugin p = Bukkit.getPluginManager().getPlugin("Factions");
-		if (p != null && p instanceof P) {
-			factions = (P) p;
+		if (p != null) {
+			factions = p;
+			factions2 = !factions.getClass().getSimpleName().equals("P");
 			return super.init();
 		}
 		return false;
@@ -52,7 +57,7 @@ public class FactionsHook extends RegionsPlugin {
 	
 	@Override
 	public boolean canBuild_i(final Player p, final Location l) {
-		return factions.isPlayerAllowedToBuildHere(p, l);
+		return factions2 ? FactionsListenerMain.canPlayerBuildAt(p, PS.valueOf(l), false) : ((P) factions).isPlayerAllowedToBuildHere(p, l);
 	}
 	
 }

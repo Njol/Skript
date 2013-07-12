@@ -21,7 +21,6 @@
 
 package ch.njol.skript.classes.data;
 
-import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.IntegerArithmetic;
@@ -29,8 +28,8 @@ import ch.njol.skript.classes.NumberArithmetic;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleLiteral;
-import ch.njol.skript.lang.util.VariableString;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.localization.RegexMessage;
 import ch.njol.skript.registrations.Classes;
@@ -40,8 +39,8 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
-public class DefaultClasses {
-	public DefaultClasses() {}
+public class JavaClasses {
+	public JavaClasses() {}
 	
 	public final static int VARIABLENAME_NUMBERACCURACY = 8;
 	
@@ -470,7 +469,7 @@ public class DefaultClasses {
 				.description("Text is simply text, i.e. a sequence of characters, which can optionally contain expressions which will be replaced with a meaningful representation " +
 						"(e.g. %player% will be replaced with the player's name).",
 						"Because scripts are also text, you have to put text into double quotes to tell Skript which part of the line is an effect/expression and which part is the text.",
-						"Please read the article on <a href='../strings'>Texts and Variable Names</a> to learn more.")
+						"Please read the article on <a href='../strings/'>Texts and Variable Names</a> to learn more.")
 				.usage("simple: <code>\"...\"</code>",
 						"quotes: <code>\"...\"\"...\"</code>",
 						"expressions: <code>\"...%expression%...\"</code>",
@@ -484,25 +483,27 @@ public class DefaultClasses {
 					public String parse(final String s, final ParseContext context) {
 						switch (context) {
 							case DEFAULT:
-								throw new SkriptAPIException("Strings must not be parsed as DEFAULT using it's Parser, but by parsing it as a VariableString!");
+								if (VariableString.isQuotedCorrectly(s, true))
+									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
+								return null;
 							case COMMAND:
-								return s;
+								return s; // TODO document this
 							case CONFIG:
-								if (!VariableString.isQuotedCorrectly(s, true))
-									return null;
-								return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
+								if (VariableString.isQuotedCorrectly(s, true))
+									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
+								return null;
 							case EVENT:
 								if (VariableString.isQuotedCorrectly(s, true))
 									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
 								return Utils.replaceChatStyles(s);
-							default:
-								return null;
 						}
+						assert false;
+						return null;
 					}
 					
 					@Override
 					public boolean canParse(final ParseContext context) {
-						return context != ParseContext.DEFAULT;
+						return true;
 					}
 					
 					@Override
@@ -516,13 +517,13 @@ public class DefaultClasses {
 					}
 					
 					@Override
-					public String toVariableNameString(final String o) {
-						return "" + o;
+					public String toVariableNameString(final String s) {
+						return s;
 					}
 					
 					@Override
 					public String getVariableNamePattern() {
-						return ".+";
+						return ".*";
 					}
 				}).serializer(new Serializer<String>() {
 					@Override

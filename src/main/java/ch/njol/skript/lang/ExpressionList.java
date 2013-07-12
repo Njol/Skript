@@ -29,18 +29,15 @@ import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
 
-import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
-import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Checker;
 import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
- * Used for lists of expressions, i.e. expr1, expr2, ..., and/or exprN
+ * A list of expressions.
  * 
  * @author Peter Güttinger
  */
@@ -96,12 +93,8 @@ public class ExpressionList<T> implements Expression<T> {
 	
 	@Override
 	public T[] getArray(final Event e) {
-		if (and) {
-			final ArrayList<T> r = new ArrayList<T>();
-			for (final Expression<? extends T> expr : expressions)
-				r.addAll(Arrays.asList(expr.getArray(e)));
-			return r.toArray((T[]) Array.newInstance(returnType, r.size()));
-		}
+		if (and)
+			return getAll(e);
 		for (final int i : CollectionUtils.permutation(expressions.length)) {
 			final T[] t = expressions[i].getArray(e);
 			if (t.length > 0)
@@ -202,18 +195,22 @@ public class ExpressionList<T> implements Expression<T> {
 		return and;
 	}
 	
-	private ClassInfo<? super T> returnTypeInfo;
-	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (returnTypeInfo == null)
-			returnTypeInfo = Classes.getSuperClassInfo(getReturnType());
-		return returnTypeInfo.getChanger() == null ? null : returnTypeInfo.getChanger().acceptChange(mode);
+		final ArrayList<Class<?>> r = new ArrayList<Class<?>>(Arrays.asList(expressions[0].acceptChange(mode)));
+		for (int i = 1; i < expressions.length; i++) {
+			r.retainAll(Arrays.asList(expressions[i].acceptChange(mode)));
+			if (r.isEmpty())
+				return null;
+		}
+		return r.toArray(new Class[r.size()]);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		((Changer<T, Object>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
+		for (final Expression<?> expr : expressions) {
+			expr.change(e, delta, mode);
+		}
 	}
 	
 	private int time = 0;
@@ -254,7 +251,7 @@ public class ExpressionList<T> implements Expression<T> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		final StringBuilder b = new StringBuilder();
+		final StringBuilder b = new StringBuilder("(");
 		for (int i = 0; i < expressions.length; i++) {
 			if (i != 0) {
 				if (i == expressions.length - 1)
@@ -264,7 +261,7 @@ public class ExpressionList<T> implements Expression<T> {
 			}
 			b.append(expressions[i].toString(e, debug));
 		}
-		return b.toString();
+		return b.append(")").toString();
 	}
 	
 	@Override
@@ -272,6 +269,9 @@ public class ExpressionList<T> implements Expression<T> {
 		return toString(null, false);
 	}
 	
+	/**
+	 * @return The internal list of expressions. Can be modified with care.
+	 */
 	public Expression<? extends T>[] getExpressions() {
 		return expressions;
 	}

@@ -53,6 +53,7 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	}
 	
 	protected void setExpr(final Expression<? extends T> expr) {
+		assert expr != null;
 		this.expr = expr;
 	}
 	
@@ -66,8 +67,6 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 		if (conv == null)
 			return null;
 		return new ConvertedExpression<T, R>(expr, to, conv) {
-			private static final long serialVersionUID = 2884135341799040191L;
-			
 			@Override
 			public String toString(final Event e, final boolean debug) {
 				if (debug && e == null)

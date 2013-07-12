@@ -69,7 +69,7 @@ public class ExprAmountOfItems extends SimpleExpression<Integer> {
 			itemsLoop: for (final ItemStack i : invi.getContents()) {
 				for (final ItemType t : types) {
 					if (t.isOfType(i)) {
-						r += i.getAmount();
+						r += i == null ? 1 : i.getAmount();
 						continue itemsLoop;
 					}
 				}
@@ -86,7 +86,7 @@ public class ExprAmountOfItems extends SimpleExpression<Integer> {
 			itemsLoop: for (final ItemStack i : invi.getContents()) {
 				for (final ItemType t : types) {
 					if (t.isOfType(i)) {
-						r += i.getAmount();
+						r += i == null ? 1 : i.getAmount();
 						continue itemsLoop;
 					}
 				}
@@ -102,11 +102,6 @@ public class ExprAmountOfItems extends SimpleExpression<Integer> {
 	
 	@Override
 	public boolean isSingle() {
-		return true;
-	}
-	
-	@Override
-	public boolean getAnd() {
 		return true;
 	}
 	

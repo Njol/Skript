@@ -25,31 +25,44 @@ import static org.junit.Assert.*;
 
 import java.util.HashMap;
 import java.util.Set;
+import java.util.logging.Filter;
+import java.util.logging.LogRecord;
 
 import org.junit.Test;
+
+import ch.njol.skript.log.SkriptLogger;
 
 /**
  * @author Peter Güttinger
  */
 public class AliasesTest {
+	static {
+		SkriptLogger.addFilter(new Filter() {
+			@Override
+			public boolean isLoggable(final LogRecord record) {
+				return record.getMessage() == null || !record.getMessage().startsWith("[Skript] Missing entry");
+			}
+		});
+	}
 	
 	@Test
 	public void testNames() {
 		final ItemType t = new ItemType();
+		t.add(new ItemData(0));
 		
 		final Aliases.Variations v = new Aliases.Variations();
 		final HashMap<String, ItemType> var1 = new HashMap<String, ItemType>();
-		var1.put("{default}", new ItemType());
-		var1.put("v1.1", new ItemType());
-		var1.put("v1.2", new ItemType());
+		var1.put("{default}", t);
+		var1.put("v1.1", t);
+		var1.put("v1.2", t);
 		v.put("var1", var1);
 		final HashMap<String, ItemType> var2 = new HashMap<String, ItemType>();
-		var2.put("v2.1 @a", new ItemType());
-		var2.put("v2.2", new ItemType());
+		var2.put("v2.1 @a", t);
+		var2.put("v2.2", t);
 		v.put("var2", var2);
 		final HashMap<String, ItemType> var3 = new HashMap<String, ItemType>();
-		var3.put("v3.1¦s", new ItemType());
-		var3.put("v3.2¦a¦b", new ItemType());
+		var3.put("v3.1¦¦s¦", t);
+		var3.put("v3.2¦a¦b¦", t);
 		v.put("var3", var3);
 		
 		final String[][] tests = {
@@ -59,15 +72,18 @@ public class AliasesTest {
 				{"a(b|c)d", "abd", "acd"},
 				{"a(b|)c", "abc", "ac"},
 				{"a {var1}", "a", "a v1.1", "a v1.2"},
-				{"a @an {var2}", "a @an", "a v2.1@a", "a v2.2@an"},
-				{"{var3}", "", "v3.1¦¦s¦", "v3.2¦a¦b¦"},
+				{"a {var2} @an", "a v2.1@a", "a v2.2 @an", "a @an"},
+				{"a {var3}", "a v3.1¦¦s¦", "a v3.2¦a¦b¦", "a"},
+				{"<any> a @an", "aliases.any-skp a @-"},
+				{"a <item>", "a ¦item¦items¦"},
 		};
 		
 		for (final String[] test : tests) {
 			final Set<String> names = Aliases.getAliases(test[0], t, v).keySet();
+			assertEquals(test[0], test.length - 1, names.size());
 			int i = 1;
 			for (final String name : names)
-				assertEquals(test[i++], name);
+				assertEquals(test[0], test[i++], name);
 		}
 	}
 	

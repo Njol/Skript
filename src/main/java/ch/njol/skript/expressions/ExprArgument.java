@@ -47,7 +47,7 @@ import ch.njol.util.StringUtils;
  */
 @SuppressWarnings("serial")
 @Name("Argument")
-@Description({"Only usable in command events. Holds the value of the n-th argument given to the command, " +
+@Description({"Only usable in command events. Holds the value of the nth argument given to the command, " +
 		"e.g. if the command \"/tell &lt;player&gt; &lt;text&gt;\" is used like \"/tell Njol Hello Njol!\" argument 1 is the player named \"Njol\" and argument 2 is \"Hello Njol!\".",
 		"One can also use the type of the argument instead of it's index to address the argument, e.g. in the above example 'player-argument' is the same as 'argument 1'."})
 @Examples({"give the item-argument to the player-argument",
@@ -161,11 +161,6 @@ public class ExprArgument extends SimpleExpression<Object> {
 	@Override
 	public boolean isLoopOf(final String s) {
 		return s.equalsIgnoreCase("argument");
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return true;
 	}
 	
 }

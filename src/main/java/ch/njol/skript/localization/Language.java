@@ -55,7 +55,7 @@ public class Language {
 	public final static int F_PLURAL = 1, F_DEFINITE_ARTICLE = 2, F_INDEFINITE_ARTICLE = 4;
 	
 	/**
-	 * Name of the localized language
+	 * Name of the localised language
 	 */
 	private static String name = "english";
 	
@@ -286,9 +286,9 @@ public class Language {
 	/**
 	 * Registers a listener. The listener will immediately be called if a language has already been loaded.
 	 * <p>
-	 * The first call to a listener is guaranteed to be (pseudo-*)english even if another language is active, in which case the listener is called twice when registered.
+	 * The first call to a listener is guaranteed to be (pseudo-*)English even if another language is active, in which case the listener is called twice when registered.
 	 * <p>
-	 * * Only this class will be english (i.e. no language listeners are notified) if the current language is not english.
+	 * * Only this class will be English (i.e. no language listeners are notified) if the current language is not English.
 	 * 
 	 * @param l
 	 */
@@ -323,7 +323,7 @@ public class Language {
 	 * }
 	 * </pre>
 	 * 
-	 * @param b Whether to enable localization or not
+	 * @param b Whether to enable localisation or not
 	 * @return Previous state
 	 */
 	public static boolean setUseLocal(final boolean b) {

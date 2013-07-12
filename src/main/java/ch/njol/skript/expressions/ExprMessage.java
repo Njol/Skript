@@ -205,11 +205,6 @@ public class ExprMessage extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
-	@Override
 	public String toString(final Event e, final boolean debug) {
 		return "the " + type.name + " message";
 	}

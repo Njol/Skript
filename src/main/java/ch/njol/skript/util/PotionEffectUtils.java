@@ -68,7 +68,7 @@ public abstract class PotionEffectUtils {
 		return names[t.getId()];
 	}
 	
-	// TODO flags
+	// TODO flags?
 	public static String toString(final PotionEffectType t, final int flags) {
 		return names[t.getId()];
 	}
@@ -81,7 +81,6 @@ public abstract class PotionEffectUtils {
 		if (p.getEffects().size() == 1) {
 			final PotionEffect e = p.getEffects().iterator().next();
 			final Potion d = new Potion(PotionType.getByEffect(e.getType())).splash();
-			
 			return d.toDamageValue();
 		}
 		return 0;

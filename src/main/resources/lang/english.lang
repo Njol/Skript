@@ -1,7 +1,7 @@
 # Default English language file
 
 # Which version of Skript this language file was written for
-version: 2.0 beta 9
+version: 2.0 beta 10
 
 # -- General --
 and: and
@@ -30,11 +30,14 @@ genders:
 	plural:
 		# id: x
 		definite article: the
+		# indefinite article: #-#
 
 # -- Skript --
 skript:
 	copyright: ~ created by & © Peter Güttinger aka Njol ~
+	prefix: <gray>[<gold>Skript<gray>] # not used
 	quotes error: Invalid use of quotes ("). If you want to use quotes in "quoted text", double them: "".
+	brackets error: Invalid amount or placement of brackets. Please make sure that each opening bracket has a corresponding closing bracket.
 	invalid reload: Skript may only be reloaded by either Bukkit's '/reload' or Skript's '/skript reload' command
 
 # -- Skript command --
@@ -46,7 +49,7 @@ skript command:
 			description: Reloads the config, all scripts, everything, or a specific script
 			all: Reloads all configs and all scripts
 			config: Reloads the main config
-			aliases: Reloads the aliases config (aliases.sk)
+			aliases: Reloads the aliases configs (aliases-*.sk)
 			scripts: Reloads all scripts
 			<script>: Reloads a specific script or a folder of scripts
 		enable:
@@ -164,7 +167,7 @@ aliases:
 	starting with number: Aliases must not start with a number
 	missing aliases: There are no aliases defined for the following ids:
 	empty string: '' is not an item type
-	invalid item data: '%s' is no a valid item data
+	invalid item data: '%s' is not a valid item data
 	invalid id: There doesn't exist a material with id %s!
 	invalid block data: Blocks only have data values from 0 to 15
 	invalid item type: '%s' is not an item type
@@ -209,25 +212,25 @@ enchantments:
 # -- Potion Effects --
 potions:
 	speed: speed, swiftness
-	slow: slowness
+	slow: slowness, slow
 	fast_digging: haste, fast digging, fast mining
 	slow_digging: mining fatigue, slow digging, slow mining
-	increase_damage: strength, power
+	increase_damage: strength, power, increase damage, increased damage
 	heal: instant health, health
 	harm: instant damage, damage
 	jump: jump boost, jump
-	confusion: nausea
+	confusion: nausea, confusion
 	regeneration: regeneration
-	damage_resistance: resistance
-	fire_resistance: fire resistance
+	damage_resistance: resistance, damage resistance
+	fire_resistance: fire resistance, fire immunity
 	water_breathing: water breathing
 	invisibility: invisibility
 	blindness: blindness
 	night_vision: night vision
 	hunger: hunger
-	weakness: weakness
+	weakness: weakness, reduce damage, reduced damage
 	poison: poison
-	wither: wither
+	wither: wither, wither effect, wither potion effect
 
 # -- Weather --
 weather:
@@ -243,14 +246,14 @@ weather:
 
 # -- Biomes --
 biomes:
-	swampland: swampland
+	swampland: swampland, swamp, march
 	forest: forest
 	taiga: taiga
 	desert: desert
 	plains: plains
-	hell: hell
+	hell: hell, nether
 	sky: sky
-	ocean: ocean
+	ocean: ocean, sea
 	river: river
 	extreme_hills: extreme hills
 	frozen_ocean: frozen ocean
@@ -263,7 +266,7 @@ biomes:
 	desert_hills: desert hills
 	forest_hills: forest hills
 	taiga_hills: taiga hills
-	small_mountains: small mountains
+	small_mountains: small mountains, hills
 	jungle: jungle
 	jungle_hills: jungle hills
 
@@ -337,8 +340,8 @@ colors:
 	white: white
 	dark_blue: blue, dark blue
 	brown: brown, light blue, indigo
-	dark_cyan: cyan, aqua, dark cyan, dark aqua
-	light_cyan: light cyan, light aqua
+	dark_cyan: cyan, aqua, dark cyan, dark aqua, dark turquoise, dark turquois
+	light_cyan: light cyan, light aqua, turquoise, turquois
 	dark_green: green, dark green
 	light_green: light green, lime, lime green
 	yellow: yellow, light yellow
@@ -378,7 +381,7 @@ directions:
 	left: to the left of
 
 # -- Entities --
-# about patterns: the marks (1¦..) are only required in the english file, i.e. you can use (..|..) or [..] for plurals.
+# about patterns: the marks (1¦..) are only required in the english file, i.e. you can use (..|..) or [..] for plurals in other languages.
 entities:
 	entity:
 		name: entit¦y¦ies @an
@@ -443,10 +446,13 @@ entities:
 		pattern: ender[ ]pearl(|1¦s)
 	fireball:
 		name: fireball¦s
-		pattern: [ghast] fire[ ]ball(|1¦s)
+		pattern: [(ghast|big)] fire[ ]ball(|1¦s)
 	small fireball:
 		name: small fireball¦s
 		pattern: (small|blaze) fire[ ]ball(|1¦s)
+	any fireball:
+		name: any fireball¦s
+		pattern: any fire[ ]ball(|1¦s)
 	fish:
 		name: fish¦es
 		pattern: fish(|1¦es)
@@ -617,31 +623,37 @@ entities:
 		name: exprerience orb¦s @an
 		pattern: ([e]xp|experience)( |-)orb(|1¦s)
 		format: %2$s-%1$s
+	firework:
+		name: firework rocket¦s
+		pattern: firework(|1¦s) [rocket(|1¦s)]
+	horse:
+		name: horse¦s
+		pattern: horse(|1¦s)
 
-# -- Damage Causes -- (not used yet)
+# -- Damage Causes --
 damage causes:
-	contact: cactus
-	entity_attack: attack @an
-	projectile: projectile
-	suffocation: suffocation
-	fall: fall
-	fire: fire
-	fire_tick: burning
-	melting: melting
+	contact: contact
+	entity_attack: attack, entity attack, an attack, an entity attack
+	projectile: projectile, a projectile
+	suffocation: suffocation, suffocate
+	fall: fall, a fall
+	fire: fire, a fire
+	fire_tick: burning, burn
+	melting: melting, melt
 	lava: lava
-	drowning: drowning
-	block_explosion: TNT
-	entity_explosion: creeper
-	void: void
-	lightning: lightning
+	drowning: drowning, drown
+	block_explosion: block explosion, a block explosion
+	entity_explosion: entity explosion, an entity explosion
+	void: void, the void
+	lightning: lightning, lightning strike, a lightning, a lightning strike
 	starvation: starvation
 	poison: poison
-	magic: potion
-	wither: wither
-	falling_block: anvil @an
+	magic: potion, a potion
+	wither: wither, wither effect, a wither, wither potion effect
+	falling_block: falling block, a falling block
 	suicide: suicide
-	thorns: thorns @x
-	custom: unknown
+	thorns: thorns
+	custom: unknown, custom, plugin, a plugin
 
 # -- Game Modes --
 game modes:
@@ -687,9 +699,11 @@ types:
 	inventoryholder: inventory holder¦s @an
 	gamemode: gamemode¦s @a
 	itemstack: item stack¦s @an
+	itementity: dropped item¦s @a # same as entities.dropped item.name
 	biome: biome¦s @a
 	potioneffecttype: potion¦s @a
 	enchantment: enchantment¦s @an
+	damagecause: damage cause¦s @a
 	
 	# Skript
 	weathertype: weather type¦s @a

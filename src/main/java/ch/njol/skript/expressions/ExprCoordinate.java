@@ -77,7 +77,7 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Double> {
 	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (mode != ChangeMode.DELETE && getExpr().isSingle() && CollectionUtils.contains(getExpr().acceptChange(ChangeMode.SET), Location.class))
+		if ((mode == ChangeMode.SET || mode == ChangeMode.ADD || mode == ChangeMode.REMOVE) && getExpr().isSingle() && CollectionUtils.contains(getExpr().acceptChange(ChangeMode.SET), Location.class))
 			return new Class[] {Number.class};
 		return null;
 	}
@@ -113,8 +113,9 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Double> {
 				getExpr().change(e, l, ChangeMode.SET);
 				break;
 			case DELETE:
+			case REMOVE_ALL:
+			case RESET:
 				assert false;
-				break;
 		}
 	}
 	

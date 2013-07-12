@@ -70,6 +70,7 @@ public class EffVehicle extends Effect {
 		if (p == null)
 			return;
 		if (v instanceof Entity) {
+			((Entity) v).eject();
 			((Entity) v).setPassenger(p);
 		} else {
 			final Entity en = ((EntityData<?>) v).spawn(p.getLocation());

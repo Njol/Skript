@@ -129,9 +129,4 @@ public class ExprClicked extends SimpleExpression<Object> {
 		return "the clicked " + (entityType != null ? entityType : itemType != null ? itemType : "block");
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

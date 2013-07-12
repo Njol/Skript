@@ -385,7 +385,7 @@ public class Direction implements Serializable {
 			
 			@Override
 			public boolean getAnd() {
-				return dirs.getAnd() && locs.getAnd();
+				return (dirs.isSingle() || dirs.getAnd()) && (locs.isSingle() || locs.getAnd());
 			}
 			
 			@Override
@@ -410,7 +410,7 @@ public class Direction implements Serializable {
 			
 			@Override
 			public Expression<? extends Location> simplify() {
-				if (dirs instanceof Literal && dirs.isSingle() && dirs.getAnd() && dirs.getSingle(null).equals(Direction.ZERO)) {
+				if (dirs instanceof Literal && dirs.isSingle() && dirs.getSingle(null).equals(Direction.ZERO)) {
 					return locs;
 				}
 				return this;

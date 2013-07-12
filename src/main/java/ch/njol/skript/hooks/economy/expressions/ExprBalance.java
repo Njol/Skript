@@ -65,10 +65,11 @@ public class ExprBalance extends SimplePropertyExpression<OfflinePlayer, Money> 
 	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.REMOVE_ALL)
+			return null;
 		return new Class[] {Money.class, Number.class};
 	}
 	
-	@SuppressWarnings("incomplete-switch")
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		if (mode == ChangeMode.DELETE) {
@@ -93,6 +94,10 @@ public class ExprBalance extends SimplePropertyExpression<OfflinePlayer, Money> 
 				case REMOVE:
 					EconomyHook.economy.withdrawPlayer(p.getName(), m);
 					break;
+				case DELETE:
+				case REMOVE_ALL:
+				case RESET:
+					assert false;
 			}
 		}
 	}

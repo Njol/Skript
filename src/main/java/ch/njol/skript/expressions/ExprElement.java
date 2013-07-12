@@ -50,7 +50,7 @@ import ch.njol.util.Kleenean;
 public class ExprElement extends SimpleExpression<Object> {
 	
 	static {
-		Skript.registerExpression(ExprElement.class, Object.class, ExpressionType.PROPERTY, "([the] first|[the] last|[a] random) element [out] of %objects%");
+		Skript.registerExpression(ExprElement.class, Object.class, ExpressionType.PROPERTY, "(-1¦[the] first|1¦[the] last|0¦[a] random) element [out] of %objects%");
 	}
 	
 	private int element;
@@ -60,10 +60,7 @@ public class ExprElement extends SimpleExpression<Object> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		expr = exprs[0];
-		String e = parseResult.expr.substring(0, parseResult.expr.indexOf(' '));
-		if (e.equalsIgnoreCase("the") || e.equalsIgnoreCase("a"))
-			e = parseResult.expr.substring(e.length() + 1, parseResult.expr.indexOf(' ', e.length()));
-		element = e.equalsIgnoreCase("last") ? 1 : e.equalsIgnoreCase("first") ? -1 : 0;
+		element = parseResult.mark;
 		return true;
 	}
 	
@@ -99,11 +96,6 @@ public class ExprElement extends SimpleExpression<Object> {
 	@Override
 	public Class<? extends Object> getReturnType() {
 		return expr.getReturnType();
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return false;
 	}
 	
 	@Override

@@ -36,6 +36,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
+import ch.njol.skript.util.HealthUtils;
 import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
@@ -47,10 +48,10 @@ import ch.njol.util.Kleenean;
 @Description("How much damage is done in a damage event, possibly ignoring armour, criticals and/or enchantments. Can be changed (remember that in Skript '1' is one full heart, not half a heart).")
 @Examples({"increase the damage by 2"})
 @Since("1.3.5")
-public class ExprDamage extends SimpleExpression<Float> {
+public class ExprDamage extends SimpleExpression<Double> {
 	
 	static {
-		Skript.registerExpression(ExprDamage.class, Float.class, ExpressionType.SIMPLE, "[the] damage");
+		Skript.registerExpression(ExprDamage.class, Double.class, ExpressionType.SIMPLE, "[the] damage");
 	}
 	
 	private Kleenean delay;
@@ -66,10 +67,10 @@ public class ExprDamage extends SimpleExpression<Float> {
 	}
 	
 	@Override
-	protected Float[] get(final Event e) {
+	protected Double[] get(final Event e) {
 		if (!(e instanceof EntityDamageEvent))
 			return null;
-		return new Float[] {0.5f * ((EntityDamageEvent) e).getDamage()};
+		return new Double[] {HealthUtils.getDamage((EntityDamageEvent) e)};
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -79,6 +80,8 @@ public class ExprDamage extends SimpleExpression<Float> {
 			Skript.error("Can't change the damage anymore after the event has already passed");
 			return null;
 		}
+		if (mode == ChangeMode.REMOVE_ALL)
+			return null;
 		return CollectionUtils.array(Number.class);
 	}
 	
@@ -86,18 +89,21 @@ public class ExprDamage extends SimpleExpression<Float> {
 	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
 		if (!(e instanceof EntityDamageEvent))
 			return;
-		final int d = mode == ChangeMode.DELETE ? 0 : Math.round(2 * ((Number) delta).floatValue());
+		double d = delta == null ? 0 : ((Number) delta).doubleValue();
 		switch (mode) {
 			case SET:
 			case DELETE:
-				((EntityDamageEvent) e).setDamage(d);
-				break;
-			case ADD:
-				((EntityDamageEvent) e).setDamage(((EntityDamageEvent) e).getDamage() + d);
+				HealthUtils.setDamage((EntityDamageEvent) e, d);
 				break;
 			case REMOVE:
-				((EntityDamageEvent) e).setDamage(((EntityDamageEvent) e).getDamage() - d);
+				d = -d;
+				//$FALL-THROUGH$
+			case ADD:
+				HealthUtils.setDamage((EntityDamageEvent) e, HealthUtils.getDamage((EntityDamageEvent) e) + d);
 				break;
+			case REMOVE_ALL:
+			case RESET:
+				assert false;
 		}
 	}
 	
@@ -107,13 +113,8 @@ public class ExprDamage extends SimpleExpression<Float> {
 	}
 	
 	@Override
-	public Class<? extends Float> getReturnType() {
-		return Float.class;
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return false;
+	public Class<? extends Double> getReturnType() {
+		return Double.class;
 	}
 	
 	@Override

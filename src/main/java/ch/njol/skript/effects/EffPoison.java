@@ -54,7 +54,7 @@ public class EffPoison extends Effect {
 				"(cure|unpoison) %livingentities% [(from|of) poison]");
 	}
 	
-	private final static int DEFAULT_DURATION = 15 * 20; // 15 seconds on hard difficulty
+	private final static int DEFAULT_DURATION = 15 * 20; // 15 seconds on hard difficulty, same as EffPotion
 	
 	private Expression<LivingEntity> entites;
 	private Expression<Timespan> duration;

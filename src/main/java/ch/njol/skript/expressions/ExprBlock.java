@@ -26,6 +26,7 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -35,6 +36,7 @@ import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.ConvertedExpression;
 import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
 
@@ -64,7 +66,12 @@ public class ExprBlock extends WrapperExpression<Block> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		if (exprs.length > 0) {
-			setExpr(Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]).getConvertedExpression(Block.class));
+			setExpr(new ConvertedExpression<Location, Block>(Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]), Block.class, new SerializableConverter<Location, Block>() {
+				@Override
+				public Block convert(final Location l) {
+					return l.getBlock();
+				}
+			}));
 		} else {
 			setExpr(new EventValueExpression<Block>(Block.class));
 			return ((EventValueExpression<Block>) getExpr()).init();

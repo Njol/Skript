@@ -38,9 +38,11 @@ import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Fish;
 import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Giant;
+import org.bukkit.entity.Horse;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Item;
@@ -69,7 +71,6 @@ import org.bukkit.entity.Zombie;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -107,8 +108,8 @@ public class SimpleEntityData extends EntityData<Entity> {
 		types.add(new SimpleEntityDataInfo("ender crystal", EnderCrystal.class));
 		types.add(new SimpleEntityDataInfo("ender dragon", EnderDragon.class));
 		types.add(new SimpleEntityDataInfo("ender pearl", EnderPearl.class));
-		types.add(new SimpleEntityDataInfo("fireball", Fireball.class));
 		types.add(new SimpleEntityDataInfo("small fireball", SmallFireball.class));
+		types.add(new SimpleEntityDataInfo("fireball", Fireball.class));
 		types.add(new SimpleEntityDataInfo("fish", Fish.class));
 		types.add(new SimpleEntityDataInfo("ghast", Ghast.class));
 		types.add(new SimpleEntityDataInfo("giant", Giant.class));
@@ -136,7 +137,11 @@ public class SimpleEntityData extends EntityData<Entity> {
 			types.add(new SimpleEntityDataInfo("wither", Wither.class));
 			types.add(new SimpleEntityDataInfo("wither skull", WitherSkull.class));
 		}
-		
+		if (Skript.isRunningMinecraft(1, 4, 6))
+			types.add(new SimpleEntityDataInfo("firework", Firework.class));
+		if (Skript.isRunningMinecraft(1, 6))
+			types.add(new SimpleEntityDataInfo("horse", Horse.class)); // TODO donkeys, mules (once Bukkit supports them)
+			
 		// TODO !Update with every version [entities]
 		
 		// supertypes
@@ -145,6 +150,8 @@ public class SimpleEntityData extends EntityData<Entity> {
 		types.add(new SimpleEntityDataInfo("projectile", Projectile.class, true));
 		types.add(new SimpleEntityDataInfo("living entity", LivingEntity.class, true));
 		types.add(new SimpleEntityDataInfo("entity", Entity.class, true));
+		
+		types.add(new SimpleEntityDataInfo("any fireball", Fireball.class, true));
 	}
 	
 	static {
@@ -165,7 +172,21 @@ public class SimpleEntityData extends EntityData<Entity> {
 		super.info = getInfo(getClass());
 		int i = 0;
 		for (final SimpleEntityDataInfo info : types) {
-			if (info.c == c || info.isSupertype && info.c.isAssignableFrom(c)) {
+			if (info.c.isAssignableFrom(c)) {
+				this.info = info;
+				matchedPattern = i;
+				return;
+			}
+			i++;
+		}
+		assert false;
+	}
+	
+	public SimpleEntityData(final Entity e) {
+		super.info = getInfo(getClass());
+		int i = 0;
+		for (final SimpleEntityDataInfo info : types) {
+			if (info.c.isInstance(e)) {
 				this.info = info;
 				matchedPattern = i;
 				return;
@@ -184,11 +205,24 @@ public class SimpleEntityData extends EntityData<Entity> {
 	}
 	
 	@Override
+	protected boolean init(final Class<? extends Entity> c, final Entity e) {
+		assert false;
+		return false;
+	}
+	
+	@Override
 	public void set(final Entity entity) {}
 	
 	@Override
 	public boolean match(final Entity e) {
-		return info.isSupertype ? info.c.isAssignableFrom(e.getClass()) : CollectionUtils.contains(e.getClass().getInterfaces(), info.c);
+		if (info.isSupertype)
+			return info.c.isInstance(e);
+		for (final SimpleEntityDataInfo info : types) {
+			if (info.c.isInstance(e))
+				return this.info.c == info.c;
+		}
+		assert false;
+		return false;
 	}
 	
 	@Override
@@ -235,8 +269,13 @@ public class SimpleEntityData extends EntityData<Entity> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Entity> e) {
-		return e.getType() == info.c || info.isSupertype && info.c.isAssignableFrom(e.getType());
+	public boolean isSupertypeOf(final EntityData<?> e) {
+		return info.c == e.getType() || info.isSupertype && info.c.isAssignableFrom(e.getType());
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return this;
 	}
 	
 }

@@ -46,6 +46,7 @@ import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.BlockingLogHandler;
+import ch.njol.skript.log.LogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
@@ -140,6 +141,26 @@ public class ExprEntities extends SimpleExpression<Entity> {
 	}
 	
 	@Override
+	public boolean isLoopOf(final String s) {
+		if (!(types instanceof Literal<?>))
+			return false;
+		final LogHandler h = SkriptLogger.startLogHandler(new BlockingLogHandler());
+		try {
+			final EntityData<?> d = EntityData.parseWithoutIndefiniteArticle(s);
+			if (d != null) {
+				for (final EntityData<?> t : types.getAll(null)) {
+					if (!d.isSupertypeOf(t))
+						return false;
+				}
+				return true;
+			}
+		} finally {
+			h.stop();
+		}
+		return false;
+	}
+	
+	@Override
 	public Iterator<? extends Entity> iterator(final Event e) {
 		if (matchedPattern >= 2) {
 			final Entity en;
@@ -213,11 +234,6 @@ public class ExprEntities extends SimpleExpression<Entity> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		return "all entities of types " + types.toString(e, debug) + (worlds != null ? " in " + worlds.toString(e, debug) : radius != null ? " in radius " + radius.toString(e, debug) + " around " + center.toString(e, debug) : "");
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return true;
 	}
 	
 }

@@ -21,12 +21,14 @@
 
 package ch.njol.skript.util;
 
-import java.util.EnumMap;
-import java.util.Map.Entry;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.bukkit.block.Biome;
 
-import ch.njol.skript.localization.Message;
+import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.LanguageChangeListener;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -35,23 +37,36 @@ public abstract class BiomeUtils {
 	
 	private BiomeUtils() {}
 	
-	private final static EnumMap<Biome, Message> names = new EnumMap<Biome, Message>(Biome.class);
+	private final static Map<String, Biome> parseMap = new HashMap<String, Biome>();
+	private final static String[] names = new String[Biome.values().length];
 	static {
-		for (final Biome b : Biome.values()) {
-			names.put(b, new Message("biomes." + b.name()));
-		}
+		Language.addListener(new LanguageChangeListener() {
+			@Override
+			public void onLanguageChange() {
+				parseMap.clear();
+				for (final Biome b : Biome.values()) {
+					if (b == null)
+						continue;
+					final String[] ls = Language.getList("biomes." + b.name());
+					names[b.ordinal()] = ls[0];
+					for (final String l : ls) {
+						parseMap.put(l.toLowerCase(), b);
+					}
+				}
+			}
+		});
 	}
 	
 	public final static Biome parse(final String s) {
-		for (final Entry<Biome, Message> e : names.entrySet()) {
-			if (e.getValue().toString().equalsIgnoreCase(s))
-				return e.getKey();
-		}
-		return null;
+		return parseMap.get(s.toLowerCase());
 	}
 	
 	public final static String toString(final Biome b) {
-		return names.get(b).toString();
+		return names[b.ordinal()];
+	}
+	
+	public final static String getAllNames() {
+		return StringUtils.join(names, ", ");
 	}
 	
 }

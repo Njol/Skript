@@ -1,5 +1,5 @@
 # Default German language file by Peter Güttinger (Njol)
-version: 2.0 beta 9
+version: 2.0 beta 10
 
 # -- General --
 and: und
@@ -32,11 +32,14 @@ genders:
 	plural:
 		# id: x
 		definite article: die
+		# indefinite article: #-#
 
 # -- Skript --
 skript:
 	copyright: ~ erstellt von & © Peter Güttinger alias Njol ~
+	prefix: <gray>[<gold>Skript<gray>]
 	quotes error: Unerlaubte Verwendung von Anführungszeichen ("). Wenn du solche in "Text mit Anführungszeichen" einfügen willst, verdopple sie: "".
+	quotes error: Ungültige Anzahl/Anordnung von Klammern. Bitte sorge dafür, dass auf jede öffnende Klammer eine Schliessende folgt.
 	invalid reload: Skript darf nur mittles Bukkits '/reload' oder Skripts '/skript reload' neu geladen werden
 
 # -- Skript command --
@@ -48,7 +51,7 @@ skript command:
 			description: Lädt die Konfigurationen, Skripte, alles oder nur bestimmte Skripte erneut
 			all: Lädt alle Konfigurationen und Skripte neu
 			config: Lädt alle Konfigurationen erneut
-			aliases: Lädt die Itemnamen neu (aliases.sk)
+			aliases: Lädt die Itemnamen neu (aliases-*.sk)
 			scripts: Lädt alle Skripte neu
 			<script>: Lädt ein bestimmtes Skript oder einen Ordner neu
 		enable:
@@ -210,26 +213,26 @@ enchantments:
 
 # -- Potion Effects --
 potions:
-	speed: Schnelligkeit
+	speed: Schnelligkeit, Geschwindigkeit
 	slow: Langsamkeit
 	fast_digging: Eile
 	slow_digging: Trägheit
-	increase_damage: Stärke
-	heal: Heilung
-	harm: Schaden
-	jump: Sprungkraft
-	confusion: Übelkeit
+	increase_damage: Stärke, erhöhter Schaden
+	heal: Heilung, Sofortheilung
+	harm: Schaden, Sofortschaden
+	jump: Sprungkraft, Sprung
+	confusion: Übelkeit, Verwirrung
 	regeneration: Regeneration
-	damage_resistance: Widerstand
-	fire_resistance: Feuerresistenz
+	damage_resistance: Widerstand, Resistenz
+	fire_resistance: Feuerresistenz, Feuerschutz
 	water_breathing: Wasseratmung
 	invisibility: Unsichtbarkeit
 	blindness: Blindheit
 	night_vision: Nachtsicht
 	hunger: Hunger
-	weakness: Schwäche
-	poison: Vergiftung
-	wither: Wither
+	weakness: Schwäche, verringerter Schaden
+	poison: Vergiftung, Gift
+	wither: Wither, Withereffekt, Wither-Effekt, Wither Effekt
 
 # -- Weather --
 weather:
@@ -240,8 +243,8 @@ weather:
 		name: Regen, regnerisch
 		adjective: regnerisch
 	thunder:
-		name: Gewitter
-		adjective: aufgewühlt
+		name: Gewitter, stürmisch, aufgewühlt
+		adjective: stürmisch
 
 # -- Biomes --
 biomes:
@@ -250,24 +253,24 @@ biomes:
 	taiga: Taiga
 	desert: Wüste
 	plains: Ebene
-	hell: Hölle
+	hell: Hölle, Nether
 	sky: Himmel
-	ocean: Ozean
+	ocean: Ozean, Meer
 	river: Fluss
 	extreme_hills: extreme Hügel
 	frozen_ocean: gefrorener Ozean
 	frozen_river: gefrorener Fluss
-	ice_plains: Eisebene
-	ice_mountains: Eisberge
+	ice_plains: Eisebene, gefrorene Ebene, vereiste Ebene
+	ice_mountains: Eisberge, gefrorene Berge, vereiste Berge
 	mushroom_island: Pilzinsel
 	mushroom_shore: Pilzküste
 	beach: Strand
-	desert_hills: Wüstenhügel
+	desert_hills: Wüstenhügel, hügelige Wüste
 	forest_hills: Waldhügel
 	taiga_hills: Taigahügel
-	small_mountains: kleine Berge
-	jungle: Dschungel
-	jungle_hills: Dschungelhügel
+	small_mountains: kleine Berge, Hügel
+	jungle: Dschungel, Jungel, Urwald
+	jungle_hills: Dschungelhügel, Jungelhügel, Urwaldhügel
 
 # -- Tree Types --
 tree types:
@@ -293,14 +296,14 @@ tree types:
 		name: grosse Tanne¦n
 		pattern: (grosse|hohe) (Tannen?|Fichten?)
 	jungle:
-		name: Jungelb¦aum¦äume
-		pattern: Jungelb(aum|äume)
+		name: Dschungelb¦aum¦äume
+		pattern: ((Dsch|J)ungel|Urwald)b(aum|äume)
 	small_jungle:
-		name: kleiner Jungelb¦aum¦äume
-		pattern: kleiner? Jungelb(aum|äume)
+		name: kleiner Dschungelb¦aum¦äume
+		pattern: kleiner? ((Dsch|J)ungel|Urwald)b(aum|äume)
 	big_jungle:
-		name: grosser Jungelb¦aum¦äume
-		pattern: (grosser?|hoher?) Jungelb(aum|äume)
+		name: grosser Dschungelb¦aum¦äume
+		pattern: (grosser?|hoher?) ((Dsch|J)ungel|Urwald)b(aum|äume)
 	jungle_bush:
 		name: B¦usch¦üsche
 		pattern: (Jungel)?b(usch|üsche)
@@ -324,7 +327,7 @@ time:
 	minute: Minute¦n
 	hour: Stunde¦n
 	day: Tag¦e
-	real: echt, echte
+	real: echt, echte, irl, rl
 	minecraft: mc, minecraft
 	errors:
 		24 hours: Ein Tag hat nur 24 Stunden
@@ -339,16 +342,16 @@ colors:
 	white: weiss
 	dark_blue: blau, dunkelblau
 	brown: braun, hellblau, indigo
-	dark_cyan: cyan, aqua, dunkelcyan, dunkelaqua
-	light_cyan: hellcyan, hellaqua
+	dark_cyan: cyan, aqua, dunkelcyan, dunkelaqua, dunkeltürkis
+	light_cyan: türkis, hellcyan, hellaqua
 	dark_green: grün, dunkelgrün
 	light_green: hellgrün, limettengrün
 	yellow: gelb, hellgelb, zitronengelb
 	orange: orange, gold, dunkelgelb
 	dark_red: rot, dunkelrot
 	light_red: pink, rosa, hellrot
-	dark_purple: violett, dunkelviolett
-	light_purple: magenta, hellviolett
+	dark_purple: violett, dunkelviolett, dunkelpurpur
+	light_purple: magenta, hellviolett, purpur, hellpurpur
 
 # -- Chat Styles -
 chat styles:
@@ -356,7 +359,7 @@ chat styles:
 	italic: schräg, s, i
 	strikethrough: durchgestrichen, gestrichen, d, g
 	underline: unterstrichen, u
-	magic: magie
+	magic: magie, magisch
 	reset: zurücksetzen, z, r
 
 # -- Directions --
@@ -621,28 +624,28 @@ entities:
 
 # -- Damage Causes --
 damage causes:
-	contact: Kaktus @m
-	entity_attack: Angriff @m
-	projectile: Projektil @n
-	suffocation: Ersticken @n
-	fall: Fall @m
-	fire: Feuer @n
-	fire_tick: Brennen @n
-	melting: Schmelzen @n
-	lava: Lava @f
-	drowning: Ertrinken @n
-	block_explosion: TNT @n
-	entity_explosion: Creeper @m
-	void: Leere @f
-	lightning: Blitz @m
-	starvation: Verhungern @n
-	poison: Gift @n
-	magic: Trank @m
-	wither: Wither @m
-	falling_block: Amboss @m
-	suicide: Suizuid @m
-	thorns: Dornen @x
-	custom: unbekannt
+	contact: Kontakt
+	entity_attack: Angriff
+	projectile: Projektil
+	suffocation: Ersticken
+	fall: Fall, Aufprall
+	fire: Feuer
+	fire_tick: Brennen, Verbrennung
+	melting: Schmelzen
+	lava: Lava
+	drowning: Ertrinken
+	block_explosion: Blockexplosion
+	entity_explosion: Wesenexplosion
+	void: Leere
+	lightning: Blitz, Blitzschlag
+	starvation: Verhungern
+	poison: Gift
+	magic: Trank
+	wither: Wither, Withereffekt
+	falling_block: fallender Block
+	suicide: Suizuid
+	thorns: Dornen
+	custom: unbekannt, Plugin
 
 # -- Game Modes --
 game modes:
@@ -678,7 +681,7 @@ types:
 	entity: Wesen @n
 	livingentity: Lebewesen @n
 	projectile: Projektil¦e @n
-	block: ¦Block¦Blöcke @m
+	block: Bl¦ock¦öcke @m
 	location: Ort¦e @m
 	world: Welt¦en @f
 	inventory: Inventar¦e @n
@@ -687,10 +690,12 @@ types:
 	commandsender: Spieler/Konsole @m
 	inventoryholder: Inventarbesitzer @m # wird eh nie benutzt
 	gamemode: Spiel¦modus¦modi @n
-	itemstack: Gegen¦stand¦stände @m
+	itemstack: Gegenst¦and¦ände @m
+	itementity: Drop¦s @m
 	biome: Biom¦e @m
 	potioneffecttype: Tr¦ank¦änke @m
 	enchantment: Verzauberung¦en @f
+	damagecause: Schadenstyp¦en @m
 	
 	# Skript
 	weathertype: Wettertyp¦en @m

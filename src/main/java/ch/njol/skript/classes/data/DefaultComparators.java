@@ -21,10 +21,40 @@
 
 package ch.njol.skript.classes.data;
 
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
+
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Boat;
+import org.bukkit.entity.Chicken;
+import org.bukkit.entity.Egg;
+import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Firework;
+import org.bukkit.entity.Fish;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.ItemFrame;
+import org.bukkit.entity.Minecart;
+import org.bukkit.entity.Painting;
+import org.bukkit.entity.PoweredMinecart;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Slime;
+import org.bukkit.entity.Snowball;
+import org.bukkit.entity.StorageMinecart;
+import org.bukkit.entity.TNTPrimed;
+import org.bukkit.entity.ThrownExpBottle;
+import org.bukkit.entity.ThrownPotion;
+import org.bukkit.entity.Wither;
+import org.bukkit.entity.WitherSkull;
+import org.bukkit.entity.minecart.ExplosiveMinecart;
+import org.bukkit.entity.minecart.HopperMinecart;
+import org.bukkit.entity.minecart.RideableMinecart;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
@@ -34,6 +64,7 @@ import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.util.Date;
+import ch.njol.skript.util.PotionEffectUtils;
 import ch.njol.skript.util.StructureType;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
@@ -43,7 +74,7 @@ import ch.njol.util.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"rawtypes", "serial"})
+@SuppressWarnings({"rawtypes", "serial", "deprecation"})
 public class DefaultComparators {
 	
 	public DefaultComparators() {}
@@ -142,6 +173,120 @@ public class DefaultComparators {
 				return false;
 			}
 		});
+	}
+	
+	// EntityData - ItemType
+	private final static LinkedHashMap<Class<? extends Entity>, Material> entityMaterials = new LinkedHashMap<Class<? extends Entity>, Material>();
+	static {
+		// to fix comparisons of eggs, arrows, etc. (e.g. 'projectile is an arrow')
+		// TODO !Update with every version [entities]
+		entityMaterials.put(Boat.class, Material.BOAT);
+		entityMaterials.put(Painting.class, Material.PAINTING);
+		entityMaterials.put(Arrow.class, Material.ARROW);
+		entityMaterials.put(Egg.class, Material.EGG);
+		entityMaterials.put(Chicken.class, Material.RAW_CHICKEN);
+		entityMaterials.put(EnderPearl.class, Material.ENDER_PEARL);
+		entityMaterials.put(Snowball.class, Material.SNOW_BALL);
+		entityMaterials.put(ThrownExpBottle.class, Material.EXP_BOTTLE);
+		entityMaterials.put(Fish.class, Material.RAW_FISH);
+		entityMaterials.put(TNTPrimed.class, Material.TNT);
+		entityMaterials.put(Slime.class, Material.SLIME_BALL);
+		if (Skript.isRunningMinecraft(1, 4))
+			entityMaterials.put(ItemFrame.class, Material.ITEM_FRAME);
+		if (Skript.isRunningMinecraft(1, 4, 6))
+			entityMaterials.put(Firework.class, Material.FIREWORK);
+		if (Skript.isRunningMinecraft(1, 5)) {
+			entityMaterials.put(org.bukkit.entity.minecart.StorageMinecart.class, Material.STORAGE_MINECART);
+			entityMaterials.put(org.bukkit.entity.minecart.PoweredMinecart.class, Material.POWERED_MINECART);
+			entityMaterials.put(RideableMinecart.class, Material.MINECART);
+			entityMaterials.put(HopperMinecart.class, Material.HOPPER_MINECART);
+			entityMaterials.put(ExplosiveMinecart.class, Material.EXPLOSIVE_MINECART);
+			entityMaterials.put(Minecart.class, Material.MINECART);
+		} else {
+			entityMaterials.put(StorageMinecart.class, Material.STORAGE_MINECART);
+			entityMaterials.put(PoweredMinecart.class, Material.POWERED_MINECART);
+			entityMaterials.put(Minecart.class, Material.MINECART);
+		}
+	}
+	public final static Comparator<EntityData, ItemType> entityItemComparator = new Comparator<EntityData, ItemType>() {
+		@Override
+		public Relation compare(final EntityData e, final ItemType i) {
+			if (e instanceof Item)
+				return Relation.get(i.isOfType(((Item) e).getItemStack()));
+			if (e instanceof ThrownPotion)
+				return Relation.get(i.isOfType(Material.POTION.getId(), PotionEffectUtils.guessData((ThrownPotion) e)));
+			if (Skript.isRunningMinecraft(1, 4) && e instanceof WitherSkull)
+				return Relation.get(i.isOfType(Material.SKULL_ITEM.getId(), (short) 1));
+			if (entityMaterials.containsKey(e.getType()))
+				return Relation.get(i.isOfType(entityMaterials.get(e.getType()).getId(), (short) 0));
+			for (final Entry<Class<? extends Entity>, Material> m : entityMaterials.entrySet()) {
+				if (m.getKey().isAssignableFrom(e.getType()))
+					return Relation.get(i.isOfType(m.getValue().getId(), (short) 0));
+			}
+			return Relation.NOT_EQUAL;
+		}
+		
+		@Override
+		public boolean supportsOrdering() {
+			return false;
+		}
+	};
+	static {
+		Comparators.registerComparator(EntityData.class, ItemType.class, entityItemComparator);
+	}
+	
+	static {
+		// CommandSender - CommandSender
+		Comparators.registerComparator(CommandSender.class, CommandSender.class, new Comparator<CommandSender, CommandSender>() {
+			@Override
+			public Relation compare(final CommandSender s1, final CommandSender s2) {
+				return Relation.get(s1.equals(s2));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+		
+		// OfflinePlayer - String
+		Comparators.registerComparator(OfflinePlayer.class, String.class, new Comparator<OfflinePlayer, String>() {
+			@Override
+			public Relation compare(final OfflinePlayer p, final String name) {
+				return Relation.get(p.getName().equalsIgnoreCase(name));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+		
+		// World - String
+		Comparators.registerComparator(World.class, String.class, new Comparator<World, String>() {
+			@Override
+			public Relation compare(final World w, final String name) {
+				return Relation.get(w.getName().equalsIgnoreCase(name));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+		
+		// String - String
+		Comparators.registerComparator(String.class, String.class, new Comparator<String, String>() {
+			@Override
+			public Relation compare(final String s1, final String s2) {
+				return Relation.get(s1.equalsIgnoreCase(s2));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
 		
 		// Date - Date
 		Comparators.registerComparator(Date.class, Date.class, new Comparator<Date, Date>() {
@@ -195,45 +340,6 @@ public class DefaultComparators {
 			}
 		});
 		
-		// OfflinePlayer - String
-		Comparators.registerComparator(OfflinePlayer.class, String.class, new Comparator<OfflinePlayer, String>() {
-			@Override
-			public Relation compare(final OfflinePlayer p, final String name) {
-				return Relation.get(p.getName().equalsIgnoreCase(name));
-			}
-			
-			@Override
-			public boolean supportsOrdering() {
-				return false;
-			}
-		});
-		
-		// World - String
-		Comparators.registerComparator(World.class, String.class, new Comparator<World, String>() {
-			@Override
-			public Relation compare(final World w, final String name) {
-				return Relation.get(w.getName().equalsIgnoreCase(name));
-			}
-			
-			@Override
-			public boolean supportsOrdering() {
-				return false;
-			}
-		});
-		
-		// String - String
-		Comparators.registerComparator(String.class, String.class, new Comparator<String, String>() {
-			@Override
-			public Relation compare(final String s1, final String s2) {
-				return Relation.get(s1.equalsIgnoreCase(s2));
-			}
-			
-			@Override
-			public boolean supportsOrdering() {
-				return false;
-			}
-		});
-		
 		// StructureType - StructureType
 		Comparators.registerComparator(StructureType.class, StructureType.class, new Comparator<StructureType, StructureType>() {
 			@Override
@@ -251,7 +357,52 @@ public class DefaultComparators {
 		Comparators.registerComparator(Object.class, ClassInfo.class, new Comparator<Object, ClassInfo>() {
 			@Override
 			public Relation compare(final Object o, final ClassInfo c) {
-				return Relation.get(c.getC().isInstance(o));
+				return Relation.get(c.getC().isInstance(o) || o instanceof ClassInfo && c.getC().isAssignableFrom(((ClassInfo<?>) o).getC()));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+		
+		// DamageCause - ItemType
+		Comparators.registerComparator(DamageCause.class, ItemType.class, new Comparator<DamageCause, ItemType>() {
+			@Override
+			public Relation compare(final DamageCause dc, final ItemType t) {
+				switch (dc) {
+					case FIRE:
+						return Relation.get(t.isOfType(Material.FIRE.getId(), (short) -1));
+					case LAVA:
+						return Relation.get(t.isOfType(Material.LAVA.getId(), (short) -1) && t.isOfType(Material.STATIONARY_LAVA.getId(), (short) -1));
+					case MAGIC:
+						return Relation.get(t.isOfType(Material.POTION.getId(), (short) -1));
+					default:
+						return Relation.NOT_EQUAL;
+				}
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+		// DamageCause - EntityData
+		Comparators.registerComparator(DamageCause.class, EntityData.class, new Comparator<DamageCause, EntityData>() {
+			@Override
+			public Relation compare(final DamageCause dc, final EntityData e) {
+				switch (dc) {
+					case ENTITY_ATTACK:
+						return Relation.get(e.isSupertypeOf(EntityData.fromClass(Entity.class)));
+//					case FALLING_BLOCK: // TODO after adding falling blocks (only 'falling block', not 'falling anvil')
+//						return ;
+					case PROJECTILE:
+						return Relation.get(e.isSupertypeOf(EntityData.fromClass(Projectile.class)));
+					case WITHER:
+						return Relation.get(e.isSupertypeOf(EntityData.fromClass(Wither.class)));
+					default:
+						return Relation.NOT_EQUAL;
+				}
 			}
 			
 			@Override

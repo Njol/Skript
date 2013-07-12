@@ -74,12 +74,18 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 	 */
 	protected abstract boolean run(Event e);
 	
-	public final static void walk(final TriggerItem start, final Event e) {
+	/**
+	 * @param start
+	 * @param e
+	 * @return false iff an exception occurred
+	 */
+	public final static boolean walk(final TriggerItem start, final Event e) {
 		assert start != null && e != null;
 		TriggerItem i = start;
 		try {
 			while (i != null)
 				i = i.walk(e);
+			return true;
 		} catch (final StackOverflowError err) {
 			Skript.adminBroadcast("<red>The script '<gold>" + start.getTrigger().getScript().getName() + "<red>' infinitely repeated itself!");
 			if (Skript.debug())
@@ -88,6 +94,7 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 			if (ex.getStackTrace().length != 0)// empty exceptions have already been printed
 				Skript.exception(ex, i);
 		}
+		return false;
 	}
 	
 	/**
@@ -111,7 +118,7 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 	protected final void debug(final Event e, final boolean run) {
 		if (!Skript.debug())
 			return;
-		Skript.info(getIndentation() + (run ? "" : "-") + toString(e, true));
+		Skript.debug(getIndentation() + (run ? "" : "-") + toString(e, true));
 	}
 	
 	@Override

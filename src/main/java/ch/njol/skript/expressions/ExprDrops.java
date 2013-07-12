@@ -52,12 +52,11 @@ import ch.njol.util.iterator.IteratorIterable;
  */
 @SuppressWarnings("serial")
 @Name("Drops")
-@Description("Only works in death events. Holds the drops of the dieing creature. Drops can be prevented by removing them with \"remove ... from drops\", e.g. \"remove all pickaxes from the drops\", or \"clear drops\" if you don't want any drops at all.")
+@Description("Only works in death events. Holds the drops of the dying creature. Drops can be prevented by removing them with \"remove ... from drops\", e.g. \"remove all pickaxes from the drops\", or \"clear drops\" if you don't want any drops at all.")
 @Examples({"clear drops",
 		"remove 4 planks from the drops"})
 @Since("1.0")
 public class ExprDrops extends SimpleExpression<ItemStack> {
-	
 	static {
 		Skript.registerExpression(ExprDrops.class, ItemStack.class, ExpressionType.SIMPLE, "[the] drops");
 	}
@@ -84,6 +83,8 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.RESET)
+			return null;
 		if (delayed.isTrue()) {
 			Skript.error("Can't change the drops anymore after the event has already passed");
 			return null;
@@ -94,10 +95,12 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		if (!(e instanceof EntityDeathEvent))
+		if (!(e instanceof EntityDeathEvent)) {
+			assert false;
 			return;
+		}
 		if (delta instanceof Experience) {
-			if (mode == ChangeMode.REMOVE && ((Experience) delta).getInternalXP() == -1) {
+			if (mode == ChangeMode.REMOVE_ALL || mode == ChangeMode.REMOVE && ((Experience) delta).getInternalXP() == -1) {
 				((EntityDeathEvent) e).setDroppedExp(0);
 			} else {
 				int xp = ((Experience) delta).getXP();
@@ -126,21 +129,30 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 					}
 					break;
 				case REMOVE:
+				case REMOVE_ALL:
 					if (delta instanceof Inventory) {
 						for (final ItemStack is : new IteratorIterable<ItemStack>(((Inventory) delta).iterator())) {
 							if (is == null)
 								continue;
-							new ItemType(is).removeFrom(drops);
+							if (mode == ChangeMode.REMOVE)
+								new ItemType(is).removeFrom(drops);
+							else
+								new ItemType(is).removeAll(drops);
 						}
 					} else {
 						for (final ItemType type : (ItemType[]) delta) {
-							type.removeFrom(drops);
+							if (mode == ChangeMode.REMOVE)
+								type.removeFrom(drops);
+							else
+								type.removeAll(drops);
 						}
 					}
 					break;
 				case DELETE:
 					drops.clear();
 					break;
+				case RESET:
+					assert false;
 			}
 		}
 	}
@@ -160,11 +172,6 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	@Override
 	public boolean isSingle() {
 		return false;
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return true;
 	}
 	
 }

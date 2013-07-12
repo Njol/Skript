@@ -56,7 +56,6 @@ import ch.njol.util.Kleenean;
 		"	damage victim by 1 heart"})
 @Since("1.3")
 public class ExprAttacker extends SimpleExpression<Entity> {
-	
 	static {
 		Skript.registerExpression(ExprAttacker.class, Entity.class, ExpressionType.SIMPLE, "[the] (attacker|damager)");
 	}
@@ -108,11 +107,6 @@ public class ExprAttacker extends SimpleExpression<Entity> {
 	
 	@Override
 	public boolean isSingle() {
-		return true;
-	}
-	
-	@Override
-	public boolean getAnd() {
 		return true;
 	}
 	

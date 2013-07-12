@@ -37,7 +37,7 @@ import ch.njol.skript.registrations.Converters;
  */
 @SuppressWarnings("serial")
 @Name("Type of")
-@Description("The type of a block/item or entity. The type of an item is only it's id and data value, i.e. it ignores the amount, enchantments etc., and the type of an entity is e.g. 'angry wolf' or 'player'.")
+@Description("The type of a block/item or entity. The type of an item is only it's id and data value, i.e. it ignores the amount, enchantments etc., and the type of an entity is e.g. 'wolf' or 'player'.")
 @Examples({"on rightclick on an entity:",
 		"	message \"This is a %type of clicked entity%!\""})
 @Since("1.4")
@@ -56,7 +56,7 @@ public class ExprTypeOf extends SimplePropertyExpression<Object, Object> {
 		if (o == null)
 			return null;
 		if (o instanceof EntityData) {
-			return o;
+			return ((EntityData<?>) o).getSuperType();
 		} else if (o instanceof ItemStack) {
 			return new ItemStack(((ItemStack) o).getTypeId(), 1, ((ItemStack) o).getDurability());
 		}

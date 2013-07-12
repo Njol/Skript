@@ -26,6 +26,7 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -86,6 +87,20 @@ public class ExprChunk extends PropertyExpression<Location, Chunk> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		return "the chunk at " + locations.toString(e, debug);
+	}
+	
+	@Override
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.RESET)
+			return new Class[0];
+		return null;
+	}
+	
+	@Override
+	public void change(final Event e, final Object delta, final ChangeMode mode) {
+		final Chunk[] cs = getArray(e);
+		for (final Chunk c : cs)
+			c.getWorld().regenerateChunk(c.getX(), c.getZ());
 	}
 	
 }

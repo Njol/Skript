@@ -31,7 +31,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 @SuppressWarnings("serial")
 public class OcelotData extends EntityData<Ocelot> {
-	
 	static {
 		EntityData.register(OcelotData.class, "ocelot", Ocelot.class, "wild ocelot", "ocelot", "cat");
 	}
@@ -41,6 +40,12 @@ public class OcelotData extends EntityData<Ocelot> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		tamed = matchedPattern - 1;
+		return true;
+	}
+	
+	@Override
+	protected boolean init(final Class<? extends Ocelot> c, final Ocelot e) {
+		tamed = e == null ? 0 : e.isTamed() ? 1 : -1;
 		return true;
 	}
 	
@@ -93,10 +98,15 @@ public class OcelotData extends EntityData<Ocelot> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Ocelot> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof OcelotData)
 			return tamed == 0 || ((OcelotData) e).tamed == tamed;
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new OcelotData();
 	}
 	
 }

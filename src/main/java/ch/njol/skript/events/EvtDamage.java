@@ -33,6 +33,7 @@ import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.HealthUtils;
 
 /**
  * @author Peter Güttinger
@@ -42,7 +43,7 @@ public class EvtDamage extends SkriptEvent {
 	
 	static {
 		Skript.registerEvent("Damage", EvtDamage.class, EntityDamageEvent.class, "damag(e|ing) [of %entitydata%]")
-				.description("Called when an entity recieves damage, e.g. by an attack from another entity, lava, fire, drowning, fall, suffocation, etc.")
+				.description("Called when an entity receives damage, e.g. by an attack from another entity, lava, fire, drowning, fall, suffocation, etc.")
 				.examples("on damage", "on damage of a player")
 				.since("1.0");
 	}
@@ -86,7 +87,7 @@ public class EvtDamage extends SkriptEvent {
 		if (!(e.getEntity() instanceof LivingEntity))
 			return true;
 		final LivingEntity en = (LivingEntity) e.getEntity();
-		if (en.getHealth() <= 0)
+		if (HealthUtils.getHealth(en) <= 0)
 			return false;
 //		if (en.getNoDamageTicks() <= en.getMaximumNoDamageTicks() / 2) {
 //			lastDamages.put(en, e.getDamage());

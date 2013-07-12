@@ -39,7 +39,6 @@ import ch.njol.util.CollectionUtils;
  */
 @SuppressWarnings("serial")
 public class SheepData extends EntityData<Sheep> {
-	
 	static {
 		EntityData.register(SheepData.class, "sheep", Sheep.class, "unsheared sheep", "sheep", "sheared sheep");
 	}
@@ -53,6 +52,13 @@ public class SheepData extends EntityData<Sheep> {
 		sheared = matchedPattern - 1;
 		if (exprs[0] != null)
 			colors = ((Literal<Color>) exprs[0]).getAll();
+		return true;
+	}
+	
+	@Override
+	protected boolean init(final Class<? extends Sheep> c, final Sheep e) {
+		sheared = e == null ? 0 : e.isSheared() ? 1 : -1;
+		colors = e == null ? null : new Color[] {Color.byWoolColor(e.getColor())};
 		return true;
 	}
 	
@@ -158,10 +164,15 @@ public class SheepData extends EntityData<Sheep> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Sheep> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof SheepData)
 			return colors == null || CollectionUtils.isSubset(colors, ((SheepData) e).colors);
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new SheepData();
 	}
 	
 }

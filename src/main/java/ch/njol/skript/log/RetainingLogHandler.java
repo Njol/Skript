@@ -30,6 +30,8 @@ import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
+import ch.njol.skript.Skript;
+
 /**
  * @author Peter Güttinger
  */
@@ -46,17 +48,28 @@ public class RetainingLogHandler extends LogHandler {
 		return false;
 	}
 	
+	boolean printedErrorOrLog = false;
+	
 	@Override
-	public void onStop() {}
+	public void onStop() {
+		if (!printedErrorOrLog && Skript.testing())
+			System.out.println("Retaining log wasn't instructed to print anything at " + SkriptLogger.getCaller());
+	}
+	
+	public final boolean printErrors() {
+		return printErrors(null);
+	}
 	
 	/**
-	 * Print all retained errors or the given one if no errors were retained.<br>
-	 * This handler is stopped if not already done
+	 * Print all retained errors or the given one if no errors were retained.
+	 * <p>
+	 * This handler is stopped if not already done.
 	 * 
 	 * @param def error to print if no errors were logged, can be null to not print any error if there are none
 	 * @return whether there were any errors
 	 */
 	public final boolean printErrors(final String def) {
+		printedErrorOrLog = true;
 		stop();
 		boolean hasError = false;
 		for (final LogEntry e : log) {
@@ -71,14 +84,16 @@ public class RetainingLogHandler extends LogHandler {
 	}
 	
 	/**
-	 * Sends all retained error messages to the given recipient<br>
-	 * This handler is stopped if not already done
+	 * Sends all retained error messages to the given recipient.
+	 * <p>
+	 * This handler is stopped if not already done.
 	 * 
 	 * @param recipient
 	 * @param def error to send if no errors were logged, can be null to not print any error if there are none
 	 * @return whether there were any errors to send
 	 */
 	public final boolean printErrors(final CommandSender recipient, final String def) {
+		printedErrorOrLog = true;
 		if (recipient == Bukkit.getConsoleSender())
 			return printErrors(def); // log as SEVERE instead of INFO
 		stop();
@@ -95,12 +110,14 @@ public class RetainingLogHandler extends LogHandler {
 	}
 	
 	/**
-	 * Prints all retained log messages<br>
-	 * This handler is stopped if not already done
+	 * Prints all retained log messages.
+	 * <p>
+	 * This handler is stopped if not already done.
 	 * 
 	 * @return
 	 */
 	public final void printLog() {
+		printedErrorOrLog = true;
 		stop();
 		SkriptLogger.logAll(log);
 	}

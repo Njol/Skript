@@ -52,10 +52,10 @@ import ch.njol.util.Kleenean;
  */
 @SuppressWarnings("serial")
 @Name("Target")
-@Description("For players this is the entity at the crosshair, while for mobs it represents the entity they are attacking/following (if any).")
+@Description("For players this is the entity at the crosshair, while for mobs and experience orbs it represents the entity they are attacking/following (if any).")
 @Examples({"on entity target:",
 		"    entity's target is a player",
-		"    send \"You're being followed!\" to target of entity"})
+		"    send \"You're being followed by an %entity%!\" to target of entity"})
 @Since("")
 public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	static {
@@ -115,7 +115,7 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (mode == ChangeMode.DELETE || mode == ChangeMode.SET)
+		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE)
 			return CollectionUtils.array(LivingEntity.class);
 		return null;
 	}

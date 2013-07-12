@@ -21,10 +21,10 @@
 
 package ch.njol.skript.classes.data;
 
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.CraftingInventory;
@@ -37,8 +37,6 @@ import org.bukkit.potion.PotionEffectType;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.SerializableChanger;
 import ch.njol.skript.util.Experience;
-import ch.njol.skript.util.Time;
-import ch.njol.skript.util.Timespan;
 import ch.njol.util.CollectionUtils;
 
 /**
@@ -47,48 +45,6 @@ import ch.njol.util.CollectionUtils;
 public class DefaultChangers {
 	
 	public DefaultChangers() {}
-	
-	/**
-	 * Although this is a Changer&lt;World, ?&gt;, it should not be used for worlds.
-	 */
-	@SuppressWarnings("serial")
-	public final static SerializableChanger<World, Object> timeChanger = new SerializableChanger<World, Object>() {
-		@SuppressWarnings("unchecked")
-		@Override
-		public Class<?>[] acceptChange(final ChangeMode mode) {
-			switch (mode) {
-				case ADD:
-				case REMOVE:
-					return CollectionUtils.array(Timespan.class);
-				case SET:
-					return CollectionUtils.array(Time.class);
-				default:
-					return null;
-			}
-		}
-		
-		@SuppressWarnings("incomplete-switch")
-		@Override
-		public void change(final World[] worlds, final Object delta, final ChangeMode mode) {
-			int mod = 1;
-			switch (mode) {
-				case SET:
-					final Time time = (Time) delta;
-					for (final World w : worlds) {
-						w.setTime(time.getTicks());
-					}
-					break;
-				case REMOVE:
-					mod = -1;
-					//$FALL-THROUGH$
-				case ADD:
-					final Timespan ts = (Timespan) delta;
-					for (final World w : worlds) {
-						w.setTime(w.getTime() + mod * ts.getTicks());
-					}
-			}
-		}
-	};
 	
 	@SuppressWarnings("serial")
 	public final static SerializableChanger<Entity, Object> entityChanger = new SerializableChanger<Entity, Object>() {
@@ -102,7 +58,10 @@ public class DefaultChangers {
 					return CollectionUtils.array();
 				case REMOVE:
 					return CollectionUtils.array(PotionEffectType[].class, ItemType[].class, Inventory.class);
+				case REMOVE_ALL:
+					return CollectionUtils.array(PotionEffectType[].class, ItemType[].class);
 				case SET:
+				case RESET: // TODO reset entity? (unshear, remove held item, ...)
 					return null;
 			}
 			assert false;
@@ -113,7 +72,7 @@ public class DefaultChangers {
 		@Override
 		public void change(final Entity[] entities, final Object delta, final ChangeMode mode) {
 			if (delta instanceof PotionEffectType[]) {
-				assert mode == ChangeMode.REMOVE;
+				assert mode == ChangeMode.REMOVE || mode == ChangeMode.REMOVE_ALL;
 				for (final Entity e : entities) {
 					if (!(e instanceof LivingEntity))
 						continue;
@@ -128,7 +87,7 @@ public class DefaultChangers {
 					} else {
 						if (mode == ChangeMode.DELETE)
 							continue;
-						Player p = (Player) e;
+						final Player p = (Player) e;
 						if (delta instanceof Experience[]) {
 							int xp = 0;
 							for (final Experience x : (Experience[]) delta)
@@ -136,18 +95,24 @@ public class DefaultChangers {
 							p.giveExp(xp);
 						} else if (delta instanceof Inventory) {
 							final PlayerInventory invi = p.getInventory();
-							if (mode == ChangeMode.ADD)
-								invi.addItem(((Inventory) delta).getContents());
-							else
+							if (mode == ChangeMode.ADD) {
+								for (final ItemStack i : (Inventory) delta) {
+									if (i != null)
+										invi.addItem(i);
+								}
+							} else {
 								invi.removeItem(((Inventory) delta).getContents());
+							}
 							p.updateInventory();
 						} else {
 							final PlayerInventory invi = p.getInventory();
 							for (final ItemType type : (ItemType[]) delta) {
 								if (mode == ChangeMode.ADD)
 									type.addTo(invi);
-								else
+								else if (mode == ChangeMode.REMOVE)
 									type.removeFrom(invi);
+								else
+									type.removeAll(invi);
 							}
 							p.updateInventory();
 						}
@@ -194,10 +159,35 @@ public class DefaultChangers {
 	};
 	
 	@SuppressWarnings("serial")
+	public final static SerializableChanger<Item, Object> itemChanger = new SerializableChanger<Item, Object>() {
+		@SuppressWarnings("unchecked")
+		@Override
+		public Class<?>[] acceptChange(final ChangeMode mode) {
+			if (mode == ChangeMode.SET)
+				return CollectionUtils.array(ItemStack.class);
+			return nonLivingEntityChanger.acceptChange(mode);
+		}
+		
+		@Override
+		public void change(final Item[] what, final Object delta, final ChangeMode mode) {
+			if (mode == ChangeMode.SET) {
+				for (final Item i : what)
+					i.setItemStack((ItemStack) delta);
+			} else {
+				nonLivingEntityChanger.change(what, delta, mode);
+			}
+		}
+	};
+	
+	@SuppressWarnings("serial")
 	public final static SerializableChanger<Inventory, Object> inventoryChanger = new SerializableChanger<Inventory, Object>() {
 		@SuppressWarnings("unchecked")
 		@Override
 		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
+			if (mode == ChangeMode.RESET)
+				return null;
+			if (mode == ChangeMode.REMOVE_ALL)
+				return CollectionUtils.array(ItemType[].class);
 			return CollectionUtils.array(ItemType[].class, Inventory.class);
 		}
 		
@@ -224,24 +214,33 @@ public class DefaultChangers {
 						//$FALL-THROUGH$
 					case ADD:
 						if (delta instanceof Inventory) {
-							invi.addItem(((Inventory) delta).getContents()); // TODO test
-						} else {
-							for (final ItemType type : (ItemType[]) delta) {
-								type.addTo(invi);
+							for (final ItemStack i : (Inventory) delta) {
+								if (i != null)
+									invi.addItem(i);
 							}
+						} else {
+							for (final ItemType type : (ItemType[]) delta)
+								type.addTo(invi);
 						}
 						break;
 					case REMOVE:
+					case REMOVE_ALL:
 						if (delta instanceof Inventory) {
+							assert mode == ChangeMode.REMOVE;
 							invi.removeItem(((Inventory) delta).getContents());
 						} else {
 							for (final ItemType type : (ItemType[]) delta) {
-								type.removeFrom(invi);
+								if (mode == ChangeMode.REMOVE)
+									type.removeFrom(invi);
+								else
+									type.removeAll(invi);
 							}
 						}
 						break;
+					case RESET:
+						assert false;
 				}
-				if (invi instanceof PlayerInventory) {
+				if (invi.getHolder() instanceof Player) {
 					((Player) invi.getHolder()).updateInventory();
 				}
 			}
@@ -253,6 +252,8 @@ public class DefaultChangers {
 		@SuppressWarnings("unchecked")
 		@Override
 		public Class<?>[] acceptChange(final ChangeMode mode) {
+			if (mode == ChangeMode.RESET)
+				return null; // TODO regenerate?
 			if (mode == ChangeMode.SET)
 				return CollectionUtils.array(ItemType.class);
 			return CollectionUtils.array(ItemType[].class, Inventory.class);
@@ -270,29 +271,37 @@ public class DefaultChangers {
 						break;
 					case ADD:
 					case REMOVE:
+					case REMOVE_ALL:
 						final BlockState state = block.getState();
 						if (!(state instanceof InventoryHolder))
 							break;
 						final Inventory invi = ((InventoryHolder) state).getInventory();
 						if (mode == ChangeMode.ADD) {
 							if (delta instanceof Inventory) {
-								invi.addItem(((Inventory) delta).getContents());
-							} else {
-								for (final ItemType type : (ItemType[]) delta) {
-									type.addTo(invi);
+								for (final ItemStack i : (Inventory) delta) {
+									if (i != null)
+										invi.addItem(i);
 								}
+							} else {
+								for (final ItemType type : (ItemType[]) delta)
+									type.addTo(invi);
 							}
 						} else {
 							if (delta instanceof Inventory) {
 								invi.removeItem(((Inventory) delta).getContents());
 							} else {
 								for (final ItemType type : (ItemType[]) delta) {
-									type.removeFrom(invi);
+									if (mode == ChangeMode.REMOVE)
+										type.removeFrom(invi);
+									else
+										type.removeAll(invi);
 								}
 							}
 						}
 						state.update();
 						break;
+					case RESET:
+						assert false;
 				}
 			}
 		}

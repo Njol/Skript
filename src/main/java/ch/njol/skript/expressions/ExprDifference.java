@@ -28,7 +28,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Arithmetic;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.conditions.CondIs;
+import ch.njol.skript.conditions.CondCompare;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -98,7 +98,7 @@ public class ExprDifference extends SimpleExpression<Object> {
 			ci = Classes.getSuperClassInfo(Utils.getSuperType(first.getReturnType(), second.getReturnType()));
 		}
 		if (ci.getMath() == null) {
-			Skript.error("Can't get the difference of " + CondIs.f(first) + " and " + CondIs.f(second), ErrorQuality.SEMANTIC_ERROR);
+			Skript.error("Can't get the difference of " + CondCompare.f(first) + " and " + CondCompare.f(second), ErrorQuality.SEMANTIC_ERROR);
 			return false;
 		}
 		math = ci.getMath();
@@ -134,11 +134,6 @@ public class ExprDifference extends SimpleExpression<Object> {
 	@Override
 	public boolean isSingle() {
 		return true;
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return false;
 	}
 	
 }

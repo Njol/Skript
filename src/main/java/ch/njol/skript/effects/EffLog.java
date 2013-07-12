@@ -51,9 +51,9 @@ import ch.njol.util.Kleenean;
 @SuppressWarnings("serial")
 @Name("Log")
 @Description({"Writes text into a .log file. Skript will write these files to /plugins/Skript/logs.",
-		"NB: Using 'server.log' as the log file will write to the default server log."})
+		"NB: Using 'server.log' as the log file will write to the default server log. Omitting the log file altogether will log the message as '[Skript] [&lt;script&gt;.sk] &lt;message&gt;' in the server log."})
 @Examples({"on place of TNT:",
-		"	log \"%player% placed TNT in %world% at %location of block%\" to \"tnt/placement\""})
+		"	log \"%player% placed TNT in %world% at %location of block%\" to \"tnt/placement.log\""})
 @Since("2.0")
 public class EffLog extends Effect {
 	static {
@@ -101,7 +101,7 @@ public class EffLog extends Effect {
 					@SuppressWarnings("resource")
 					PrintWriter w = writers.get(s);
 					if (w == null) {
-						final File f = new File(logsFolder, s);
+						final File f = new File(logsFolder, s); // TODO what if s contains '..'?
 						try {
 							f.getParentFile().mkdirs();
 							w = new PrintWriter(new BufferedWriter(new FileWriter(f, true)));
@@ -120,6 +120,6 @@ public class EffLog extends Effect {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "log " + messages.toString(e, debug) + " to " + files.toString(e, debug);
+		return "log " + messages.toString(e, debug) + (files == null ? "" : " to " + files.toString(e, debug));
 	}
 }

@@ -24,7 +24,6 @@ package ch.njol.skript.expressions;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -32,12 +31,11 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Getter;
+import ch.njol.skript.util.HealthUtils;
 import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
-import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
@@ -47,10 +45,9 @@ import ch.njol.util.Math2;
 @Description("The health of a creature, e.g. a player, mob, villager, etc. from 0 to the creature's max health, e.g. 10 for players.")
 @Examples({"message \"You have %health% HP left.\""})
 @Since("1.0")
-public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
-	
+public class ExprHealth extends PropertyExpression<LivingEntity, Double> {
 	static {
-		Skript.registerExpression(ExprHealth.class, Float.class, ExpressionType.PROPERTY, "[the] health [of %livingentities%]", "%livingentities%'[s] health");
+		register(ExprHealth.class, Double.class, "health", "livingentities");
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -66,7 +63,7 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 	}
 	
 	@Override
-	protected Float[] get(final Event e, final LivingEntity[] source) {
+	protected Double[] get(final Event e, final LivingEntity[] source) {
 //		if (e instanceof EntityDamageEvent && getTime() > 0 && entities.getSource() instanceof ExprAttacked && !Delay.isDelayed(e)) {
 //			return ConverterUtils.convert(entities.getArray(e), Float.class, new Getter<Float, LivingEntity>() {
 //				@Override
@@ -75,12 +72,10 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 //				}
 //			});
 //		}
-		return get(source, new Getter<Float, LivingEntity>() {
+		return get(source, new Getter<Double, LivingEntity>() {
 			@Override
-			public Float get(final LivingEntity entity) {
-				if (entity.isDead())
-					return Float.valueOf(0);
-				return Float.valueOf(0.5f * entity.getHealth());
+			public Double get(final LivingEntity entity) {
+				return Double.valueOf(HealthUtils.getHealth(entity));
 			}
 		});
 	}
@@ -104,37 +99,42 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Float> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.REMOVE_ALL)
+			return null;
 		return CollectionUtils.array(Number.class);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		int s = 0;
-		if (mode != ChangeMode.DELETE)
-			s = Math.round(((Number) delta).floatValue() * 2);
+		double d = delta == null ? 0 : ((Number) delta).doubleValue();
 		switch (mode) {
 			case DELETE:
 			case SET:
 				for (final LivingEntity entity : getExpr().getArray(e)) {
-					entity.setHealth(Math2.fit(0, s, entity.getMaxHealth()));
-				}
-				break;
-			case ADD:
-				for (final LivingEntity entity : getExpr().getArray(e)) {
-					entity.setHealth(Math2.fit(0, entity.getHealth() + s, entity.getMaxHealth()));
+					HealthUtils.setHealth(entity, d);
 				}
 				break;
 			case REMOVE:
+				d = -d;
+				//$FALL-THROUGH$
+			case ADD:
 				for (final LivingEntity entity : getExpr().getArray(e)) {
-					entity.setHealth(Math2.fit(0, entity.getHealth() - s, entity.getMaxHealth()));
+					HealthUtils.heal(entity, d);
 				}
 				break;
+			case RESET:
+				for (final LivingEntity entity : getExpr().getArray(e)) {
+					HealthUtils.setHealth(entity, HealthUtils.getMaxHealth(entity));
+				}
+				break;
+			case REMOVE_ALL:
+				assert false;
 		}
 	}
 	
 	@Override
-	public Class<Float> getReturnType() {
-		return Float.class;
+	public Class<Double> getReturnType() {
+		return Double.class;
 	}
 	
 //	@Override

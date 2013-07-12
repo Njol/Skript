@@ -92,8 +92,7 @@ public class Loop extends TriggerSection {
 		if (iter == null || !iter.hasNext()) {
 			if (iter != null)
 				currentIter.remove(e); // a loop inside another loop can be called multiple times in the same event
-			else
-				debug(e, false);
+			debug(e, false);
 			return actualNext;
 		} else {
 			current.put(e, iter.next());

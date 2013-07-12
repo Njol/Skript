@@ -48,17 +48,16 @@ import ch.njol.util.Kleenean;
 		"on join:",
 		"	apply potion of strength of tier {strength.%player%} to the player for 999 days"})
 @Since("2.0")
-public class EffPotion extends Effect {
-	
+public class EffPotion extends Effect { // TODO doesn't work on victim // as well as EffPoison
 	static {
 		Skript.registerEffect(EffPotion.class,
-				"apply [potion of] %potioneffecttypes% [potion] [[[of] tier] %-number%] to %livingentities% [for %-timespan%]",
-				"remove %potioneffecttypes% from %livingentities%");
+				"apply [potion of] %potioneffecttypes% [potion] [[[of] tier] %-number%] to %livingentities% [for %-timespan%]"
+				/*,"remove %potioneffecttypes% from %livingentities%"*/);
 	}
 	
-	private final static int DEFAULT_DURATION = 15 * 20; // 15 seconds
+	private final static int DEFAULT_DURATION = 15 * 20; // 15 seconds, same as EffPoison
 	
-	private Expression<PotionEffectType> types;
+	private Expression<PotionEffectType> potions;
 	private Expression<Number> tier;
 	private Expression<LivingEntity> entities;
 	private Expression<Timespan> duration;
@@ -69,12 +68,12 @@ public class EffPotion extends Effect {
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		apply = matchedPattern == 0;
 		if (apply) {
-			types = (Expression<PotionEffectType>) exprs[0];
+			potions = (Expression<PotionEffectType>) exprs[0];
 			tier = (Expression<Number>) exprs[1];
 			entities = (Expression<LivingEntity>) exprs[2];
 			duration = (Expression<Timespan>) exprs[3];
 		} else {
-			types = (Expression<PotionEffectType>) exprs[0];
+			potions = (Expression<PotionEffectType>) exprs[0];
 			entities = (Expression<LivingEntity>) exprs[1];
 		}
 		return true;
@@ -83,14 +82,14 @@ public class EffPotion extends Effect {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (apply)
-			return "apply " + types.toString(e, debug) + (tier == null ? "" : " of tier " + tier.toString(e, debug)) + " to " + entities.toString(e, debug) + (duration == null ? "" : " for " + duration.toString(e, debug));
+			return "apply " + potions.toString(e, debug) + (tier == null ? "" : " of tier " + tier.toString(e, debug)) + " to " + entities.toString(e, debug) + (duration == null ? "" : " for " + duration.toString(e, debug));
 		else
-			return "remove " + types.toString(e, debug) + " from " + entities.toString(e, debug);
+			return "remove " + potions.toString(e, debug) + " from " + entities.toString(e, debug);
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		final PotionEffectType[] ts = types.getArray(e);
+		final PotionEffectType[] ts = potions.getArray(e);
 		if (ts.length == 0)
 			return;
 		if (!apply) {
@@ -125,6 +124,7 @@ public class EffPotion extends Effect {
 						}
 					}
 				}
+				// TOD doesn't work in damage events?
 				en.addPotionEffect(new PotionEffect(t, duration, a), true);
 			}
 		}

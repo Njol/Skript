@@ -50,7 +50,6 @@ import ch.njol.util.Math2;
 @Examples({"set the player's food level to 10"})
 @Since("1.0")
 public class ExprFoodLevel extends PropertyExpression<Player, Float> {
-	
 	static {
 		Skript.registerExpression(ExprFoodLevel.class, Float.class, ExpressionType.PROPERTY, "[the] (food|hunger)[[ ](level|meter|bar)] [of %player%]", "%player%'[s] (food|hunger)[[ ](level|meter|bar)]");
 	}
@@ -80,52 +79,51 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 		});
 	}
 	
+	@Override
+	public Class<Float> getReturnType() {
+		return Float.class;
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.REMOVE_ALL)
+			return null;
 		return CollectionUtils.array(Number.class);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		int s = 0;
-		if (mode != ChangeMode.DELETE)
-			s = Math.round(((Number) delta).floatValue() * 2);
-		switch (mode) {
-			case SET:
-			case DELETE:
-				if (getTime() >= 0 && getExpr().isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
-					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, s, 20));
-					return;
-				}
-				for (final Player player : getExpr().getArray(e)) {
-					player.setFoodLevel(Math2.fit(0, s, 20));
-				}
-				return;
-			case ADD:
-				if (getTime() >= 0 && getExpr().isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
-					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, ((FoodLevelChangeEvent) e).getFoodLevel() + s, 20));
-					return;
-				}
-				for (final Player player : getExpr().getArray(e)) {
-					player.setFoodLevel(Math2.fit(0, player.getFoodLevel() + s, 20));
-				}
-				return;
-			case REMOVE:
-				if (getTime() >= 0 && getExpr().isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
-					((FoodLevelChangeEvent) e).setFoodLevel(Math2.fit(0, ((FoodLevelChangeEvent) e).getFoodLevel() - s, 20));
-					return;
-				}
-				for (final Player player : getExpr().getArray(e)) {
-					player.setFoodLevel(Math2.fit(0, player.getFoodLevel() - s, 20));
-				}
-				return;
+		final int s = delta == null ? 0 : Math.round(((Number) delta).floatValue() * 2);
+		for (final Player player : getExpr().getArray(e)) {
+			final boolean event = getTime() >= 0 && e instanceof FoodLevelChangeEvent && ((FoodLevelChangeEvent) e).getEntity() == player && !Delay.isDelayed(e);
+			int food;
+			if (event)
+				food = ((FoodLevelChangeEvent) e).getFoodLevel();
+			else
+				food = player.getFoodLevel();
+			switch (mode) {
+				case SET:
+				case DELETE:
+					food = Math2.fit(0, s, 20);
+					break;
+				case ADD:
+					food = Math2.fit(0, food + s, 20);
+					break;
+				case REMOVE:
+					food = Math2.fit(0, food - s, 20);
+					break;
+				case RESET:
+					food = 20;
+					break;
+				case REMOVE_ALL:
+					assert false;
+			}
+			if (event)
+				((FoodLevelChangeEvent) e).setFoodLevel(food);
+			else
+				player.setFoodLevel(food);
 		}
-	}
-	
-	@Override
-	public Class<Float> getReturnType() {
-		return Float.class;
 	}
 	
 	@Override

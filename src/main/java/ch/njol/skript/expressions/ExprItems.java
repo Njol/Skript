@@ -172,9 +172,4 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 		return blocks && s.equalsIgnoreCase("block") || !blocks && s.equalsIgnoreCase("item");
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

@@ -46,12 +46,12 @@ import ch.njol.util.Kleenean;
 		"set {_x} to floor({_y}) - ceil({_x})",
 		"add rounded down argument to the player's health"})
 @Since("2.0")
-public class ExprRound extends PropertyExpression<Number, Integer> {
+public class ExprRound extends PropertyExpression<Number, Long> {
 	static {
-		Skript.registerExpression(ExprRound.class, Integer.class, ExpressionType.PROPERTY,
-				"floor\\(%number%\\)", "round[ed] down %number%",
-				"round\\(%number%\\)", "round[ed] %number%",
-				"ceil[ing]\\(%number%\\)", "round[ed] up %number%");
+		Skript.registerExpression(ExprRound.class, Long.class, ExpressionType.PROPERTY,
+				"floor\\(%number%\\)", "(a|the|) round[ed] down %number%",
+				"round\\(%number%\\)", "(a|the|) round[ed] %number%",
+				"ceil[ing]\\(%number%\\)", "(a|the|) round[ed] up %number%");
 	}
 	
 	int action;
@@ -65,20 +65,22 @@ public class ExprRound extends PropertyExpression<Number, Integer> {
 	}
 	
 	@Override
-	protected Integer[] get(final Event e, final Number[] source) {
-		return get(source, new Converter<Number, Integer>() {
+	protected Long[] get(final Event e, final Number[] source) {
+		return get(source, new Converter<Number, Long>() {
 			@Override
-			public Integer convert(final Number n) {
+			public Long convert(final Number n) {
 				if (n instanceof Integer)
-					return (Integer) n;
-				return (int) (action == -1 ? Math.floor(n.doubleValue()) : action == 0 ? Math.round(n.doubleValue()) : Math.ceil(n.doubleValue()));
+					return n.longValue();
+				else if (n instanceof Long)
+					return (Long) n;
+				return (long) (action == -1 ? Math.floor(n.doubleValue()) : action == 0 ? Math.round(n.doubleValue()) : Math.ceil(n.doubleValue()));
 			}
 		});
 	}
 	
 	@Override
-	public Class<? extends Integer> getReturnType() {
-		return Integer.class;
+	public Class<? extends Long> getReturnType() {
+		return Long.class;
 	}
 	
 	@Override

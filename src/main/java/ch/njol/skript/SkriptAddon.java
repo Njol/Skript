@@ -64,7 +64,7 @@ public final class SkriptAddon {
 			if (!m.find())
 				throw new IllegalArgumentException("The version of the plugin " + p.getName() + " does not contain any numbers: " + p.getDescription().getVersion());
 			v = new Version(Utils.parseInt(m.group(1)), m.group(2) == null ? 0 : Utils.parseInt(m.group(2)), m.group(3) == null ? 0 : Utils.parseInt(m.group(3)));
-			Skript.warning("The plugin " + p.getName() + " uses a non-stardard version syntax: '" + p.getDescription().getVersion() + "'. Skript will use " + v + " instead.");
+			Skript.warning("The plugin " + p.getName() + " uses a non-standard version syntax: '" + p.getDescription().getVersion() + "'. Skript will use " + v + " instead.");
 		}
 		version = v;
 	}
@@ -128,8 +128,8 @@ public final class SkriptAddon {
 	private String languageFileDirectory = null;
 	
 	/**
-	 * Makes Skript load language files from the specified directory, e.g. "lang" or "skript lang" if you have a lang folder yourself. Localized files will be read from the
-	 * plugin's jar and the plugin's data folder, but the default english file is only taken from the jar and <b>must</b> exist!
+	 * Makes Skript load language files from the specified directory, e.g. "lang" or "skript lang" if you have a lang folder yourself. Localised files will be read from the
+	 * plugin's jar and the plugin's data folder, but the default English file is only taken from the jar and <b>must</b> exist!
 	 * 
 	 * @param directory Directory name
 	 * @return This SkriptAddon
@@ -138,6 +138,7 @@ public final class SkriptAddon {
 		assert directory != null;
 		if (languageFileDirectory != null)
 			throw new IllegalStateException();
+		directory = directory.replace('\\', '/');
 		if (directory.endsWith("/"))
 			directory = directory.substring(0, directory.length() - 1);
 		languageFileDirectory = directory;
@@ -172,7 +173,7 @@ public final class SkriptAddon {
 		} catch (final SecurityException e) {
 			throw new RuntimeException(e);
 		} catch (final InvocationTargetException e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException(e.getCause());
 		}
 		return null;
 	}

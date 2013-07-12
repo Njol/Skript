@@ -42,7 +42,8 @@ import ch.njol.util.Kleenean;
  */
 @SuppressWarnings("serial")
 @Name("Amount")
-@Description("The amount of something.")
+@Description({"The amount of something.",
+		"Please note that <code>amount of &lt;items&gt;</code> will not return the number of items, but the number of stacks, e.g. 1 for a stack of 64 torches."})
 @Examples({"message \"There are %number of all players% players online!\""})
 @Since("1.0")
 public class ExprAmount extends SimpleExpression<Integer> {
@@ -82,11 +83,6 @@ public class ExprAmount extends SimpleExpression<Integer> {
 	@Override
 	protected Integer[] get(final Event e) {
 		return new Integer[] {expr.getArray(e).length};
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return true;
 	}
 	
 }

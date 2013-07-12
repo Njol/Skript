@@ -23,10 +23,11 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
-import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.classes.Comparator.Relation;
+import ch.njol.skript.classes.data.DefaultComparators;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -50,19 +51,16 @@ import ch.njol.util.Kleenean;
 public class CondIsOfType extends Condition {
 	static {
 		Skript.registerCondition(CondIsOfType.class,
-				"%itemstacks% (is|are) of type[s] %itemtypes%", "%itemstacks% (isn't|is not|aren't|are not) of type[s] %itemtypes%",
-				"%entities% (is|are) of type[s] %entitydatas%", "%entities% (isn't|is not|aren't|are not) of type[s] %entitydatas%");
+				"%itemstacks/entities% (is|are) of type[s] %itemtypes/entitydatas%", "%itemstacks/entities% (isn't|is not|aren't|are not) of type[s] %itemtypes/entitydatas%");
 	}
 	
 	private Expression<?> what, types;
-	private boolean item;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		what = exprs[0];
 		types = exprs[1];
-		item = matchedPattern <= 1;
-		setNegated(matchedPattern % 2 != 0);
+		setNegated(matchedPattern == 1);
 		return true;
 	}
 	
@@ -74,10 +72,14 @@ public class CondIsOfType extends Condition {
 				return types.check(e, new Checker<Object>() {
 					@Override
 					public boolean check(final Object o2) {
-						if (item) {
-							return ((ItemType) o2).isOfType((ItemStack) o1);
-						} else {
+						if (o2 instanceof ItemType && o1 instanceof ItemType) {
+							return ((ItemType) o2).isSupertypeOf((ItemType) o1);
+						} else if (o2 instanceof EntityData && o1 instanceof Entity) {
 							return ((EntityData<?>) o2).isInstance((Entity) o1);
+						} else if (o2 instanceof ItemType && o1 instanceof Entity) {
+							return Relation.EQUAL.is(DefaultComparators.entityItemComparator.compare(EntityData.fromEntity((Entity) o1), (ItemType) o2));
+						} else {
+							return false;
 						}
 					}
 				}, isNegated());

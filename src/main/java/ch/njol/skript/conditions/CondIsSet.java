@@ -30,7 +30,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.Literal;
+import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
 
@@ -43,14 +43,13 @@ import ch.njol.util.Kleenean;
 @Examples({"{teamscript.%player%.preferred team} is not set",
 		"on damage:",
 		"	projectile exists",
-		"	broadcast \"%attacker% used a projectile to attack %victim%!\""})
+		"	broadcast \"%attacker% used a %projectile% to attack %victim%!\""})
 @Since("1.2")
 public class CondIsSet extends Condition {
-	
 	static {
 		Skript.registerCondition(CondIsSet.class,
-				"%objects% (exists|is set)",
-				"%objects% (doesn't exist|does not exist|isn't set|is not set)");
+				"%~objects% (exist[s]|(is|are) set)",
+				"%~objects% (do[es](n't| not) exist|(is|are)(n't| not) set)");
 	}
 	
 	private Expression<?> expr;
@@ -58,22 +57,32 @@ public class CondIsSet extends Condition {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		expr = exprs[0];
-		if (expr instanceof Literal<?>) {
-//			Skript.error("Can't understand this expression: " + expr, ErrorQuality.NOT_AN_EXPRESSION);
-			return false;
-		}
 		setNegated(matchedPattern == 1);
 		return true;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return expr.toString(e, debug) + (isNegated() ? " isn't" : " is") + " set";
+		return expr.toString(e, debug) + " " + (isNegated() ? "isn't" : "is") + " set";
+	}
+	
+	private boolean check(final Expression<?> expr, final Event e) {
+		if (expr instanceof ExpressionList) {
+			for (final Expression<?> ex : ((ExpressionList<?>) expr).getExpressions()) {
+				final boolean b = check(ex, e);
+				if (expr.getAnd() ^ b)
+					return !expr.getAnd();
+			}
+			return expr.getAnd();
+		}
+		assert expr.getAnd();
+		final Object[] all = expr.getAll(e);
+		return isNegated() ^ (all.length != 0);
 	}
 	
 	@Override
 	public boolean check(final Event e) {
-		return isNegated() ^ (expr.getArray(e).length > 0);
+		return check(expr, e);
 	}
 	
 }

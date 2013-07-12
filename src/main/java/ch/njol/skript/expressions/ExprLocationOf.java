@@ -53,8 +53,8 @@ public class ExprLocationOf extends WrapperExpression<Location> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		setExpr((Expression<? extends Location>) vars[0]);
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		setExpr((Expression<? extends Location>) exprs[0]);
 		return true;
 	}
 	

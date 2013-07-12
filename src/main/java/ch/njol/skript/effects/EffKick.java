@@ -23,6 +23,7 @@ package ch.njol.skript.effects;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerLoginEvent.Result;
 
@@ -73,8 +74,11 @@ public class EffKick extends Effect {
 		if (r == null)
 			return;
 		for (final Player p : players.getArray(e)) {
-			if (e instanceof PlayerLoginEvent && p.equals(((PlayerLoginEvent) e).getPlayer())) {
+			// TODO change other expressions to behave like this
+			if (e instanceof PlayerLoginEvent && p.equals(((PlayerLoginEvent) e).getPlayer()) && !Delay.isDelayed(e)) {
 				((PlayerLoginEvent) e).disallow(Result.KICK_OTHER, r);
+			} else if (e instanceof PlayerKickEvent && p.equals(((PlayerKickEvent) e).getPlayer()) && !Delay.isDelayed(e)) {
+				((PlayerKickEvent) e).setLeaveMessage(r);
 			} else {
 				p.kickPlayer(r);
 			}

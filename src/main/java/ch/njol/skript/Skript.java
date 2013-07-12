@@ -34,7 +34,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Filter;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,9 +61,9 @@ import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.data.BukkitClasses;
 import ch.njol.skript.classes.data.BukkitEventValues;
-import ch.njol.skript.classes.data.DefaultClasses;
 import ch.njol.skript.classes.data.DefaultComparators;
 import ch.njol.skript.classes.data.DefaultConverters;
+import ch.njol.skript.classes.data.JavaClasses;
 import ch.njol.skript.classes.data.SkriptClasses;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.doc.Documentation;
@@ -77,8 +79,8 @@ import ch.njol.skript.lang.SkriptEventInfo;
 import ch.njol.skript.lang.Statement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.TriggerItem;
+import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.lang.util.VariableString;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.log.CountingLogHandler;
@@ -131,9 +133,6 @@ import ch.njol.util.iterator.EnumerationIterable;
  */
 public final class Skript extends JavaPlugin implements Listener {
 	
-	public static final Message m_quotes_error = new Message("skript.quotes error");
-	public static final Message m_invalid_reload = new Message("skript.invalid reload");
-	
 	// ================ PLUGIN ================
 	
 	private static Skript instance = null;
@@ -155,6 +154,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	public static Version getVersion() {
 		return version;
 	}
+	
+	public static final Message m_invalid_reload = new Message("skript.invalid reload");
 	
 	@Override
 	public void onEnable() {
@@ -179,7 +180,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		getCommand("skript").setExecutor(new SkriptCommand());
 		
-		new DefaultClasses();
+		new JavaClasses();
 		new BukkitClasses();
 		new BukkitEventValues();
 		new SkriptClasses();
@@ -221,11 +222,11 @@ public final class Skript extends JavaPlugin implements Listener {
 					final JarFile jar = new JarFile(getFile());
 					try {
 						for (final JarEntry e : new EnumerationIterable<JarEntry>(jar.entries())) {
-							if (e.getName().startsWith("ch/njol/skript/hooks/") && e.getName().endsWith("Hook.class") && StringUtils.count(e.getName(), '/') == 5) {
+							if (e.getName().startsWith("ch/njol/skript/hooks/") && e.getName().endsWith("Hook.class") && StringUtils.count(e.getName(), '/') <= 5) {
 								final String c = e.getName().replace('/', '.').substring(0, e.getName().length() - ".class".length());
 								try {
 									final Class<?> hook = Class.forName(c, true, getClassLoader());
-									if (hook != null && Hook.class.isAssignableFrom(hook) && !hook.isInterface()) {
+									if (hook != null && Hook.class.isAssignableFrom(hook) && !hook.isInterface() && Hook.class != hook) {
 										hook.getDeclaredConstructor().setAccessible(true);
 										final Hook h = (Hook) hook.getDeclaredConstructor().newInstance();
 										h.load();
@@ -248,7 +249,7 @@ public final class Skript extends JavaPlugin implements Listener {
 						} catch (final IOException e) {}
 					}
 				} catch (final Exception e) {
-					error("Error while loading plugin hooks: " + e.getLocalizedMessage());
+					error("Error while loading plugin hooks" + (e.getLocalizedMessage() == null ? "" : ": " + e.getLocalizedMessage()));
 					if (testing())
 						e.printStackTrace();
 				}
@@ -342,6 +343,23 @@ public final class Skript extends JavaPlugin implements Listener {
 					});
 				}
 				metrics.start();
+				
+				// suppresses the "can't keep up" warning after loading all scripts
+				final Filter f = new Filter() {
+					@Override
+					public boolean isLoggable(final LogRecord record) {
+						if (record.getMessage() != null && record.getMessage().equalsIgnoreCase("Can't keep up! Did the system time change, or is the server overloaded?"))
+							return false;
+						return true;
+					}
+				};
+				SkriptLogger.addFilter(f);
+				Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.this, new Runnable() {
+					@Override
+					public void run() {
+						SkriptLogger.removeFilter(f);
+					}
+				});
 			}
 		});
 		
@@ -524,11 +542,18 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * A small value, useful for comparing doubles or floats.<br>
-	 * E.g. to test whether a location is within a specific radius of another location:
+	 * A small value, useful for comparing doubles or floats.
+	 * <p>
+	 * E.g. to test whether two floating-point numbers are equal:
 	 * 
 	 * <pre>
-	 * location.distanceSquared(center) - Skript.EPSILON &lt; radius * radius
+	 * Math.abs(a - b) &lt; Skript.EPSILON
+	 * </pre>
+	 * 
+	 * or whether a location is within a specific radius of another location:
+	 * 
+	 * <pre>
+	 * location.distanceSquared(center) - radius * radius &lt; Skript.EPSILON
 	 * </pre>
 	 * 
 	 * @see #EPSILON_MULT
@@ -546,9 +571,9 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	public static final int MAXBLOCKID = 255;
 	/**
-	 * The maximum data value Skript supports. This is currently {@link Short#MAX_VALUE}.
+	 * The maximum data value of Minecraft, i.e. Short.MAX_VALUE - Short.MIN_VALUE.
 	 */
-	public final static int MAXDATAVALUE = Short.MAX_VALUE;
+	public final static int MAXDATAVALUE = Short.MAX_VALUE - Short.MIN_VALUE;
 	
 	public final static String toString(final double n) {
 		return StringUtils.toString(n, SkriptConfig.numberAccuracy.value());
@@ -560,7 +585,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static void checkAcceptRegistrations() {
 		if (!acceptRegistrations)
-			throw new SkriptAPIException("Registering is disabled after initialization!");
+			throw new SkriptAPIException("Registering is disabled after initialisation!");
 	}
 	
 	private static void stopAcceptingRegistrations() {
@@ -788,11 +813,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		return SkriptLogger.log(minVerb);
 	}
 	
-	/**
-	 * @see SkriptLogger#log(Level, String)
-	 */
-	public static void config(final String info) {
-		SkriptLogger.log(Level.CONFIG, info);
+	public static void debug(final String info) {
+		SkriptLogger.log(SkriptLogger.DEBUG, info);
 	}
 	
 	/**
@@ -856,7 +878,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		logEx("[Skript] Severe Error:");
 		logEx(info);
 		logEx();
-		logEx("If you're developping an add-on for Skript this likely means that you have done something wrong.");
+		logEx("If you're developing an add-on for Skript this likely means that you have done something wrong.");
 		logEx("If you're a server admin however please go to http://dev.bukkit.org/server-mods/skript/tickets/");
 		logEx("and check whether this error has already been reported.");
 		logEx("If not please create a new ticket with a meaningful title, copy & paste this whole error into it,");
@@ -865,7 +887,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		logEx("By following this guide fixing the error should be easy and done fast.");
 		
 		logEx();
-		logEx("Stacktrace:");
+		logEx("Stack trace:");
 		if (cause == null || cause.getStackTrace().length == 0) {
 			logEx("  warning: no/empty exception given, dumping current stack trace instead");
 			cause = new Exception(cause);
@@ -903,7 +925,18 @@ public final class Skript extends JavaPlugin implements Listener {
 			Bukkit.getLogger().severe(EXCEPTION_PREFIX + line);
 	}
 	
-	public final static String SKRIPT_PREFIX = ChatColor.GRAY + "[" + ChatColor.GOLD + "Skript" + ChatColor.GRAY + "]" + ChatColor.RESET + " ";
+	public static String SKRIPT_PREFIX = ChatColor.GRAY + "[" + ChatColor.GOLD + "Skript" + ChatColor.GRAY + "]" + ChatColor.RESET + " ";
+	
+//	static {
+//		Language.addListener(new LanguageChangeListener() {
+//			@Override
+//			public void onLanguageChange() {
+//				final String s = Language.get_("skript.prefix");
+//				if (s != null)
+//					SKRIPT_PREFIX = Utils.replaceEnglishChatStyles(s) + ChatColor.RESET + " ";
+//			}
+//		});
+//	}
 	
 	public static void info(final CommandSender sender, final String info) {
 		sender.sendMessage(SKRIPT_PREFIX + Utils.replaceEnglishChatStyles(info));

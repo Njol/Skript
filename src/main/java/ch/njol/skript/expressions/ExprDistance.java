@@ -82,9 +82,4 @@ public class ExprDistance extends SimpleExpression<Double> {
 		return Double.class;
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

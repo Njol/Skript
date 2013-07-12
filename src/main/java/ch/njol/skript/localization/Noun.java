@@ -282,9 +282,9 @@ public class Noun extends Message {
 					indefiniteArticles.add("");
 					definiteArticles.add("");
 				}
-				final String dpa = lang.get(GENDERS_SECTION+"plural.definite article");
+				final String dpa = lang.get(GENDERS_SECTION + "plural.definite article");
 				if (dpa == null)
-					Skript.error("Missing entry '"+GENDERS_SECTION+"plural.definite article' in the "+Language.getName()+" language file!");
+					Skript.error("Missing entry '" + GENDERS_SECTION + "plural.definite article' in the " + Language.getName() + " language file!");
 				definitePluralArticle = dpa == null ? "" : dpa;
 			}
 		}, LanguageListenerPriority.EARLIEST);

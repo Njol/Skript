@@ -34,6 +34,9 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Variable;
+import ch.njol.skript.log.ParseLogHandler;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Comparators;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
@@ -48,7 +51,6 @@ import ch.njol.util.Kleenean;
 		"player has 4 flint and 2 iron ingots"})
 @Since("1.0")
 public class CondContains extends Condition {
-	
 	static {
 		Skript.registerCondition(CondContains.class,
 				"%inventories% ha(s|ve) %itemtypes% [in [(the[ir]|his|her|its)] inventory]",
@@ -65,7 +67,25 @@ public class CondContains extends Condition {
 		containers = exprs[0].getConvertedExpression(Object.class);
 		if (containers == null)
 			return false;
-		items = exprs[1];
+		if (!(containers instanceof Variable) && !String.class.isAssignableFrom(containers.getReturnType()) && !Inventory.class.isAssignableFrom(containers.getReturnType())) {
+			final ParseLogHandler h = SkriptLogger.startParseLogHandler();
+			try {
+				Expression<?> c = containers.getConvertedExpression(String.class);
+				if (c == null)
+					c = containers.getConvertedExpression(Inventory.class);
+				if (c == null) {
+					h.printError();
+					return false;
+				}
+				containers = c;
+				h.printLog();
+			} finally {
+				h.stop();
+			}
+		}
+		items = exprs[1].getConvertedExpression(Object.class);
+		if (items == null)
+			return false;
 		setNegated(matchedPattern >= 2);
 		return true;
 	}
@@ -75,7 +95,14 @@ public class CondContains extends Condition {
 		return containers.check(e, new Checker<Object>() {
 			@Override
 			public boolean check(final Object container) {
-				if (containers.isSingle()) {
+				if (containers instanceof Variable && !containers.isSingle()) {
+					return items.check(e, new Checker<Object>() {
+						@Override
+						public boolean check(final Object item) {
+							return Relation.EQUAL.is(Comparators.compare(container, item));
+						}
+					}, isNegated());
+				} else {
 					if (container instanceof Inventory) {
 						final Inventory invi = (Inventory) container;
 						return items.check(e, new Checker<Object>() {
@@ -94,13 +121,6 @@ public class CondContains extends Condition {
 						}, isNegated());
 					}
 					return false;
-				} else {
-					return items.check(e, new Checker<Object>() {
-						@Override
-						public boolean check(final Object item) {
-							return Relation.EQUAL.is(Comparators.compare(container, item));
-						}
-					}, isNegated());
 				}
 			}
 		});

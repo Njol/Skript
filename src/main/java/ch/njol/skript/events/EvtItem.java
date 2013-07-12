@@ -26,6 +26,7 @@ import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -41,28 +42,34 @@ import ch.njol.util.Checker;
  */
 @SuppressWarnings("serial")
 public class EvtItem extends SkriptEvent {
-	
+	private final static boolean hasConsumeEvent = Skript.isRunningMinecraft(1, 5, 1);
 	static {
-		Skript.registerEvent("Dispense", EvtItem.class, BlockDispenseEvent.class, "dispense [[of] %itemtypes%]")
+		Skript.registerEvent("Dispense", EvtItem.class, BlockDispenseEvent.class, "dispens(e|ing) [[of] %itemtypes%]")
 				.description("Called when a dispenser dispenses an item.")
 				.examples("")
 				.since("");
-		Skript.registerEvent("Item Spawn", EvtItem.class, ItemSpawnEvent.class, "item spawn [[of] %itemtypes%]")
+		Skript.registerEvent("Item Spawn", EvtItem.class, ItemSpawnEvent.class, "item spawn[ing] [[of] %itemtypes%]")
 				.description("Called whenever an item stack is spawned in a world, e.g. as drop of a block or mob, a player throwing items out of his inventory, or a dispenser dispensing an item (not shooting it).")
 				.examples("")
 				.since("");
-		Skript.registerEvent("Drop", EvtItem.class, PlayerDropItemEvent.class, "drop [[of] %itemtypes%]")
-				.description("Called when a player drops an item.")
+		Skript.registerEvent("Drop", EvtItem.class, PlayerDropItemEvent.class, "[player] drop[ing] [[of] %itemtypes%]") // TODO cancelling a "mouse drop" deletes the item
+		.description("Called when a player drops an item from his inventory.")
 				.examples("")
 				.since("");
-		Skript.registerEvent("Craft", EvtItem.class, CraftItemEvent.class, "craft [[of] %itemtypes%]")
+		Skript.registerEvent("Craft", EvtItem.class, CraftItemEvent.class, "[player] craft[ing] [[of] %itemtypes%]")
 				.description("Called when a player crafts an item.")
 				.examples("")
 				.since("");
-		Skript.registerEvent("Pick Up", EvtItem.class, PlayerPickupItemEvent.class, "(pick[ ]up|picking up) [[of] %itemtypes%]")
-				.description("Called when a player picks up an item. The item is still on the ground when this event is called.")
+		Skript.registerEvent("Pick Up", EvtItem.class, PlayerPickupItemEvent.class, "[player] (pick[ ]up|picking up) [[of] %itemtypes%]")
+				.description("Called when a player picks up an item. Please note that the item is still on the ground when this event is called.")
 				.examples("")
 				.since("");
+		if (hasConsumeEvent) {
+			Skript.registerEvent("Consume", EvtItem.class, PlayerItemConsumeEvent.class, "[player] ((eat|drink)[ing]|consum(e|ing)) [[of] %itemtypes%]")
+					.description("Called when a player is done eating/drinking something, e.g. an apple, bread, meat, milk or a potion.")
+					.examples("")
+					.since("2.0");
+		}
 	}
 	
 	private Literal<ItemType> types;
@@ -89,6 +96,8 @@ public class EvtItem extends SkriptEvent {
 			is = ((CraftItemEvent) e).getRecipe().getResult();
 		} else if (e instanceof PlayerPickupItemEvent) {
 			is = ((PlayerPickupItemEvent) e).getItem().getItemStack();
+		} else if (hasConsumeEvent && e instanceof PlayerItemConsumeEvent) {
+			is = ((PlayerItemConsumeEvent) e).getItem();
 		} else {
 			assert false;
 			return false;
@@ -103,7 +112,7 @@ public class EvtItem extends SkriptEvent {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "dispense/spawn/drop/craft/pickup" + (types == null ? "" : " of " + types);
+		return "dispense/spawn/drop/craft/pickup/consume" + (types == null ? "" : " of " + types);
 	}
 	
 }

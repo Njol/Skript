@@ -21,42 +21,19 @@
 
 package ch.njol.skript.classes.data;
 
-import java.util.HashMap;
-
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Arrow;
-import org.bukkit.entity.Boat;
-import org.bukkit.entity.Egg;
-import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Fish;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.ItemFrame;
-import org.bukkit.entity.Minecart;
-import org.bukkit.entity.Painting;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.PoweredMinecart;
-import org.bukkit.entity.Snowball;
-import org.bukkit.entity.StorageMinecart;
-import org.bukkit.entity.TNTPrimed;
-import org.bukkit.entity.ThrownExpBottle;
-import org.bukkit.entity.ThrownPotion;
-import org.bukkit.entity.WitherSkull;
-import org.bukkit.entity.minecart.ExplosiveMinecart;
-import org.bukkit.entity.minecart.HopperMinecart;
-import org.bukkit.entity.minecart.RideableMinecart;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Converter.ConverterOptions;
 import ch.njol.skript.classes.SerializableConverter;
@@ -67,13 +44,12 @@ import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.BlockUtils;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.Experience;
-import ch.njol.skript.util.PotionEffectUtils;
 import ch.njol.skript.util.Slot;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"rawtypes", "serial", "deprecation"})
+@SuppressWarnings({"rawtypes", "serial"})
 public class DefaultConverters {
 	
 	public DefaultConverters() {}
@@ -136,12 +112,12 @@ public class DefaultConverters {
 		}, ConverterOptions.NO_LEFT_CHAINING);
 		
 		// Location - Block
-		Converters.registerConverter(Location.class, Block.class, new SerializableConverter<Location, Block>() {
-			@Override
-			public Block convert(final Location l) {
-				return l.getBlock();
-			}
-		});
+//		Converters.registerConverter(Location.class, Block.class, new SerializableConverter<Location, Block>() {
+//			@Override
+//			public Block convert(final Location l) {
+//				return l.getBlock();
+//			}
+//		});
 		Converters.registerConverter(Block.class, Location.class, new SerializableConverter<Block, Location>() {
 			@Override
 			public Location convert(final Block b) {
@@ -197,49 +173,6 @@ public class DefaultConverters {
 			}
 		});
 		
-		// to fix comparisions of eggs, arrows, etc. (e.g. 'projectile is an arrow'), but also allows to add these entities to inventories as items
-		// TODO !Update with every version [entities]
-		final HashMap<Class<? extends Entity>, Material> entityMaterials = new HashMap<Class<? extends Entity>, Material>();
-		entityMaterials.put(Boat.class, Material.BOAT);
-		entityMaterials.put(Minecart.class, Material.MINECART);
-		entityMaterials.put(Painting.class, Material.PAINTING);
-		entityMaterials.put(Arrow.class, Material.ARROW);
-		entityMaterials.put(Egg.class, Material.EGG);
-		entityMaterials.put(EnderPearl.class, Material.ENDER_PEARL);
-		entityMaterials.put(Snowball.class, Material.SNOW_BALL);
-		entityMaterials.put(ThrownExpBottle.class, Material.EXP_BOTTLE);
-		entityMaterials.put(Fish.class, Material.RAW_FISH);
-		entityMaterials.put(TNTPrimed.class, Material.TNT);
-		if (Skript.isRunningMinecraft(1, 4))
-			entityMaterials.put(ItemFrame.class, Material.ITEM_FRAME);
-		if (Skript.isRunningMinecraft(1, 5)) {
-			entityMaterials.put(org.bukkit.entity.minecart.StorageMinecart.class, Material.STORAGE_MINECART);
-			entityMaterials.put(org.bukkit.entity.minecart.PoweredMinecart.class, Material.POWERED_MINECART);
-			entityMaterials.put(RideableMinecart.class, Material.MINECART);
-			entityMaterials.put(HopperMinecart.class, Material.HOPPER_MINECART);
-			entityMaterials.put(ExplosiveMinecart.class, Material.EXPLOSIVE_MINECART);
-		} else {
-			entityMaterials.put(StorageMinecart.class, Material.STORAGE_MINECART);
-			entityMaterials.put(PoweredMinecart.class, Material.POWERED_MINECART);
-		}
-		Converters.registerConverter(Entity.class, ItemStack.class, new SerializableConverter<Entity, ItemStack>() {
-			@Override
-			public ItemStack convert(final Entity e) {
-				for (final Class<?> i : e.getClass().getInterfaces()) {
-					final Material m = entityMaterials.get(i);
-					if (m != null)
-						return new ItemStack(m);
-				}
-				if (e instanceof Item)
-					return ((Item) e).getItemStack();
-				if (e instanceof ThrownPotion)
-					return new ItemStack(Material.POTION, 1, PotionEffectUtils.guessData((ThrownPotion) e));
-				if (Skript.isRunningMinecraft(1, 4) && e instanceof WitherSkull)
-					return new ItemStack(Material.SKULL_ITEM, 1, (short) 1);
-				return null;
-			}
-		});
-		
 		// Experience - XpOrbData
 		Converters.registerConverter(Experience.class, XpOrbData.class, new SerializableConverter<Experience, XpOrbData>() {
 			@Override
@@ -253,6 +186,14 @@ public class DefaultConverters {
 				return new Experience(e.getExperience());
 			}
 		});
+		
+//		// Item - ItemStack
+//		Converters.registerConverter(Item.class, ItemStack.class, new SerializableConverter<Item, ItemStack>() {
+//			@Override
+//			public ItemStack convert(final Item i) {
+//				return i.getItemStack();
+//			}
+//		});
 		
 		// Slot - ItemStack
 		Converters.registerConverter(Slot.class, ItemStack.class, new SerializableConverter<Slot, ItemStack>() {

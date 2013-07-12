@@ -33,6 +33,7 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.HealthUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -65,7 +66,7 @@ public class EffKill extends Effect {
 	protected void execute(final Event e) {
 		for (final Entity entity : entities.getArray(e)) {
 			if (entity instanceof LivingEntity)
-				((LivingEntity) entity).damage(((LivingEntity) entity).getMaxHealth() * 100); // just to make sure that it really dies >:)
+				HealthUtils.damage((LivingEntity) entity, HealthUtils.getMaxHealth((LivingEntity) entity) * 100); // just to make sure that it really dies >:)
 		}
 	}
 	

@@ -29,7 +29,8 @@ import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.block.BlockFace;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
 import org.bukkit.event.Listener;
@@ -82,7 +83,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 	
 	static {
 //		Skript.registerEvent(EvtMoveOn.class, PlayerMoveEvent.class, "(step|walk) on <.+>");
-		Skript.registerEvent("Move On", EvtMoveOn.class, PlayerMoveEvent.class, "(step|walk)[ing] (on|over) %itemtypes%")
+		Skript.registerEvent("Move On", EvtMoveOn.class, PlayerMoveEvent.class, "(step|walk)[ing] (on|over) %*itemtypes%")
 				.description("Called when a player moves onto a certain type of block. Please note that using this event can cause lag if there are many players online.")
 				.examples("on walking on dirt or grass", "on stepping on stone")
 				.since("2.0");
@@ -100,9 +101,6 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 		public void execute(final Listener l, final Event event) throws EventException {
 			final PlayerMoveEvent e = (PlayerMoveEvent) event;
 			final Location from = e.getFrom(), to = e.getTo();
-			if (from.getWorld() == to.getWorld() && from.getBlockX() == to.getBlockX() && from.getBlockY() == to.getBlockY() && from.getBlockZ() == to.getBlockZ())
-				return;
-			SkriptEventHandler.logEventStart(e);
 //			if (!blockTriggers.isEmpty()) {
 //				final List<Trigger> ts = blockTriggers.get(new BlockLocation(to.getWorld(), to.getBlockX(), to.getBlockY(), to.getBlockZ()));
 //				if (ts != null) {
@@ -114,26 +112,52 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 //				}
 //			}
 			if (!itemTypeTriggers.isEmpty()) {
-				final int id = to.getWorld().getBlockTypeIdAt(to.getBlockX(), to.getBlockY() - 1, to.getBlockZ());
+				final int id = getOnBlock(to);
+				if (id == 0)
+					return;
 				final List<Trigger> ts = itemTypeTriggers.get(id);
-				if (ts != null) {
-					final byte data = to.getBlock().getRelative(BlockFace.DOWN).getData();
-					triggersLoop: for (final Trigger t : ts) {
-						final EvtMoveOn se = (EvtMoveOn) t.getEvent();
-						for (final ItemType i : se.types) {
-							if (i.isOfType(id, data)) {
-								SkriptEventHandler.logTriggerStart(t);
-								t.execute(e);
-								SkriptEventHandler.logTriggerEnd(t);
-								continue triggersLoop;
-							}
+				if (ts == null)
+					return;
+				final int y = getBlockY(to.getY(), id);
+				if (to.getWorld().equals(from.getWorld()) && to.getBlockX() == from.getBlockX() && to.getBlockZ() == from.getBlockZ() && y == getBlockY(from.getY(), getOnBlock(from)) && getOnBlock(from) == id)
+					return;
+				SkriptEventHandler.logEventStart(e);
+				final byte data = to.getWorld().getBlockAt(to.getBlockX(), y, to.getBlockZ()).getData();
+				triggersLoop: for (final Trigger t : ts) {
+					final EvtMoveOn se = (EvtMoveOn) t.getEvent();
+					for (final ItemType i : se.types) {
+						if (i.isOfType(id, data)) {
+							SkriptEventHandler.logTriggerStart(t);
+							t.execute(e);
+							SkriptEventHandler.logTriggerEnd(t);
+							continue triggersLoop;
 						}
 					}
 				}
+				SkriptEventHandler.logEventEnd();
 			}
-			SkriptEventHandler.logEventEnd();
 		}
 	};
+	
+	private final static int getOnBlock(final Location l) {
+		int id = l.getWorld().getBlockTypeIdAt(l.getBlockX(), (int) Math.ceil(l.getY()) - 1, l.getBlockZ());
+		if (id == 0 && Math.abs((l.getY() - l.getBlockY()) - 0.5) < Skript.EPSILON) { // fences
+			id = l.getWorld().getBlockTypeIdAt(l.getBlockX(), l.getBlockY() - 1, l.getBlockZ());
+			if (id != Material.FENCE.getId() && id != 107 && id != 113) // fence gate // nether fence
+				return 0;
+		}
+		return id;
+	}
+	
+	private final static int getBlockY(final double y, final int id) {
+		if ((id == Material.FENCE.getId() || id == 107 || id == 113) && Math.abs((y - Math.floor(y)) - 0.5) < Skript.EPSILON) // fence gate // nether fence
+			return (int) Math.floor(y) - 1;
+		return (int) Math.ceil(y) - 1;
+	}
+	
+	public final static Block getBlock(final PlayerMoveEvent e) {
+		return e.getTo().subtract(0, 0.5, 0).getBlock();
+	}
 	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
@@ -161,7 +185,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 					Skript.error("Can't use an 'on walk' event with an alias that matches all blocks");
 					return false;
 				}
-				if (d.getId() <= Skript.MAXBLOCKID)
+				if (d.getId() <= Skript.MAXBLOCKID && d.getId() != 0) // don't allow air
 					hasBlock = true;
 			}
 			if (!hasBlock) {
@@ -228,4 +252,5 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent {
 //		blockTriggers.clear();
 		itemTypeTriggers.clear();
 	}
+	
 }

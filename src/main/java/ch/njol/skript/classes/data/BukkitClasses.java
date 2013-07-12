@@ -38,9 +38,11 @@ import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -61,6 +63,7 @@ import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.BiomeUtils;
+import ch.njol.skript.util.DamageCauseUtils;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.PotionEffectUtils;
 import ch.njol.skript.util.StringMode;
@@ -69,6 +72,7 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
+// TODO vectors
 public class BukkitClasses {
 	
 	public BukkitClasses() {}
@@ -209,6 +213,7 @@ public class BukkitClasses {
 					}
 				}));
 		
+		// TODO add an expression to dynamically create a location from 3 coordinates and a world - idea: 'location [at] <x>[,] <y>[,] <z> [in|for] <world>'
 		Classes.registerClass(new ClassInfo<Location>(Location.class, "location")
 				.user("locations?")
 				.name("Location")
@@ -512,7 +517,17 @@ public class BukkitClasses {
 				}));
 		
 		Classes.registerClass(new ClassInfo<CommandSender>(CommandSender.class, "commandsender")
-				.name(ClassInfo.NO_DOC)
+				.user("(commands?)? ?(sender|executor)s?")
+				.name("Command Sender")
+				.description("A player or the console.")
+				.usage("use <a href='../expressions/#LitConsole'>the console</a> for the console",
+						"see <a href='#player'>player</a> for players.")
+				.examples("on command /pm:",
+						"	command sender is not the console",
+						"	chance of 10%",
+						"	give coal to the player",
+						"	message \"You got a piece of coal for sending that PM!\"")
+				.since("1.0")
 				.defaultExpression(new EventValueExpression<CommandSender>(CommandSender.class))
 				.parser(new Parser<CommandSender>() {
 					@Override
@@ -703,11 +718,16 @@ public class BukkitClasses {
 					}
 				}));
 		
+		Classes.registerClass(new ClassInfo<Item>(Item.class, "itementity")
+				.name(ClassInfo.NO_DOC)
+				.since("2.0")
+				.changer(DefaultChangers.itemChanger));
+		
 		Classes.registerClass(new ClassInfo<Biome>(Biome.class, "biome")
 				.user("biomes?")
 				.name("Biome")
 				.description("All possible biomes Minecraft uses to generate a world.")
-				.usage(ClassInfo.ENUM_USAGE)
+				.usage(BiomeUtils.getAllNames())
 				.examples("biome at the player is desert")
 				.since("1.4.4")
 				.parser(new Parser<Biome>() {
@@ -780,16 +800,43 @@ public class BukkitClasses {
 					}
 				}));
 		
-		// TODO make my own damagecause class (that e.g. stores the attacker entity, the projectile, or the attacking block)
-//		Classes.registerClass(new ClassInfo<DamageCause>(DamageCause.class, "damagecause")
-//				.user("damage causes?")
-//				.parser(null)
-//				.serializer(new EnumSerializer<DamageCause>(DamageCause.class)));
+		// TODO make my own damage cause class (that e.g. stores the attacker entity, the projectile, or the attacking block)
+		Classes.registerClass(new ClassInfo<DamageCause>(DamageCause.class, "damagecause")
+				.user("damage causes?")
+				.name("Damage Cause")
+				.description("The cause/type of a <a href='../events/#damage'>damage event</a>, e.g. lava, fall, fire, drowning, explosion, poison, etc.",
+						"Please note that support for this type is very rudimentary, e.g. lava, fire and burning, as well as projectile and attack are considered different types.")
+				.usage(DamageCauseUtils.getAllNames())
+				.examples("")
+				.since("2.0")
+				.after("itemtype", "itemstack", "entitydata", "entitytype")
+				.parser(new Parser<DamageCause>() {
+					@Override
+					public DamageCause parse(final String s, final ParseContext context) {
+						return DamageCauseUtils.parse(s);
+					}
+					
+					@Override
+					public String toString(final DamageCause d, final int flags) {
+						return DamageCauseUtils.toString(d, flags);
+					}
+					
+					@Override
+					public String toVariableNameString(final DamageCause o) {
+						return o.name();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return "[a-z0-9_-]+";
+					}
+				})
+				.serializer(new EnumSerializer<DamageCause>(DamageCause.class)));
 		
 		Classes.registerClass(new ClassInfo<Chunk>(Chunk.class, "chunk")
 				.user("chunks?")
 				.name("Chunk")
-				.description("A chunk is a cuboid of 16x16x128 blocks. Chunks are spread on a fixed rectangular grid in their world.")
+				.description("A chunk is a cuboid of 16×16×128 (x×z×y) blocks. Chunks are spread on a fixed rectangular grid in their world.")
 				.usage("")
 				.examples("")
 				.since("2.0")

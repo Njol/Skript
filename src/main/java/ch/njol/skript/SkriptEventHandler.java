@@ -22,7 +22,6 @@
 package ch.njol.skript;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,7 +35,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Result;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -193,6 +191,7 @@ public abstract class SkriptEventHandler {
 	
 	static ScriptInfo removeTriggers(final File script) {
 		final ScriptInfo info = new ScriptInfo();
+		info.files = 1;
 		final Iterator<List<Trigger>> triggersIter = SkriptEventHandler.triggers.values().iterator();
 		while (triggersIter.hasNext()) {
 			final List<Trigger> ts = triggersIter.next();
@@ -222,9 +221,8 @@ public abstract class SkriptEventHandler {
 	
 	static void removeAllTriggers() {
 		triggers.clear();
-		for (final Trigger t : selfRegisteredTriggers) {
+		for (final Trigger t : selfRegisteredTriggers)
 			((SelfRegisteringSkriptEvent) t.getEvent()).unregisterAll();
-		}
 		selfRegisteredTriggers.clear();
 //		unregisterEvents();
 	}

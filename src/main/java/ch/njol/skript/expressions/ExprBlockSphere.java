@@ -109,9 +109,4 @@ public class ExprBlockSphere extends SimpleExpression<Block> {
 		return false;
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

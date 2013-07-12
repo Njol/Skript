@@ -37,11 +37,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Vehicle;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.BlockFormEvent;
+import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
@@ -68,6 +70,9 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.vehicle.VehicleEvent;
@@ -81,6 +86,7 @@ import org.bukkit.inventory.ItemStack;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.command.CommandEvent;
+import ch.njol.skript.events.EvtMoveOn;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.BlockStateBlock;
 import ch.njol.skript.util.BlockUtils;
@@ -233,7 +239,15 @@ public final class BukkitEventValues {
 			public Block get(final BlockBreakEvent e) {
 				final BlockState s = e.getBlock().getState();
 				s.setType(s.getType() == Material.ICE ? Material.STATIONARY_WATER : Material.AIR);
+				s.setRawData((byte) 0);
 				return new BlockStateBlock(s, true);
+			}
+		}, 1);
+		// BlockFromToEvent
+		EventValues.registerEventValue(BlockFromToEvent.class, Block.class, new SerializableGetter<Block, BlockFromToEvent>() {
+			@Override
+			public Block get(final BlockFromToEvent e) {
+				return e.getToBlock();
 			}
 		}, 1);
 		// BlockIgniteEvent
@@ -248,6 +262,22 @@ public final class BukkitEventValues {
 			@Override
 			public ItemStack get(final BlockDispenseEvent e) {
 				return e.getItem();
+			}
+		}, 0);
+		// BlockCanBuildEvent
+		EventValues.registerEventValue(BlockCanBuildEvent.class, Block.class, new SerializableGetter<Block, BlockCanBuildEvent>() {
+			@Override
+			public Block get(final BlockCanBuildEvent e) {
+				return e.getBlock();
+			}
+		}, -1);
+		EventValues.registerEventValue(BlockCanBuildEvent.class, Block.class, new SerializableGetter<Block, BlockCanBuildEvent>() {
+			@Override
+			public Block get(final BlockCanBuildEvent e) {
+				final BlockState s = e.getBlock().getState();
+				s.setTypeId(e.getMaterialId());
+				s.setRawData((byte) 0);
+				return new BlockStateBlock(s, true);
 			}
 		}, 0);
 		// SignChangeEvent
@@ -268,7 +298,7 @@ public final class BukkitEventValues {
 		EventValues.registerEventValue(EntityEvent.class, World.class, new SerializableGetter<World, EntityEvent>() {
 			@Override
 			public World get(final EntityEvent e) {
-				return e.getEntity().getWorld();
+				return e.getEntity() == null ? null : e.getEntity().getWorld(); // no idea why it could be null, but it can happen
 			}
 		}, 0);
 		// EntityDamageEvent
@@ -290,15 +320,17 @@ public final class BukkitEventValues {
 		EventValues.registerEventValue(EntityDeathEvent.class, Projectile.class, new SerializableGetter<Projectile, EntityDeathEvent>() {
 			@Override
 			public Projectile get(final EntityDeathEvent e) {
-				if (e.getEntity().getLastDamageCause() instanceof EntityDamageByEntityEvent && ((EntityDamageByEntityEvent) e.getEntity().getLastDamageCause()).getDamager() instanceof Projectile)
-					return (Projectile) ((EntityDamageByEntityEvent) e.getEntity().getLastDamageCause()).getDamager();
+				final EntityDamageEvent ldc = e.getEntity().getLastDamageCause();
+				if (ldc instanceof EntityDamageByEntityEvent && ((EntityDamageByEntityEvent) ldc).getDamager() instanceof Projectile)
+					return (Projectile) ((EntityDamageByEntityEvent) ldc).getDamager();
 				return null;
 			}
 		}, 0);
 		EventValues.registerEventValue(EntityDeathEvent.class, DamageCause.class, new SerializableGetter<DamageCause, EntityDeathEvent>() {
 			@Override
 			public DamageCause get(final EntityDeathEvent e) {
-				return e.getEntity().getLastDamageCause().getCause();
+				final EntityDamageEvent ldc = e.getEntity().getLastDamageCause();
+				return ldc == null ? null : ldc.getCause();
 			}
 		}, 0);
 		// ProjectileHitEvent
@@ -408,6 +440,26 @@ public final class BukkitEventValues {
 				return e.getItemDrop().getItemStack();
 			}
 		}, 0);
+		// PlayerPickupItemEvent
+		EventValues.registerEventValue(PlayerPickupItemEvent.class, Item.class, new SerializableGetter<Item, PlayerPickupItemEvent>() {
+			@Override
+			public Item get(final PlayerPickupItemEvent e) {
+				return e.getItem();
+			}
+		}, 0);
+		EventValues.registerEventValue(PlayerPickupItemEvent.class, ItemStack.class, new SerializableGetter<ItemStack, PlayerPickupItemEvent>() {
+			@Override
+			public ItemStack get(final PlayerPickupItemEvent e) {
+				return e.getItem().getItemStack();
+			}
+		}, 0);
+		// PlayerItemConsumeEvent
+		EventValues.registerEventValue(PlayerItemConsumeEvent.class, ItemStack.class, new SerializableGetter<ItemStack, PlayerItemConsumeEvent>() {
+			@Override
+			public ItemStack get(final PlayerItemConsumeEvent e) {
+				return e.getItem();
+			}
+		}, 0);
 		// PlayerInteractEntityEvent
 		EventValues.registerEventValue(PlayerInteractEntityEvent.class, Entity.class, new SerializableGetter<Entity, PlayerInteractEntityEvent>() {
 			@Override
@@ -427,6 +479,13 @@ public final class BukkitEventValues {
 			@Override
 			public Entity get(final PlayerShearEntityEvent e) {
 				return e.getEntity();
+			}
+		}, 0);
+		// PlayerMoveEvent
+		EventValues.registerEventValue(PlayerMoveEvent.class, Block.class, new SerializableGetter<Block, PlayerMoveEvent>() {
+			@Override
+			public Block get(final PlayerMoveEvent e) {
+				return EvtMoveOn.getBlock(e);
 			}
 		}, 0);
 		

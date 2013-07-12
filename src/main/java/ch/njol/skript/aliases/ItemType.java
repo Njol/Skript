@@ -47,6 +47,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ConfigurationSerializer;
+import ch.njol.skript.lang.Unit;
 import ch.njol.skript.localization.GeneralWords;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.util.BlockUtils;
@@ -58,7 +59,7 @@ import ch.njol.util.iterator.SingleItemIterator;
 
 @ContainerType(ItemStack.class)
 @SuppressWarnings("serial")
-public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Container<ItemStack> {
+public class ItemType implements Unit, Serializable, Iterable<ItemData>, Container<ItemStack> {
 	
 	/**
 	 * Note to self: use {@link #add(ItemData)} to add item datas, don't add them directly to this list.
@@ -159,6 +160,12 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		}
 	}
 	
+	public ItemType(final Block b) {
+//		amount = 1;
+		add(new ItemData(b.getTypeId(), b.getData()));
+		// TODO metadata
+	}
+	
 	private ItemType(final ItemType i) {
 		all = i.all;
 		amount = i.amount;
@@ -184,6 +191,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	/**
 	 * @return amount or 1 if amount == -1
 	 */
+	@Override
 	public int getAmount() {
 		return amount == -1 ? 1 : amount;
 	}
@@ -195,6 +203,11 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	 */
 	public int getInternalAmount() {
 		return amount;
+	}
+	
+	@Override
+	public void setAmount(final double amount) {
+		setAmount((int) amount);
 	}
 	
 	public void setAmount(final int amount) {
@@ -232,7 +245,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	
 	/**
 	 * @param item
-	 * @return Whether the given item has correct enchantments & ItemMeta, but doesn't check it's type
+	 * @return Whether the given item has correct enchantments & ItemMeta, but doesn't check its type
 	 */
 	private boolean hasMeta(final ItemStack item) {
 		if (enchantments != null) {
@@ -259,8 +272,10 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 	}
 	
 	public boolean isOfType(final Block block) {
-		if (block == null || enchantments != null)
+		if (enchantments != null)
 			return false;
+		if (block == null)
+			return isOfType(0, (short) 0);
 		return isOfType(block.getTypeId(), block.getData());
 	}
 	
@@ -303,6 +318,7 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		return toString(false, 0);
 	}
 	
+	@Override
 	public String toString(final int flags) {
 		return toString(false, flags);
 	}
@@ -537,6 +553,19 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		};
 	}
 	
+	public ItemStack removeAll(final ItemStack item) {
+		final boolean wasAll = all;
+		final int oldAmount = amount;
+		all = true;
+		amount = -1;
+		try {
+			return removeFrom(item);
+		} finally {
+			all = wasAll;
+			amount = oldAmount;
+		}
+	}
+	
 	/**
 	 * Removes this type from the item stack if appropriate
 	 * 
@@ -548,6 +577,8 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 			return null;
 		if (!isOfType(item))
 			return item;
+		if (all && amount == -1)
+			return null;
 		final int a = item.getAmount() - getAmount();
 		if (a <= 0)
 			return null;
@@ -692,6 +723,19 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		return all;
 	}
 	
+	public boolean removeAll(final Inventory invi) {
+		final boolean wasAll = all;
+		final int oldAmount = amount;
+		all = true;
+		amount = -1;
+		try {
+			return removeFrom(invi);
+		} finally {
+			all = wasAll;
+			amount = oldAmount;
+		}
+	}
+	
 	/**
 	 * Removes this type from the given inventory. Does not call updateInventory for players.
 	 * 
@@ -709,6 +753,19 @@ public class ItemType implements Serializable, Cloneable, Iterable<ItemData>, Co
 		if (armour != null)
 			((PlayerInventory) invi).setArmorContents(armour);
 		return ok;
+	}
+	
+	public boolean removeAll(final List<ItemStack>... lists) {
+		final boolean wasAll = all;
+		final int oldAmount = amount;
+		all = true;
+		amount = -1;
+		try {
+			return removeFrom(lists);
+		} finally {
+			all = wasAll;
+			amount = oldAmount;
+		}
 	}
 	
 	/**

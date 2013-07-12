@@ -135,4 +135,8 @@ public enum Color {
 		return byWool[15 - data];
 	}
 	
+	public static final Color byWoolColor(final DyeColor color) {
+		return byWool(color.getData());
+	}
+	
 }

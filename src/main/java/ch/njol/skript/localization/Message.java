@@ -68,6 +68,9 @@ public class Message {
 		}
 	}
 	
+	/**
+	 * @return The value of this message in the current language
+	 */
 	@Override
 	public String toString() {
 		validate();

@@ -21,7 +21,6 @@
 
 package ch.njol.skript.hooks.economy;
 
-import net.milkbowl.vault.Vault;
 import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.Bukkit;
@@ -29,13 +28,13 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 import ch.njol.skript.hooks.Hook;
+import ch.njol.skript.hooks.VaultHook;
 
 /**
  * @author Peter Güttinger
  */
 public class EconomyHook extends Hook {
 	
-	private static Vault vault = null;
 	public static Economy economy = null;
 	
 	public static String singular = null;
@@ -43,9 +42,7 @@ public class EconomyHook extends Hook {
 	
 	@Override
 	protected boolean init() {
-		final Plugin p = Bukkit.getPluginManager().getPlugin("Vault"); // TODO permissions (groups) hook
-		if (p != null && p instanceof Vault) {
-			vault = (Vault) p;
+		if (VaultHook.vault != null) {
 			final RegisteredServiceProvider<Economy> e = Bukkit.getServicesManager().getRegistration(Economy.class);
 			if (e != null) {
 				economy = e.getProvider();
@@ -59,7 +56,7 @@ public class EconomyHook extends Hook {
 	
 	@Override
 	public Plugin getPlugin() {
-		return vault;
+		return VaultHook.vault;
 	}
 	
 }

@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.conditions.CondIs;
+import ch.njol.skript.conditions.CondCompare;
 import ch.njol.skript.lang.ExpressionInfo;
 import ch.njol.skript.lang.SkriptEventInfo;
 import ch.njol.skript.lang.SyntaxElementInfo;
@@ -204,7 +204,7 @@ public class Documentation {
 			Skript.warning("" + info.c.getSimpleName() + "'s description or 'since' is invalid");
 			return;
 		}
-		final String patterns = cleanPatterns(StringUtils.join(info.patterns, "\n", 0, info.c == CondIs.class ? 8 : info.patterns.length));
+		final String patterns = cleanPatterns(StringUtils.join(info.patterns, "\n", 0, info.c == CondCompare.class ? 8 : info.patterns.length));
 		insertOnDuplicateKeyUpdate(pw, "syntax_elements",
 				"id, name, type, patterns, description, examples, since",
 				"patterns = CONCAT(patterns, '\n', '" + escapeSQL(patterns) + "')",
@@ -264,8 +264,8 @@ public class Documentation {
 	
 	private static ArrayList<Pattern> validation = new ArrayList<Pattern>();
 	static {
-		validation.add(Pattern.compile("<" + "(?!a href='|/a>|br ?/|/?(i|b|u|code|pre)>)"));
-		validation.add(Pattern.compile("(?<!</a|'|br ?/|/?(i|b|u|code|pre))" + ">"));
+		validation.add(Pattern.compile("<" + "(?!a href='|/a>|br ?/|/?(i|b|u|code|pre|ul|li)>)"));
+		validation.add(Pattern.compile("(?<!</a|'|br ?/|/?(i|b|u|code|pre|ul|li))" + ">"));
 	}
 	
 	private final static String[] urls = {"expressions", "effects", "conditions"};

@@ -21,12 +21,17 @@
 
 package ch.njol.skript.lang;
 
+import java.util.logging.Level;
+
 import org.bukkit.event.Event;
 
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.log.LogEntry;
+import ch.njol.skript.log.ParseLogHandler;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Checker;
 import ch.njol.util.CollectionUtils;
@@ -43,14 +48,26 @@ import ch.njol.util.iterator.NonNullIterator;
 public class UnparsedLiteral implements Literal<Object> {
 	
 	private final String data;
+	private final LogEntry error;
 	
 	/**
 	 * @param data non-null, non-empty & trimmed string
-	 * @param and
 	 */
 	public UnparsedLiteral(final String data) {
-		assert data != null && data.length() != 0;
+		assert data != null && data.length() > 0;
 		this.data = data;
+		error = null;
+	}
+	
+	/**
+	 * @param data non-null, non-empty & trimmed string
+	 * @param error Error to log if this literal cannot be parsed
+	 */
+	public UnparsedLiteral(final String data, final LogEntry error) {
+		assert data != null && data.length() > 0;
+		assert error == null || error.getLevel() == Level.SEVERE;
+		this.data = data;
+		this.error = error;
 	}
 	
 	public String getData() {
@@ -71,12 +88,26 @@ public class UnparsedLiteral implements Literal<Object> {
 	public <R> Literal<? extends R> getConvertedExpression(final ParseContext context, final Class<? extends R>... to) {
 		assert to != null && to.length > 0;
 		assert to.length == 1 || !CollectionUtils.contains(to, Object.class);
-		for (final Class<? extends R> t : to) {
-			final R r = Classes.parse(data, t, context);
-			if (r != null)
-				return new SimpleLiteral<R>(r, false);
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		try {
+			for (final Class<? extends R> t : to) {
+				final R r = Classes.parse(data, t, context);
+				if (r != null) {
+					log.printLog();
+					return new SimpleLiteral<R>(r, false);
+				}
+				log.clear();
+			}
+			if (error != null) {
+				log.printLog();
+				SkriptLogger.log(error);
+			} else {
+				log.printError();
+			}
+			return null;
+		} finally {
+			log.stop();
 		}
-		return null;
 		
 		// V2
 //		if (to[0] != Object.class) {

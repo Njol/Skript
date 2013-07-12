@@ -26,6 +26,8 @@ import java.lang.reflect.Array;
 import ch.njol.skript.lang.util.SimpleLiteral;
 
 /**
+ * A list of literals. Can contain {@link UnparsedLiteral}s.
+ * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")

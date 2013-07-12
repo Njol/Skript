@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
+import ch.njol.skript.Skript;
+
 /**
  * @author Peter Güttinger
  */
@@ -45,19 +47,13 @@ public class ParseLogHandler extends LogHandler {
 		return false;
 	}
 	
-	public void stop(final boolean error) {
-		SkriptLogger.removeHandler(this);
-		if (error) {
-			if (this.error != null)
-				SkriptLogger.log(this.error);
-		} else {
-			for (final LogEntry e : log)
-				SkriptLogger.log(e);
-		}
-	}
+	boolean printedErrorOrLog = false;
 	
 	@Override
-	public void onStop() {}
+	public void onStop() {
+		if (!printedErrorOrLog && Skript.testing())
+			System.out.println("Parse log wasn't instructed to print anything at " + SkriptLogger.getCaller());
+	}
 	
 	public void error(final String error, final ErrorQuality quality) {
 		log(new LogEntry(Level.SEVERE, quality, error));
@@ -74,6 +70,7 @@ public class ParseLogHandler extends LogHandler {
 	 * Prints the retained log, but no errors
 	 */
 	public void printLog() {
+		printedErrorOrLog = true;
 		stop();
 		SkriptLogger.logAll(log);
 	}
@@ -88,13 +85,12 @@ public class ParseLogHandler extends LogHandler {
 	 * @param def Error to log if no error has been logged so far, can be null
 	 */
 	public void printError(final String def) {
+		printedErrorOrLog = true;
 		stop();
-		if (error == null && def == null)
-			return;
-		if (error == null)
-			SkriptLogger.log(new LogEntry(Level.SEVERE, def));
-		else
+		if (error != null)
 			SkriptLogger.log(error);
+		else if (def != null)
+			SkriptLogger.log(new LogEntry(Level.SEVERE, def));
 	}
 	
 	public int getNumErrors() {

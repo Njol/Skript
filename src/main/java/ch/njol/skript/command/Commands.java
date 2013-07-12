@@ -33,6 +33,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.logging.Filter;
+import java.util.logging.LogRecord;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,6 +72,7 @@ import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
+import ch.njol.util.Callback;
 import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
@@ -82,7 +85,7 @@ public abstract class Commands {
 	
 	public final static ArgsMessage m_too_many_arguments = new ArgsMessage("commands.too many arguments");
 	public final static Message m_correct_usage = new Message("commands.correct usage");
-//	private final static Message m_internal_error = new Message("commands.internal error");
+	public final static Message m_internal_error = new Message("commands.internal error");
 	
 	private final static Map<String, ScriptCommand> commands = new HashMap<String, ScriptCommand>();
 	
@@ -124,10 +127,15 @@ public abstract class Commands {
 	
 	public static List<Argument<?>> currentArguments = null;
 	
-	private final static Pattern escape = Pattern.compile("["+Pattern.quote("(|)<>%\\")+"]");
+	private final static Pattern escape = Pattern.compile("[" + Pattern.quote("(|)<>%\\") + "]");
+	private final static Pattern unescape = Pattern.compile("\\\\[" + Pattern.quote("(|)<>%\\") + "]");
 	
 	private final static String escape(final String s) {
 		return escape.matcher(s).replaceAll("\\\\$0");
+	}
+	
+	private final static String unescape(final String s) {
+		return unescape.matcher(s).replaceAll("$0");
 	}
 	
 	private final static Listener commandListener = new Listener() {
@@ -144,41 +152,32 @@ public abstract class Commands {
 			if (SkriptConfig.enableEffectCommands.value() && e.getCommand().startsWith(SkriptConfig.effectCommandToken.value())) {
 				if (handleEffectCommand(e.getSender(), e.getCommand())) {
 					e.setCommand("");
-//					suppressUnknownCommandMessage = true;
+					suppressUnknownCommandMessage = true;
 				}
 				return;
 			}
 			if (handleCommand(e.getSender(), e.getCommand())) {
 				e.setCommand("");
-//				suppressUnknownCommandMessage = true;
+				suppressUnknownCommandMessage = true;
 			}
 		}
 	};
 	
-	// doesn't work
-//	private static boolean suppressUnknownCommandMessage = false;
-//	static {
-//		Bukkit.getLogger().addHandler(new Handler() {
-//			@Override
-//			public void publish(final LogRecord lr) {
-//				if (suppressUnknownCommandMessage && lr.getMessage().equalsIgnoreCase("Unknown command. Type \"help\" for help.")) {
-//					lr.setLevel(Level.ALL);
-//					lr.setMessage(null);
-//					suppressUnknownCommandMessage = false;
-//				}
-//			}
-//			
-//			@Override
-//			public void flush() {}
-//			
-//			@Override
-//			public void close() throws SecurityException {
-//				throw new SecurityException("wtf are you doing?");
-//			}
-//		});
-//	}
+	private static boolean suppressUnknownCommandMessage = false;
+	static {
+		SkriptLogger.addFilter(new Filter() {
+			@Override
+			public boolean isLoggable(final LogRecord record) {
+				if (suppressUnknownCommandMessage && record.getMessage() != null && record.getMessage().equalsIgnoreCase("Unknown command. Type \"help\" for help.")) {
+					suppressUnknownCommandMessage = false;
+					return false;
+				}
+				return true;
+			}
+		});
+	}
 	
-	private final static Listener pre1_3chatListener = new Listener() {
+	private final static Listener pre1_3chatListener = Skript.isRunningMinecraft(1, 3) ? null : new Listener() {
 		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 		public void onPlayerChat(final PlayerChatEvent e) {
 			if (!SkriptConfig.enableEffectCommands.value() || !e.getMessage().startsWith(SkriptConfig.effectCommandToken.value()))
@@ -187,7 +186,7 @@ public abstract class Commands {
 				e.setCancelled(true);
 		}
 	};
-	private final static Listener post1_3chatListener = new Listener() {
+	private final static Listener post1_3chatListener = !Skript.isRunningMinecraft(1, 3) ? null : new Listener() {
 		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 		public void onPlayerChat(final AsyncPlayerChatEvent e) {
 			if (!SkriptConfig.enableEffectCommands.value() || !e.getMessage().startsWith(SkriptConfig.effectCommandToken.value()))
@@ -234,10 +233,10 @@ public abstract class Commands {
 		}
 		final ScriptCommand c = commands.get(cmd[0]);
 		if (c != null) {
-			if (cmd.length == 2 && cmd[1].equals("?")) {
-				c.sendHelp(sender);
-				return true;
-			}
+//			if (cmd.length == 2 && cmd[1].equals("?")) {
+//				c.sendHelp(sender);
+//				return true;
+//			}
 			if (SkriptConfig.logPlayerCommands.value() && !(sender instanceof ConsoleCommandSender))
 				Bukkit.getLogger().info(sender.getName() + ": /" + command);
 			c.execute(sender, cmd[0], cmd.length == 1 ? "" : cmd[1]);
@@ -312,67 +311,73 @@ public abstract class Commands {
 		
 		final String arguments = m.group(3) == null ? "" : m.group(3);
 		final StringBuilder pattern = new StringBuilder();
-		final StringBuilder desc = new StringBuilder("/" + m.group(1) + " ");
 		
 		currentArguments = new ArrayList<Argument<?>>();
 		m = Pattern.compile("<([a-zA-Z -]+?)\\s*(=\\s*(" + SkriptParser.wildcard + "))?>").matcher(arguments);
 		int lastEnd = 0;
 		int optionals = 0;
-		final boolean wasLocal = Language.setUseLocal(true); // use localized class names in desc
-		try {
-			for (int i = 0; m.find(); i++) {
-				pattern.append(escape(arguments.substring(lastEnd, m.start())));
-				desc.append(arguments.substring(lastEnd, m.start()));
-				optionals += StringUtils.count(arguments, '[', lastEnd, m.start());
-				optionals -= StringUtils.count(arguments, ']', lastEnd, m.start());
-				
-				lastEnd = m.end();
-				
-				ClassInfo<?> c;
-				c = Classes.getClassInfoFromUserInput(m.group(1));
-				final Pair<String, Boolean> p = Utils.getEnglishPlural(m.group(1));
-				if (c == null)
-					c = Classes.getClassInfoFromUserInput(p.first);
-				if (c == null) {
-					Skript.error("unknown type '" + m.group(1) + "'");
-					return null;
-				}
-				if (c.getParser() == null || !c.getParser().canParse(ParseContext.COMMAND)) {
-					Skript.error("can't use " + m.group(1) + " as argument of a command");
-					return null;
-				}
-				
-				final Argument<?> arg = Argument.newInstance(c.getC(), m.group(3), i, !p.second, optionals > 0);
-				if (arg == null)
-					return null;
-				currentArguments.add(arg);
-				
-				if (arg.isOptional() && optionals == 0) {
-					pattern.append('[');
-					desc.append('[');
-					optionals++;
-				}
-				pattern.append("%" + (arg.isOptional() ? "-" : "") + Utils.toEnglishPlural(c.getCodeName(), p.second) + "%");
-				desc.append("<" + c.getName().toString(p.second) + ">");
+		for (int i = 0; m.find(); i++) {
+			pattern.append(escape(arguments.substring(lastEnd, m.start())));
+			optionals += StringUtils.count(arguments, '[', lastEnd, m.start());
+			optionals -= StringUtils.count(arguments, ']', lastEnd, m.start());
+			
+			lastEnd = m.end();
+			
+			ClassInfo<?> c;
+			c = Classes.getClassInfoFromUserInput(m.group(1));
+			final Pair<String, Boolean> p = Utils.getEnglishPlural(m.group(1));
+			if (c == null)
+				c = Classes.getClassInfoFromUserInput(p.first);
+			if (c == null) {
+				Skript.error("unknown type '" + m.group(1) + "'");
+				return null;
 			}
-		} finally {
-			Language.setUseLocal(wasLocal);
+			if (c.getParser() == null || !c.getParser().canParse(ParseContext.COMMAND)) {
+				Skript.error("can't use " + m.group(1) + " as argument of a command");
+				return null;
+			}
+			
+			final Argument<?> arg = Argument.newInstance(c.getC(), m.group(3), i, !p.second, optionals > 0);
+			if (arg == null)
+				return null;
+			currentArguments.add(arg);
+			
+			if (arg.isOptional() && optionals == 0) {
+				pattern.append('[');
+				optionals++;
+			}
+			pattern.append("%" + (arg.isOptional() ? "-" : "") + Utils.toEnglishPlural(c.getCodeName(), p.second) + "%");
 		}
 		
 		pattern.append(escape(arguments.substring(lastEnd)));
 		optionals += StringUtils.count(arguments, '[', lastEnd);
 		optionals -= StringUtils.count(arguments, ']', lastEnd);
-		for (int i = 0; i < optionals; i++) {
+		for (int i = 0; i < optionals; i++)
 			pattern.append(']');
-			desc.append(']');
+		
+		String desc = "/" + command + " ";
+		final boolean wasLocal = Language.setUseLocal(true); // use localized class names in desc
+		try {
+			desc += StringUtils.replaceAll(pattern, "(?<!\\\\)%-?(.+?)%", new Callback<String, Matcher>() {
+				@Override
+				public String run(final Matcher m) {
+					final Pair<String, Boolean> p = Utils.getEnglishPlural(m.group(1));
+					final String s = p.first;
+					return "<" + Classes.getClassInfo(s).getName().toString(p.second) + ">";
+				}
+			});
+		} finally {
+			Language.setUseLocal(wasLocal);
 		}
+		desc = unescape(desc);
+		desc = desc.trim();
 		
 		node.convertToEntries(0);
 		commandStructure.validate(node);
 		if (!(node.get("trigger") instanceof SectionNode))
 			return null;
 		
-		final String usage = ScriptLoader.replaceOptions(node.get("usage", desc.toString()));
+		final String usage = ScriptLoader.replaceOptions(node.get("usage", desc));
 		final String description = ScriptLoader.replaceOptions(node.get("description", ""));
 		List<String> aliases = Arrays.asList(ScriptLoader.replaceOptions(node.get("aliases", "")).split("\\s*,\\s*/?"));
 		if (aliases.get(0).startsWith("/"))
@@ -398,8 +403,8 @@ public abstract class Commands {
 			Skript.warning("command /" + command + " has a permission message set, but not a permission");
 		}
 		
-		if (Skript.debug())
-			Skript.info("command " + desc + ":");
+		if (Skript.debug() || node.debug())
+			Skript.debug("command " + desc + ":");
 		
 		final ScriptCommand c = new ScriptCommand(node.getConfig().getFile(), command, pattern.toString(), currentArguments, description, usage, aliases, permission, permissionMessage, executableBy, ScriptLoader.loadItems(trigger));
 		registerCommand(c);
@@ -446,10 +451,7 @@ public abstract class Commands {
 	public final static void registerListeners() {
 		if (!registeredListeners) {
 			Bukkit.getPluginManager().registerEvents(commandListener, Skript.getInstance());
-			if (Skript.isRunningMinecraft(1, 3))
-				Bukkit.getPluginManager().registerEvents(post1_3chatListener, Skript.getInstance());
-			else
-				Bukkit.getPluginManager().registerEvents(pre1_3chatListener, Skript.getInstance());
+			Bukkit.getPluginManager().registerEvents(post1_3chatListener != null ? post1_3chatListener : pre1_3chatListener, Skript.getInstance());
 			registeredListeners = true;
 		}
 	}

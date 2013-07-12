@@ -135,9 +135,4 @@ public class ExprNumbers extends SimpleExpression<Number> {
 		return integer ? Integer.class : Double.class;
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

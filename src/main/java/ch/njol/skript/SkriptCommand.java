@@ -21,6 +21,7 @@ import ch.njol.skript.localization.PluralizingArgsMessage;
 import ch.njol.skript.log.RedirectingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.CommandHelp;
+import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
@@ -166,7 +167,7 @@ public class SkriptCommand implements CommandExecutor {
 							error(sender, "enable.all.error", r.numErrors());
 						}
 					} catch (final IOException e) {
-						error(sender, "enable.all.io error", e.getLocalizedMessage());
+						error(sender, "enable.all.io error", ExceptionUtils.toString(e));
 					}
 				} else {
 					File f = getScriptFromArgs(sender, args, 1);
@@ -181,7 +182,7 @@ public class SkriptCommand implements CommandExecutor {
 						try {
 							f = FileUtils.move(f, new File(f.getParentFile(), f.getName().substring(1)), false);
 						} catch (final IOException e) {
-							error(sender, "enable.single.io error", f.getName().substring(1), e.getLocalizedMessage());
+							error(sender, "enable.single.io error", f.getName().substring(1), ExceptionUtils.toString(e));
 							return true;
 						}
 						
@@ -198,7 +199,7 @@ public class SkriptCommand implements CommandExecutor {
 						try {
 							scripts = toggleScripts(f, true);
 						} catch (final IOException e) {
-							error(sender, "enable.folder.io error", f.getName(), e.getLocalizedMessage());
+							error(sender, "enable.folder.io error", f.getName(), ExceptionUtils.toString(e));
 							return true;
 						}
 						if (scripts.isEmpty()) {
@@ -223,7 +224,7 @@ public class SkriptCommand implements CommandExecutor {
 						toggleScripts(new File(Skript.getInstance().getDataFolder(), Skript.SCRIPTSFOLDER), false);
 						info(sender, "disable.all.disabled");
 					} catch (final IOException e) {
-						error(sender, "disable.all.io error", e.getLocalizedMessage());
+						error(sender, "disable.all.io error", ExceptionUtils.toString(e));
 					}
 				} else {
 					final File f = getScriptFromArgs(sender, args, 1);
@@ -240,7 +241,7 @@ public class SkriptCommand implements CommandExecutor {
 						try {
 							FileUtils.move(f, new File(f.getParentFile(), "-" + f.getName()), false);
 						} catch (final IOException e) {
-							error(sender, "disable.single.io error", f.getName(), e.getLocalizedMessage());
+							error(sender, "disable.single.io error", f.getName(), ExceptionUtils.toString(e));
 							return true;
 						}
 						info(sender, "disable.single.disabled", f.getName());
@@ -250,7 +251,7 @@ public class SkriptCommand implements CommandExecutor {
 						try {
 							scripts = toggleScripts(f, false);
 						} catch (final IOException e) {
-							error(sender, "disable.folder.io error", f.getName(), e.getLocalizedMessage());
+							error(sender, "disable.folder.io error", f.getName(), ExceptionUtils.toString(e));
 							return true;
 						}
 						if (scripts.isEmpty()) {
@@ -259,7 +260,7 @@ public class SkriptCommand implements CommandExecutor {
 						}
 						
 						for (final File script : scripts)
-							ScriptLoader.unloadScript(script);
+							ScriptLoader.unloadScript(new File(script.getParentFile(), script.getName().substring(1)));
 						
 						info(sender, "disable.folder.disabled", f.getName(), scripts.size());
 						return true;
@@ -393,7 +394,7 @@ public class SkriptCommand implements CommandExecutor {
 		final boolean isFolder = script.endsWith("/") || script.endsWith("\\");
 		if (isFolder) {
 			script = script.replace('/', File.separatorChar).replace('\\', File.separatorChar);
-		} else if (!script.endsWith(".sk")) {
+		} else if (!StringUtils.endsWithIgnoreCase(script, ".sk")) {
 			script = script + ".sk";
 		}
 		if (script.startsWith("-"))

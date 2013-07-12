@@ -129,6 +129,8 @@ public class ExprBlocks extends SimpleExpression<Block> {
 				final Direction d = direction.getSingle(e);
 				if (d == null)
 					return null;
+				if (l.getBlock() == null)
+					return null;
 				return new BlockLineIterator(l, o != l ? d.getDirection((Block) o) : d.getDirection(l), SkriptConfig.maxTargetBlockDistance.value());
 			} else {
 				final Block b = (Block) from.getSingle(e);
@@ -154,11 +156,6 @@ public class ExprBlocks extends SimpleExpression<Block> {
 	@Override
 	public boolean isSingle() {
 		return false;
-	}
-	
-	@Override
-	public boolean getAnd() {
-		return true;
 	}
 	
 }

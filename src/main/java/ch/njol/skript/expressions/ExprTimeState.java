@@ -31,7 +31,6 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
-import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.util.Kleenean;
@@ -41,9 +40,9 @@ import ch.njol.util.Kleenean;
  */
 @SuppressWarnings("serial")
 @Name("Former/Future State")
-@Description({"Represents a value before an event happened or the value it will have directly after the event. " +
-		"If you use an expression that has different values before and after the event, the default value will usually be the value after the event.",
-		"Note: The past, future and present of an expression are sometimes called 'time states' (I have to find a better word for this)."})
+@Description({"Represents the value of an expression before an event happened or the value it will have directly after the event, e.g. the old or new level respectively in a <a href='../events/#level_change'>level change event</a>.",
+		"Note: The past, future and present states of an expression are sometimes called 'time states' of an expression.",
+		"Note 2: If you don't specify whether to use the past or future state of an expression that has different values, its default value will be used which is usually the value after the event."})
 @Examples({"on teleport:",
 		"	former world was \"world_nether\" # or 'world was'",
 		"	world will be \"world\" # or 'world after the event is'",
@@ -51,21 +50,19 @@ import ch.njol.util.Kleenean;
 		"	past tool is an axe",
 		"	the tool after the event will be air",
 		"on weather change:",
-		"	set {%world%.old weather} to past weather",
-		"	set {%world.current weather} to the future weather"})
+		"	set {weather.%world%.old} to past weather",
+		"	set {weather.%world%.current} to the new weather"})
 @Since("1.1")
 public class ExprTimeState extends WrapperExpression<Object> {
 	static {
 		Skript.registerExpression(ExprTimeState.class, Object.class, ExpressionType.PROPERTY,
-				"[the] (former|past) [state] [of] %object%", "%object% before [the event]",
-				"[the] (future|to-be) [state] [of] %object%", "%object%(-to-be| after[(wards| the event)])");
+				"[the] (former|past|old) [state] [of] %~object%", "%~object% before [the event]",
+				"[the] (future|to-be|new) [state] [of] %~object%", "%~object%(-to-be| after[(wards| the event)])");
 	}
 	
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		final Expression<?> expr = vars[0];
-		if (expr instanceof Literal<?>)
-			return false;
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		final Expression<?> expr = exprs[0];
 		if (isDelayed == Kleenean.TRUE) {
 			Skript.error("Cannot use time states after the event has already passed", ErrorQuality.SEMANTIC_ERROR);
 			return false;

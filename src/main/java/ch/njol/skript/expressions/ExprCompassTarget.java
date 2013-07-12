@@ -55,19 +55,6 @@ public class ExprCompassTarget extends SimplePropertyExpression<Player, Location
 	}
 	
 	@Override
-	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (mode == ChangeMode.SET)
-			return new Class[] {Location.class};
-		return null;
-	}
-	
-	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		for (final Player p : getExpr().getArray(e))
-			p.setCompassTarget((Location) delta);
-	}
-	
-	@Override
 	public Class<Location> getReturnType() {
 		return Location.class;
 	}
@@ -75,6 +62,19 @@ public class ExprCompassTarget extends SimplePropertyExpression<Player, Location
 	@Override
 	protected String getPropertyName() {
 		return "compass target";
+	}
+	
+	@Override
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.SET || mode == ChangeMode.RESET)
+			return new Class[] {Location.class};
+		return null;
+	}
+	
+	@Override
+	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+		for (final Player p : getExpr().getArray(e))
+			p.setCompassTarget(delta == null ? p.getWorld().getSpawnLocation() : (Location) delta);
 	}
 	
 }

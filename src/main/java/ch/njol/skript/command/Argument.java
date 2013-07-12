@@ -31,7 +31,8 @@ import org.bukkit.event.Event;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
-import ch.njol.skript.lang.util.VariableString;
+import ch.njol.skript.lang.VariableString;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
@@ -74,29 +75,33 @@ public class Argument<T> implements Serializable {
 			if (def.startsWith("%") && def.endsWith("%")) {
 				final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 				try {
-					d = SkriptParser.parseExpression(def.substring(1, def.length() - 1), SkriptParser.PARSE_EXPRESSIONS, ParseContext.COMMAND, type);
+					d = new SkriptParser(def.substring(1, def.length() - 1), SkriptParser.PARSE_EXPRESSIONS, ParseContext.COMMAND).parseExpression(type);
 					if (d == null) {
 						log.printErrors("Can't understand this expression: " + def + "");
 						return null;
 					}
+					log.printLog();
 				} finally {
 					log.stop();
 				}
-				log.printLog();
 			} else {
 				final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 				try {
-					if (type == String.class && def.startsWith("\"") && def.endsWith("\"")) {
-						d = (Expression<? extends T>) VariableString.newInstance(def.substring(1, def.length() - 1));
+					if (type == String.class) {
+						if (def.startsWith("\"") && def.endsWith("\""))
+							d = (Expression<? extends T>) VariableString.newInstance(def.substring(1, def.length() - 1));
+						else
+							d = (Expression<? extends T>) new SimpleLiteral<String>(def, false);
 					} else {
 						d = SkriptParser.parseLiteral(def, type, ParseContext.DEFAULT);
 					}
+					if (d == null) {
+						log.printErrors("'" + def + "' is not " + Classes.getSuperClassInfo(type).getName().withIndefiniteArticle());
+						return null;
+					}
+					log.printLog();
 				} finally {
 					log.stop();
-				}
-				if (d == null) {
-					log.printErrors("'" + def + "' is not " + Classes.getSuperClassInfo(type).getName().withIndefiniteArticle());
-					return null;
 				}
 			}
 		}

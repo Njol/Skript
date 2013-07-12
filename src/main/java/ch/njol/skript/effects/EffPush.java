@@ -46,7 +46,6 @@ import ch.njol.util.Kleenean;
 		"push the victim downwards at speed 0.5"})
 @Since("1.4.6")
 public class EffPush extends Effect {
-	
 	static {
 		Skript.registerEffect(EffPush.class, "(push|thrust) %entities% %direction% [(at|with) (speed|velocity|force) %-number%]");
 	}
@@ -77,7 +76,7 @@ public class EffPush extends Effect {
 			final Vector mod = d.getDirection(en);
 			if (v != null)
 				mod.normalize().multiply(v.doubleValue());
-			en.setVelocity(en.getVelocity().add(mod));
+			en.setVelocity(en.getVelocity().add(mod)); // TODO add NoCheatPlus exception to players
 		}
 	}
 	

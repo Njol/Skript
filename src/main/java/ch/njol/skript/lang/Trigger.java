@@ -44,8 +44,12 @@ public class Trigger extends TriggerSection {
 		this.event = event;
 	}
 	
-	public void execute(final Event e) {
-		TriggerItem.walk(this, e);
+	/**
+	 * @param e
+	 * @return false iff an exception occurred
+	 */
+	public boolean execute(final Event e) {
+		return TriggerItem.walk(this, e);
 	}
 	
 	@Override

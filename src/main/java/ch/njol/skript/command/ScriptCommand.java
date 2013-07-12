@@ -179,23 +179,27 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		final ScriptCommandEvent event = new ScriptCommandEvent(this, sender);
 		
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
-		final boolean ok;
 		try {
-			ok = SkriptParser.parseArguments(rest, this, event);
+			final boolean ok = SkriptParser.parseArguments(rest, this, event);
+			if (!ok) {
+				if (log.hasError())
+					sender.sendMessage(ChatColor.DARK_RED + log.getError().getMessage());
+				sender.sendMessage(Commands.m_correct_usage + " " + usage);
+				return false;
+			}
+			log.clear();
+			log.printLog();
 		} finally {
 			log.stop();
-		}
-		if (!ok) {
-			if (log.hasError())
-				sender.sendMessage(ChatColor.DARK_RED + log.getError().getMessage());
-			sender.sendMessage(Commands.m_correct_usage + " " + usage);
-			return false;
 		}
 		
 		if (Skript.log(Verbosity.VERY_HIGH))
 			Skript.info("# /" + name + " " + rest);
 		final long startTrigger = System.nanoTime();
-		trigger.execute(event);
+		
+		if (!trigger.execute(event))
+			sender.sendMessage(Commands.m_internal_error.toString());
+		
 		if (Skript.log(Verbosity.VERY_HIGH))
 			Skript.info("# " + name + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
 		

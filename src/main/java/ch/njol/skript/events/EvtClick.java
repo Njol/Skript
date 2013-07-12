@@ -31,6 +31,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.classes.Comparator.Relation;
+import ch.njol.skript.classes.data.DefaultComparators;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
@@ -67,7 +69,7 @@ public class EvtClick extends SkriptEvent {
 	private Literal<?> types = null;
 	private Literal<ItemType> tools;
 	
-	private final static int RIGHT = 1, LEFT = 2, ANY = 3;
+	private final static int RIGHT = 1, LEFT = 2, ANY = RIGHT | LEFT;
 	private int click = ANY;
 	
 	@Override
@@ -128,7 +130,11 @@ public class EvtClick extends SkriptEvent {
 		return types.check(e, new Checker<Object>() {
 			@Override
 			public boolean check(final Object o) {
-				return o instanceof EntityData ? ((EntityData<?>) o).isInstance(entity) : ((ItemType) o).isOfType(block); // both tests are null-safe
+				if (entity != null) {
+					return o instanceof EntityData ? ((EntityData<?>) o).isInstance(entity) : Relation.EQUAL.is(DefaultComparators.entityItemComparator.compare(EntityData.fromEntity(entity), (ItemType) o));
+				} else {
+					return o instanceof EntityData ? false : ((ItemType) o).isOfType(block);
+				}
 			}
 		});
 	}

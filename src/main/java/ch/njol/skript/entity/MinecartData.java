@@ -38,7 +38,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 @SuppressWarnings({"serial", "deprecation"})
 public class MinecartData extends EntityData<Minecart> {
-	
 	private static enum MinecartType {
 		ANY(Minecart.class, "minecart"),
 		NORMAL(Skript.isRunningMinecraft(1, 5) ? RideableMinecart.class : Minecart.class, "regular minecart"),
@@ -81,6 +80,19 @@ public class MinecartData extends EntityData<Minecart> {
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		type = MinecartType.values()[matchedPattern];
 		return true;
+	}
+	
+	@Override
+	protected boolean init(final Class<? extends Minecart> c, final Minecart e) {
+		final MinecartType[] ts = MinecartType.values();
+		for (int i = ts.length - 1; i >= 0; i--) {
+			if (e == null ? ts[i].c.isAssignableFrom(c) : ts[i].c.isInstance(e)) {
+				type = ts[i];
+				return true;
+			}
+		}
+		assert false;
+		return false;
 	}
 	
 	@Override
@@ -131,10 +143,15 @@ public class MinecartData extends EntityData<Minecart> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Minecart> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof MinecartData)
 			return type == MinecartType.ANY || ((MinecartData) e).type == type;
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new MinecartData();
 	}
 	
 }

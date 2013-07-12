@@ -27,8 +27,8 @@ import java.util.logging.Level;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -39,7 +39,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.CountingLogHandler;
 import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.log.RetainingLogHandler;
+import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Patterns;
@@ -49,7 +49,7 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-@Name("Change: Set/Add/Remove/Delete")
+@Name("Change: Set/Add/Remove/Delete/Reset")
 @Description("A very general effect that can change many <a href='../expressions'>expressions</a>. Many expressions can only be set and/or deleted, while some can have things added to or removed from them.")
 @Examples({"# set:",
 		"Set the player's display name to \"<red>%name of player%\"",
@@ -58,16 +58,21 @@ import ch.njol.util.Kleenean;
 		"add 2 to the player's health # preferably use '<a href='#heal'>heal</a>' for this",
 		"add argument to {blacklist::*}",
 		"give a diamond pickaxe of efficiency 5 to the player",
-		"increase the datavalue of the clicked block by 1",
+		"increase the data value of the clicked block by 1",
 		"# remove:",
 		"remove 2 pickaxes from the victim",
-		"remove all iron tools from the targeted block",
 		"subtract 2.5 from {points.%player%}",
+		"# remove all:",
+		"remove every iron tool from the player",
+		"remove all minecarts from {entitylist::*}",
 		"# delete:",
 		"delete the block below the player",
 		"clear drops",
-		"delete {variable}"})
-@Since("1.0")
+		"delete {variable}",
+		"# reset:",
+		"reset walk speed of player",
+		"reset chunk at the targeted block"})
+@Since("1.0 (set, add, remove, delete), 2.0 (remove all)")
 public class EffChange extends Effect {
 	private static Patterns<ChangeMode> patterns = new Patterns<ChangeMode>(new Object[][] {
 			{"(add|give) %objects% to %~objects%", ChangeMode.ADD},
@@ -76,14 +81,14 @@ public class EffChange extends Effect {
 			
 			{"set %~objects% to %objects%", ChangeMode.SET},
 			
+			{"remove (all|every) %objects% from %~objects%", ChangeMode.REMOVE_ALL},
+			
 			{"(remove|subtract) %objects% from %~objects%", ChangeMode.REMOVE},
 			{"reduce %~objects% by %objects%", ChangeMode.REMOVE},
 			
-			{"(clear|delete) %~objects%", ChangeMode.DELETE},
+			{"(delete|clear) %~objects%", ChangeMode.DELETE},
 			
-			// TODO distinguish clear/delete, add REMOVE_ALL
-			// {"clear %~objects%", ChangeMode.CLEAR},
-			// {"remove (all|every) %objects% from %~objects%", ChangeMode.REMOVE_ALL},
+			{"reset %~objects%", ChangeMode.RESET}
 	});
 	
 	static {
@@ -118,8 +123,12 @@ public class EffChange extends Effect {
 				changer = exprs[1];
 				changed = exprs[0];
 				break;
+			case REMOVE_ALL:
+				changer = exprs[0];
+				changed = exprs[1];
+				break;
 			case REMOVE:
-				if (matchedPattern == 4) {
+				if (matchedPattern == 5) {
 					changer = exprs[0];
 					changed = exprs[1];
 				} else {
@@ -130,48 +139,68 @@ public class EffChange extends Effect {
 			case DELETE:
 				changed = exprs[0];
 				break;
-			default:
-				assert false;
-				return false;
+			case RESET:
+				changed = exprs[0];
 		}
 		
 		final CountingLogHandler h = SkriptLogger.startLogHandler(new CountingLogHandler(Level.SEVERE));
 		final Class<?>[] rs;
-		final Changer<?, ?> c;
 		final String what;
 		try {
 			rs = changed.acceptChange(mode);
-			c = Classes.getSuperClassInfo(changed.getReturnType()).getChanger();
-			what = c == null || !Arrays.equals(c.acceptChange(mode), rs) ? changed.toString(null, false) : Classes.getSuperClassInfo(changed.getReturnType()).getName().withIndefiniteArticle();
+			final ClassInfo<?> c = Classes.getSuperClassInfo(changed.getReturnType());
+			what = c.getChanger() == null || !Arrays.equals(c.getChanger().acceptChange(mode), rs) ? changed.toString(null, false) : c.getName().withIndefiniteArticle();
 		} finally {
 			h.stop();
 		}
 		if (rs == null) {
 			if (h.getCount() > 0)
 				return false;
-			if (mode == ChangeMode.SET)
-				Skript.error(what + " can't be 'set' to anything", ErrorQuality.SEMANTIC_ERROR);
-			else if (mode == ChangeMode.DELETE)
-				Skript.error(what + " can't be cleared/deleted", ErrorQuality.SEMANTIC_ERROR);
-			else
-				Skript.error(what + " can't have anything " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " it", ErrorQuality.SEMANTIC_ERROR);
+			switch (mode) {
+				case SET:
+					Skript.error(what + " can't be set to anything", ErrorQuality.SEMANTIC_ERROR);
+					break;
+				case DELETE:
+					if (changed.acceptChange(ChangeMode.RESET) != null)
+						Skript.error(what + " can't be deleted/cleared. It can however be reset which might result in the desired effect.", ErrorQuality.SEMANTIC_ERROR);
+					else
+						Skript.error(what + " can't be deleted/cleared", ErrorQuality.SEMANTIC_ERROR);
+					break;
+				case REMOVE_ALL:
+					if (changed.acceptChange(ChangeMode.REMOVE) != null) {
+						Skript.error(what + " can't have 'all of something' removed from it. Use 'remove' instead of 'remove all' to fix this.", ErrorQuality.SEMANTIC_ERROR);
+						break;
+					}
+					//$FALL-THROUGH$
+				case ADD:
+				case REMOVE:
+					Skript.error(what + " can't have anything " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " it", ErrorQuality.SEMANTIC_ERROR);
+					break;
+				case RESET:
+					if (changed.acceptChange(ChangeMode.DELETE) != null)
+						Skript.error(what + " can't be reset. It can however be deleted which might result in the desired effect.", ErrorQuality.SEMANTIC_ERROR);
+					else
+						Skript.error(what + " can't be reset", ErrorQuality.SEMANTIC_ERROR);
+			}
 			return false;
 		}
 		
 		if (changer != null) {
-			final ErrorQuality q = changer.getReturnType() == Object.class ? ErrorQuality.NOT_AN_EXPRESSION : ErrorQuality.SEMANTIC_ERROR;
 			Expression<?> v = null;
 			Class<?> x = null;
-			final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+			final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 			try {
 				for (final Class<?> r : rs) {
+					log.clear();
 					if ((r.isArray() ? r.getComponentType() : r).isAssignableFrom(changer.getReturnType())) {
 						v = changer.getConvertedExpression(Object.class);
 						x = r;
+						break; // break even if v == null as it won't convert to Object apparently
 					}
 				}
 				if (v == null) {
 					for (final Class<?> r : rs) {
+						log.clear();
 						v = changer.getConvertedExpression(r.isArray() ? r.getComponentType() : r);
 						if (v != null) {
 							x = r;
@@ -179,24 +208,27 @@ public class EffChange extends Effect {
 						}
 					}
 				}
-			} finally {
-				log.stop();
-			}
-			if (v == null) {
-				if (log.hasErrors()) {
-					SkriptLogger.log(log.getFirstError());
+				if (v == null) {
+					if (log.hasError()) {
+						log.printError();
+						return false;
+					}
+					log.clear();
+					log.printLog();
+					final Class<?>[] r = new Class[rs.length];
+					for (int i = 0; i < rs.length; i++)
+						r[i] = rs[i].isArray() ? rs[i].getComponentType() : rs[i];
+					if (rs.length == 1 && rs[0] == Object.class)
+						Skript.error("Can't understand this expression: " + changer, ErrorQuality.NOT_AN_EXPRESSION);
+					else if (mode == ChangeMode.SET)
+						Skript.error(what + " can't be set to " + changer + " because the latter is " + SkriptParser.notOfType(r), ErrorQuality.SEMANTIC_ERROR);
+					else
+						Skript.error(changer + " can't be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + what + " because the former is " + SkriptParser.notOfType(r), ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
-				final Class<?>[] r = new Class[rs.length];
-				for (int i = 0; i < rs.length; i++)
-					r[i] = rs[i].isArray() ? rs[i].getComponentType() : rs[i];
-				if (rs.length == 1 && rs[0] == Object.class)
-					Skript.error("Can't understand this expression: " + changer, ErrorQuality.NOT_AN_EXPRESSION);
-				else if (mode == ChangeMode.SET)
-					Skript.error(what + " can't be set to " + changer + " because the latter is " + SkriptParser.notOfType(r), q);
-				else
-					Skript.error(what + " can't be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed + " because the former is " + SkriptParser.notOfType(r), q);
-				return false;
+				log.printLog();
+			} finally {
+				log.stop();
 			}
 			
 			if (x.isArray()) {
@@ -234,16 +266,20 @@ public class EffChange extends Effect {
 	public String toString(final Event e, final boolean debug) {
 		switch (mode) {
 			case ADD:
-				return "add " + changer.toString(e, debug) + " to " + changed.toString(null, true);
-			case DELETE:
-				return "delete " + changed.toString(null, true);
-			case REMOVE:
-				return "remove " + changer.toString(e, debug) + " from " + changed.toString(null, true);
+				return "add " + changer.toString(e, debug) + " to " + changed.toString(e, debug);
 			case SET:
-				return "set " + changed.toString(e, debug) + " to " + changer.toString(null, true);
-			default:
-				throw new IllegalStateException();
+				return "set " + changed.toString(e, debug) + " to " + changer.toString(e, debug);
+			case REMOVE:
+				return "remove " + changer.toString(e, debug) + " from " + changed.toString(e, debug);
+			case REMOVE_ALL:
+				return "remove all " + changer.toString(e, debug) + " from " + changed.toString(e, debug);
+			case DELETE:
+				return "delete/clear " + changed.toString(e, debug);
+			case RESET:
+				return "reset " + changed.toString(e, debug);
 		}
+		assert false;
+		return "";
 	}
 	
 }

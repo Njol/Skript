@@ -33,9 +33,9 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 @SuppressWarnings("serial")
 public class SkeletonData extends EntityData<Skeleton> {
-	
+	private final static boolean hasWither = Skript.isRunningMinecraft(1, 4);
 	static {
-		if (Skript.isRunningMinecraft(1, 4))
+		if (hasWither)
 			register(SkeletonData.class, "skeleton", Skeleton.class, "skeleton", "wither skeleton");
 		else
 			register(SkeletonData.class, "skeleton", Skeleton.class, "skeleton");
@@ -50,6 +50,12 @@ public class SkeletonData extends EntityData<Skeleton> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		wither = matchedPattern == 1;
+		return true;
+	}
+	
+	@Override
+	protected boolean init(final Class<? extends Skeleton> c, final Skeleton e) {
+		wither = e == null || !hasWither ? false : e.getSkeletonType() == SkeletonType.WITHER;
 		return true;
 	}
 	
@@ -71,12 +77,13 @@ public class SkeletonData extends EntityData<Skeleton> {
 	
 	@Override
 	public void set(final Skeleton entity) {
-		entity.setSkeletonType(wither ? SkeletonType.WITHER : SkeletonType.NORMAL);
+		if (hasWither)
+			entity.setSkeletonType(wither ? SkeletonType.WITHER : SkeletonType.NORMAL);
 	}
 	
 	@Override
 	protected boolean match(final Skeleton entity) {
-		return (entity.getSkeletonType() == SkeletonType.WITHER) == wither;
+		return hasWither ? (entity.getSkeletonType() == SkeletonType.WITHER) == wither : true;
 	}
 	
 	@Override
@@ -102,10 +109,15 @@ public class SkeletonData extends EntityData<Skeleton> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Skeleton> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof SkeletonData)
 			return ((SkeletonData) e).wither == wither;
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return this;
 	}
 	
 }

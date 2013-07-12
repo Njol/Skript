@@ -32,6 +32,8 @@ import ch.njol.skript.hooks.Hook;
 /**
  * @author Peter Güttinger
  */
+// TODO support GriefPrevention, PreciousStones and maybe other plugins
+// TODO add 'region(s) at <location>', 'owner of <region>', '<player> is member of <region>', 'members of <region>', etc.
 public abstract class RegionsPlugin extends Hook {
 	
 	public static Collection<RegionsPlugin> plugins = new ArrayList<RegionsPlugin>(2);

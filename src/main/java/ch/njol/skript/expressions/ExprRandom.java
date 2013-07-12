@@ -87,9 +87,4 @@ public class ExprRandom extends SimpleExpression<Object> {
 		return true;
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return false;
-	}
-	
 }

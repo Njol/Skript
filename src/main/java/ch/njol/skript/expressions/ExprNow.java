@@ -70,11 +70,6 @@ public class ExprNow extends SimpleExpression<Date> {
 	}
 	
 	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
-	@Override
 	public String toString(final Event e, final boolean debug) {
 		return "now";
 	}

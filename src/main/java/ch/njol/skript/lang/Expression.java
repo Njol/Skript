@@ -30,6 +30,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.conditions.CondIsSet;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.util.Checker;
@@ -130,10 +131,10 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	/**
 	 * Returns true if this expression returns all possible values, false if it only returns one.
 	 * <p>
-	 * This method significantly influences {@link #check(Event, Checker)} and {@link #check(Event, Checker, boolean)} and thus breaks conditions that use this expression if it
-	 * returns a wrong value.
+	 * This method significantly influences {@link #check(Event, Checker)}, {@link #check(Event, Checker, boolean)} and {@link CondIsSet} and thus breaks conditions that use this
+	 * expression if it returns a wrong value.
 	 * <p>
-	 * This method can return anything if this is a {@link #isSingle() single} expression.
+	 * This method must return true if this is a {@link #isSingle() single} expression.
 	 * 
 	 * @return
 	 */
@@ -222,7 +223,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * 
 	 * @param mode
 	 * @return An array of types that {@link #change(Event, Object, ChangeMode)} accepts as it's <code>delta</code> parameter (which can be arrays),
-	 *         or null if the given mode is not supported. For {@link ChangeMode#DELETE} this can return any array to mark clear as supported, even an empty one.
+	 *         or null if the given mode is not supported. For {@link ChangeMode#DELETE} and {@link ChangeMode#RESET} this can return any non-null array to mark them as supported.
 	 */
 	public Class<?>[] acceptChange(ChangeMode mode);
 	
@@ -231,8 +232,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * {@link #acceptChange(ChangeMode)}
 	 * 
 	 * @param e
-	 * @param delta The amount to vary this expression by or null for {@link ChangeMode#DELETE}. Can also be null if {@link #acceptChange(ChangeMode)} didn't return an array class,
-	 *            otherwise it cannot be null but an empty array.
+	 * @param delta The amount to vary this expression by or null for {@link ChangeMode#DELETE} and {@link ChangeMode#RESET}. Must not be null, but can be an empty array.
 	 * @param mode
 	 * @throws UnsupportedOperationException (optional) - If this method was called on an unsupported ChangeMode.
 	 * @throws ClassCastException (automatic) - If the delta parameter is of a wrong type.

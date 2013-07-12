@@ -172,9 +172,4 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 		return Classes.getDebugMessage(loop.getCurrent(e));
 	}
 	
-	@Override
-	public boolean getAnd() {
-		return true;
-	}
-	
 }

@@ -19,7 +19,7 @@
  * 
  */
 
-package ch.njol.skript.lang.util;
+package ch.njol.skript.lang;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -40,13 +40,11 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionList;
-import ch.njol.skript.lang.ParseContext;
-import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Noun;
+import ch.njol.skript.log.BlockingLogHandler;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
@@ -74,27 +72,29 @@ public class VariableString implements Expression<String> {
 		int flags = 0;
 	}
 	
-	private final String name;
+	private final String orig;
 	
 	private final Object[] string;
 	private final boolean isSimple;
 	private final String simple;
-	private StringMode mode;
+	private final StringMode mode;
 	
-	private VariableString(final String s, final StringMode mode) {
-		name = s;
-		string = null;
+	private VariableString(final String s) {
 		isSimple = true;
 		simple = s;
-		this.mode = mode;
+		
+		orig = s;
+		string = null;
+		mode = StringMode.MESSAGE;
 	}
 	
-	private VariableString(final String name, final Object[] string, final StringMode mode) {
-		this.name = name;
-		isSimple = false;
-		simple = null;
+	private VariableString(final String orig, final Object[] string, final StringMode mode) {
+		this.orig = orig;
 		this.string = string;
 		this.mode = mode;
+		
+		isSimple = false;
+		simple = null;
 	}
 	
 	/**
@@ -138,15 +138,15 @@ public class VariableString implements Expression<String> {
 	 * @param mode
 	 * @return
 	 */
-	public static VariableString newInstance(String s, final StringMode mode) {
-		if (!isQuotedCorrectly(s, false))
+	public static VariableString newInstance(final String orig, final StringMode mode) {
+		if (!isQuotedCorrectly(orig, false))
 			return null;
-		final int n = StringUtils.count(s, '%');
+		final int n = StringUtils.count(orig, '%');
 		if (n % 2 != 0) {
 			Skript.error("The percent sign is used for expressions (e.g. %player%). To insert a '%' type it twice: %%.");
 			return null;
 		}
-		s = Utils.replaceChatStyles(s.replace("\"\"", "\""));
+		final String s = Utils.replaceChatStyles(orig.replace("\"\"", "\""));
 		final ArrayList<Object> string = new ArrayList<Object>(n / 2 + 2);
 		int c = s.indexOf('%');
 		if (c != -1) {
@@ -177,7 +177,7 @@ public class VariableString implements Expression<String> {
 					final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 					try {
 						@SuppressWarnings("unchecked")
-						final Expression<?> expr = SkriptParser.parseExpression(s.substring(c + 1, c2), SkriptParser.PARSE_EXPRESSIONS, ParseContext.DEFAULT, Object.class);
+						final Expression<?> expr = new SkriptParser(s.substring(c + 1, c2), SkriptParser.PARSE_EXPRESSIONS, ParseContext.DEFAULT).parseExpression(Object.class);
 						if (expr == null) {
 							log.printErrors("Can't understand this expression: " + s.substring(c + 1, c2));
 							return null;
@@ -205,10 +205,10 @@ public class VariableString implements Expression<String> {
 								string.add(i);
 							}
 						}
+						log.printLog();
 					} finally {
 						log.stop();
 					}
-					log.printLog();
 				}
 				c = s.indexOf('%', c2 + 1);
 				if (c == -1)
@@ -234,8 +234,8 @@ public class VariableString implements Expression<String> {
 		checkVariableConflicts(s, mode, string);
 		
 		if (string.size() == 1 && string.get(0) instanceof String)
-			return new VariableString((String) string.get(0), mode);
-		return new VariableString(s, string.toArray(), mode);
+			return new VariableString((String) string.get(0));
+		return new VariableString(orig, string.toArray(), mode);
 	}
 	
 	private static void checkVariableConflicts(final String name, final StringMode mode, final Iterable<Object> string) {
@@ -255,7 +255,7 @@ public class VariableString implements Expression<String> {
 							continue stringLoop;
 						}
 					}
-					p.append("[^%*](.*[^%])?"); // [^*] to not report {var::%index%}/{var::*} as conflict
+					p.append("[^%*](.*[^%*])?"); // [^*] to not report {var::%index%}/{var::*} as conflict
 				} else {
 					p.append(Pattern.quote(o.toString()));
 				}
@@ -277,7 +277,7 @@ public class VariableString implements Expression<String> {
 	
 	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
 		in.defaultReadObject();
-		checkVariableConflicts(name, mode, string == null ? null : Arrays.asList(string));
+		checkVariableConflicts(Utils.replaceChatStyles(orig.replace("\"\"", "\"")), mode, string == null ? null : Arrays.asList(string));
 	}
 	
 	/**
@@ -411,8 +411,15 @@ public class VariableString implements Expression<String> {
 		return mode;
 	}
 	
-	public void setMode(final StringMode mode) {
-		this.mode = mode;
+	public VariableString setMode(final StringMode mode) {
+		if (this.mode == mode || isSimple)
+			return this;
+		final BlockingLogHandler h = SkriptLogger.startLogHandler(new BlockingLogHandler());
+		try {
+			return newInstance(orig, mode);
+		} finally {
+			h.stop();
+		}
 	}
 	
 	@Override
@@ -508,15 +515,19 @@ public class VariableString implements Expression<String> {
 		return this;
 	}
 	
-	public final static void setStringMode(final Expression<?> e, final StringMode mode) {
+	@SuppressWarnings("unchecked")
+	public final static <T> Expression<T> setStringMode(final Expression<T> e, final StringMode mode) {
 		if (e instanceof ExpressionList) {
-			for (final Expression<?> ex : ((ExpressionList<?>) e).getExpressions()) {
-				if (ex instanceof VariableString)
-					((VariableString) ex).setMode(mode);
+			final Expression<?>[] l = ((ExpressionList<?>) e).getExpressions();
+			for (int i = 0; i < l.length; i++) {
+				l[i] = setStringMode(l[i], mode);
 			}
 		} else if (e instanceof VariableString) {
-			((VariableString) e).setMode(mode);
+			final VariableString vs = ((VariableString) e).setMode(mode);
+			if (vs != null)
+				return (Expression<T>) vs;
 		}
+		return e;
 	}
 	
 	@Override

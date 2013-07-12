@@ -294,4 +294,9 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		return this;
 	}
 	
+	@Override
+	public boolean getAnd() {
+		return true;
+	}
+	
 }

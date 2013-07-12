@@ -32,7 +32,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 @SuppressWarnings("serial")
 public class PlayerData extends EntityData<Player> {
-	
 	static {
 		EntityData.register(PlayerData.class, "player", Player.class, "non-op", "player", "op");
 	}
@@ -43,6 +42,12 @@ public class PlayerData extends EntityData<Player> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		op = matchedPattern - 1;
+		return true;
+	}
+	
+	@Override
+	protected boolean init(final Class<? extends Player> c, final Player e) {
+		op = e == null ? 0 : e.isOp() ? 1 : -1;
 		return true;
 	}
 	
@@ -100,10 +105,15 @@ public class PlayerData extends EntityData<Player> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Player> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof PlayerData)
 			return op == 0 || ((PlayerData) e).op == op;
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new PlayerData();
 	}
 	
 }

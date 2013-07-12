@@ -50,7 +50,7 @@ public class SkriptTest {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				org.bukkit.craftbukkit.Main.main(new String[] {"-nojline"});
+//				org.bukkit.craftbukkit.Main.main(new String[] {"-nojline"});
 			}
 		}).start();
 		while (Bukkit.getServer() == null) {

@@ -21,8 +21,11 @@
 
 package ch.njol.skript.log;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.logging.Filter;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
@@ -41,40 +44,56 @@ public abstract class SkriptLogger {
 	
 	static boolean debug;
 	
+	public final static Level DEBUG = new Level("DEBUG", Level.INFO.intValue()) {
+		private static final long serialVersionUID = 8959282461654206205L;
+	};
+	
 	public final static Logger LOGGER = Bukkit.getServer() != null ? Bukkit.getLogger() : Logger.getGlobal(); // cannot use Bukkit in tests
 	
 	private final static HandlerList handlers = new HandlerList();
 	
 	/**
-	 * Starts retaining the log, i.e. all subsequent log messages will be added to this handler and not printed.
+	 * Shorthand for <tt>{@link #startLogHandler(LogHandler) startLogHandler}(new {@link RetainingLogHandler}());</tt>
+	 * 
+	 * @return A newly created RetainingLogHandler
+	 */
+	public final static RetainingLogHandler startRetainingLog() {
+		return startLogHandler(new RetainingLogHandler());
+	}
+	
+	/**
+	 * Shorthand for <tt>{@link #startLogHandler(LogHandler) startLogHandler}(new {@link ParseLogHandler}());</tt>
+	 * 
+	 * @return A newly created ParseLogHandler
+	 */
+	public final static ParseLogHandler startParseLogHandler() {
+		return startLogHandler(new ParseLogHandler());
+	}
+	
+	/**
+	 * Starts a log handler.
 	 * <p>
 	 * This should be used like this:
 	 * 
 	 * <pre>
-	 * RetainingLogHandler log = SkriptLogger.startRetainingLog();
+	 * LogHandler log = SkriptLogger.startLogHandler(new ...LogHandler());
 	 * try {
 	 * 	doSomethingThatLogsMessages();
+	 * 	// do something with the logged messages
 	 * } finally {
 	 * 	log.stop();
 	 * }
-	 * // do something with the logged messages
 	 * </pre>
 	 * 
-	 * @return a newly created RetainingLogHandler
+	 * @return The passed LogHandler
+	 * @see #startParseLogHandler()
+	 * @see #startRetainingLog()
 	 * @see BlockingLogHandler
+	 * @see CountingLogHandler
+	 * @see ErrorDescLogHandler
+	 * @see FilteringLogHandler
+	 * @see RedirectingLogHandler
 	 */
-	public final static RetainingLogHandler startRetainingLog() {
-		final RetainingLogHandler h = new RetainingLogHandler();
-		handlers.add(h);
-		return h;
-	}
-	
-	public final static ParseLogHandler startParseLogHandler() {
-		final ParseLogHandler h = new ParseLogHandler();
-		handlers.add(h);
-		return h;
-	}
-	
 	public final static <T extends LogHandler> T startLogHandler(final T h) {
 		handlers.add(h);
 		return h;
@@ -89,6 +108,10 @@ public abstract class SkriptLogger {
 				i++;
 			LOGGER.severe("[Skript] " + i + " log handler" + (i == 1 ? " was" : "s were") + " not stopped properly! (at " + getCaller() + ") [if you're a server admin and you see this message please file a bug report at http://dev.bukkit.org/server-mods/skript/tickets/ if there is not already one]");
 		}
+	}
+	
+	final static boolean isStopped(final LogHandler h) {
+		return !handlers.contains(h);
 	}
 	
 	final static StackTraceElement getCaller() {
@@ -138,6 +161,8 @@ public abstract class SkriptLogger {
 	public static void log(final LogEntry entry) {
 		if (entry == null)
 			return;
+		if (Skript.testing() && node != null && node.debug())
+			System.out.print("---> " + entry.level + ": " + entry.getMessage() + " ::" + LogEntry.findCaller());
 		for (final LogHandler h : handlers) {
 			if (!h.log(entry))
 				return;
@@ -170,27 +195,33 @@ public abstract class SkriptLogger {
 		return debug;
 	}
 	
-//	public static int getNumErrors() {
-//		int errors = numErrors;
-//		for (final SubLog log : handlers)
-//			errors += log.getNumErrors();
-//		return errors;
-//	}
-//	
-//	public static void error(final LogEntry error, final ErrorQuality quality) {
-//		if (error.getLevel() != Level.SEVERE)
-//			throw new IllegalArgumentException("Cannot error anything else than an error");
-//		if (!(handlers.getLast() instanceof ParseLog))
-//			throw new SkriptAPIException("Cannot log with a quality if no parsing is in progress");
-//		((ParseLog) handlers.getLast()).error(error, quality);
-//	}
-//	
-//	static void printParseLogError(final LogEntry error, final int quality) {
-//		if (handlers.peekLast() instanceof ParseLog) {
-//			((ParseLog) handlers.getLast()).error(error, quality);
-//		} else {
-//			log(error);
-//		}
-//	}
-//	
+	private final static Collection<Filter> filters = new ArrayList<Filter>();
+	static {
+		final Filter oldFilter = LOGGER.getFilter();
+		LOGGER.setFilter(new Filter() {
+			@Override
+			public boolean isLoggable(final LogRecord record) {
+				if (oldFilter != null && !oldFilter.isLoggable(record))
+					return false;
+				for (final Filter f : filters)
+					if (!f.isLoggable(record))
+						return false;
+				return true;
+			}
+		});
+	}
+	
+	/**
+	 * Adds a filter to Bukkit's log.
+	 * 
+	 * @param f A filter to filter log messages
+	 */
+	public final static void addFilter(final Filter f) {
+		filters.add(f);
+	}
+	
+	public final static boolean removeFilter(final Filter f) {
+		return filters.remove(f);
+	}
+	
 }

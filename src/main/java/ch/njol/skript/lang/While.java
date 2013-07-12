@@ -36,6 +36,7 @@ public class While extends TriggerSection {
 	public While(final Condition c, final SectionNode n) {
 		super(n);
 		this.c = c;
+		super.setNext(this);
 	}
 	
 	@Override
@@ -45,7 +46,23 @@ public class While extends TriggerSection {
 	
 	@Override
 	protected TriggerItem walk(final Event e) {
-		return super.walk(e, c.check(e));
+		if (c.check(e)) {
+			return walk(e, true);
+		} else {
+			debug(e, false);
+			return actualNext;
+		}
+	}
+	
+	private TriggerItem actualNext;
+	
+	@Override
+	public void setNext(final TriggerItem next) {
+		actualNext = next;
+	}
+	
+	public TriggerItem getActualNext() {
+		return actualNext;
 	}
 	
 }

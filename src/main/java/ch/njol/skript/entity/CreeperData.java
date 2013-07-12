@@ -31,7 +31,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 @SuppressWarnings("serial")
 public class CreeperData extends EntityData<Creeper> {
-	
 	static {
 		EntityData.register(CreeperData.class, "creeper", Creeper.class, "unpowered creeper", "creeper", "powered creeper");
 	}
@@ -41,6 +40,12 @@ public class CreeperData extends EntityData<Creeper> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		powered = matchedPattern - 1;
+		return true;
+	}
+	
+	@Override
+	protected boolean init(final Class<? extends Creeper> c, final Creeper e) {
+		powered = e == null ? 0 : e.isPowered() ? 1 : -1;
 		return true;
 	}
 	
@@ -93,10 +98,15 @@ public class CreeperData extends EntityData<Creeper> {
 	}
 	
 	@Override
-	protected boolean isSupertypeOf_i(final EntityData<? extends Creeper> e) {
+	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (e instanceof CreeperData)
 			return powered == 0 || ((CreeperData) e).powered == powered;
 		return false;
+	}
+	
+	@Override
+	public EntityData getSuperType() {
+		return new CreeperData();
 	}
 	
 }
