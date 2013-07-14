@@ -26,7 +26,6 @@ import java.util.Locale;
 import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -416,11 +415,6 @@ public class BukkitClasses {
 					
 					@Override
 					public String toString(final Player p, final int flags) {
-						return p.getDisplayName() + ChatColor.RESET;
-					}
-					
-					@Override
-					public String toCommandString(final Player p) {
 						return p.getName();
 					}
 					
@@ -473,13 +467,6 @@ public class BukkitClasses {
 					
 					@Override
 					public String toString(final OfflinePlayer p, final int flags) {
-						if (p.isOnline())
-							return p.getPlayer().getDisplayName() + ChatColor.RESET;
-						return p.getName();
-					}
-					
-					@Override
-					public String toCommandString(final OfflinePlayer p) {
 						return p.getName();
 					}
 					

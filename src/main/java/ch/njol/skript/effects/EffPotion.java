@@ -124,7 +124,7 @@ public class EffPotion extends Effect { // TODO doesn't work on victim // as wel
 						}
 					}
 				}
-				// TOD doesn't work in damage events?
+				// TODO doesn't work at all
 				en.addPotionEffect(new PotionEffect(t, duration, a), true);
 			}
 		}

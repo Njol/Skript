@@ -103,7 +103,7 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (e == null)
-			return "the target" + (type == null ? "" : "ed " + type) + " of " + getExpr().toString(e, debug);
+			return "the target" + (type == null ? "" : "ed " + type) + (getExpr().isDefault() ? "" : " of " + getExpr().toString(e, debug));
 		return Classes.getDebugMessage(getAll(e));
 	}
 	
@@ -117,20 +117,24 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE)
 			return CollectionUtils.array(LivingEntity.class);
-		return null;
+		return super.acceptChange(mode);
 	}
 	
 	@Override
 	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		if (getTime() >= 0 && e instanceof EntityTargetEvent && getExpr().isDefault() && !Delay.isDelayed(e)) {
-			((EntityTargetEvent) e).setTarget((LivingEntity) delta);
-			return;
-		}
-		final LivingEntity target = (LivingEntity) delta;
-		for (final LivingEntity entity : getExpr().getArray(e)) {
-			if (!(entity instanceof Creature))
-				continue;
-			((Creature) entity).setTarget(target);
+		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE) {
+			if (getTime() >= 0 && e instanceof EntityTargetEvent && getExpr().isDefault() && !Delay.isDelayed(e)) {
+				((EntityTargetEvent) e).setTarget((LivingEntity) delta);
+				return;
+			}
+			final LivingEntity target = (LivingEntity) delta;
+			for (final LivingEntity entity : getExpr().getArray(e)) {
+				if (!(entity instanceof Creature))
+					continue;
+				((Creature) entity).setTarget(target);
+			}
+		} else {
+			super.change(e, delta, mode);
 		}
 	}
 	

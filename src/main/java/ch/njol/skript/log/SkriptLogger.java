@@ -161,8 +161,8 @@ public abstract class SkriptLogger {
 	public static void log(final LogEntry entry) {
 		if (entry == null)
 			return;
-		if (Skript.testing() && node != null && node.debug())
-			System.out.print("---> " + entry.level + ": " + entry.getMessage() + " ::" + LogEntry.findCaller());
+//		if (Skript.testing() && node != null && node.debug())
+//			System.out.print("---> " + entry.level + ": " + entry.getMessage() + " ::" + LogEntry.findCaller());
 		for (final LogHandler h : handlers) {
 			if (!h.log(entry))
 				return;

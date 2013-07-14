@@ -22,6 +22,7 @@
 package ch.njol.skript.config;
 
 import java.lang.reflect.Field;
+import java.util.Locale;
 
 /**
  * @author Peter Güttinger
@@ -34,13 +35,14 @@ public class Section {
 		this.name = name;
 	}
 	
-	public final <T> T get(final String name) {
+	public final <T> T get(String key) {
+		key = key.toLowerCase(Locale.ENGLISH);
 		for (final Field f : this.getClass().getDeclaredFields()) {
 			f.setAccessible(true);
 			if (Option.class.isAssignableFrom(f.getType())) {
 				try {
 					final Option<?> o = (Option<?>) f.get(this);
-					if (o.key.equals(name))
+					if (o.key.equals(key))
 						return (T) o.value();
 				} catch (final IllegalArgumentException e) {
 					assert false;

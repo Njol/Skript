@@ -66,6 +66,8 @@ public class EffShoot extends Effect {
 	private Expression<Number> velocity;
 	private Expression<Direction> direction;
 	
+	public static Entity lastSpawned = null;
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
@@ -78,6 +80,7 @@ public class EffShoot extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
+		lastSpawned = null;
 		final Number v = velocity == null ? DEFAULT_SPEED : velocity.getSingle(e);
 		if (v == null)
 			return;
@@ -88,19 +91,22 @@ public class EffShoot extends Effect {
 			for (final EntityData<?> d : types.getArray(e)) {
 				final Vector vel = dir.getDirection(shooter).multiply(v.doubleValue());
 				if (Fireball.class.isAssignableFrom(d.getType())) {// fireballs explode in the shooter's face by default
-					final Fireball projectile = (Fireball) shooter.getWorld().spawn(shooter.getEyeLocation().add(vel.normalize().multiply(0.5)), d.getType());
+					final Fireball projectile = (Fireball) shooter.getWorld().spawn(shooter.getEyeLocation().add(vel.clone().normalize().multiply(0.5)), d.getType());
 					projectile.setShooter(shooter);
 					projectile.setVelocity(vel);
+					lastSpawned = projectile;
 				} else if (Projectile.class.isAssignableFrom(d.getType())) {
 					final Projectile projectile = shooter.launchProjectile((Class<? extends Projectile>) d.getType());
 					set(projectile, d);
 					projectile.setVelocity(vel);
+					lastSpawned = projectile;
 				} else {
 					final Location loc = shooter.getLocation();
 					loc.setY(loc.getY() + shooter.getEyeHeight() / 2);
 					final Entity projectile = d.spawn(loc);
 					if (projectile != null)
 						projectile.setVelocity(vel);
+					lastSpawned = projectile;
 				}
 			}
 		}

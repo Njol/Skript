@@ -172,11 +172,12 @@ public final class Skript extends JavaPlugin implements Listener {
 		final String bukkitV = Bukkit.getBukkitVersion();
 		final Matcher m = Pattern.compile("\\d+\\.\\d+(\\.\\d+)?").matcher(bukkitV);
 		if (!m.find()) {
-			Skript.error("The Bukkit version '" + Bukkit.getBukkitVersion() + "' does not contain a version number which is required for Skript to enable or disable certain features. Skript will now disable itself.");
-			setEnabled(false);
-			return;
+			Skript.error("The Bukkit version '" + Bukkit.getBukkitVersion() + "' does not contain a version number which is required for Skript to enable or disable certain features. " +
+					"Skript will still work, but you might get random errors if you use features that are not available in your version of Bukkit.");
+			minecraftVersion = new Version(666, 0, 0);
+		} else {
+			minecraftVersion = new Version(m.group());
 		}
-		minecraftVersion = new Version(m.group());
 		
 		getCommand("skript").setExecutor(new SkriptCommand());
 		

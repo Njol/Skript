@@ -100,11 +100,11 @@ public abstract class HealthUtils {
 	 */
 	public final static void setHealth(final LivingEntity e, final double health) {
 		if (usesDoubles) {
-			e.setHealth(Math2.fit(0, health * 2, e.getMaxHealth()));
+			e.setHealth(Math2.fit(0, health, e.getMaxHealth()) * 2);
 			return;
 		}
 		try {
-			setHealth.invoke(e, (int) Math.round(Math2.fit(0, health * 2, getMaxHealth(e))));
+			setHealth.invoke(e, (int) Math.round(Math2.fit(0, health, getMaxHealth(e)) * 2));
 		} catch (final IllegalAccessException ex) {
 			Skript.exception(ex);
 		} catch (final IllegalArgumentException ex) {

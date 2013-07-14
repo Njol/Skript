@@ -217,12 +217,14 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	/**
 	 * Tests whether this expression supports the given mode, and if yes what type it expects the <code>delta</code> to be.
 	 * <p>
-	 * Please note that if a changer is registered for this expression's {@link #getReturnType() returnType} this method does not have to be overridden.
+	 * Please note that if a changer is registered for this expression's {@link #getReturnType() returnType} this method does not have to be overridden. If you override it though
+	 * make sure to return <tt>super.acceptChange(mode)</tt>, and to handle the appropriate ChangeMode(s) in {@link #change(Event, Object, ChangeMode)} with
+	 * <tt>super.change(...)</tt>.
 	 * <p>
 	 * Unlike {@link Changer#acceptChange(ChangeMode)} this method may print errors.
 	 * 
 	 * @param mode
-	 * @return An array of types that {@link #change(Event, Object, ChangeMode)} accepts as it's <code>delta</code> parameter (which can be arrays),
+	 * @return An array of types that {@link #change(Event, Object, ChangeMode)} accepts as its <code>delta</code> parameter (which can be arrays),
 	 *         or null if the given mode is not supported. For {@link ChangeMode#DELETE} and {@link ChangeMode#RESET} this can return any non-null array to mark them as supported.
 	 */
 	public Class<?>[] acceptChange(ChangeMode mode);

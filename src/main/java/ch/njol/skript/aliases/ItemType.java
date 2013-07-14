@@ -516,10 +516,10 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 					throw new NoSuchElementException();
 				final ItemStack is = currentDataIter.next();
 				is.setAmount(getAmount());
-				if (enchantments != null)
-					is.addUnsafeEnchantments(enchantments);
 				if (meta != null)
 					is.setItemMeta((ItemMeta) meta);
+				if (enchantments != null)
+					is.addUnsafeEnchantments(enchantments);
 				return is;
 			}
 			
@@ -626,10 +626,10 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 			item -= types.get(++i).numItems();
 		final ItemStack is = types.get(i).getRandom();
 		is.setAmount(getAmount());
-		if (enchantments != null)
-			is.addUnsafeEnchantments(enchantments);
 		if (meta != null)
 			is.setItemMeta((ItemMeta) meta);
+		if (enchantments != null)
+			is.addUnsafeEnchantments(enchantments);
 		return is;
 	}
 	

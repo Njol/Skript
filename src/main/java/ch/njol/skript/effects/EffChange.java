@@ -115,8 +115,8 @@ public class EffChange extends Effect {
 					changer = exprs[0];
 					changed = exprs[1];
 				} else {
-					changed = exprs[0];
 					changer = exprs[1];
+					changed = exprs[0];
 				}
 				break;
 			case SET:
@@ -132,8 +132,8 @@ public class EffChange extends Effect {
 					changer = exprs[0];
 					changed = exprs[1];
 				} else {
-					changed = exprs[0];
 					changer = exprs[1];
+					changed = exprs[0];
 				}
 				break;
 			case DELETE:

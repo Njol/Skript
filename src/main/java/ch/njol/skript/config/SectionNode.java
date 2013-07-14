@@ -26,6 +26,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 import ch.njol.skript.Skript;
@@ -63,18 +64,18 @@ public class SectionNode extends Node implements Iterable<Node> {
 	public void add(final Node n) {
 		modified();
 		nodes.add(n);
-		nodeMap.put(n.key, n);
+		nodeMap.put(n.key.toLowerCase(Locale.ENGLISH), n);
 	}
 	
 	public void remove(final Node n) {
 		modified();
 		nodes.remove(n);
-		nodeMap.remove(n.key);
+		nodeMap.remove(n.key.toLowerCase(Locale.ENGLISH));
 	}
 	
 	public void remove(final String key) {
 		modified();
-		nodes.remove(nodeMap.remove(key));
+		nodes.remove(nodeMap.remove(key.toLowerCase(Locale.ENGLISH)));
 	}
 	
 	@Override
@@ -119,16 +120,16 @@ public class SectionNode extends Node implements Iterable<Node> {
 			for (final Node node : nodes) {
 				if (node.isVoid())
 					continue;
-				nodeMap.put(node.key, node);
+				nodeMap.put(node.key.toLowerCase(Locale.ENGLISH), node);
 			}
 		}
-		return nodeMap.get(key);
+		return nodeMap.get(key.toLowerCase(Locale.ENGLISH));
 	}
 	
 	/**
 	 * Gets an entry's value or the default value if it doesn't exist or is not an EntryNode.
 	 * 
-	 * @param name The exact name of the node // TODO make case insensitive?
+	 * @param name The name of the node (case insensitive)
 	 * @param def The default value
 	 * @return
 	 */
@@ -317,7 +318,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 	@Override
 	String save() {
 		assert false;
-		return key + ":";
+		return key + ":" + getComment();
 	}
 	
 	public boolean validate(final SectionValidator validator) {

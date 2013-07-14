@@ -64,7 +64,15 @@ public abstract class Converters {
 	
 	public static <F, T> void registerConverter(final Class<F> from, final Class<T> to, final SerializableConverter<F, T> converter, final int options) {
 		Skript.checkAcceptRegistrations();
-		converters.add(new ConverterInfo<F, T>(from, to, converter, options));
+		final ConverterInfo<F, T> info = new ConverterInfo<F, T>(from, to, converter, options);
+		for (int i = 0; i < converters.size(); i++) {
+			final ConverterInfo<?, ?> info2 = converters.get(i);
+			if (info2.from.isAssignableFrom(from) && to.isAssignableFrom(info2.to)) {
+				converters.add(i, info);
+				return;
+			}
+		}
+		converters.add(info);
 	}
 	
 	// TODO how to manage overriding of converters? - shouldn't actually matter

@@ -22,6 +22,7 @@
 package ch.njol.skript.config.validate;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map.Entry;
 
 import ch.njol.skript.Skript;
@@ -56,7 +57,7 @@ public class SectionValidator implements NodeValidator {
 	public SectionValidator addNode(final String name, final NodeValidator v, final boolean optional) {
 		assert name != null;
 		assert v != null;
-		nodes.put(name, new NodeInfo(v, optional));
+		nodes.put(name.toLowerCase(Locale.ENGLISH), new NodeInfo(v, optional));
 		return this;
 	}
 	
@@ -100,7 +101,7 @@ public class SectionValidator implements NodeValidator {
 		if (allowUndefinedSections && allowUndefinedEntries)
 			return ok;
 		for (final Node n : (SectionNode) node) {
-			if (!nodes.containsKey(n.getKey())) {
+			if (!nodes.containsKey(n.getKey().toLowerCase(Locale.ENGLISH))) {
 				if (n instanceof SectionNode && allowUndefinedSections || n instanceof EntryNode && allowUndefinedEntries)
 					continue;
 				SkriptLogger.setNode(n);

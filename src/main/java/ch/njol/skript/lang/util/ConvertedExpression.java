@@ -79,7 +79,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	@Override
 	public String toString(final Event e, final boolean debug) {
 		if (debug && e == null)
-			return "(" + source.toString(e, debug) + ")->" + to.getName();
+			return "(" + source.toString(e, debug) + " >> " + conv + ": " + source.getReturnType().getName() + "->" + to.getName() + ")";
 		return source.toString(e, debug);
 	}
 	

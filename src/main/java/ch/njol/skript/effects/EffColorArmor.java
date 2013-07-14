@@ -27,6 +27,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -35,78 +36,86 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Color;
+import ch.njol.skript.util.Slot;
+import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Math2;
 
 /**
  * @author joeuguce99
  */
 @SuppressWarnings("serial")
-@Name("Color Armor")
-@Description("Colors leather armor. You can also use RGB codes if you feel limited with the default 16 colors.")
+@Name("Colour Armour")
+@Description("Colours leather armour in a given <a href='../classes/#color'>colour</a>. " +
+		"You can also use RGB codes if you feel limited with the 16 default colours. " +
+		"RGB codes are three numbers from 0 to 255 in the order <code>(red, green, blue)</code>, where <code>(0,0,0)</code> is black and <code>(255,255,255)</code> is white.")
 @Examples({"dye player's helmet blue",
 		"colour the player's tool red"})
 @Since("2.0")
 public class EffColorArmor extends Effect {
-	
 	static {
 		Skript.registerEffect(EffColorArmor.class,
-				"(dye|colo[u]r|paint) %itemstack% %color%",
-				"(dye|color[u]|paint) %itemstack% (%number%, %number%, %number%)");
+				"(dye|colo[u]r|paint) %slots/itemstack% %color%",
+				"(dye|colo[u]r|paint) %slots/itemstack% \\(%number%, %number%, %number%\\)");
 	}
 	
-	private Expression<ItemStack> item;
+	private Expression<?> items;
 	private Expression<Color> color;
 	private Expression<Number> red;
 	private Expression<Number> green;
 	private Expression<Number> blue;
 	
-	private boolean rgb;
-	
-	
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		item = (Expression<ItemStack>) vars[0];
-		if (matchedPattern == 0) {
-			color = (Expression<Color>) vars[1];
-			rgb = false;
-			return true;
-		} else if(matchedPattern == 1){
-			red = (Expression<Number>) vars[1];
-			green = (Expression<Number>) vars[2];
-			blue = (Expression<Number>) vars[3];
-			rgb = true;
-			return true;
-		} else{
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
+		items = exprs[0];
+		if (!Slot.class.isAssignableFrom(items.getReturnType()) && !CollectionUtils.containsSuperclass(items.acceptChange(ChangeMode.SET), ItemStack.class)) {
+			Skript.error(items + " cannot be coloured as it cannot be changed at all.");
 			return false;
 		}
+		if (matchedPattern == 0) {
+			color = (Expression<Color>) exprs[1];
+		} else {
+			red = (Expression<Number>) exprs[1];
+			green = (Expression<Number>) exprs[2];
+			blue = (Expression<Number>) exprs[3];
+		}
+		return true;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "dye " + item.toString(e, debug) + color.toString(e, debug);
+		return "dye " + items.toString(e, debug) + " " + (color != null ? color.toString(e, debug) : "(" + red.toString(e, debug) + "," + green.toString(e, debug) + "," + blue.toString(e, debug) + ")");
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		final ItemStack i = item.getSingle(e);
-		if(i.getType() == Material.LEATHER_BOOTS || i.getType() == Material.LEATHER_CHESTPLATE || i.getType() == Material.LEATHER_HELMET || i.getType() == Material.LEATHER_LEGGINGS){
-			if(!rgb){
-				final Color c = color.getSingle(e);
-				final LeatherArmorMeta m = (LeatherArmorMeta) i.getItemMeta();
-				m.setColor(c.getBukkitColor(c));
-				i.setItemMeta(m);
-			} else{
-				final int r = red.getSingle(e).intValue();
-				final int g = green.getSingle(e).intValue();
-				final int b = blue.getSingle(e).intValue();
-				final LeatherArmorMeta m = (LeatherArmorMeta) i.getItemMeta();
-				m.setColor(org.bukkit.Color.fromRGB(r, g, b));
-				i.setItemMeta(m);
-			}
-		} else{
-			Skript.error("Specified item is not leather armor");
+		final org.bukkit.Color c;
+		if (color != null) {
+			final Color cl = color.getSingle(e);
+			if (cl == null)
+				return;
+			c = cl.getBukkitColor();
+		} else {
+			final Number r = red.getSingle(e), g = green.getSingle(e), b = blue.getSingle(e);
+			if (r == null || g == null || b == null)
+				return;
+			c = org.bukkit.Color.fromRGB(Math2.fit(0, r.intValue(), 255), Math2.fit(0, g.intValue(), 255), Math2.fit(0, b.intValue(), 255));
 		}
 		
-	}	
+		for (final Object o : items.getArray(e)) {
+			final ItemStack i = o instanceof Slot ? ((Slot) o).getItem() : (ItemStack) o;
+			if (i.getType() == Material.LEATHER_BOOTS || i.getType() == Material.LEATHER_CHESTPLATE || i.getType() == Material.LEATHER_HELMET || i.getType() == Material.LEATHER_LEGGINGS) {
+				final LeatherArmorMeta m = (LeatherArmorMeta) i.getItemMeta();
+				m.setColor(c);
+				i.setItemMeta(m);
+			}
+			if (o instanceof Slot) {
+				((Slot) o).setItem(i);
+			} else {
+				items.change(e, i, ChangeMode.SET);
+				return;
+			}
+		}
+	}
 }

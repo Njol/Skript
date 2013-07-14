@@ -47,7 +47,6 @@ import ch.njol.util.Kleenean;
 		"set tool of player to the player's tool named \"<gold>Wand\"",
 		"set the name of the player's tool to \"<gold>Wand\""})
 @Since("2.0")
-// TODO test
 public class ExprNamed extends PropertyExpression<ItemStack, ItemStack> {
 	static {
 		Skript.registerExpression(ExprNamed.class, ItemStack.class, ExpressionType.PROPERTY, "%itemstacks% (named|with name[s]) %string%");
@@ -76,8 +75,10 @@ public class ExprNamed extends PropertyExpression<ItemStack, ItemStack> {
 		for (int i = 0; i < r.length; i++) {
 			r[i] = source[i].clone();
 			final ItemMeta m = r[i].getItemMeta();
-			m.setDisplayName(n);
-			r[i].setItemMeta(m);
+			if (m != null) {
+				m.setDisplayName(n);
+				r[i].setItemMeta(m);
+			}
 		}
 		return r;
 	}
@@ -89,7 +90,7 @@ public class ExprNamed extends PropertyExpression<ItemStack, ItemStack> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return getExpr() + " named " + name;
+		return getExpr().toString(e, debug) + " named " + name;
 	}
 	
 }

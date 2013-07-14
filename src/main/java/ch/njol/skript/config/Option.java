@@ -21,6 +21,8 @@
 
 package ch.njol.skript.config;
 
+import java.util.Locale;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
@@ -44,7 +46,7 @@ public class Option<T> {
 	private Setter<? super T> setter;
 	
 	public Option(final String key, final Class<T> c) {
-		this.key = key;
+		this.key = key.toLowerCase(Locale.ENGLISH);
 		if (c == String.class) {
 			parser = new Converter<String, T>() {
 				@SuppressWarnings("unchecked")
@@ -73,7 +75,7 @@ public class Option<T> {
 	public Option(final String key, final Converter<String, ? extends T> parser) {
 		if (parser == null)
 			throw new IllegalArgumentException();
-		this.key = key;
+		this.key = key.toLowerCase(Locale.ENGLISH);
 		this.parser = parser;
 	}
 	

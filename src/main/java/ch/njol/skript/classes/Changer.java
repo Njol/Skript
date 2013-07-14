@@ -48,7 +48,7 @@ public interface Changer<T, V> {
 	 * Unlike {@link Expression#acceptChange(ChangeMode)} this method must not print errors
 	 * 
 	 * @param mode
-	 * @return An array of types that {@link #change(Event, Expression, Expression, ChangeMode)} accepts as it's <code>delta</code> parameter's type param,
+	 * @return An array of types that {@link #change(Event, Expression, Expression, ChangeMode)} accepts as its <code>delta</code> parameter's type param,
 	 *         or null if the given mode is not supported. For {@link ChangeMode#DELETE} and {@link ChangeMode#RESET} this can return any non-null array to mark them as supported.
 	 */
 	public abstract Class<? extends V>[] acceptChange(ChangeMode mode);

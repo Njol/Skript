@@ -85,6 +85,7 @@ public abstract class Parser<T> {
 		return null;
 	}
 	
+	// not used anymore
 	public String toCommandString(final T o) {
 		return toString(o, 0);
 	}

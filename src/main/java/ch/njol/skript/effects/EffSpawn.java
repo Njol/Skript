@@ -70,6 +70,7 @@ public class EffSpawn extends Effect {
 	
 	@Override
 	public void execute(final Event e) {
+		lastSpawned = null;
 		if (amount != null && amount.getSingle(e) == null)
 			return;
 		final EntityType[] ts = types.getArray(e);

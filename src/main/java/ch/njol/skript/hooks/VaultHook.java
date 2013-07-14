@@ -32,15 +32,15 @@ import org.bukkit.plugin.Plugin;
 public class VaultHook extends Hook {
 	
 	public static Plugin vault = null;
+	static {
+		final Plugin p = Bukkit.getPluginManager().getPlugin("Vault"); // TODO permissions hook (groups)
+		if (p != null && p instanceof Vault)
+			vault = p;
+	}
 	
 	@Override
 	protected boolean init() {
-		final Plugin p = Bukkit.getPluginManager().getPlugin("Vault"); // TODO permissions hook (groups)
-		if (p != null && p instanceof Vault) {
-			vault = p;
-			return true;
-		}
-		return false;
+		return vault != null;
 	}
 	
 	@Override

@@ -28,6 +28,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -89,6 +90,15 @@ public class DefaultConverters {
 			public Player convert(final Entity e) {
 				if (e instanceof Player)
 					return (Player) e;
+				return null;
+			}
+		});
+		// Entity - LivingEntity // Entity->Player is used if this doesn't exist
+		Converters.registerConverter(Entity.class, LivingEntity.class, new SerializableConverter<Entity, LivingEntity>() {
+			@Override
+			public LivingEntity convert(final Entity e) {
+				if (e instanceof LivingEntity)
+					return (LivingEntity) e;
 				return null;
 			}
 		});
@@ -214,16 +224,6 @@ public class DefaultConverters {
 //				return s.getInventory();
 //			}
 //		});
-		
-		// OfflinePlayer - Player
-		Converters.registerConverter(OfflinePlayer.class, Player.class, new SerializableConverter<OfflinePlayer, Player>() {
-			@Override
-			public Player convert(final OfflinePlayer p) {
-				if (!p.isOnline())
-					return null;
-				return p.getPlayer();
-			}
-		});
 		
 		// Block - InventoryHolder
 		Converters.registerConverter(Block.class, InventoryHolder.class, new SerializableConverter<Block, InventoryHolder>() {
