@@ -86,10 +86,10 @@ public class ExprDamage extends SimpleExpression<Double> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		if (!(e instanceof EntityDamageEvent))
 			return;
-		double d = delta == null ? 0 : ((Number) delta).doubleValue();
+		double d = delta == null ? 0 : ((Number) delta[0]).doubleValue();
 		switch (mode) {
 			case SET:
 			case DELETE:

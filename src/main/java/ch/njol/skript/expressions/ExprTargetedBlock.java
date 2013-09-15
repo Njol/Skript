@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import java.util.WeakHashMap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -96,8 +97,9 @@ public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 //			targetedBlocks.put(((PlayerInteractEvent) e).getPlayer(), ((PlayerInteractEvent) e).getClickedBlock());
 //			return ((PlayerInteractEvent) e).getClickedBlock();
 //		}
+		@SuppressWarnings("deprecation")
 		Block b = p.getTargetBlock(null, SkriptConfig.maxTargetBlockDistance.value());
-		if (b.getTypeId() == 0)
+		if (b.getType() == Material.AIR)
 			b = null;
 		targetedBlocks.put(p, b);
 		return b;

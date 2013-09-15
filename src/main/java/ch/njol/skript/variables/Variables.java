@@ -51,8 +51,8 @@ public abstract class Variables {
 	public static boolean load() {
 		try {
 			variablesLock.writeLock().lock();
-			assert variables.isEmpty();
-			assert variablesHashMap.isEmpty();
+			assert variables.treeMap.isEmpty();
+			assert variables.hashMap.isEmpty();
 			
 			return database.load() && file.load();
 		} finally {
@@ -105,64 +105,67 @@ public abstract class Variables {
 	
 	private final static ReadWriteLock variablesLock = new ReentrantReadWriteLock(true);
 	/**
-	 * note to self: use {@link #setVariable(String, Object, VariablesStorage)} and {@link #getVariable(String)}
-	 * <p>
 	 * must be locked with {@link #variablesLock}.
 	 */
-	private final static TreeMap<String, Object> variables = new TreeMap<String, Object>(variableNameComparator);
-	/**
-	 * For fast access
-	 * <p>
-	 * must be locked with {@link #variablesLock}.
-	 */
-	private final static HashMap<String, Object> variablesHashMap = new HashMap<String, Object>();
+	private final static VariablesMap variables = new VariablesMap();
+	private final static WeakHashMap<Event, VariablesMap> localVariables = new WeakHashMap<Event, VariablesMap>();
 	
-	private final static HashMap<String, WeakHashMap<Event, Object>> localVariables = new HashMap<String, WeakHashMap<Event, Object>>();
-	
-	/**
-	 * Remember to lock with {@link #getReadLock()} and to not make any changes!
-	 * 
-	 * @return
-	 */
-	static TreeMap<String, Object> getVariables() {
-		return variables;
-	}
-	
-	/**
-	 * Remember to lock with {@link #getReadLock()}!
-	 * 
-	 * @return
-	 */
-	static Map<String, Object> getVariablesHashMap() {
-		return Collections.unmodifiableMap(variablesHashMap);
-	}
-	
-	static Lock getReadLock() {
-		return variablesLock.readLock();
-	}
-	
-	/**
-	 * Sets a variable.
-	 * 
-	 * @param name The variable's name. Can be a "list variable::*" (<tt>value</tt> must be <tt>null</tt> in this case)
-	 * @param value The variable's value. Use <tt>null</tt> to delete the variable.
-	 */
-	public final static void setVariable(final String name, final Object value) {
-		setVariable(name, value, null);
-	}
-	
-	@SuppressWarnings("unchecked")
-	final static void setVariable(final String name, final Object value, final VariablesStorage source) {
-		try {
-			variablesLock.writeLock().lock();
+	private final static class VariablesMap {
+		private final HashMap<String, Object> hashMap = new HashMap<String, Object>();
+		private final TreeMap<String, Object> treeMap = new TreeMap<String, Object>();
+		
+		/**
+		 * Returns the internal value of the requested variable.
+		 * <p>
+		 * <b>Do not modify the returned value!</b>
+		 * 
+		 * @param name
+		 * @return an Object for a normal Variable or a Map<String, Object> for a list variable, or null if the variable is not set.
+		 */
+		@SuppressWarnings("unchecked")
+		final Object getVariable(final String name) {
+			if (!name.endsWith("*")) {
+				return hashMap.get(name);
+			} else {
+				final String[] split = splitVariableName(name);
+				TreeMap<String, Object> current = treeMap;
+				for (int i = 0; i < split.length; i++) {
+					final String n = split[i];
+					if (n.equals("*")) {
+						assert i == split.length - 1;
+						return current;
+					}
+					final Object o = current.get(n);
+					if (o == null)
+						return null;
+					if (o instanceof Map) {
+						current = (TreeMap<String, Object>) o;
+						assert i != split.length - 1;
+						continue;
+					} else {
+						return null;
+					}
+				}
+				return null;
+			}
+		}
+		
+		/**
+		 * Sets a variable.
+		 * 
+		 * @param name The variable's name. Can be a "list variable::*" (<tt>value</tt> must be <tt>null</tt> in this case)
+		 * @param value The variable's value. Use <tt>null</tt> to delete the variable.
+		 */
+		@SuppressWarnings("unchecked")
+		final void setVariable(final String name, final Object value) {
 			if (!name.endsWith("*")) {
 				if (value == null)
-					variablesHashMap.remove(name);
+					hashMap.remove(name);
 				else
-					variablesHashMap.put(name, value);
+					hashMap.put(name, value);
 			}
 			final String[] split = splitVariableName(name);
-			TreeMap<String, Object> parent = variables;
+			TreeMap<String, Object> parent = treeMap;
 			for (int i = 0; i < split.length; i++) {
 				final String n = split[i];
 				Object current = parent.get(n);
@@ -216,20 +219,91 @@ public abstract class Variables {
 					}
 				}
 			}
-			saveVariableChange(name, value, source);
-		} finally {
-			variablesLock.writeLock().unlock();
+		}
+		
+		void deleteFromHashMap(final String parent, final TreeMap<String, Object> current) {
+			for (final Entry<String, Object> e : current.entrySet()) {
+				if (e.getKey() == null)
+					continue;
+				hashMap.remove(parent + Variable.SEPARATOR + e.getKey());
+				if (e.getValue() instanceof TreeMap) {
+					deleteFromHashMap(parent + Variable.SEPARATOR + e.getKey(), (TreeMap<String, Object>) e.getValue());
+				}
+			}
+		}
+		
+	}
+	
+	/**
+	 * Remember to lock with {@link #getReadLock()} and to not make any changes!
+	 * 
+	 * @return
+	 */
+	static TreeMap<String, Object> getVariables() {
+		return variables.treeMap;
+	}
+	
+	/**
+	 * Remember to lock with {@link #getReadLock()}!
+	 * 
+	 * @return
+	 */
+	static Map<String, Object> getVariablesHashMap() {
+		return Collections.unmodifiableMap(variables.hashMap);
+	}
+	
+	static Lock getReadLock() {
+		return variablesLock.readLock();
+	}
+	
+	/**
+	 * Returns the internal value of the requested variable.
+	 * <p>
+	 * <b>Do not modify the returned value!</b>
+	 * 
+	 * @param name
+	 * @return an Object for a normal Variable or a Map<String, Object> for a list variable, or null if the variable is not set.
+	 */
+	public final static Object getVariable(final String name, final Event e, final boolean local) {
+		if (local) {
+			final VariablesMap map = localVariables.get(e);
+			if (map == null)
+				return null;
+			return map.getVariable(name);
+		} else {
+			try {
+				variablesLock.readLock().lock();
+				return variables.getVariable(name);
+			} finally {
+				variablesLock.readLock().unlock();
+			}
 		}
 	}
 	
-	private static void deleteFromHashMap(final String parent, final TreeMap<String, Object> current) {
-		for (final Entry<String, Object> e : current.entrySet()) {
-			if (e.getKey() == null)
-				continue;
-			variablesHashMap.remove(parent + Variable.SEPARATOR + e.getKey());
-			if (e.getValue() instanceof TreeMap) {
-				deleteFromHashMap(parent + Variable.SEPARATOR + e.getKey(), (TreeMap<String, Object>) e.getValue());
-			}
+	/**
+	 * Sets a variable.
+	 * 
+	 * @param name The variable's name. Can be a "list variable::*" (<tt>value</tt> must be <tt>null</tt> in this case)
+	 * @param value The variable's value. Use <tt>null</tt> to delete the variable.
+	 */
+	public final static void setVariable(final String name, final Object value, final Event e, final boolean local) {
+		if (local) {
+			VariablesMap map = localVariables.get(e);
+			if (map == null)
+				localVariables.put(e, map = new VariablesMap());
+			map.setVariable(name, value);
+		} else {
+			setVariable(name, value, null);
+		}
+	}
+	
+	final static void setVariable(final String name, final Object value, final VariablesStorage source) {
+		try {
+			variablesLock.writeLock().lock();
+			variables.setVariable(name, value);
+			saveVariableChange(name, value, source);
+		} finally {
+			variablesLock.writeLock().unlock();
 		}
 	}
 	
@@ -249,65 +323,10 @@ public abstract class Variables {
 		}
 	}
 	
-	/**
-	 * Returns the internal value of the requested variable.
-	 * <p>
-	 * <b>Do not modify the returned value!</b>
-	 * 
-	 * @param name
-	 * @return an Object for a normal Variable or a Map<String, Object> for a list variable, or null if the variable is not set.
-	 */
-	@SuppressWarnings("unchecked")
-	public final static Object getVariable(final String name) {
-		try {
-			variablesLock.readLock().lock();
-			if (!name.endsWith("*")) {
-				return variablesHashMap.get(name);
-			} else {
-				final String[] split = splitVariableName(name);
-				TreeMap<String, Object> current = variables;
-				for (int i = 0; i < split.length; i++) {
-					final String n = split[i];
-					if (n.equals("*")) {
-						assert i == split.length - 1;
-						return current;
-					}
-					final Object o = current.get(n);
-					if (o == null)
-						return null;
-					if (o instanceof Map) {
-						current = (TreeMap<String, Object>) o;
-						assert i != split.length - 1;
-						continue;
-					} else {
-						return null;
-					}
-				}
-				return null;
-			}
-		} finally {
-			variablesLock.readLock().unlock();
-		}
-	}
-	
-	public final static void setLocalVariable(final String name, final Event e, final Object value) {
-		WeakHashMap<Event, Object> map = localVariables.get(name);
-		if (map == null)
-			localVariables.put(name, map = new WeakHashMap<Event, Object>());
-		map.put(e, value);
-	}
-	
-	public final static Object getLocalVariable(final String name, final Event e) {
-		final WeakHashMap<Event, Object> map = localVariables.get(name);
-		if (map == null)
-			return null;
-		return map.get(e);
-	}
-	
 	public static int numVariables() {
 		try {
 			variablesLock.readLock().lock();
-			return variablesHashMap.size();
+			return variables.hashMap.size();
 		} finally {
 			variablesLock.readLock().unlock();
 		}

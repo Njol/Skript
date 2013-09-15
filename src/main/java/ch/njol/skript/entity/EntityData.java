@@ -55,7 +55,7 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings({"rawtypes", "serial"})
-public abstract class EntityData<E extends Entity> implements SyntaxElement {// TODO baby animals // TODO unit
+public abstract class EntityData<E extends Entity> implements SyntaxElement {// TODO baby animals, extended horse support, zombie villagers // TODO unit
 
 	// must be here to be initialised before 'new SimpleLiteral' is called in the register block below
 	private static final List<EntityDataInfo<?>> infos = new ArrayList<EntityDataInfo<?>>();

@@ -69,7 +69,6 @@ public class DatabaseStorage extends VariablesStorage {
 	
 	private final static String guid = UUID.randomUUID().toString();
 	
-	@SuppressWarnings("resource")
 	@Override
 	protected boolean load_i() {
 		
@@ -203,29 +202,30 @@ public class DatabaseStorage extends VariablesStorage {
 		}
 		
 		if (monitor) {
-			new Thread(new Runnable() {
+			Skript.newThread(new Runnable() {
 				@Override
 				public void run() {
 					long lastWarning = Long.MIN_VALUE;
+					final int WARING_INTERVAL = 10;
 					
 					while (!closed) {
 						final long target = System.currentTimeMillis() + DatabaseStorage.this.monitor_interval;
 						checkDatabase();
 						final long now = System.currentTimeMillis();
-						if (target < now && lastWarning < now - 10000) {
+						if (target < now && lastWarning < now - WARING_INTERVAL * 1000) {
 							Skript.warning("Cannot load variables from the database fast enough (loading took " + ((now - target + DatabaseStorage.this.monitor_interval) / 1000.) + "s, monitor interval = " + (DatabaseStorage.this.monitor_interval / 1000.) + "s). " +
 									"Please increase your monitor interval or reduce usage of variables. " +
-									"(this warning will be repeated at most once every 10 seconds)");
+									"(this warning will be repeated at most once every " + WARING_INTERVAL + " seconds)");
 							lastWarning = now;
 						}
-						do {
+						while (System.currentTimeMillis() < target) {
 							try {
 								Thread.sleep(target - System.currentTimeMillis());
 							} catch (final InterruptedException e) {}
-						} while (System.currentTimeMillis() < target);
+						}
 					}
 				}
-			}).start();
+			}, "Skript database monitor thread").start();
 		}
 		
 		return true;
@@ -263,7 +263,6 @@ public class DatabaseStorage extends VariablesStorage {
 	
 	private long lastRowID = -1;
 	
-	@SuppressWarnings("resource")
 	protected void checkDatabase() {
 		if (db == null)
 			return;

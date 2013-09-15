@@ -64,14 +64,14 @@ import ch.njol.util.Kleenean;
 @SuppressWarnings("serial")
 public class EventValueExpression<T> extends SimpleExpression<T> implements DefaultExpression<T> {
 	private final Class<? extends T> c;
-	private SerializableChanger<? super T, ?> changer;
+	private SerializableChanger<? super T> changer;
 	private final Map<Class<? extends Event>, SerializableGetter<? extends T, ?>> getters = new HashMap<Class<? extends Event>, SerializableGetter<? extends T, ?>>();
 	
 	public EventValueExpression(final Class<? extends T> c) {
 		this(c, null);
 	}
 	
-	public EventValueExpression(final Class<? extends T> c, final SerializableChanger<? super T, ?> changer) {
+	public EventValueExpression(final Class<? extends T> c, final SerializableChanger<? super T> changer) {
 		assert c != null;
 		this.c = c;
 		this.changer = changer;
@@ -159,12 +159,12 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (changer == null)
-			changer = (SerializableChanger<? super T, ?>) Classes.getSuperClassInfo(c).getChanger();
+			changer = (SerializableChanger<? super T>) Classes.getSuperClassInfo(c).getChanger();
 		return changer == null ? null : changer.acceptChange(mode);
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
 		if (changer == null)
 			throw new UnsupportedOperationException();
 		ChangerUtils.change(changer, getArray(e), delta, mode);

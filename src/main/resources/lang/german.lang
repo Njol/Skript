@@ -233,6 +233,9 @@ potions:
 	weakness: Schwäche, verringerter Schaden
 	poison: Vergiftung, Gift
 	wither: Wither, Withereffekt, Wither-Effekt, Wither Effekt
+	health_boost: Gesundheitsschub, erhöhte Gesundheit
+	absorption: Absorption, Absorbtion
+	saturation: Sättingung
 
 # -- Weather --
 weather:

@@ -56,6 +56,7 @@ import ch.njol.util.Setter;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("deprecation")
 public abstract class Aliases {
 	
 	/**

@@ -59,14 +59,16 @@ public abstract class SkriptConfig {
 			.optional(true)
 			.defaultValue(null);
 	
-	public final static Option<Boolean> keepConfigsLoaded = new Option<Boolean>("keep configs loaded", Boolean.class)
+	public final static Option<String> language = new Option<String>("language", String.class)
 			.optional(true)
-			.defaultValue(false);
-	
-	public static final Option<Boolean> enableEffectCommands = new Option<Boolean>("enable effect commands", Boolean.class)
-			.defaultValue(false);
-	public static final Option<String> effectCommandToken = new Option<String>("effect command token", String.class)
-			.defaultValue("!");
+			.setter(new Setter<String>() {
+				@Override
+				public void set(final String s) {
+					if (!Language.load(s)) {
+						Skript.error("No language file found for '" + s + "'!");
+					}
+				}
+			});
 	
 	static final Option<Boolean> checkForNewVersion = new Option<Boolean>("check for new version", Boolean.class)
 			.defaultValue(false);
@@ -82,11 +84,10 @@ public abstract class SkriptConfig {
 	static final Option<Boolean> automaticallyDownloadNewVersion = new Option<Boolean>("automatically download new version", Boolean.class)
 			.defaultValue(false);
 	
-	public static final Option<Boolean> logPlayerCommands = new Option<Boolean>("log player commands", Boolean.class)
+	public static final Option<Boolean> enableEffectCommands = new Option<Boolean>("enable effect commands", Boolean.class)
 			.defaultValue(false);
-	
-	public static final Option<Boolean> disableVariableConflictWarnings = new Option<Boolean>("disable variable conflict warnings", Boolean.class)
-			.defaultValue(false);
+	public static final Option<String> effectCommandToken = new Option<String>("effect command token", String.class)
+			.defaultValue("!");
 	
 	public static final Option<Timespan> variableBackupInterval = new Option<Timespan>("variables backup interval", Timespan.class)
 			.defaultValue(new Timespan(0))
@@ -101,6 +102,20 @@ public abstract class SkriptConfig {
 					}
 				}
 			});
+	
+	public final static Section database = new Section("database") {
+		// no default values, everything is handled by VariablesStorage
+		private final Option<String> type = new Option<String>("type", String.class);
+		private final Option<String> pattern = new Option<String>("pattern", String.class);
+		private final Option<Boolean> monitor_changes = new Option<Boolean>("monitor changes", Boolean.class);
+		private final Option<Timespan> monitor_interval = new Option<Timespan>("monitor interval", Timespan.class);
+		private final Option<String> host = new Option<String>("host", String.class);
+		private final Option<Integer> port = new Option<Integer>("port", Integer.class);
+		private final Option<String> user = new Option<String>("user", String.class);
+		private final Option<String> password = new Option<String>("password", String.class);
+		private final Option<String> database = new Option<String>("database", String.class);
+		private final Option<String> file = new Option<String>("file", String.class);
+	};
 	
 	private static final Option<DateFormat> dateFormat = new Option<DateFormat>("date format", new Converter<String, DateFormat>() {
 		@Override
@@ -123,9 +138,14 @@ public abstract class SkriptConfig {
 		}
 	}
 	
-	public static final Option<Boolean> enableScriptCaching = new Option<Boolean>("enable script caching", Boolean.class)
-			.optional(true)
-			.defaultValue(false);
+	private final static Option<Verbosity> verbosity = new Option<Verbosity>("verbosity", new EnumParser<Verbosity>(Verbosity.class, "verbosity"))
+			.defaultValue(Verbosity.NORMAL)
+			.setter(new Setter<Verbosity>() {
+				@Override
+				public void set(final Verbosity v) {
+					SkriptLogger.setVerbosity(v);
+				}
+			});
 	
 	public final static Option<EventPriority> defaultEventPriority = new Option<EventPriority>("plugin priority", new Converter<String, EventPriority>() {
 		@Override
@@ -139,48 +159,31 @@ public abstract class SkriptConfig {
 		}
 	}).defaultValue(EventPriority.NORMAL);
 	
-	private final static Option<Verbosity> verbosity = new Option<Verbosity>("verbosity", new EnumParser<Verbosity>(Verbosity.class, "verbosity"))
-			.defaultValue(Verbosity.NORMAL)
-			.setter(new Setter<Verbosity>() {
-				@Override
-				public void set(final Verbosity v) {
-					SkriptLogger.setVerbosity(v);
-				}
-			});
-	
-	public final static Option<String> language = new Option<String>("language", String.class)
-			.optional(true)
-			.setter(new Setter<String>() {
-				@Override
-				public void set(final String s) {
-					if (!Language.load(s)) {
-						Skript.error("No language file found for '" + s + "'!");
-					}
-				}
-			});
-	
-	public static final Option<Integer> maxTargetBlockDistance = new Option<Integer>("maximum target block distance", Integer.class)
-			.defaultValue(100);
+	public static final Option<Boolean> logPlayerCommands = new Option<Boolean>("log player commands", Boolean.class)
+			.defaultValue(false);
 	
 	/**
-	 * maximum number of digits to display after the period for floats and doubles
+	 * Maximum number of digits to display after the period for floats and doubles
 	 */
 	public static final Option<Integer> numberAccuracy = new Option<Integer>("number accuracy", Integer.class)
 			.defaultValue(2);
 	
-	public final static Section database = new Section("database") {
-		// no default values, everything is handled by VariablesStorage
-		private final Option<String> type = new Option<String>("type", String.class);
-		private final Option<String> pattern = new Option<String>("pattern", String.class);
-		private final Option<Boolean> monitor_changes = new Option<Boolean>("monitor changes", Boolean.class);
-		private final Option<Timespan> monitor_interval = new Option<Timespan>("monitor interval", Timespan.class);
-		private final Option<String> host = new Option<String>("host", String.class);
-		private final Option<Integer> port = new Option<Integer>("port", Integer.class);
-		private final Option<String> user = new Option<String>("user", String.class);
-		private final Option<String> password = new Option<String>("password", String.class);
-		private final Option<String> database = new Option<String>("database", String.class);
-		private final Option<String> file = new Option<String>("file", String.class);
-	};
+	public static final Option<Integer> maxTargetBlockDistance = new Option<Integer>("maximum target block distance", Integer.class)
+			.defaultValue(100);
+	
+	public final static Option<Boolean> caseSensitive = new Option<Boolean>("case sensitive", Boolean.class)
+			.defaultValue(false);
+	
+	public static final Option<Boolean> disableVariableConflictWarnings = new Option<Boolean>("disable variable conflict warnings", Boolean.class)
+			.defaultValue(false);
+	
+	public static final Option<Boolean> enableScriptCaching = new Option<Boolean>("enable script caching", Boolean.class)
+			.optional(true)
+			.defaultValue(false);
+	
+	public final static Option<Boolean> keepConfigsLoaded = new Option<Boolean>("keep configs loaded", Boolean.class)
+			.optional(true)
+			.defaultValue(false);
 	
 	static boolean load() {
 		try {

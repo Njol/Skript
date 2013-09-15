@@ -116,7 +116,7 @@ public class ExprSignText extends SimpleExpression<String> {
 	
 	@SuppressWarnings("incomplete-switch")
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		final Number l = line.getSingle(e);
 		if (l == null)
 			return;
@@ -129,7 +129,7 @@ public class ExprSignText extends SimpleExpression<String> {
 					((SignChangeEvent) e).setLine(line, "");
 					break;
 				case SET:
-					((SignChangeEvent) e).setLine(line, (String) delta);
+					((SignChangeEvent) e).setLine(line, (String) delta[0]);
 					break;
 			}
 			return;
@@ -145,10 +145,10 @@ public class ExprSignText extends SimpleExpression<String> {
 				s.setLine(line, "");
 				break;
 			case SET:
-				s.setLine(line, (String) delta);
+				s.setLine(line, (String) delta[0]);
 				break;
 		}
-		s.update();
+		s.update(false, false);
 	}
 	
 	@Override

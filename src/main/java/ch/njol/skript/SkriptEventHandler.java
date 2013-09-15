@@ -192,6 +192,7 @@ public abstract class SkriptEventHandler {
 	static ScriptInfo removeTriggers(final File script) {
 		final ScriptInfo info = new ScriptInfo();
 		info.files = 1;
+		
 		final Iterator<List<Trigger>> triggersIter = SkriptEventHandler.triggers.values().iterator();
 		while (triggersIter.hasNext()) {
 			final List<Trigger> ts = triggersIter.next();
@@ -205,6 +206,7 @@ public abstract class SkriptEventHandler {
 				}
 			}
 		}
+		
 		for (int i = 0; i < selfRegisteredTriggers.size(); i++) {
 			final Trigger t = selfRegisteredTriggers.get(i);
 			if (t.getScript().equals(script)) {
@@ -214,6 +216,7 @@ public abstract class SkriptEventHandler {
 				i--;
 			}
 		}
+		
 		info.commands = Commands.unregisterCommands(script);
 		
 		return info;

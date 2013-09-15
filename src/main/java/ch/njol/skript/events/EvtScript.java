@@ -31,38 +31,52 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 
 /**
- * Currently only "on script load/init" which is called once when the script is loaded.
- * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
 public class EvtScript extends SelfRegisteringSkriptEvent {
 	static {
-		Skript.registerEvent("Script Load", EvtScript.class, ScriptEvent.class, "[script] (load|init)")
-				.description("Called directly after the trigger is loaded.")
-				.examples("")
+		Skript.registerEvent("Script Load/Unload", EvtScript.class, ScriptEvent.class, "[script] (load|init|enable)", "[script] (unload|stop|disable)")
+				.description("Called directly after the trigger is loaded, or directly before the whole script is unloaded.")
+				.examples("on load:",
+						"	set {running.%script%} to true",
+						"on unload:",
+						"	set {running.%script%} to false")
 				.since("2.0");
 	}
 	
+	private boolean load;
+	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
+		load = matchedPattern == 0;
 		return true;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "script init";
+		return "script " + (load ? "" : "un") + "load";
 	}
+	
+	private Trigger t;
 	
 	@Override
 	public void register(final Trigger t) {
-		t.execute(new ScriptEvent());
+		this.t = t;
+		if (load)
+			t.execute(new ScriptEvent());
 	}
 	
 	@Override
-	public void unregister(final Trigger t) {}
+	public void unregister(final Trigger t) {
+		if (!load)
+			t.execute(new ScriptEvent());
+	}
 	
 	@Override
-	public void unregisterAll() {}
+	public void unregisterAll() {
+		if (!load)
+			t.execute(new ScriptEvent());
+	}
 	
 }

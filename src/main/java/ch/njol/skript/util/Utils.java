@@ -91,7 +91,7 @@ public abstract class Utils {
 	public static boolean itemStacksEqual(final ItemStack is1, final ItemStack is2) {
 		if (is1 == null || is2 == null)
 			return is1 == is2;
-		return is1.getTypeId() == is2.getTypeId() && is1.getDurability() == is2.getDurability()
+		return is1.getType() == is2.getType() && is1.getDurability() == is2.getDurability()
 				&& (Skript.isRunningMinecraft(1, 4, 5) ? is1.getItemMeta().equals(is2.getItemMeta()) : is1.getEnchantments().equals(is2.getEnchantments()));
 	}
 	

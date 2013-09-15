@@ -160,6 +160,7 @@ public class BukkitClasses {
 						return false;
 					}
 					
+					@SuppressWarnings("deprecation")
 					@Override
 					public String toString(final Block b, final int flags) {
 						return ItemType.toString(new ItemStack(b.getTypeId(), 1, b.getState().getRawData()), flags);
@@ -212,7 +213,6 @@ public class BukkitClasses {
 					}
 				}));
 		
-		// TODO add an expression to dynamically create a location from 3 coordinates and a world - idea: 'location [at] <x>[,] <y>[,] <z> [in|for] <world>'
 		Classes.registerClass(new ClassInfo<Location>(Location.class, "location")
 				.user("locations?")
 				.name("Location")
@@ -631,6 +631,7 @@ public class BukkitClasses {
 						return ItemType.toString(i, flags);
 					}
 					
+					@SuppressWarnings("deprecation")
 					@Override
 					public String toVariableNameString(final ItemStack i) {
 						final StringBuilder b = new StringBuilder("item:");
@@ -672,6 +673,7 @@ public class BukkitClasses {
 						return ConfigurationSerializer.deserializeCS(s, ItemStack.class);
 					}
 					
+					@SuppressWarnings("deprecation")
 					private ItemStack deserializeOld(final String s) {
 						final String[] split = s.split("[:*#]");
 						if (split.length < 3 || split.length % 2 != 1)
@@ -912,11 +914,13 @@ public class BukkitClasses {
 					}
 				})
 				.serializer(new Serializer<Enchantment>() {
+					@SuppressWarnings("deprecation")
 					@Override
 					public String serialize(final Enchantment e) {
 						return "" + e.getId();
 					}
 					
+					@SuppressWarnings("deprecation")
 					@Override
 					public Enchantment deserialize(final String s) {
 						try {

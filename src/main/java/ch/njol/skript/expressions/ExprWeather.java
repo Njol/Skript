@@ -98,8 +98,8 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		final WeatherType t = mode == ChangeMode.DELETE ? WeatherType.CLEAR : (WeatherType) delta;
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		final WeatherType t = delta == null ? WeatherType.CLEAR : (WeatherType) delta[0];
 		if (getTime() >= 0 && (e instanceof WeatherChangeEvent || e instanceof ThunderChangeEvent) && getExpr().isDefault() && !Delay.isDelayed(e)) {
 			if (e instanceof WeatherChangeEvent) {
 				if (((WeatherChangeEvent) e).toWeatherState() && t == WeatherType.CLEAR)

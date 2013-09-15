@@ -45,6 +45,7 @@ import ch.njol.skript.Skript;
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("deprecation")
 public class DelayedChangeBlock implements Block {
 	
 	private final Block b;

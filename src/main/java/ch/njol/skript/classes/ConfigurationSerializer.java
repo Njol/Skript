@@ -53,7 +53,7 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> implem
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final static <T> T deserializeCS(final String s, final Class<T> c) {
+	public final static <T extends ConfigurationSerializable> T deserializeCS(final String s, final Class<T> c) {
 		final YamlConfiguration y = new YamlConfiguration();
 		try {
 			y.loadFromString(s.replace("\uFEFF", "\n"));

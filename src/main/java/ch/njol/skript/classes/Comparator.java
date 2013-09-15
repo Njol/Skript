@@ -54,7 +54,7 @@ public interface Comparator<T1, T2> extends Serializable {
 		}
 		
 		/**
-		 * Gets a Relation from a difference: If i is 0, EQUAL is returned, if i is greather than 0, GREATER is returned, otherwise SMALLER.
+		 * Gets a Relation from a difference: If i is 0, EQUAL is returned, if i is greater than 0, GREATER is returned, otherwise SMALLER.
 		 * 
 		 * @param i
 		 * @return <tt>i == 0 ? Relation.EQUAL : i > 0 ? Relation.GREATER : Relation.SMALLER</tt>
@@ -64,7 +64,7 @@ public interface Comparator<T1, T2> extends Serializable {
 		}
 		
 		/**
-		 * Gets a Relation from a difference: If d is 0, EQUAL is returned, if d is greather than 0, GREATER is returned, otherwise SMALLER.
+		 * Gets a Relation from a difference: If d is 0, EQUAL is returned, if d is greater than 0, GREATER is returned, otherwise SMALLER.
 		 * 
 		 * @param d
 		 * @return <tt>d == 0 ? Relation.EQUAL : d > 0 ? Relation.GREATER : Relation.SMALLER</tt>
@@ -126,7 +126,7 @@ public interface Comparator<T1, T2> extends Serializable {
 		}
 		
 		/**
-		 * Gets the inverse of this relation, i.e if this relation fulfills <code>X rel Y</code>, then the returned relation fullfills <code>!(X rel Y)</code>.
+		 * Gets the inverse of this relation, i.e if this relation fulfils <code>X rel Y</code>, then the returned relation fulfils <code>!(X rel Y)</code>.
 		 * 
 		 * @return
 		 */
@@ -150,7 +150,7 @@ public interface Comparator<T1, T2> extends Serializable {
 		}
 		
 		/**
-		 * Gets the relation which has switched arguments, i.e. if this relation fulfills <code>X rel Y</code>, then the returned relation fullfills <code>Y rel X</code>.
+		 * Gets the relation which has switched arguments, i.e. if this relation fulfils <code>X rel Y</code>, then the returned relation fulfils <code>Y rel X</code>.
 		 * 
 		 * @return
 		 */
@@ -235,7 +235,7 @@ public interface Comparator<T1, T2> extends Serializable {
 	 * 
 	 * @param o1 Non-null object
 	 * @param o2 Non-null object
-	 * @return the relation of the obects.
+	 * @return the relation of the objects.
 	 */
 	public Relation compare(T1 o1, T2 o2);
 	

@@ -89,70 +89,72 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 			Skript.error("Can't change the drops anymore after the event has already passed");
 			return null;
 		}
-		return CollectionUtils.array(ItemType[].class, Inventory.class, Experience.class);
+		return CollectionUtils.array(ItemType[].class, Inventory[].class, Experience[].class);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] deltas, final ChangeMode mode) {
+		assert mode != ChangeMode.RESET;
 		if (!(e instanceof EntityDeathEvent)) {
 			assert false;
 			return;
 		}
-		if (delta instanceof Experience) {
-			if (mode == ChangeMode.REMOVE_ALL || mode == ChangeMode.REMOVE && ((Experience) delta).getInternalXP() == -1) {
-				((EntityDeathEvent) e).setDroppedExp(0);
+		
+		final List<ItemStack> drops = ((EntityDeathEvent) e).getDrops();
+		if (mode == ChangeMode.DELETE) {
+			drops.clear();
+			return;
+		}
+		boolean cleared = false;
+		
+		for (final Object delta : deltas) {
+			if (delta instanceof Experience) {
+				if (mode == ChangeMode.REMOVE_ALL || mode == ChangeMode.REMOVE && ((Experience) delta).getInternalXP() == -1) {
+					((EntityDeathEvent) e).setDroppedExp(0);
+				} else {
+					((EntityDeathEvent) e).setDroppedExp(Math.max(0, ((EntityDeathEvent) e).getDroppedExp() + (mode == ChangeMode.ADD ? 1 : -1) * ((Experience) delta).getXP()));
+				}
 			} else {
-				int xp = ((Experience) delta).getXP();
-				if (mode == ChangeMode.ADD)
-					xp += ((EntityDeathEvent) e).getDroppedExp();
-				else if (mode == ChangeMode.REMOVE)
-					xp = ((EntityDeathEvent) e).getDroppedExp() - xp;
-				((EntityDeathEvent) e).setDroppedExp(xp < 0 ? 0 : xp);
-			}
-		} else {
-			final List<ItemStack> drops = ((EntityDeathEvent) e).getDrops();
-			switch (mode) {
-				case SET:
-					drops.clear();
-					//$FALL-THROUGH$
-				case ADD:
-					if (delta instanceof Inventory) {
-						for (final ItemStack is : new IteratorIterable<ItemStack>(((Inventory) delta).iterator())) {
-							if (is != null)
-								drops.add(is);
+				switch (mode) {
+					case SET:
+						if (!cleared) {
+							drops.clear();
+							cleared = true;
 						}
-					} else {
-						for (final ItemType type : (ItemType[]) delta) {
-							type.addTo(drops);
+						//$FALL-THROUGH$
+					case ADD:
+						if (delta instanceof Inventory) {
+							for (final ItemStack is : new IteratorIterable<ItemStack>(((Inventory) delta).iterator())) {
+								if (is != null)
+									drops.add(is);
+							}
+						} else {
+							((ItemType) delta).addTo(drops);
 						}
-					}
-					break;
-				case REMOVE:
-				case REMOVE_ALL:
-					if (delta instanceof Inventory) {
-						for (final ItemStack is : new IteratorIterable<ItemStack>(((Inventory) delta).iterator())) {
-							if (is == null)
-								continue;
+						break;
+					case REMOVE:
+					case REMOVE_ALL:
+						if (delta instanceof Inventory) {
+							for (final ItemStack is : new IteratorIterable<ItemStack>(((Inventory) delta).iterator())) {
+								if (is == null)
+									continue;
+								if (mode == ChangeMode.REMOVE)
+									new ItemType(is).removeFrom(drops);
+								else
+									new ItemType(is).removeAll(drops);
+							}
+						} else {
 							if (mode == ChangeMode.REMOVE)
-								new ItemType(is).removeFrom(drops);
+								((ItemType) delta).removeFrom(drops);
 							else
-								new ItemType(is).removeAll(drops);
+								((ItemType) delta).removeAll(drops);
 						}
-					} else {
-						for (final ItemType type : (ItemType[]) delta) {
-							if (mode == ChangeMode.REMOVE)
-								type.removeFrom(drops);
-							else
-								type.removeAll(drops);
-						}
-					}
-					break;
-				case DELETE:
-					drops.clear();
-					break;
-				case RESET:
-					assert false;
+						break;
+					case DELETE:
+					case RESET:
+						assert false;
+				}
 			}
 		}
 	}

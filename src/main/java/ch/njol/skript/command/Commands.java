@@ -168,7 +168,7 @@ public abstract class Commands {
 		SkriptLogger.addFilter(new Filter() {
 			@Override
 			public boolean isLoggable(final LogRecord record) {
-				if (suppressUnknownCommandMessage && record.getMessage() != null && record.getMessage().equalsIgnoreCase("Unknown command. Type \"help\" for help.")) {
+				if (suppressUnknownCommandMessage && record.getMessage() != null && record.getMessage().toLowerCase().startsWith("unknown command.")) {
 					suppressUnknownCommandMessage = false;
 					return false;
 				}

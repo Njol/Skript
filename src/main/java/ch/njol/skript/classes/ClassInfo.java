@@ -51,12 +51,12 @@ public class ClassInfo<T> implements Debuggable {
 	
 	private Pattern[] userInputPatterns = null;
 	
-	private SerializableChanger<? super T, ?> changer = null;
+	private SerializableChanger<? super T> changer = null;
 	
 	private Serializer<? super T> serializer = null;
 	private Class<?> serializeAs = null;
 	
-	private Arithmetic<T, ?> math = null;
+	private Arithmetic<? super T, ?> math = null;
 	private Class<?> mathRelativeType = null;
 	
 	private String docName = null;
@@ -131,13 +131,13 @@ public class ClassInfo<T> implements Debuggable {
 		return this;
 	}
 	
-	public ClassInfo<T> changer(final SerializableChanger<? super T, ?> changer) {
+	public ClassInfo<T> changer(final SerializableChanger<? super T> changer) {
 		assert this.changer == null;
 		this.changer = changer;
 		return this;
 	}
 	
-	public <R> ClassInfo<T> math(final Class<R> relativeType, final Arithmetic<T, R> math) {
+	public <R> ClassInfo<T> math(final Class<R> relativeType, final Arithmetic<? super T, R> math) {
 		assert this.math == null;
 		this.math = math;
 		mathRelativeType = relativeType;
@@ -235,7 +235,7 @@ public class ClassInfo<T> implements Debuggable {
 		return userInputPatterns;
 	}
 	
-	public SerializableChanger<? super T, ?> getChanger() {
+	public SerializableChanger<? super T> getChanger() {
 		return changer;
 	}
 	
@@ -247,7 +247,7 @@ public class ClassInfo<T> implements Debuggable {
 		return serializeAs;
 	}
 	
-	public Arithmetic<T, ?> getMath() {
+	public Arithmetic<? super T, ?> getMath() {
 		return math;
 	}
 	

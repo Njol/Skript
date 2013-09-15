@@ -27,6 +27,7 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -36,7 +37,6 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.HealthUtils;
 import ch.njol.skript.util.Slot;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -67,7 +67,7 @@ public class EffHealth extends Effect {
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		damageables = vars[0];
 		if (ItemStack.class.isAssignableFrom(damageables.getReturnType())) {
-			if (!CollectionUtils.contains(damageables.acceptChange(ChangeMode.SET), ItemStack.class)) {
+			if (!ChangerUtils.acceptsChange(damageables, ChangeMode.SET, ItemStack.class)) {
 				Skript.error(damageables + " cannot be changed, thus it cannot be damaged or repaired.");
 				return false;
 			}
@@ -88,6 +88,8 @@ public class EffHealth extends Effect {
 		}
 		if (ItemStack.class.isAssignableFrom(damageables.getReturnType())) {
 			ItemStack i = (ItemStack) damageables.getSingle(e);
+			if (i == null)
+				return;
 			if (this.damage == null) {
 				i.setDurability((short) 0);
 			} else {
@@ -95,12 +97,14 @@ public class EffHealth extends Effect {
 				if (i.getDurability() >= i.getType().getMaxDurability())
 					i = null;
 			}
-			damageables.change(e, i, ChangeMode.SET);
+			damageables.change(e, new ItemStack[] {i}, ChangeMode.SET);
 			return;
 		}
 		for (final Object damageable : damageables.getArray(e)) {
 			if (damageable instanceof Slot) {
 				ItemStack is = ((Slot) damageable).getItem();
+				if (is == null)
+					continue;
 				if (this.damage == null) {
 					is.setDurability((short) 0);
 				} else {

@@ -71,13 +71,16 @@ public class ExprBalance extends SimplePropertyExpression<OfflinePlayer, Money> 
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		if (mode == ChangeMode.DELETE) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+		assert mode != ChangeMode.REMOVE_ALL;
+		
+		if (delta == null) {
 			for (final OfflinePlayer p : getExpr().getAll(e))
 				EconomyHook.economy.withdrawPlayer(p.getName(), EconomyHook.economy.getBalance(p.getName()));
 			return;
 		}
-		final double m = delta instanceof Number ? ((Number) delta).doubleValue() : ((Money) delta).getAmount();
+		
+		final double m = delta[0] instanceof Number ? ((Number) delta[0]).doubleValue() : ((Money) delta[0]).getAmount();
 		for (final OfflinePlayer p : getExpr().getAll(e)) {
 			switch (mode) {
 				case SET:

@@ -212,8 +212,8 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		((Changer<T, Object>) returnTypeInfo.getChanger()).change(getArray(), delta, mode);
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+		((Changer<T>) returnTypeInfo.getChanger()).change(getArray(), delta, mode);
 	}
 	
 	@Override

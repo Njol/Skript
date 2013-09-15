@@ -140,8 +140,7 @@ public final class Updater {
 		}
 		if (!isAutomatic || Skript.logNormal())
 			Skript.info(sender, "" + m_checking);
-		new Thread(new Runnable() {
-			@SuppressWarnings("resource")
+		Skript.newThread(new Runnable() {
 			@Override
 			public void run() {
 				InputStream in = null;
@@ -166,7 +165,7 @@ public final class Updater {
 							} else {
 								if (element.equalsIgnoreCase("title")) {
 									final String version = reader.nextEvent().asCharacters().getData();
-									if (!version.matches("\\d+\\.\\d+(\\.\\d+)? \\(zip\\)")) {// not the default version pattern to not match beta/etc. versions
+									if (!version.matches("\\d+\\.\\d+(\\.\\d+)? \\(zip\\)")) {// not the default version pattern to not match beta/etc. versions // TODO only upload jar file and include default files in it?
 										current = null;
 										continue;
 									}
@@ -260,7 +259,7 @@ public final class Updater {
 					}
 				}
 			}
-		}).start();
+		}, "Skript update thread").start();
 	}
 	
 	private final static String getFileURL(final String pageURL) throws MalformedURLException, IOException {
@@ -400,12 +399,12 @@ public final class Updater {
 		} finally {
 			stateLock.writeLock().unlock();
 		}
-		new Thread(new Runnable() {
+		Skript.newThread(new Runnable() {
 			@Override
 			public void run() {
 				download_i(sender, isAutomatic);
 			}
-		}).start();
+		}, "Skript download thread").start();
 	}
 	
 }

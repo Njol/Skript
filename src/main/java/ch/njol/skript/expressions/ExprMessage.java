@@ -187,10 +187,11 @@ public class ExprMessage extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		assert mode == ChangeMode.SET;
 		for (final Class<? extends Event> c : type.events) {
 			if (c.isInstance(e))
-				type.set(e, (String) delta);
+				type.set(e, (String) delta[0]);
 		}
 	}
 	

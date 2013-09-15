@@ -217,7 +217,9 @@ public abstract class SkriptLogger {
 	 * @param f A filter to filter log messages
 	 */
 	public final static void addFilter(final Filter f) {
-		filters.add(f);
+		assert f != null;
+		if (f != null)
+			filters.add(f);
 	}
 	
 	public final static boolean removeFilter(final Filter f) {

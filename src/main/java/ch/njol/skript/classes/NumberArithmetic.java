@@ -25,11 +25,21 @@ package ch.njol.skript.classes;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-public class NumberArithmetic<T extends Number> implements Arithmetic<T, Double> {
+public class NumberArithmetic implements Arithmetic<Number, Number> {
 	
 	@Override
-	public Double difference(final T first, final T second) {
+	public Number difference(final Number first, final Number second) {
 		return Math.abs(first.doubleValue() - second.doubleValue());
+	}
+	
+	@Override
+	public Number add(final Number value, final Number difference) {
+		return new Double(value.doubleValue() + difference.doubleValue());
+	}
+	
+	@Override
+	public Number subtract(final Number value, final Number difference) {
+		return new Double(value.doubleValue() - difference.doubleValue());
 	}
 	
 }

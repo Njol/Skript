@@ -27,6 +27,7 @@ import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -35,7 +36,6 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.EnchantmentType;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -61,11 +61,11 @@ public class EffEnchant extends Effect {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		item = (Expression<ItemStack>) exprs[0];
-		if (!CollectionUtils.contains(item.acceptChange(ChangeMode.SET), ItemStack.class)) {
+		if (!ChangerUtils.acceptsChange(item, ChangeMode.SET, ItemStack.class)) {
 			Skript.error(item + " cannot be changed, thus it cannot be (dis)enchanted");
 			return false;
 		}
-		if (matchedPattern == 1)
+		if (matchedPattern == 0)
 			enchs = (Expression<EnchantmentType>) exprs[1];
 		return true;
 	}
@@ -79,7 +79,7 @@ public class EffEnchant extends Effect {
 			for (final Enchantment ench : i.getEnchantments().keySet()) {
 				i.removeEnchantment(ench);
 			}
-			item.change(e, i, ChangeMode.SET);
+			item.change(e, new ItemStack[] {i}, ChangeMode.SET);
 		} else {
 			final EnchantmentType[] types = enchs.getArray(e);
 			if (types.length == 0)
@@ -87,7 +87,7 @@ public class EffEnchant extends Effect {
 			for (final EnchantmentType type : types) {
 				i.addUnsafeEnchantment(type.getType(), type.getLevel());
 			}
-			item.change(e, i, ChangeMode.SET);
+			item.change(e, new ItemStack[] {i}, ChangeMode.SET);
 		}
 	}
 	

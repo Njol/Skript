@@ -84,6 +84,7 @@ public class EffLog extends Effect {
 		return true;
 	}
 	
+	@SuppressWarnings("resource")
 	@Override
 	protected void execute(final Event e) {
 		for (final String message : messages.getArray(e)) {
@@ -98,7 +99,6 @@ public class EffLog extends Effect {
 						Bukkit.getLogger().log(Level.INFO, message);
 						continue;
 					}
-					@SuppressWarnings("resource")
 					PrintWriter w = writers.get(s);
 					if (w == null) {
 						final File f = new File(logsFolder, s); // TODO what if s contains '..'?

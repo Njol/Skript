@@ -87,12 +87,12 @@ public class ExprTime extends PropertyExpression<World, Time> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
 		final World[] worlds = getExpr().getArray(e);
 		int mod = 1;
 		switch (mode) {
 			case SET:
-				final Time time = (Time) delta;
+				final Time time = (Time) delta[0];
 				for (final World w : worlds) {
 					w.setTime(time.getTicks());
 				}
@@ -101,7 +101,7 @@ public class ExprTime extends PropertyExpression<World, Time> {
 				mod = -1;
 				//$FALL-THROUGH$
 			case ADD:
-				final Timespan ts = (Timespan) delta;
+				final Timespan ts = (Timespan) delta[0];
 				for (final World w : worlds) {
 					w.setTime(w.getTime() + mod * ts.getTicks());
 				}

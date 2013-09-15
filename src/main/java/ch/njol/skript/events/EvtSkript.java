@@ -42,7 +42,7 @@ import ch.njol.util.CollectionUtils;
 public class EvtSkript extends SelfRegisteringSkriptEvent {
 	
 	static {
-		Skript.registerEvent("Server Start/Stop", EvtSkript.class, CollectionUtils.array(SkriptStartEvent.class, SkriptStopEvent.class), "(0¦server|1¦skript) (start|load)", "(0¦server|1¦skript) stop")
+		Skript.registerEvent("Server Start/Stop", EvtSkript.class, CollectionUtils.array(SkriptStartEvent.class, SkriptStopEvent.class), "(0¦server|1¦skript) (start|load|enable)", "(0¦server|1¦skript) (stop|unload|disable)")
 				.description("Called when the server starts or stops (actually, when Skript starts or stops, so a /reload will trigger these events as well).")
 				.examples("on Skript start", "on server stop")
 				.since("2.0");

@@ -308,7 +308,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		throw invalidAccessException();
 	}
 	

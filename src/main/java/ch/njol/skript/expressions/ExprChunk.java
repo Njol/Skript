@@ -97,7 +97,9 @@ public class ExprChunk extends PropertyExpression<Location, Chunk> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		assert mode == ChangeMode.RESET;
+		
 		final Chunk[] cs = getArray(e);
 		for (final Chunk c : cs)
 			c.getWorld().regenerateChunk(c.getX(), c.getZ());

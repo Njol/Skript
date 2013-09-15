@@ -25,6 +25,7 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -32,7 +33,6 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -77,17 +77,17 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Double> {
 	
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if ((mode == ChangeMode.SET || mode == ChangeMode.ADD || mode == ChangeMode.REMOVE) && getExpr().isSingle() && CollectionUtils.contains(getExpr().acceptChange(ChangeMode.SET), Location.class))
+		if ((mode == ChangeMode.SET || mode == ChangeMode.ADD || mode == ChangeMode.REMOVE) && getExpr().isSingle() && ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, Location.class))
 			return new Class[] {Number.class};
 		return null;
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		final Location l = getExpr().getSingle(e);
 		if (l == null)
 			return;
-		double n = ((Number) delta).doubleValue();
+		double n = ((Number) delta[0]).doubleValue();
 		switch (mode) {
 			case REMOVE:
 				n = -n;
@@ -100,7 +100,7 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Double> {
 				} else {
 					l.setZ(l.getZ() + n);
 				}
-				getExpr().change(e, l, ChangeMode.SET);
+				getExpr().change(e, new Location[] {l}, ChangeMode.SET);
 				break;
 			case SET:
 				if (axis == 0) {
@@ -110,7 +110,7 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Double> {
 				} else {
 					l.setZ(n);
 				}
-				getExpr().change(e, l, ChangeMode.SET);
+				getExpr().change(e, new Location[] {l}, ChangeMode.SET);
 				break;
 			case DELETE:
 			case REMOVE_ALL:

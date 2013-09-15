@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
@@ -198,13 +199,14 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * Gets the class info of the given class or it's closest registered superclass. This method will never return null.
+	 * Gets the class info of the given class or it's closest registered superclass. This method will never return null unless <tt>c</tt> is null.
 	 * 
 	 * @param c
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> ClassInfo<? super T> getSuperClassInfo(final Class<T> c) {
+		assert c != null;
 		checkAllowClassInfoInteraction();
 		final ClassInfo<?> i = superClassInfos.get(c);
 		if (i != null)
@@ -216,6 +218,7 @@ public abstract class Classes {
 				return (ClassInfo<? super T>) ci;
 			}
 		}
+		assert false;
 		return null;
 	}
 	
@@ -490,19 +493,19 @@ public abstract class Classes {
 		return mode == StringMode.VARIABLE_NAME ? "object:" + o : "" + o;
 	}
 	
-	public static final String toString(final Object[] os, final int flags) {
-		return toString(os, true, StringMode.MESSAGE, flags);
+	public static final String toString(final Object[] os, final int flags, final ChatColor c) {
+		return toString(os, true, c, StringMode.MESSAGE, flags);
 	}
 	
 	public static final String toString(final Object[] os, final boolean and) {
-		return toString(os, and, StringMode.MESSAGE, 0);
+		return toString(os, and, null, StringMode.MESSAGE, 0);
 	}
 	
 	public static final String toString(final Object[] os, final boolean and, final StringMode mode) {
-		return toString(os, and, mode, 0);
+		return toString(os, and, null, mode, 0);
 	}
 	
-	private static final String toString(final Object[] os, final boolean and, final StringMode mode, final int flags) {
+	private static final String toString(final Object[] os, final boolean and, final ChatColor c, final StringMode mode, final int flags) {
 		if (os.length == 0)
 			return toString(null);
 		if (os.length == 1)
@@ -510,6 +513,8 @@ public abstract class Classes {
 		final StringBuilder b = new StringBuilder();
 		for (int i = 0; i < os.length; i++) {
 			if (i != 0) {
+				if (c != null)
+					b.append(c.toString());
 				if (i == os.length - 1)
 					b.append(and ? " and " : " or ");
 				else

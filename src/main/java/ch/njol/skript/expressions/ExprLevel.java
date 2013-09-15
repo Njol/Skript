@@ -94,8 +94,11 @@ public class ExprLevel extends SimplePropertyExpression<Player, Integer> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		final int l = delta == null ? 0 : ((Number) delta).intValue();
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		assert mode != ChangeMode.REMOVE_ALL;
+		
+		final int l = delta == null ? 0 : ((Number) delta[0]).intValue();
+		
 		for (final Player p : getExpr().getArray(e)) {
 			int level;
 			if (getTime() > 0 && e instanceof PlayerDeathEvent && ((PlayerDeathEvent) e).getEntity() == p && !Delay.isDelayed(e)) {

@@ -47,7 +47,6 @@ import ch.njol.util.Kleenean;
 		"	message \"You're currently looking at a %type of the targeted entity%!\""})
 @Since("1.0")
 public class EffMessage extends Effect {
-	
 	static {
 		Skript.registerEffect(EffMessage.class, "(message|send [message]) %strings% [to %commandsenders%]");
 	}

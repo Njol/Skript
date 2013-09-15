@@ -58,7 +58,7 @@ public class ExprTypeOf extends SimplePropertyExpression<Object, Object> {
 		if (o instanceof EntityData) {
 			return ((EntityData<?>) o).getSuperType();
 		} else if (o instanceof ItemStack) {
-			return new ItemStack(((ItemStack) o).getTypeId(), 1, ((ItemStack) o).getDurability());
+			return new ItemStack(((ItemStack) o).getType(), 1, ((ItemStack) o).getDurability());
 		}
 		assert false;
 		return null;

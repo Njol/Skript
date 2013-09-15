@@ -121,13 +121,13 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
 		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE) {
+			final LivingEntity target = delta == null ? null : (LivingEntity) delta[0];
 			if (getTime() >= 0 && e instanceof EntityTargetEvent && getExpr().isDefault() && !Delay.isDelayed(e)) {
-				((EntityTargetEvent) e).setTarget((LivingEntity) delta);
+				((EntityTargetEvent) e).setTarget(target);
 				return;
 			}
-			final LivingEntity target = (LivingEntity) delta;
 			for (final LivingEntity entity : getExpr().getArray(e)) {
 				if (!(entity instanceof Creature))
 					continue;

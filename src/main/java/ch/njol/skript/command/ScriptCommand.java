@@ -281,7 +281,7 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		helps.add(t);
 		final HelpTopic aliases = help.getHelpTopic("Aliases");
 		if (aliases != null && aliases instanceof IndexHelpTopic) {
-			aliases.getFullText(Bukkit.getConsoleSender());// CraftBukkit has a lazy IndexHelpTopic class (org.bukkit.craftbukkit.help.CustomIndexHelpTopic) - maybe it's used for aliases as well
+			aliases.getFullText(Bukkit.getConsoleSender()); // CraftBukkit has a lazy IndexHelpTopic class (org.bukkit.craftbukkit.help.CustomIndexHelpTopic) - maybe its used for aliases as well
 			try {
 				final Field topics = IndexHelpTopic.class.getDeclaredField("allTopics");
 				topics.setAccessible(true);

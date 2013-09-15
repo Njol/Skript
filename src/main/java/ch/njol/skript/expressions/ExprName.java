@@ -29,7 +29,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -67,7 +69,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	private static enum NameType {
 		NAME("name", "name", PLAYER | ITEMSTACK | ENTITY, ITEMSTACK | ENTITY) {
 			@Override
-			void set(final Object o, final String s) { // TODO test
+			void set(final Object o, final String s) {
 				if (o == null)
 					return;
 				if (o instanceof LivingEntity) {
@@ -244,7 +246,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			return null;
 		if ((type.acceptChange & PLAYER) != 0 && Player.class.isAssignableFrom(getExpr().getReturnType())) {
 			changeType = PLAYER;
-		} else if ((type.acceptChange & ITEMSTACK) != 0 && (getExpr().isSingle() && CollectionUtils.contains(getExpr().acceptChange(ChangeMode.SET), ItemStack.class) || Slot.class.isAssignableFrom(getExpr().getReturnType()))) {
+		} else if ((type.acceptChange & ITEMSTACK) != 0 && (getExpr().isSingle() && ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, ItemStack.class, ItemType.class) || Slot.class.isAssignableFrom(getExpr().getReturnType()))) {
 			changeType = ITEMSTACK;
 		} else if ((type.acceptChange & ENTITY) != 0 && LivingEntity.class.isAssignableFrom(getExpr().getReturnType())) {
 			if (type == NameType.NAME && Player.class.isAssignableFrom(getExpr().getReturnType())) {
@@ -257,12 +259,13 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+		final String name = delta == null ? null : (String) delta[0];
 		if (changeType == ITEMSTACK) {
 			if (Slot.class.isAssignableFrom(getExpr().getReturnType())) {
 				for (final Slot s : (Slot[]) getExpr().getArray(e)) {
 					final ItemStack i = s.getItem();
-					type.set(i, (String) delta);
+					type.set(i, name);
 					s.setItem(i);
 				}
 			} else {
@@ -270,16 +273,18 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 				if (!(i instanceof ItemStack) && !(i instanceof Slot))
 					return;
 				final ItemStack is = i instanceof Slot ? ((Slot) i).getItem() : (ItemStack) i;
-				type.set(is, (String) delta);
+				type.set(is, name);
 				if (i instanceof Slot)
 					((Slot) i).setItem(is);
+				else if (ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, ItemStack.class))
+					getExpr().change(e, new Object[] {i}, ChangeMode.SET);
 				else
-					getExpr().change(e, i, ChangeMode.SET);
+					getExpr().change(e, new ItemType[] {new ItemType((ItemStack) i)}, ChangeMode.SET);
 			}
 		} else {
 			for (final Object o : getExpr().getArray(e)) {
 				if (o instanceof LivingEntity || o instanceof Player)
-					type.set(o, (String) delta);
+					type.set(o, name);
 			}
 		}
 	}

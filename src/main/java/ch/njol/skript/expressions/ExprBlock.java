@@ -72,11 +72,11 @@ public class ExprBlock extends WrapperExpression<Block> {
 					return l.getBlock();
 				}
 			}));
+			return true;
 		} else {
 			setExpr(new EventValueExpression<Block>(Block.class));
 			return ((EventValueExpression<Block>) getExpr()).init();
 		}
-		return true;
 	}
 	
 	@Override

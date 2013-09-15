@@ -58,7 +58,6 @@ import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.WeatherType;
-import ch.njol.util.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -192,6 +191,7 @@ public class SkriptClasses {
 						return t.getDebugMessage();
 					}
 					
+					@SuppressWarnings("deprecation")
 					@Override
 					public String toVariableNameString(final ItemType t) {
 						final StringBuilder b = new StringBuilder("itemtype:");
@@ -218,6 +218,7 @@ public class SkriptClasses {
 					}
 				})
 				.serializer(new Serializer<ItemType>() {
+					@SuppressWarnings("deprecation")
 					@Override
 					public String serialize(final ItemType t) {
 						final StringBuilder b = new StringBuilder();
@@ -242,6 +243,7 @@ public class SkriptClasses {
 						return b.toString();
 					}
 					
+					@SuppressWarnings("deprecation")
 					@Override
 					public ItemType deserialize(final String s) {
 						final String[] ss = s.split("\\|");
@@ -415,6 +417,16 @@ public class SkriptClasses {
 					public Timespan difference(final Timespan t1, final Timespan t2) {
 						return new Timespan(Math.abs(t1.getMilliSeconds() - t2.getMilliSeconds()));
 					}
+					
+					@Override
+					public Timespan add(final Timespan value, final Timespan difference) {
+						return new Timespan(value.getMilliSeconds() + difference.getMilliSeconds());
+					}
+					
+					@Override
+					public Timespan subtract(final Timespan value, final Timespan difference) {
+						return new Timespan(Math.max(0, value.getMilliSeconds() - difference.getMilliSeconds()));
+					}
 				}));
 		
 		// TODO remove?
@@ -526,28 +538,15 @@ public class SkriptClasses {
 					public Timespan difference(final Date first, final Date second) {
 						return first.difference(second);
 					}
-				}).changer(new SerializableChanger<Date, Timespan>() {
-					@SuppressWarnings("unchecked")
+					
 					@Override
-					public Class<? extends Timespan>[] acceptChange(final ChangeMode mode) {
-						if (mode == ChangeMode.ADD || mode == ChangeMode.REMOVE)
-							return CollectionUtils.array(Timespan.class);
-						return null;
+					public Date add(final Date value, final Timespan difference) {
+						return new Date(value.getTimestamp() + difference.getMilliSeconds());
 					}
 					
-					@SuppressWarnings("incomplete-switch")
 					@Override
-					public void change(final Date[] what, final Timespan delta, final ChangeMode mode) {
-						switch (mode) {
-							case ADD:
-								for (final Date d : what)
-									d.add(delta);
-								break;
-							case REMOVE:
-								for (final Date d : what)
-									d.subtract(delta);
-								break;
-						}
+					public Date subtract(final Date value, final Timespan difference) {
+						return new Date(value.getTimestamp() - difference.getMilliSeconds());
 					}
 				}));
 		
@@ -622,7 +621,7 @@ public class SkriptClasses {
 						"enchant the player's chestplate with projectile protection 5")
 				.since("")
 				.defaultExpression(new EventValueExpression<Slot>(Slot.class))
-				.changer(new SerializableChanger<Slot, Object>() {
+				.changer(new SerializableChanger<Slot>() {
 					@SuppressWarnings("unchecked")
 					@Override
 					public Class<Object>[] acceptChange(final ChangeMode mode) {
@@ -632,7 +631,8 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public void change(final Slot[] slots, final Object delta, final ChangeMode mode) {
+					public void change(final Slot[] slots, final Object[] deltas, final ChangeMode mode) {
+						final Object delta = deltas == null ? null : deltas[0];
 						for (final Slot slot : slots) {
 							switch (mode) {
 								case SET:
@@ -642,7 +642,7 @@ public class SkriptClasses {
 									if (delta instanceof ItemStack) {
 										final ItemStack i = slot.getItem();
 										if (Utils.itemStacksEqual(i, (ItemStack) delta)) {
-											i.setAmount(i.getAmount() + ((ItemStack) delta).getAmount());
+											i.setAmount(Math.min(i.getAmount() + ((ItemStack) delta).getAmount(), i.getMaxStackSize()));
 											slot.setItem(i);
 										}
 									} else {
@@ -720,6 +720,7 @@ public class SkriptClasses {
 				.examples("grow any regular tree at the block",
 						"grow a huge red mushroom above the block")
 				.since("")
+				.defaultExpression(new SimpleLiteral<StructureType>(StructureType.TREE, true))
 				.parser(new Parser<StructureType>() {
 					@Override
 					public StructureType parse(final String s, final ParseContext context) {
@@ -772,11 +773,13 @@ public class SkriptClasses {
 					}
 				})
 				.serializer(new Serializer<EnchantmentType>() {
+					@SuppressWarnings("deprecation")
 					@Override
 					public String serialize(final EnchantmentType o) {
 						return o.getType().getId() + ":" + o.getLevel();
 					}
 					
+					@SuppressWarnings("deprecation")
 					@Override
 					public EnchantmentType deserialize(final String s) {
 						final String[] split = s.split(":");

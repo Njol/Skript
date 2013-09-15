@@ -21,6 +21,7 @@
 
 package ch.njol.skript.conditions;
 
+import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
@@ -51,7 +52,7 @@ public class CondIsEmpty extends PropertyCondition<Object> {
 			return !((Inventory) o).iterator().hasNext();
 		if (o instanceof Slot) {
 			final Slot s = (Slot) o;
-			return s.getItem() == null || s.getItem().getTypeId() == 0;
+			return s.getItem() == null || s.getItem().getType() == Material.AIR;
 		}
 		return false;
 	}

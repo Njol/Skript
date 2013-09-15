@@ -44,7 +44,7 @@ public class FactionsHook extends RegionsPlugin {
 		final Plugin p = Bukkit.getPluginManager().getPlugin("Factions");
 		if (p != null) {
 			factions = p;
-			factions2 = !factions.getClass().getSimpleName().equals("P");
+			factions2 = !factions.getClass().getName().equals("com.massivecraft.factions.P");
 			return super.init();
 		}
 		return false;

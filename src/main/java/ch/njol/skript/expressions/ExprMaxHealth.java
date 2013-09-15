@@ -76,18 +76,18 @@ public class ExprMaxHealth extends SimplePropertyExpression<LivingEntity, Double
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		double d = delta == null ? 0 : ((Number) delta).doubleValue();
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		double d = delta == null ? 0 : ((Number) delta[0]).doubleValue();
 		for (final LivingEntity en : getExpr().getArray(e)) {
 			switch (mode) {
 				case SET:
-					en.setMaxHealth(2 * Math.max(0, d));
+					HealthUtils.setMaxHealth(en, d);
 					break;
 				case REMOVE:
 					d = -d;
 					//$FALL-THROUGH$
 				case ADD:
-					en.setMaxHealth(Math.max(0, en.getMaxHealth() + 2 * d));
+					HealthUtils.setMaxHealth(en, HealthUtils.getMaxHealth(en) + d);
 					break;
 				case RESET:
 					en.resetMaxHealth();

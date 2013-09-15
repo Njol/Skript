@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.localization.Message;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
@@ -34,15 +35,31 @@ import ch.njol.skript.localization.Message;
 @SuppressWarnings("serial")
 public class Time implements Serializable {
 	
+	private final static int TICKS_PER_HOUR = 1000, TICKS_PER_DAY = 24 * TICKS_PER_HOUR;
+	private final static double TICKS_PER_MINUTE = 1000. / 60;
+	/**
+	 * 0 ticks == 6:00
+	 */
+	private final static int HOUR_ZERO = 6 * TICKS_PER_HOUR;
+	
 	private final int time;
 	
 	public Time(final int time) {
-		this.time = (time % 24000 + 24000) % 24000;
-		assert this.time >= 0 && this.time < 24000 : time;
+		this.time = Math2.mod(time, TICKS_PER_DAY);
 	}
 	
+	/**
+	 * @return Ticks in Minecraft time (0 ticks == 6:00)
+	 */
 	public int getTicks() {
 		return time;
+	}
+	
+	/**
+	 * @return Ticks in day time (0 ticks == 0:00)
+	 */
+	public int getTime() {
+		return (time + HOUR_ZERO) % TICKS_PER_DAY;
 	}
 	
 	@Override
@@ -51,10 +68,10 @@ public class Time implements Serializable {
 	}
 	
 	public static String toString(final int ticks) {
-		assert 0 <= ticks && ticks < 24000;
-		final int t = (ticks + 6000) % 24000;
-		int hours = (int) Math.floor(t / 1000);
-		int minutes = (int) (Math.round((t % 1000) / 16.666666667));
+		assert 0 <= ticks && ticks < TICKS_PER_DAY;
+		final int t = (ticks + HOUR_ZERO) % TICKS_PER_DAY;
+		int hours = t / TICKS_PER_HOUR;
+		int minutes = (int) (Math.round((t % TICKS_PER_HOUR) / TICKS_PER_MINUTE));
 		if (minutes >= 60) {
 			hours = (hours + 1) % 24;
 			minutes -= 60;
@@ -87,7 +104,7 @@ public class Time implements Serializable {
 				Skript.error("" + m_error_60_minutes);
 				return null;
 			}
-			return new Time((int) Math.round(hours * 1000 - 6000 + minutes * 16.6666667));
+			return new Time((int) Math.round(hours * TICKS_PER_HOUR - HOUR_ZERO + minutes * TICKS_PER_MINUTE));
 		} else {
 			final Matcher m = Pattern.compile("(\\d?\\d)(:(\\d\\d))? ?(am|pm)", Pattern.CASE_INSENSITIVE).matcher(s);
 			if (m.matches()) {
@@ -107,7 +124,7 @@ public class Time implements Serializable {
 				}
 				if (m.group(4).equalsIgnoreCase("pm"))
 					hours += 12;
-				return new Time((int) Math.round(hours * 1000 - 6000 + minutes * 16.6666667));
+				return new Time((int) Math.round(hours * TICKS_PER_HOUR - HOUR_ZERO + minutes * TICKS_PER_MINUTE));
 			}
 		}
 		return null;

@@ -145,6 +145,7 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 			return iter;
 		
 		return new CheckedIterator<ItemStack>(iter, new Checker<ItemStack>() {
+			@SuppressWarnings("deprecation")
 			@Override
 			public boolean check(final ItemStack is) {
 				return is.getTypeId() <= Skript.MAXBLOCKID;

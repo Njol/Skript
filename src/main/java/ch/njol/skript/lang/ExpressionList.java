@@ -207,7 +207,7 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		for (final Expression<?> expr : expressions) {
 			expr.change(e, delta, mode);
 		}

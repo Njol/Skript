@@ -36,6 +36,7 @@ import ch.njol.skript.localization.LanguageChangeListener;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("deprecation")
 public abstract class PotionEffectUtils {
 	
 	private PotionEffectUtils() {}

@@ -94,8 +94,10 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
-		final Location l = (Location) delta;
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+		assert mode == ChangeMode.SET;
+		
+		final Location l = (Location) delta[0];
 		final int x = l.getBlockX(), y = l.getBlockY(), z = l.getBlockZ();
 		for (final World w : getExpr().getArray(e)) {
 			w.setSpawnLocation(x, y, z);

@@ -71,7 +71,7 @@ public class CondIsRiding extends Condition {
 				return types.check(e, new Checker<EntityData<?>>() {
 					@Override
 					public boolean check(final EntityData<?> d) {
-						return d.isInstance(en);
+						return d.isInstance(en.getVehicle());
 					}
 				}, isNegated());
 			}

@@ -24,7 +24,9 @@ package ch.njol.skript.effects;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -32,8 +34,8 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -61,7 +63,7 @@ public class EffReplace extends Effect {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		haystack = (Expression<String>) exprs[1 + matchedPattern];
-		if (!CollectionUtils.containsSuperclass(haystack.acceptChange(ChangeMode.SET), String.class)) {
+		if (!ChangerUtils.acceptsChange(haystack, ChangeMode.SET, String.class)) {
 			Skript.error(haystack + " cannot be changed and can thus not have parts replaced.");
 			return false;
 		}
@@ -78,8 +80,8 @@ public class EffReplace extends Effect {
 		if (h == null || ns.length == 0 || r == null)
 			return;
 		for (final String n : ns)
-			h = h.replace(n, r);
-		haystack.change(e, h, ChangeMode.SET);
+			h = StringUtils.replace(h, n, r, SkriptConfig.caseSensitive.value());
+		haystack.change(e, new String[] {h}, ChangeMode.SET);
 	}
 	
 	@Override

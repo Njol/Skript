@@ -55,6 +55,9 @@ public class Date implements Serializable, Comparable<Date> {
 		return SkriptConfig.formatDate(timestamp);
 	}
 	
+	/**
+	 * @return The timestamp in milliseconds
+	 */
 	public long getTimestamp() {
 		return timestamp;
 	}

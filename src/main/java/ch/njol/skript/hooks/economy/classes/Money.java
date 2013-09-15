@@ -81,6 +81,16 @@ public class Money {
 							return new Money(0);
 						return new Money(d);
 					}
+					
+					@Override
+					public Money add(final Money value, final Money difference) {
+						return new Money(value.amount + difference.amount);
+					}
+					
+					@Override
+					public Money subtract(final Money value, final Money difference) {
+						return new Money(value.amount - difference.amount);
+					}
 				}));
 		
 		Comparators.registerComparator(Money.class, Money.class, new Comparator<Money, Money>() {

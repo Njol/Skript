@@ -48,7 +48,9 @@ public enum StructureType {
 	SWAMP(TreeType.SWAMP),
 	
 	MUSHROOM(TreeType.RED_MUSHROOM, TreeType.BROWN_MUSHROOM),
-	RED_MUSHROOM(TreeType.RED_MUSHROOM), BROWN_MUSHROOM(TreeType.BROWN_MUSHROOM), ;
+	RED_MUSHROOM(TreeType.RED_MUSHROOM), BROWN_MUSHROOM(TreeType.BROWN_MUSHROOM),
+	
+	;
 	
 	private Noun name;
 	private final TreeType[] types;

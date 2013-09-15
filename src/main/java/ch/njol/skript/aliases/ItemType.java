@@ -38,6 +38,7 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.RandomAccess;
 
+import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
@@ -58,7 +59,7 @@ import ch.njol.skript.util.Utils;
 import ch.njol.util.iterator.SingleItemIterator;
 
 @ContainerType(ItemStack.class)
-@SuppressWarnings("serial")
+@SuppressWarnings({"serial", "deprecation"})
 public class ItemType implements Unit, Serializable, Iterable<ItemData>, Container<ItemStack> {
 	
 	/**
@@ -232,8 +233,17 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	
 	public void setItemMeta(final Object meta) {
 		if (!Skript.isRunningMinecraft(1, 4, 5) || !(meta instanceof ItemMeta))
-			throw new IllegalStateException();
+			throw new IllegalStateException("" + meta);
+		unsetItemMetaEnchs((ItemMeta) meta);
 		this.meta = meta;
+		if (item != null) {
+			item = item.clone();
+			item.meta = meta;
+		}
+		if (block != null) {
+			block = block.clone();
+			block.meta = meta;
+		}
 	}
 	
 	private final static void unsetItemMetaEnchs(final ItemMeta meta) {
@@ -517,7 +527,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 				final ItemStack is = currentDataIter.next();
 				is.setAmount(getAmount());
 				if (meta != null)
-					is.setItemMeta((ItemMeta) meta);
+					is.setItemMeta(Bukkit.getItemFactory().asMetaFor((ItemMeta) meta, is.getType()));
 				if (enchantments != null)
 					is.addUnsafeEnchantments(enchantments);
 				return is;
@@ -627,7 +637,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		final ItemStack is = types.get(i).getRandom();
 		is.setAmount(getAmount());
 		if (meta != null)
-			is.setItemMeta((ItemMeta) meta);
+			is.setItemMeta(Bukkit.getItemFactory().asMetaFor((ItemMeta) meta, is.getType()));
 		if (enchantments != null)
 			is.addUnsafeEnchantments(enchantments);
 		return is;

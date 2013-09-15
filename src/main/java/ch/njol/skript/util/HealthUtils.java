@@ -38,13 +38,14 @@ public abstract class HealthUtils {
 	private HealthUtils() {}
 	
 	private final static boolean usesDoubles = Skript.isRunningMinecraft(1, 6);
-	private static Method getHealth, setHealth, getMaxHealth, damage;
+	private static Method getHealth, setHealth, getMaxHealth, setMaxHealth, damage;
 	static {
 		if (!usesDoubles) {
 			try {
 				getHealth = Damageable.class.getDeclaredMethod("getHealth");
-				getMaxHealth = Damageable.class.getDeclaredMethod("getMaxHealth");
 				setHealth = Damageable.class.getDeclaredMethod("setHealth", int.class);
+				getMaxHealth = Damageable.class.getDeclaredMethod("getMaxHealth");
+				setMaxHealth = Damageable.class.getDeclaredMethod("setMaxHealth", int.class);
 				damage = Damageable.class.getDeclaredMethod("damage", int.class);
 			} catch (final NoSuchMethodException e) {
 				Skript.outdatedError(e);
@@ -77,6 +78,26 @@ public abstract class HealthUtils {
 	
 	/**
 	 * @param e
+	 * @param health The amount of hearts to set
+	 */
+	public final static void setHealth(final LivingEntity e, final double health) {
+		if (usesDoubles) {
+			e.setHealth(Math2.fit(0, health, getMaxHealth(e)) * 2);
+			return;
+		}
+		try {
+			setHealth.invoke(e, (int) Math.round(Math2.fit(0, health, getMaxHealth(e)) * 2));
+		} catch (final IllegalAccessException ex) {
+			Skript.exception(ex);
+		} catch (final IllegalArgumentException ex) {
+			Skript.outdatedError(ex);
+		} catch (final InvocationTargetException ex) {
+			Skript.exception(ex);
+		}
+	}
+	
+	/**
+	 * @param e
 	 * @return How many hearts the entity can have at most
 	 */
 	public final static double getMaxHealth(final LivingEntity e) {
@@ -96,15 +117,15 @@ public abstract class HealthUtils {
 	
 	/**
 	 * @param e
-	 * @param health The amount of hearts to set
+	 * @return How many hearts the entity can have at most
 	 */
-	public final static void setHealth(final LivingEntity e, final double health) {
+	public final static void setMaxHealth(final LivingEntity e, final double health) {
 		if (usesDoubles) {
-			e.setHealth(Math2.fit(0, health, e.getMaxHealth()) * 2);
+			e.setMaxHealth(Math.max(0, health * 2));
 			return;
 		}
 		try {
-			setHealth.invoke(e, (int) Math.round(Math2.fit(0, health, getMaxHealth(e)) * 2));
+			setMaxHealth.invoke(e, Math.max(0, (int) Math.round(health * 2)));
 		} catch (final IllegalAccessException ex) {
 			Skript.exception(ex);
 		} catch (final IllegalArgumentException ex) {

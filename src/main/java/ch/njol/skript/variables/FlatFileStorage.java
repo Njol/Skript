@@ -44,6 +44,7 @@ import ch.njol.skript.lang.Variable;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
@@ -52,6 +53,9 @@ import ch.njol.skript.util.Version;
 import ch.njol.util.Pair;
 
 /**
+ * TODO use a database (SQLite) instead and only load a limited amount of variables into RAM
+ * rem: store null variables to prevent looking up the same variables over and over again
+ * 
  * @author Peter Güttinger
  */
 public class FlatFileStorage extends VariablesStorage {
@@ -118,7 +122,7 @@ public class FlatFileStorage extends VariablesStorage {
 			return false;
 		}
 		
-		boolean ioEx = false;
+		IOException ioEx = null;
 		int unsuccessful = 0;
 		final StringBuilder invalid = new StringBuilder();
 		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
@@ -169,9 +173,8 @@ public class FlatFileStorage extends VariablesStorage {
 					}
 				}
 			} catch (final IOException e) {
-				Skript.error(e.getLocalizedMessage());
 				loadError = true;
-				ioEx = true;
+				ioEx = e;
 			} finally {
 				if (r != null) {
 					try {
@@ -182,7 +185,7 @@ public class FlatFileStorage extends VariablesStorage {
 		} finally {
 			log.stop();
 		}
-		if (ioEx || unsuccessful > 0) {
+		if (ioEx != null || unsuccessful > 0) {
 			if (unsuccessful > 0) {
 				Skript.error(unsuccessful + " variable" + (unsuccessful == 1 ? "" : "s") + " could not be loaded!");
 				Skript.error("Affected variables: " + invalid.toString());
@@ -191,8 +194,8 @@ public class FlatFileStorage extends VariablesStorage {
 					log.printErrors(null);
 				}
 			}
-			if (ioEx) {
-				Skript.error("An I/O error occurred while loading the variables");
+			if (ioEx != null) {
+				Skript.error("An I/O error occurred while loading the variables: " + ExceptionUtils.toString(ioEx));
 				Skript.error("This means that some to all variables could not be loaded!");
 			}
 			try {
@@ -224,7 +227,7 @@ public class FlatFileStorage extends VariablesStorage {
 		if (backupTask == null && SkriptConfig.variableBackupInterval.value() != null)
 			startBackupTask(SkriptConfig.variableBackupInterval.value());
 		
-		return !ioEx;
+		return ioEx == null;
 	}
 	
 	private final static Pattern csv = Pattern.compile("\\s*([^\",]+|\"([^\"]|\"\")*\")\\s*(,|$)");

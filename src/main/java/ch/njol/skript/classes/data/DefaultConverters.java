@@ -22,6 +22,7 @@
 package ch.njol.skript.classes.data;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -115,6 +116,7 @@ public class DefaultConverters {
 		
 		// Block - ItemStack
 		Converters.registerConverter(Block.class, ItemStack.class, new SerializableConverter<Block, ItemStack>() {
+			@SuppressWarnings("deprecation")
 			@Override
 			public ItemStack convert(final Block b) {
 				return new ItemStack(b.getTypeId(), 1, b.getData());
@@ -211,7 +213,7 @@ public class DefaultConverters {
 			public ItemStack convert(final Slot s) {
 				final ItemStack i = s.getItem();
 				if (i == null)
-					return new ItemStack(0, 1);
+					return new ItemStack(Material.AIR, 1);
 				return i;
 			}
 		});

@@ -32,4 +32,8 @@ public interface Arithmetic<A, R> extends Serializable {
 	
 	public R difference(A first, A second);
 	
+	public A add(A value, R difference);
+	
+	public A subtract(A value, R difference);
+	
 }

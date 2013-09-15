@@ -21,8 +21,10 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -48,7 +50,6 @@ import ch.njol.util.Kleenean;
 		"kill all endermen, witches and bats"})
 @Since("1.0")
 public class EffKill extends Effect {
-	
 	static {
 		Skript.registerEffect(EffKill.class, "kill %entities%");
 	}
@@ -65,8 +66,14 @@ public class EffKill extends Effect {
 	@Override
 	protected void execute(final Event e) {
 		for (final Entity entity : entities.getArray(e)) {
-			if (entity instanceof LivingEntity)
+			if (entity instanceof LivingEntity) {
+				final boolean creative = entity instanceof Player && ((Player) entity).getGameMode() == GameMode.CREATIVE;
+				if (creative)
+					((Player) entity).setGameMode(GameMode.SURVIVAL);
 				HealthUtils.damage((LivingEntity) entity, HealthUtils.getMaxHealth((LivingEntity) entity) * 100); // just to make sure that it really dies >:)
+				if (creative)
+					((Player) entity).setGameMode(GameMode.CREATIVE);
+			}
 		}
 	}
 	

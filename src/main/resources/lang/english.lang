@@ -231,6 +231,9 @@ potions:
 	weakness: weakness, reduce damage, reduced damage
 	poison: poison
 	wither: wither, wither effect, wither potion effect
+	health_boost: health boost, max health boost, maximum health boost
+	absorption: absorption
+	saturation: saturation
 
 # -- Weather --
 weather:

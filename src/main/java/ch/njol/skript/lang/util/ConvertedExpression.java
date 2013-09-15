@@ -119,9 +119,9 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
 		if (returnTypeInfo != null) {
-			((Changer<T, Object>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
+			((Changer<T>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
 		} else {
 			source.change(e, delta, mode);
 		}

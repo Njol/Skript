@@ -72,9 +72,9 @@ public class ExprCompassTarget extends SimplePropertyExpression<Player, Location
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		for (final Player p : getExpr().getArray(e))
-			p.setCompassTarget(delta == null ? p.getWorld().getSpawnLocation() : (Location) delta);
+			p.setCompassTarget(delta == null ? p.getWorld().getSpawnLocation() : (Location) delta[0]);
 	}
 	
 }

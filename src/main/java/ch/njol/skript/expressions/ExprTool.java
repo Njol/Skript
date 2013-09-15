@@ -54,10 +54,9 @@ import ch.njol.util.Kleenean;
 		"# is the same as",
 		"player's tool is a pickaxe"})
 @Since("1.0")
-public class ExprTool extends PropertyExpression<Player, Slot> {
-	
+public class ExprTool extends PropertyExpression<Player, Slot> { // TODO for mobs as well
 	static {
-		Skript.registerExpression(ExprTool.class, Slot.class, ExpressionType.PROPERTY, "[the] (tool|held item) [of %players%]", "%player%'[s] (tool|held item)");
+		Skript.registerExpression(ExprTool.class, Slot.class, ExpressionType.PROPERTY, "[the] (tool|held item|weapon) [of %players%]", "%player%'[s] (tool|held item)");
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -69,12 +68,15 @@ public class ExprTool extends PropertyExpression<Player, Slot> {
 	
 	@Override
 	protected Slot[] get(final Event e, final Player[] source) {
-		if (getExpr().isDefault() && !Delay.isDelayed(e)) {
-			if (e instanceof PlayerItemHeldEvent) {
-				return new Slot[] {new Slot(((PlayerItemHeldEvent) e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot())};
-			} else if (e instanceof PlayerBucketEvent) {
-				return new Slot[] {
-						new Slot(((PlayerBucketEvent) e).getPlayer().getInventory(), ((PlayerBucketEvent) e).getPlayer().getInventory().getHeldItemSlot()) {
+		final boolean delayed = Delay.isDelayed(e);
+		return get(source, new Getter<Slot, Player>() {
+			@Override
+			public Slot get(final Player p) {
+				if (!delayed) {
+					if (e instanceof PlayerItemHeldEvent && ((PlayerItemHeldEvent) e).getPlayer() == p) {
+						return new Slot(((PlayerItemHeldEvent) e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot());
+					} else if (e instanceof PlayerBucketEvent && ((PlayerBucketEvent) e).getPlayer() == p) {
+						return new Slot(((PlayerBucketEvent) e).getPlayer().getInventory(), ((PlayerBucketEvent) e).getPlayer().getInventory().getHeldItemSlot()) {
 							@Override
 							public ItemStack getItem() {
 								return getTime() <= 0 ? super.getItem() : ((PlayerBucketEvent) e).getItemStack();
@@ -88,13 +90,9 @@ public class ExprTool extends PropertyExpression<Player, Slot> {
 									super.setItem(item);
 								}
 							}
-						}
-				};
-			}
-		}
-		return get(source, new Getter<Slot, Player>() {
-			@Override
-			public Slot get(final Player p) {
+						};
+					}
+				}
 				return new Slot(p.getInventory(), p.getInventory().getHeldItemSlot()) {
 					@Override
 					public void setItem(final ItemStack item) {

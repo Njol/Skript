@@ -46,7 +46,7 @@ public class VillagerData extends EntityData<Villager> {
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (matchedPattern > 0)
-			profession = Profession.getProfession(matchedPattern - 1);
+			profession = Profession.values()[matchedPattern - 1];
 		return true;
 	}
 	

@@ -22,6 +22,8 @@
 package ch.njol.skript.expressions;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
@@ -37,6 +39,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import ch.njol.util.iterator.EmptyIterator;
 
 /**
  * @author Peter Güttinger
@@ -50,7 +53,7 @@ import ch.njol.util.Kleenean;
 				"	remove loop-item from the player",
 		"set {inventory.%player%} to items in the player's inventory"})
 @Since("2.0")
-public class ExprItemsIn extends SimpleExpression<ItemStack> {
+public class ExprItemsIn extends SimpleExpression<ItemStack> {// TODO return slots to be able to change the loop-item
 	static {
 		Skript.registerExpression(ExprItemsIn.class, ItemStack.class, ExpressionType.PROPERTY,
 				"[all] items (in|of|contained in|out of) %inventories%");
@@ -75,6 +78,48 @@ public class ExprItemsIn extends SimpleExpression<ItemStack> {
 			}
 		}
 		return r.toArray(new ItemStack[r.size()]);
+	}
+	
+	@Override
+	public Iterator<? extends ItemStack> iterator(final Event e) {
+		final Inventory[] is = invis.getArray(e);
+		if (is.length == 0)
+			return EmptyIterator.get();
+		return new Iterator<ItemStack>() {
+			int isi = 0;
+			Inventory current = is[0];
+			int i = 0;
+			
+			@Override
+			public boolean hasNext() {
+				while (i < current.getSize() && current.getItem(i) == null)
+					i++;
+				while (i >= current.getSize() && isi < is.length - 1) {
+					current = is[++isi];
+					i = 0;
+					while (i < current.getSize() && current.getItem(i) == null)
+						i++;
+				}
+				return isi <= is.length;
+			}
+			
+			@Override
+			public ItemStack next() {
+				if (!hasNext())
+					throw new NoSuchElementException();
+				return current.getItem(i++); // new Slot(current, i++);
+			}
+			
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+	
+	@Override
+	public boolean isLoopOf(final String s) {
+		return s.equalsIgnoreCase("item");
 	}
 	
 	@Override

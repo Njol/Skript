@@ -22,8 +22,6 @@
 package ch.njol.skript.events;
 
 import org.bukkit.Material;
-import org.bukkit.entity.ItemFrame;
-import org.bukkit.entity.Painting;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
@@ -43,6 +41,9 @@ import org.bukkit.event.player.PlayerBucketFillEvent;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.classes.Comparator.Relation;
+import ch.njol.skript.classes.data.DefaultComparators;
+import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -116,15 +117,16 @@ public class EvtBlock extends SkriptEvent {
 			id = Material.PAINTING.getId();
 			durability = 0;
 		} else if (Skript.isRunningMinecraft(1, 4, 3) && e instanceof HangingEvent) {
-			if (((HangingEvent) e).getEntity() instanceof Painting)
-				id = Material.PAINTING.getId();
-			else if (((HangingEvent) e).getEntity() instanceof ItemFrame)
-				id = Material.ITEM_FRAME.getId();
-			else
-				return false;
-			durability = 0;
+			final EntityData<?> d = EntityData.fromEntity(((HangingEvent) e).getEntity());
+			return types.check(e, new Checker<ItemType>() {
+				@Override
+				public boolean check(final ItemType t) {
+					return Relation.EQUAL.is(DefaultComparators.entityItemComparator.compare(d, t));
+				}
+			});
 		} else {
-			throw new IllegalStateException();
+			assert false;
+			return false;
 		}
 		return types.check(e, new Checker<ItemType>() {
 			@Override

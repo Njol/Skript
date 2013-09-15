@@ -45,7 +45,7 @@ import ch.njol.util.Kleenean;
 @Examples({"set chestplate of the player to a diamond chestplate",
 		"helmet of player is neither a helmet nor air # player is wearing a block, e.g. from another plugin"})
 @Since("1.0")
-public class ExprArmorSlot extends SimplePropertyExpression<Player, ItemStack> {
+public class ExprArmorSlot extends SimplePropertyExpression<Player, ItemStack> {// TODO for mobs as well
 	static {
 		register(ExprArmorSlot.class, ItemStack.class, "(0¦boot[s]|0¦shoe[s]|1¦leg[ging][s]|2¦chestplate[s]|3¦helm[et][s]) [slot]", "players");
 	}
@@ -104,10 +104,10 @@ public class ExprArmorSlot extends SimplePropertyExpression<Player, ItemStack> {
 	
 	@SuppressWarnings("deprecation")
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
 		for (final Player p : getExpr().getArray(e)) {
 			final ItemStack[] armour = p.getInventory().getArmorContents();
-			armour[slot] = (ItemStack) delta; // both SET and DELETE
+			armour[slot] = delta == null ? null : (ItemStack) delta[0];
 			p.getInventory().setArmorContents(armour);
 			p.updateInventory();
 		}

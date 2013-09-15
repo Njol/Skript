@@ -28,6 +28,7 @@ import org.bukkit.inventory.meta.LeatherArmorMeta;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -37,7 +38,6 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Color;
 import ch.njol.skript.util.Slot;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Math2;
 
@@ -69,7 +69,7 @@ public class EffColorArmor extends Effect {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		items = exprs[0];
-		if (!Slot.class.isAssignableFrom(items.getReturnType()) && !CollectionUtils.containsSuperclass(items.acceptChange(ChangeMode.SET), ItemStack.class)) {
+		if (!Slot.class.isAssignableFrom(items.getReturnType()) && !ChangerUtils.acceptsChange(items, ChangeMode.SET, ItemStack.class)) {
 			Skript.error(items + " cannot be coloured as it cannot be changed at all.");
 			return false;
 		}
@@ -113,7 +113,7 @@ public class EffColorArmor extends Effect {
 			if (o instanceof Slot) {
 				((Slot) o).setItem(i);
 			} else {
-				items.change(e, i, ChangeMode.SET);
+				items.change(e, new ItemStack[] {i}, ChangeMode.SET);
 				return;
 			}
 		}

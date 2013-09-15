@@ -19,70 +19,66 @@
  * 
  */
 
-package ch.njol.skript.effects;
+package ch.njol.skript.expressions;
 
-import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 
+import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.entity.EntityData;
-import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-@Name("Vehicle")
-@Description({"Makes an entity ride another entity, e.g. a minecart, a saddled pig, an arrow, etc."})
-@Examples({"make the player ride a saddled pig",
-		"make the attacker ride the victim"})
+@Name("Script Name")
+@Description("Holds the current script's name (the file name without '.sk').")
+@Examples({"on script load:",
+		"	set {running.%script%} to true",
+		"on script unload:",
+		"	set {running.%script%} to false"})
 @Since("2.0")
-public class EffVehicle extends Effect {
+public class ExprScript extends SimpleExpression<String> {
 	static {
-		Skript.registerEffect(EffVehicle.class,
-				"make %entity% (ride|mount) [(in|on)] %entity/entitydata%"); // TODO eject/dismount effect
+		Skript.registerExpression(ExprScript.class, String.class, ExpressionType.SIMPLE, "[the] script[['s] name]");
 	}
 	
-	private Expression<Entity> passenger;
-	private Expression<?> vehicle;
+	private String name;
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		passenger = (Expression<Entity>) exprs[0];
-		vehicle = exprs[1];
+		name = ScriptLoader.currentScript.getFileName();
+		if (name.contains("."))
+			name = name.substring(0, name.lastIndexOf('.'));
+		return name != null;
+	}
+	
+	@Override
+	protected String[] get(final Event e) {
+		return new String[] {name};
+	}
+	
+	@Override
+	public boolean isSingle() {
 		return true;
 	}
 	
 	@Override
-	protected void execute(final Event e) {
-		final Object v = vehicle.getSingle(e);
-		if (v == null)
-			return;
-		final Entity p = passenger.getSingle(e);
-		if (p == null)
-			return;
-		if (v instanceof Entity) {
-			((Entity) v).eject();
-			((Entity) v).setPassenger(p);
-		} else {
-			final Entity en = ((EntityData<?>) v).spawn(p.getLocation());
-			if (en == null)
-				return;
-			en.setPassenger(p);
-		}
+	public Class<? extends String> getReturnType() {
+		return String.class;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "make " + passenger.toString(e, debug) + " ride " + vehicle.toString(e, debug);
+		return "the script's name";
 	}
 	
 }

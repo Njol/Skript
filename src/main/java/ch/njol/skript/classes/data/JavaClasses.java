@@ -23,7 +23,6 @@ package ch.njol.skript.classes.data;
 
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.IntegerArithmetic;
 import ch.njol.skript.classes.NumberArithmetic;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
@@ -111,7 +110,7 @@ public class JavaClasses {
 					public boolean mustSyncDeserialization() {
 						return false;
 					}
-				}));
+				}).math(Number.class, new NumberArithmetic()));
 		
 		Classes.registerClass(new ClassInfo<Long>(Long.class, "long")
 				.user("int(eger)?s?")
@@ -161,7 +160,7 @@ public class JavaClasses {
 					public boolean mustSyncDeserialization() {
 						return false;
 					}
-				}).math(Double.class, new NumberArithmetic<Long>()));
+				}).math(Number.class, new NumberArithmetic()));
 		
 		Classes.registerClass(new ClassInfo<Integer>(Integer.class, "integer")
 				.name(ClassInfo.NO_DOC)
@@ -209,7 +208,7 @@ public class JavaClasses {
 					public boolean mustSyncDeserialization() {
 						return false;
 					}
-				}).math(Integer.class, new IntegerArithmetic<Integer>()));
+				}).math(Number.class, new NumberArithmetic()));
 		
 		Classes.registerClass(new ClassInfo<Double>(Double.class, "double")
 				.name(ClassInfo.NO_DOC)
@@ -259,7 +258,7 @@ public class JavaClasses {
 					public boolean mustSyncDeserialization() {
 						return false;
 					}
-				}).math(Double.class, new NumberArithmetic<Double>()));
+				}).math(Number.class, new NumberArithmetic()));
 		
 		Classes.registerClass(new ClassInfo<Float>(Float.class, "float")
 				.name(ClassInfo.NO_DOC)
@@ -307,7 +306,7 @@ public class JavaClasses {
 					public boolean mustSyncDeserialization() {
 						return false;
 					}
-				}).math(Double.class, new NumberArithmetic<Float>()));
+				}).math(Number.class, new NumberArithmetic()));
 		
 		Classes.registerClass(new ClassInfo<Boolean>(Boolean.class, "boolean")
 				.user("booleans?")
@@ -413,7 +412,7 @@ public class JavaClasses {
 					public boolean mustSyncDeserialization() {
 						return false;
 					}
-				}).math(Integer.class, new IntegerArithmetic<Short>()));
+				}).math(Number.class, new NumberArithmetic()));
 		
 		Classes.registerClass(new ClassInfo<Byte>(Byte.class, "byte")
 				.name(ClassInfo.NO_DOC)
@@ -461,7 +460,7 @@ public class JavaClasses {
 					public boolean mustSyncDeserialization() {
 						return false;
 					}
-				}).math(Integer.class, new IntegerArithmetic<Byte>()));
+				}).math(Number.class, new NumberArithmetic()));
 		
 		Classes.registerClass(new ClassInfo<String>(String.class, "string")
 				.user("texts?")
@@ -483,19 +482,13 @@ public class JavaClasses {
 					public String parse(final String s, final ParseContext context) {
 						switch (context) {
 							case DEFAULT:
+							case CONFIG:
+							case EVENT:
 								if (VariableString.isQuotedCorrectly(s, true))
 									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
 								return null;
 							case COMMAND:
 								return s; // TODO document this
-							case CONFIG:
-								if (VariableString.isQuotedCorrectly(s, true))
-									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
-								return null;
-							case EVENT:
-								if (VariableString.isQuotedCorrectly(s, true))
-									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
-								return Utils.replaceChatStyles(s);
 						}
 						assert false;
 						return null;

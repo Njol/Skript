@@ -39,7 +39,7 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
+@SuppressWarnings({"serial", "deprecation"})
 @Name("Toggle")
 @Description("Toggle the state of a block.")
 @Examples({"# use arrows to toggle switches, doors, etc.",

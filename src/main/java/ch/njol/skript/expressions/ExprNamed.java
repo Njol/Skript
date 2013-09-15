@@ -21,11 +21,13 @@
 
 package ch.njol.skript.expressions;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.event.Event;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -47,9 +49,9 @@ import ch.njol.util.Kleenean;
 		"set tool of player to the player's tool named \"<gold>Wand\"",
 		"set the name of the player's tool to \"<gold>Wand\""})
 @Since("2.0")
-public class ExprNamed extends PropertyExpression<ItemStack, ItemStack> {
+public class ExprNamed extends PropertyExpression<ItemType, ItemType> {
 	static {
-		Skript.registerExpression(ExprNamed.class, ItemStack.class, ExpressionType.PROPERTY, "%itemstacks% (named|with name[s]) %string%");
+		Skript.registerExpression(ExprNamed.class, ItemType.class, ExpressionType.PROPERTY, "%itemtypes% (named|with name[s]) %string%");
 	}
 	
 	private Expression<String> name;
@@ -61,31 +63,29 @@ public class ExprNamed extends PropertyExpression<ItemStack, ItemStack> {
 			Skript.error("Item names are only available in Minecraft 1.4.5+");
 			return false;
 		}
-		setExpr((Expression<? extends ItemStack>) exprs[0]);
+		setExpr((Expression<? extends ItemType>) exprs[0]);
 		name = (Expression<String>) exprs[1];
 		return true;
 	}
 	
 	@Override
-	protected ItemStack[] get(final Event e, final ItemStack[] source) {
+	protected ItemType[] get(final Event e, final ItemType[] source) {
 		final String n = name.getSingle(e);
 		if (n == null)
-			return new ItemStack[0];
-		final ItemStack[] r = source.clone();
+			return new ItemType[0];
+		final ItemType[] r = source.clone();
 		for (int i = 0; i < r.length; i++) {
 			r[i] = source[i].clone();
-			final ItemMeta m = r[i].getItemMeta();
-			if (m != null) {
-				m.setDisplayName(n);
-				r[i].setItemMeta(m);
-			}
+			final ItemMeta m = r[i].getItemMeta() == null ? Bukkit.getItemFactory().getItemMeta(Material.STONE) /* AIR results in null */: (ItemMeta) r[i].getItemMeta();
+			m.setDisplayName(n);
+			r[i].setItemMeta(m);
 		}
 		return r;
 	}
 	
 	@Override
-	public Class<? extends ItemStack> getReturnType() {
-		return ItemStack.class;
+	public Class<? extends ItemType> getReturnType() {
+		return ItemType.class;
 	}
 	
 	@Override

@@ -133,6 +133,7 @@ public class Direction implements Serializable {
 		return getDirection(e.getLocation());
 	}
 	
+	@SuppressWarnings("deprecation")
 	public Vector getDirection(final Block b) {
 		if (!relative)
 			return new Vector(mod[0], mod[1], mod[2]);
@@ -210,6 +211,7 @@ public class Direction implements Serializable {
 	 * @param b
 	 * @return The facing of the block or {@link BlockFace#SELF} if the block doesn't have a facing.
 	 */
+	@SuppressWarnings("deprecation")
 	public final static BlockFace getFacing(final Block b) {
 		final Material m = b.getType();
 		if (!Directional.class.isAssignableFrom(m.getData()))

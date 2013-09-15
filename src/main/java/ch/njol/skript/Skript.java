@@ -23,6 +23,7 @@ package ch.njol.skript;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -349,7 +350,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				final Filter f = new Filter() {
 					@Override
 					public boolean isLoggable(final LogRecord record) {
-						if (record.getMessage() != null && record.getMessage().equalsIgnoreCase("Can't keep up! Did the system time change, or is the server overloaded?"))
+						if (record.getMessage() != null && record.getMessage().toLowerCase().startsWith("can't keep up!"))
 							return false;
 						return true;
 					}
@@ -360,7 +361,7 @@ public final class Skript extends JavaPlugin implements Listener {
 					public void run() {
 						SkriptLogger.removeFilter(f);
 					}
-				});
+				}, 2);
 			}
 		});
 		
@@ -394,14 +395,14 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * @return whether this server is running CraftBukkit
+	 * @return Whether this server is running CraftBukkit
 	 */
 	public static boolean isRunningCraftBukkit() {
 		return runningCraftBukkit;
 	}
 	
 	/**
-	 * @return whether this server is running Bukkit <tt>major.minor</tt> or higher
+	 * @return Whether this server is running Minecraft <tt>major.minor</tt> or higher
 	 */
 	public static boolean isRunningMinecraft(final int major, final int minor) {
 		return minecraftVersion.compareTo(major, minor) >= 0;
@@ -478,9 +479,9 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		EvtSkript.onSkriptStop(); // TODO [code style] warn user about delays in Skript stop events
 		
-		Bukkit.getScheduler().cancelTasks(this);
-		
 		disableScripts();
+		
+		Bukkit.getScheduler().cancelTasks(this);
 		
 		for (final Closeable c : closeOnDisable) {
 			try {
@@ -490,7 +491,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		// unset static fields to prevent memory leaks as Bukkit reloads the classes with a different classloader on reload
 		// async to not slow down server reload, delayed to not slow down server shutdown
-		new Thread(new Runnable() {
+		final Thread t = newThread(new Runnable() {
 			@Override
 			public void run() {
 				try {
@@ -525,7 +526,10 @@ public final class Skript extends JavaPlugin implements Listener {
 						ex.printStackTrace();
 				}
 			}
-		}).start();
+		}, "Skript cleanup thread");
+		t.setPriority(Thread.MIN_PRIORITY);
+		t.setDaemon(true);
+		t.start();
 	}
 	
 	// ================ CONSTANTS, OPTIONS & OTHER ================
@@ -578,6 +582,19 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public final static String toString(final double n) {
 		return StringUtils.toString(n, SkriptConfig.numberAccuracy.value());
+	}
+	
+	public final static UncaughtExceptionHandler UEH = new UncaughtExceptionHandler() {
+		@Override
+		public void uncaughtException(final Thread t, final Throwable e) {
+			Skript.exception(e, "Exception in thread " + t.getName());
+		}
+	};
+	
+	public final static Thread newThread(final Runnable r, final String name) {
+		final Thread t = new Thread(r, name);
+		t.setUncaughtExceptionHandler(UEH);
+		return t;
 	}
 	
 	// ================ REGISTRATIONS ================
@@ -863,7 +880,15 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	public final static EmptyStackException exception(final Throwable cause, final String... info) {
-		return exception(cause, null, info);
+		return exception(cause, null, null, info);
+	}
+	
+	public final static EmptyStackException exception(final Throwable cause, final Thread thread, final String... info) {
+		return exception(cause, thread, null, info);
+	}
+	
+	public final static EmptyStackException exception(final Throwable cause, final TriggerItem item, final String... info) {
+		return exception(cause, null, null, info);
 	}
 	
 	/**
@@ -873,7 +898,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param info Description of the error and additional information
 	 * @return an EmptyStackException to throw if code execution should terminate.
 	 */
-	public final static EmptyStackException exception(Throwable cause, final TriggerItem item, final String... info) {
+	public final static EmptyStackException exception(Throwable cause, final Thread thread, final TriggerItem item, final String... info) {
 		
 		logEx();
 		logEx("[Skript] Severe Error:");
@@ -909,7 +934,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		logEx("Current node: " + SkriptLogger.getNode());
 		logEx("Current item: " + (item == null ? "null" : item.toString(null, true)));
 		logEx();
-		logEx("Current thread: " + Thread.currentThread().getName());
+		logEx("Thread: " + (thread == null ? Thread.currentThread() : thread).getName());
 		logEx();
 		logEx("End of Error.");
 		logEx();

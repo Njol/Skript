@@ -54,7 +54,7 @@ public abstract class VariablesStorage implements Closeable {
 	 */
 	protected abstract boolean load_i();
 	
-	private final Thread writeThread = new Thread(new Runnable() {
+	private final Thread writeThread = Skript.newThread(new Runnable() {
 		@Override
 		public void run() {
 			while (!closed) {
@@ -68,14 +68,15 @@ public abstract class VariablesStorage implements Closeable {
 				} catch (final InterruptedException e) {}
 			}
 		}
-	});
+	}, "Skript variable save thread (" + type() + ")");
 	
 	private long lastWarning = Long.MIN_VALUE;
+	private final static int WARNING_INTERVAL = 10;
 	
 	final void save(final String name, final Object value) {
 		if (!changesQueue.offer(new Pair<String, Object>(name, value))) {
-			if (lastWarning < System.currentTimeMillis() - 10000) {
-				Skript.warning("Cannot write variables to the " + type() + " at sufficient speed; server performance will suffer and many variables will be lost if the server crashes. (this warning will be repeated at most once every 10 seconds)");
+			if (lastWarning < System.currentTimeMillis() - WARNING_INTERVAL * 1000) {
+				Skript.warning("Cannot write variables to the " + type() + " at sufficient speed; server performance will suffer and many variables will be lost if the server crashes. (this warning will be repeated at most once every " + WARNING_INTERVAL + " seconds)");
 				lastWarning = System.currentTimeMillis();
 			}
 			while (true) {
@@ -95,6 +96,7 @@ public abstract class VariablesStorage implements Closeable {
 			} catch (final InterruptedException e) {}
 		}
 		closed = true;
+		writeThread.interrupt();
 	}
 	
 	/**

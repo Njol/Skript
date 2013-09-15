@@ -74,8 +74,10 @@ public class ExprItem extends EventValueExpression<ItemStack> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		final ItemType t = (ItemType) delta;
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		assert mode != ChangeMode.RESET;
+		
+		final ItemType t = delta == null ? null : (ItemType) delta[0];
 		final Item i = item == null ? null : item.getSingle(e);
 		final Slot s = slot == null ? null : slot.getSingle(e);
 		if (i == null && s == null)

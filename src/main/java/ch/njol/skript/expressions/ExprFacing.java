@@ -64,6 +64,7 @@ public class ExprFacing extends SimplePropertyExpression<Object, Direction> {
 		return super.init(exprs, matchedPattern, isDelayed, parseResult);
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	public Direction convert(final Object o) {
 		if (o instanceof Block) {
@@ -98,15 +99,18 @@ public class ExprFacing extends SimplePropertyExpression<Object, Direction> {
 		return null;
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+		assert mode == ChangeMode.SET;
+		
 		final Block b = (Block) getExpr().getSingle(e);
 		if (b == null)
 			return;
 		final MaterialData d = b.getType().getNewData(b.getData());
 		if (!(d instanceof Directional))
 			return;
-		((Directional) d).setFacingDirection(toBlockFace(((Direction) delta).getDirection(b)));
+		((Directional) d).setFacingDirection(toBlockFace(((Direction) delta[0]).getDirection(b)));
 		b.setData(d.getData());
 	}
 	

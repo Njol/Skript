@@ -98,7 +98,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 					} else {
 						final ItemStack i = super.getItem();
 						i.setAmount(i.getAmount() - 1);
-						return i.getAmount() == 0 ? new ItemStack(0, 1) : i;
+						return i.getAmount() == 0 ? new ItemStack(Material.AIR, 1) : i;
 					}
 				} else {
 					return super.getItem();
@@ -110,7 +110,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 					} else {
 						final ItemStack i = super.getItem();
 						i.setAmount(i.getAmount() - 1);
-						return i.getAmount() == 0 ? new ItemStack(0, 1) : i;
+						return i.getAmount() == 0 ? new ItemStack(Material.AIR, 1) : i;
 					}
 				} else {
 					return super.getItem();
@@ -122,7 +122,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 		public void setItem(final ItemStack item) {
 			if (e instanceof FurnaceSmeltEvent) {
 				if (slot == RESULT && getTime() >= 0) {
-					if (item == null || item.getTypeId() == 0) { // null/air crashes the server on account of a NPE if using event.setResult(...)
+					if (item == null || item.getType() == Material.AIR) { // null/air crashes the server on account of a NPE if using event.setResult(...)
 						Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.getInstance(), new Runnable() {
 							@Override
 							public void run() {

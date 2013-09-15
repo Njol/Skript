@@ -22,6 +22,7 @@
 package ch.njol.skript.effects;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -86,7 +87,7 @@ public class EffDrop extends Effect {
 					orb.setExperience(((Experience) o).getXP());
 				} else {
 					for (final ItemStack is : ((ItemType) o).getItem().getAll()) {
-						if (is.getTypeId() != 0)
+						if (is.getType() != Material.AIR)
 							l.getWorld().dropItemNaturally(itemDropLoc, is);
 					}
 				}

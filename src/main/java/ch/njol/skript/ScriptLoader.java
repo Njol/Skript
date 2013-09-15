@@ -384,7 +384,7 @@ final public class ScriptLoader {
 								Skript.error("Invalid use of percent signs in variable name");
 								continue;
 							}
-							if (Variables.getVariable(name) != null)
+							if (Variables.getVariable(name, null, false) != null)
 								continue;
 							final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 							Object o = Classes.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.CONFIG);
@@ -405,7 +405,7 @@ final public class ScriptLoader {
 									continue;
 								}
 							}
-							Variables.setVariable(name, o);
+							Variables.setVariable(name, o, null, false);
 						}
 						continue;
 					}
@@ -432,18 +432,20 @@ final public class ScriptLoader {
 						
 						continue;
 					}
+					
 					if (Skript.logVeryHigh() && !Skript.debug())
 						Skript.info("loading trigger '" + event + "'");
 					
 					if (StringUtils.startsWithIgnoreCase(event, "on "))
 						event = event.substring("on ".length());
+					
 					event = replaceOptions(event);
 					if (event == null)
 						continue;
+					
 					final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getKey() + "'");
-					if (parsedEvent == null) {
+					if (parsedEvent == null)
 						continue;
-					}
 					
 					if (Skript.debug() || node.debug())
 						Skript.debug(event + " (" + parsedEvent.second.toString(null, true) + "):");

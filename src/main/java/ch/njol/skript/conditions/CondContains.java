@@ -25,6 +25,7 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Comparator.Relation;
 import ch.njol.skript.doc.Description;
@@ -40,6 +41,7 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Comparators;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -112,11 +114,11 @@ public class CondContains extends Condition {
 							}
 						}, isNegated());
 					} else if (container instanceof String) {
-						final String s = ((String) container).toLowerCase();
+						final String s = (String) container;
 						return items.check(e, new Checker<Object>() {
 							@Override
 							public boolean check(final Object type) {
-								return type instanceof String && s.contains(((String) type).toLowerCase());
+								return type instanceof String && StringUtils.contains(s, (String) type, SkriptConfig.caseSensitive.value());
 							}
 						}, isNegated());
 					}

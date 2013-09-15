@@ -46,6 +46,7 @@ import ch.njol.skript.Skript;
  * 
  * @author Peter Güttinger
  */
+@SuppressWarnings("deprecation")
 public class BlockStateBlock implements Block {
 	
 	private final BlockState state;

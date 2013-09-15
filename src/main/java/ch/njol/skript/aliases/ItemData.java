@@ -36,7 +36,7 @@ import ch.njol.util.iterator.SingleItemIterator;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
+@SuppressWarnings({"serial", "deprecation"})
 public class ItemData implements Serializable, Cloneable {
 	
 	/**

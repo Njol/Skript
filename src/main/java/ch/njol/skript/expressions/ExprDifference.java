@@ -109,7 +109,7 @@ public class ExprDifference extends SimpleExpression<Object> {
 	@Override
 	protected Object[] get(final Event e) {
 		final Object f = first.getSingle(e), s = second.getSingle(e);
-		if (s == null || f == null)
+		if (f == null || s == null)
 			return null;
 		final Object[] one = (Object[]) Array.newInstance(relativeType, 1);
 		one[0] = diff(math, f, s);

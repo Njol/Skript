@@ -105,8 +105,8 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Double> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		double d = delta == null ? 0 : ((Number) delta).doubleValue();
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		double d = delta == null ? 0 : ((Number) delta[0]).doubleValue();
 		switch (mode) {
 			case DELETE:
 			case SET:

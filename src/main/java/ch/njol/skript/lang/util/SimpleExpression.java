@@ -205,8 +205,8 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		((Changer<T, Object>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		((Changer<T>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
 	}
 	
 	/**

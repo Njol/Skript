@@ -140,7 +140,7 @@ public class ExprParse extends SimpleExpression<Object> {
 	
 	@Override
 	public boolean isSingle() {
-		return pattern != null;
+		return pattern == null;
 	}
 	
 	@Override

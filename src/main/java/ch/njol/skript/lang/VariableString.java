@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import org.bukkit.ChatColor;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.ScriptLoader;
@@ -56,7 +57,7 @@ import ch.njol.util.StringUtils;
 import ch.njol.util.iterator.SingleItemIterator;
 
 /**
- * Represents a string that may contain expressions.
+ * Represents a string that may contain expressions, and is thus "variable".
  * 
  * @author Peter Güttinger
  */
@@ -186,7 +187,7 @@ public class VariableString implements Expression<String> {
 								string.add(expr);
 							} else {
 								final ExpressionInfo i = new ExpressionInfo(expr);
-								if (c2 == s.length() - 2 && s.charAt(c2 + 1) == 's' || c2 < s.length() - 2 && s.charAt(c2 + 1) == 's' && Character.isWhitespace(s.charAt(c2 + 2))) {
+								if (c2 <= s.length() - 2 && s.charAt(c2 + 1) == 's' && (c2 == s.length() - 2 || !Character.isLetter(s.charAt(c2 + 2)))) {
 									i.flags |= Language.F_PLURAL;
 								}
 								if (string.size() > 0 && string.get(string.size() - 1) instanceof String) {
@@ -332,6 +333,7 @@ public class VariableString implements Expression<String> {
 	
 	/**
 	 * Parses all expressions in the string and returns it.
+	 * TODO make <%expr%> work like before
 	 * 
 	 * @param e Event to pass to the expressions.
 	 * @return The input string with all expressions replaced.
@@ -351,12 +353,23 @@ public class VariableString implements Expression<String> {
 				int flags = info.flags;
 				if ((flags & Language.F_PLURAL) == 0 && b.length() > 0 && Math.abs(StringUtils.numberBefore(b, b.length() - 1)) != 1)
 					flags |= Language.F_PLURAL;
-				b.append(Classes.toString(info.expr.getArray(e), flags));
+				b.append(Classes.toString(info.expr.getArray(e), flags, getLastColor(b)));
 			} else {
 				b.append(o);
 			}
 		}
 		return b.toString();
+	}
+	
+	private final static ChatColor getLastColor(final CharSequence s) {
+		for (int i = s.length() - 2; i >= 0; i--) {
+			if (s.charAt(i) == ChatColor.COLOR_CHAR) {
+				final ChatColor c = ChatColor.getByChar(s.charAt(i + 1));
+				if (c != null && (c.isColor() || c == ChatColor.RESET))
+					return c;
+			}
+		}
+		return null;
 	}
 	
 	@Override
@@ -476,7 +489,7 @@ public class VariableString implements Expression<String> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
 	

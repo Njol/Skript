@@ -38,6 +38,8 @@ import ch.njol.skript.lang.Testable;
 import ch.njol.util.Kleenean;
 
 /**
+ * TODO add mob support (zombies, skeletons, horses, pigs, ...)
+ * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
@@ -47,7 +49,6 @@ import ch.njol.util.Kleenean;
 		"equip player with all diamond armor"})
 @Since("1.0")
 public class EffEquip extends Effect implements Testable {
-	
 	static {
 		Skript.registerEffect(EffEquip.class,
 				"equip [%players%] with %itemtypes%",

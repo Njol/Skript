@@ -37,6 +37,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.log.CountingLogHandler;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.ParseLogHandler;
@@ -100,7 +101,7 @@ public class EffChange extends Effect {
 	
 	private ChangeMode mode;
 	
-	private boolean single = true;
+	private boolean single;
 	
 //	private Changer<?, ?> c = null;
 	
@@ -185,6 +186,11 @@ public class EffChange extends Effect {
 			return false;
 		}
 		
+		final Class<?>[] rs2 = new Class<?>[rs.length];
+		for (int i = 0; i < rs.length; i++)
+			rs2[i] = rs[i].isArray() ? rs[i].getComponentType() : rs[i];
+		final boolean allSingle = Arrays.equals(rs, rs2);
+		
 		if (changer != null) {
 			Expression<?> v = null;
 			Class<?> x = null;
@@ -199,12 +205,22 @@ public class EffChange extends Effect {
 					}
 				}
 				if (v == null) {
-					for (final Class<?> r : rs) {
-						log.clear();
-						v = changer.getConvertedExpression(r.isArray() ? r.getComponentType() : r);
-						if (v != null) {
-							x = r;
-							break;
+					if (changer instanceof Variable) {
+						if (allSingle && !changer.isSingle()) {
+							v = changer;
+							x = rs.length == 1 ? rs[0] : Object.class;
+						} else {
+							v = ((Variable<?>) changer).getConvertedExpression(rs2);
+							x = Object.class;
+						}
+					} else {
+						for (final Class<?> r : rs) {
+							log.clear();
+							v = changer.getConvertedExpression(r.isArray() ? r.getComponentType() : r);
+							if (v != null) {
+								x = r;
+								break;
+							}
 						}
 					}
 				}
@@ -231,10 +247,9 @@ public class EffChange extends Effect {
 				log.stop();
 			}
 			
-			if (x.isArray()) {
-				single = false;
+			single = !x.isArray();
+			if (x.isArray())
 				x = x.getComponentType();
-			}
 			changer = v;
 			
 			if (!changer.isSingle() && single) {
@@ -250,8 +265,8 @@ public class EffChange extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
-		final Object delta = changer == null ? null : single ? changer.getSingle(e) : changer.getArray(e);
-		if (delta == null && changer != null)
+		final Object[] delta = changer == null ? null : changer.getArray(e);
+		if (delta != null && delta.length == 0)
 			return;
 		changed.change(e, delta, mode);
 //		changed.change(e, new Changer2<Object>() {

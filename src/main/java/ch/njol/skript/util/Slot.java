@@ -21,6 +21,7 @@
 
 package ch.njol.skript.util;
 
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
@@ -57,7 +58,7 @@ public class Slot implements Debuggable {
 	}
 	
 	public ItemStack getItem() {
-		return invi.getItem(index) == null ? new ItemStack(0, 1) : invi.getItem(index).clone();
+		return invi.getItem(index) == null ? new ItemStack(Material.AIR, 1) : invi.getItem(index).clone();
 	}
 	
 	@SuppressWarnings("deprecation")

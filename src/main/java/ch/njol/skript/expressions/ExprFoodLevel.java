@@ -93,8 +93,10 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
-		final int s = delta == null ? 0 : Math.round(((Number) delta).floatValue() * 2);
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		assert mode != ChangeMode.REMOVE_ALL;
+		
+		final int s = delta == null ? 0 : Math.round(((Number) delta[0]).floatValue() * 2);
 		for (final Player player : getExpr().getArray(e)) {
 			final boolean event = getTime() >= 0 && e instanceof FoodLevelChangeEvent && ((FoodLevelChangeEvent) e).getEntity() == player && !Delay.isDelayed(e);
 			int food;

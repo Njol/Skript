@@ -19,9 +19,9 @@
  * 
  */
 
-package ch.njol.skript.effects;
+package ch.njol.skript.expressions;
 
-import org.bukkit.entity.Entity;
+import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -29,60 +29,44 @@ import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
-import ch.njol.skript.entity.EntityData;
-import ch.njol.skript.lang.Effect;
+import ch.njol.skript.expressions.base.EventValueExpression;
+import ch.njol.skript.expressions.base.WrapperExpression;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-@Name("Vehicle")
-@Description({"Makes an entity ride another entity, e.g. a minecart, a saddled pig, an arrow, etc."})
-@Examples({"make the player ride a saddled pig",
-		"make the attacker ride the victim"})
+@Name("Location")
+@Description("The location where an event happened (e.g. at an entity or block), or a location <a href='#ExprDirection'>relative</a> to another (e.g. 1 meter above another location).")
+@Examples({"drop 5 apples at the event-location # exactly the same as writing 'drop 5 apples'",
+		"set {_loc} to the location 1 meter above the player"})
 @Since("2.0")
-public class EffVehicle extends Effect {
+public class ExprLocation extends WrapperExpression<Location> {
 	static {
-		Skript.registerEffect(EffVehicle.class,
-				"make %entity% (ride|mount) [(in|on)] %entity/entitydata%"); // TODO eject/dismount effect
+		Skript.registerExpression(ExprLocation.class, Location.class, ExpressionType.SIMPLE, "[the] [event-](location|position)");
+		Skript.registerExpression(ExprLocation.class, Location.class, ExpressionType.NORMAL, "[the] (location|position) %direction% [%location%]");
 	}
-	
-	private Expression<Entity> passenger;
-	private Expression<?> vehicle;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		passenger = (Expression<Entity>) exprs[0];
-		vehicle = exprs[1];
-		return true;
-	}
-	
-	@Override
-	protected void execute(final Event e) {
-		final Object v = vehicle.getSingle(e);
-		if (v == null)
-			return;
-		final Entity p = passenger.getSingle(e);
-		if (p == null)
-			return;
-		if (v instanceof Entity) {
-			((Entity) v).eject();
-			((Entity) v).setPassenger(p);
+		if (exprs.length > 0) {
+			super.setExpr(Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]));
+			return true;
 		} else {
-			final Entity en = ((EntityData<?>) v).spawn(p.getLocation());
-			if (en == null)
-				return;
-			en.setPassenger(p);
+			setExpr(new EventValueExpression<Location>(Location.class));
+			return ((EventValueExpression<Location>) getExpr()).init();
 		}
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "make " + passenger.toString(e, debug) + " ride " + vehicle.toString(e, debug);
+		return getExpr() instanceof EventValueExpression ? "the location" : "the location " + getExpr().toString(e, debug);
 	}
 	
 }

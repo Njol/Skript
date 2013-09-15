@@ -85,7 +85,7 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	
 	@SuppressWarnings("incomplete-switch")
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
 		if (!(e instanceof Cancellable))
 			return;
 		switch (mode) {
@@ -93,7 +93,7 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 				((Cancellable) e).setCancelled(false);
 				break;
 			case SET:
-				((Cancellable) e).setCancelled((Boolean) delta);
+				((Cancellable) e).setCancelled((Boolean) delta[0]);
 		}
 	}
 	

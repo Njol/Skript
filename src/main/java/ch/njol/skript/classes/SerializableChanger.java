@@ -26,4 +26,4 @@ import java.io.Serializable;
 /**
  * @author Peter Güttinger
  */
-public interface SerializableChanger<T, V> extends Changer<T, V>, Serializable {}
+public interface SerializableChanger<T> extends Changer<T>, Serializable {}

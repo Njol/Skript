@@ -82,12 +82,14 @@ public class ExprPrefixSuffix extends SimplePropertyExpression<Player, String> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		assert mode == ChangeMode.SET;
+		
 		for (final Player p : getExpr().getArray(e)) {
 			if (prefix)
-				ChatHook.chat.setPlayerPrefix(p, (String) delta);
+				ChatHook.chat.setPlayerPrefix(p, (String) delta[0]);
 			else
-				ChatHook.chat.setPlayerSuffix(p, (String) delta);
+				ChatHook.chat.setPlayerSuffix(p, (String) delta[0]);
 		}
 	}
 	

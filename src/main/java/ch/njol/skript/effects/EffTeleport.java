@@ -71,6 +71,7 @@ public class EffTeleport extends Effect {
 		return "teleport " + entities.toString(e, debug) + " to " + location.toString(e, debug);
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void execute(final Event e) {
 		Location to = location.getSingle(e);

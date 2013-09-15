@@ -224,8 +224,9 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * Unlike {@link Changer#acceptChange(ChangeMode)} this method may print errors.
 	 * 
 	 * @param mode
-	 * @return An array of types that {@link #change(Event, Object, ChangeMode)} accepts as its <code>delta</code> parameter (which can be arrays),
-	 *         or null if the given mode is not supported. For {@link ChangeMode#DELETE} and {@link ChangeMode#RESET} this can return any non-null array to mark them as supported.
+	 * @return An array of types that {@link #change(Event, Object, ChangeMode)} accepts as its <code>delta</code> parameter (which can be arrays to denote that multiple of
+	 *         that type are accepted), or null if the given mode is not supported. For {@link ChangeMode#DELETE} and {@link ChangeMode#RESET} this can return any non-null array to
+	 *         mark them as supported.
 	 */
 	public Class<?>[] acceptChange(ChangeMode mode);
 	
@@ -234,11 +235,11 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * {@link #acceptChange(ChangeMode)}
 	 * 
 	 * @param e
-	 * @param delta The amount to vary this expression by or null for {@link ChangeMode#DELETE} and {@link ChangeMode#RESET}. Must not be null, but can be an empty array.
+	 * @param delta An array with one or more instances of one or more of the the classes returned by {@link #acceptChange(ChangeMode)} for the given change mode (null for
+	 *            {@link ChangeMode#DELETE} and {@link ChangeMode#RESET}). <b>This can be a Object[], thus casting is not allowed.</b>
 	 * @param mode
 	 * @throws UnsupportedOperationException (optional) - If this method was called on an unsupported ChangeMode.
-	 * @throws ClassCastException (automatic) - If the delta parameter is of a wrong type.
 	 */
-	public void change(Event e, final Object delta, final ChangeMode mode);
+	public void change(Event e, final Object[] delta, final ChangeMode mode);
 	
 }

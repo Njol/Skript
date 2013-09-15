@@ -48,8 +48,8 @@ import ch.njol.util.iterator.IteratorIterable;
 /**
  * @author Peter Güttinger
  */
-public class Documentation {
-	
+public class Documentation { // TODO list special expressions for events
+
 	public final static void generate() {
 		if (!generate)
 			return;
@@ -71,16 +71,17 @@ public class Documentation {
 	
 	private final static void asSql(final PrintWriter pw) {
 		pw.println("-- syntax elements");
-		pw.println("DROP TABLE IF EXISTS syntax_elements;");
-		pw.println("CREATE TABLE syntax_elements (" +
-				"id VARCHAR(20) NOT NULL PRIMARY KEY," +
-				"name VARCHAR(100) NOT NULL," +
-				"type ENUM('condition','effect','expression','event') NOT NULL," +
-				"patterns VARCHAR(2000) NOT NULL," +
-				"description VARCHAR(2000) NOT NULL," +
-				"examples VARCHAR(2000) NOT NULL," +
-				"since VARCHAR(100) NOT NULL" +
-				");");
+//		pw.println("DROP TABLE IF EXISTS syntax_elements;");
+//		pw.println("CREATE TABLE syntax_elements (" +
+//				"id VARCHAR(20) NOT NULL PRIMARY KEY," +
+//				"name VARCHAR(100) NOT NULL," +
+//				"type ENUM('condition','effect','expression','event') NOT NULL," +
+//				"patterns VARCHAR(2000) NOT NULL," +
+//				"description VARCHAR(2000) NOT NULL," +
+//				"examples VARCHAR(2000) NOT NULL," +
+//				"since VARCHAR(100) NOT NULL" +
+//				");");
+		pw.println("UPDATE syntax_elements SET patterns=''");
 		pw.println();
 		pw.println("-- expressions");
 		for (final ExpressionInfo<?, ?> e : new IteratorIterable<ExpressionInfo<?, ?>>(Skript.getExpressions())) {
@@ -105,16 +106,17 @@ public class Documentation {
 		pw.println();
 		pw.println();
 		pw.println("-- classes");
-		pw.println("DROP TABLE IF EXISTS classes;");
-		pw.println("CREATE TABLE classes (" +
-				"id VARCHAR(20) NOT NULL PRIMARY KEY," +
-				"name VARCHAR(100) NOT NULL," +
-				"description VARCHAR(2000) NOT NULL," +
-				"patterns VARCHAR(2000) NOT NULL," +
-				"`usage` VARCHAR(2000) NOT NULL," +
-				"examples VARCHAR(2000) NOT NULL," +
-				"since VARCHAR(100) NOT NULL" +
-				");");
+//		pw.println("DROP TABLE IF EXISTS classes;");
+//		pw.println("CREATE TABLE classes (" +
+//				"id VARCHAR(20) NOT NULL PRIMARY KEY," +
+//				"name VARCHAR(100) NOT NULL," +
+//				"description VARCHAR(2000) NOT NULL," +
+//				"patterns VARCHAR(2000) NOT NULL," +
+//				"`usage` VARCHAR(2000) NOT NULL," +
+//				"examples VARCHAR(2000) NOT NULL," +
+//				"since VARCHAR(100) NOT NULL" +
+//				");");
+		pw.println("UPDATE classes SET patterns=''");
 		pw.println();
 		for (final ClassInfo<?> c : Classes.getClassInfos()) {
 			if (c.getDocName() == ClassInfo.NO_DOC)
@@ -153,9 +155,9 @@ public class Documentation {
 	private final static String cleanPatterns(final String patterns) {
 		return StringUtils.replaceAll(
 				escapeHTML(patterns) // escape HTML
-				.replaceAll("(?<=\\(|\\|).+?¦", "") // remove marks
+				.replaceAll("(?<=[\\(\\|]).+?¦", "") // remove marks
 				.replace("()", "") // remove empty mark setting groups (mark¦)
-				.replaceAll("\\(([^|]+)\\|\\)", "[$1]") // replace (mark¦x|) groups with [x]
+				.replaceAll("\\(([^|]+?)\\|\\)", "[$1]") // replace (mark¦x|) groups with [x]
 				, "(?<!\\\\)%(.+?)(?<!\\\\)%", new Callback<String, Matcher>() { // link & fancy types
 					@Override
 					public String run(final Matcher m) {
@@ -207,7 +209,7 @@ public class Documentation {
 		final String patterns = cleanPatterns(StringUtils.join(info.patterns, "\n", 0, info.c == CondCompare.class ? 8 : info.patterns.length));
 		insertOnDuplicateKeyUpdate(pw, "syntax_elements",
 				"id, name, type, patterns, description, examples, since",
-				"patterns = CONCAT(patterns, '\n', '" + escapeSQL(patterns) + "')",
+				"patterns = TRIM(LEADING '\n' FROM CONCAT(patterns, '\n', '" + escapeSQL(patterns) + "'))",
 				escapeHTML(info.c.getSimpleName()),
 				escapeHTML(info.c.getAnnotation(Name.class).value()),
 				type,
@@ -237,8 +239,9 @@ public class Documentation {
 			return;
 		}
 		final String patterns = cleanPatterns(info.getName().startsWith("On ") ? "[on] " + StringUtils.join(info.patterns, "\n[on] ") : StringUtils.join(info.patterns, "\n"));
-		insert(pw, "syntax_elements",
+		insertOnDuplicateKeyUpdate(pw, "syntax_elements",
 				"id, name, type, patterns, description, examples, since",
+				"patterns = '" + escapeSQL(patterns) + "'",
 				escapeHTML(info.getId()),
 				escapeHTML(info.getName()),
 				"event",
@@ -259,7 +262,7 @@ public class Documentation {
 		for (int i = 0; i < values.length; i++) {
 			values[i] = escapeSQL(values[i]);
 		}
-		pw.println("INSERT INTO " + table + " (" + fields + ") VALUES ('" + StringUtils.join(values, "','") + "') ON DUPLICATE KEY UPDATE " + update + ";");
+		pw.println("INSERT IGNORE INTO " + table + " (" + fields + ") VALUES ('" + StringUtils.join(values, "','") + "') ON DUPLICATE KEY UPDATE " + update + ";");
 	}
 	
 	private static ArrayList<Pattern> validation = new ArrayList<Pattern>();

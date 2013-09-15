@@ -47,7 +47,7 @@ import ch.njol.util.Kleenean;
 @Since("2.0")
 public class EffOpenInventory extends Effect {
 	static {
-		Skript.registerEffect(EffOpenInventory.class, "(0¦open|1¦show) %inventory% (to|for) %players%");
+		Skript.registerEffect(EffOpenInventory.class, "(0¦open|1¦show) %inventory% (to|for) %players%"); // TODO allow to open crafting table
 	}
 	
 	private Expression<Inventory> invi;

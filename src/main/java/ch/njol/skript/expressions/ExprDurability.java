@@ -24,7 +24,9 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -32,7 +34,6 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.util.Slot;
 import ch.njol.util.CollectionUtils;
-import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
@@ -75,16 +76,16 @@ public class ExprDurability extends SimplePropertyExpression<Object, Short> {
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.REMOVE_ALL)
 			return null;
-		if (Slot.class.isAssignableFrom(getExpr().getReturnType()) || getExpr().isSingle() && CollectionUtils.contains(getExpr().acceptChange(ChangeMode.SET), ItemStack.class))
+		if (Slot.class.isAssignableFrom(getExpr().getReturnType()) || getExpr().isSingle() && ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, ItemStack.class, ItemType.class))
 			return CollectionUtils.array(Number.class);
 		return null;
 	}
 	
 	@Override
-	public void change(final Event e, final Object delta, final ChangeMode mode) {
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
 		int a = 0;
 		if (mode != ChangeMode.DELETE)
-			a = ((Number) delta).intValue();
+			a = ((Number) delta[0]).intValue();
 		final Object[] os = getExpr().getArray(e);
 		for (final Object o : os) {
 			final ItemStack i = o instanceof Slot ? ((Slot) o).getItem() : (ItemStack) o;
@@ -95,10 +96,10 @@ public class ExprDurability extends SimplePropertyExpression<Object, Short> {
 					a = -a;
 					//$FALL-THROUGH$
 				case ADD:
-					i.setDurability((short) Math2.fit(0, i.getDurability() + a, i.getType().getMaxDurability()));
+					i.setDurability((short) (i.getDurability() + a));
 					break;
 				case SET:
-					i.setDurability((short) Math2.fit(0, a, i.getType().getMaxDurability()));
+					i.setDurability((short) a);
 					break;
 				case DELETE:
 				case RESET:
@@ -110,8 +111,10 @@ public class ExprDurability extends SimplePropertyExpression<Object, Short> {
 			}
 			if (o instanceof Slot)
 				((Slot) o).setItem(i);
+			else if (ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, ItemStack.class))
+				getExpr().change(e, new ItemStack[] {i}, ChangeMode.SET);
 			else
-				getExpr().change(e, i, ChangeMode.SET);
+				getExpr().change(e, new ItemType[] {new ItemType(i)}, ChangeMode.SET);
 		}
 	}
 	

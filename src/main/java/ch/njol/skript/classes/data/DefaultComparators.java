@@ -58,6 +58,7 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
@@ -70,6 +71,7 @@ import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
 import ch.njol.util.CollectionUtils;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -279,7 +281,7 @@ public class DefaultComparators {
 		Comparators.registerComparator(String.class, String.class, new Comparator<String, String>() {
 			@Override
 			public Relation compare(final String s1, final String s2) {
-				return Relation.get(s1.equalsIgnoreCase(s2));
+				return Relation.get(StringUtils.equals(s1, s2, SkriptConfig.caseSensitive.value()));
 			}
 			
 			@Override
@@ -305,7 +307,7 @@ public class DefaultComparators {
 		Comparators.registerComparator(Time.class, Time.class, new Comparator<Time, Time>() {
 			@Override
 			public Relation compare(final Time t1, final Time t2) {
-				return Relation.get(t1.getTicks() - t2.getTicks());
+				return Relation.get(t1.getTime() - t2.getTime());
 			}
 			
 			@Override

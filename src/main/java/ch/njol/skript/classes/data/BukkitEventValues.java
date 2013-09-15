@@ -48,6 +48,7 @@ import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
@@ -366,6 +367,13 @@ public final class BukkitEventValues {
 			@Override
 			public Player get(final EntityTameEvent e) {
 				return e.getOwner() instanceof Player ? (Player) e.getOwner() : null;
+			}
+		}, 0);
+		// EntityChangeBlockEvent
+		EventValues.registerEventValue(EntityChangeBlockEvent.class, Block.class, new SerializableGetter<Block, EntityChangeBlockEvent>() {
+			@Override
+			public Block get(final EntityChangeBlockEvent e) {
+				return e.getBlock();
 			}
 		}, 0);
 		

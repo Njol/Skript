@@ -48,7 +48,7 @@ import ch.njol.util.Kleenean;
 		"on join:",
 		"	apply potion of strength of tier {strength.%player%} to the player for 999 days"})
 @Since("2.0")
-public class EffPotion extends Effect { // TODO doesn't work on victim // as well as EffPoison
+public class EffPotion extends Effect {
 	static {
 		Skript.registerEffect(EffPotion.class,
 				"apply [potion of] %potioneffecttypes% [potion] [[[of] tier] %-number%] to %livingentities% [for %-timespan%]"
@@ -124,7 +124,6 @@ public class EffPotion extends Effect { // TODO doesn't work on victim // as wel
 						}
 					}
 				}
-				// TODO doesn't work at all
 				en.addPotionEffect(new PotionEffect(t, duration, a), true);
 			}
 		}
