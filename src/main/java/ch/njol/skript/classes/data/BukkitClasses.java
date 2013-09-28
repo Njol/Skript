@@ -727,7 +727,7 @@ public class BukkitClasses {
 					
 					@Override
 					public String toString(final Biome b, final int flags) {
-						return BiomeUtils.toString(b);
+						return BiomeUtils.toString(b, flags);
 					}
 					
 					@Override

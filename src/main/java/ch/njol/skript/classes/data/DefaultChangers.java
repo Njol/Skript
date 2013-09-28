@@ -113,7 +113,7 @@ public class DefaultChangers {
 					}
 				}
 				if (e instanceof Player)
-					((Player) e).updateInventory();
+					((Player) e).updateInventory();// TODO find out if this is required (at least for adding)
 			}
 		}
 	};

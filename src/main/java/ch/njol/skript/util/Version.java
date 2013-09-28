@@ -49,7 +49,7 @@ public class Version implements Serializable, Comparable<Version> {
 	public Version(final int major, final int minor, final String postfix) {
 		version[0] = major;
 		version[1] = minor;
-		this.postfix = postfix;
+		this.postfix = postfix == null || postfix.isEmpty() ? null : postfix;
 	}
 	
 	public final static Pattern versionPattern = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?\\s*(.*)");
@@ -116,7 +116,7 @@ public class Version implements Serializable, Comparable<Version> {
 	 * @return Whether this is a stable version, i.e. a simple version number without any additional details (like alpha/beta/etc.)
 	 */
 	public boolean isStable() {
-		return postfix.isEmpty();
+		return postfix == null;
 	}
 	
 	@Override

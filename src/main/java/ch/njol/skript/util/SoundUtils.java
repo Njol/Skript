@@ -21,28 +21,26 @@
 
 package ch.njol.skript.util;
 
+import org.bukkit.Sound;
+
 /**
  * @author Peter Güttinger
  */
-public class Experience {
+public abstract class SoundUtils {
+	private SoundUtils() {}
 	
-	private final int xp;
+	private final static EnumUtils<Sound> util = new EnumUtils<Sound>(Sound.class, "sounds");
 	
-	public Experience(final int xp) {
-		this.xp = xp;
+	public final static Sound parse(final String s) {
+		return util.parse(s);
 	}
 	
-	public int getXP() {
-		return xp == -1 ? 1 : xp;
+	public static String toString(final Sound s, final int flags) {
+		return util.toString(s, flags);
 	}
 	
-	public int getInternalXP() {
-		return xp;
-	}
-	
-	@Override
-	public String toString() {
-		return xp == -1 ? "xp" : xp + " xp";
+	public final static String getAllNames() {
+		return util.getAllNames();
 	}
 	
 }

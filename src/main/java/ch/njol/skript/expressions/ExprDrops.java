@@ -112,6 +112,8 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 			if (delta instanceof Experience) {
 				if (mode == ChangeMode.REMOVE_ALL || mode == ChangeMode.REMOVE && ((Experience) delta).getInternalXP() == -1) {
 					((EntityDeathEvent) e).setDroppedExp(0);
+				} else if (mode == ChangeMode.SET) {
+					((EntityDeathEvent) e).setDroppedExp(((Experience) delta).getXP());
 				} else {
 					((EntityDeathEvent) e).setDroppedExp(Math.max(0, ((EntityDeathEvent) e).getDroppedExp() + (mode == ChangeMode.ADD ? 1 : -1) * ((Experience) delta).getXP()));
 				}

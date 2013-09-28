@@ -19,30 +19,39 @@
  * 
  */
 
-package ch.njol.skript.util;
+package ch.njol.skript.effects;
+
+import org.bukkit.event.Event;
+
+import ch.njol.skript.lang.Effect;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
-public class Experience {
-	
-	private final int xp;
-	
-	public Experience(final int xp) {
-		this.xp = xp;
-	}
-	
-	public int getXP() {
-		return xp == -1 ? 1 : xp;
-	}
-	
-	public int getInternalXP() {
-		return xp;
+@SuppressWarnings("serial")
+public class EffVisualEffect extends Effect {// TODO this + sound effect
+	static {
+		
 	}
 	
 	@Override
-	public String toString() {
-		return xp == -1 ? "xp" : xp + " xp";
+	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	@Override
+	public String toString(final Event e, final boolean debug) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	protected void execute(final Event e) {
+		// TODO Auto-generated method stub
 	}
 	
 }

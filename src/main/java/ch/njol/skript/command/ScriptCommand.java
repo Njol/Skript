@@ -117,8 +117,8 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		this.aliases = aliases;
 		activeAliases = new ArrayList<String>(aliases);
 		
-		this.description = Utils.replaceChatStyles(description);
-		this.usage = Utils.replaceChatStyles(usage);
+		this.description = Utils.replaceEnglishChatStyles(description);
+		this.usage = Utils.replaceEnglishChatStyles(usage);
 		
 		this.executableBy = executableBy;
 		

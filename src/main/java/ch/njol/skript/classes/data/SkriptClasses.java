@@ -805,7 +805,7 @@ public class SkriptClasses {
 				.name("Experience")
 				.description("Experience points. Please note that Bukkit only allows to give XP, but not remove XP from players. " +
 						"You can however change a player's <a href='../expressions/#ExprLevel'>level</a> and <a href='../expressions/#ExprLevelProgress'>level progress</a> freely.")
-				.usage("<code>[&lt;number&gt;] ([e]xp|experience)</code>")
+				.usage("<code>[&lt;number&gt;] ([e]xp|experience [point[s]])</code>")
 				.examples("give 10 xp to the player")
 				.since("2.0")
 				.parser(new Parser<Experience>() {
@@ -813,7 +813,7 @@ public class SkriptClasses {
 					
 					@Override
 					public Experience parse(String s, final ParseContext context) {
-						int xp = 1;
+						int xp = -1;
 						if (s.matches("\\d+ .+")) {
 							xp = Utils.parseInt(s.substring(0, s.indexOf(' ')));
 							s = s.substring(s.indexOf(' ') + 1);

@@ -287,6 +287,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		if (block == null)
 			return isOfType(0, (short) 0);
 		return isOfType(block.getTypeId(), block.getData());
+		// TODO metadata
 	}
 	
 	public boolean isOfType(final int id, final short data) {

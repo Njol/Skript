@@ -21,13 +21,7 @@
 
 package ch.njol.skript.util;
 
-import java.util.HashMap;
-
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-
-import ch.njol.skript.localization.Language;
-import ch.njol.skript.localization.LanguageChangeListener;
-import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -35,33 +29,18 @@ import ch.njol.util.StringUtils;
 public abstract class DamageCauseUtils {
 	private DamageCauseUtils() {}
 	
-	private final static HashMap<String, DamageCause> parseMap = new HashMap<String, DamageCause>();
-	private final static String[] names = new String[DamageCause.values().length];
-	static {
-		Language.addListener(new LanguageChangeListener() {
-			@Override
-			public void onLanguageChange() {
-				parseMap.clear();
-				for (final DamageCause dc : DamageCause.values()) {
-					final String[] ls = Language.getList("damage causes." + dc.name());
-					names[dc.ordinal()] = ls[0];
-					for (final String l : ls)
-						parseMap.put(l, dc);
-				}
-			}
-		});
-	}
+	private final static EnumUtils<DamageCause> util = new EnumUtils<DamageCause>(DamageCause.class, "damage causes");
 	
 	public final static DamageCause parse(final String s) {
-		return parseMap.get(s.toLowerCase());
+		return util.parse(s);
 	}
 	
 	public static String toString(final DamageCause dc, final int flags) {
-		return names[dc.ordinal()];
+		return util.toString(dc, flags);
 	}
 	
 	public final static String getAllNames() {
-		return StringUtils.join(names, ", ");
+		return util.getAllNames();
 	}
 	
 }

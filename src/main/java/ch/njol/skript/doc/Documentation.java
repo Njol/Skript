@@ -81,7 +81,7 @@ public class Documentation { // TODO list special expressions for events
 //				"examples VARCHAR(2000) NOT NULL," +
 //				"since VARCHAR(100) NOT NULL" +
 //				");");
-		pw.println("UPDATE syntax_elements SET patterns=''");
+		pw.println("UPDATE syntax_elements SET patterns='';");
 		pw.println();
 		pw.println("-- expressions");
 		for (final ExpressionInfo<?, ?> e : new IteratorIterable<ExpressionInfo<?, ?>>(Skript.getExpressions())) {
@@ -116,7 +116,7 @@ public class Documentation { // TODO list special expressions for events
 //				"examples VARCHAR(2000) NOT NULL," +
 //				"since VARCHAR(100) NOT NULL" +
 //				");");
-		pw.println("UPDATE classes SET patterns=''");
+		pw.println("UPDATE classes SET patterns='';");
 		pw.println();
 		for (final ClassInfo<?> c : Classes.getClassInfos()) {
 			if (c.getDocName() == ClassInfo.NO_DOC)
@@ -255,14 +255,14 @@ public class Documentation { // TODO list special expressions for events
 		for (int i = 0; i < values.length; i++) {
 			values[i] = escapeSQL(values[i]);
 		}
-		pw.println("INSERT INTO " + table + " (" + fields + ") VALUES ('" + StringUtils.join(values, "','") + "');");
+		pw.println("INSERT IGNORE INTO " + table + " (" + fields + ") VALUES ('" + StringUtils.join(values, "','") + "');");
 	}
 	
 	private final static void insertOnDuplicateKeyUpdate(final PrintWriter pw, final String table, final String fields, final String update, final String... values) {
 		for (int i = 0; i < values.length; i++) {
 			values[i] = escapeSQL(values[i]);
 		}
-		pw.println("INSERT IGNORE INTO " + table + " (" + fields + ") VALUES ('" + StringUtils.join(values, "','") + "') ON DUPLICATE KEY UPDATE " + update + ";");
+		pw.println("INSERT INTO " + table + " (" + fields + ") VALUES ('" + StringUtils.join(values, "','") + "') ON DUPLICATE KEY UPDATE " + update + ";");
 	}
 	
 	private static ArrayList<Pattern> validation = new ArrayList<Pattern>();

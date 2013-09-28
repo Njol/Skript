@@ -27,7 +27,6 @@ import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,6 +37,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.Slot;
 import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.EmptyIterator;
 
@@ -49,13 +49,13 @@ import ch.njol.util.iterator.EmptyIterator;
 @Description({"All items in an inventory. Useful for looping or storing in a list variable.",
 		"Please note that the positions of the items in the inventory are not saved, only their order is preserved."})
 @Examples({"loop all items in the player's inventory:",
-		"	loop-item is enchanted" +
-				"	remove loop-item from the player",
+		"	loop-item is enchanted",
+		"	remove loop-item from the player",
 		"set {inventory.%player%} to items in the player's inventory"})
 @Since("2.0")
-public class ExprItemsIn extends SimpleExpression<ItemStack> {// TODO return slots to be able to change the loop-item
+public class ExprItemsIn extends SimpleExpression<Slot> {
 	static {
-		Skript.registerExpression(ExprItemsIn.class, ItemStack.class, ExpressionType.PROPERTY,
+		Skript.registerExpression(ExprItemsIn.class, Slot.class, ExpressionType.PROPERTY,
 				"[all] items (in|of|contained in|out of) %inventories%");
 	}
 	
@@ -69,45 +69,45 @@ public class ExprItemsIn extends SimpleExpression<ItemStack> {// TODO return slo
 	}
 	
 	@Override
-	protected ItemStack[] get(final Event e) {
-		final ArrayList<ItemStack> r = new ArrayList<ItemStack>();
+	protected Slot[] get(final Event e) {
+		final ArrayList<Slot> r = new ArrayList<Slot>();
 		for (final Inventory invi : invis.getArray(e)) {
-			for (final ItemStack is : invi) {
-				if (is != null)
-					r.add(is);
+			for (int i = 0; i < invi.getSize(); i++) {
+				if (invi.getItem(i) != null)
+					r.add(new Slot(invi, i));
 			}
 		}
-		return r.toArray(new ItemStack[r.size()]);
+		return r.toArray(new Slot[r.size()]);
 	}
 	
 	@Override
-	public Iterator<? extends ItemStack> iterator(final Event e) {
-		final Inventory[] is = invis.getArray(e);
-		if (is.length == 0)
+	public Iterator<Slot> iterator(final Event e) {
+		final Iterator<? extends Inventory> is = invis.iterator(e);
+		if (!is.hasNext())
 			return EmptyIterator.get();
-		return new Iterator<ItemStack>() {
-			int isi = 0;
-			Inventory current = is[0];
-			int i = 0;
+		return new Iterator<Slot>() {
+			Inventory current = is.next();
+			
+			int next = 0;
 			
 			@Override
 			public boolean hasNext() {
-				while (i < current.getSize() && current.getItem(i) == null)
-					i++;
-				while (i >= current.getSize() && isi < is.length - 1) {
-					current = is[++isi];
-					i = 0;
-					while (i < current.getSize() && current.getItem(i) == null)
-						i++;
+				while (next < current.getSize() && current.getItem(next) == null)
+					next++;
+				while (next >= current.getSize() && is.hasNext()) {
+					current = is.next();
+					next = 0;
+					while (next < current.getSize() && current.getItem(next) == null)
+						next++;
 				}
-				return isi <= is.length;
+				return next < current.getSize() && is.hasNext();
 			}
 			
 			@Override
-			public ItemStack next() {
+			public Slot next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
-				return current.getItem(i++); // new Slot(current, i++);
+				return new Slot(current, next++);
 			}
 			
 			@Override
@@ -133,8 +133,8 @@ public class ExprItemsIn extends SimpleExpression<ItemStack> {// TODO return slo
 	}
 	
 	@Override
-	public Class<? extends ItemStack> getReturnType() {
-		return ItemStack.class;
+	public Class<Slot> getReturnType() {
+		return Slot.class;
 	}
 	
 }
