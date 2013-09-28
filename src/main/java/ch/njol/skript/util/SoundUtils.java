@@ -29,7 +29,7 @@ import org.bukkit.Sound;
 public abstract class SoundUtils {
 	private SoundUtils() {}
 	
-	private final static EnumUtils<Sound> util = new EnumUtils<Sound>(Sound.class, "sounds");
+	private final static EnumUtils<Sound> util = null;//new EnumUtils<Sound>(Sound.class, "sounds");
 	
 	public final static Sound parse(final String s) {
 		return util.parse(s);

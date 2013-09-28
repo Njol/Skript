@@ -32,7 +32,6 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
-import ch.njol.skript.localization.Language;
 import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.SingleItemIterator;
 
@@ -68,7 +67,7 @@ public final class VisualEffect implements SyntaxElement {
 		final Type[] ts = Type.values();
 		final String[] patterns = new String[ts.length];
 		for (int i = 0; i < ts.length; i++) {
-			patterns[i] = Language.get_(LANGUAGE_NODE + "." + ts[i].name() + ".pattern");
+//			patterns[i] = Language.get_(LANGUAGE_NODE + "." + ts[i].name() + ".pattern");
 		}
 		info = new SyntaxElementInfo<VisualEffect>(patterns, VisualEffect.class);
 	}

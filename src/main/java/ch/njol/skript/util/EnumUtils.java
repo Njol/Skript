@@ -23,8 +23,6 @@ package ch.njol.skript.util;
 
 import java.util.HashMap;
 
-import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.util.StringUtils;
@@ -33,18 +31,15 @@ import ch.njol.util.StringUtils;
  * @author Peter Güttinger
  */
 public final class EnumUtils<E extends Enum<E>> {
-	private final Class<E> c;
-	private final String languageNode;
+	private final HashMap<String, E> parseMap = new HashMap<String, E>();
+	private final String[] names;
 	
 	public EnumUtils(final Class<E> c, final String languageNode) {
-		this.c = c;
+		assert c != null && c.isEnum() && languageNode != null && !languageNode.isEmpty();
 		assert !languageNode.endsWith(".");
-		this.languageNode = languageNode;
-	}
-	
-	private final HashMap<String, E> parseMap = new HashMap<String, E>();
-	private final String[] names = new String[DamageCause.values().length];
-	{
+		
+		names = new String[c.getEnumConstants().length];
+		
 		Language.addListener(new LanguageChangeListener() {
 			@Override
 			public void onLanguageChange() {
