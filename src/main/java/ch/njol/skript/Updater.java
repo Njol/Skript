@@ -167,7 +167,7 @@ public final class Updater {
 										current = null;
 										continue;
 									}
-									current.version = new Version(version.substring(0, version.length() - " (zip)".length()));
+									current.version = new Version(version.substring(0, version.indexOf(' ')));
 									if (current.version.compareTo(Skript.getVersion()) <= 0)
 										break;
 								} else if (element.equalsIgnoreCase("link")) {
