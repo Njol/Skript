@@ -2,8 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>ch.njol</groupId>
-	<artifactId>Skript</artifactId>
-	<version>2.0</version>
+	<artifactId>skript</artifactId>
+	<version>2.0.2</version>
 	<name>Skript</name>
 	<dependencies>
 		<dependency>
@@ -15,53 +15,40 @@
 		<dependency>
 			<groupId>org.bukkit</groupId>
 			<artifactId>craftbukkit</artifactId>
-			<version>1.6.2-R1.0</version>
+			<version>1.6.4-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
-		<!--
+		<!-- <dependency> <groupId>org.bukkit</groupId> <artifactId>minecraft-server</artifactId> 
+			<version>1.5.2</version> <scope>provided</scope> </dependency> -->
 		<dependency>
-			<groupId>org.bukkit</groupId>
-			<artifactId>minecraft-server</artifactId>
-			<version>1.5.2</version>
-			<scope>provided</scope>
-		</dependency>
-		 -->
-		<dependency>
-			<groupId>net.milkbowl.vault</groupId>
+			<groupId>net.milkbowl</groupId>
 			<artifactId>vault</artifactId>
-			<version>1.2.18</version>
-			<!-- Vault's repo is fucking useless since it only contains snapshots 
-				>_> -->
-			<scope>system</scope>
-			<systemPath>${basedir}/dep/Vault.jar</systemPath>
+			<version>1.2.27</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.massivecraft</groupId>
 			<artifactId>factions</artifactId>
-			<version>1.8.0</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/dep/Factions.jar</systemPath>
+			<version>1.8</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.massivecraft</groupId>
 			<artifactId>factions2</artifactId>
-			<version>2.0.0</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/dep/Factions-2.0.jar</systemPath>
+			<version>2.0</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.massivecraft</groupId>
 			<artifactId>mcore</artifactId>
-			<version>6.4.0</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/dep/mcore.jar</systemPath>
+			<version>6.4</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>patpeter</groupId>
 			<artifactId>sqlibrary</artifactId>
 			<version>4.0</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/dep/SQLibrary.jar</systemPath>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.sk89q</groupId>
@@ -83,8 +70,8 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.njol</groupId>
-			<artifactId>Utils</artifactId>
-			<version>1.0</version>
+			<artifactId>utils</artifactId>
+			<version>1.0-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 		<!-- Now directly included in Skript's source -->
@@ -93,8 +80,12 @@
 	</dependencies>
 	<repositories>
 		<repository>
+			<id>njol-repo</id>
+			<url>http://maven.njol.ch/repo/</url>
+		</repository>
+		<repository>
 			<id>bukkit-repo</id>
-			<url>http://repo.bukkit.org/content/repositories/releases/</url>
+			<url>http://repo.bukkit.org/content/repositories/public/</url>
 		</repository>
 		<repository>
 			<id>sk89q-repo</id>
@@ -104,8 +95,18 @@
 			<!-- added by WorldGuard, but doesn't seem to exist anymore -->
 			<id>zml-repo</id>
 			<url>http://files.zachsthings.com/repo/</url>
-			<releases><updatePolicy>never</updatePolicy><enabled>false</enabled></releases>
-			<snapshots><updatePolicy>never</updatePolicy><enabled>false</enabled></snapshots>
+			<releases>
+				<updatePolicy>never</updatePolicy>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<updatePolicy>never</updatePolicy>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>vault-repo</id>
+			<url>http://ci.herocraftonline.com/plugin/repository/everything/</url>
 		</repository>
 		<!-- <repository> <id>Plugin Metrics Repo</id> <url>http://repo.mcstats.org/content/repositories/public</url> 
 			</repository> -->
@@ -145,7 +146,16 @@
 				<filtering>false</filtering>
 				<includes>
 					<include>config.sk</include>
+					<include>aliases-*.sk</include>
 				</includes>
+			</resource>
+			<resource>
+				<directory>../../testserver/plugins/Skript/scripts/distributed/</directory>
+				<filtering>false</filtering>
+				<includes>
+					<include>*</include>
+				</includes>
+				<targetPath>scripts/</targetPath>
 			</resource>
 		</resources>
 		<plugins>
@@ -181,11 +191,9 @@
 						</goals>
 						<configuration>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
-							<!-- <minimizeJar>true</minimizeJar> // takes too long and only removes 
-								a few classes -->
 							<artifactSet>
 								<includes>
-									<include>ch.njol:Utils</include>
+									<include>ch.njol:utils</include>
 									<!-- <include>org.mcstats:metrics</include> -->
 								</includes>
 							</artifactSet>
@@ -203,4 +211,60 @@
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>build</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+		</profile>
+		<profile>
+			<id>deploy</id>
+			<activation>
+				<property>
+					<name>env</name>
+					<value>deploy</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<version>1.7.1</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<minimizeJar>true</minimizeJar>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>2.2.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+	<distributionManagement>
+		<repository>
+			<id>njol-repo</id>
+			<url>file://///DISKSTATION/web/maven.njol.ch/repo/</url>
+		</repository>
+	</distributionManagement>
 </project>

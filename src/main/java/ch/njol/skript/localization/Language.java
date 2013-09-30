@@ -125,6 +125,7 @@ public class Language {
 		try {
 			return String.format(value, args);
 		} catch (final Exception e) {
+			Skript.error("Invalid format string at '" + key + "' in the " + getName() + " language file: " + value);
 			return key;
 		}
 	}
@@ -136,7 +137,7 @@ public class Language {
 	 * @return The message surrounded by spaces, a space if the entry is empty, or " "+key+" " if the entry is missing.
 	 */
 	public static String getSpaced(final String key) {
-		final String s = get(key.toLowerCase(Locale.ENGLISH));
+		final String s = get(key);
 		if (s.isEmpty())
 			return " ";
 		return " " + s + " ";

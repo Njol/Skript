@@ -21,7 +21,7 @@
 
 package ch.njol.skript.conditions;
 
-import org.bukkit.entity.Player;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -49,19 +49,19 @@ public class CondItemInHand extends Condition {
 	
 	static {
 		Skript.registerCondition(CondItemInHand.class,
-				"[%players%] ha(s|ve) %itemtypes% in hand",
-				"[%players%] (is|are) holding %itemtypes%",
-				"[%players%] (ha(s|ve) not|do[es]n't have) %itemtypes% in hand",
-				"[%players%] (is not|isn't) holding %itemtypes%");
+				"[%livingentities%] ha(s|ve) %itemtypes% in hand",
+				"[%livingentities%] (is|are) holding %itemtypes%",
+				"[%livingentities%] (ha(s|ve) not|do[es]n't have) %itemtypes% in hand",
+				"[%livingentities%] (is not|isn't) holding %itemtypes%");
 	}
 	
-	private Expression<Player> players;
+	private Expression<LivingEntity> entities;
 	private Expression<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		players = (Expression<Player>) vars[0];
+		entities = (Expression<LivingEntity>) vars[0];
 		types = (Expression<ItemType>) vars[1];
 		setNegated(matchedPattern >= 2);
 		return true;
@@ -69,13 +69,13 @@ public class CondItemInHand extends Condition {
 	
 	@Override
 	public boolean check(final Event e) {
-		return players.check(e, new Checker<Player>() {
+		return entities.check(e, new Checker<LivingEntity>() {
 			@Override
-			public boolean check(final Player p) {
+			public boolean check(final LivingEntity en) {
 				return types.check(e, new Checker<ItemType>() {
 					@Override
 					public boolean check(final ItemType type) {
-						return type.isOfType(p.getItemInHand());
+						return type.isOfType(en.getEquipment().getItemInHand());
 					}
 				}, isNegated());
 			}
@@ -84,7 +84,7 @@ public class CondItemInHand extends Condition {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return players.toString(e, debug) + " is holding " + types.toString(e, debug);
+		return entities.toString(e, debug) + " " + (entities.isSingle() ? "is" : "are") + " holding " + types.toString(e, debug);
 	}
 	
 }

@@ -21,6 +21,7 @@
 
 package ch.njol.skript.expressions;
 
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
@@ -40,7 +41,9 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.EquipmentSlot;
 import ch.njol.skript.util.Getter;
+import ch.njol.skript.util.InventorySlot;
 import ch.njol.skript.util.Slot;
 import ch.njol.util.Kleenean;
 
@@ -54,9 +57,9 @@ import ch.njol.util.Kleenean;
 		"# is the same as",
 		"player's tool is a pickaxe"})
 @Since("1.0")
-public class ExprTool extends PropertyExpression<Player, Slot> { // TODO for mobs as well
+public class ExprTool extends PropertyExpression<LivingEntity, Slot> {
 	static {
-		Skript.registerExpression(ExprTool.class, Slot.class, ExpressionType.PROPERTY, "[the] (tool|held item|weapon) [of %players%]", "%player%'[s] (tool|held item)");
+		Skript.registerExpression(ExprTool.class, Slot.class, ExpressionType.PROPERTY, "[the] (tool|held item|weapon) [of %livingentities%]", "%livingentities%'[s] (tool|held item|weapon)");
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -67,16 +70,16 @@ public class ExprTool extends PropertyExpression<Player, Slot> { // TODO for mob
 	}
 	
 	@Override
-	protected Slot[] get(final Event e, final Player[] source) {
+	protected Slot[] get(final Event e, final LivingEntity[] source) {
 		final boolean delayed = Delay.isDelayed(e);
-		return get(source, new Getter<Slot, Player>() {
+		return get(source, new Getter<Slot, LivingEntity>() {
 			@Override
-			public Slot get(final Player p) {
+			public Slot get(final LivingEntity p) {
 				if (!delayed) {
 					if (e instanceof PlayerItemHeldEvent && ((PlayerItemHeldEvent) e).getPlayer() == p) {
-						return new Slot(((PlayerItemHeldEvent) e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot());
+						return new InventorySlot(((PlayerItemHeldEvent) e).getPlayer().getInventory(), getTime() >= 0 ? ((PlayerItemHeldEvent) e).getNewSlot() : ((PlayerItemHeldEvent) e).getPreviousSlot());
 					} else if (e instanceof PlayerBucketEvent && ((PlayerBucketEvent) e).getPlayer() == p) {
-						return new Slot(((PlayerBucketEvent) e).getPlayer().getInventory(), ((PlayerBucketEvent) e).getPlayer().getInventory().getHeldItemSlot()) {
+						return new InventorySlot(((PlayerBucketEvent) e).getPlayer().getInventory(), ((PlayerBucketEvent) e).getPlayer().getInventory().getHeldItemSlot()) {
 							@Override
 							public ItemStack getItem() {
 								return getTime() <= 0 ? super.getItem() : ((PlayerBucketEvent) e).getItemStack();
@@ -93,20 +96,10 @@ public class ExprTool extends PropertyExpression<Player, Slot> { // TODO for mob
 						};
 					}
 				}
-				return new Slot(p.getInventory(), p.getInventory().getHeldItemSlot()) {
+				return new EquipmentSlot(p.getEquipment(), EquipmentSlot.EquipSlot.TOOL) {
 					@Override
-					public void setItem(final ItemStack item) {
-						p.setItemInHand(item);
-					}
-					
-					@Override
-					public ItemStack getItem() {
-						return p.getItemInHand();
-					}
-					
-					@Override
-					public String toString(final Event e, final boolean debug) {
-						return "the " + (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + "tool of " + p.getName();
+					public String toString_i() {
+						return "the " + (getTime() == 1 ? "future " : getTime() == -1 ? "former " : "") + super.toString_i();
 					}
 				};
 			}

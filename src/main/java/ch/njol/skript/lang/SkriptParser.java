@@ -664,11 +664,11 @@ public class SkriptParser {
 					}
 				}
 			}
+			log.printError(null);
+			return null;
 		} finally {
 			log.stop();
 		}
-		log.printError(null);
-		return null;
 	}
 	
 	/**

@@ -42,6 +42,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Getter;
+import ch.njol.skript.util.InventorySlot;
 import ch.njol.skript.util.Slot;
 import ch.njol.util.Kleenean;
 
@@ -75,7 +76,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 		return true;
 	}
 	
-	private final class FurnaceEventSlot extends Slot {
+	private final class FurnaceEventSlot extends InventorySlot {
 		
 		private final Event e;
 		
@@ -171,7 +172,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 			public Slot get(final Block b) {
 				if (b.getType() != Material.FURNACE && b.getType() != Material.BURNING_FURNACE)
 					return null;
-				return new Slot(((Furnace) b.getState()).getInventory(), slot);
+				return new InventorySlot(((Furnace) b.getState()).getInventory(), slot);
 			}
 		});
 	}

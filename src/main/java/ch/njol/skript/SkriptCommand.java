@@ -86,6 +86,8 @@ public class SkriptCommand implements CommandExecutor {
 	private final static ArgsMessage m_reloaded = new ArgsMessage(NODE + ".reload.reloaded");
 	private final static ArgsMessage m_reload_error = new ArgsMessage(NODE + ".reload.error");
 	
+	private final static ArgsMessage m_changes_title = new ArgsMessage(NODE + ".update.changes.title");
+	
 	private final static void reloaded(final CommandSender sender, final RedirectingLogHandler r, String what, final Object... args) {
 		what = args.length == 0 ? Language.get(NODE + ".reload." + what) : PluralizingArgsMessage.format(Language.format(NODE + ".reload." + what, args));
 		if (r.numErrors() == 0)
@@ -306,40 +308,47 @@ public class SkriptCommand implements CommandExecutor {
 							Skript.info(sender, "" + Updater.m_check_error);
 						} else if (Updater.latest.get() == null) {
 							Skript.info(sender, Skript.getVersion().isStable() ? "" + Updater.m_running_latest_version : "" + Updater.m_running_latest_version_beta);
-						} else if (args.length == 2 && Updater.infos.size() != 1) {
-							info(sender, "update.changes.multiple versions.title", Updater.infos.size(), Skript.getVersion());
-							String versions = Updater.infos.get(0).version.toString();
-							for (int i = Updater.infos.size() - 1; i >= 0; i--)
-								versions += ", " + Updater.infos.get(i).version.toString();
-							Skript.message(sender, "  " + versions);
-							message(sender, "update.changes.multiple versions.footer");
+//						} else if (args.length == 2 && Updater.infos.size() != 1) {
+//							info(sender, "update.changes.multiple versions.title", Updater.infos.size(), Skript.getVersion());
+//							String versions = Updater.infos.get(0).version.toString();
+//							for (int i = Updater.infos.size() - 1; i >= 0; i--)
+//								versions += ", " + Updater.infos.get(i).version.toString();
+//							Skript.message(sender, "  " + versions);
+//							message(sender, "update.changes.multiple versions.footer");
 						} else {
-							VersionInfo info = null;
+//							VersionInfo info = null;
 							int pageNum = 1;
-							if (Updater.infos.size() == 1) {
-								info = Updater.latest.get();
-								if (args.length >= 3 && args[2].matches("\\d+"))
-									pageNum = Utils.parseInt(args[2]);
-							} else {
-								final String version = args[2];
-								for (final VersionInfo i : Updater.infos) {
-									if (i.version.toString().equals(version)) {
-										info = i;
-										break;
-									}
-								}
-								if (info == null) {
-									error(sender, "update.changes.invalid version", version);
-									return true;
-								}
-								if (args.length >= 4 && args[3].matches("\\d+"))
-									pageNum = Utils.parseInt(args[3]);
+//							if (Updater.infos.size() == 1) {
+//								info = Updater.latest.get();
+							if (args.length >= 3 && args[2].matches("\\d+"))
+								pageNum = Utils.parseInt(args[2]);
+//							} else {
+//								final String version = args[2];
+//								for (final VersionInfo i : Updater.infos) {
+//									if (i.version.toString().equals(version)) {
+//										info = i;
+//										break;
+//									}
+//								}
+//								if (info == null) {
+//									error(sender, "update.changes.invalid version", version);
+//									return true;
+//								}
+//								if (args.length >= 4 && args[3].matches("\\d+"))
+//									pageNum = Utils.parseInt(args[3]);
+//							}
+							final StringBuilder changes = new StringBuilder();
+							for (final VersionInfo i : Updater.infos) {
+								if (changes.length() != 0)
+									changes.append("\n");
+								changes.append(Skript.SKRIPT_PREFIX + Utils.replaceEnglishChatStyles(m_changes_title.toString(i.version, i.date)));
+								changes.append("\n");
+								changes.append(i.changelog);
 							}
-							final ChatPage page = ChatPaginator.paginate(info.changelog, pageNum, ChatPaginator.GUARANTEED_NO_WRAP_CHAT_PAGE_WIDTH, ChatPaginator.CLOSED_CHAT_PAGE_HEIGHT - 2);
-							info(sender, "update.changes.title", info.version, info.date, pageNum, page.getTotalPages());
+							final ChatPage page = ChatPaginator.paginate(changes.toString(), pageNum, ChatPaginator.GUARANTEED_NO_WRAP_CHAT_PAGE_WIDTH, ChatPaginator.OPEN_CHAT_PAGE_HEIGHT - 2);
 							sender.sendMessage(page.getLines());
 							if (pageNum < page.getTotalPages())
-								message(sender, "update.changes.next page", (Updater.infos.size() == 1 ? "" : info.version + " ") + (pageNum + 1));
+								message(sender, "update.changes.next page", pageNum, page.getTotalPages(), pageNum + 1);
 						}
 					} else if (args[1].equalsIgnoreCase("download")) {
 						switch (state) {

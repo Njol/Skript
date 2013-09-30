@@ -21,7 +21,7 @@
 
 package ch.njol.skript.conditions;
 
-import org.bukkit.entity.Player;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 
@@ -49,16 +49,16 @@ import ch.njol.util.Kleenean;
 public class CondIsWearing extends Condition {
 	
 	static {
-		Skript.registerCondition(CondIsWearing.class, "%players% (is|are) wearing %itemtypes%", "%players% (isn't|is not|aren't|are not) wearing %itemtypes%");
+		Skript.registerCondition(CondIsWearing.class, "%livingentities% (is|are) wearing %itemtypes%", "%livingentities% (isn't|is not|aren't|are not) wearing %itemtypes%");
 	}
 	
-	private Expression<Player> players;
+	private Expression<LivingEntity> entities;
 	private Expression<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		players = (Expression<Player>) vars[0];
+		entities = (Expression<LivingEntity>) vars[0];
 		types = (Expression<ItemType>) vars[1];
 		setNegated(matchedPattern == 1);
 		return true;
@@ -66,18 +66,18 @@ public class CondIsWearing extends Condition {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return players.toString(e, debug) + (players.isSingle() ? " is" : " are") + (isNegated() ? "not " : "") + " wearing " + types;
+		return entities.toString(e, debug) + (entities.isSingle() ? " is" : " are") + (isNegated() ? "not " : "") + " wearing " + types;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
-		return players.check(e, new Checker<Player>() {
+		return entities.check(e, new Checker<LivingEntity>() {
 			@Override
-			public boolean check(final Player p) {
+			public boolean check(final LivingEntity en) {
 				return types.check(e, new Checker<ItemType>() {
 					@Override
 					public boolean check(final ItemType t) {
-						for (final ItemStack is : p.getInventory().getArmorContents()) {
+						for (final ItemStack is : en.getEquipment().getArmorContents()) {
 							if (t.isOfType(is) ^ t.isAll())
 								return !t.isAll();
 						}

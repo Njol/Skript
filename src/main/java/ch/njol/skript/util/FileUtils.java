@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
@@ -159,6 +160,29 @@ public abstract class FileUtils {
 			}
 		}
 		return changed;
+	}
+	
+	/**
+	 * Saves the contents of an InputStream in a file.
+	 * 
+	 * @param in The InputStream to read from.
+	 * @param file The file to save to. Will be replaced if it exists, or created if it doesn't.
+	 * @throws IOException
+	 */
+	public final static void save(final InputStream in, final File file) throws IOException {
+		file.getParentFile().mkdirs();
+		FileOutputStream out = null;
+		try {
+			out = new FileOutputStream(file);
+			final byte[] buffer = new byte[16 * 1024];
+			int read;
+			while ((read = in.read(buffer)) > 0) {
+				out.write(buffer, 0, read);
+			}
+		} finally {
+			if (out != null)
+				out.close();
+		}
 	}
 	
 }

@@ -37,6 +37,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.InventorySlot;
 import ch.njol.skript.util.Slot;
 import ch.njol.util.Kleenean;
 import ch.njol.util.iterator.EmptyIterator;
@@ -74,7 +75,7 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 		for (final Inventory invi : invis.getArray(e)) {
 			for (int i = 0; i < invi.getSize(); i++) {
 				if (invi.getItem(i) != null)
-					r.add(new Slot(invi, i));
+					r.add(new InventorySlot(invi, i));
 			}
 		}
 		return r.toArray(new Slot[r.size()]);
@@ -100,14 +101,14 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 					while (next < current.getSize() && current.getItem(next) == null)
 						next++;
 				}
-				return next < current.getSize() && is.hasNext();
+				return next < current.getSize();
 			}
 			
 			@Override
 			public Slot next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
-				return new Slot(current, next++);
+				return new InventorySlot(current, next++);
 			}
 			
 			@Override

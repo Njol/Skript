@@ -21,6 +21,7 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -38,7 +39,7 @@ import ch.njol.skript.lang.Testable;
 import ch.njol.util.Kleenean;
 
 /**
- * TODO add mob support (zombies, skeletons, horses, pigs, ...)
+ * TODO add mob support (zombies, skeletons, horses, pigs, ...) -> tool/weapon -> is wearing -> armour slot -> etc...
  * 
  * @author Peter Güttinger
  */
@@ -51,54 +52,54 @@ import ch.njol.util.Kleenean;
 public class EffEquip extends Effect implements Testable {
 	static {
 		Skript.registerEffect(EffEquip.class,
-				"equip [%players%] with %itemtypes%",
-				"make %players% wear %itemtypes%");
+				"equip [%livingentity%] with %itemtypes%",
+				"make %livingentity% wear %itemtypes%");
 	}
 	
-	private Expression<Player> players;
+	private Expression<LivingEntity> entities;
 	private Expression<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		players = (Expression<Player>) vars[0];
+		entities = (Expression<LivingEntity>) vars[0];
 		types = (Expression<ItemType>) vars[1];
 		return true;
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "equip " + players.toString(e, debug) + " with " + types.toString(e, debug);
+		return "equip " + entities.toString(e, debug) + " with " + types.toString(e, debug);
 	}
 	
 	@SuppressWarnings("deprecation")
 	@Override
 	protected void execute(final Event e) {
 		final ItemType[] ts = types.getArray(e);
-		for (final Player p : players.getArray(e)) {
+		for (final LivingEntity en : entities.getArray(e)) {
 			for (final ItemType t : ts) {
-				for (final ItemStack item : t.getBlock().getAll()) {
+				for (final ItemStack item : t.getAll()) {
 					switch (item.getType()) {
 						case LEATHER_BOOTS:
 						case IRON_BOOTS:
 						case GOLD_BOOTS:
 						case CHAINMAIL_BOOTS:
 						case DIAMOND_BOOTS:
-							p.getInventory().setBoots(item);
+							en.getEquipment().setBoots(item);
 							break;
 						case LEATHER_LEGGINGS:
 						case IRON_LEGGINGS:
 						case GOLD_LEGGINGS:
 						case CHAINMAIL_LEGGINGS:
 						case DIAMOND_LEGGINGS:
-							p.getInventory().setLeggings(item);
+							en.getEquipment().setLeggings(item);
 							break;
 						case LEATHER_CHESTPLATE:
 						case IRON_CHESTPLATE:
 						case GOLD_CHESTPLATE:
 						case CHAINMAIL_CHESTPLATE:
 						case DIAMOND_CHESTPLATE:
-							p.getInventory().setChestplate(item);
+							en.getEquipment().setChestplate(item);
 							break;
 						default:
 							if (!(item.getType().isBlock() || item.getTypeId() == 397 /* mob head */))
@@ -109,11 +110,12 @@ public class EffEquip extends Effect implements Testable {
 						case GOLD_HELMET:
 						case CHAINMAIL_HELMET:
 						case DIAMOND_HELMET:
-							p.getInventory().setHelmet(item);
+							en.getEquipment().setHelmet(item);
 					}
 				}
 			}
-			p.updateInventory();
+			if (en instanceof Player)
+				((Player) en).updateInventory();
 		}
 	}
 	

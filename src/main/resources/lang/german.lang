@@ -117,12 +117,12 @@ skript command:
 	update:
 		# check/download: see Updater
 		changes:
-			multiple versions:
-				title: <gold>%s <r>Update¦ ist¦s sind¦ seit dieser Version (<gold>%s<r>) veröffentlicht worden:
-				footer: Für den Changelog einer Version tippe <gold>/skript update changes <version><reset>
-			invalid version: Kein Changelog der Version <gold>%s<red> verfügbar
-			title: <bold><cyan>%s<reset> (%s) <grey>[Seite %s von %s]
-			next page: <gray>tippe <gold>/skript update changes %s<gray> für die nächste Seite (Tipp: benutze die Pfeil-Hoch-Taste)
+			# multiple versions:
+			# 	title: <gold>%s <r>Update¦ ist¦s sind¦ seit dieser Version (<gold>%s<r>) veröffentlicht worden:
+			# 	footer: Für den Changelog einer Version tippe <gold>/skript update changes <version><reset>
+			# invalid version: Kein Changelog der Version <gold>%s<red> verfügbar
+			title: <bold><cyan>%s<reset> (%s)
+			next page: <gray>Seite %s von %s. Tippe <gold>/skript update changes %s<gray> für die nächste Seite (Tipp: benutze die Pfeil-Hoch-Taste)
 
 # -- Updater --
 updater:

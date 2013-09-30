@@ -22,6 +22,7 @@
 package ch.njol.skript;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Field;
@@ -40,6 +41,9 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -95,6 +99,8 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.registrations.EventValues;
+import ch.njol.skript.util.ExceptionUtils;
+import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Utils;
@@ -180,6 +186,43 @@ public final class Skript extends JavaPlugin implements Listener {
 			minecraftVersion = new Version(m.group());
 		}
 		
+		if (!getDataFolder().isDirectory())
+			getDataFolder().mkdirs();
+		
+		final File scripts = new File(getDataFolder(), SCRIPTSFOLDER);
+		if (!scripts.isDirectory()) {
+			scripts.mkdirs();
+			ZipFile f = null;
+			try {
+				f = new ZipFile(getFile());
+				for (final ZipEntry e : new EnumerationIterable<ZipEntry>(f.entries())) {
+					if (e.isDirectory())
+						continue;
+					if (e.getName().startsWith(SCRIPTSFOLDER + "/")) {
+						final String fileName = e.getName().substring(e.getName().lastIndexOf('/') + 1);
+						FileUtils.save(f.getInputStream(e), new File(scripts, (fileName.startsWith("-") ? "" : "-") + fileName));
+					} else if (e.getName().equals("config.sk")) {
+						final File cf = new File(getDataFolder(), e.getName());
+						if (!cf.exists())
+							FileUtils.save(f.getInputStream(e), cf);
+					} else if (e.getName().startsWith("aliases-") && e.getName().endsWith(".sk") && !e.getName().contains("/")) {
+						final File af = new File(getDataFolder(), e.getName());
+						if (!af.exists())
+							FileUtils.save(f.getInputStream(e), af);
+					}
+				}
+				info("Successfully generated the config, the example scripts and the aliases files.");
+			} catch (final ZipException e) {} catch (final IOException e) {
+				error("Error generating the default files: " + ExceptionUtils.toString(e));
+			} finally {
+				if (f != null) {
+					try {
+						f.close();
+					} catch (final IOException e) {}
+				}
+			}
+		}
+		
 		getCommand("skript").setExecutor(new SkriptCommand());
 		
 		new JavaClasses();
@@ -197,9 +240,6 @@ public final class Skript extends JavaPlugin implements Listener {
 			setEnabled(false);
 			return;
 		}
-		
-		if (!getDataFolder().isDirectory())
-			getDataFolder().mkdirs();
 		
 		SkriptConfig.load();
 		Language.setUseLocal(true);
@@ -410,6 +450,10 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static boolean isRunningMinecraft(final int major, final int minor, final int revision) {
 		return minecraftVersion.compareTo(major, minor, revision) >= 0;
+	}
+	
+	public static boolean isRunningMinecraft(final Version v) {
+		return minecraftVersion.compareTo(v) >= 0;
 	}
 	
 	private static Metrics metrics;

@@ -115,12 +115,12 @@ skript command:
 	update:
 		# check/download: see Updater
 		changes:
-			multiple versions:
-				title: <gold>%s<r> update¦ has¦s have¦ been released since this version (<gold>%s<r>) of Skript:
-				footer: To show the changelog of a version type <gold>/skript update changes <version><reset>
-			invalid version: No changelog for the version <gold>%s<red> available
-			title: <bold><cyan>%s<reset> (%s) <grey>[page %s of %s]
-			next page: <gray>type <gold>/skript update changes %s<gray> for the next page (hint: use the up arrow key)
+			# multiple versions:
+			# 	title: <gold>%s<r> update¦ has¦s have¦ been released since this version (<gold>%s<r>) of Skript:
+			# 	footer: To show the changelog of a version type <gold>/skript update changes <version><reset>
+			# invalid version: No changelog for the version <gold>%s<red> available
+			title: <bold><cyan>%s<reset> (%s)
+			next page: <grey>page %s of %s. Type <gold>/skript update changes %s<gray> for the next page (hint: use the up arrow key)
 
 # -- Updater --
 updater:

@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
 
 import ch.njol.skript.Skript;
 
@@ -15,28 +15,28 @@ import ch.njol.skript.Skript;
  */
 public abstract class Task implements Runnable {
 	
-	private final JavaPlugin plugin;
+	private final Plugin plugin;
 	private final boolean async;
 	private long period = -1;
 	
 	private int taskID;
 	
-	public Task(final JavaPlugin plugin, final long delay, final long period) {
+	public Task(final Plugin plugin, final long delay, final long period) {
 		this(plugin, delay, period, false);
 	}
 	
-	public Task(final JavaPlugin plugin, final long delay, final long period, final boolean async) {
+	public Task(final Plugin plugin, final long delay, final long period, final boolean async) {
 		this.plugin = plugin;
 		this.period = period;
 		this.async = async;
 		schedule(delay);
 	}
 	
-	public Task(final JavaPlugin plugin, final long delay) {
+	public Task(final Plugin plugin, final long delay) {
 		this(plugin, delay, false);
 	}
 	
-	public Task(final JavaPlugin plugin, final long delay, final boolean async) {
+	public Task(final Plugin plugin, final long delay, final boolean async) {
 		this.plugin = plugin;
 		this.async = async;
 		schedule(delay);

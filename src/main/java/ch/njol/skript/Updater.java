@@ -23,7 +23,6 @@ package ch.njol.skript;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -38,8 +37,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -53,6 +50,7 @@ import ch.njol.skript.localization.FormattedMessage;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.util.Date;
 import ch.njol.skript.util.ExceptionUtils;
+import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Version;
@@ -165,7 +163,7 @@ public final class Updater {
 							} else {
 								if (element.equalsIgnoreCase("title")) {
 									final String version = reader.nextEvent().asCharacters().getData();
-									if (!version.matches("\\d+\\.\\d+(\\.\\d+)? \\(zip\\)")) {// not the default version pattern to not match beta/etc. versions // TODO only upload jar file and include default files in it?
+									if (!version.matches("\\d+\\.\\d+(\\.\\d+)?( \\(jar( only)?\\))?")) {// not the default version pattern to not match beta/etc. versions
 										current = null;
 										continue;
 									}
@@ -294,22 +292,6 @@ public final class Updater {
 		throw new IOException("Could not get the file's URL. You can however download Skript manually from " + pageURL);
 	}
 	
-	private final static void saveZipEntry(final ZipInputStream zip, final File file) throws IOException {
-		file.getParentFile().mkdirs();
-		FileOutputStream out = null;
-		try {
-			out = new FileOutputStream(file);
-			final byte[] buffer = new byte[16 * 1024];
-			int read;
-			while ((read = zip.read(buffer)) > 0) {
-				out.write(buffer, 0, read);
-			}
-		} finally {
-			if (out != null)
-				out.close();
-		}
-	}
-	
 	/**
 	 * Must set {@link #state} to {@link UpdateState#DOWNLOAD_IN_PROGRESS} prior to calling this
 	 * 
@@ -326,27 +308,29 @@ public final class Updater {
 			stateLock.readLock().unlock();
 		}
 		Skript.info(sender, "" + m_downloading);
-		boolean hasJar = false;
-		ZipInputStream zip = null;
+//		boolean hasJar = false;
+//		ZipInputStream zip = null;
+		InputStream in = null;
 		try {
 			final URLConnection conn = new URL(getFileURL(latest.get().pageURL)).openConnection();
-			zip = new ZipInputStream(conn.getInputStream());
-			ZipEntry entry;
-//			boolean hasAliases = false;
-			while ((entry = zip.getNextEntry()) != null) {
-				if (entry.getName().endsWith("Skript.jar")) {
-					assert !hasJar;
-					saveZipEntry(zip, new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
-					hasJar = true;
-				}// else if (entry.getName().endsWith("aliases.sk")) {
-//					assert !hasAliases;
-//					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "aliases-" + latest.get().version + ".sk"));
-//					hasAliases = true;
-//				}
-				zip.closeEntry();
-				if (hasJar)// && hasAliases)
-					break;
-			}
+			FileUtils.save(in = conn.getInputStream(), new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
+//			zip = new ZipInputStream(conn.getInputStream());
+//			ZipEntry entry;
+////			boolean hasAliases = false;
+//			while ((entry = zip.getNextEntry()) != null) {
+//				if (entry.getName().endsWith("Skript.jar")) {
+//					assert !hasJar;
+//					save(zip, new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
+//					hasJar = true;
+//				}// else if (entry.getName().endsWith("aliases.sk")) {
+////					assert !hasAliases;
+////					saveZipEntry(zip, new File(Skript.getInstance().getDataFolder(), "aliases-" + latest.get().version + ".sk"));
+////					hasAliases = true;
+////				}
+//				zip.closeEntry();
+//				if (hasJar)// && hasAliases)
+//					break;
+//			}
 			if (isAutomatic)
 				Skript.adminBroadcast("" + m_downloaded);
 			else
@@ -376,9 +360,9 @@ public final class Updater {
 				stateLock.writeLock().unlock();
 			}
 		} finally {
-			if (zip != null) {
+			if (in != null) {
 				try {
-					zip.close();
+					in.close();
 				} catch (final IOException e) {}
 			}
 		}

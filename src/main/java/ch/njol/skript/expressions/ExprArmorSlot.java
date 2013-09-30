@@ -21,11 +21,10 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.inventory.ItemStack;
+import java.util.Locale;
 
-import ch.njol.skript.classes.Changer.ChangeMode;
+import org.bukkit.entity.LivingEntity;
+
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -33,7 +32,9 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.util.CollectionUtils;
+import ch.njol.skript.util.EquipmentSlot;
+import ch.njol.skript.util.EquipmentSlot.EquipSlot;
+import ch.njol.skript.util.Slot;
 import ch.njol.util.Kleenean;
 
 /**
@@ -45,72 +46,35 @@ import ch.njol.util.Kleenean;
 @Examples({"set chestplate of the player to a diamond chestplate",
 		"helmet of player is neither a helmet nor air # player is wearing a block, e.g. from another plugin"})
 @Since("1.0")
-public class ExprArmorSlot extends SimplePropertyExpression<Player, ItemStack> {// TODO for mobs as well
+public class ExprArmorSlot extends SimplePropertyExpression<LivingEntity, Slot> {
 	static {
-		register(ExprArmorSlot.class, ItemStack.class, "(0¦boot[s]|0¦shoe[s]|1¦leg[ging][s]|2¦chestplate[s]|3¦helm[et][s]) [slot]", "players");
+		register(ExprArmorSlot.class, Slot.class, "(0¦boot[s]|0¦shoe[s]|1¦leg[ging][s]|2¦chestplate[s]|3¦helm[et][s]) [slot]", "livingentities");
 	}
 	
-	private int slot;
+	private EquipSlot slot;
 	
-	private final static String[] slotNames = {"boots", "leggings", "chestplate", "helmet"};
+	private final static EquipSlot[] slots = {EquipSlot.BOOTS, EquipSlot.LEGGINGS, EquipSlot.CHESTPLATE, EquipSlot.HELMET};
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		super.init(exprs, matchedPattern, isDelayed, parseResult);
-		slot = parseResult.mark;
+		slot = slots[parseResult.mark];
 		return true;
 	}
 	
 	@Override
-	public ItemStack convert(final Player p) {
-		return p.getInventory().getArmorContents()[slot];
-//		return new PlayerSlot(p.getInventory()) {
-//			@Override
-//			public ItemStack getItem() {
-//				return p.getInventory().getArmorContents()[slot];
-//			}
-//			
-//			@Override
-//			public void setItem(final ItemStack item) {
-//				final ItemStack[] armour = p.getInventory().getArmorContents();
-//				armour[slot] = item;
-//				p.getInventory().setArmorContents(armour);
-//			}
-//			
-//			@Override
-//			public String toString(final Event e, final boolean debug) {
-//				return slotNames[slot] + " of " + p.getName();
-//			}
-//		};
+	public Slot convert(final LivingEntity en) {
+		return new EquipmentSlot(en.getEquipment(), slot);
 	}
 	
 	@Override
 	protected String getPropertyName() {
-		return slotNames[slot];
+		return slot.name().toLowerCase(Locale.ENGLISH);
 	}
 	
 	@Override
-	public Class<ItemStack> getReturnType() {
-		return ItemStack.class;
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public Class<ItemStack>[] acceptChange(final ChangeMode mode) {
-		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE)
-			return CollectionUtils.array(ItemStack.class);
-		return null;
-	}
-	
-	@SuppressWarnings("deprecation")
-	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
-		for (final Player p : getExpr().getArray(e)) {
-			final ItemStack[] armour = p.getInventory().getArmorContents();
-			armour[slot] = delta == null ? null : (ItemStack) delta[0];
-			p.getInventory().setArmorContents(armour);
-			p.updateInventory();
-		}
+	public Class<Slot> getReturnType() {
+		return Slot.class;
 	}
 	
 }
