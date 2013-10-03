@@ -30,7 +30,7 @@ import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
-import ch.njol.skript.hooks.chat.ChatHook;
+import ch.njol.skript.hooks.VaultHook;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
@@ -61,7 +61,7 @@ public class ExprPrefixSuffix extends SimplePropertyExpression<Player, String> {
 	
 	@Override
 	public String convert(final Player p) {
-		return prefix ? ChatHook.chat.getPlayerPrefix(p) : ChatHook.chat.getPlayerSuffix(p);
+		return prefix ? VaultHook.chat.getPlayerPrefix(p) : VaultHook.chat.getPlayerSuffix(p);
 	}
 	
 	@Override
@@ -87,9 +87,9 @@ public class ExprPrefixSuffix extends SimplePropertyExpression<Player, String> {
 		
 		for (final Player p : getExpr().getArray(e)) {
 			if (prefix)
-				ChatHook.chat.setPlayerPrefix(p, (String) delta[0]);
+				VaultHook.chat.setPlayerPrefix(p, (String) delta[0]);
 			else
-				ChatHook.chat.setPlayerSuffix(p, (String) delta[0]);
+				VaultHook.chat.setPlayerSuffix(p, (String) delta[0]);
 		}
 	}
 	

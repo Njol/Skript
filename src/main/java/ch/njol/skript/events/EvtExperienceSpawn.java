@@ -123,14 +123,14 @@ public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 			}
 			SkriptEventHandler.logEventEnd();
 			
-			if (es.isCancelled()) {
-				if (e instanceof BlockExpEvent) {
-					((BlockExpEvent) e).setExpToDrop(0);
-				} else if (e instanceof EntityDeathEvent) {
-					((EntityDeathEvent) e).setDroppedExp(0);
-				} else if (e instanceof ExpBottleEvent) {
-					((ExpBottleEvent) e).setExperience(0);
-				}
+			if (es.isCancelled())
+				es.setSpawnedXP(0);
+			if (e instanceof BlockExpEvent) {
+				((BlockExpEvent) e).setExpToDrop(es.getSpawnedXP());
+			} else if (e instanceof EntityDeathEvent) {
+				((EntityDeathEvent) e).setDroppedExp(es.getSpawnedXP());
+			} else if (e instanceof ExpBottleEvent) {
+				((ExpBottleEvent) e).setExperience(es.getSpawnedXP());
 			}
 		}
 	};

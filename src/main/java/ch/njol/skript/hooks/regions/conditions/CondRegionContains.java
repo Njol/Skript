@@ -15,22 +15,17 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011-2013 Peter Güttinger
+ * Copyright 2011, 2012 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.hooks.regions.conditions;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.doc.Description;
-import ch.njol.skript.doc.Examples;
-import ch.njol.skript.doc.Name;
-import ch.njol.skript.doc.Since;
-import ch.njol.skript.hooks.regions.RegionsPlugin;
+import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -42,44 +37,39 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-@Name("Can Build")
-@Description("Tests whether a player is allowed to build at a certain location. This condition requires either Factions or WorldGuard (or both) to be installed.")
-@Examples({"command /setblock <material>:",
-		"	description: set the block at your crosshair to a different type",
-		"	trigger:",
-		"		player cannot build at the targeted block:",
-		"			message \"You do not have permission to change blocks there!\"",
-		"			stop",
-		"		set the targeted block to argument"})
-@Since("2.0")
-public class CondCanBuild extends Condition {
+public class CondRegionContains extends Condition {
 	static {
-		Skript.registerCondition(CondCanBuild.class,
-				"%players% (can|(is|are) allowed to) build %directions% %locations%",
-				"%players% (can('t|not)|(is|are)(n't| not) allowed to) build %directions% %locations%");
+		Skript.registerCondition(CondRegionContains.class,
+				"[[the] region] %regions% contain[s] %directions% %locations%", "%locations% (is|are) (contained in|part of) [[the] region] %regions%",
+				"[[the] region] %regions% (do|does)(n't| not) contain %directions% %locations%", "%locations% (is|are)(n't| not) (contained in|part of) [[the] region] %regions%");
 	}
 	
-	private Expression<Player> players;
-	private Expression<Location> locations;
+	private Expression<Region> regions;
+	private Expression<Location> locs;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		players = (Expression<Player>) exprs[0];
-		locations = Direction.combine((Expression<? extends Direction>) exprs[1], (Expression<? extends Location>) exprs[2]);
-		setNegated(matchedPattern == 1);
+		if (exprs.length == 3) {
+			regions = (Expression<Region>) exprs[0];
+			locs = Direction.combine((Expression<? extends Direction>) exprs[1], (Expression<? extends Location>) exprs[2]);
+		} else {
+			regions = (Expression<Region>) exprs[1];
+			locs = (Expression<Location>) exprs[0];
+		}
+		setNegated(matchedPattern >= 2);
 		return true;
 	}
 	
 	@Override
 	public boolean check(final Event e) {
-		return players.check(e, new Checker<Player>() {
+		return regions.check(e, new Checker<Region>() {
 			@Override
-			public boolean check(final Player p) {
-				return locations.check(e, new Checker<Location>() {
+			public boolean check(final Region r) {
+				return locs.check(e, new Checker<Location>() {
 					@Override
 					public boolean check(final Location l) {
-						return RegionsPlugin.canBuild(p, l);
+						return r.contains(l);
 					}
 				}, isNegated());
 			}
@@ -88,7 +78,7 @@ public class CondCanBuild extends Condition {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return players.toString(e, debug) + " can build " + locations.toString(e, debug);
+		return regions.toString(e, debug) + " contain" + (regions.isSingle() ? "s" : "") + " " + locs.toString(e, debug);
 	}
 	
 }

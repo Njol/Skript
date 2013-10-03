@@ -52,7 +52,7 @@ public class Version implements Serializable, Comparable<Version> {
 		this.postfix = postfix == null || postfix.isEmpty() ? null : postfix;
 	}
 	
-	public final static Pattern versionPattern = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?\\s*(.*)");
+	public final static Pattern versionPattern = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?(\\s*|-)(.*)");
 	
 	public Version(final String version) {
 		final Matcher m = versionPattern.matcher(version.trim());

@@ -53,8 +53,8 @@ public class EvtClick extends SkriptEvent {
 	
 	static {
 		Skript.registerEvent("Click", EvtClick.class, CollectionUtils.array(PlayerInteractEvent.class, PlayerInteractEntityEvent.class),
-				"[(1¦right|2¦left)[ ]][mouse[ ]]click[ing] [on %-entitydata/itemtype%] [(with|using|holding) %itemtype%]",
-				"[(1¦right|2¦left)[ ]][mouse[ ]]click[ing] (with|using|holding) %itemtype% on %entitydata/itemtype%")
+				"[(1¦right|2¦left)( |-)][mouse( |-)]click[ing] [on %-entitydata/itemtype%] [(with|using|holding) %itemtype%]",
+				"[(1¦right|2¦left)( |-)][mouse( |-)]click[ing] (with|using|holding) %itemtype% on %entitydata/itemtype%")
 				.description("Called when a user clicks on a block, an entity or air with or without an item in their hand.",
 						"Please note that rightclick events with an empty hand while not looking at a block are not sent to the server, so there's no way to detect them.")
 				.examples("on click",

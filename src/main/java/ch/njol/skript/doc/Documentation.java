@@ -158,6 +158,9 @@ public class Documentation { // TODO list special expressions for events
 				.replaceAll("(?<=[\\(\\|]).+?¦", "") // remove marks
 				.replace("()", "") // remove empty mark setting groups (mark¦)
 				.replaceAll("\\(([^|]+?)\\|\\)", "[$1]") // replace (mark¦x|) groups with [x]
+				.replaceAll("\\(\\|([^|]+?)\\)", "[$1]") // dito
+				.replaceAll("\\((.+?)\\|\\)", "[($1)]")
+						.replaceAll("\\(\\|(.+?)\\)", "[($1)]")
 				, "(?<!\\\\)%(.+?)(?<!\\\\)%", new Callback<String, Matcher>() { // link & fancy types
 					@Override
 					public String run(final Matcher m) {

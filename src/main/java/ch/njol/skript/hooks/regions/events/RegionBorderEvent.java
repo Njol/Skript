@@ -15,49 +15,40 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011-2013 Peter Güttinger
+ * Copyright 2011, 2012 Peter Güttinger
  * 
  */
 
-package ch.njol.skript.effects;
+package ch.njol.skript.hooks.regions.events;
 
 import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
 
-import ch.njol.skript.Skript;
-import ch.njol.skript.lang.Effect;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.hooks.regions.classes.Region;
 
 /**
  * @author Peter Güttinger
- *
  */
-public class EffPlayEffect extends Effect {
+public class RegionBorderEvent extends Event {
 	
-	static {
-		Skript.registerEffect(EffPlayEffect.class, "");
+	public final Region region;
+	
+	public final boolean enter;
+	
+	public RegionBorderEvent(final Region region, final boolean enter) {
+		this.region = region;
+		this.enter = enter;
 	}
 	
-	private static enum EffectType {
-		
-	}
+	// Bukkit stuff
+	private static final HandlerList handlers = new HandlerList();
 	
 	@Override
-	public boolean init(Expression<?>[] exprs, int matchedPattern, int isDelayed, ParseResult parseResult) {
-		// TODO Auto-generated method stub
-		return false;
+	public HandlerList getHandlers() {
+		return handlers;
 	}
 	
-	@Override
-	public String toString(Event e, boolean debug) {
-		// TODO Auto-generated method stub
-		return null;
+	public static HandlerList getHandlerList() {
+		return handlers;
 	}
-	
-	@Override
-	protected void execute(Event e) {
-		// TODO Auto-generated method stub
-		
-	}
-	
 }

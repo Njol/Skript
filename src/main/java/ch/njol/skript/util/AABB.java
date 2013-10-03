@@ -24,6 +24,7 @@ package ch.njol.skript.util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -32,6 +33,8 @@ import org.bukkit.util.Vector;
 import ch.njol.skript.Skript;
 
 /**
+ * AABB = Axis-Aligned Bounding Box
+ * 
  * @author Peter Güttinger
  */
 public class AABB implements Iterable<Block> {
@@ -61,6 +64,16 @@ public class AABB implements Iterable<Block> {
 		world = center.getWorld();
 		lowerBound = new Vector(center.getX() - rX, Math.max(center.getY() - rY, 0), center.getZ() - rZ);
 		upperBound = new Vector(center.getX() + rX, Math.min(center.getY() + rY, world.getMaxHeight()), center.getZ() + rZ);
+	}
+	
+	public AABB(final World w, final Vector v1, final Vector v2) {
+		world = w;
+		lowerBound = new Vector(Math.min(v1.getX(), v2.getX()), Math.min(v1.getY(), v2.getY()), Math.min(v1.getZ(), v2.getZ()));
+		upperBound = new Vector(Math.max(v1.getX(), v2.getX()) + 1, Math.max(v1.getY(), v2.getY()) + 1, Math.max(v1.getZ(), v2.getZ()) + 1);
+	}
+	
+	public AABB(final Chunk c) {
+		this(c.getBlock(0, 0, 0), c.getBlock(15, c.getWorld().getMaxHeight() - 1, 15));
 	}
 	
 	public boolean contains(final Location l) {

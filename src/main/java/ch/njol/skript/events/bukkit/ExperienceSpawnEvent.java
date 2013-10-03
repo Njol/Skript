@@ -63,6 +63,7 @@ public class ExperienceSpawnEvent extends Event implements Cancellable {
 		return xp;
 	}
 	
+	// TODO create an 'experience' expression
 	public void setSpawnedXP(final int xp) {
 		this.xp = xp;
 	}

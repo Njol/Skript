@@ -27,7 +27,7 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.SerializableConverter;
-import ch.njol.skript.hooks.economy.EconomyHook;
+import ch.njol.skript.hooks.VaultHook;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Comparators;
@@ -39,7 +39,6 @@ import ch.njol.util.StringUtils;
  */
 @SuppressWarnings("serial")
 public class Money {
-	
 	static {
 		Classes.registerClass(new ClassInfo<Money>(Money.class, "money")
 				.user("money")
@@ -135,32 +134,33 @@ public class Money {
 	}
 	
 	public static final Money parse(final String s) {
-		if (EconomyHook.economy == null) {
+		if (VaultHook.economy == null) {
 //			Skript.error("No economy plugin detected");
 			return null;
 		}
-		if (!EconomyHook.plural.isEmpty()) {
-			if (StringUtils.endsWithIgnoreCase(s, EconomyHook.plural)) {
+		final String singular = VaultHook.economy.currencyNameSingular(), plural = VaultHook.economy.currencyNamePlural();
+		if (!plural.isEmpty()) {
+			if (StringUtils.endsWithIgnoreCase(s, plural)) {
 				try {
-					final double d = Double.parseDouble(s.substring(0, s.length() - EconomyHook.plural.length()).trim());
+					final double d = Double.parseDouble(s.substring(0, s.length() - plural.length()).trim());
 					return new Money(d);
 				} catch (final NumberFormatException e) {}
-			} else if (StringUtils.startsWithIgnoreCase(s, EconomyHook.plural)) {
+			} else if (StringUtils.startsWithIgnoreCase(s, plural)) {
 				try {
-					final double d = Double.parseDouble(s.substring(EconomyHook.plural.length()).trim());
+					final double d = Double.parseDouble(s.substring(plural.length()).trim());
 					return new Money(d);
 				} catch (final NumberFormatException e) {}
 			}
 		}
-		if (!EconomyHook.singular.isEmpty()) {
-			if (StringUtils.endsWithIgnoreCase(s, EconomyHook.singular)) {
+		if (!singular.isEmpty()) {
+			if (StringUtils.endsWithIgnoreCase(s, singular)) {
 				try {
-					final double d = Double.parseDouble(s.substring(0, s.length() - EconomyHook.singular.length()).trim());
+					final double d = Double.parseDouble(s.substring(0, s.length() - singular.length()).trim());
 					return new Money(d);
 				} catch (final NumberFormatException e) {}
-			} else if (StringUtils.startsWithIgnoreCase(s, EconomyHook.singular)) {
+			} else if (StringUtils.startsWithIgnoreCase(s, singular)) {
 				try {
-					final double d = Double.parseDouble(s.substring(EconomyHook.singular.length()).trim());
+					final double d = Double.parseDouble(s.substring(singular.length()).trim());
 					return new Money(d);
 				} catch (final NumberFormatException e) {}
 			}
@@ -173,7 +173,7 @@ public class Money {
 	
 	@Override
 	public String toString() {
-		return EconomyHook.economy.format(amount);
+		return VaultHook.economy.format(amount);
 	}
 	
 }

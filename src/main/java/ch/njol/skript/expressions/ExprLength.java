@@ -19,39 +19,32 @@
  * 
  */
 
-package ch.njol.skript.hooks.chat;
+package ch.njol.skript.expressions;
 
-import net.milkbowl.vault.chat.Chat;
-
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.RegisteredServiceProvider;
-
-import ch.njol.skript.hooks.Hook;
-import ch.njol.skript.hooks.VaultHook;
+import ch.njol.skript.expressions.base.SimplePropertyExpression;
 
 /**
  * @author Peter Güttinger
  */
-public class ChatHook extends Hook {
-	
-	public static Chat chat = null;
-	
-	@Override
-	protected boolean init() {
-		if (VaultHook.vault != null) {
-			final RegisteredServiceProvider<Chat> e = Bukkit.getServicesManager().getRegistration(Chat.class);
-			if (e != null) {
-				chat = e.getProvider();
-				return true;
-			}
-		}
-		return false;
+@SuppressWarnings("serial")
+public class ExprLength extends SimplePropertyExpression<String, Integer> {
+	static {
+		register(ExprLength.class, Integer.class, "length", "strings");
 	}
 	
 	@Override
-	public Plugin getPlugin() {
-		return VaultHook.vault;
+	public Integer convert(final String s) {
+		return Integer.valueOf(s.length());
+	}
+	
+	@Override
+	public Class<? extends Integer> getReturnType() {
+		return Integer.class;
+	}
+	
+	@Override
+	protected String getPropertyName() {
+		return "length";
 	}
 	
 }

@@ -21,31 +21,43 @@
 
 package ch.njol.skript.hooks;
 
+import java.io.IOException;
+
 import net.milkbowl.vault.Vault;
+import net.milkbowl.vault.chat.Chat;
+import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
+
+import ch.njol.skript.Skript;
 
 /**
  * @author Peter Güttinger
  */
-public class VaultHook extends Hook {
+public class VaultHook extends Hook<Vault> {
 	
-	public static Plugin vault = null;
-	static {
-		final Plugin p = Bukkit.getPluginManager().getPlugin("Vault"); // TODO permissions hook (groups)
-		if (p != null && p instanceof Vault)
-			vault = p;
-	}
+	public static Economy economy;
+	
+	public static Chat chat;
 	
 	@Override
 	protected boolean init() {
-		return vault != null;
+		economy = Bukkit.getServicesManager().getRegistration(Economy.class) == null ? null : Bukkit.getServicesManager().getRegistration(Economy.class).getProvider();
+		chat = Bukkit.getServicesManager().getRegistration(Chat.class) == null ? null : Bukkit.getServicesManager().getRegistration(Chat.class).getProvider();
+		return economy != null || chat != null;
 	}
 	
 	@Override
-	public Plugin getPlugin() {
-		return vault;
+	protected void loadClasses() throws IOException {
+		if (economy != null)
+			Skript.getAddonInstance().loadClasses(getClass().getPackage().getName() + ".economy");
+		if (chat != null)
+			Skript.getAddonInstance().loadClasses(getClass().getPackage().getName() + ".chat");
+	}
+	
+	@Override
+	public String getName() {
+		return "Vault";
 	}
 	
 }

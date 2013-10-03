@@ -270,7 +270,7 @@ public final class Skript extends JavaPlugin implements Listener {
 									final Class<?> hook = Class.forName(c, true, getClassLoader());
 									if (hook != null && Hook.class.isAssignableFrom(hook) && !hook.isInterface() && Hook.class != hook) {
 										hook.getDeclaredConstructor().setAccessible(true);
-										final Hook h = (Hook) hook.getDeclaredConstructor().newInstance();
+										final Hook<?> h = (Hook<?>) hook.getDeclaredConstructor().newInstance();
 										h.load();
 									}
 								} catch (final ClassNotFoundException ex) {
@@ -508,6 +508,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	/**
 	 * Registers a Closeable that should be closed when this plugin is disabled.
+	 * <p>
+	 * All registered Closeables will be closed after all scripts have been stopped.
 	 * 
 	 * @param closeable
 	 */

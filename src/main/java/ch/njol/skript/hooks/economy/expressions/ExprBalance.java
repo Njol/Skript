@@ -30,7 +30,7 @@ import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
-import ch.njol.skript.hooks.economy.EconomyHook;
+import ch.njol.skript.hooks.VaultHook;
 import ch.njol.skript.hooks.economy.classes.Money;
 
 /**
@@ -50,7 +50,7 @@ public class ExprBalance extends SimplePropertyExpression<OfflinePlayer, Money> 
 	
 	@Override
 	public Money convert(final OfflinePlayer p) {
-		return new Money(EconomyHook.economy.getBalance(p.getName()));
+		return new Money(VaultHook.economy.getBalance(p.getName()));
 	}
 	
 	@Override
@@ -76,7 +76,7 @@ public class ExprBalance extends SimplePropertyExpression<OfflinePlayer, Money> 
 		
 		if (delta == null) {
 			for (final OfflinePlayer p : getExpr().getAll(e))
-				EconomyHook.economy.withdrawPlayer(p.getName(), EconomyHook.economy.getBalance(p.getName()));
+				VaultHook.economy.withdrawPlayer(p.getName(), VaultHook.economy.getBalance(p.getName()));
 			return;
 		}
 		
@@ -84,18 +84,18 @@ public class ExprBalance extends SimplePropertyExpression<OfflinePlayer, Money> 
 		for (final OfflinePlayer p : getExpr().getAll(e)) {
 			switch (mode) {
 				case SET:
-					final double b = EconomyHook.economy.getBalance(p.getName());
+					final double b = VaultHook.economy.getBalance(p.getName());
 					if (b < m) {
-						EconomyHook.economy.depositPlayer(p.getName(), m - b);
+						VaultHook.economy.depositPlayer(p.getName(), m - b);
 					} else if (b > m) {
-						EconomyHook.economy.withdrawPlayer(p.getName(), b - m);
+						VaultHook.economy.withdrawPlayer(p.getName(), b - m);
 					}
 					break;
 				case ADD:
-					EconomyHook.economy.depositPlayer(p.getName(), m);
+					VaultHook.economy.depositPlayer(p.getName(), m);
 					break;
 				case REMOVE:
-					EconomyHook.economy.withdrawPlayer(p.getName(), m);
+					VaultHook.economy.withdrawPlayer(p.getName(), m);
 					break;
 				case DELETE:
 				case REMOVE_ALL:

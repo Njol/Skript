@@ -22,8 +22,10 @@
 package ch.njol.skript.hooks.regions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -33,114 +35,125 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.hooks.regions.classes.Region;
+import ch.njol.skript.util.AABB;
 import ch.njol.util.iterator.EmptyIterator;
 
-import com.sk89q.worldedit.BlockVector2D;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.massivecraft.factions.Factions;
+import com.massivecraft.factions.entity.BoardColls;
+import com.massivecraft.factions.entity.Faction;
+import com.massivecraft.factions.entity.FactionColls;
+import com.massivecraft.factions.entity.UPlayer;
+import com.massivecraft.factions.listeners.FactionsListenerMain;
+import com.massivecraft.mcore.ps.PS;
 
 /**
  * @author Peter Güttinger
  */
-public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
+public class Factions2Hook extends RegionsPlugin<Factions> {
 	
 	@Override
 	public String getName() {
-		return "WorldGuard";
+		return "Factions";
+	}
+	
+	@Override
+	protected boolean init() {
+		if (!plugin.getClass().getName().equals("com.massivecraft.factions.Factions"))
+			return false;
+		super.init();
+		return true;
 	}
 	
 	@Override
 	public boolean canBuild_i(final Player p, final Location l) {
-		return plugin.canBuild(p, l);
+		return FactionsListenerMain.canPlayerBuildAt(p, PS.valueOf(l), false);
 	}
 	
-	public final class WorldGuardRegion extends Region {
+	public final class FactionsRegion extends Region {
 		
-		private final World w;
-		private final ProtectedRegion r;
+		private final Faction f;
 		
-		public WorldGuardRegion(final World w, final ProtectedRegion r) {
-			this.w = w;
-			this.r = r;
+		public FactionsRegion(final Faction f) {
+			this.f = f;
 		}
 		
 		@Override
 		public boolean contains(final Location l) {
-			return l.getWorld().equals(w) && r.contains(l.getBlockX(), l.getBlockY(), l.getBlockZ());
+			return BoardColls.get().getFactionAt(PS.valueOf(l)) == f;
 		}
 		
 		@Override
 		public boolean isMember(final OfflinePlayer p) {
-			return r.isMember(p.getName());
+			for (final UPlayer up : f.getUPlayers()) {
+				if (up.getName().equalsIgnoreCase(p.getName()))
+					return true;
+			}
+			return false;
 		}
 		
 		@Override
 		public Collection<OfflinePlayer> getMembers() {
-			final Collection<String> ps = r.getMembers().getPlayers();
+			final Collection<UPlayer> ps = f.getUPlayers();
 			final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ps.size());
-			for (final String p : ps)
-				r.add(Bukkit.getOfflinePlayer(p));
+			for (final UPlayer p : ps)
+				r.add(Bukkit.getOfflinePlayer(p.getName()));
 			return r;
 		}
 		
 		@Override
 		public boolean isOwner(final OfflinePlayer p) {
-			return r.isOwner(p.getName());
+			return f.getLeader().getName().equalsIgnoreCase(p.getName());
 		}
 		
 		@Override
 		public Collection<OfflinePlayer> getOwners() {
-			final Collection<String> ps = r.getOwners().getPlayers();
-			final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ps.size());
-			for (final String p : ps)
-				r.add(Bukkit.getOfflinePlayer(p));
-			return r;
+			return Arrays.asList(Bukkit.getOfflinePlayer(f.getLeader().getName()));
 		}
 		
 		@Override
 		public Iterator<Block> getBlocks() {
-			final Iterator<BlockVector2D> iter = r.getPoints().iterator();
-			if (!iter.hasNext())
+			final Iterator<PS> cs = BoardColls.get().get(f).getChunks(f).iterator();
+			if (!cs.hasNext())
 				return EmptyIterator.get();
 			return new Iterator<Block>() {
-				BlockVector2D current = iter.next();
-				int height = 0;
-				final int maxHeight = w.getMaxHeight();
+				Iterator<Block> current = new AABB(cs.next().asBukkitChunk()).iterator();
 				
 				@Override
 				public boolean hasNext() {
-					if (height >= maxHeight && iter.hasNext()) {
-						height = 0;
-						current = iter.next();
+					if (!current.hasNext() && cs.hasNext()) {
+						current = new AABB(cs.next().asBukkitChunk()).iterator();
 					}
-					return height < maxHeight;
+					return current.hasNext();
 				}
 				
 				@Override
 				public Block next() {
-					return w.getBlockAt(current.getBlockX(), height, current.getBlockZ());
+					if (!hasNext())
+						throw new NoSuchElementException();
+					return null;
 				}
 				
 				@Override
 				public void remove() {
 					throw new UnsupportedOperationException();
 				}
+				
 			};
 		}
 		
 		@Override
-		public String serialize() {
-			return w.getName() + ":" + r.getId();
+		public String toString() {
+			return f.getName();
 		}
 		
 		@Override
-		public String toString() {
-			return r.getId() + " in world " + w.getName();
+		public String serialize() {
+			return f.getUniverse() + ":" + f.getId();
 		}
 		
 		@Override
 		public RegionsPlugin<?> getPlugin() {
-			return WorldGuardHook.this;
+			return Factions2Hook.this;
 		}
 		
 		@Override
@@ -149,50 +162,44 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 				return true;
 			if (o == null)
 				return false;
-			if (!(o instanceof WorldGuardRegion))
+			if (!(o instanceof FactionsRegion))
 				return false;
-			return w.equals(((WorldGuardRegion) o).w) && r.equals(((WorldGuardRegion) o).r);
+			return f.equals(((FactionsRegion) o).f);
 		}
 		
 		@Override
 		public int hashCode() {
-			return w.hashCode() ^ r.hashCode();
+			return f.hashCode();
 		}
 		
 	}
 	
 	@Override
 	public Collection<? extends Region> getRegionsAt_i(final Location l) {
-		final Iterator<ProtectedRegion> i = plugin.getRegionManager(l.getWorld()).getApplicableRegions(l).iterator();
-		final ArrayList<Region> r = new ArrayList<Region>();
-		while (i.hasNext())
-			r.add(new WorldGuardRegion(l.getWorld(), i.next()));
-		return r;
+		return Arrays.asList(new FactionsRegion(BoardColls.get().getFactionAt(PS.valueOf(l))));
 	}
 	
 	@Override
 	public Region getRegion_i(final World world, final String name) {
-		final ProtectedRegion r = plugin.getRegionManager(world).getRegion(name);
-		if (r != null)
-			return new WorldGuardRegion(world, r);
+		final Faction f = FactionColls.get().getForUniverse(world.getName()).getByName(name);
+		if (f != null)
+			return new FactionsRegion(f);
 		return null;
 	}
 	
 	@Override
 	public boolean hasMultipleOwners_i() {
-		return true;
+		return false;
 	}
 	
 	@Override
 	protected Region deserializeRegion_i(final String s) {
 		final String[] split = s.split(":", 2);
-		final World w = Bukkit.getWorld(split[0]);
-		if (w == null)
+		if (split.length != 2)
 			return null;
-		final ProtectedRegion r = plugin.getRegionManager(w).getRegionExact(split[1]);
-		if (r == null)
+		final Faction f = FactionColls.get().getForUniverse(split[0]).get(split[1]);
+		if (f == null)
 			return null;
-		return new WorldGuardRegion(w, r);
+		return new FactionsRegion(f);
 	}
-	
 }

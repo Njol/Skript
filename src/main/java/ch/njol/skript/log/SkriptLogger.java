@@ -21,6 +21,7 @@
 
 package ch.njol.skript.log;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Filter;
@@ -195,20 +196,46 @@ public abstract class SkriptLogger {
 		return debug;
 	}
 	
-	private final static Collection<Filter> filters = new ArrayList<Filter>();
-	static {
-		final Filter oldFilter = LOGGER.getFilter();
-		LOGGER.setFilter(new Filter() {
-			@Override
-			public boolean isLoggable(final LogRecord record) {
-				if (oldFilter != null && !oldFilter.isLoggable(record))
+	private final static class LoggerFilter implements Filter, Closeable {
+		private final Logger l;
+		private final Collection<Filter> filters = new ArrayList<Filter>();
+		private final Filter oldFilter;
+		
+		public LoggerFilter(final Logger l) {
+			this.l = l;
+			oldFilter = l.getFilter();
+			l.setFilter(this);
+		}
+		
+		@Override
+		public boolean isLoggable(final LogRecord record) {
+			if (oldFilter != null && !oldFilter.isLoggable(record))
+				return false;
+			for (final Filter f : filters)
+				if (!f.isLoggable(record))
 					return false;
-				for (final Filter f : filters)
-					if (!f.isLoggable(record))
-						return false;
-				return true;
-			}
-		});
+			return true;
+		}
+		
+		public final void addFilter(final Filter f) {
+			assert f != null;
+			if (f != null)
+				filters.add(f);
+		}
+		
+		public final boolean removeFilter(final Filter f) {
+			return filters.remove(f);
+		}
+		
+		@Override
+		public void close() {
+			l.setFilter(oldFilter);
+		}
+	}
+	
+	private final static LoggerFilter filter = new LoggerFilter(LOGGER);
+	static {
+		Skript.closeOnDisable(filter);
 	}
 	
 	/**
@@ -219,11 +246,11 @@ public abstract class SkriptLogger {
 	public final static void addFilter(final Filter f) {
 		assert f != null;
 		if (f != null)
-			filters.add(f);
+			filter.addFilter(f);
 	}
 	
 	public final static boolean removeFilter(final Filter f) {
-		return filters.remove(f);
+		return filter.removeFilter(f);
 	}
 	
 }

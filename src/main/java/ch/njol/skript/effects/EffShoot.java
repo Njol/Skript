@@ -52,17 +52,16 @@ import ch.njol.util.Kleenean;
 		"shoot a pig from the creeper"})
 @Since("1.4")
 public class EffShoot extends Effect {
-	
 	static {
 		Skript.registerEffect(EffShoot.class,
-				"shoot %entitydatas% [from %livingentity%] [(at|with) (speed|velocity) %-number%] [%-direction%]",
-				"(make|let) %livingentity% shoot %entitydatas% [(at|with) (speed|velocity) %-number%] [%-direction%]");
+				"shoot %entitydatas% [from %livingentities/locations%] [(at|with) (speed|velocity) %-number%] [%-direction%]",
+				"(make|let) %livingentities/locations% shoot %entitydatas% [(at|with) (speed|velocity) %-number%] [%-direction%]");
 	}
 	
 	private final static Double DEFAULT_SPEED = 5.;
 	
 	private Expression<EntityData<?>> types;
-	private Expression<LivingEntity> shooters;
+	private Expression<?> shooters;
 	private Expression<Number> velocity;
 	private Expression<Direction> direction;
 	
@@ -72,7 +71,7 @@ public class EffShoot extends Effect {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		types = (Expression<EntityData<?>>) exprs[matchedPattern];
-		shooters = (Expression<LivingEntity>) exprs[1 - matchedPattern];
+		shooters = exprs[1 - matchedPattern];
 		velocity = (Expression<Number>) exprs[2];
 		direction = (Expression<Direction>) exprs[3];
 		return true;
@@ -87,23 +86,31 @@ public class EffShoot extends Effect {
 		final Direction dir = direction == null ? Direction.IDENTITY : direction.getSingle(e);
 		if (dir == null)
 			return;
-		for (final LivingEntity shooter : shooters.getArray(e)) {
+		for (final Object shooter : shooters.getArray(e)) {
 			for (final EntityData<?> d : types.getArray(e)) {
-				final Vector vel = dir.getDirection(shooter).multiply(v.doubleValue());
-				if (Fireball.class.isAssignableFrom(d.getType())) {// fireballs explode in the shooter's face by default
-					final Fireball projectile = (Fireball) shooter.getWorld().spawn(shooter.getEyeLocation().add(vel.clone().normalize().multiply(0.5)), d.getType());
-					projectile.setShooter(shooter);
-					projectile.setVelocity(vel);
-					lastSpawned = projectile;
-				} else if (Projectile.class.isAssignableFrom(d.getType())) {
-					final Projectile projectile = shooter.launchProjectile((Class<? extends Projectile>) d.getType());
-					set(projectile, d);
-					projectile.setVelocity(vel);
-					lastSpawned = projectile;
+				if (shooter instanceof LivingEntity) {
+					final Vector vel = dir.getDirection(((LivingEntity) shooter).getLocation()).multiply(v.doubleValue());
+					if (Fireball.class.isAssignableFrom(d.getType())) {// fireballs explode in the shooter's face by default
+						final Fireball projectile = (Fireball) ((LivingEntity) shooter).getWorld().spawn(((LivingEntity) shooter).getEyeLocation().add(vel.clone().normalize().multiply(0.5)), d.getType());
+						projectile.setShooter((LivingEntity) shooter);
+						projectile.setVelocity(vel);
+						lastSpawned = projectile;
+					} else if (Projectile.class.isAssignableFrom(d.getType())) {
+						final Projectile projectile = ((LivingEntity) shooter).launchProjectile((Class<? extends Projectile>) d.getType());
+						set(projectile, d);
+						projectile.setVelocity(vel);
+						lastSpawned = projectile;
+					} else {
+						final Location loc = ((LivingEntity) shooter).getLocation();
+						loc.setY(loc.getY() + ((LivingEntity) shooter).getEyeHeight() / 2);
+						final Entity projectile = d.spawn(loc);
+						if (projectile != null)
+							projectile.setVelocity(vel);
+						lastSpawned = projectile;
+					}
 				} else {
-					final Location loc = shooter.getLocation();
-					loc.setY(loc.getY() + shooter.getEyeHeight() / 2);
-					final Entity projectile = d.spawn(loc);
+					final Vector vel = dir.getDirection((Location) shooter).multiply(v.doubleValue());
+					final Entity projectile = d.spawn((Location) shooter);
 					if (projectile != null)
 						projectile.setVelocity(vel);
 					lastSpawned = projectile;

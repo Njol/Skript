@@ -23,6 +23,7 @@ package ch.njol.skript.hooks;
 
 import java.io.IOException;
 
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
 import ch.njol.skript.Skript;
@@ -31,23 +32,42 @@ import ch.njol.skript.localization.ArgsMessage;
 /**
  * @author Peter Güttinger
  */
-public abstract class Hook {
+public abstract class Hook<P extends Plugin> {
 	
 	private final static ArgsMessage m_hooked = new ArgsMessage("hooks.hooked");
 	
-	public Hook() {}
+	protected P plugin;
 	
-	public boolean load() throws IOException {
+	public final P getPlugin() {
+		return plugin;
+	}
+	
+	public final boolean load() throws IOException {
+		plugin = (P) Bukkit.getPluginManager().getPlugin(getName());
+		if (plugin == null)
+			return false;
 		if (!init())
 			return false;
-		Skript.getAddonInstance().loadClasses(getClass().getPackage().getName());
+		loadClasses();
 		if (Skript.logHigh())
-			Skript.info(m_hooked.toString(getPlugin().getName()));
+			Skript.info(m_hooked.toString(plugin.getName()));
 		return true;
 	}
 	
-	protected abstract boolean init();
+	protected void loadClasses() throws IOException {
+		Skript.getAddonInstance().loadClasses(getClass().getPackage().getName());
+	}
 	
-	public abstract Plugin getPlugin();
+	/**
+	 * @return The hooked plugin's exact name
+	 */
+	public abstract String getName();
+	
+	/**
+	 * Called when the plugin has been successfully hooked
+	 */
+	protected boolean init() {
+		return true;
+	}
 	
 }
