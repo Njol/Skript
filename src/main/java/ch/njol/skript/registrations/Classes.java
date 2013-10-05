@@ -47,7 +47,7 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.StringMode;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
-import ch.njol.util.iterator.ArrayIterator;
+import ch.njol.util.coll.iterator.ArrayIterator;
 
 /**
  * @author Peter Güttinger

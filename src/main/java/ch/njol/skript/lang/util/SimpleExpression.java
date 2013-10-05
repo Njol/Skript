@@ -38,7 +38,7 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
-import ch.njol.util.iterator.ArrayIterator;
+import ch.njol.util.coll.iterator.ArrayIterator;
 
 /**
  * An implementation of the {@link Expression} interface. You should usually extend this class to make a new expression.

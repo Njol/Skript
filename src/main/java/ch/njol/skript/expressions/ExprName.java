@@ -40,8 +40,8 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Slot;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -105,7 +105,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 				}
 			}
 		},
-		DISPLAY_NAME("display name", "(display|nick)[ ]name", PLAYER | ITEMSTACK | ENTITY, PLAYER | ITEMSTACK | ENTITY) {
+		DISPLAY_NAME("display name", "(display|nick|chat)[ ]name", PLAYER | ITEMSTACK | ENTITY, PLAYER | ITEMSTACK | ENTITY) {
 			@Override
 			void set(final Object o, final String s) {
 				if (o == null)

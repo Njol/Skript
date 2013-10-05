@@ -42,10 +42,10 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
 import ch.njol.util.Checker;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
-import ch.njol.util.iterator.NonNullIterator;
+import ch.njol.util.coll.CollectionUtils;
+import ch.njol.util.coll.iterator.NonNullIterator;
 
 /**
  * Represents a literal, i.e. a static value like a number or a string.

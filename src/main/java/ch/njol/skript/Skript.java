@@ -88,6 +88,7 @@ import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
+import ch.njol.skript.log.BukkitLoggerFilter;
 import ch.njol.skript.log.CountingLogHandler;
 import ch.njol.skript.log.ErrorDescLogHandler;
 import ch.njol.skript.log.ErrorQuality;
@@ -107,11 +108,11 @@ import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Checker;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
-import ch.njol.util.iterator.CheckedIterator;
-import ch.njol.util.iterator.EnumerationIterable;
+import ch.njol.util.coll.CollectionUtils;
+import ch.njol.util.coll.iterator.CheckedIterator;
+import ch.njol.util.coll.iterator.EnumerationIterable;
 
 /**
  * <b>Skript</b> - A Bukkit plugin to modify how Minecraft behaves without having to write a single line of code (You'll likely be writing some code though if you're reading this
@@ -395,13 +396,13 @@ public final class Skript extends JavaPlugin implements Listener {
 						return true;
 					}
 				};
-				SkriptLogger.addFilter(f);
+				BukkitLoggerFilter.addFilter(f);
 				Bukkit.getScheduler().scheduleSyncDelayedTask(Skript.this, new Runnable() {
 					@Override
 					public void run() {
-						SkriptLogger.removeFilter(f);
+						BukkitLoggerFilter.removeFilter(f);
 					}
-				}, 2);
+				}, 1);
 			}
 		});
 		

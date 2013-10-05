@@ -36,7 +36,7 @@ import org.bukkit.entity.Player;
 
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
-import ch.njol.util.iterator.EmptyIterator;
+import ch.njol.util.coll.iterator.EmptyIterator;
 
 import com.massivecraft.factions.Factions;
 import com.massivecraft.factions.entity.BoardColls;

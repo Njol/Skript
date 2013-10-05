@@ -116,6 +116,7 @@
 			</repository> -->
 	</repositories>
 	<build>
+		<finalName>${project.artifactId}</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/resources/</directory>
@@ -123,6 +124,7 @@
 				<includes>
 					<include>plugin.yml</include>
 					<include>version</include>
+					<include>config.sk</include>
 				</includes>
 			</resource>
 			<resource>
@@ -134,6 +136,7 @@
 				<excludes>
 					<exclude>plugin.yml</exclude>
 					<exclude>version</exclude>
+					<exclude>config.sk</exclude>
 				</excludes>
 			</resource>
 			<resource>
@@ -142,22 +145,6 @@
 				<includes>
 					<include>gpl.txt</include>
 				</includes>
-			</resource>
-			<resource>
-				<directory>../../testserver/plugins/Skript/</directory>
-				<filtering>false</filtering>
-				<includes>
-					<include>config.sk</include>
-					<include>aliases-*.sk</include>
-				</includes>
-			</resource>
-			<resource>
-				<directory>../../testserver/plugins/Skript/scripts/distributed/</directory>
-				<filtering>false</filtering>
-				<includes>
-					<include>*</include>
-				</includes>
-				<targetPath>scripts/</targetPath>
 			</resource>
 		</resources>
 		<plugins>
@@ -211,33 +198,6 @@
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.1</version>
-				<executions>
-					<execution>
-						<id>copy</id>
-						<phase>package</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>${project.groupId}</groupId>
-									<artifactId>${project.artifactId}</artifactId>
-									<version>${project.version}</version>
-									<type>${project.packaging}</type>
-									<overWrite>true</overWrite>
-									<outputDirectory>../../testserver/plugins/</outputDirectory>
-									<destFileName>Skript.jar</destFileName>
-								</artifactItem>
-							</artifactItems>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 	<profiles>
@@ -264,20 +224,6 @@
 								<configuration>
 									<minimizeJar>true</minimizeJar>
 								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-dependency-plugin</artifactId>
-						<version>2.1</version>
-						<executions>
-							<execution>
-								<id>copy</id>
-								<phase>package</phase>
-								<goals>
-									<goal>copy</goal>
-								</goals>
 							</execution>
 						</executions>
 					</plugin>

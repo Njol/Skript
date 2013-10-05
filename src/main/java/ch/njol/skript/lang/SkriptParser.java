@@ -54,10 +54,10 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Utils;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * Used for parsing my custom patterns.<br>
@@ -109,6 +109,9 @@ public class SkriptParser {
 		public final Expression<?>[] exprs;
 		public final List<MatchResult> regexes = new ArrayList<MatchResult>();
 		public final String expr;
+		/**
+		 * Defaults to -1. The first mark in a pattern will set this value accordingly, but any subsequent marks will be XORed with the existing value.
+		 */
 		public int mark = -1;
 		
 		public ParseResult(final SkriptParser parser, final String pattern) {
@@ -120,7 +123,7 @@ public class SkriptParser {
 	@SuppressWarnings("serial")
 	private final static class MalformedPatternException extends RuntimeException {
 		public MalformedPatternException(final String pattern, final String message) {
-			this(message, pattern, null);
+			this(pattern, message, null);
 		}
 		
 		public MalformedPatternException(final String pattern, final String message, final Throwable cause) {
@@ -678,24 +681,30 @@ public class SkriptParser {
 	 * @param closingBracket The bracket to look for, e.g. ')'
 	 * @param openingBracket A bracket that opens another group, e.g. '('
 	 * @param start This must not be the index of the opening bracket!
+	 * @param isGroup Whether <tt>start</tt> is assumed to be in a group (will print an error if this is not the case, otherwise it returns <tt>pattern.length()</tt>)
 	 * @return
 	 * @throws MalformedPatternException If the group is not closed
 	 */
-	private static int nextBracket(final String pattern, final char closingBracket, final char openingBracket, final int start) throws MalformedPatternException {
+	private static int nextBracket(final String pattern, final char closingBracket, final char openingBracket, final int start, final boolean isGroup) throws MalformedPatternException {
 		int n = 0;
 		for (int i = start; i < pattern.length(); i++) {
 			if (pattern.charAt(i) == '\\') {
 				i++;
 				continue;
 			} else if (pattern.charAt(i) == closingBracket) {
-				if (n == 0)
+				if (n == 0) {
+					if (!isGroup)
+						throw new MalformedPatternException(pattern, "Unexpected closing bracket '" + closingBracket + "'");
 					return i;
+				}
 				n--;
 			} else if (pattern.charAt(i) == openingBracket) {
 				n++;
 			}
 		}
-		throw new MalformedPatternException(pattern, "Missing closing bracket '" + closingBracket + "'");
+		if (isGroup)
+			throw new MalformedPatternException(pattern, "Missing closing bracket '" + closingBracket + "'");
+		return pattern.length();
 	}
 	
 	/**
@@ -826,6 +835,24 @@ public class SkriptParser {
 		return i + 1;
 	}
 	
+	private final static int getGroupLevel(final String pattern, final int j) {
+		assert j <= pattern.length();
+		int level = 0;
+		for (int i = 0; i < j; i++) {
+			final char c = pattern.charAt(i);
+			if (c == '\\') {
+				i++;
+			} else if (c == '(') {
+				level++;
+			} else if (c == ')') {
+				if (level == 0)
+					throw new MalformedPatternException(pattern, "Unexpected closing bracket ')'");
+				level--;
+			}
+		}
+		return level;
+	}
+	
 	/**
 	 * Prints errors
 	 * 
@@ -849,7 +876,7 @@ public class SkriptParser {
 							return res;
 						}
 						log.clear();
-						j = nextBracket(pattern, ']', '[', j + 1) + 1;
+						j = nextBracket(pattern, ']', '[', j + 1, true) + 1;
 						res = parse_i(pattern, i, j);
 						if (res == null)
 							log.printError(null);
@@ -880,12 +907,16 @@ public class SkriptParser {
 								res = parse_i(pattern, i, j + 1);
 								if (res != null) {
 									log.printLog();
-									if (mark != -1 && res.mark == -1)// the rightmost mark is the one kept
-										res.mark = mark;
+									if (mark != -1) {
+										if (res.mark == -1)
+											res.mark = mark;
+										else
+											res.mark ^= mark;
+									}
 									return res;
 								}
 							} else if (pattern.charAt(j) == '(') {
-								j = nextBracket(pattern, ')', '(', j + 1);
+								j = nextBracket(pattern, ')', '(', j + 1, true);
 							} else if (pattern.charAt(j) == ')') {
 								break;
 							} else if (j == pattern.length() - 1) {
@@ -1004,8 +1035,20 @@ public class SkriptParser {
 					j++;
 					continue;
 				case '|':
-					j = nextBracket(pattern, ')', '(', j + 1) + 1;
-					break;
+					final int newJ = nextBracket(pattern, ')', '(', j + 1, getGroupLevel(pattern, j) != 0);
+					if (newJ == pattern.length()) {
+						if (i == pattern.length()) {
+							j = expr.length();
+							break;
+						} else {
+							i = 0;
+							j++;
+							continue;
+						}
+					} else {
+						j = newJ + 1;
+						break;
+					}
 				case ' ':
 					if (i == 0 || i == expr.length() || (i > 0 && expr.charAt(i - 1) == ' ')) {
 						j++;

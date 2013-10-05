@@ -33,7 +33,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.hooks.regions.classes.Region;
-import ch.njol.util.iterator.EmptyIterator;
+import ch.njol.util.coll.iterator.EmptyIterator;
 
 import com.sk89q.worldedit.BlockVector2D;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;

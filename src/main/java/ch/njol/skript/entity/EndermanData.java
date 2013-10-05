@@ -32,8 +32,8 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Checker;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger

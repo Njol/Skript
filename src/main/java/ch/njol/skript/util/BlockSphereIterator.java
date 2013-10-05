@@ -26,7 +26,7 @@ import org.bukkit.block.Block;
 
 import ch.njol.skript.Skript;
 import ch.njol.util.Checker;
-import ch.njol.util.iterator.CheckedIterator;
+import ch.njol.util.coll.iterator.CheckedIterator;
 
 /**
  * @author Peter Güttinger

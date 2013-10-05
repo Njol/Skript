@@ -40,10 +40,10 @@ import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Callback;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
-import ch.njol.util.iterator.IteratorIterable;
+import ch.njol.util.coll.CollectionUtils;
+import ch.njol.util.coll.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger

@@ -68,14 +68,15 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
+import ch.njol.skript.log.BukkitLoggerFilter;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Callback;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -165,7 +166,7 @@ public abstract class Commands {
 	
 	private static boolean suppressUnknownCommandMessage = false;
 	static {
-		SkriptLogger.addFilter(new Filter() {
+		BukkitLoggerFilter.addFilter(new Filter() {
 			@Override
 			public boolean isLoggable(final LogRecord record) {
 				if (suppressUnknownCommandMessage && record.getMessage() != null && record.getMessage().toLowerCase().startsWith("unknown command.")) {

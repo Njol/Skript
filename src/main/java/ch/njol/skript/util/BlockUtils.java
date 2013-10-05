@@ -30,7 +30,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.material.Directional;
 
 import ch.njol.skript.Skript;
-import ch.njol.util.CollectionUtils;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * TODO !Update with every version [blocks]

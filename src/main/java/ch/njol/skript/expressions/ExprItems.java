@@ -41,9 +41,9 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
-import ch.njol.util.iterator.ArrayIterator;
-import ch.njol.util.iterator.CheckedIterator;
-import ch.njol.util.iterator.IteratorIterable;
+import ch.njol.util.coll.iterator.ArrayIterator;
+import ch.njol.util.coll.iterator.CheckedIterator;
+import ch.njol.util.coll.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger

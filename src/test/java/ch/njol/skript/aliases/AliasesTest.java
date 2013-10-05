@@ -30,14 +30,14 @@ import java.util.logging.LogRecord;
 
 import org.junit.Test;
 
-import ch.njol.skript.log.SkriptLogger;
+import ch.njol.skript.log.BukkitLoggerFilter;
 
 /**
  * @author Peter Güttinger
  */
 public class AliasesTest {
 	static {
-		SkriptLogger.addFilter(new Filter() {
+		BukkitLoggerFilter.addFilter(new Filter() {
 			@Override
 			public boolean isLoggable(final LogRecord record) {
 				return record.getMessage() == null || !record.getMessage().startsWith("[Skript] Missing entry");

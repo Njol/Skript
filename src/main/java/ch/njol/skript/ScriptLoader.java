@@ -80,10 +80,10 @@ import ch.njol.skript.util.Date;
 import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Callback;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger

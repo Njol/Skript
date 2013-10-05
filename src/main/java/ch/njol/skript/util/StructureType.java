@@ -33,7 +33,7 @@ import org.bukkit.block.Block;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.skript.localization.Noun;
-import ch.njol.util.CollectionUtils;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger

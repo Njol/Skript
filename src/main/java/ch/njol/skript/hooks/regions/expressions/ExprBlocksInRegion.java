@@ -35,8 +35,8 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
-import ch.njol.util.iterator.ArrayIterator;
-import ch.njol.util.iterator.EmptyIterator;
+import ch.njol.util.coll.iterator.ArrayIterator;
+import ch.njol.util.coll.iterator.EmptyIterator;
 
 /**
  * @author Peter Güttinger

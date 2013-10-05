@@ -34,9 +34,9 @@ import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Checker;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
-import ch.njol.util.iterator.NonNullIterator;
+import ch.njol.util.coll.CollectionUtils;
+import ch.njol.util.coll.iterator.NonNullIterator;
 
 /**
  * A literal which has yet to be parsed. This is returned if %object(s)% is used within patterns and no expression matches.

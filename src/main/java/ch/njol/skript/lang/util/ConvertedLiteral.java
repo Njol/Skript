@@ -33,8 +33,8 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Checker;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Pair;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger

@@ -27,7 +27,7 @@ import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 
 import ch.njol.util.Checker;
-import ch.njol.util.iterator.StoppableIterator;
+import ch.njol.util.coll.iterator.StoppableIterator;
 
 /**
  * @author Peter Güttinger

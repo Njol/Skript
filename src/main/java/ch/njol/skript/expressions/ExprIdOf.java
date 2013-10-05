@@ -40,7 +40,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
-import ch.njol.util.iterator.SingleItemIterator;
+import ch.njol.util.coll.iterator.SingleItemIterator;
 
 /**
  * @author Peter Güttinger

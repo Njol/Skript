@@ -384,20 +384,23 @@ directions:
 	left: to the left of
 
 # -- Entities --
-# about patterns: the marks (1¦..) are only required in the english file, i.e. you can use (..|..) or [..] for plurals in other languages.
+# about patterns:
+#	the marks (1¦..) are only required in the english file, i.e. you can use (..|..) or [..] for plurals in other languages
+#	the exception to this rule is the 'age pattern' and the corresponding marks (4¦ and 8¦)
 entities:
+	age pattern: (|4¦baby|4¦young|8¦adult)
 	entity:
 		name: entit¦y¦ies @an
-		pattern: entit(y|1¦ies)
+		pattern: <age> entit(y|1¦ies)
 	living entity:
 		name: living entit¦y¦ies
-		pattern: living entit(y|1¦ies)
+		pattern: <age> living entit(y|1¦ies)
 	projectile:
 		name: projectile¦s
 		pattern: projectile(|1¦s)
 	creature:
 		name: creature¦s
-		pattern: creature(|1¦s)
+		pattern: <age> creature(|1¦s)
 	human:
 		name: human¦s
 		pattern: human(|1¦s)
@@ -406,7 +409,7 @@ entities:
 		pattern: arrow(|1¦s)
 	bat:
 		name: bat¦s
-		pattern: bat(|1¦s)
+		pattern: <age> bat(|1¦s)
 	boat:
 		name: boat¦s
 		pattern: boat(|1¦s)
@@ -415,10 +418,10 @@ entities:
 		pattern: blaze(|1¦s)
 	chicken:
 		name: chicken¦s
-		pattern: chicken(|1¦s)
+		pattern: <age> chicken(|1¦s)|(4¦)chick(|1¦s)
 	cow:
 		name: cow¦s
-		pattern: cow(|1¦s)
+		pattern: <age> cow(|1¦s)|(4¦)cal(f|1¦ves)
 	cave spider:
 		name: cave spider¦s
 		pattern: cave[ ]spider(|1¦s)
@@ -470,7 +473,7 @@ entities:
 		pattern: iron golem(|1¦s)
 	dropped item:
 		name: dropped item¦s
-		pattern: (dropped item(|1¦s)|item entit(y|1¦ies))
+		pattern: dropped item(|1¦s)|item entit(y|1¦ies)
 	item frame:
 		name: item frame¦s @an
 		pattern: item[ ]frame(|1¦s)
@@ -485,37 +488,37 @@ entities:
 		pattern: regular [mine]cart(|1¦s)
 	storage minecart:
 		name: storage minecart¦s
-		pattern: (storage [mine]cart(|1¦s)|[mine]cart(|1¦s) with chest[s])
+		pattern: storage [mine]cart(|1¦s)|[mine]cart(|1¦s) with chest[s]
 	powered minecart:
 		name: powered minecart¦s
-		pattern: (powered [mine]cart(|1¦s)|[mine]cart(|1¦s) with furnace[s])
+		pattern: powered [mine]cart(|1¦s)|[mine]cart(|1¦s) with furnace[s]
 	hopper minecart:
 		name: hopper minecart¦s
-		pattern: (hopper [mine]cart(|1¦s)|[mine]cart(|1¦s) with hopper[s])
+		pattern: hopper [mine]cart(|1¦s)|[mine]cart(|1¦s) with hopper[s]
 	explosive minecart:
 		name: explosive minecart¦s
-		pattern: (explosive [mine]cart(|1¦s)|[mine]cart(|1¦s) with TNT[s])
+		pattern: explosive [mine]cart(|1¦s)|[mine]cart(|1¦s) with TNT[s]
 	spawner minecart:
 		name: spawner minecart¦s
-		pattern: ((monster|mob|) spawner [mine]cart(|1¦s)|[mine]cart(|1¦s) with (monster|mob|) spawner[s])
+		pattern: (monster|mob|) spawner [mine]cart(|1¦s)|[mine]cart(|1¦s) with (monster|mob|) spawner[s]
 	mooshroom:
 		name: mooshroom¦s
-		pattern: mooshroom(|1¦s)
+		pattern: <age> mooshroom(|1¦s)
 	ocelot:
 		name: ocelot¦s @an
-		pattern: ocelot(|1¦s)
+		pattern: <age> ocelot(|1¦s)
 	wild ocelot:
 		name: wild ocelot¦s
-		pattern: (wild|untamed) ocelot(|1¦s)
+		pattern: (wild|untamed) <age> ocelot(|1¦s)
 	cat:
 		name: cat¦s
-		pattern: (cat(|1¦s)|tamed ocelot(|1¦s))
+		pattern: <age> cat(|1¦s)|tamed <age> ocelot(|1¦s)|(4¦)kitten(|1¦s)
 	painting:
 		name: painting¦s
 		pattern: painting(|1¦s)
 	pig:
 		name: pig¦s
-		pattern: pig(|1¦s)
+		pattern: <age> pig(|1¦s)|(4¦)piglet(|1¦s)
 	saddled pig:
 		name: saddled pig¦s
 		pattern: saddled pig(|1¦s)
@@ -533,17 +536,18 @@ entities:
 		pattern: non(-| |)op(|1¦s)
 	zombie pigman:
 		name: zombie pig¦man¦men
-		pattern: zombie pigm(an|1¦en)
+		pattern: <age> zombie pigm(an|1¦en)|(4¦)zombie pigletboy(|1¦s)
 	sheep:
 		name: sheep
-		pattern: [%-colors%] sheep(0¦|1¦s) # while sheep is unclear, sheeps is plural (even though it's wrong)
+		# while sheep is unclear, sheeps is plural (even though it's wrong)
+		pattern: [%-colors%] <age> sheep(2¦|1¦s)|(4¦)[%-colors%] lamb(|1¦s)
 		format: %2$s %1$s
 	unsheared sheep:
 		name: unsheared sheep @an
-		pattern: unsheared [%-colors%] sheep(0¦|1¦s)
+		pattern: unsheared [%-colors%] sheep(2¦|1¦s)
 	sheared sheep:
 		name: sheared sheep
-		pattern: sheared [%-colors%] sheep(0¦|1¦s)
+		pattern: sheared [%-colors%] sheep(2¦|1¦s)
 	silverfish:
 		name: silverfish¦es
 		pattern: silverfish(|1¦es)
@@ -567,31 +571,31 @@ entities:
 		pattern: squid(|1¦s)
 	bottle of enchanting:
 		name: bottle¦ of enchanting¦s of enchanting
-		pattern: (bottle(|1¦s) o(f|') enchanting|[e]xp[erience] bottle(|1¦s))
+		pattern: bottle(|1¦s) o(f|') enchanting|[e]xp[erience] bottle(|1¦s)
 	thrown potion:
 		name: thrown potions¦s
 		pattern: thrown potion(|1¦s)
 	tnt:
 		name: TNT
-		pattern: ([primed] TNT(0¦|1¦s)|TNT entit(y|1¦ies))
+		pattern: ([primed] TNT(2¦|1¦s)|TNT entit(y|1¦ies))
 	villager:
 		name: villager¦s
-		pattern: villager(|1¦s)
+		pattern: <age> villager(|1¦s)|(4¦)[villager] (kid(|1¦s)|child(|1¦ren))
 	farmer:
 		name: farmer¦s
-		pattern: farmer(|1¦s)
+		pattern: <age> farmer(|1¦s)|(4¦)farmer (kid(|1¦s)|child(|1¦ren))
 	librarian:
 		name: librarian¦s
-		pattern: librarian(|1¦s)
+		pattern: <age> librarian(|1¦s)|(4¦)librarian (kid(|1¦s)|child(|1¦ren))
 	priest:
 		name: priest¦s
-		pattern: priest(|1¦s)
+		pattern: <age> priest(|1¦s)|(4¦)priest (kid(|1¦s)|child(|1¦ren))
 	blacksmith:
 		name: blacksmith¦s
-		pattern: [black]smith(|1¦s)
+		pattern: <age> [black]smith(|1¦s)|(4¦)[black]smith (kid(|1¦s)|child(|1¦ren))
 	butcher:
 		name: butcher¦s
-		pattern: butcher(|1¦s)
+		pattern: <age> butcher(|1¦s)|(4¦)butcher (kid(|1¦s)|child(|1¦ren))
 	witch:
 		name: witch¦es
 		pattern: witch(|1¦es)
@@ -606,22 +610,22 @@ entities:
 		pattern: wither skull((|1¦s)| projectile(|1¦s))
 	wolf:
 		name: wol¦f¦ves
-		pattern: wol(f|1¦ves)
+		pattern: <age> wol(f|1¦ves)
 	tamed wolf:
 		name: tamed wol¦f¦ves
-		pattern: (dog(|1¦s)|tamed wol(f|1¦ves))
+		pattern: <age> dog(|1¦s)|tamed <age> wol(f|1¦ves)|(4¦)pupp(y|1¦ies)
 	wild wolf:
 		name: wild wol¦f¦ves
-		pattern: (wild|untamed) wol(f|1¦ves)
+		pattern: (wild|untamed) <age> wol(f|1¦ves)
 	angry wolf:
 		name: angry wol¦f¦ves @an
-		pattern: (angry|aggressive) wol(f|1¦ves)
+		pattern: (angry|aggressive) <age> wol(f|1¦ves)
 	peaceful wolf:
 		name: peaceful wol¦f¦ves
-		pattern: (peaceful|neutral|unaggressive) wol(f|1¦ves)
+		pattern: (peaceful|neutral|unaggressive) <age> wol(f|1¦ves)
 	zombie:
 		name: zombie¦s
-		pattern: zombie(|1¦s)
+		pattern: <age> zombie(|1¦s)|(4¦)zombie (kid(|1¦s)|child(|1¦ren))
 	xp-orb:
 		name: exprerience orb¦s @an
 		pattern: ([e]xp|experience)( |-)orb(|1¦s)
@@ -631,7 +635,7 @@ entities:
 		pattern: firework(|1¦s) [rocket(|1¦s)]
 	horse:
 		name: horse¦s
-		pattern: horse(|1¦s)
+		pattern: <age> horse(|1¦s)|(4¦)foal(|1¦s)
 
 # -- Damage Causes --
 damage causes:

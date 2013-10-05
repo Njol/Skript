@@ -42,7 +42,7 @@ import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.AABB;
 import ch.njol.util.Checker;
-import ch.njol.util.iterator.CheckedIterator;
+import ch.njol.util.coll.iterator.CheckedIterator;
 
 /**
  * @author Peter Güttinger

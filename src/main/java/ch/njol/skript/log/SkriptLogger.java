@@ -21,12 +21,8 @@
 
 package ch.njol.skript.log;
 
-import java.io.Closeable;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.logging.Filter;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
@@ -194,63 +190,6 @@ public abstract class SkriptLogger {
 	
 	public static boolean debug() {
 		return debug;
-	}
-	
-	private final static class LoggerFilter implements Filter, Closeable {
-		private final Logger l;
-		private final Collection<Filter> filters = new ArrayList<Filter>();
-		private final Filter oldFilter;
-		
-		public LoggerFilter(final Logger l) {
-			this.l = l;
-			oldFilter = l.getFilter();
-			l.setFilter(this);
-		}
-		
-		@Override
-		public boolean isLoggable(final LogRecord record) {
-			if (oldFilter != null && !oldFilter.isLoggable(record))
-				return false;
-			for (final Filter f : filters)
-				if (!f.isLoggable(record))
-					return false;
-			return true;
-		}
-		
-		public final void addFilter(final Filter f) {
-			assert f != null;
-			if (f != null)
-				filters.add(f);
-		}
-		
-		public final boolean removeFilter(final Filter f) {
-			return filters.remove(f);
-		}
-		
-		@Override
-		public void close() {
-			l.setFilter(oldFilter);
-		}
-	}
-	
-	private final static LoggerFilter filter = new LoggerFilter(LOGGER);
-	static {
-		Skript.closeOnDisable(filter);
-	}
-	
-	/**
-	 * Adds a filter to Bukkit's log.
-	 * 
-	 * @param f A filter to filter log messages
-	 */
-	public final static void addFilter(final Filter f) {
-		assert f != null;
-		if (f != null)
-			filter.addFilter(f);
-	}
-	
-	public final static boolean removeFilter(final Filter f) {
-		return filter.removeFilter(f);
 	}
 	
 }

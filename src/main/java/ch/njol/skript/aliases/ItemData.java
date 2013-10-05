@@ -30,8 +30,8 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.util.Utils;
-import ch.njol.util.CollectionUtils;
-import ch.njol.util.iterator.SingleItemIterator;
+import ch.njol.util.coll.CollectionUtils;
+import ch.njol.util.coll.iterator.SingleItemIterator;
 
 /**
  * @author Peter Güttinger

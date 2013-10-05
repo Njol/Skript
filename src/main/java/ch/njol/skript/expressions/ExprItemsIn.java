@@ -40,7 +40,7 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.InventorySlot;
 import ch.njol.skript.util.Slot;
 import ch.njol.util.Kleenean;
-import ch.njol.util.iterator.EmptyIterator;
+import ch.njol.util.coll.iterator.EmptyIterator;
 
 /**
  * @author Peter Güttinger

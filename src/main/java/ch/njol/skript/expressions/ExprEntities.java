@@ -51,8 +51,8 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
-import ch.njol.util.iterator.CheckedIterator;
-import ch.njol.util.iterator.NonNullIterator;
+import ch.njol.util.coll.iterator.CheckedIterator;
+import ch.njol.util.coll.iterator.NonNullIterator;
 
 /**
  * @author Peter Güttinger

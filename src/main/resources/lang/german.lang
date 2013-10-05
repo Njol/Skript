@@ -387,18 +387,19 @@ directions:
 
 # -- Entities --
 entities:
+	age pattern: (|4¦jung[e[(r|s)]]|4¦baby|8¦erwachsen[e[(r|s)]])
 	entity:
 		name: Wesen @n
-		pattern: Wesen
+		pattern: <age> Wesen
 	living entity:
 		name: Lebewesen @n
-		pattern: Lebewesen
+		pattern: <age> Lebewesen
 	projectile:
 		name: Projektil¦e @n
 		pattern: Projektil[e]
 	creature:
 		name: Kreatur¦en @f
-		pattern: Kreatur[en]
+		pattern: <age> Kreatur[en]
 	human:
 		name: Mensch¦en @m
 		pattern: Mensch[en]
@@ -416,10 +417,10 @@ entities:
 		pattern: Lohe[n]
 	chicken:
 		name: H¦uhn¦ühner @n
-		pattern: H(uhn|ühner)
+		pattern: <age> H(uhn|ühner)|(4¦)Küken
 	cow:
 		name: K¦uh¦ühe @f
-		pattern: K(uh|ühe)
+		pattern: <age> K(uh|ühe)|(4¦)K(alb|1¦älber)
 	cave spider:
 		name: Höhlenspinne¦n @f
 		pattern: Höhlenspinne[n]
@@ -468,7 +469,7 @@ entities:
 		pattern: Eisengolem[s]
 	dropped item:
 		name: Drop¦s @m
-		pattern: ((fallengelassene[r]|gedroppte[r]) (Item[s]|Gegenst(and|ände))|Drop[s])
+		pattern: (fallengelassene[r]|gedroppte[r]) (Item[s]|Gegenst(and|ände))|Drop[s]
 	item frame:
 		name: Itemrahmen @m
 		pattern: (Item|Gegenstands)rahmen
@@ -477,43 +478,43 @@ entities:
 		pattern: Magma(schleim[e]|würfel)
 	minecart:
 		name: Lore¦n @f
-		pattern: (Lore[n]|Minecart[s])
+		pattern: Lore[n]|Minecart[s]
 	regular minecart:
 		name: normale Lore¦n @f
 		pattern: (normale|reguläre)[r] (Lore[n]|Minecart[s])
 	storage minecart:
 		name: Güterlore¦n @f
-		pattern: (Güter(lore[n]|minecart[s])|(Lore[n]|Minecart[s]) mit Kiste[n])
+		pattern: Güter(lore[n]|minecart[s])|(Lore[n]|Minecart[s]) mit Kiste[n]
 	powered minecart:
 		name: angetriebene Lore¦n @f
-		pattern: (angetriebene (Lore[n]|Minecart[s])|(Lore[n]|Minecart[s]) mit [Schmelz]ofen)
+		pattern: angetriebene (Lore[n]|Minecart[s])|(Lore[n]|Minecart[s]) mit [Schmelz]ofen
 	hopper minecart:
 		name: Trichterlore¦n @f
-		pattern: (Trichter(lore[n]|minecart[s])|(Lore[n]|Minecart[s]) mit Trichter[n])
+		pattern: Trichter(lore[n]|minecart[s])|(Lore[n]|Minecart[s]) mit Trichter[n]
 	explosive minecart:
 		name: explosive Lore¦n @f
-		pattern: (explosive (Lore[n]|Minecart[s])|(Lore[n]|Minecart[s]) mit TNT)
+		pattern: explosive (Lore[n]|Minecart[s])|(Lore[n]|Minecart[s]) mit TNT
 	spawner minecart:
 		name: Spawnerlore¦n @f
-		pattern: (Spawner( |-|)(Lore[n]|Minecart[s])|(Lore[n]|Minecart[s]) mit Spawner[n])
+		pattern: Spawner( |-|)(Lore[n]|Minecart[s])|(Lore[n]|Minecart[s]) mit Spawner[n]
 	mooshroom:
 		name: Pilzk¦uh¦ühe @f
-		pattern: Pilzk(uh|ühe)
+		pattern: <age> Pilzk(uh|ühe)|(4¦) Pilzk(alb|älber)
 	ocelot:
 		name: Ozelot[s] @m
-		pattern: Ozelot[s]
+		pattern: <age> Ozelot[s]
 	wild ocelot:
 		name: wilde¦r Ozelot¦ Ozelots @m
-		pattern: ungezähmte[r] Ozelot[s]
+		pattern: <age> ungezähmte[r] Ozelot[s]
 	cat:
 		name: Katze¦n @f
-		pattern: (Katze[n]|gezähmte[r] Ozelot[s])
+		pattern: <age> Katze[n]|gezähmte[r] <age> Ozelot[s]|(4¦)Kätzchen
 	painting:
 		name: Gemälde @n
 		pattern: (Gemälde|Bild[er])
 	pig:
 		name: Schwein¦e @n
-		pattern: Schwein[e]
+		pattern: <age> Schwein[e]|(4¦)Ferkel|(4¦)Schweinchen
 	saddled pig:
 		name: gesattelte¦s Schwein¦ Schweine @n
 		pattern: gesattelte[s] Schwein[e]
@@ -531,17 +532,17 @@ entities:
 		pattern: nicht-Op[s]
 	zombie pigman:
 		name: Zombie Pigm¦an¦en @m
-		pattern: Zombie( |-)Pigm(an[s]|en)
+		pattern: <age> Zombie( |-)Pigm(an[s]|en)
 	sheep:
 		name: Schaf¦e @n
-		pattern:  [%-colors%] Schaf[e]
+		pattern: <age> [%-colors%] Schaf[e]|(4¦)[%-colors%] L(amm|ämmer)
 		format: %2$s %1$s
 	unsheared sheep:
 		name: ungeschorene¦s Schaf¦ Schafe @n
-		pattern: ungeschorene[s] [%-colors%] Schaf[e]
+		pattern: <age> ungeschorene[s] [%-colors%] Schaf[e]
 	sheared sheep:
 		name: geschorene¦s Schaf¦ Schafe @n
-		pattern: geschorene[s] [%-colors%] Schaf[e]
+		pattern: <age> geschorene[s] [%-colors%] Schaf[e]
 	silverfish:
 		name: Silberfisch¦e @m
 		pattern: Silberfisch[e]
@@ -574,22 +575,22 @@ entities:
 		pattern: gezündete[s] TNT[s]
 	villager:
 		name: Dorfbewohner @m
-		pattern: Dorfbewohner
+		pattern: <age> Dorfbewohner
 	farmer:
 		name: Bauer|n @m
-		pattern: Bauer[n]
+		pattern: <age> Bauer[n]
 	librarian:
 		name: Bibliothekar¦e @m
-		pattern: Bibliothekar[e]
+		pattern: <age> Bibliothekar[e]
 	priest:
 		name: Priester @m
-		pattern: Priester
+		pattern: <age> Priester
 	blacksmith:
 		name: Schmied @m
-		pattern: Schmied
+		pattern: <age> Schmied
 	butcher:
 		name: Metzger @m
-		pattern: Metzger
+		pattern: <age> Metzger
 	witch:
 		name: Hexe¦n @f
 		pattern: Hexe[n]
@@ -604,26 +605,32 @@ entities:
 		pattern: Wither[-]schädel
 	wolf:
 		name: W¦olf¦ölfe @m
-		pattern: W(olf|ölfe)
+		pattern: <age> W(olf|ölfe)
 	tamed wolf:
 		name: gezähmte¦r Wolf¦ Wölfe @m
-		pattern: (gezähmte[r] W(olf|ölfe)|Hund[e])
+		pattern: <age> gezähmte[r] W(olf|ölfe)|<age> Hund[e]|(4¦)Welpe[n]
 	wild wolf:
 		name: wilde¦r Wolf¦ Wölfe @m
-		pattern: wilde[r] W(olf|ölfe)
+		pattern: <age> wilde[r] W(olf|ölfe)
 	angry wolf:
 		name: aggressive¦r Wolf¦e Wölfe @m
-		pattern: aggressive[r]  W(olf|ölfe)
+		pattern: <age> aggressive[r]  W(olf|ölfe)
 	peaceful wolf:
 		name: friedliche¦r Wolf¦ Wölfe @m
-		pattern: (friedliche[r]|neutrale[r]) W(olf|ölfe)
+		pattern: <age> (friedliche[r]|neutrale[r]) W(olf|ölfe)
 	zombie:
 		name: Zombie¦s @m
-		pattern: Zombie[s]
+		pattern: <age> Zombie[s]
 	xp-orb:
 		name: Erfahrungskugel¦n @f
 		pattern: ([e]xp(-| |)|Erfahrungs)(orb[s]|kugel[n])
 		format: %2$s-xp %1$s
+	firework:
+		name: Feuerwerksrakete¦n
+		pattern: Feuerwerk[srakete[n]]
+	horse:
+		name: Pferd¦e
+		pattern: <age> Pferd[e]|(4¦)Fohlen
 
 # -- Damage Causes --
 damage causes:

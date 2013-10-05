@@ -38,8 +38,8 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timespan;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger

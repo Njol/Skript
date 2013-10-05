@@ -39,8 +39,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.BlockSphereIterator;
 import ch.njol.util.Kleenean;
-import ch.njol.util.iterator.EmptyIterator;
-import ch.njol.util.iterator.IteratorIterable;
+import ch.njol.util.coll.iterator.EmptyIterator;
+import ch.njol.util.coll.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger

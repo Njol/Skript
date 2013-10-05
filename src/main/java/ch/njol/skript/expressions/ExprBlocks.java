@@ -41,8 +41,8 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.BlockLineIterator;
 import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
-import ch.njol.util.iterator.ArrayIterator;
-import ch.njol.util.iterator.IteratorIterable;
+import ch.njol.util.coll.iterator.ArrayIterator;
+import ch.njol.util.coll.iterator.IteratorIterable;
 
 /**
  * @author Peter Güttinger

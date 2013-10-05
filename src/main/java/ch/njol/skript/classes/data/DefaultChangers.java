@@ -37,7 +37,7 @@ import org.bukkit.potion.PotionEffectType;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.SerializableChanger;
 import ch.njol.skript.util.Experience;
-import ch.njol.util.CollectionUtils;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger

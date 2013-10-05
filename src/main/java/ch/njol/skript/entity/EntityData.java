@@ -29,6 +29,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -48,14 +49,14 @@ import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.util.CollectionUtils;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings({"rawtypes", "serial"})
-public abstract class EntityData<E extends Entity> implements SyntaxElement {// TODO baby animals, extended horse support, zombie villagers // TODO unit
+public abstract class EntityData<E extends Entity> implements SyntaxElement {// TODO extended horse support, zombie villagers // TODO unit
 
 	// must be here to be initialised before 'new SimpleLiteral' is called in the register block below
 	private static final List<EntityDataInfo<?>> infos = new ArrayList<EntityDataInfo<?>>();
@@ -143,9 +144,10 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	static <E extends Entity, T extends EntityData<E>> void register(final Class<T> dataClass, final String name, final Class<E> entityClass, final String... codeNames) throws IllegalArgumentException {
 		final String[] patterns = new String[codeNames.length];
 		final Noun[] names = new Noun[codeNames.length];
+		final String agePattern = Language.get("entities.age pattern");
 		for (int i = 0; i < codeNames.length; i++) {
 			assert codeNames[i] != null;
-			patterns[i] = Language.get("entities." + codeNames[i] + ".pattern");
+			patterns[i] = Language.get("entities." + codeNames[i] + ".pattern").replace("<age>", agePattern);
 			names[i] = new Noun("entities." + codeNames[i] + ".name");
 		}
 		final EntityDataInfo<T> info = new EntityDataInfo<T>(dataClass, name, entityClass, patterns, names);
@@ -198,6 +200,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 		assert loc != null;
 		try {
 			final E e = loc.getWorld().spawn(loc, getType());
+			if (baby.isTrue() && e instanceof Ageable)
+				((Ageable) e).setBaby();
 			set(e);
 			return e;
 		} catch (final IllegalArgumentException e) {
@@ -304,6 +308,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	public final boolean isInstance(final Entity e) {
 		if (e == null)
 			return false;
+		if (!baby.isUnknown() && e instanceof Ageable && ((Ageable) e).isAdult() != baby.isFalse())
+			return false;
 		return getType().isInstance(e) && match((E) e);
 	}
 	
@@ -316,6 +322,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	protected EntityDataInfo<?> info;
 	protected int matchedPattern = 0;
 	private Kleenean plural = Kleenean.UNKNOWN;
+	private Kleenean baby = Kleenean.UNKNOWN;
 	
 	public EntityData() {
 		for (final EntityDataInfo<?> i : infos) {
@@ -330,7 +337,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	@Override
 	public final boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		this.matchedPattern = matchedPattern;
-		this.plural = Kleenean.get(parseResult.mark);
+		this.plural = Kleenean.get(2 - (parseResult.mark & 0x3));
+		this.baby = Kleenean.get(1 - (((parseResult.mark >> 2) & 0x3) ^ 0x1));
 		return init(Arrays.copyOf(exprs, exprs.length, Literal[].class), matchedPattern, parseResult);
 	}
 	
@@ -357,7 +365,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	public abstract EntityData getSuperType();
 	
 	@Override
-	public String toString() {
+	public String toString() { // TODO baby/adult
 		return info.names[matchedPattern].getSingular();
 	}
 	
@@ -367,6 +375,10 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	
 	public Kleenean isPlural() {
 		return plural;
+	}
+	
+	public Kleenean isBaby() {
+		return baby;
 	}
 	
 	@Override

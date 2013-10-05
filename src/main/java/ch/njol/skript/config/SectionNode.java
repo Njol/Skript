@@ -35,7 +35,7 @@ import ch.njol.skript.config.validate.EntryValidator;
 import ch.njol.skript.config.validate.SectionValidator;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Checker;
-import ch.njol.util.iterator.CheckedIterator;
+import ch.njol.util.coll.iterator.CheckedIterator;
 
 /**
  * @author Peter Güttinger

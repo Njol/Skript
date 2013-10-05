@@ -63,25 +63,31 @@ import ch.njol.util.Math2;
 		"grow a regular tree 2 meters horizontally behind the player"})
 @Since("1.0 (basic), 2.0 (extended)")
 public class ExprDirection extends SimpleExpression<Direction> {
+	
+	private final static BlockFace[] byMark = new BlockFace[] {
+			BlockFace.UP, BlockFace.DOWN,
+			BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST,
+			BlockFace.NORTH_EAST, BlockFace.NORTH_WEST, BlockFace.SOUTH_EAST, BlockFace.SOUTH_WEST};
+	private final static int UP = 0, DOWN = 1,
+			NORTH = 2, SOUTH = 3, EAST = 4, WEST = 5,
+			NORTH_EAST = 6, NORTH_WEST = 7, SOUTH_EAST = 8, SOUTH_WEST = 9;
+	
 	static {
 		// TODO think about parsing statically & dynamically (also in general)
 		// "at": see LitAt
 		// TODO direction of %location% (from|relative to) %location%
 		Skript.registerExpression(ExprDirection.class, Direction.class, ExpressionType.COMBINED,
 				"[%-number% [(block|meter)[s]] [to the]] (" +
-						"2¦north[(-| |)(6¦east|7¦west)][(ward(s|ly|)|er(n|ly|))] [of]" +
-						"|3¦south[(-| |)(8¦east|9¦west)][(ward(s|ly|)|er(n|ly|))] [of]" +
-						"|(4¦east|5¦west)[(ward(s|ly|)|er(n|ly|))] [of]" +
-						"|0¦above|0¦over|(0¦up|1¦down)[ward(s|ly|)]|1¦below|1¦under[neath]|1¦beneath" +
+						NORTH + "¦north[(-| |)(" + (NORTH_EAST ^ NORTH) + "¦east|" + (NORTH_WEST ^ NORTH) + "¦west)][(ward(s|ly|)|er(n|ly|))] [of]" +
+						"|" + SOUTH + "¦south[(-| |)(" + (SOUTH_EAST ^ SOUTH) + "¦east|" + (SOUTH_WEST ^ SOUTH) + "¦west)][(ward(s|ly|)|er(n|ly|))] [of]" +
+						"|(" + EAST + "¦east|" + WEST + "¦west)[(ward(s|ly|)|er(n|ly|))] [of]" +
+						"|" + UP + "¦above|" + UP + "¦over|(" + UP + "¦up|" + DOWN + "¦down)[ward(s|ly|)]|" + DOWN + "¦below|" + DOWN + "¦under[neath]|" + DOWN + "¦beneath" +
 						") [%-direction%]",
 				"[%-number% [(block|meter)[s]]] in [the] (0¦direction|1¦horizontal direction|2¦facing|3¦horizontal facing) of %entity/block% (of|from|)",
 				"[%-number% [(block|meter)[s]]] in %entity/block%'[s] (0¦direction|1¦horizontal direction|2¦facing|3¦horizontal facing) (of|from|)",
 				"[%-number% [(block|meter)[s]]] (0¦in[ ]front [of]|0¦forward[s]|2¦behind|2¦backwards|[to the] (1¦right|-1¦left) [of])",
 				"[%-number% [(block|meter)[s]]] horizontal[ly] (0¦in[ ]front [of]|0¦forward[s]|2¦behind|2¦backwards|to the (1¦right|-1¦left) [of])");
 	}
-	
-	private final static BlockFace[] byMark = new BlockFace[] {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST,
-			BlockFace.NORTH_EAST, BlockFace.NORTH_WEST, BlockFace.SOUTH_EAST, BlockFace.SOUTH_WEST};
 	
 	private Expression<Number> amount;
 	

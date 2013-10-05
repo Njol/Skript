@@ -33,7 +33,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.util.Kleenean;
-import ch.njol.util.iterator.SingleItemIterator;
+import ch.njol.util.coll.iterator.SingleItemIterator;
 
 /**
  * @author Peter Güttinger
