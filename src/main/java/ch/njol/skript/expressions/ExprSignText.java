@@ -148,7 +148,7 @@ public class ExprSignText extends SimpleExpression<String> {
 				s.setLine(line, (String) delta[0]);
 				break;
 		}
-		s.update(false, false);
+		s.update();
 	}
 	
 	@Override
