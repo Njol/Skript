@@ -114,6 +114,8 @@ public class ExprSignText extends SimpleExpression<String> {
 		return null;
 	}
 	
+	static boolean hasUpdateBooleanBoolean = true;
+	
 	@SuppressWarnings("incomplete-switch")
 	@Override
 	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
@@ -147,7 +149,16 @@ public class ExprSignText extends SimpleExpression<String> {
 					s.setLine(line, (String) delta[0]);
 					break;
 			}
-			s.update();
+			if (hasUpdateBooleanBoolean) {
+				try {
+					s.update(false, false);
+				} catch (final NoSuchMethodError err) {
+					hasUpdateBooleanBoolean = false;
+					s.update();
+				}
+			} else {
+				s.update();
+			}
 		}
 	}
 	
