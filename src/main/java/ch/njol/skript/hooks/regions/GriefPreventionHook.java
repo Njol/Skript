@@ -21,6 +21,7 @@
 
 package ch.njol.skript.hooks.regions;
 
+import java.io.StreamCorruptedException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -37,6 +38,7 @@ import org.bukkit.entity.Player;
 
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
+import ch.njol.yggdrasil.Fields;
 
 /**
  * @author Peter Güttinger
@@ -55,7 +57,7 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 	
 	public final class GriefPreventionRegion extends Region {
 		
-		private final Claim c;
+		private transient Claim c;
 		
 		public GriefPreventionRegion(final Claim c) {
 			this.c = c;
@@ -88,7 +90,11 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 		
 		@Override
 		public Iterator<Block> getBlocks() {
-			return new AABB(c.getLesserBoundaryCorner(), c.getGreaterBoundaryCorner()).iterator();
+			final Location upper = c.getGreaterBoundaryCorner();
+			upper.setY(upper.getWorld().getMaxHeight());
+			upper.setX(upper.getBlockX() + 1);
+			upper.setZ(upper.getBlockZ() + 1);
+			return new AABB(c.getLesserBoundaryCorner(), upper).iterator();
 		}
 		
 		@Override
@@ -97,8 +103,18 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 		}
 		
 		@Override
-		public String serialize() {
-			return "" + c.getID();
+		public Fields serialize() {
+			final Fields f = new Fields();
+			f.putPrimitive("id", c.getID());
+			return f;
+		}
+		
+		@Override
+		public void deserialize(final Fields fields) throws StreamCorruptedException {
+			final long id = fields.getPrimitive("id", long.class);
+			c = plugin.dataStore.getClaim(id);
+			if (c == null)
+				throw new StreamCorruptedException("Invalid claim " + id);
 		}
 		
 		@Override
@@ -134,7 +150,14 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 	
 	@Override
 	public Region getRegion_i(final World world, final String name) {
-		return null;
+		try {
+			final Claim c = plugin.dataStore.getClaim(Long.parseLong(name));
+			if (c != null && world.equals(c.getLesserBoundaryCorner().getWorld()))
+				return new GriefPreventionRegion(c);
+			return null;
+		} catch (final NumberFormatException e) {
+			return null;
+		}
 	}
 	
 	@Override
@@ -143,14 +166,7 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 	}
 	
 	@Override
-	protected Region deserializeRegion_i(final String s) {
-		try {
-			final Claim c = plugin.dataStore.getClaim(Long.parseLong(s));
-			if (c != null)
-				return new GriefPreventionRegion(c);
-			return null;
-		} catch (final NumberFormatException e) {
-			return null;
-		}
+	protected Class<? extends Region> getRegionClass() {
+		return GriefPreventionRegion.class;
 	}
 }

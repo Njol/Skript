@@ -54,6 +54,7 @@ public class ExprRandom extends SimpleExpression<Object> {
 	
 	private Expression<?> expr;
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		expr = exprs[1].getConvertedExpression(((ClassInfo<?>) exprs[0].getSingle(null)).getC());
@@ -68,7 +69,7 @@ public class ExprRandom extends SimpleExpression<Object> {
 		if (set.length <= 1)
 			return set;
 		final Object[] one = (Object[]) Array.newInstance(set.getClass().getComponentType(), 1);
-		one[0] = CollectionUtils.random(set);
+		one[0] = CollectionUtils.getRandom(set);
 		return one;
 	}
 	

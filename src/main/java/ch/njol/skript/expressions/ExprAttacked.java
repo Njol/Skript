@@ -55,7 +55,6 @@ import ch.njol.util.Kleenean;
 		"	damage the attacked by 1 heart"})
 @Since("1.3")
 public class ExprAttacked extends SimpleExpression<Entity> {
-	
 	static {
 		Skript.registerExpression(ExprAttacked.class, Entity.class, ExpressionType.SIMPLE, "[the] (attacked|damaged|victim) [<(.+)>]");
 	}

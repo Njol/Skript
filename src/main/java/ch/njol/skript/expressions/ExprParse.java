@@ -36,6 +36,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.ParseLogHandler;
@@ -71,7 +72,7 @@ import ch.njol.util.Pair;
 public class ExprParse extends SimpleExpression<Object> {
 	static {
 		Skript.registerExpression(ExprParse.class, Object.class, ExpressionType.COMBINED,
-				"%string% parsed as %*string/classinfo%");
+				"%string% parsed as (%-*classinfo%|\"<.*>\")");
 	}
 	
 	static String lastError = null;
@@ -87,9 +88,12 @@ public class ExprParse extends SimpleExpression<Object> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		text = (Expression<String>) exprs[0];
-		final Object o = exprs[1].getSingle(null);
-		if (o instanceof String) {
-			pattern = (String) o;
+		if (exprs[1] == null) {
+			pattern = parseResult.regexes.get(0).group();
+			if (!VariableString.isQuotedCorrectly(pattern, false)) {
+				Skript.error("Invalid amount and/or placement of double quotes in '" + pattern + "'");
+				return false;
+			}
 			pattern = pattern.replace("¦", "\\¦"); // not useful for users
 			final Pair<String, boolean[]> p = SkriptParser.validatePattern(pattern);
 			if (p == null)
@@ -97,7 +101,7 @@ public class ExprParse extends SimpleExpression<Object> {
 			pattern = p.first;
 			plurals = p.second;
 		} else {
-			c = (ClassInfo<?>) o;
+			c = (ClassInfo<?>) exprs[1].getSingle(null);
 			if (c.getParser() == null || !c.getParser().canParse(ParseContext.COMMAND)) {
 				Skript.error("Text cannot be parsed as " + c.getName().withIndefiniteArticle());
 				return false;

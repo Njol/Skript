@@ -68,7 +68,7 @@ public class LogEntry {
 		from = Skript.debug() ? findCaller() : "";
 	}
 	
-	private static final String skriptLogPackageName = SkriptLogger.class.getPackage().getName();
+	private final static String skriptLogPackageName = SkriptLogger.class.getPackage().getName();
 	
 	static String findCaller() {
 		final StackTraceElement[] es = new Exception().getStackTrace();
@@ -99,7 +99,7 @@ public class LogEntry {
 	public String toString() {
 		if (node == null || level.intValue() < Level.WARNING.intValue())
 			return message;
-		return message + from + " (" + node.getConfig().getFileName() + ", line " + node.getLine() + (node.getOrig() == null ? "" : ": '" + node.getOrig().trim() + "')");
+		return message + from + " (" + node.getConfig().getFileName() + ", line " + node.getLine() + ": " + node.save().trim() + "')";
 	}
 	
 }

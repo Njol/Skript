@@ -32,7 +32,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 @SuppressWarnings("serial")
 public class CreeperData extends EntityData<Creeper> {
 	static {
-		EntityData.register(CreeperData.class, "creeper", Creeper.class, "unpowered creeper", "creeper", "powered creeper");
+		EntityData.register(CreeperData.class, "creeper", Creeper.class, 1, "unpowered creeper", "creeper", "powered creeper");
 	}
 	
 	private int powered = 0;
@@ -66,27 +66,19 @@ public class CreeperData extends EntityData<Creeper> {
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		return powered;
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof CreeperData))
 			return false;
 		final CreeperData other = (CreeperData) obj;
 		return powered == other.powered;
 	}
 	
-	@Override
-	public String serialize() {
-		return "" + powered;
-	}
-	
+//		return "" + powered;
 	@Override
 	protected boolean deserialize(final String s) {
 		try {

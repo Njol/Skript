@@ -29,7 +29,7 @@ import ch.njol.skript.registrations.Converters;
  * @param <F> the accepted type of objects to convert <u>f</u>rom
  * @param <T> the type to convert <u>t</u>o
  * @author Peter Güttinger
- * @see Converters#registerConverter(Class, Class, Converter)
+ * @see Converters#registerConverter(Class, Class, SerializableConverter)
  */
 public interface Converter<F, T> {
 	
@@ -48,7 +48,7 @@ public interface Converter<F, T> {
 	 * @param <F> same as in {@link Converter}
 	 * @param <T> dito
 	 */
-	public static final class ConverterInfo<F, T> {
+	public final static class ConverterInfo<F, T> {
 		
 		public final Class<F> from;
 		public final Class<T> to;
@@ -74,7 +74,7 @@ public interface Converter<F, T> {
 	 */
 	public T convert(F f);
 	
-	public static final class ConverterUtils {
+	public final static class ConverterUtils {
 		
 		public final static <F, T> SerializableConverter<?, T> createInstanceofConverter(final ConverterInfo<F, T> conv) {
 			return createInstanceofConverter(conv.from, conv.converter);
@@ -82,7 +82,7 @@ public interface Converter<F, T> {
 		
 		public final static <F, T> SerializableConverter<?, T> createInstanceofConverter(final Class<F> from, final Converter<F, T> conv) {
 			return new SerializableConverter<Object, T>() {
-				private static final long serialVersionUID = -9026052502252522895L;
+				private final static long serialVersionUID = -9026052502252522895L;
 				
 				@SuppressWarnings("unchecked")
 				@Override
@@ -96,7 +96,7 @@ public interface Converter<F, T> {
 		
 		public final static <F, T> SerializableConverter<F, T> createInstanceofConverter(final Converter<F, ?> conv, final Class<T> to) {
 			return new SerializableConverter<F, T>() {
-				private static final long serialVersionUID = 2408973867196975702L;
+				private final static long serialVersionUID = 2408973867196975702L;
 				
 				@SuppressWarnings("unchecked")
 				@Override
@@ -115,7 +115,7 @@ public interface Converter<F, T> {
 		
 		public final static <F, T> SerializableConverter<?, T> createDoubleInstanceofConverter(final Class<F> from, final Converter<F, ?> conv, final Class<T> to) {
 			return new SerializableConverter<Object, T>() {
-				private static final long serialVersionUID = 6009912617490506586L;
+				private final static long serialVersionUID = 6009912617490506586L;
 				
 				@SuppressWarnings("unchecked")
 				@Override

@@ -123,7 +123,10 @@ public class ExprSignText extends SimpleExpression<String> {
 		final int line = l.intValue() - 1;
 		if (line < 0 || line > 3)
 			return;
-		if (getTime() >= 0 && block.isDefault() && e instanceof SignChangeEvent && !Delay.isDelayed(e)) {
+		final Block b = block.getSingle(e);
+		if (b == null)
+			return;
+		if (getTime() >= 0 && e instanceof SignChangeEvent && b.equals(((SignChangeEvent) e).getBlock()) && !Delay.isDelayed(e)) {
 			switch (mode) {
 				case DELETE:
 					((SignChangeEvent) e).setLine(line, "");
@@ -132,23 +135,20 @@ public class ExprSignText extends SimpleExpression<String> {
 					((SignChangeEvent) e).setLine(line, (String) delta[0]);
 					break;
 			}
-			return;
+		} else {
+			if (b.getType() != Material.SIGN_POST && b.getType() != Material.WALL_SIGN)
+				return;
+			final Sign s = (Sign) b.getState();
+			switch (mode) {
+				case DELETE:
+					s.setLine(line, "");
+					break;
+				case SET:
+					s.setLine(line, (String) delta[0]);
+					break;
+			}
+			s.update();
 		}
-		final Block b = block.getSingle(e);
-		if (b == null)
-			return;
-		if (b.getType() != Material.SIGN_POST && b.getType() != Material.WALL_SIGN)
-			return;
-		final Sign s = (Sign) b.getState();
-		switch (mode) {
-			case DELETE:
-				s.setLine(line, "");
-				break;
-			case SET:
-				s.setLine(line, (String) delta[0]);
-				break;
-		}
-		s.update(false, false);
 	}
 	
 	@Override

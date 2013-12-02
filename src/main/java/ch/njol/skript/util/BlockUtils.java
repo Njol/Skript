@@ -33,7 +33,7 @@ import ch.njol.skript.Skript;
 import ch.njol.util.coll.CollectionUtils;
 
 /**
- * TODO !Update with every version [blocks]
+ * TODO !Update with every version [blocks] - also update aliases-xyz.sk
  * 
  * @author Peter Güttinger
  */
@@ -91,12 +91,17 @@ public abstract class BlockUtils {
 			BlockFace.SOUTH, BlockFace.WEST, BlockFace.NORTH, BlockFace.EAST
 	};
 	
+	// not the actual facing, but a direction where fence posts should exist
+	private final static BlockFace[] gate = new BlockFace[] {
+			BlockFace.WEST, BlockFace.NORTH
+	};
+	
 	/**
 	 * @param b
 	 * @param type
 	 * @param dataMin The miminum data value from 0 to 15, can be -1
 	 * @param dataMax The maximum data value from 0 to 15, can be -1
-	 * @param applyPhysics
+	 * @param applyPhysics TODO add effect that sets block without physics checks
 	 * @return Whether the block could be set successfully
 	 */
 	public static boolean set(final Block b, final int type, byte dataMin, byte dataMax, final boolean applyPhysics) {
@@ -113,14 +118,21 @@ public abstract class BlockUtils {
 		// ATTACHABLES
 		final BlockFace[] attach = attached[type];
 		if (attach != null) {
-			if (dataMin >= attach.length)
-				return false;
+			if (dataMin >= attach.length) {
+				b.setTypeIdAndData(type, (byte) Utils.random(dataMin, dataMax + 1), applyPhysics);
+				return true;
+			}
 			dataMax = (byte) Math.min(dataMax, attach.length - 1);
-			byte down; // TODO randomize preferred face?
-			if ((down = (byte) CollectionUtils.indexOf(attach, BlockFace.DOWN, dataMin, dataMax)) != -1) {
+			// solid blocks?
+			if (CollectionUtils.indexOf(attach, BlockFace.DOWN, dataMin, dataMax) != -1) {
 				if (isSolid(b.getRelative(BlockFace.DOWN).getTypeId())) {
-					b.setTypeIdAndData(type, down, applyPhysics);
-					return true;
+					for (final byte data : CollectionUtils.permutation(dataMin, dataMax)) {
+						if (attach[data] != BlockFace.DOWN)
+							continue;
+						b.setTypeIdAndData(type, data, applyPhysics);
+						return true;
+					}
+					assert false;
 				}
 			}
 			for (final int data : CollectionUtils.permutation(dataMin, dataMax)) {
@@ -132,7 +144,30 @@ public abstract class BlockUtils {
 					return true;
 				}
 			}
-			return false;
+			// no solid blocks - any blocks at all?
+			if (CollectionUtils.indexOf(attach, BlockFace.DOWN, dataMin, dataMax) != -1) {
+				if (b.getRelative(BlockFace.DOWN).getType() != Material.AIR) {
+					for (final byte data : CollectionUtils.permutation(dataMin, dataMax)) {
+						if (attach[data] != BlockFace.DOWN)
+							continue;
+						b.setTypeIdAndData(type, data, applyPhysics);
+						return true;
+					}
+					assert false;
+				}
+			}
+			for (final int data : CollectionUtils.permutation(dataMin, dataMax)) {
+				final BlockFace f = attach[data];
+				if (f == null)
+					continue;
+				if (b.getRelative(f).getType() != Material.AIR) {
+					b.setTypeIdAndData(type, (byte) data, applyPhysics);
+					return true;
+				}
+			}
+			// no blocks at all - just place it in the air, who cares ^^
+			b.setTypeIdAndData(type, (byte) Utils.random(dataMin, dataMax + 1), applyPhysics);
+			return true;
 		}
 		
 		// DOORS
@@ -167,27 +202,49 @@ public abstract class BlockUtils {
 		
 		// BED
 		if (type == Material.BED_BLOCK.getId()) {
-			for (final int data : CollectionUtils.permutation(dataMin, dataMax)) {
+			for (final byte data : CollectionUtils.permutation(dataMin, dataMax)) {
 				final boolean head = (data & 0x8) == 0x8;
 				final BlockFace f = bed[data & 0x3];
 				if (head) {
 					if (b.getRelative(f, -1).getTypeId() != 0)
 						continue;
 					b.getRelative(f, -1).setTypeIdAndData(type, (byte) (data & ~0x8), false);
-					b.setTypeIdAndData(type, (byte) data, applyPhysics);
+					b.setTypeIdAndData(type, data, applyPhysics);
 					return true;
 				} else {
 					if (b.getRelative(f).getTypeId() != 0)
 						continue;
 					b.getRelative(f).setTypeIdAndData(type, (byte) (data | 0x8), false);
-					b.setTypeIdAndData(type, (byte) data, applyPhysics);
+					b.setTypeIdAndData(type, data, applyPhysics);
 					return true;
 				}
 			}
 			return false;
 		}
 		
-		// TODO rails, fence gates?
+		// FENCE GATE
+		if (type == Material.FENCE_GATE.getId()) {
+			final boolean[] tried = new boolean[gate.length];
+			for (final byte data : CollectionUtils.permutation(dataMin, dataMax)) {
+				if (tried[data & 0x1])
+					continue;
+				final BlockFace f = gate[data & 0x1];
+				final Block b1 = b.getRelative(f), b2 = b.getRelative(f, -1);
+				final int m1 = b1.getTypeId(), m2 = b2.getTypeId();
+				// 113 == nether fence
+				if ((m1 == Material.FENCE.getId() || m1 == 113 || m1 == Material.FENCE_GATE.getId() && (b1.getData() & 0x1) == (data & 0x1))
+						&& (m2 == Material.FENCE.getId() || m2 == 113 || m2 == Material.FENCE_GATE.getId() && (b2.getData() & 0x1) == (data & 0x1))) {
+					b.setTypeIdAndData(type, data, applyPhysics);
+					return true;
+				} else {
+					tried[data & 0x1] = true;
+				}
+			}
+			b.setTypeIdAndData(type, (byte) Utils.random(dataMin, dataMax + 1), applyPhysics);
+			return true;
+		}
+		
+		// REMIND rails?
 		
 		// DEFAULT
 		b.setTypeIdAndData(type, any ? 0 : (byte) Utils.random(dataMin, dataMax + 1), applyPhysics);
@@ -195,12 +252,12 @@ public abstract class BlockUtils {
 	}
 	
 	// Material.isSolid() treats e.g. steps as solid...
-	// TODO !Update with every version [blocks]
+	// TODO !Update with every version [blocks] // FIXME updated this, above and rest to follow!
 	private final static int[] solid = {
 			1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29, 33, 35, 41, 42, 43, 45, 46, 47, 48, 49,
 			52, 54, 56, 57, 58, 60, 61, 62, 73, 74, 79, 80, 82, 84, 86, 87, 88, 89, 91, 95, 97, 98, 99,
 			100, 103, 110, 112, 120, 121, 123, 124, 125, 129, 130, 133, 137, 138, 146,
-			152, 153, 155, 158
+			152, 153, 155, 158, 159, 161, 162, 170, 172, 173, 174
 	};
 	private final static boolean[] isSolid = new boolean[Skript.MAXBLOCKID + 1];
 	static {
@@ -208,7 +265,7 @@ public abstract class BlockUtils {
 			isSolid[i] = true;
 	}
 	
-	public static final boolean isSolid(final int type) {
+	public final static boolean isSolid(final int type) {
 		if (type < 0 || type >= isSolid.length)
 			throw new IllegalArgumentException(type + " is not a block id");
 		return isSolid[type];

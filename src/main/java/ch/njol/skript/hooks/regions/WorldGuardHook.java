@@ -21,6 +21,8 @@
 
 package ch.njol.skript.hooks.regions;
 
+import java.io.NotSerializableException;
+import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -33,7 +35,9 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
 import ch.njol.skript.hooks.regions.classes.Region;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.coll.iterator.EmptyIterator;
+import ch.njol.yggdrasil.Fields;
 
 import com.sk89q.worldedit.BlockVector2D;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -56,27 +60,27 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 	
 	public final class WorldGuardRegion extends Region {
 		
-		private final World w;
-		private final ProtectedRegion r;
+		private final World world;
+		private transient ProtectedRegion region;
 		
 		public WorldGuardRegion(final World w, final ProtectedRegion r) {
-			this.w = w;
-			this.r = r;
+			world = w;
+			region = r;
 		}
 		
 		@Override
 		public boolean contains(final Location l) {
-			return l.getWorld().equals(w) && r.contains(l.getBlockX(), l.getBlockY(), l.getBlockZ());
+			return l.getWorld().equals(world) && region.contains(l.getBlockX(), l.getBlockY(), l.getBlockZ());
 		}
 		
 		@Override
 		public boolean isMember(final OfflinePlayer p) {
-			return r.isMember(p.getName());
+			return region.isMember(p.getName());
 		}
 		
 		@Override
 		public Collection<OfflinePlayer> getMembers() {
-			final Collection<String> ps = r.getMembers().getPlayers();
+			final Collection<String> ps = region.getMembers().getPlayers();
 			final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ps.size());
 			for (final String p : ps)
 				r.add(Bukkit.getOfflinePlayer(p));
@@ -85,12 +89,12 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		
 		@Override
 		public boolean isOwner(final OfflinePlayer p) {
-			return r.isOwner(p.getName());
+			return region.isOwner(p.getName());
 		}
 		
 		@Override
 		public Collection<OfflinePlayer> getOwners() {
-			final Collection<String> ps = r.getOwners().getPlayers();
+			final Collection<String> ps = region.getOwners().getPlayers();
 			final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ps.size());
 			for (final String p : ps)
 				r.add(Bukkit.getOfflinePlayer(p));
@@ -99,13 +103,13 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		
 		@Override
 		public Iterator<Block> getBlocks() {
-			final Iterator<BlockVector2D> iter = r.getPoints().iterator();
+			final Iterator<BlockVector2D> iter = region.getPoints().iterator();
 			if (!iter.hasNext())
 				return EmptyIterator.get();
 			return new Iterator<Block>() {
 				BlockVector2D current = iter.next();
 				int height = 0;
-				final int maxHeight = w.getMaxHeight();
+				final int maxHeight = world.getMaxHeight();
 				
 				@Override
 				public boolean hasNext() {
@@ -118,7 +122,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 				
 				@Override
 				public Block next() {
-					return w.getBlockAt(current.getBlockX(), height, current.getBlockZ());
+					return world.getBlockAt(current.getBlockX(), height, current.getBlockZ());
 				}
 				
 				@Override
@@ -129,13 +133,24 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		}
 		
 		@Override
-		public String serialize() {
-			return w.getName() + ":" + r.getId();
+		public Fields serialize() throws NotSerializableException {
+			final Fields f = new Fields(this);
+			f.putObject("region", region.getId());
+			return f;
+		}
+		
+		@Override
+		public void deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
+			final String r = fields.getAndRemoveObject("region", String.class);
+			fields.setFields(this, Variables.yggdrasil);
+			region = plugin.getRegionManager(world).getRegion(r);
+			if (region == null)
+				throw new StreamCorruptedException("Invalid region " + r + " in world " + world);
 		}
 		
 		@Override
 		public String toString() {
-			return r.getId() + " in world " + w.getName();
+			return region.getId() + " in world " + world.getName();
 		}
 		
 		@Override
@@ -151,12 +166,12 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 				return false;
 			if (!(o instanceof WorldGuardRegion))
 				return false;
-			return w.equals(((WorldGuardRegion) o).w) && r.equals(((WorldGuardRegion) o).r);
+			return world.equals(((WorldGuardRegion) o).world) && region.equals(((WorldGuardRegion) o).region);
 		}
 		
 		@Override
 		public int hashCode() {
-			return w.hashCode() ^ r.hashCode();
+			return world.hashCode() * 31 + region.hashCode();
 		}
 		
 	}
@@ -184,15 +199,8 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 	}
 	
 	@Override
-	protected Region deserializeRegion_i(final String s) {
-		final String[] split = s.split(":", 2);
-		final World w = Bukkit.getWorld(split[0]);
-		if (w == null)
-			return null;
-		final ProtectedRegion r = plugin.getRegionManager(w).getRegionExact(split[1]);
-		if (r == null)
-			return null;
-		return new WorldGuardRegion(w, r);
+	protected Class<? extends Region> getRegionClass() {
+		return WorldGuardRegion.class;
 	}
 	
 }

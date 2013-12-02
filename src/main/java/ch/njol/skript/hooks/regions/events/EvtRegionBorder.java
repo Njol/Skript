@@ -26,6 +26,7 @@ import java.util.Collection;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
 import org.bukkit.event.Listener;
@@ -34,12 +35,14 @@ import org.bukkit.plugin.EventExecutor;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.hooks.regions.RegionsPlugin;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
+import ch.njol.skript.registrations.EventValues;
 import ch.njol.util.Checker;
 
 /**
@@ -49,7 +52,25 @@ import ch.njol.util.Checker;
 public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 	static {
 		Skript.registerEvent("Region Enter/Leave", EvtRegionBorder.class, RegionBorderEvent.class,
-				"(0¦enter[ing]|1¦leav(e|ing)|1¦exit[ing]) [of] (a region|[[the] region[s]] %-regions%)");
+				"(0¦enter[ing]|1¦leav(e|ing)|1¦exit[ing]) [of] ([a] region|[[the] region] %-regions%)",
+				"region (0¦enter[ing]|1¦leav(e|ing)|1¦exit[ing])")
+				.description("Called when a player enters or leaves a <a href='../classes/#reion'>region</a>.",
+						"This event requires a supported regions plugin to be installed.")
+				.examples("on region exit:",
+						"	message \"Leaving %region%.\"")
+				.since("2.1");
+		EventValues.registerEventValue(RegionBorderEvent.class, Region.class, new SerializableGetter<Region, RegionBorderEvent>() {
+			@Override
+			public Region get(final RegionBorderEvent e) {
+				return e.getRegion();
+			}
+		}, 0);
+		EventValues.registerEventValue(RegionBorderEvent.class, Player.class, new SerializableGetter<Player, RegionBorderEvent>() {
+			@Override
+			public Player get(final RegionBorderEvent e) {
+				return e.getPlayer();
+			}
+		}, 0);
 	}
 	
 	private boolean enter;
@@ -59,7 +80,7 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parseResult) {
 		enter = parseResult.mark == 0;
-		regions = (Literal<Region>) args[0];
+		regions = args.length == 0 ? null : (Literal<Region>) args[0];
 		return true;
 	}
 	
@@ -88,11 +109,11 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 	
 	private boolean applies(final Event e) {
 		assert e instanceof RegionBorderEvent;
-		if (enter != ((RegionBorderEvent) e).enter)
+		if (enter != ((RegionBorderEvent) e).isEntering())
 			return false;
 		if (regions == null)
 			return true;
-		final Region re = ((RegionBorderEvent) e).region;
+		final Region re = ((RegionBorderEvent) e).getRegion();
 		return regions.check(e, new Checker<Region>() {
 			@Override
 			public boolean check(final Region r) {
@@ -101,29 +122,31 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 		});
 	}
 	
-	private final static void callEvent(final Region r, final boolean enter) {
-		final RegionBorderEvent e = new RegionBorderEvent(r, enter);
+	private final static void callEvent(final Region r, final PlayerMoveEvent me, final boolean enter) {
+		final RegionBorderEvent e = new RegionBorderEvent(r, me.getPlayer(), enter);
+		e.setCancelled(me.isCancelled());
 		for (final Trigger t : triggers) {
 			if (((EvtRegionBorder) t.getEvent()).applies(e))
 				t.execute(e);
 		}
+		me.setCancelled(e.isCancelled());
 	}
 	
 	private final static EventExecutor ee = new EventExecutor() {
 		@Override
 		public void execute(final Listener listener, final Event event) throws EventException {
-			final PlayerMoveEvent e = (PlayerMoveEvent) event; // even WorldGuard doesn't have events, and this method supports all region plugins for sure.
+			final PlayerMoveEvent e = (PlayerMoveEvent) event; // even WorldGuard doesn't have events, and this way all region plugins are supported for sure.
 			final Location to = e.getTo(), from = e.getFrom();
 			if (to.equals(from))
 				return;
 			final Collection<? extends Region> oldRs = RegionsPlugin.getRegionsAt(from), newRs = RegionsPlugin.getRegionsAt(to);
 			for (final Region r : oldRs) {
 				if (!newRs.contains(r))
-					callEvent(r, false);
+					callEvent(r, e, false);
 			}
 			for (final Region r : newRs) {
 				if (!oldRs.contains(r))
-					callEvent(r, true);
+					callEvent(r, e, true);
 			}
 		}
 	};

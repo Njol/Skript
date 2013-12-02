@@ -82,11 +82,11 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * tests whether two item stacks are of the same type, i.e. it ignores the amounts.
+	 * Tests whether two item stacks are of the same type, i.e. it ignores the amounts.
 	 * 
 	 * @param is1
 	 * @param is2
-	 * @return
+	 * @return Whether the item stacks are of the same type
 	 */
 	public static boolean itemStacksEqual(final ItemStack is1, final ItemStack is2) {
 		if (is1 == null || is2 == null)
@@ -100,7 +100,7 @@ public abstract class Utils {
 	 * 
 	 * @param entity The entity to get the target of
 	 * @param type Can be null for any entity
-	 * @return
+	 * @return The entity's target
 	 */
 	public static <T extends Entity> T getTarget(final LivingEntity entity, final EntityData<T> type) {
 		assert entity != null;
@@ -223,7 +223,7 @@ public abstract class Utils {
 	 * @param s trimmed string
 	 * @return Pair of singular string + boolean whether it was plural
 	 */
-	public static final Pair<String, Boolean> getEnglishPlural(final String s) {
+	public final static Pair<String, Boolean> getEnglishPlural(final String s) {
 		assert s != null;
 		if (s.isEmpty())
 			return new Pair<String, Boolean>("", Boolean.FALSE);
@@ -240,9 +240,9 @@ public abstract class Utils {
 	 * Gets the english plural of a word.
 	 * 
 	 * @param s
-	 * @return
+	 * @return The english plural of the given word
 	 */
-	public static final String toEnglishPlural(final String s) {
+	public final static String toEnglishPlural(final String s) {
 		assert s != null && s.length() != 0;
 		for (final String[] p : plurals) {
 			if (s.endsWith(p[0]))
@@ -253,11 +253,11 @@ public abstract class Utils {
 	}
 	
 	/**
-	 * Gets the plural of a word (or not if p = false)
+	 * Gets the plural of a word (or not if p is false)
 	 * 
 	 * @param s
 	 * @param p
-	 * @return
+	 * @return The english plural of the given word, or the word itself if p is false.
 	 */
 	public final static String toEnglishPlural(final String s, final boolean p) {
 		if (p)
@@ -268,36 +268,36 @@ public abstract class Utils {
 	/**
 	 * Adds 'a' or 'an' to the given string, depending on the first character of the string.
 	 * 
-	 * @param s the string to add the article to
-	 * @return string with an appended a/an and a space at the beginning
+	 * @param s The string to add the article to
+	 * @return The given string with an appended a/an and a space at the beginning
 	 * @see #A(String)
 	 * @see #a(String, boolean)
 	 */
-	public static final String a(final String s) {
+	public final static String a(final String s) {
 		return a(s, false);
 	}
 	
 	/**
 	 * Adds 'A' or 'An' to the given string, depending on the first character of the string.
 	 * 
-	 * @param s the string to add the article to
-	 * @return string with an appended A/An and a space at the beginning
+	 * @param s The string to add the article to
+	 * @return The given string with an appended A/An and a space at the beginning
 	 * @see #a(String)
 	 * @see #a(String, boolean)
 	 */
-	public static final String A(final String s) {
+	public final static String A(final String s) {
 		return a(s, true);
 	}
 	
 	/**
 	 * Adds 'a' or 'an' to the given string, depending on the first character of the string.
 	 * 
-	 * @param s the string to add the article to
+	 * @param s The string to add the article to
 	 * @param capA Whether to use a capital a or not
-	 * @return string with an appended a/an (or A/An if capA is true) and a space at the beginning
+	 * @return The given string with an appended a/an (or A/An if capA is true) and a space at the beginning
 	 * @see #a(String)
 	 */
-	public static final String a(final String s, final boolean capA) {
+	public final static String a(final String s, final boolean capA) {
 		assert s != null && s.length() != 0;
 		if ("aeiouAEIOU".indexOf(s.charAt(0)) != -1) {
 			if (capA)
@@ -316,7 +316,7 @@ public abstract class Utils {
 	 * TODO !Update with every version [blocks]
 	 * 
 	 * @param type
-	 * @return
+	 * @return The block's height at the center
 	 */
 	public static double getBlockHeight(final int type, final byte data) {
 		switch (type) {
@@ -384,13 +384,17 @@ public abstract class Utils {
 		});
 	}
 	
+	public final static String getChatStyle(final String s) {
+		return chat.get(s);
+	}
+	
 	private final static Pattern stylePattern = Pattern.compile("<([^<>]+)>");
 	
 	/**
 	 * Replaces &lt;chat styles&gt; in the message
 	 * 
 	 * @param message
-	 * @return
+	 * @return message with localised chat styles converted to Minecraft's format
 	 */
 	public final static String replaceChatStyles(String message) {
 		if (message == null || message.isEmpty())
@@ -416,7 +420,7 @@ public abstract class Utils {
 	 * changing, and for some hardcoded messages.
 	 * 
 	 * @param message
-	 * @return
+	 * @return message with english chat styles converted to Minecraft's format
 	 */
 	public final static String replaceEnglishChatStyles(String message) {
 		if (message == null || message.isEmpty())
@@ -442,7 +446,7 @@ public abstract class Utils {
 	 * 
 	 * @param start
 	 * @param end
-	 * @return
+	 * @return <tt>start + random.nextInt(end - start)</tt>
 	 */
 	public static int random(final int start, final int end) {
 		if (end <= start)
@@ -450,7 +454,7 @@ public abstract class Utils {
 		return start + random.nextInt(end - start);
 	}
 	
-	// TODO improve?
+	// TODO improve
 	public final static Class<?> getSuperType(final Class<?>... cs) {
 		assert cs.length > 0;
 		Class<?> r = cs[0];
@@ -487,7 +491,7 @@ public abstract class Utils {
 	 * This method will return {@link Integer#MIN_VALUE} or {@link Integer#MAX_VALUE} respectively if that happens.
 	 * 
 	 * @param s
-	 * @return
+	 * @return The parsed integer, {@link Integer#MIN_VALUE} or {@link Integer#MAX_VALUE} respectively
 	 */
 	public final static int parseInt(final String s) {
 		assert s.matches("-?\\d+");
@@ -504,7 +508,7 @@ public abstract class Utils {
 	 * This method will return {@link Long#MIN_VALUE} or {@link Long#MAX_VALUE} respectively if that happens.
 	 * 
 	 * @param s
-	 * @return
+	 * @return The parsed long, {@link Long#MIN_VALUE} or {@link Long#MAX_VALUE} respectively
 	 */
 	public final static long parseLong(final String s) {
 		assert s.matches("-?\\d+");

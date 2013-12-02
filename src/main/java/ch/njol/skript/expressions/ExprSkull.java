@@ -21,6 +21,7 @@
 
 package ch.njol.skript.expressions;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.SkullType;
@@ -28,10 +29,10 @@ import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Skeleton.SkeletonType;
 import org.bukkit.entity.Zombie;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -54,9 +55,9 @@ import ch.njol.util.Kleenean;
 @Examples({"give the victim's skull to the attacker",
 		"set the block at the entity to the entity's skull"})
 @Since("2.0")
-public class ExprSkull extends SimplePropertyExpression<Object, ItemStack> {
+public class ExprSkull extends SimplePropertyExpression<Object, ItemType> {
 	static {
-		register(ExprSkull.class, ItemStack.class, "skull", "offlineplayers/entities/entitydatas");
+		register(ExprSkull.class, ItemType.class, "skull", "offlineplayers/entities/entitydatas");
 	}
 	
 	@Override
@@ -69,7 +70,7 @@ public class ExprSkull extends SimplePropertyExpression<Object, ItemStack> {
 	}
 	
 	@Override
-	public ItemStack convert(final Object o) {
+	public ItemType convert(final Object o) {
 		final SkullType type;
 		if (o instanceof Skeleton || o instanceof SkeletonData) {
 			if (o instanceof SkeletonData ? ((SkeletonData) o).isWither() : ((Skeleton) o).getSkeletonType() == SkeletonType.WITHER) {
@@ -86,18 +87,19 @@ public class ExprSkull extends SimplePropertyExpression<Object, ItemStack> {
 		} else {
 			return null;
 		}
-		final ItemStack is = new ItemStack(Material.SKULL_ITEM, 1, (short) type.ordinal());
+		@SuppressWarnings("deprecation")
+		final ItemType i = new ItemType(Material.SKULL_ITEM.getId(), (short) type.ordinal());
 		if (o instanceof OfflinePlayer) {
-			final SkullMeta s = (SkullMeta) is.getItemMeta();
+			final SkullMeta s = (SkullMeta) Bukkit.getItemFactory().getItemMeta(Material.SKULL_ITEM);
 			s.setOwner(((OfflinePlayer) o).getName());
-			is.setItemMeta(s);
+			i.setItemMeta(s);
 		}
-		return is;
+		return i;
 	}
 	
 	@Override
-	public Class<? extends ItemStack> getReturnType() {
-		return ItemStack.class;
+	public Class<? extends ItemType> getReturnType() {
+		return ItemType.class;
 	}
 	
 	@Override

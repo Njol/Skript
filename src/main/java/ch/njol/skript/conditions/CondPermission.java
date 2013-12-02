@@ -64,7 +64,6 @@ public class CondPermission extends Condition {
 		return true;
 	}
 	
-	// TODO 'player doesn't have permission "a" or "b"' does not work even with both permissions?
 	@Override
 	public boolean check(final Event e) {
 		return senders.check(e, new Checker<CommandSender>() {

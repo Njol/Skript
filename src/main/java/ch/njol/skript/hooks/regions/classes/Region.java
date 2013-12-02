@@ -24,28 +24,68 @@ package ch.njol.skript.hooks.regions.classes;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
-import ch.njol.skript.classes.Serializer;
+import ch.njol.skript.classes.YggdrasilSerializer;
 import ch.njol.skript.hooks.regions.RegionsPlugin;
 import ch.njol.skript.lang.ParseContext;
+import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.yggdrasil.YggdrasilSerializable.YggdrasilExtendedSerializable;
 
 /**
  * @author Peter Güttinger
  */
-public abstract class Region {
+public abstract class Region implements YggdrasilExtendedSerializable {
 	static {
 		Classes.registerClass(new ClassInfo<Region>(Region.class, "region")
 				.name("Region")
+				.description("A region of a regions plugin. Skript currently supports WorldGuard, Factions, GriefPrevention and PreciousStones.",
+						"Please note that some regions plugins do not have named regions, some use numerical ids to identify regions, and some may have regions with the same name in different worlds, "
+								+ "thus using regions like \"region name\" in scripts may or may not work.")
+				.usage("\"region name\"")
+				.examples("")
+				.after("string", "world", "offlineplayer", "player")
+				.since("2.1")
 				.parser(new Parser<Region>() {
 					@Override
-					public Region parse(final String s, final ParseContext context) {
-						return null;
+					public Region parse(String s, final ParseContext context) {
+						final boolean quoted;
+						switch (context) {
+							case DEFAULT:
+							case EVENT:
+								quoted = true;
+								break;
+							case COMMAND:
+							case CONFIG:
+								quoted = false;
+								break;
+							default:
+								assert false;
+								return null;
+						}
+						if (!VariableString.isQuotedCorrectly(s, quoted))
+							return null;
+						s = VariableString.unquote(s, quoted);
+						Region r = null;
+						for (final World w : Bukkit.getWorlds()) {
+							final Region r2 = RegionsPlugin.getRegion(w, s);
+							if (r2 == null)
+								continue;
+							if (r != null) {
+								Skript.error("Multiple regions with the name '" + s + "' exist.");
+								return null;
+							}
+							r = r2;
+						}
+						return r;
 					}
 					
 					@Override
@@ -55,25 +95,15 @@ public abstract class Region {
 					
 					@Override
 					public String toVariableNameString(final Region r) {
-						return RegionsPlugin.serializeRegion(r);
+						return r.toString();
 					}
 					
 					@Override
 					public String getVariableNamePattern() {
-						return ".+";
+						return ".*";
 					}
 				})
-				.serializer(new Serializer<Region>() {
-					@Override
-					public String serialize(final Region r) {
-						return RegionsPlugin.serializeRegion(r);
-					}
-					
-					@Override
-					public Region deserialize(final String s) {
-						return RegionsPlugin.deserializeRegion(s);
-					}
-					
+				.serializer(new YggdrasilSerializer<Region>() {
 					@Override
 					public boolean mustSyncDeserialization() {
 						return true;
@@ -95,8 +125,6 @@ public abstract class Region {
 	
 	@Override
 	public abstract String toString();
-	
-	public abstract String serialize();
 	
 	public abstract RegionsPlugin<?> getPlugin();
 	

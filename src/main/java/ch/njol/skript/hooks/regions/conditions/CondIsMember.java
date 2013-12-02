@@ -25,6 +25,10 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
@@ -36,6 +40,14 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
+@Name("Is Member/Owner of Region")
+@Description({"Checks whetehr a player is a member or owner of a particular region.",
+		"This condition requires a supported regions plugin to be installed."})
+@Examples({"on region enter:",
+		"	player is the owner of the region",
+		"	message \"Welcome back to %region%!\"",
+		"	send \"%player% just entered %region%!\" to all members of the region"})
+@Since("2.1")
 public class CondIsMember extends Condition {
 	static {
 		Skript.registerCondition(CondIsMember.class,

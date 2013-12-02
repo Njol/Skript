@@ -22,9 +22,11 @@
 package ch.njol.skript.aliases;
 
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,29 +51,36 @@ import org.bukkit.inventory.meta.ItemMeta;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ConfigurationSerializer;
 import ch.njol.skript.lang.Unit;
+import ch.njol.skript.localization.Adjective;
 import ch.njol.skript.localization.GeneralWords;
 import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Message;
+import ch.njol.skript.localization.Noun;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.BlockUtils;
 import ch.njol.skript.util.Container;
 import ch.njol.skript.util.Container.ContainerType;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.coll.iterator.SingleItemIterator;
+import ch.njol.yggdrasil.Fields;
+import ch.njol.yggdrasil.YggdrasilSerializable.YggdrasilExtendedSerializable;
 
 @ContainerType(ItemStack.class)
 @SuppressWarnings({"serial", "deprecation"})
-public class ItemType implements Unit, Serializable, Iterable<ItemData>, Container<ItemStack> {
+public class ItemType implements Unit, Serializable, Iterable<ItemData>, Container<ItemStack>, YggdrasilExtendedSerializable {
+	
+	private final static Message m_named = new Message("aliases.named");
 	
 	/**
-	 * Note to self: use {@link #add(ItemData)} to add item datas, don't add them directly to this list.
+	 * Note to self: use {@link #add_(ItemData)} to add item datas, don't add them directly to this list.
 	 */
 	private final ArrayList<ItemData> types = new ArrayList<ItemData>();
 	
 	private boolean all = false;
 	
 	private int amount = -1;
-	
-	private boolean hasPreferred = false;
 	
 	/**
 	 * How many different items this item type represents
@@ -83,19 +92,23 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	/**
 	 * Guaranteed to be of type ItemMeta.
 	 */
-	private Object meta = null;
+	private transient Object meta = null;
 	
 	/**
-	 * ItemTypes to use intead of this one if adding to an inventory or setting a block.
+	 * ItemTypes to use instead of this one if adding to an inventory or setting a block.
 	 */
 	private ItemType item = null, block = null;
 	
 	void setItem(final ItemType item) {
-		if (item == this) {
+		if (equals(item)) { // can happen if someone defines a 'x' and 'x item/block' alias that have the same value, e.g. 'dirt' and 'dirt block'
 			this.item = null;
 		} else {
 			if (item != null) {
-				assert item.item == null && item.block == null : this + "; item=" + item + ", item.item=" + item.item + ", item.block=" + item.block;
+				if (item.item != null || item.block != null) {
+					assert false : this + "; item=" + item + ", item.item=" + item.item + ", item.block=" + item.block;
+					this.item = null;
+					return;
+				}
 				item.setAmount(amount);
 			}
 			this.item = item;
@@ -103,56 +116,38 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	}
 	
 	void setBlock(final ItemType block) {
-		if (block == this) {
+		if (equals(block)) {
 			this.block = null;
 		} else {
 			if (block != null) {
-				assert block.item == null && block.block == null : this + "; block=" + block + ", block.item=" + block.item + ", block.block=" + block.block;
+				if (block.item != null || block.block != null) {
+					assert false : this + "; block=" + block + ", block.item=" + block.item + ", block.block=" + block.block;
+					this.block = null;
+					return;
+				}
 				block.setAmount(amount);
 			}
 			this.block = block;
 		}
 	}
 	
-	private void writeObject(final ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-		if (enchantments == null) {
-			out.writeObject(null);
-		} else {
-			// Integer instead of int to allow nulls
-			final Integer[][] enchs = new Integer[enchantments.size()][];
-			int i = 0;
-			for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
-				enchs[i] = new Integer[] {e.getKey().getId(), e.getValue()};
-				i++;
-			}
-			out.writeObject(enchs);
-		}
-		if (meta == null)
-			out.writeObject(null);
-		else
-			out.writeObject(ConfigurationSerializer.serializeCS((ItemMeta) meta));
-	}
-	
-	private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-		final Object o = in.readObject();
-		if (o == null)
-			return;
-		final Integer[][] enchs = (Integer[][]) o;
-		enchantments = new HashMap<Enchantment, Integer>(enchs.length);
-		for (final Integer[] e : enchs)
-			enchantments.put(Enchantment.getById(e[0]), e[1]);
-		final String m = (String) in.readObject();
-		if (m != null)
-			meta = ConfigurationSerializer.deserializeCS(m, ItemMeta.class);
-	}
-	
 	public ItemType() {}
+	
+	public ItemType(final int id) {
+		add_(new ItemData(id));
+	}
+	
+	public ItemType(final int id, final short data) {
+		add_(new ItemData(id, data));
+	}
+	
+	public ItemType(final ItemData d) {
+		add_(d.clone());
+	}
 	
 	public ItemType(final ItemStack i) {
 		amount = i.getAmount();
-		add(new ItemData(i));
+		add_(new ItemData(i));
 		if (!i.getEnchantments().isEmpty())
 			enchantments = new HashMap<Enchantment, Integer>(i.getEnchantments());
 		if (Skript.isRunningMinecraft(1, 4, 5)) {
@@ -163,14 +158,13 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	
 	public ItemType(final Block b) {
 //		amount = 1;
-		add(new ItemData(b.getTypeId(), b.getData()));
-		// TODO metadata
+		add_(new ItemData(b.getTypeId(), b.getData()));
+		// TODO metadata - spawners, skulls, etc.
 	}
 	
 	private ItemType(final ItemType i) {
 		all = i.all;
 		amount = i.amount;
-		hasPreferred = i.hasPreferred;
 		numItems = i.numItems;
 		block = i.block == null ? null : i.block.clone();
 		item = i.item == null ? null : i.item.clone();
@@ -198,9 +192,9 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	}
 	
 	/**
-	 * Only use this method if you know what you're doing
+	 * Only use this method if you know what you're doing.
 	 * 
-	 * @return
+	 * @return the internal amount, i.e. -1 or the same as {@link #getAmount()}.
 	 */
 	public int getInternalAmount() {
 		return amount;
@@ -324,80 +318,8 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		return true;
 	}
 	
-	@Override
-	public String toString() {
-		return toString(false, 0);
-	}
-	
-	@Override
-	public String toString(final int flags) {
-		return toString(false, flags);
-	}
-	
-	private String toString(final boolean debug, final int flags) {
-		final StringBuilder b = new StringBuilder();
-//		if (types.size() == 1 && !types.get(0).hasDataRange()) {
-//			if (getAmount() != 1)
-//				b.append(amount + " ");
-//			if (isAll())
-//				b.append(getAmount() == 1 ? "every " : "of every ");
-//		} else {
-//			if (getAmount() != 1)
-//				b.append(amount + " of ");
-//			b.append(isAll() ? "every " : "any ");
-//		}
-		if (amount != -1 && amount != 1)
-			b.append(amount + " ");
-		final int f = amount == 1 || amount == -1 ? flags : Language.F_PLURAL;
-		for (int i = 0; i < types.size(); i++) {
-			if (i != 0) {// this belongs here as size-1 can be 0
-				if (i == types.size() - 1)
-					b.append(" " + (isAll() ? GeneralWords.and : GeneralWords.or) + " ");
-				else
-					b.append(", ");
-			}
-			b.append(types.get(i).toString(debug, f));
-		}
-		if (enchantments == null)
-			return b.toString();
-		b.append(Language.getSpaced("enchantments.of"));
-		int i = 0;
-		for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
-			if (i != 0) {
-				if (i != enchantments.size() - 1)
-					b.append(", ");
-				else
-					b.append(" " + GeneralWords.and + " ");
-			}
-			b.append(EnchantmentType.toString(e.getKey()));
-			b.append(" ");
-			b.append(e.getValue());
-			i++;
-		}
-		if (meta != null && debug) {
-			b.append(" meta=[").append(meta).append("]");
-		}
-		return b.toString();
-	}
-	
-	public static String toString(final ItemStack i) {
-		return new ItemType(i).toString();
-	}
-	
-	public static String toString(final ItemStack i, final int flags) {
-		return new ItemType(i).toString(flags);
-	}
-	
-	public String getDebugMessage() {
-		return toString(true, 0);
-	}
-	
 	public ItemType getItem() {
 		return item == null ? this : item;
-	}
-	
-	public boolean hasItem() {
-		return item != null;
 	}
 	
 	public ItemType getBlock() {
@@ -417,8 +339,26 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		return block == null ? this : block;
 	}
 	
+	/**
+	 * @return Whether this ItemType has at least one ItemData that represents an item
+	 */
+	public boolean hasItem() {
+		for (final ItemData d : types) {
+			if (d.getId() > Skript.MAXBLOCKID)
+				return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * @return Whether this ItemType has at least one ItemData that represents a block
+	 */
 	public boolean hasBlock() {
-		return block != null;
+		for (final ItemData d : types) {
+			if (d.getId() <= Skript.MAXBLOCKID)
+				return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -441,11 +381,10 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	/**
 	 * Intersects all ItemDatas with all ItemDatas of the given ItemType, returning an ItemType with at most n*m ItemDatas, where n = #ItemDatas of this ItemType, and m =
 	 * #ItemDatas of the argument.
-	 * <p>
-	 * more info: {@link ItemData#intersection(ItemData)}
 	 * 
+	 * @see ItemData#intersection(ItemData)
 	 * @param other
-	 * @return a new item type which is the intersection of the two item types or null if the intersection is empty.
+	 * @return A new item type which is the intersection of the two item types or null if the intersection is empty.
 	 */
 	public ItemType intersection(final ItemType other) {
 		if (amount != -1 || other.amount != -1 || enchantments != null || other.enchantments != null)
@@ -453,7 +392,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		final ItemType r = new ItemType();
 		for (final ItemData d1 : types) {
 			for (final ItemData d2 : other.types) {
-				r.add(d1.intersection(d2));
+				r.add_(d1.intersection(d2));
 			}
 		}
 		if (r.types.isEmpty())
@@ -461,7 +400,18 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		return r;
 	}
 	
+	/**
+	 * @param type Some ItemData. Only a copy of it will be stored.
+	 */
 	public void add(final ItemData type) {
+		if (type != null)
+			add_(type.clone());
+	}
+	
+	/**
+	 * @param type A cloned or newly created ItemData
+	 */
+	private void add_(final ItemData type) {
 		if (type != null) {
 			types.add(type);
 			numItems += type.numItems();
@@ -499,8 +449,9 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 			this.enchantments.putAll(enchantments);
 	}
 	
-	public void emptyEnchantments() {
-		enchantments = new HashMap<Enchantment, Integer>(0);
+	public void clearEnchantments() {
+		if (enchantments != null)
+			enchantments.clear();
 	}
 	
 	public Map<Enchantment, Integer> getEnchantments() {
@@ -544,7 +495,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	/**
 	 * Gets all ItemStacks this ItemType represents. Only use this if you know what you're doing, as it returns only one element if this is not an 'every' alias.
 	 * 
-	 * @return
+	 * @return An Iterable whose iterator will always return the same item(s)
 	 */
 	public Iterable<ItemStack> getAll() {
 		if (!isAll()) {
@@ -647,11 +598,11 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	/**
 	 * Test whether this ItemType can be put into the given inventory completely.
 	 * <p>
-	 * TODO If this ItemType represents multiple items with OR, this function will immediately return false.<br/>
+	 * REMIND If this ItemType represents multiple items with OR, this function will immediately return false.<br/>
 	 * CondCanHold currently blocks aliases without 'every'/'all' as temporary solution.
 	 * 
 	 * @param invi
-	 * @return
+	 * @return Whether this item type can be added to the given inventory
 	 */
 	public boolean hasSpace(final Inventory invi) {
 		if (!isAll()) {
@@ -781,7 +732,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	
 	/**
 	 * @param lists The lists to remove this type from. Each list should implement {@link RandomAccess} or this method will be slow.
-	 * @return
+	 * @return Whether this whole item type could be removed (i.e. returns false if the lists didn't contain this item type completely)
 	 */
 	public boolean removeFrom(final List<ItemStack>... lists) {
 		int removed = 0;
@@ -889,6 +840,226 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 			ok &= addTo(is, buf);
 		}
 		return ok;
+	}
+	
+	/**
+	 * Tests whether a given set of ItemTypes is a subset of another set of ItemTypes.
+	 * <p>
+	 * This method works differently that normal set operations, as is e.g. returns true if set == {everything}.
+	 * 
+	 * @param set
+	 * @param sub
+	 * @return
+	 */
+	public final static boolean isSubset(final ItemType[] set, final ItemType[] sub) {
+		outer: for (final ItemType i : sub) {
+			for (final ItemType t : set) {
+				if (t.isSupertypeOf(i))
+					continue outer;
+			}
+			return false;
+		}
+		return true;
+	}
+	
+//	/**
+//	 * Saves an array of ItemTypes, separated by '|'
+//	 */
+//	public static String serialize(final ItemType[] types) {
+//		if (types == null)
+//			return "";
+//		final StringBuilder b = new StringBuilder();
+//		for (final ItemType t : types) {
+//			if (b.length() != 0)
+//				b.append("|");
+//			final Pair<String, String> p = Classes.serialize(t);
+//			assert p.first.equals("itemtype");
+//			b.append(p.second.replace("|", "||"));
+//		}
+//		return b.toString();
+//	}
+	
+	/**
+	 * Loads an array of ItemTypes separated by '|'
+	 */
+	@Deprecated
+	public static ItemType[] deserialize(final String s) {
+		if (s.isEmpty())
+			return null;
+		final String[] split = s.split("(?!<\\|)\\|(?!\\|)");
+		final ItemType[] types = new ItemType[split.length];
+		for (int i = 0; i < types.length; i++) {
+			final ItemType t = (ItemType) Classes.deserialize("itemtype", split[i].replace("||", "|"));
+			if (t == null)
+				return null;
+			types[i] = t;
+		}
+		return types;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (all ? 1231 : 1237);
+		result = prime * result + amount;
+		result = prime * result + ((meta == null) ? 0 : meta.hashCode());
+		result = prime * result + ((types == null) ? 0 : types.hashCode());
+		return result;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof ItemType))
+			return false;
+		final ItemType other = (ItemType) obj;
+		if (all != other.all)
+			return false;
+		if (amount != other.amount)
+			return false;
+		if (meta == null) {
+			if (other.meta != null)
+				return false;
+		} else if (!meta.equals(other.meta))
+			return false;
+		if (types == null) {
+			if (other.types != null)
+				return false;
+		} else if (!types.equals(other.types))
+			return false;
+		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return toString(false, 0, null);
+	}
+	
+	@Override
+	public String toString(final int flags) {
+		return toString(false, flags, null);
+	}
+	
+	public String toString(final int flags, final Adjective a) {
+		return toString(false, flags, a);
+	}
+	
+	private String toString(final boolean debug, final int flags, final Adjective a) {
+		final StringBuilder b = new StringBuilder();
+//		if (types.size() == 1 && !types.get(0).hasDataRange()) {
+//			if (getAmount() != 1)
+//				b.append(amount + " ");
+//			if (isAll())
+//				b.append(getAmount() == 1 ? "every " : "of every ");
+//		} else {
+//			if (getAmount() != 1)
+//				b.append(amount + " of ");
+//			b.append(isAll() ? "every " : "any ");
+//		}
+		final boolean plural = amount != 1 && amount != -1 || (flags & Language.F_PLURAL) != 0;
+		if (amount != -1 && amount != 1) {
+			b.append(amount + " ");
+		} else {
+			b.append(Noun.getArticleWithSpace(types.get(0).getGender(), flags));
+		}
+		if (a != null)
+			b.append(a.toString(types.get(0).getGender(), flags));
+		for (int i = 0; i < types.size(); i++) {
+			if (i != 0) {// this belongs here as size-1 can be 0
+				if (i == types.size() - 1)
+					b.append(" " + (isAll() ? GeneralWords.and : GeneralWords.or) + " ");
+				else
+					b.append(", ");
+			}
+			b.append(types.get(i).toString(debug, plural));
+		}
+		if (enchantments == null)
+			return b.toString();
+		b.append(Language.getSpaced("enchantments.of"));
+		int i = 0;
+		for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
+			if (i != 0) {
+				if (i != enchantments.size() - 1)
+					b.append(", ");
+				else
+					b.append(" " + GeneralWords.and + " ");
+			}
+			b.append(EnchantmentType.toString(e.getKey()));
+			b.append(" ");
+			b.append(e.getValue());
+			i++;
+		}
+		if (meta != null) {
+			final ItemMeta m = (ItemMeta) meta;
+			if (m.hasDisplayName()) {
+				b.append(" " + m_named.toString() + " ");
+				b.append("\"" + m.getDisplayName() + "\"");
+			}
+			if (debug)
+				b.append(" meta=[").append(meta).append("]");
+		}
+		return b.toString();
+	}
+	
+	public static String toString(final ItemStack i) {
+		return new ItemType(i).toString();
+	}
+	
+	public static String toString(final ItemStack i, final int flags) {
+		return new ItemType(i).toString(flags);
+	}
+	
+	public String getDebugMessage() {
+		return toString(true, 0, null);
+	}
+	
+	private void writeObject(final ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+		if (enchantments == null) {
+			out.writeObject(null);
+		} else {
+			// Integer instead of int to allow nulls
+			final Integer[][] enchs = new Integer[enchantments.size()][];
+			int i = 0;
+			for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
+				enchs[i] = new Integer[] {Integer.valueOf(e.getKey().getId()), e.getValue()};
+				i++;
+			}
+			out.writeObject(enchs);
+		}
+		out.writeObject(meta == null ? null : ConfigurationSerializer.serializeCS((ItemMeta) meta));
+	}
+	
+	private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
+		in.defaultReadObject();
+		final Object o = in.readObject();
+		if (o == null)
+			return;
+		final Integer[][] enchs = (Integer[][]) o;
+		enchantments = new HashMap<Enchantment, Integer>(enchs.length);
+		for (final Integer[] e : enchs)
+			enchantments.put(Enchantment.getById(e[0]), e[1]);
+		final String m = (String) in.readObject();
+		if (m != null)
+			meta = ConfigurationSerializer.deserializeCS(m, ItemMeta.class);
+	}
+	
+	@Override
+	public Fields serialize() throws NotSerializableException {
+		final Fields f = new Fields(this);
+		// both are serialisable with Yggdrasil
+		f.putObject("enchantments", enchantments);
+		f.putObject("meta", meta);
+		return f;
+	}
+	
+	@Override
+	public void deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
+		fields.setFields(this, Variables.yggdrasil);
 	}
 	
 }

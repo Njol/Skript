@@ -52,8 +52,8 @@ public class EvtItem extends SkriptEvent {
 				.description("Called whenever an item stack is spawned in a world, e.g. as drop of a block or mob, a player throwing items out of his inventory, or a dispenser dispensing an item (not shooting it).")
 				.examples("")
 				.since("");
-		Skript.registerEvent("Drop", EvtItem.class, PlayerDropItemEvent.class, "[player] drop[ing] [[of] %itemtypes%]") // TODO cancelling a "mouse drop" deletes the item
-		.description("Called when a player drops an item from his inventory.")
+		Skript.registerEvent("Drop", EvtItem.class, PlayerDropItemEvent.class, "[player] drop[ing] [[of] %itemtypes%]")
+				.description("Called when a player drops an item from his inventory.")
 				.examples("")
 				.since("");
 		Skript.registerEvent("Craft", EvtItem.class, CraftItemEvent.class, "[player] craft[ing] [[of] %itemtypes%]")

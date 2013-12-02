@@ -61,7 +61,7 @@ public abstract class PotionEffectUtils {
 		});
 	}
 	
-	public static PotionEffectType parse(final String s) {
+	public static PotionEffectType parseType(final String s) {
 		return types.get(s.toLowerCase());
 	}
 	
@@ -69,7 +69,7 @@ public abstract class PotionEffectUtils {
 		return names[t.getId()];
 	}
 	
-	// TODO flags?
+	// REMIND flags?
 	public static String toString(final PotionEffectType t, final int flags) {
 		return names[t.getId()];
 	}

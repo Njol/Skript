@@ -239,7 +239,7 @@ public abstract class Commands {
 //				return true;
 //			}
 			if (SkriptConfig.logPlayerCommands.value() && !(sender instanceof ConsoleCommandSender))
-				Bukkit.getLogger().info(sender.getName() + ": /" + command);
+				SkriptLogger.LOGGER.info(sender.getName() + ": /" + command);
 			c.execute(sender, cmd[0], cmd.length == 1 ? "" : cmd[1]);
 			return true;
 		}
@@ -248,7 +248,7 @@ public abstract class Commands {
 	
 	@SuppressWarnings("unchecked")
 	private final static boolean handleEffectCommand(final CommandSender sender, String command) {
-		if (!sender.hasPermission("skript.effectcommands"))
+		if (!(sender.hasPermission("skript.effectcommands") || SkriptConfig.allowOpsToUseEffectCommands.value() && sender.isOp()))
 			return false;
 		try {
 			command = command.substring(SkriptConfig.effectCommandToken.value().length()).trim();

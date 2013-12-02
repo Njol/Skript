@@ -281,7 +281,7 @@ public class Documentation { // TODO list special expressions for events
 			if (p.matcher(html).find())
 				return null;
 		}
-		html = html.replaceAll("&(?!(lt|gt);)", "&amp;");
+		html = html.replaceAll("&(?!(amp|lt|gt|quot);)", "&amp;");
 		final Matcher m = Pattern.compile("<a href='(.*?)'>").matcher(html);
 		linkLoop: while (m.find()) {
 			final String url = m.group(1);

@@ -36,8 +36,8 @@ import ch.njol.util.Kleenean;
  * It is also needed if the event has parameters.
  * 
  * @author Peter Güttinger
- * @see Skript#registerEvent(Class, Class, String...)
- * @see Skript#registerEvent(Class, Class[], String...)
+ * @see Skript#registerEvent(String, Class, Class, String...)
+ * @see Skript#registerEvent(String, Class, Class[], String...)
  */
 @SuppressWarnings("serial")
 public abstract class SkriptEvent implements SyntaxElement, Debuggable {

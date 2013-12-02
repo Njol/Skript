@@ -79,9 +79,8 @@ public class UnparsedLiteral implements Literal<Object> {
 		return Object.class;
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to) {
+	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
 		return getConvertedExpression(ParseContext.DEFAULT, to);
 	}
 	

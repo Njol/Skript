@@ -196,7 +196,11 @@ default aliases:
 
 
 	# -- sand & gravel--
+	<any> sand = 12:0-1
 	sand = 12
+	normal sand = 12:0
+	sand <item/block> = 12:0
+	red sand = 12:1
 	gravel = 13
 
 

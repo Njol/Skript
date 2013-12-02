@@ -32,7 +32,6 @@ import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
@@ -41,6 +40,7 @@ import ch.njol.skript.lang.UnparsedLiteral;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
@@ -69,7 +69,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		out.defaultWriteObject();
 		out.writeObject(data.getClass().getComponentType());
 		@SuppressWarnings("unchecked")
-		final Pair<String, String>[] d = new Pair[data.length];
+		final Pair<String, byte[]>[] d = new Pair[data.length];
 		for (int i = 0; i < data.length; i++) {
 			if ((d[i] = Classes.serialize(data[i])) == null) {
 				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
@@ -81,7 +81,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
 		in.defaultReadObject();
 		final Class<?> c = (Class<?>) in.readObject();
-		final Pair<String, String>[] d = (Pair<String, String>[]) in.readObject();
+		final Pair<String, byte[]>[] d = (Pair<String, byte[]>[]) in.readObject();
 		data = (T[]) Array.newInstance(c, d.length);
 		for (int i = 0; i < data.length; i++) {
 			data[i] = (T) Classes.deserialize(d[i].first, d[i].second);
@@ -143,7 +143,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	@Override
 	public T getSingle() {
-		return CollectionUtils.random(data);
+		return CollectionUtils.getRandom(data);
 	}
 	
 	@Override
@@ -158,16 +158,13 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to) {
-		if (to.isAssignableFrom(c))
+	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
+		if (CollectionUtils.containsSuperclass(to, c))
 			return (Literal<? extends R>) this;
-		final Converter<? super T, ? extends R> p = Converters.getConverter(c, to);
-		if (p == null)
-			return null;
-		final R[] parsedData = Converters.convert(data, to, p);
+		final R[] parsedData = Converters.convertArray(data, to, (Class<R>) Utils.getSuperType(to));
 		if (parsedData.length != data.length)
 			return null;
-		return new ConvertedLiteral<T, R>(this, parsedData, to);
+		return new ConvertedLiteral<T, R>(this, parsedData, (Class<R>) Utils.getSuperType(to));
 	}
 	
 	@Override

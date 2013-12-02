@@ -41,7 +41,7 @@ public class EventValues {
 	private EventValues() {}
 	
 	@SuppressWarnings("serial")
-	private static final class EventValueInfo<E extends Event, T> implements Serializable {
+	private final static class EventValueInfo<E extends Event, T> implements Serializable {
 		
 		public final Class<E> event;
 		public final Class<T> c;
@@ -61,11 +61,11 @@ public class EventValues {
 		}
 	}
 	
-	private static final List<EventValueInfo<?, ?>> defaultEventValues = new ArrayList<EventValueInfo<?, ?>>(30);
-	private static final List<EventValueInfo<?, ?>> futureEventValues = new ArrayList<EventValueInfo<?, ?>>();
-	private static final List<EventValueInfo<?, ?>> pastEventValues = new ArrayList<EventValueInfo<?, ?>>();
+	private final static List<EventValueInfo<?, ?>> defaultEventValues = new ArrayList<EventValueInfo<?, ?>>(30);
+	private final static List<EventValueInfo<?, ?>> futureEventValues = new ArrayList<EventValueInfo<?, ?>>();
+	private final static List<EventValueInfo<?, ?>> pastEventValues = new ArrayList<EventValueInfo<?, ?>>();
 	
-	private static final List<EventValueInfo<?, ?>> getEventValuesList(final int time) {
+	private final static List<EventValueInfo<?, ?>> getEventValuesList(final int time) {
 		if (time == -1)
 			return pastEventValues;
 		if (time == 0)
@@ -90,7 +90,7 @@ public class EventValues {
 	}
 	
 	/**
-	 * Same as {@link registerEventValue}
+	 * Same as {@link #registerEventValue(Class, Class, SerializableGetter, int)}
 	 * 
 	 * @param e
 	 * @param c
@@ -113,14 +113,15 @@ public class EventValues {
 	
 	/**
 	 * Gets a specific value from an event. Returns null if the event doesn't have such a value (conversions are done to try and get the desired value).<br>
-	 * It is recommended to use {@link EventValues#getEventValueGetter(Class, Class)} or {@link EventValueExpression#EventValueExpression(Class)} instead of invoking this method
+	 * It is recommended to use {@link EventValues#getEventValueGetter(Class, Class, int)} or {@link EventValueExpression#EventValueExpression(Class)} instead of invoking this
+	 * method
 	 * repeatedly.
 	 * 
 	 * @param e
 	 * @param c
 	 * @param time
-	 * @return
-	 * @see registerEventValue
+	 * @return The event's value
+	 * @see #registerEventValue(Class, Class, SerializableGetter, int)
 	 */
 	public static <T, E extends Event> T getEventValue(final E e, final Class<T> c, final int time) {
 		final Getter<? extends T, ? super E> g = EventValues.getEventValueGetter((Class<E>) e.getClass(), c, time);
@@ -137,16 +138,16 @@ public class EventValues {
 	 * @param e
 	 * @param c
 	 * @param time
-	 * @return
-	 * @see registerEventValue
+	 * @return A getter to get values for a given type of events
+	 * @see #registerEventValue(Class, Class, SerializableGetter, int)
 	 * @see EventValueExpression#EventValueExpression(Class)
 	 */
-	public static final <T, E extends Event> SerializableGetter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time) {
+	public final static <T, E extends Event> SerializableGetter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time) {
 		return EventValues.getEventValueGetter(e, c, time, true);
 	}
 	
 	@SuppressWarnings({"unchecked", "serial"})
-	private static final <T, E extends Event> SerializableGetter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time, final boolean allowDefault) {
+	private final static <T, E extends Event> SerializableGetter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time, final boolean allowDefault) {
 		final List<EventValueInfo<?, ?>> eventValues = getEventValuesList(time);
 		boolean b;
 		for (final EventValueInfo<?, ?> ev : eventValues) {
@@ -227,7 +228,7 @@ public class EventValues {
 		};
 	}
 	
-	public static final boolean doesEventValueHaveTimeStates(final Class<? extends Event> e, final Class<?> c) {
+	public final static boolean doesEventValueHaveTimeStates(final Class<? extends Event> e, final Class<?> c) {
 		return getEventValueGetter(e, c, -1, false) != null || getEventValueGetter(e, c, 1, false) != null;
 	}
 	

@@ -81,7 +81,7 @@ public class EvtDamage extends SkriptEvent {
 		return "damage" + (types == null ? "" : " of " + types.toString(e, debug));
 	}
 	
-//	private static final WeakHashMap<LivingEntity, Integer> lastDamages = new WeakHashMap<LivingEntity, Integer>();
+//	private final static WeakHashMap<LivingEntity, Integer> lastDamages = new WeakHashMap<LivingEntity, Integer>();
 	
 	private static boolean checkDamage(final EntityDamageEvent e) {
 		if (!(e.getEntity() instanceof LivingEntity))

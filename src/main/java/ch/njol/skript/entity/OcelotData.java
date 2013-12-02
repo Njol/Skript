@@ -32,7 +32,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 @SuppressWarnings("serial")
 public class OcelotData extends EntityData<Ocelot> {
 	static {
-		EntityData.register(OcelotData.class, "ocelot", Ocelot.class, "wild ocelot", "ocelot", "cat");
+		EntityData.register(OcelotData.class, "ocelot", Ocelot.class, 1, "wild ocelot", "ocelot", "cat");
 	}
 	
 	int tamed = 0;
@@ -66,27 +66,19 @@ public class OcelotData extends EntityData<Ocelot> {
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		return tamed;
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof OcelotData))
 			return false;
 		final OcelotData other = (OcelotData) obj;
 		return tamed == other.tamed;
 	}
 	
-	@Override
-	public String serialize() {
-		return "" + tamed;
-	}
-	
+//		return "" + tamed;
 	@Override
 	protected boolean deserialize(final String s) {
 		try {

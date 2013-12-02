@@ -52,7 +52,7 @@ public class ScheduledWorldEvent extends ScheduledEvent {
 	}
 	
 	// Bukkit stuff
-	private static final HandlerList handlers = new HandlerList();
+	private final static HandlerList handlers = new HandlerList();
 	
 	@Override
 	public HandlerList getHandlers() {

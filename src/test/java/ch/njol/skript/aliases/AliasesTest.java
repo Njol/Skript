@@ -23,7 +23,7 @@ package ch.njol.skript.aliases;
 
 import static org.junit.Assert.*;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.logging.Filter;
 import java.util.logging.LogRecord;
@@ -51,19 +51,24 @@ public class AliasesTest {
 		t.add(new ItemData(0));
 		
 		final Aliases.Variations v = new Aliases.Variations();
-		final HashMap<String, ItemType> var1 = new HashMap<String, ItemType>();
+		final LinkedHashMap<String, ItemType> var1 = new LinkedHashMap<String, ItemType>();
 		var1.put("{default}", t);
 		var1.put("v1.1", t);
 		var1.put("v1.2", t);
 		v.put("var1", var1);
-		final HashMap<String, ItemType> var2 = new HashMap<String, ItemType>();
+		final LinkedHashMap<String, ItemType> var2 = new LinkedHashMap<String, ItemType>();
 		var2.put("v2.1 @a", t);
 		var2.put("v2.2", t);
 		v.put("var2", var2);
-		final HashMap<String, ItemType> var3 = new HashMap<String, ItemType>();
+		final LinkedHashMap<String, ItemType> var3 = new LinkedHashMap<String, ItemType>();
 		var3.put("v3.1¦¦s¦", t);
 		var3.put("v3.2¦a¦b¦", t);
 		v.put("var3", var3);
+		final LinkedHashMap<String, ItemType> varL = new LinkedHashMap<String, ItemType>();
+		varL.put("{default}", t);
+		varL.put("normales ", t);
+		varL.put("Birken", t);
+		v.put("varL", varL);
 		
 		final String[][] tests = {
 				{"a", "a"},
@@ -76,6 +81,8 @@ public class AliasesTest {
 				{"a {var3}", "a v3.1¦¦s¦", "a v3.2¦a¦b¦", "a"},
 				{"<any> a @an", "aliases.any-skp a @-"},
 				{"a <item>", "a ¦item¦items¦"},
+				{"[Holz]Block", "Holzblock", "Block"},
+				{"{varL}Holz", "Holz", "normales Holz", "Birkenholz"}
 		};
 		
 		for (final String[] test : tests) {

@@ -21,37 +21,87 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.Location;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.util.Direction;
+import ch.njol.skript.util.VisualEffect;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-public class EffVisualEffect extends Effect {// TODO this + sound effect
+public class EffVisualEffect extends Effect {
 	static {
-		
+		Skript.registerEffect(EffVisualEffect.class, "(play|show) %visualeffects% (on|%directions%) %entities/locations% [to %-players%]");
 	}
 	
+	private Expression<VisualEffect> effects;
+	private Expression<Direction> direction;
+	private Expression<?> where;
+	private Expression<Player> players;
+	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		// TODO Auto-generated method stub
+		effects = (Expression<VisualEffect>) exprs[0];
+		direction = (Expression<Direction>) exprs[1];
+		where = exprs[2];
+		players = (Expression<Player>) exprs[3];
+		if (effects instanceof Literal) {
+			final VisualEffect[] effs = effects.getAll(null);
+			@SuppressWarnings("unused")
+			boolean hasLocationEffect = false, hasEntityEffect = false;
+			for (final VisualEffect e : effs) {
+				if (e.isEntityEffect())
+					hasEntityEffect = true;
+				else
+					hasLocationEffect = true;
+			}
+			if (!hasLocationEffect && players != null)
+				Skript.warning("Entity effects are visible to all players");
+			if (!hasLocationEffect && !direction.isDefault())
+				Skript.warning("Entity effects are always played on an entity");
+		}
 		return false;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		// TODO Auto-generated method stub
-		return null;
+	protected void execute(final Event e) {
+		final VisualEffect[] effs = effects.getArray(e);
+		final Direction[] dirs = direction.getArray(e);
+		final Object[] os = where.getArray(e);
+		final Player[] ps = players == null ? null : players.getArray(e);
+		for (final Direction d : dirs) {
+			for (final Object o : os) {
+				if (o instanceof Entity) {
+					for (final VisualEffect eff : effs) {
+						eff.play(ps, d.getRelative((Entity) o), (Entity) o);
+					}
+				} else if (o instanceof Location) {
+					for (final VisualEffect eff : effs) {
+						if (eff.isEntityEffect())
+							continue;
+						eff.play(ps, d.getRelative((Location) o), null);
+					}
+				} else {
+					assert false;
+				}
+			}
+		}
 	}
 	
 	@Override
-	protected void execute(final Event e) {
-		// TODO Auto-generated method stub
+	public String toString(final Event e, final boolean debug) {
+		return "play " + effects.toString(e, debug) + " " + direction.toString(e, debug) + " " + where.toString(e, debug) + (players == null ? "" : " to " + players.toString(e, debug));
 	}
 	
 }

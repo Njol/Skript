@@ -35,12 +35,12 @@ public class SimpleNode extends Node {
 	}
 	
 	@Override
-	String save() {
+	String save_i() {
 		return key;
 	}
 	
 	public void set(final String s) {
-		orig = key = s;
+		key = s;
 	}
 	
 }

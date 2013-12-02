@@ -62,18 +62,21 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	}
 	
 	@Override
-	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R> to) {
-		final SerializableConverter<? super T, ? extends R> conv = (SerializableConverter<? super T, ? extends R>) Converters.getConverter(getReturnType(), to);
-		if (conv == null)
-			return null;
-		return new ConvertedExpression<T, R>(expr, to, conv) {
-			@Override
-			public String toString(final Event e, final boolean debug) {
-				if (debug && e == null)
-					return "(" + WrapperExpression.this.toString(e, debug) + ")->" + to.getName();
-				return WrapperExpression.this.toString(e, debug);
-			}
-		};
+	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R>... to) {
+		for (final Class<R> c : to) {
+			final SerializableConverter<? super T, ? extends R> conv = (SerializableConverter<? super T, ? extends R>) Converters.getConverter(getReturnType(), c);
+			if (conv == null)
+				continue;
+			return new ConvertedExpression<T, R>(expr, c, conv) {
+				@Override
+				public String toString(final Event e, final boolean debug) {
+					if (debug && e == null)
+						return "(" + WrapperExpression.this.toString(e, debug) + ")->" + to.getName();
+					return WrapperExpression.this.toString(e, debug);
+				}
+			};
+		}
+		return null;
 	}
 	
 	@Override

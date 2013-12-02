@@ -31,14 +31,23 @@ import org.bukkit.enchantments.Enchantment;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
+import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
-public class EnchantmentType {
+public class EnchantmentType implements YggdrasilSerializable {
 	
 	private final Enchantment type;
 	private final int level;
+	
+	/**
+	 * Used for deserialisation only
+	 */
+	public EnchantmentType() {
+		type = null;
+		level = -1;
+	}
 	
 	public EnchantmentType(final Enchantment type, final int level) {
 		assert type != null;
@@ -84,7 +93,7 @@ public class EnchantmentType {
 		return Language.get("enchantments.names." + e.getName());
 	}
 	
-	// TODO flags?
+	// REMIND flags?
 	public static String toString(final Enchantment e, final int flags) {
 		return Language.get("enchantments.names." + e.getName());
 	}
@@ -122,6 +131,31 @@ public class EnchantmentType {
 	
 	public final static Set<String> getNames() {
 		return enchantmentNames.keySet();
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + level;
+		result = prime * result + type.hashCode();
+		return result;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof EnchantmentType))
+			return false;
+		final EnchantmentType other = (EnchantmentType) obj;
+		if (level != other.level)
+			return false;
+		if (!type.equals(other.type))
+			return false;
+		return true;
 	}
 	
 }

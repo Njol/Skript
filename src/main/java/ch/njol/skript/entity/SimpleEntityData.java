@@ -21,6 +21,8 @@
 
 package ch.njol.skript.entity;
 
+import java.io.NotSerializableException;
+import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,10 +44,8 @@ import org.bukkit.entity.Firework;
 import org.bukkit.entity.Fish;
 import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Giant;
-import org.bukkit.entity.Horse;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.IronGolem;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.MagmaCube;
@@ -71,14 +71,13 @@ import org.bukkit.entity.Zombie;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.yggdrasil.Fields;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
 public class SimpleEntityData extends EntityData<Entity> {
-	
-	// TODO falling blocks
 	
 	private final static class SimpleEntityDataInfo {
 		final String codeName;
@@ -93,6 +92,27 @@ public class SimpleEntityData extends EntityData<Entity> {
 			this.codeName = codeName;
 			this.c = c;
 			this.isSupertype = isSupertype;
+		}
+		
+		@Override
+		public int hashCode() {
+			return c.hashCode();
+		}
+		
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (!(obj instanceof SimpleEntityDataInfo))
+				return false;
+			final SimpleEntityDataInfo other = (SimpleEntityDataInfo) obj;
+			if (c != other.c)
+				return false;
+			assert codeName.equals(other.codeName);
+			assert isSupertype == other.isSupertype;
+			return true;
 		}
 	}
 	
@@ -110,11 +130,10 @@ public class SimpleEntityData extends EntityData<Entity> {
 		types.add(new SimpleEntityDataInfo("ender pearl", EnderPearl.class));
 		types.add(new SimpleEntityDataInfo("small fireball", SmallFireball.class));
 		types.add(new SimpleEntityDataInfo("fireball", Fireball.class));
-		types.add(new SimpleEntityDataInfo("fish", Fish.class));
+		types.add(new SimpleEntityDataInfo("fish", Fish.class)); // REMIND 1.7: fish, salmon, clownfish, pufferfish
 		types.add(new SimpleEntityDataInfo("ghast", Ghast.class));
 		types.add(new SimpleEntityDataInfo("giant", Giant.class));
 		types.add(new SimpleEntityDataInfo("iron golem", IronGolem.class));
-		types.add(new SimpleEntityDataInfo("dropped item", Item.class));
 		types.add(new SimpleEntityDataInfo("magma cube", MagmaCube.class));
 		types.add(new SimpleEntityDataInfo("mooshroom", MushroomCow.class));
 		types.add(new SimpleEntityDataInfo("painting", Painting.class));
@@ -139,9 +158,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		}
 		if (Skript.isRunningMinecraft(1, 4, 6))
 			types.add(new SimpleEntityDataInfo("firework", Firework.class));
-		if (Skript.isRunningMinecraft(1, 6))
-			types.add(new SimpleEntityDataInfo("horse", Horse.class)); // TODO donkeys, mules (once Bukkit supports them)
-			
+		
 		// TODO !Update with every version [entities]
 		
 		// supertypes
@@ -160,16 +177,22 @@ public class SimpleEntityData extends EntityData<Entity> {
 		for (final SimpleEntityDataInfo info : types) {
 			codeNames[i++] = info.codeName;
 		}
-		EntityData.register(SimpleEntityData.class, "simple", Entity.class, codeNames);
+		EntityData.register(SimpleEntityData.class, "simple", Entity.class, 0, codeNames);
 	}
+	
+	private transient SimpleEntityDataInfo info;
 	
 	public SimpleEntityData() {
 		this(Entity.class);
 	}
 	
+	private SimpleEntityData(final SimpleEntityDataInfo info) {
+		assert info != null;
+		this.info = info;
+	}
+	
 	public SimpleEntityData(final Class<? extends Entity> c) {
 		assert c != null && c.isInterface() : c;
-		super.info = getInfo(getClass());
 		int i = 0;
 		for (final SimpleEntityDataInfo info : types) {
 			if (info.c.isAssignableFrom(c)) {
@@ -183,7 +206,6 @@ public class SimpleEntityData extends EntityData<Entity> {
 	}
 	
 	public SimpleEntityData(final Entity e) {
-		super.info = getInfo(getClass());
 		int i = 0;
 		for (final SimpleEntityDataInfo info : types) {
 			if (info.c.isInstance(e)) {
@@ -195,8 +217,6 @@ public class SimpleEntityData extends EntityData<Entity> {
 		}
 		assert false;
 	}
-	
-	private SimpleEntityDataInfo info;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
@@ -231,28 +251,41 @@ public class SimpleEntityData extends EntityData<Entity> {
 	}
 	
 	@Override
-	public int hashCode() {
-		return info.c.hashCode();
+	protected int hashCode_i() {
+		return info.hashCode();
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof SimpleEntityData))
 			return false;
 		final SimpleEntityData other = (SimpleEntityData) obj;
-		return info.c == other.info.c;
+		return info.equals(other.info);
 	}
 	
 	@Override
-	public String serialize() {
-		return info.c.getName();
+	public Fields serialize() throws NotSerializableException {
+		final Fields f = super.serialize();
+		f.putObject("info.codeName", info.codeName);
+		return f;
 	}
 	
 	@Override
+	public void deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
+		final String codeName = fields.getAndRemoveObject("info.codeName", String.class);
+		for (final SimpleEntityDataInfo i : types) {
+			if (i.codeName.equals(codeName)) {
+				info = i;
+				super.deserialize(fields);
+				return;
+			}
+		}
+		throw new StreamCorruptedException("Invalid SimpleEntityDataInfo code name " + codeName);
+	}
+	
+//		return info.c.getName();
+	@Override
+	@Deprecated
 	protected boolean deserialize(final String s) {
 		try {
 			final Class<?> c = Class.forName(s);
@@ -275,7 +308,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 	
 	@Override
 	public EntityData getSuperType() {
-		return this;
+		return new SimpleEntityData(info);
 	}
 	
 }

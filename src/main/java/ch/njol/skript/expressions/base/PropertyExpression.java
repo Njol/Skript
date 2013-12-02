@@ -87,7 +87,7 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	 * 
 	 * @param e
 	 * @param source
-	 * @return
+	 * @return An array of the converted objects, which may contain less elements than the source array, but must not be null.
 	 * @see Converters#convert(Object[], Class, Converter)
 	 */
 	protected abstract T[] get(Event e, F[] source);
@@ -95,7 +95,7 @@ public abstract class PropertyExpression<F, T> extends SimpleExpression<T> {
 	/**
 	 * @param source
 	 * @param converter must return instances of {@link #getReturnType()}
-	 * @return
+	 * @return An array containing the converted values
 	 * @throws ArrayStoreException if the converter returned invalid values
 	 */
 	protected T[] get(final F[] source, final Converter<? super F, ? extends T> converter) {

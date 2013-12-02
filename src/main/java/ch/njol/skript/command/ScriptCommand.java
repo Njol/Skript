@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -63,6 +64,7 @@ import ch.njol.skript.localization.Message;
 import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
+import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
 import ch.njol.util.Validate;
@@ -176,34 +178,41 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 			return false;
 		}
 		
-		final ScriptCommandEvent event = new ScriptCommandEvent(this, sender);
-		
-		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
-		try {
-			final boolean ok = SkriptParser.parseArguments(rest, this, event);
-			if (!ok) {
-				if (log.hasError())
-					sender.sendMessage(ChatColor.DARK_RED + log.getError().getMessage());
-				sender.sendMessage(Commands.m_correct_usage + " " + usage);
-				return false;
+		// just to be sure...
+		return Task.callSync(new Callable<Boolean>() {
+			@Override
+			public Boolean call() throws Exception {
+				final ScriptCommandEvent event = new ScriptCommandEvent(ScriptCommand.this, sender);
+				
+				final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+				try {
+					final boolean ok = SkriptParser.parseArguments(rest, ScriptCommand.this, event);
+					if (!ok) {
+						if (log.hasError())
+							sender.sendMessage(ChatColor.DARK_RED + log.getError().getMessage());
+						sender.sendMessage(Commands.m_correct_usage + " " + usage);
+						log.clear();
+						log.printLog();
+						return false;
+					}
+					log.clear();
+					log.printLog();
+				} finally {
+					log.stop();
+				}
+				
+				if (Skript.log(Verbosity.VERY_HIGH))
+					Skript.info("# /" + name + " " + rest);
+				final long startTrigger = System.nanoTime();
+				
+				if (!trigger.execute(event))
+					sender.sendMessage(Commands.m_internal_error.toString());
+				
+				if (Skript.log(Verbosity.VERY_HIGH))
+					Skript.info("# " + name + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
+				return true;
 			}
-			log.clear();
-			log.printLog();
-		} finally {
-			log.stop();
-		}
-		
-		if (Skript.log(Verbosity.VERY_HIGH))
-			Skript.info("# /" + name + " " + rest);
-		final long startTrigger = System.nanoTime();
-		
-		if (!trigger.execute(event))
-			sender.sendMessage(Commands.m_internal_error.toString());
-		
-		if (Skript.log(Verbosity.VERY_HIGH))
-			Skript.info("# " + name + " took " + 1. * (System.nanoTime() - startTrigger) / 1000000. + " milliseconds");
-		
-		return true;
+		});
 	}
 	
 	public void sendHelp(final CommandSender sender) {

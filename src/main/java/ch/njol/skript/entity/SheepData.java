@@ -28,8 +28,8 @@ import org.bukkit.entity.Sheep;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.skript.localization.ArgsMessage;
-import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.localization.Adjective;
+import ch.njol.skript.localization.Noun;
 import ch.njol.skript.util.Color;
 import ch.njol.util.Checker;
 import ch.njol.util.coll.CollectionUtils;
@@ -40,7 +40,7 @@ import ch.njol.util.coll.CollectionUtils;
 @SuppressWarnings("serial")
 public class SheepData extends EntityData<Sheep> {
 	static {
-		EntityData.register(SheepData.class, "sheep", Sheep.class, "unsheared sheep", "sheep", "sheared sheep");
+		EntityData.register(SheepData.class, "sheep", Sheep.class, 1, "unsheared sheep", "sheep", "sheared sheep");
 	}
 	
 	private Color[] colors = null;
@@ -65,7 +65,7 @@ public class SheepData extends EntityData<Sheep> {
 	@Override
 	public void set(final Sheep entity) {
 		if (colors != null)
-			entity.setColor(CollectionUtils.random(colors).getWoolColor());
+			entity.setColor(CollectionUtils.getRandom(colors).getWoolColor());
 	}
 	
 	@Override
@@ -84,17 +84,25 @@ public class SheepData extends EntityData<Sheep> {
 		return Sheep.class;
 	}
 	
-	private final static ArgsMessage format = new ArgsMessage("entities.sheep.format");
+	private Adjective[] adjectives = null;
 	
 	@Override
-	public String toString() {
+	public String toString(final int flags) {
 		if (colors == null)
-			return super.toString();
-		return format.toString(super.toString(), Classes.toString(colors, false));
+			return super.toString(flags);
+		if (adjectives == null) {
+			adjectives = new Adjective[colors.length];
+			for (int i = 0; i < colors.length; i++)
+				adjectives[i] = colors[i].getAdjective();
+		}
+		final Noun name = getName();
+		final Adjective age = getAgeAdjective();
+		return name.getArticleWithSpace(flags) + (age == null ? "" : " " + age.toString(name.getGender(), flags))
+				+ " " + Adjective.toString(adjectives, name.getGender(), flags, false) + " " + name.toString(flags);
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + Arrays.hashCode(colors);
@@ -103,11 +111,7 @@ public class SheepData extends EntityData<Sheep> {
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof SheepData))
 			return false;
 		final SheepData other = (SheepData) obj;
@@ -118,23 +122,19 @@ public class SheepData extends EntityData<Sheep> {
 		return true;
 	}
 	
-	@Override
-	public String serialize() {
-		if (colors != null) {
-			final StringBuilder b = new StringBuilder();
-			b.append(sheared);
-			b.append("|");
-			for (final Color c : colors) {
-				if (b.length() != 0)
-					b.append(",");
-				b.append(c.name());
-			}
-			return b.toString();
-		} else {
-			return "" + sheared;
-		}
-	}
-	
+//		if (colors != null) {
+//			final StringBuilder b = new StringBuilder();
+//			b.append(sheared);
+//			b.append("|");
+//			for (final Color c : colors) {
+//				if (b.length() != 0)
+//					b.append(",");
+//				b.append(c.name());
+//			}
+//			return b.toString();
+//		} else {
+//			return "" + sheared;
+//		}
 	@Override
 	protected boolean deserialize(final String s) {
 		final String[] split = s.split("\\|");

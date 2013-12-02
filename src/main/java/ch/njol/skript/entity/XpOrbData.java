@@ -83,8 +83,8 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 	private final static ArgsMessage format = new ArgsMessage("entities.xp-orb.format");
 	
 	@Override
-	public String toString() {
-		return xp == -1 ? super.toString() : format.toString(super.toString(), xp);
+	public String toString(final int flags) {
+		return xp == -1 ? super.toString(flags) : format.toString(super.toString(flags), xp);
 	}
 	
 	public int getExperience() {
@@ -96,27 +96,19 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		return xp;
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof XpOrbData))
 			return false;
 		final XpOrbData other = (XpOrbData) obj;
 		return xp == other.xp;
 	}
 	
-	@Override
-	public String serialize() {
-		return "" + xp;
-	}
-	
+//		return "" + xp;
 	@Override
 	protected boolean deserialize(final String s) {
 		try {

@@ -27,6 +27,10 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.hooks.regions.RegionsPlugin;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.lang.Expression;
@@ -40,6 +44,17 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
+@Name("Regions At")
+@Description({"All <a href='../classes/#region'>regions</a> at a particular <a href='../classes/#location'>location</a>.",
+		"This expression requires a supported regions plugin to be installed."})
+@Examples({"On click on a sign:",
+		"	line 1 of the clicked block is \"[region info]\"",
+		"	set {_regions::*} to regions at the clicked block",
+		"	if {_regions::*} is empty:",
+		"		message \"No regions exist at this sign.\"",
+		"	else:",
+		"		message \"Regions containing this sign: <gold>%{_regions::*}%<r>.\""})
+@Since("2.1")
 public class ExprRegionsAt extends SimpleExpression<Region> {
 	static {
 		Skript.registerExpression(ExprRegionsAt.class, Region.class, ExpressionType.PROPERTY,

@@ -27,18 +27,19 @@ import org.bukkit.entity.Entity;
 
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
-import ch.njol.skript.classes.Serializer;
+import ch.njol.skript.classes.YggdrasilSerializer;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
+import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-public class EntityType implements Serializable, Cloneable {
+public class EntityType implements Serializable, Cloneable, YggdrasilSerializable {
 	
 	static {
 		Classes.registerClass(new ClassInfo<EntityType>(EntityType.class, "entitytype")
@@ -69,13 +70,10 @@ public class EntityType implements Serializable, Cloneable {
 						return "entitytype:.+";
 					}
 				})
-				.serializer(new Serializer<EntityType>() {
+				.serializer(new YggdrasilSerializer<EntityType>() {
+//						return t.amount + "*" + EntityData.serializer.serialize(t.data);
 					@Override
-					public String serialize(final EntityType t) {
-						return t.amount + "*" + EntityData.serializer.serialize(t.data);
-					}
-					
-					@Override
+					@Deprecated
 					public EntityType deserialize(final String s) {
 						final String[] split = s.split("\\*", 2);
 						if (split.length != 2)
@@ -100,6 +98,13 @@ public class EntityType implements Serializable, Cloneable {
 	public int amount = -1;
 	
 	public final EntityData<?> data;
+	
+	/**
+	 * Only used for deserialisation
+	 */
+	public EntityType() {
+		data = null;
+	}
 	
 	public EntityType(final EntityData<?> data, final int amount) {
 		assert data != null;
@@ -166,6 +171,31 @@ public class EntityType implements Serializable, Cloneable {
 			assert false : e;
 			return null;
 		}
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + amount;
+		result = prime * result + data.hashCode();
+		return result;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof EntityType))
+			return false;
+		final EntityType other = (EntityType) obj;
+		if (amount != other.amount)
+			return false;
+		if (!data.equals(other.data))
+			return false;
+		return true;
 	}
 	
 }

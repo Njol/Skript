@@ -21,6 +21,7 @@
 
 package ch.njol.skript.classes.data;
 
+import java.io.StreamCorruptedException;
 import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
@@ -40,6 +41,7 @@ import ch.njol.skript.classes.EnumSerializer;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.SerializableChanger;
 import ch.njol.skript.classes.Serializer;
+import ch.njol.skript.classes.YggdrasilSerializer;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.util.SimpleLiteral;
@@ -57,7 +59,9 @@ import ch.njol.skript.util.Time;
 import ch.njol.skript.util.Timeperiod;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.util.VisualEffect;
 import ch.njol.skript.util.WeatherType;
+import ch.njol.yggdrasil.Fields;
 
 /**
  * @author Peter Güttinger
@@ -108,10 +112,32 @@ public class SkriptClasses {
 				})
 				.serializer(new Serializer<ClassInfo>() {
 					@Override
-					public String serialize(final ClassInfo c) {
-						return c.getCodeName();
+					public Fields serialize(final ClassInfo c) {
+						final Fields f = new Fields();
+						f.putObject("codeName", c.getCodeName());
+						return f;
 					}
 					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends ClassInfo> c) {
+						return false;
+					}
+					
+					@Override
+					public void deserialize(final ClassInfo o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+					@Override
+					protected ClassInfo deserialize(final Fields fields) throws StreamCorruptedException {
+						final String codeName = fields.getObject("codeName", String.class);
+						final ClassInfo<?> ci = Classes.getClassInfo(codeName);
+						if (ci == null)
+							throw new StreamCorruptedException("Invalid ClassInfo " + codeName);
+						return ci;
+					}
+					
+//					return c.getCodeName();
 					@Override
 					public ClassInfo deserialize(final String s) {
 						return Classes.getClassInfoNoError(s);
@@ -217,34 +243,29 @@ public class SkriptClasses {
 						return "itemtype:.+";
 					}
 				})
-				.serializer(new Serializer<ItemType>() {
-					@SuppressWarnings("deprecation")
+				.serializer(new YggdrasilSerializer<ItemType>() {
+//						final StringBuilder b = new StringBuilder();
+//						b.append(t.getInternalAmount());
+//						b.append("," + t.isAll());
+//						for (final ItemData d : t.getTypes()) {
+//							b.append("," + d.getId());
+//							b.append(":" + d.dataMin);
+//							b.append("/" + d.dataMax);
+//						}
+//						if (t.getEnchantments() != null) {
+//							b.append("|");
+//							for (final Entry<Enchantment, Integer> e : t.getEnchantments().entrySet()) {
+//								b.append("#" + e.getKey().getId());
+//								b.append(":" + e.getValue());
+//							}
+//						}
+//						if (t.getItemMeta() != null) {
+//							b.append("¦");
+//							b.append(ConfigurationSerializer.serializeCS((ItemMeta) t.getItemMeta()).replace("¦", "¦¦"));
+//						}
+//						return b.toString();
 					@Override
-					public String serialize(final ItemType t) {
-						final StringBuilder b = new StringBuilder();
-						b.append(t.getInternalAmount());
-						b.append("," + t.isAll());
-						for (final ItemData d : t.getTypes()) {
-							b.append("," + d.getId());
-							b.append(":" + d.dataMin);
-							b.append("/" + d.dataMax);
-						}
-						if (t.getEnchantments() != null) {
-							b.append("|");
-							for (final Entry<Enchantment, Integer> e : t.getEnchantments().entrySet()) {
-								b.append("#" + e.getKey().getId());
-								b.append(":" + e.getValue());
-							}
-						}
-						if (t.getItemMeta() != null) {
-							b.append("¦");
-							b.append(ConfigurationSerializer.serializeCS((ItemMeta) t.getItemMeta()).replace("¦", "¦¦"));
-						}
-						return b.toString();
-					}
-					
-					@SuppressWarnings("deprecation")
-					@Override
+					@Deprecated
 					public ItemType deserialize(final String s) {
 						final String[] ss = s.split("\\|");
 						if (ss.length > 2)
@@ -269,9 +290,7 @@ public class SkriptClasses {
 						}
 						if (ss.length == 2) {
 							final String[] sss = ss[1].split("¦", 2);
-							if (sss[0].isEmpty()) {
-								t.emptyEnchantments();
-							} else {
+							if (!sss[0].isEmpty()) {
 								final String[] es = sss[0].split("#");
 								for (final String e : es) {
 									if (e.isEmpty())
@@ -299,11 +318,6 @@ public class SkriptClasses {
 							}
 						}
 						return t;
-					}
-					
-					@Override
-					public boolean mustSyncDeserialization() {
-						return false;
 					}
 				}));
 		
@@ -339,12 +353,8 @@ public class SkriptClasses {
 					public String getVariableNamePattern() {
 						return "time:\\d+";
 					}
-				}).serializer(new Serializer<Time>() {
-					@Override
-					public String serialize(final Time t) {
-						return "" + t.getTicks();
-					}
-					
+				}).serializer(new YggdrasilSerializer<Time>() {
+//						return "" + t.getTicks();
 					@Override
 					public Time deserialize(final String s) {
 						try {
@@ -392,12 +402,8 @@ public class SkriptClasses {
 					public String getVariableNamePattern() {
 						return "timespan:\\d+";
 					}
-				}).serializer(new Serializer<Timespan>() {
-					@Override
-					public String serialize(final Timespan t) {
-						return "" + t.getMilliSeconds();
-					}
-					
+				}).serializer(new YggdrasilSerializer<Timespan>() {
+//						return "" + t.getMilliSeconds();
 					@Override
 					public Timespan deserialize(final String s) {
 						try {
@@ -429,7 +435,7 @@ public class SkriptClasses {
 					}
 				}));
 		
-		// TODO remove?
+		// TODO remove
 		Classes.registerClass(new ClassInfo<Timeperiod>(Timeperiod.class, "timeperiod")
 				.user("time ?periods?", "durations?")
 				.name("Timeperiod")
@@ -480,12 +486,8 @@ public class SkriptClasses {
 					public String getVariableNamePattern() {
 						return "timeperiod:\\d+-\\d+";
 					}
-				}).serializer(new Serializer<Timeperiod>() {
-					@Override
-					public String serialize(final Timeperiod t) {
-						return t.start + "-" + t.end;
-					}
-					
+				}).serializer(new YggdrasilSerializer<Timeperiod>() {
+//						return t.start + "-" + t.end;
 					@Override
 					public Timeperiod deserialize(final String s) {
 						final String[] split = s.split("-");
@@ -496,11 +498,6 @@ public class SkriptClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
-					}
-					
-					@Override
-					public boolean mustSyncDeserialization() {
-						return false;
 					}
 				}));
 		
@@ -514,12 +511,8 @@ public class SkriptClasses {
 						"subtract a day from {_yesterday}",
 						"# now {_yesterday} represents the date 24 hours before now")
 				.since("1.4")
-				.serializer(new Serializer<Date>() {
-					@Override
-					public String serialize(final Date d) {
-						return "" + d.getTimestamp();
-					}
-					
+				.serializer(new YggdrasilSerializer<Date>() {
+//						return "" + d.getTimestamp();
 					@Override
 					public Date deserialize(final String s) {
 						try {
@@ -527,11 +520,6 @@ public class SkriptClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
-					}
-					
-					@Override
-					public boolean mustSyncDeserialization() {
-						return false;
 					}
 				}).math(Timespan.class, new Arithmetic<Date, Timespan>() {
 					@Override
@@ -580,28 +568,20 @@ public class SkriptClasses {
 					
 					@Override
 					public String toVariableNameString(final Direction o) {
-						return "direction:" + o.serialize();
+						return o.toString();
 					}
 					
 					@Override
 					public String getVariableNamePattern() {
-						return "direction:.+";
+						return ".*";
 					}
 				})
-				.serializer(new Serializer<Direction>() {
+				.serializer(new YggdrasilSerializer<Direction>() {
+//						return o.serialize();
 					@Override
-					public String serialize(final Direction o) {
-						return o.serialize();
-					}
-					
-					@Override
+					@Deprecated
 					public Direction deserialize(final String s) {
 						return Direction.deserialize(s);
-					}
-					
-					@Override
-					public boolean mustSyncDeserialization() {
-						return false;
 					}
 				}));
 		
@@ -678,7 +658,6 @@ public class SkriptClasses {
 							}
 						}
 					}
-					
 				}).serializeAs(ItemStack.class));
 		
 		Classes.registerClass(new ClassInfo<Color>(Color.class, "color")
@@ -772,13 +751,8 @@ public class SkriptClasses {
 						return ".+";
 					}
 				})
-				.serializer(new Serializer<EnchantmentType>() {
-					@SuppressWarnings("deprecation")
-					@Override
-					public String serialize(final EnchantmentType o) {
-						return o.getType().getId() + ":" + o.getLevel();
-					}
-					
+				.serializer(new YggdrasilSerializer<EnchantmentType>() {
+//						return o.getType().getId() + ":" + o.getLevel();
 					@SuppressWarnings("deprecation")
 					@Override
 					public EnchantmentType deserialize(final String s) {
@@ -793,11 +767,6 @@ public class SkriptClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
-					}
-					
-					@Override
-					public boolean mustSyncDeserialization() {
-						return false;
 					}
 				}));
 		
@@ -838,12 +807,8 @@ public class SkriptClasses {
 						return "\\d+";
 					}
 				})
-				.serializer(new Serializer<Experience>() {
-					@Override
-					public String serialize(final Experience xp) {
-						return "" + xp;
-					}
-					
+				.serializer(new YggdrasilSerializer<Experience>() {
+//						return "" + xp;
 					@Override
 					public Experience deserialize(final String s) {
 						try {
@@ -852,13 +817,35 @@ public class SkriptClasses {
 							return null;
 						}
 					}
-					
-					@Override
-					public boolean mustSyncDeserialization() {
-						return false;
-					}
 				}));
 		
+		Classes.registerClass(new ClassInfo<VisualEffect>(VisualEffect.class, "visualeffect")
+				.name("Visual Effect")
+				.description("A visible effect, e.g. particles.")
+				.user("(visual|particle) effects?")
+				.usage(VisualEffect.getAllNames())
+				.parser(new Parser<VisualEffect>() {
+					@Override
+					public VisualEffect parse(final String s, final ParseContext context) {
+						return VisualEffect.parse(s);
+					}
+					
+					@Override
+					public String toString(final VisualEffect e, final int flags) {
+						return e.toString(flags);
+					}
+					
+					@Override
+					public String toVariableNameString(final VisualEffect e) {
+						return e.toString();
+					}
+					
+					@Override
+					public String getVariableNamePattern() {
+						return ".*";
+					}
+				})
+				.serializer(new YggdrasilSerializer<VisualEffect>()));
 	}
 	
 }

@@ -61,7 +61,7 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		setExpr((Expression<ItemType>) vars[0]);
-		if (parser.mark == -1) {
+		if (parser.mark != 1) {
 			single = true;
 			if (!getExpr().isSingle() || (getExpr() instanceof Literal && ((Literal<ItemType>) getExpr()).getSingle().getTypes().size() != 1)) {
 				Skript.warning("'" + getExpr() + "' has multiple ids");

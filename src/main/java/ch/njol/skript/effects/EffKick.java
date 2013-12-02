@@ -74,7 +74,6 @@ public class EffKick extends Effect {
 		if (r == null)
 			return;
 		for (final Player p : players.getArray(e)) {
-			// TODO change other expressions to behave like this
 			if (e instanceof PlayerLoginEvent && p.equals(((PlayerLoginEvent) e).getPlayer()) && !Delay.isDelayed(e)) {
 				((PlayerLoginEvent) e).disallow(Result.KICK_OTHER, r);
 			} else if (e instanceof PlayerKickEvent && p.equals(((PlayerKickEvent) e).getPlayer()) && !Delay.isDelayed(e)) {

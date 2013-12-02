@@ -33,7 +33,7 @@ public interface Literal<T> extends Expression<T> {
 	public T getSingle();
 	
 	@Override
-	public <R> Literal<? extends R> getConvertedExpression(Class<R> to);
+	public <R> Literal<? extends R> getConvertedExpression(Class<R>... to);
 	
 	public T[] getAll();
 	

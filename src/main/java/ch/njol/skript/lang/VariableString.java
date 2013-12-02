@@ -54,6 +54,7 @@ import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 import ch.njol.util.StringUtils;
+import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.SingleItemIterator;
 
 /**
@@ -71,6 +72,7 @@ public class VariableString implements Expression<String> {
 		
 		final Expression<?> expr;
 		int flags = 0;
+		boolean toChatStyle = false;
 	}
 	
 	private final String orig;
@@ -100,9 +102,6 @@ public class VariableString implements Expression<String> {
 	
 	/**
 	 * Prints errors
-	 * 
-	 * @param s unquoted string
-	 * @return
 	 */
 	public static VariableString newInstance(final String s) {
 		return newInstance(s, StringMode.MESSAGE);
@@ -115,7 +114,7 @@ public class VariableString implements Expression<String> {
 	 * 
 	 * @param s The string
 	 * @param withQuotes Whether s must be surrounded by double quotes or not
-	 * @return
+	 * @return Whether the string is quoted correctly
 	 */
 	public final static boolean isQuotedCorrectly(final String s, final boolean withQuotes) {
 		if (withQuotes && (!s.startsWith("\"") || !s.endsWith("\"")))
@@ -133,11 +132,25 @@ public class VariableString implements Expression<String> {
 	}
 	
 	/**
+	 * Removes quoted quotes from a string.
+	 * 
+	 * @param s The string
+	 * @param surroundingQuotes Whether the string has quotes at the start & end that should be removed
+	 * @return The string with double quotes replaced with signle ones and optionally with removed surrounding quotes.
+	 */
+	public final static String unquote(final String s, final boolean surroundingQuotes) {
+		assert isQuotedCorrectly(s, surroundingQuotes);
+		if (surroundingQuotes)
+			return s.substring(1, s.length() - 1).replace("\"\"", "\"");
+		return s.replace("\"\"", "\"");
+	}
+	
+	/**
 	 * Prints errors
 	 * 
-	 * @param s unquoted string
+	 * @param orig unquoted string
 	 * @param mode
-	 * @return
+	 * @return A new VariableString instance
 	 */
 	public static VariableString newInstance(final String orig, final StringMode mode) {
 		if (!isQuotedCorrectly(orig, false))
@@ -189,18 +202,25 @@ public class VariableString implements Expression<String> {
 								final ExpressionInfo i = new ExpressionInfo(expr);
 								if (c2 <= s.length() - 2 && s.charAt(c2 + 1) == 's' && (c2 == s.length() - 2 || !Character.isLetter(s.charAt(c2 + 2)))) {
 									i.flags |= Language.F_PLURAL;
+									c2++; // remove the 's'
 								}
 								if (string.size() > 0 && string.get(string.size() - 1) instanceof String) {
 									final String last = (String) string.get(string.size() - 1);
-									final int l = last.lastIndexOf(' ', last.endsWith(" ") ? last.length() - 1 : last.length());
-									if (l != -1) {
-										final String lastWord = last.substring(l + 1).trim();
-										if (Noun.isIndefiniteArticle(lastWord))
-											i.flags |= Language.F_INDEFINITE_ARTICLE;
-										else if (Noun.isDefiniteArticle(lastWord))
-											i.flags |= Language.F_DEFINITE_ARTICLE;
-										if ((i.flags & (Language.F_INDEFINITE_ARTICLE | Language.F_DEFINITE_ARTICLE)) != 0)
-											string.set(string.size() - 1, last.substring(0, l));
+									if (c2 <= s.length() - 2 && s.charAt(c2 + 1) == '>' && last.endsWith("<")) {
+										i.toChatStyle = true;
+										string.set(string.size() - 1, last.substring(0, last.length() - 1));
+										c2++; // remove the '>'
+									} else {
+										final int l = last.lastIndexOf(' ', last.endsWith(" ") ? last.length() - 1 : last.length());
+										if (l != -1) {
+											final String lastWord = last.substring(l + 1).trim();
+											if (Noun.isIndefiniteArticle(lastWord))
+												i.flags |= Language.F_INDEFINITE_ARTICLE;
+											else if (Noun.isDefiniteArticle(lastWord))
+												i.flags |= Language.F_DEFINITE_ARTICLE;
+											if ((i.flags & (Language.F_INDEFINITE_ARTICLE | Language.F_DEFINITE_ARTICLE)) != 0)
+												string.set(string.size() - 1, last.substring(0, l));
+										}
 									}
 								}
 								string.add(i);
@@ -214,12 +234,7 @@ public class VariableString implements Expression<String> {
 				c = s.indexOf('%', c2 + 1);
 				if (c == -1)
 					c = s.length();
-				final Object last = string.get(string.size() - 1);
-				final String l;
-				if (last instanceof ExpressionInfo && (((ExpressionInfo) last).flags & Language.F_PLURAL) != 0)
-					l = s.substring(c2 + 2, c); //strip 's'
-				else
-					l = s.substring(c2 + 1, c);
+				final String l = s.substring(c2 + 1, c);
 				if (!l.isEmpty()) {
 					if (string.size() > 0 && string.get(string.size() - 1) instanceof String) {
 						string.set(string.size() - 1, (String) string.get(string.size() - 1) + l);
@@ -282,11 +297,11 @@ public class VariableString implements Expression<String> {
 	}
 	
 	/**
-	 * Copied from {@link SkriptParser#nextBracket(String, char, char, int)}, but removed escaping & returns -1 on error.
+	 * Copied from {@link SkriptParser#nextBracket(String, char, char, int, boolean)}, but removed escaping & returns -1 on error.
 	 * 
 	 * @param s
 	 * @param start Index after the opening bracket
-	 * @return
+	 * @return The next closing curly bracket
 	 */
 	public static int nextVariableBracket(final String s, final int start) {
 		int n = 0;
@@ -317,7 +332,7 @@ public class VariableString implements Expression<String> {
 	
 	/**
 	 * @param args Quoted strings - This is not checked!
-	 * @return
+	 * @return a new array containing all newly created VariableStrings, or null if one is invalid
 	 */
 	public static VariableString[] makeStringsFromQuoted(final List<String> args) {
 		final VariableString[] strings = new VariableString[args.size()];
@@ -333,7 +348,7 @@ public class VariableString implements Expression<String> {
 	
 	/**
 	 * Parses all expressions in the string and returns it.
-	 * TODO make <%expr%> work like before
+	 * FIXME make <%expr%> work like before // should work now -- test!
 	 * 
 	 * @param e Event to pass to the expressions.
 	 * @return The input string with all expressions replaced.
@@ -353,7 +368,13 @@ public class VariableString implements Expression<String> {
 				int flags = info.flags;
 				if ((flags & Language.F_PLURAL) == 0 && b.length() > 0 && Math.abs(StringUtils.numberBefore(b, b.length() - 1)) != 1)
 					flags |= Language.F_PLURAL;
-				b.append(Classes.toString(info.expr.getArray(e), flags, getLastColor(b)));
+				if (info.toChatStyle) {
+					final String s = Classes.toString(info.expr.getArray(e), flags, getLastColor(b));
+					final String style = Utils.getChatStyle(s);
+					b.append(style == null ? "<" + s + ">" : style);
+				} else {
+					b.append(Classes.toString(info.expr.getArray(e), flags, getLastColor(b)));
+				}
 			} else {
 				b.append(o);
 			}
@@ -379,10 +400,6 @@ public class VariableString implements Expression<String> {
 	
 	/**
 	 * Use {@link #toString(Event)} to get the actual string
-	 * 
-	 * @param e
-	 * @param debug
-	 * @return
 	 */
 	@Override
 	public String toString(final Event e, final boolean debug) {
@@ -472,8 +489,8 @@ public class VariableString implements Expression<String> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
-		if (to.isAssignableFrom(String.class))
+	public <R> Expression<? extends R> getConvertedExpression(final Class<R>... to) {
+		if (CollectionUtils.containsSuperclass(to, String.class))
 			return (Expression<? extends R>) this;
 		return null;
 	}
@@ -548,7 +565,7 @@ public class VariableString implements Expression<String> {
 		return this;
 	}
 	
-	/* TODO allow special characters?
+	/* REMIND allow special characters?
 	private static String allowedChars = null;
 	private static Field allowedCharacters = null;
 	

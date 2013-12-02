@@ -24,7 +24,6 @@ package ch.njol.skript.aliases;
 import java.util.HashMap;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.localization.Noun;
 import ch.njol.util.Pair;
 
 final class MaterialName {
@@ -41,28 +40,28 @@ final class MaterialName {
 		this.gender = gender;
 	}
 	
-	public String toString(final short dataMin, final short dataMax, final int flags) {
+	public String toString(final short dataMin, final short dataMax, final boolean p) {
 		if (names == null)
-			return Noun.toString(singular, plural, gender, flags);
+			return p ? plural : singular;
 		Pair<String, String> s = names.get(new Pair<Short, Short>(dataMin, dataMax));
 		if (s != null)
-			return Noun.toString(s.first, s.second, gender, flags);
+			return p ? s.second : s.first;
 		if (dataMin == -1 && dataMax == -1 || dataMin == 0 && dataMax == 0)
-			return Noun.toString(singular, plural, gender, flags);
+			return p ? plural : singular;
 		s = names.get(new Pair<Short, Short>((short) -1, (short) -1));
 		if (s != null)
-			return Noun.toString(s.first, s.second, gender, flags);
-		return Noun.toString(singular, plural, gender, flags);
+			return p ? s.second : s.first;
+		return p ? plural : singular;
 	}
 	
-	public String getDebugName(final short dataMin, final short dataMax, final int flags) {
+	public String getDebugName(final short dataMin, final short dataMax, final boolean p) {
 		if (names == null)
-			return Noun.toString(singular, plural, gender, flags);
+			return p ? plural : singular;
 		final Pair<String, String> s = names.get(new Pair<Short, Short>(dataMin, dataMax));
 		if (s != null)
-			return Noun.toString(s.first, s.second, gender, flags);
+			return p ? s.second : s.first;
 		if (dataMin == -1 && dataMax == -1 || dataMin == 0 && dataMax == 0)
-			return Noun.toString(singular, plural, gender, flags);
-		return Noun.toString(singular, plural, gender, flags) + ":" + (dataMin == -1 ? 0 : dataMin) + (dataMin == dataMax ? "" : "-" + (dataMax == -1 ? (id <= Skript.MAXBLOCKID ? 15 : Short.MAX_VALUE) : dataMax));
+			return p ? plural : singular;
+		return (p ? plural : singular) + ":" + (dataMin == -1 ? 0 : dataMin) + (dataMin == dataMax ? "" : "-" + (dataMax == -1 ? (id <= Skript.MAXBLOCKID ? 15 : Short.MAX_VALUE) : dataMax));
 	}
 }

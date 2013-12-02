@@ -107,12 +107,13 @@ public class SkriptParser {
 	
 	public final static class ParseResult {
 		public final Expression<?>[] exprs;
-		public final List<MatchResult> regexes = new ArrayList<MatchResult>();
+		public final List<MatchResult> regexes = new ArrayList<MatchResult>(1);
 		public final String expr;
 		/**
-		 * Defaults to -1. The first mark in a pattern will set this value accordingly, but any subsequent marks will be XORed with the existing value.
+		 * FIXME default was -1 before
+		 * Defaults to 0. The first mark in a pattern will set this value accordingly, but any subsequent marks will be XORed with the existing value.
 		 */
-		public int mark = -1;
+		public int mark = 0;
 		
 		public ParseResult(final SkriptParser parser, final String pattern) {
 			expr = parser.expr;
@@ -133,14 +134,9 @@ public class SkriptParser {
 	
 	/**
 	 * Prints errors.
-	 * 
-	 * @param expr
-	 * @param c
-	 * @param context
-	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public static final <T> Literal<? extends T> parseLiteral(String expr, final Class<T> c, final ParseContext context) {
+	public final static <T> Literal<? extends T> parseLiteral(String expr, final Class<T> c, final ParseContext context) {
 		expr = expr.trim();
 		if (expr.isEmpty())
 			return null;
@@ -151,13 +147,8 @@ public class SkriptParser {
 	 * Parses a string as one of the given syntax elements.
 	 * <p>
 	 * Can print an error.
-	 * 
-	 * @param expr
-	 * @param source
-	 * @param defaultError
-	 * @return
 	 */
-	public static final <T extends SyntaxElement> T parse(String expr, final Iterator<? extends SyntaxElementInfo<T>> source, final String defaultError) {
+	public final static <T extends SyntaxElement> T parse(String expr, final Iterator<? extends SyntaxElementInfo<T>> source, final String defaultError) {
 		expr = expr.trim();
 		if (expr.isEmpty()) {
 			Skript.error(defaultError);
@@ -177,7 +168,7 @@ public class SkriptParser {
 		}
 	}
 	
-	public static final <T extends SyntaxElement> T parseStatic(String expr, final Iterator<? extends SyntaxElementInfo<? extends T>> source, final String defaultError) {
+	public final static <T extends SyntaxElement> T parseStatic(String expr, final Iterator<? extends SyntaxElementInfo<? extends T>> source, final String defaultError) {
 		expr = expr.trim();
 		if (expr.isEmpty()) {
 			Skript.error(defaultError);
@@ -257,10 +248,6 @@ public class SkriptParser {
 	
 	/**
 	 * Prints errors
-	 * 
-	 * @param expr
-	 * @param returnType
-	 * @return
 	 */
 	private final static <T> Variable<T> parseVariable(final String expr, final Class<? extends T>[] returnTypes) {
 		if (varPattern.matcher(expr).matches())
@@ -589,11 +576,6 @@ public class SkriptParser {
 	
 	/**
 	 * Prints parse errors (i.e. must start a ParseLog before calling this method)
-	 * 
-	 * @param args
-	 * @param command
-	 * @param event
-	 * @return
 	 */
 	public static boolean parseArguments(final String args, final ScriptCommand command, final ScriptCommandEvent event) {
 		final SkriptParser parser = new SkriptParser(args, PARSE_LITERALS, ParseContext.COMMAND);
@@ -617,10 +599,6 @@ public class SkriptParser {
 	 * Parses the text as the given pattern as {@link ParseContext#COMMAND}.
 	 * <p>
 	 * Prints parse errors (i.e. must start a ParseLog before calling this method)
-	 * 
-	 * @param text
-	 * @param pattern
-	 * @return
 	 */
 	public static ParseResult parse(final String text, final String pattern) {
 		return new SkriptParser(text, PARSE_LITERALS, ParseContext.COMMAND).parse_i(pattern, 0, 0);
@@ -682,7 +660,7 @@ public class SkriptParser {
 	 * @param openingBracket A bracket that opens another group, e.g. '('
 	 * @param start This must not be the index of the opening bracket!
 	 * @param isGroup Whether <tt>start</tt> is assumed to be in a group (will print an error if this is not the case, otherwise it returns <tt>pattern.length()</tt>)
-	 * @return
+	 * @return The index of the next bracket
 	 * @throws MalformedPatternException If the group is not closed
 	 */
 	private static int nextBracket(final String pattern, final char closingBracket, final char openingBracket, final int start, final boolean isGroup) throws MalformedPatternException {
@@ -704,7 +682,7 @@ public class SkriptParser {
 		}
 		if (isGroup)
 			throw new MalformedPatternException(pattern, "Missing closing bracket '" + closingBracket + "'");
-		return pattern.length();
+		return -1;
 	}
 	
 	/**
@@ -731,7 +709,7 @@ public class SkriptParser {
 	 * 
 	 * @param pattern
 	 * @param c The character to search for
-	 * @return
+	 * @return The number of unescaped occurrences of the given character
 	 */
 	private static int countUnescaped(final String pattern, final char c) {
 		int r = 0;
@@ -894,7 +872,7 @@ public class SkriptParser {
 						for (; j < pattern.length(); j++) {
 							log.clear();
 							if (j == start || pattern.charAt(j) == '|') {
-								int mark = -1;
+								int mark = 0;
 								if (j != pattern.length() - 1 && ('0' <= pattern.charAt(j + 1) && pattern.charAt(j + 1) <= '9' || pattern.charAt(j + 1) == '-')) {
 									final int j2 = pattern.indexOf('¦', j + 2);
 									if (j2 != -1) {
@@ -907,12 +885,7 @@ public class SkriptParser {
 								res = parse_i(pattern, i, j + 1);
 								if (res != null) {
 									log.printLog();
-									if (mark != -1) {
-										if (res.mark == -1)
-											res.mark = mark;
-										else
-											res.mark ^= mark;
-									}
+									res.mark ^= mark; // doesn't do anything if no mark was set as x ^ 0 == x
 									return res;
 								}
 							} else if (pattern.charAt(j) == '(') {
@@ -1036,9 +1009,9 @@ public class SkriptParser {
 					continue;
 				case '|':
 					final int newJ = nextBracket(pattern, ')', '(', j + 1, getGroupLevel(pattern, j) != 0);
-					if (newJ == pattern.length()) {
-						if (i == pattern.length()) {
-							j = expr.length();
+					if (newJ == -1) {
+						if (i == expr.length()) {
+							j = pattern.length();
 							break;
 						} else {
 							i = 0;
@@ -1152,8 +1125,8 @@ public class SkriptParser {
 		return null;
 	}
 	
-	private static final Message m_quotes_error = new Message("skript.quotes error");
-	private static final Message m_brackets_error = new Message("skript.brackets error");
+	private final static Message m_quotes_error = new Message("skript.quotes error");
+	private final static Message m_brackets_error = new Message("skript.brackets error");
 	
 	public final static boolean validateLine(final String line) {
 		if (StringUtils.count(line, '"') % 2 != 0) {

@@ -135,6 +135,7 @@ public class CondCompare extends Condition {
 		return Classes.getSuperClassInfo(e.getReturnType()).getName().withIndefiniteArticle();
 	}
 	
+	@SuppressWarnings("unchecked")
 	private boolean init() {
 		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 		try {
@@ -196,25 +197,17 @@ public class CondCompare extends Condition {
 	 * a and b !# x or y === a !# x or y && b !# x or y
 	 * a or b !# x and y === a !# x and y || b !# x and y
 	 * a or b !# x or y === a !# x or y || b !# x or y
-	 * 
-	 * Exception for 'is not':
-	 *  a !# x or y === a !# x && a !# y === !(a # x || a # y) === !(a # x or y)
-	 *  a !# x and y === a !# x || a !# y  === !(a # x && a # y) === !(a # x and y)
-	 *  a and/or b !# x is normal
-	 *  This does not apply to 'is not greater/smaller than'
-	 *  TODO check whether any other condition should behave the same
-	 * 
 	 */
 	@Override
 	public boolean check(final Event e) {
 		return first.check(e, new Checker<Object>() {
 			@Override
 			public boolean check(final Object o1) {
-				return (relation == Relation.NOT_EQUAL && third == null) ^ second.check(e, new Checker<Object>() {
+				return second.check(e, new Checker<Object>() {
 					@Override
 					public boolean check(final Object o2) {
 						if (third == null)
-							return (relation == Relation.NOT_EQUAL) ^ relation.is(comp != null ? comp.compare(o1, o2) : Comparators.compare(o1, o2));
+							return relation.is(comp != null ? comp.compare(o1, o2) : Comparators.compare(o1, o2));
 						return third.check(e, new Checker<Object>() {
 							@Override
 							public boolean check(final Object o3) {

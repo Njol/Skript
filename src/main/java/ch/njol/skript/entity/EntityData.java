@@ -21,6 +21,8 @@
 
 package ch.njol.skript.entity;
 
+import java.io.NotSerializableException;
+import java.io.StreamCorruptedException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,27 +48,70 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.localization.Adjective;
 import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.LanguageChangeListener;
+import ch.njol.skript.localization.Message;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
+import ch.njol.yggdrasil.Fields;
+import ch.njol.yggdrasil.YggdrasilSerializable.YggdrasilExtendedSerializable;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings({"rawtypes", "serial"})
-public abstract class EntityData<E extends Entity> implements SyntaxElement {// TODO extended horse support, zombie villagers // TODO unit
+public abstract class EntityData<E extends Entity> implements SyntaxElement, YggdrasilExtendedSerializable {// TODO extended horse support, zombie villagers // REMIND unit
 
+	public final static String LANGUAGE_NODE = "entities";
+	
+	public final static Message m_age_pattern = new Message(LANGUAGE_NODE + ".age pattern");
+	public final static Adjective m_baby = new Adjective(LANGUAGE_NODE + ".age adjectives.baby"),
+			m_adult = new Adjective(LANGUAGE_NODE + ".age adjectives.adult");
+	
 	// must be here to be initialised before 'new SimpleLiteral' is called in the register block below
-	private static final List<EntityDataInfo<?>> infos = new ArrayList<EntityDataInfo<?>>();
+	private final static List<EntityDataInfo<?>> infos = new ArrayList<EntityDataInfo<?>>();
 	
 	public static Serializer<EntityData> serializer = new Serializer<EntityData>() {
 		@Override
-		public String serialize(final EntityData d) {
-			return getInfo((Class<? extends EntityData<?>>) d.getClass()).codeName + ":" + d.serialize();
+		public Fields serialize(final EntityData o) throws NotSerializableException {
+			final Fields f = o.serialize();
+			f.putObject("codeName", o.info.codeName);
+			return f;
 		}
 		
+		@Override
+		public boolean canBeInstantiated(final Class<? extends EntityData> c) {
+			return false;
+		}
+		
+		@Override
+		public void deserialize(final EntityData o, final Fields f) throws StreamCorruptedException {
+			assert false;
+		}
+		
+		@Override
+		protected EntityData deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
+			final String codeName = fields.getAndRemoveObject("codeName", String.class);
+			final EntityDataInfo<?> info = getInfo(codeName);
+			if (info == null)
+				throw new StreamCorruptedException("Invalid EntityData code name " + codeName);
+			try {
+				final EntityData<?> d = info.c.newInstance();
+				d.deserialize(fields);
+				return d;
+			} catch (final InstantiationException e) {
+				Skript.exception(e);
+			} catch (final IllegalAccessException e) {
+				Skript.exception(e);
+			}
+			return null;
+		};
+		
+//		return getInfo((Class<? extends EntityData<?>>) d.getClass()).codeName + ":" + d.serialize();
 		@Override
 		public EntityData deserialize(final String s) {
 			final String[] split = s.split(":", 2);
@@ -127,30 +172,68 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 				}).serializer(serializer));
 	}
 	
-	private final static class EntityDataInfo<T extends EntityData<?>> extends SyntaxElementInfo<T> {
+	private final static class EntityDataInfo<T extends EntityData<?>> extends SyntaxElementInfo<T> implements LanguageChangeListener {
 		final String codeName;
+		final String[] codeNames;
+		final int defaultName;
 		final Class<? extends Entity> entityClass;
 		final Noun[] names;
 		
-		public EntityDataInfo(final Class<T> dataClass, final String codeName, final Class<? extends Entity> entityClass, final String[] patterns, final Noun[] names) throws IllegalArgumentException {
-			super(patterns, dataClass);
-			assert codeName != null && entityClass != null && names != null && names.length > 0;
+		public EntityDataInfo(final Class<T> dataClass, final String codeName, final String[] codeNames, final int defaultName, final Class<? extends Entity> entityClass) throws IllegalArgumentException {
+			super(new String[codeNames.length], dataClass);
+			assert codeName != null && entityClass != null && codeNames.length > 0;
 			this.codeName = codeName;
+			this.codeNames = codeNames;
+			this.defaultName = defaultName;
 			this.entityClass = entityClass;
-			this.names = names;
+			this.names = new Noun[codeNames.length];
+			for (int i = 0; i < codeNames.length; i++) {
+				assert codeNames[i] != null;
+				names[i] = new Noun(LANGUAGE_NODE + "." + codeNames[i] + ".name");
+			}
+			
+			Language.addListener(this); // will initialise patterns
 		}
+		
+		@Override
+		public void onLanguageChange() {
+			for (int i = 0; i < codeNames.length; i++)
+				patterns[i] = Language.get(LANGUAGE_NODE + "." + codeNames[i] + ".pattern").replace("<age>", m_age_pattern.toString());
+		}
+		
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + codeName.hashCode();
+			return result;
+		}
+		
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (!(obj instanceof EntityDataInfo))
+				return false;
+			final EntityDataInfo other = (EntityDataInfo) obj;
+			if (!codeName.equals(other.codeName))
+				return false;
+			assert Arrays.equals(codeNames, other.codeNames);
+			assert defaultName == other.defaultName;
+			assert entityClass == other.entityClass;
+			return true;
+		}
+		
 	}
 	
-	static <E extends Entity, T extends EntityData<E>> void register(final Class<T> dataClass, final String name, final Class<E> entityClass, final String... codeNames) throws IllegalArgumentException {
-		final String[] patterns = new String[codeNames.length];
-		final Noun[] names = new Noun[codeNames.length];
-		final String agePattern = Language.get("entities.age pattern");
-		for (int i = 0; i < codeNames.length; i++) {
-			assert codeNames[i] != null;
-			patterns[i] = Language.get("entities." + codeNames[i] + ".pattern").replace("<age>", agePattern);
-			names[i] = new Noun("entities." + codeNames[i] + ".name");
-		}
-		final EntityDataInfo<T> info = new EntityDataInfo<T>(dataClass, name, entityClass, patterns, names);
+	static <E extends Entity, T extends EntityData<E>> void register(final Class<T> dataClass, final String name, final Class<E> entityClass, final String codeName) throws IllegalArgumentException {
+		register(dataClass, codeName, entityClass, 0, codeName);
+	}
+	
+	static <E extends Entity, T extends EntityData<E>> void register(final Class<T> dataClass, final String name, final Class<E> entityClass, final int defaultName, final String... codeNames) throws IllegalArgumentException {
+		final EntityDataInfo<T> info = new EntityDataInfo<T>(dataClass, name, codeNames, defaultName, entityClass);
 		for (int i = 0; i < infos.size(); i++) {
 			if (infos.get(i).entityClass.isAssignableFrom(entityClass)) {
 				infos.add(i, info);
@@ -159,6 +242,119 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 		}
 		infos.add(info);
 	}
+	
+	private transient EntityDataInfo<?> info;
+	protected int matchedPattern = 0;
+	private Kleenean plural = Kleenean.UNKNOWN;
+	private Kleenean baby = Kleenean.UNKNOWN;
+	
+	public EntityData() {
+		for (final EntityDataInfo<?> i : infos) {
+			if (getClass() == i.c) {
+				info = i;
+				matchedPattern = i.defaultName;
+				return;
+			}
+		}
+		info = null;
+		assert false;
+	}
+	
+	@Override
+	public final boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		this.matchedPattern = matchedPattern;
+		// plural bits (0x3): 0 = singular, 1 = plural, 2 = unknown
+		final int pluralBits = parseResult.mark & 0x3;
+		this.plural = pluralBits == 1 ? Kleenean.TRUE : pluralBits == 1 ? Kleenean.FALSE : Kleenean.UNKNOWN;
+		// age bits (0xC): 0 = unknown, 4 = baby, 8 = adult
+		final int ageBits = parseResult.mark & 0xC;
+		this.baby = ageBits == 4 ? Kleenean.TRUE : ageBits == 8 ? Kleenean.FALSE : Kleenean.UNKNOWN;
+		return init(Arrays.copyOf(exprs, exprs.length, Literal[].class), matchedPattern, parseResult);
+	}
+	
+	protected abstract boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult);
+	
+	/**
+	 * @param c An entity's class, e.g. Player or CraftPlayer. Must not be null.
+	 * @param e An actual entity, or null to get an entity data for an entity class
+	 * @return Whether initialisation was successful
+	 */
+	protected abstract boolean init(Class<? extends E> c, E e);
+	
+	public abstract void set(E entity);
+	
+	protected abstract boolean match(E entity);
+	
+	public abstract Class<? extends E> getType();
+	
+	/**
+	 * Returns the super type of this entity data, e.g. 'wolf' for 'angry wolf'.
+	 * 
+	 * @return The supertype of this entity data. Must not be null.
+	 */
+	public abstract EntityData getSuperType();
+	
+	@Override
+	public final String toString() {
+		return toString(0);
+	}
+	
+	protected Noun getName() {
+		return info.names[matchedPattern];
+	}
+	
+	protected Adjective getAgeAdjective() {
+		return baby.isTrue() ? m_baby : baby.isFalse() ? m_adult : null;
+	}
+	
+	public String toString(final int flags) {
+		final Noun name = info.names[matchedPattern];
+		return baby.isTrue() ? m_baby.toString(name, flags) : baby.isFalse() ? m_adult.toString(name, flags) : name.toString(flags);
+	}
+	
+	public Kleenean isPlural() {
+		return plural;
+	}
+	
+	public Kleenean isBaby() {
+		return baby;
+	}
+	
+	@Override
+	public final int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + baby.hashCode();
+		result = prime * result + plural.hashCode();
+		result = prime * result + matchedPattern;
+		result = prime * result + info.hashCode();
+		result = prime * result + hashCode_i();
+		return result;
+	}
+	
+	@Override
+	public final boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof EntityData))
+			return false;
+		final EntityData other = (EntityData) obj;
+		if (baby != other.baby)
+			return false;
+		if (plural != other.plural)
+			return false;
+		if (matchedPattern != other.matchedPattern)
+			return false;
+		if (!info.equals(other.info))
+			return false;
+		return equals_i(other);
+	}
+	
+	protected abstract boolean equals_i(EntityData<?> obj);
+	
+	protected abstract int hashCode_i();
 	
 	public final static EntityDataInfo<?> getInfo(final Class<? extends EntityData<?>> c) {
 		for (final EntityDataInfo<?> i : infos) {
@@ -179,8 +375,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	/**
 	 * Prints errors.
 	 * 
-	 * @param s
-	 * @return
+	 * @param s String with optional indefinite article at the beginning
+	 * @return The parsed entity data
 	 */
 	public final static EntityData<?> parse(final String s) {
 		return SkriptParser.parseStatic(Noun.stripIndefiniteArticle(s), infos.iterator(), null);
@@ -190,7 +386,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	 * Prints errors.
 	 * 
 	 * @param s
-	 * @return
+	 * @return The parsed entity data
 	 */
 	public final static EntityData<?> parseWithoutIndefiniteArticle(final String s) {
 		return SkriptParser.parseStatic(s, infos.iterator(), null);
@@ -226,7 +422,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	 * @param types
 	 * @param type
 	 * @param worlds worlds or null for all
-	 * @return
+	 * @return All entities of this type in the given worlds
 	 */
 	public final static <E extends Entity> E[] getAll(final EntityData<?>[] types, final Class<E> type, World[] worlds) {
 		assert types.length > 0;
@@ -288,20 +484,20 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 		return getData(null, e);
 	}
 	
-	public static final String toString(final Entity e) {
+	public final static String toString(final Entity e) {
 		return fromEntity(e).getSuperType().toString();
 	}
 	
-	public static final String toString(final Class<? extends Entity> c) {
-		return fromClass(c).toString();
+	public final static String toString(final Class<? extends Entity> c) {
+		return fromClass(c).getSuperType().toString();
 	}
 	
-	public static final String toString(final Entity e, final int flags) {
+	public final static String toString(final Entity e, final int flags) {
 		return fromEntity(e).getSuperType().toString(flags);
 	}
 	
-	public static final String toString(final Class<? extends Entity> c, final int flags) {
-		return fromClass(c).toString(flags);
+	public final static String toString(final Class<? extends Entity> c, final int flags) {
+		return fromClass(c).getSuperType().toString(flags);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -315,75 +511,19 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement {// 
 	
 	public abstract boolean isSupertypeOf(EntityData<?> e);
 	
-	public abstract String serialize();
-	
-	protected abstract boolean deserialize(final String s);
-	
-	protected EntityDataInfo<?> info;
-	protected int matchedPattern = 0;
-	private Kleenean plural = Kleenean.UNKNOWN;
-	private Kleenean baby = Kleenean.UNKNOWN;
-	
-	public EntityData() {
-		for (final EntityDataInfo<?> i : infos) {
-			if (getClass() == i.c) {
-				info = i;
-				break;
-			}
-		}
-		assert info != null;
+	@Override
+	public Fields serialize() throws NotSerializableException {
+		return new Fields(this);
 	}
 	
 	@Override
-	public final boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		this.matchedPattern = matchedPattern;
-		this.plural = Kleenean.get(2 - (parseResult.mark & 0x3));
-		this.baby = Kleenean.get(1 - (((parseResult.mark >> 2) & 0x3) ^ 0x1));
-		return init(Arrays.copyOf(exprs, exprs.length, Literal[].class), matchedPattern, parseResult);
+	public void deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
+		fields.setFields(this, Variables.yggdrasil);
 	}
 	
-	protected abstract boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult);
-	
-	/**
-	 * @param c null iff e != null
-	 * @param e null iff c != null
-	 * @return
-	 */
-	protected abstract boolean init(Class<? extends E> c, E e);
-	
-	public abstract void set(E entity);
-	
-	protected abstract boolean match(E entity);
-	
-	public abstract Class<? extends E> getType();
-	
-	/**
-	 * Returns the super type of this entity data, e.g. 'wolf' for 'angry wolf'. If this type is already such a supertype it should return itself.
-	 * 
-	 * @return
-	 */
-	public abstract EntityData getSuperType();
-	
-	@Override
-	public String toString() { // TODO baby/adult
-		return info.names[matchedPattern].getSingular();
+	@Deprecated
+	protected boolean deserialize(final String s) {
+		return false;
 	}
 	
-	public String toString(final int flags) {
-		return info.names[matchedPattern].toString(flags);
-	}
-	
-	public Kleenean isPlural() {
-		return plural;
-	}
-	
-	public Kleenean isBaby() {
-		return baby;
-	}
-	
-	@Override
-	public abstract boolean equals(Object obj);
-	
-	@Override
-	public abstract int hashCode();
 }

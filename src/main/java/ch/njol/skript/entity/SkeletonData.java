@@ -36,12 +36,18 @@ public class SkeletonData extends EntityData<Skeleton> {
 	private final static boolean hasWither = Skript.isRunningMinecraft(1, 4);
 	static {
 		if (hasWither)
-			register(SkeletonData.class, "skeleton", Skeleton.class, "skeleton", "wither skeleton");
+			register(SkeletonData.class, "skeleton", Skeleton.class, 0, "skeleton", "wither skeleton");
 		else
 			register(SkeletonData.class, "skeleton", Skeleton.class, "skeleton");
 	}
 	
 	private boolean wither;
+	
+	public SkeletonData() {}
+	
+	public SkeletonData(final boolean wither) {
+		this.wither = wither;
+	}
 	
 	public boolean isWither() {
 		return wither;
@@ -59,11 +65,7 @@ public class SkeletonData extends EntityData<Skeleton> {
 		return true;
 	}
 	
-	@Override
-	public String serialize() {
-		return wither ? "1" : "0";
-	}
-	
+//		return wither ? "1" : "0";
 	@Override
 	protected boolean deserialize(final String s) {
 		if (s.equals("1"))
@@ -92,11 +94,7 @@ public class SkeletonData extends EntityData<Skeleton> {
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof SkeletonData))
 			return false;
 		final SkeletonData other = (SkeletonData) obj;
@@ -104,7 +102,7 @@ public class SkeletonData extends EntityData<Skeleton> {
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		return wither ? 1 : 0;
 	}
 	
@@ -117,7 +115,7 @@ public class SkeletonData extends EntityData<Skeleton> {
 	
 	@Override
 	public EntityData getSuperType() {
-		return this;
+		return new SkeletonData(wither);
 	}
 	
 }

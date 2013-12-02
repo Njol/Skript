@@ -76,7 +76,7 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param description
-	 * @return
+	 * @return This SkriptEventInfo object
 	 */
 	public SkriptEventInfo<E> description(final String... description) {
 		assert this.description == null;
@@ -88,7 +88,7 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param examples
-	 * @return
+	 * @return This SkriptEventInfo object
 	 */
 	public SkriptEventInfo<E> examples(final String... examples) {
 		assert this.examples == null;
@@ -100,7 +100,7 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param since
-	 * @return
+	 * @return This SkriptEventInfo object
 	 */
 	public SkriptEventInfo<E> since(final String since) {
 		assert this.since == null;

@@ -61,11 +61,11 @@ public enum StructureType {
 	}
 	
 	public void grow(final Location loc) {
-		loc.getWorld().generateTree(loc, CollectionUtils.random(types));
+		loc.getWorld().generateTree(loc, CollectionUtils.getRandom(types));
 	}
 	
 	public void grow(final Block b) {
-		b.getWorld().generateTree(b.getLocation(), CollectionUtils.random(types));
+		b.getWorld().generateTree(b.getLocation(), CollectionUtils.getRandom(types));
 	}
 	
 	public TreeType[] getTypes() {

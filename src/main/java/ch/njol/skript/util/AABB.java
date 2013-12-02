@@ -61,6 +61,7 @@ public class AABB implements Iterable<Block> {
 	}
 	
 	public AABB(final Location center, final double rX, final double rY, final double rZ) {
+		assert rX >= 0 && rY >= 0 && rZ >= 0 : rX + "," + rY + "," + rY;
 		world = center.getWorld();
 		lowerBound = new Vector(center.getX() - rX, Math.max(center.getY() - rY, 0), center.getZ() - rZ);
 		upperBound = new Vector(center.getX() + rX, Math.min(center.getY() + rY, world.getMaxHeight()), center.getZ() + rZ);
@@ -73,7 +74,9 @@ public class AABB implements Iterable<Block> {
 	}
 	
 	public AABB(final Chunk c) {
-		this(c.getBlock(0, 0, 0), c.getBlock(15, c.getWorld().getMaxHeight() - 1, 15));
+		world = c.getWorld();
+		lowerBound = c.getBlock(0, 0, 0).getLocation().toVector();
+		upperBound = lowerBound.clone().add(new Vector(16, world.getMaxHeight(), 16));
 	}
 	
 	public boolean contains(final Location l) {
@@ -140,4 +143,33 @@ public class AABB implements Iterable<Block> {
 			}
 		};
 	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + lowerBound.hashCode();
+		result = prime * result + upperBound.hashCode();
+		result = prime * result + world.hashCode();
+		return result;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof AABB))
+			return false;
+		final AABB other = (AABB) obj;
+		if (!lowerBound.equals(other.lowerBound))
+			return false;
+		if (!upperBound.equals(other.upperBound))
+			return false;
+		if (!world.equals(other.world))
+			return false;
+		return true;
+	}
+	
 }

@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * @author Peter Güttinger
  */
 public class Version implements Serializable, Comparable<Version> {
-	private static final long serialVersionUID = 8687040355286333293L;
+	private final static long serialVersionUID = 8687040355286333293L;
 	
 	private final int[] version = new int[3];
 	/**

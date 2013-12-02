@@ -32,7 +32,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 @SuppressWarnings("serial")
 public class WolfData extends EntityData<Wolf> {
 	static {
-		EntityData.register(WolfData.class, "wolf", Wolf.class,
+		EntityData.register(WolfData.class, "wolf", Wolf.class, 1,
 				"angry wolf", "wolf", "peaceful wolf",
 				"wild wolf", "tamed wolf");
 	}
@@ -83,7 +83,7 @@ public class WolfData extends EntityData<Wolf> {
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + angry;
@@ -92,11 +92,7 @@ public class WolfData extends EntityData<Wolf> {
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof WolfData))
 			return false;
 		final WolfData other = (WolfData) obj;
@@ -107,11 +103,7 @@ public class WolfData extends EntityData<Wolf> {
 		return true;
 	}
 	
-	@Override
-	public String serialize() {
-		return angry + "|" + tamed;
-	}
-	
+//		return angry + "|" + tamed;
 	@Override
 	protected boolean deserialize(final String s) {
 		final String[] split = s.split("\\|");

@@ -113,7 +113,7 @@ public class SectionValidator implements NodeValidator {
 		return ok;
 	}
 	
-	public static final void notASectionError(final Node node) {
+	public final static void notASectionError(final Node node) {
 		SkriptLogger.setNode(node);
 		Skript.error("'" + node.getKey() + "' is not a section (like 'name:', followed by one or more indented lines)");
 	}

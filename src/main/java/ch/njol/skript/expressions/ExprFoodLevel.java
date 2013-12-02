@@ -68,13 +68,14 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 	
 	@Override
 	protected Float[] get(final Event e, final Player[] source) {
-		if (getTime() >= 0 && getExpr().isDefault() && e instanceof FoodLevelChangeEvent && !Delay.isDelayed(e)) {
-			return new Float[] {0.5f * ((FoodLevelChangeEvent) e).getFoodLevel()};
-		}
 		return get(source, new Getter<Float, Player>() {
 			@Override
 			public Float get(final Player p) {
-				return 0.5f * p.getFoodLevel();
+				if (getTime() >= 0 && e instanceof FoodLevelChangeEvent && p.equals(((FoodLevelChangeEvent) e).getEntity()) && !Delay.isDelayed(e)) {
+					return 0.5f * ((FoodLevelChangeEvent) e).getFoodLevel();
+				} else {
+					return 0.5f * p.getFoodLevel();
+				}
 			}
 		});
 	}

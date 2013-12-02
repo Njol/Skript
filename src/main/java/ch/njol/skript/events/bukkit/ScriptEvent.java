@@ -32,7 +32,7 @@ public class ScriptEvent extends Event {
 	public ScriptEvent() {}
 	
 	// Bukkit stuff
-	private static final HandlerList handlers = new HandlerList();
+	private final static HandlerList handlers = new HandlerList();
 	
 	@Override
 	public HandlerList getHandlers() {

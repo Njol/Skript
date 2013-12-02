@@ -67,17 +67,17 @@ public class Metrics {
 	/**
 	 * The base url of the metrics domain
 	 */
-	private static final String BASE_URL = "http://report.mcstats.org";
+	private final static String BASE_URL = "http://report.mcstats.org";
 	
 	/**
 	 * The url used to report a server's status
 	 */
-	private static final String REPORT_URL = "/plugin/%s";
+	private final static String REPORT_URL = "/plugin/%s";
 	
 	/**
 	 * Interval of time to ping (in minutes)
 	 */
-	private static final int PING_INTERVAL = 15;
+	private final static int PING_INTERVAL = 15;
 	
 	/**
 	 * The plugin this metrics submits for
@@ -493,7 +493,7 @@ public class Metrics {
 	 * GZip compress a string of bytes
 	 * 
 	 * @param input
-	 * @return
+	 * @return Compressed data
 	 */
 	public static byte[] gzip(final String input) {
 		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -565,7 +565,7 @@ public class Metrics {
 	 * Escape a string to create a valid JSON string
 	 * 
 	 * @param text
-	 * @return
+	 * @return Escaped String
 	 */
 	private static String escapeJSON(final String text) {
 		final StringBuilder builder = new StringBuilder();

@@ -75,7 +75,7 @@ public abstract class Converters {
 		converters.add(info);
 	}
 	
-	// TODO how to manage overriding of converters? - shouldn't actually matter
+	// REMIND how to manage overriding of converters? - shouldn't actually matter
 	public static void createMissingConverters() {
 		for (int i = 0; i < converters.size(); i++) {
 			final ConverterInfo<?, ?> info = converters.get(i);
@@ -134,7 +134,7 @@ public abstract class Converters {
 	 * 
 	 * @param o
 	 * @param to
-	 * @return
+	 * @return The converted object
 	 */
 	@SuppressWarnings("unchecked")
 	public final static <F, T> T convert(final F o, final Class<? extends T>[] to) {
@@ -153,7 +153,7 @@ public abstract class Converters {
 	}
 	
 	/**
-	 * Converts all entries in the given array to the desired type, using {@link convert} to convert every single value. If you want to convert an array of values
+	 * Converts all entries in the given array to the desired type, using {@link #convert(Object, Class)} to convert every single value. If you want to convert an array of values
 	 * of a known type, consider using {@link #convert(Object[], Class, Converter)} for much better performance.
 	 * 
 	 * @param o
@@ -182,7 +182,7 @@ public abstract class Converters {
 	 * @param o
 	 * @param to
 	 * @param superType The component type of the returned array
-	 * @return
+	 * @return The converted array
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T[] convertArray(final Object[] o, final Class<? extends T>[] to, final Class<T> superType) {
@@ -208,13 +208,22 @@ public abstract class Converters {
 	 * 
 	 * @param from
 	 * @param to
-	 * @return
+	 * @return Whether a converter exists
 	 */
 	public final static boolean converterExists(final Class<?> from, final Class<?> to) {
 		assert from != null && to != null;
 		if (to.isAssignableFrom(from) || from.isAssignableFrom(to))
 			return true;
 		return getConverter(from, to) != null;
+	}
+	
+	public final static boolean converterExists(final Class<?> from, final Class<?>... to) {
+		assert from != null && to != null;
+		for (final Class<?> t : to) {
+			if (converterExists(from, t))
+				return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -259,7 +268,7 @@ public abstract class Converters {
 	 * @param from
 	 * @param to
 	 * @param conv
-	 * @return
+	 * @return The converted array
 	 * @throws ArrayStoreException if the given class is not a superclass of all objects returned by the converter
 	 */
 	@SuppressWarnings("unchecked")

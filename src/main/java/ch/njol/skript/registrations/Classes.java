@@ -21,11 +21,19 @@
 
 package ch.njol.skript.registrations;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.NotSerializableException;
+import java.io.SequenceInputStream;
+import java.sql.Blob;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -39,15 +47,21 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.Converter.ConverterInfo;
 import ch.njol.skript.classes.Parser;
-import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.StringMode;
+import ch.njol.skript.variables.DatabaseStorage;
+import ch.njol.skript.variables.Variables;
+import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.iterator.ArrayIterator;
+import ch.njol.yggdrasil.Tag;
+import ch.njol.yggdrasil.YggdrasilConstants;
+import ch.njol.yggdrasil.YggdrasilInputStream;
+import ch.njol.yggdrasil.YggdrasilOutputStream;
 
 /**
  * @author Peter Güttinger
@@ -71,14 +85,18 @@ public abstract class Classes {
 			throw new IllegalArgumentException("Can't register " + info.getC().getName() + " with the code name " + info.getCodeName() + " because that name is already used by " + classInfosByCodeName.get(info.getCodeName()));
 		if (exactClassInfos.containsKey(info.getC()))
 			throw new IllegalArgumentException("Can't register the class info " + info.getCodeName() + " because the class " + info.getC().getName() + " is already registered");
+		if (info.getCodeName().length() > DatabaseStorage.MAX_CLASS_CODENAME_LENGTH)
+			throw new IllegalArgumentException("The codename '" + info.getCodeName() + "' is too long to be saved in a database, the maximum length allowed is " + DatabaseStorage.MAX_CLASS_CODENAME_LENGTH);
 		exactClassInfos.put(info.getC(), info);
 		classInfosByCodeName.put(info.getCodeName(), info);
 		tempClassInfos.add(info);
 	}
 	
 	public final static void onRegistrationsStop() {
+		
 		sortClassInfos();
 		
+		// validate serializeAs
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getSerializeAs() != null) {
 				final ClassInfo<?> sa = getExactClassInfo(ci.getSerializeAs());
@@ -89,24 +107,28 @@ public abstract class Classes {
 				}
 			}
 		}
+		
+		// register to Yggdrasil
+		for (final ClassInfo<?> ci : classInfos) {
+			if (ci.getSerializer() != null)
+				Variables.yggdrasil.registerClassResolver(ci.getSerializer());
+		}
 	}
 	
 	/**
 	 * Sorts the class infos according to sub/superclasses and relations set with {@link ClassInfo#before(String...)} and {@link ClassInfo#after(String...)}.
 	 */
 	private final static void sortClassInfos() {
-		assert classInfos == null;
+//		assert classInfos == null; // FindBugs complains about this
 		
-		final LinkedList<ClassInfo<?>> classInfos = new LinkedList<ClassInfo<?>>();
-		
-		// merge before, after & sub/supertypes in before
+		// merge before, after & sub/supertypes in after
 		for (final ClassInfo<?> ci : tempClassInfos) {
-			if (ci.after() != null && !ci.after().isEmpty()) {
+			if (ci.before() != null && !ci.before().isEmpty()) {
 				for (final ClassInfo<?> ci2 : tempClassInfos) {
-					if (ci.after().contains(ci2.getCodeName())) {
-						ci2.before().add(ci.getCodeName());
-						ci.after().remove(ci2.getCodeName());
-						if (ci.after().isEmpty())
+					if (ci.before().contains(ci2.getCodeName())) {
+						ci2.after().add(ci.getCodeName());
+						ci.before().remove(ci2.getCodeName());
+						if (ci.before().isEmpty())
 							break;
 					}
 				}
@@ -116,45 +138,78 @@ public abstract class Classes {
 			for (final ClassInfo<?> ci2 : tempClassInfos) {
 				if (ci == ci2)
 					continue;
-				if (ci2.getC().isAssignableFrom(ci.getC()))
-					ci.before().add(ci2.getCodeName());
+				if (ci.getC().isAssignableFrom(ci2.getC()))
+					ci.after().add(ci2.getCodeName());
 			}
 		}
+		
+		// remove unresolvable dependencies (and print a warning if testing)
+		for (final ClassInfo<?> ci : tempClassInfos) {
+			final Set<String> s = new HashSet<String>();
+			if (ci.before() != null) {
+				for (final String b : ci.before()) {
+					if (getClassInfoNoError(b) == null) {
+						s.add(b);
+					}
+				}
+				ci.before().removeAll(s);
+			}
+			for (final String a : ci.after()) {
+				if (getClassInfoNoError(a) == null) {
+					s.add(a);
+				}
+			}
+			ci.after().removeAll(s);
+			if (!s.isEmpty() && Skript.testing())
+				Skript.warning(s.size() + " dependency/ies could not be resolved for " + ci + ": " + StringUtils.join(s, ", "));
+		}
+		
+		final List<ClassInfo<?>> classInfos = new ArrayList<ClassInfo<?>>(tempClassInfos.size());
 		
 		boolean changed = true;
 		while (changed) {
 			changed = false;
 			for (int i = 0; i < tempClassInfos.size(); i++) {
 				final ClassInfo<?> ci = tempClassInfos.get(i);
-				if (ci.before().isEmpty()) {
-					classInfos.addFirst(ci);
+				if (ci.after().isEmpty()) {
+					classInfos.add(ci);
 					tempClassInfos.remove(i);
 					i--;
 					for (final ClassInfo<?> ci2 : tempClassInfos)
-						ci2.before().remove(ci.getCodeName());
+						ci2.after().remove(ci.getCodeName());
 					changed = true;
 				}
 			}
 		}
+		
 		Classes.classInfos = classInfos.toArray(new ClassInfo[classInfos.size()]);
-		if (!tempClassInfos.isEmpty())
-			throw new IllegalStateException("ClassInfos with circular dependencies detected: " + StringUtils.join(tempClassInfos, ", "));
-		if (Skript.testing()) {
-			for (final ClassInfo<?> ci : classInfos) {
-				if (ci.before() != null && !ci.before().isEmpty() || ci.after() != null && !ci.after().isEmpty()) {
-					final Set<String> s = new HashSet<String>();
-					if (ci.before() != null)
-						s.addAll(ci.before());
-					if (ci.after() != null)
-						s.addAll(ci.after());
-					Skript.info(s.size() + " dependency/ies could not be resolved for " + ci + ": " + s);
-				}
+		
+		// check for circular dependencies
+		if (!tempClassInfos.isEmpty()) {
+			final StringBuilder b = new StringBuilder();
+			for (final ClassInfo<?> c : tempClassInfos) {
+				if (b.length() != 0)
+					b.append(", ");
+				b.append(c.getCodeName() + " (after: " + StringUtils.join(c.after(), ", ") + ")");
 			}
+			throw new IllegalStateException("ClassInfos with circular dependencies detected: " + b.toString());
 		}
+		
+		// debug message
+		if (Skript.debug()) {
+			final StringBuilder b = new StringBuilder();
+			for (final ClassInfo<?> ci : Classes.classInfos) {
+				if (b.length() != 0)
+					b.append(", ");
+				b.append(ci.getCodeName());
+			}
+			Skript.info("All registered classes in order: " + b.toString());
+		}
+		
 	}
 	
 	private final static void checkAllowClassInfoInteraction() {
-		if (Skript.acceptRegistrations)
+		if (Skript.isAcceptRegistrations())
 			throw new IllegalStateException("Cannot use classinfos until registration is over");
 	}
 	
@@ -169,20 +224,26 @@ public abstract class Classes {
 	}
 	
 	/**
+	 * This method can be called even while Skript is loading.
+	 * 
 	 * @param codeName
-	 * @return
+	 * @return The ClassInfo with the given code name
 	 * @throws SkriptAPIException If the given class was not registered
 	 */
 	public static ClassInfo<?> getClassInfo(final String codeName) {
-		checkAllowClassInfoInteraction();
 		final ClassInfo<?> ci = classInfosByCodeName.get(codeName);
 		if (ci == null)
 			throw new SkriptAPIException("No class info found for " + codeName);
 		return ci;
 	}
 	
+	/**
+	 * This method can be called even while Skript is loading.
+	 * 
+	 * @param codeName
+	 * @return
+	 */
 	public static ClassInfo<?> getClassInfoNoError(final String codeName) {
-		checkAllowClassInfoInteraction();
 		return classInfosByCodeName.get(codeName);
 	}
 	
@@ -202,7 +263,7 @@ public abstract class Classes {
 	 * Gets the class info of the given class or it's closest registered superclass. This method will never return null unless <tt>c</tt> is null.
 	 * 
 	 * @param c
-	 * @return
+	 * @return The closest superclass's info
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> ClassInfo<? super T> getSuperClassInfo(final Class<T> c) {
@@ -213,7 +274,7 @@ public abstract class Classes {
 			return (ClassInfo<? super T>) i;
 		for (final ClassInfo<?> ci : classInfos) {
 			if (ci.getC().isAssignableFrom(c)) {
-				if (!Skript.acceptRegistrations)
+				if (!Skript.isAcceptRegistrations())
 					superClassInfos.put(c, ci);
 				return (ClassInfo<? super T>) ci;
 			}
@@ -226,7 +287,7 @@ public abstract class Classes {
 	 * Gets a class by it's code name
 	 * 
 	 * @param codeName
-	 * @return the class
+	 * @return the class with the given code name
 	 * @throws SkriptAPIException If the given class was not registered
 	 */
 	public static Class<?> getClass(final String codeName) {
@@ -279,10 +340,10 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * gets the default of a class
+	 * Gets the default expression of a class
 	 * 
-	 * @param codeName
-	 * @return the expression holding the default value or null if this class doesn't have one
+	 * @param c The class
+	 * @return The expression holding the default value or null if this class doesn't have one
 	 */
 	public static <T> DefaultExpression<T> getDefaultExpression(final Class<T> c) {
 		checkAllowClassInfoInteraction();
@@ -309,7 +370,7 @@ public abstract class Classes {
 	 * 
 	 * @param s
 	 * @param c
-	 * @return
+	 * @return The parsed object
 	 */
 	public static <T> T parseSimple(final String s, final Class<T> c, final ParseContext context) {
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
@@ -340,7 +401,7 @@ public abstract class Classes {
 	 * 
 	 * @param s The string to parse
 	 * @param c The desired type. The returned value will be of this type or a subclass if it.
-	 * @return The parsed object.
+	 * @return The parsed object
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static <T> T parse(final String s, final Class<T> c, final ParseContext context) {
@@ -375,10 +436,10 @@ public abstract class Classes {
 	 * Gets a parser for parsing instances of the desired type from strings. The returned parser may only be used for parsing, i.e. you must not use its toString methods.
 	 * 
 	 * @param to
-	 * @return
+	 * @return A parser to parse object of the desired type
 	 */
 	@SuppressWarnings("unchecked")
-	public static final <T> Parser<? extends T> getParser(final Class<T> to) {
+	public final static <T> Parser<? extends T> getParser(final Class<T> to) {
 		checkAllowClassInfoInteraction();
 		for (int i = classInfos.length - 1; i >= 0; i--) {
 			final ClassInfo<?> ci = classInfos[i];
@@ -398,15 +459,15 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * Gets a parser for an exactly known class. You should usually use {@link getParser} instead of this method.
+	 * Gets a parser for an exactly known class. You should usually use {@link #getParser(Class)} instead of this method.
 	 * <p>
 	 * The main benefit of this method is that it's the only class info method of Skript that can be used while Skript is initializing and thus useful for parsing configs.
 	 * 
 	 * @param c
-	 * @return
+	 * @return A parser to parse object of the desired type
 	 */
-	public static final <T> Parser<? extends T> getExactParser(final Class<T> c) {
-		if (Skript.acceptRegistrations) {
+	public final static <T> Parser<? extends T> getExactParser(final Class<T> c) {
+		if (Skript.isAcceptRegistrations()) {
 			for (final ClassInfo<?> ci : tempClassInfos) {
 				if (ci.getC() == c)
 					return (Parser<? extends T>) ci.getParser();
@@ -449,7 +510,9 @@ public abstract class Classes {
 	/**
 	 * @param o Any object, preferably not an array: use {@link Classes#toString(Object[], boolean)} instead.
 	 * @return String representation of the object (using a parser if found or {@link String#valueOf(Object)} otherwise).
-	 * @see Classes#toString(Object, boolean)
+	 * @see #toString(Object, StringMode)
+	 * @see #toString(Object[], boolean)
+	 * @see #toString(Object[], boolean, StringMode)
 	 * @see Parser
 	 */
 	public static String toString(final Object o) {
@@ -460,11 +523,11 @@ public abstract class Classes {
 		return toString(o, StringMode.DEBUG, 0);
 	}
 	
-	public static final <T> String toString(final T o, final StringMode mode) {
+	public final static <T> String toString(final T o, final StringMode mode) {
 		return toString(o, mode, 0);
 	}
 	
-	private static final <T> String toString(final T o, final StringMode mode, final int flags) {
+	private final static <T> String toString(final T o, final StringMode mode, final int flags) {
 		assert flags == 0 || mode == StringMode.MESSAGE;
 		if (o == null)
 			return "<none>";
@@ -493,19 +556,23 @@ public abstract class Classes {
 		return mode == StringMode.VARIABLE_NAME ? "object:" + o : "" + o;
 	}
 	
-	public static final String toString(final Object[] os, final int flags, final ChatColor c) {
+	public final static String toString(final Object[] os, final int flags, final boolean and) {
+		return toString(os, and, null, StringMode.MESSAGE, flags);
+	}
+	
+	public final static String toString(final Object[] os, final int flags, final ChatColor c) {
 		return toString(os, true, c, StringMode.MESSAGE, flags);
 	}
 	
-	public static final String toString(final Object[] os, final boolean and) {
+	public final static String toString(final Object[] os, final boolean and) {
 		return toString(os, and, null, StringMode.MESSAGE, 0);
 	}
 	
-	public static final String toString(final Object[] os, final boolean and, final StringMode mode) {
+	public final static String toString(final Object[] os, final boolean and, final StringMode mode) {
 		return toString(os, and, null, mode, 0);
 	}
 	
-	private static final String toString(final Object[] os, final boolean and, final ChatColor c, final StringMode mode, final int flags) {
+	private final static String toString(final Object[] os, final boolean and, final ChatColor c, final StringMode mode, final int flags) {
 		if (os.length == 0)
 			return toString(null);
 		if (os.length == 1)
@@ -525,34 +592,106 @@ public abstract class Classes {
 		return b.toString();
 	}
 	
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	public final static Pair<String, String> serialize(final Object o) {
-		final ClassInfo<?> ci = getSuperClassInfo(o.getClass());
+	/**
+	 * consists of {@link YggdrasilConstants#I_YGGDRASIL} and {@link YggdrasilConstants#VERSION}
+	 */
+	private final static byte[] YGGDRASIL_START = {(byte) 'Y', (byte) 'g', (byte) 'g', 0, (YggdrasilConstants.VERSION >>> 8) & 0xFF, YggdrasilConstants.VERSION & 0xFF};
+	
+	private final static byte[] getYggdrasilStart(final ClassInfo<?> c) throws NotSerializableException {
+		assert Enum.class.isAssignableFrom(Kleenean.class) && Tag.getType(Kleenean.class) == Tag.T_ENUM : Tag.getType(Kleenean.class);
+		final Tag t = Tag.getType(c.getC());
+		assert t.isWrapper() || t == Tag.T_STRING || t == Tag.T_OBJECT || t == Tag.T_ENUM;
+		final byte[] cn = t == Tag.T_OBJECT || t == Tag.T_ENUM ? Variables.yggdrasil.getID(c.getC()).getBytes(YggdrasilConstants.utf8) : null;
+		final byte[] r = new byte[YGGDRASIL_START.length + 1 + (cn == null ? 0 : 1 + cn.length)];
+		int i = 0;
+		for (; i < YGGDRASIL_START.length; i++)
+			r[i] = YGGDRASIL_START[i];
+		r[i++] = t.tag;
+		if (cn != null) {
+			r[i++] = (byte) cn.length;
+			for (int j = 0; j < cn.length; j++)
+				r[i++] = cn[j];
+		}
+		assert i == r.length;
+		return r;
+	}
+	
+	public final static Pair<String, byte[]> serialize(Object o) {
+		ClassInfo<?> ci = getSuperClassInfo(o.getClass());
 		if (ci == null)
 			return null;
 		if (ci.getSerializeAs() != null) {
-			final ClassInfo<?> as = getExactClassInfo(ci.getSerializeAs());
-			if (as == null || as.getSerializer() == null)
-				throw new SkriptAPIException(ci.getSerializeAs().getName() + ", the class to serialize " + o.getClass().getName() + " as, is not registered or not serializable");
-			final Object s = Converters.convert(o, as.getC());
-			if (s == null)
+			ci = getExactClassInfo(ci.getSerializeAs());
+			o = Converters.convert(o, ci.getC());
+			if (o == null) {
+				assert false : ci.getCodeName();
 				return null;
-			return new Pair<String, String>(as.getCodeName(), ((Serializer) as.getSerializer()).serialize(s));
-		} else if (ci.getSerializer() != null) {
-			return new Pair<String, String>(ci.getCodeName(), ((Serializer) ci.getSerializer()).serialize(o));
+			}
 		}
-		return null;
+		try {
+			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+			final YggdrasilOutputStream yout = Variables.yggdrasil.newOutputStream(bout);
+			yout.writeObject(o);
+			yout.flush();
+			yout.close();
+			final byte[] r = bout.toByteArray();
+			final byte[] start = getYggdrasilStart(ci);
+			for (int i = 0; i < start.length; i++)
+				assert r[i] == start[i] : o + " (" + ci.getC().getName() + "); " + Arrays.toString(start) + ", " + Arrays.toString(r);
+			final byte[] r2 = new byte[r.length - start.length];
+			System.arraycopy(r, start.length, r2, 0, r2.length);
+			
+			final Object d;
+			assert o.equals(d = deserialize(ci, new ByteArrayInputStream(r2))) : o + " (" + o.getClass() + ") != " + d + " (" + (d == null ? null : d.getClass()) + "): " + Arrays.toString(r);
+			
+			return new Pair<String, byte[]>(ci.getCodeName(), r2);
+		} catch (final IOException e) { // shouldn't happen
+			Skript.exception(e);
+			return null;
+		}
+	}
+	
+	public final static Object deserialize(final ClassInfo<?> type, final Blob value) throws SQLException {
+		return deserialize(type, value.getBinaryStream());
+	}
+	
+	public final static Object deserialize(final String type, final byte[] value) {
+		final ClassInfo<?> ci = getClassInfo(type);
+		if (ci == null)
+			return null;
+		return deserialize(ci, new ByteArrayInputStream(value));
+	}
+	
+	public final static Object deserialize(final ClassInfo<?> type, InputStream value) {
+		assert Bukkit.isPrimaryThread();
+		YggdrasilInputStream in = null;
+		try {
+			value = new SequenceInputStream(new ByteArrayInputStream(getYggdrasilStart(type)), value);
+			in = Variables.yggdrasil.newInputStream(value);
+			return in.readObject();
+		} catch (final IOException e) { // i.e. invalid save
+			if (Skript.testing())
+				e.printStackTrace();
+			return null;
+		} finally {
+			try {
+				if (in != null)
+					in.close();
+				value.close();
+			} catch (final IOException e) {}
+		}
 	}
 	
 	/**
-	 * Deserializes an object.
+	 * Deserialises an object.
 	 * <p>
 	 * This method must only be called from Bukkits main thread!
 	 * 
 	 * @param type
 	 * @param value
-	 * @return
+	 * @return Deserialised value or null if the input is invalid
 	 */
+	@Deprecated
 	public final static Object deserialize(final String type, final String value) {
 		assert Bukkit.isPrimaryThread();
 		final ClassInfo<?> ci = getClassInfo(type);

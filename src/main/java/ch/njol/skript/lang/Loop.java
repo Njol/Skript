@@ -40,7 +40,6 @@ import ch.njol.skript.util.Container.ContainerType;
  * A trigger section which represents a loop.
  * 
  * @author Peter Güttinger
- * @see LoopExpr
  */
 @SuppressWarnings("serial")
 public class Loop extends TriggerSection {

@@ -74,10 +74,10 @@ public interface Comparator<T1, T2> extends Serializable {
 		}
 		
 		/**
-		 * Test whether this relation is fulfilled if another is, e.g. EQUAL.is(GREATER_OR_EQUAL) returns true.
+		 * Test whether this relation is fulfilled if another is, e.g. GREATER_OR_EQUAL.is(EQUAL) returns true.
 		 * 
 		 * @param other
-		 * @return
+		 * @return Whether is relation is part of the given relation
 		 */
 		public boolean is(final Relation other) {
 			if (other == this)
@@ -86,17 +86,17 @@ public interface Comparator<T1, T2> extends Serializable {
 				return false;
 			switch (this) {
 				case EQUAL:
-					return other == SMALLER_OR_EQUAL || other == GREATER_OR_EQUAL;
+					return false;
 				case NOT_EQUAL:
 					return other == SMALLER || other == GREATER;
 				case GREATER:
-					return other == GREATER_OR_EQUAL;
+					return false;
 				case GREATER_OR_EQUAL:
-					return other == EQUAL || other == GREATER;
+					return other == GREATER || other == EQUAL;
 				case SMALLER:
-					return other == SMALLER_OR_EQUAL;
+					return false;
 				case SMALLER_OR_EQUAL:
-					return other == EQUAL || other == SMALLER;
+					return other == SMALLER || other == EQUAL;
 			}
 			assert false;
 			return false;
@@ -128,7 +128,7 @@ public interface Comparator<T1, T2> extends Serializable {
 		/**
 		 * Gets the inverse of this relation, i.e if this relation fulfils <code>X rel Y</code>, then the returned relation fulfils <code>!(X rel Y)</code>.
 		 * 
-		 * @return
+		 * @return !this
 		 */
 		public Relation getInverse() {
 			switch (this) {
@@ -152,10 +152,14 @@ public interface Comparator<T1, T2> extends Serializable {
 		/**
 		 * Gets the relation which has switched arguments, i.e. if this relation fulfils <code>X rel Y</code>, then the returned relation fulfils <code>Y rel X</code>.
 		 * 
-		 * @return
+		 * @return siht
 		 */
 		public Relation getSwitched() {
 			switch (this) {
+				case EQUAL:
+					return EQUAL;
+				case NOT_EQUAL:
+					return NOT_EQUAL;
 				case GREATER:
 					return SMALLER;
 				case GREATER_OR_EQUAL:
@@ -164,9 +168,9 @@ public interface Comparator<T1, T2> extends Serializable {
 					return GREATER;
 				case SMALLER_OR_EQUAL:
 					return GREATER_OR_EQUAL;
-				default:
-					return this;
 			}
+			assert false;
+			return null;
 		}
 		
 		public boolean isEqualOrInverse() {
@@ -215,7 +219,7 @@ public interface Comparator<T1, T2> extends Serializable {
 	}
 	
 	Comparator<?, ?> equalsComparator = new Comparator<Object, Object>() {
-		private static final long serialVersionUID = -7978700549410981219L;
+		private final static long serialVersionUID = -7978700549410981219L;
 		
 		@Override
 		public Relation compare(final Object o1, final Object o2) {
@@ -235,7 +239,7 @@ public interface Comparator<T1, T2> extends Serializable {
 	 * 
 	 * @param o1 Non-null object
 	 * @param o2 Non-null object
-	 * @return the relation of the objects.
+	 * @return the relation of the objects. Should neither return GREATER_OR_EQUAL nor SMALLER_OR_EQUAL.
 	 */
 	public Relation compare(T1 o1, T2 o2);
 	

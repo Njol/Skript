@@ -120,6 +120,7 @@ public class ClassInfo<T> implements Debuggable {
 		if (serializeAs != null)
 			throw new IllegalStateException("Can't set a serializer if this class is set to be serialized as another one");
 		this.serializer = serializer;
+		serializer.register(this);
 		return this;
 	}
 	
@@ -153,7 +154,7 @@ public class ClassInfo<T> implements Debuggable {
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param name
-	 * @return
+	 * @return This ClassInfo object
 	 */
 	public ClassInfo<T> name(final String name) {
 		assert this.docName == null;
@@ -165,7 +166,7 @@ public class ClassInfo<T> implements Debuggable {
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param description
-	 * @return
+	 * @return This ClassInfo object
 	 */
 	public ClassInfo<T> description(final String... description) {
 		assert this.description == null;
@@ -177,7 +178,7 @@ public class ClassInfo<T> implements Debuggable {
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param usage
-	 * @return
+	 * @return This ClassInfo object
 	 */
 	public ClassInfo<T> usage(final String... usage) {
 		assert this.usage == null;
@@ -189,7 +190,7 @@ public class ClassInfo<T> implements Debuggable {
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param examples
-	 * @return
+	 * @return This ClassInfo object
 	 */
 	public ClassInfo<T> examples(final String... examples) {
 		assert this.examples == null;
@@ -201,7 +202,7 @@ public class ClassInfo<T> implements Debuggable {
 	 * Only used for Skript's documentation.
 	 * 
 	 * @param since
-	 * @return
+	 * @return This ClassInfo object
 	 */
 	public ClassInfo<T> since(final String since) {
 		assert this.since == null;
@@ -277,11 +278,11 @@ public class ClassInfo<T> implements Debuggable {
 	
 	// === ORDERING ===
 	
-	private final Set<String> before = new HashSet<String>();
-	private Set<String> after;
+	private Set<String> before;
+	private final Set<String> after = new HashSet<String>();
 	
 	/**
-	 * Sets one or more classes that should occur before this class in the class infos list. This only affects the order in which classes are parsed if it's unknown of which type
+	 * Sets one or more classes that this class should occur before in the class info list. This only affects the order in which classes are parsed if it's unknown of which type
 	 * the parsed string is.
 	 * <p>
 	 * Please note that subclasses will always be registered before superclasses, no matter what is defined here or in {@link #after(String...)}.
@@ -292,12 +293,13 @@ public class ClassInfo<T> implements Debuggable {
 	 * @return this ClassInfo
 	 */
 	public ClassInfo<T> before(final String... before) {
-		this.before.addAll(Arrays.asList(before));
+		assert this.before == null;
+		this.before = new HashSet<String>(Arrays.asList(before));
 		return this;
 	}
 	
 	/**
-	 * Sets one or more classes that should occur after this class in the class infos list. This only affects the order in which classes are parsed if it's unknown of which type
+	 * Sets one or more classes that this class should occur after in the class info list. This only affects the order in which classes are parsed if it's unknown of which type
 	 * the parsed string is.
 	 * <p>
 	 * Please note that subclasses will always be registered before superclasses, no matter what is defined here or in {@link #before(String...)}.
@@ -308,20 +310,19 @@ public class ClassInfo<T> implements Debuggable {
 	 * @return this ClassInfo
 	 */
 	public ClassInfo<T> after(final String... after) {
-		assert this.after == null;
-		this.after = new HashSet<String>(Arrays.asList(after));
+		this.after.addAll(Arrays.asList(after));
 		return this;
 	}
 	
 	/**
-	 * @return never null
+	 * @return Set of classes that should be after this one. May return null.
 	 */
 	public Set<String> before() {
 		return before;
 	}
 	
 	/**
-	 * @return maybe null
+	 * @return Set of classes that should be before this one. Never returns null.
 	 */
 	public Set<String> after() {
 		return after;

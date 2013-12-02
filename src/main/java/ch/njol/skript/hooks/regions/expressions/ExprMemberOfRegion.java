@@ -27,6 +27,10 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.hooks.regions.RegionsPlugin;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.lang.Expression;
@@ -39,10 +43,16 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
+@Name("Region Members & Owners")
+@Description({"A list of members or owners of a <a href='../classes/#region'>region</a>.",
+		"This expression requires a supported regions plugin to be installed."})
+@Examples({"on entering of a region:",
+		"	message \"You're entering %region% whose owners are %owners of region%\"."})
+@Since("2.1")
 public class ExprMemberOfRegion extends SimpleExpression<OfflinePlayer> {
 	static {
 		Skript.registerExpression(ExprMemberOfRegion.class, OfflinePlayer.class, ExpressionType.PROPERTY,
-				"[the] (0¦members|1¦owner[s]) of [[the] region[s]] %regions%");
+				"(all|the|) (0¦members|1¦owner[s]) of [[the] region[s]] %regions%", "[[the] region[s]] %regions%'[s] (0¦members|1¦owner[s])");
 	}
 	
 	private boolean owners;

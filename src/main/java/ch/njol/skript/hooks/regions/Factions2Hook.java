@@ -21,6 +21,7 @@
 
 package ch.njol.skript.hooks.regions;
 
+import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,6 +38,7 @@ import org.bukkit.entity.Player;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
 import ch.njol.util.coll.iterator.EmptyIterator;
+import ch.njol.yggdrasil.Fields;
 
 import com.massivecraft.factions.Factions;
 import com.massivecraft.factions.entity.BoardColls;
@@ -71,7 +73,7 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 	
 	public final class FactionsRegion extends Region {
 		
-		private final Faction f;
+		private transient Faction f;
 		
 		public FactionsRegion(final Faction f) {
 			this.f = f;
@@ -130,14 +132,13 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 				public Block next() {
 					if (!hasNext())
 						throw new NoSuchElementException();
-					return null;
+					return current.next();
 				}
 				
 				@Override
 				public void remove() {
 					throw new UnsupportedOperationException();
 				}
-				
 			};
 		}
 		
@@ -147,8 +148,20 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 		}
 		
 		@Override
-		public String serialize() {
-			return f.getUniverse() + ":" + f.getId();
+		public Fields serialize() {
+			final Fields fields = new Fields();
+			fields.putObject("universe", f.getUniverse());
+			fields.putObject("id", f.getId());
+			return fields;
+		}
+		
+		@Override
+		public void deserialize(final Fields fields) throws StreamCorruptedException {
+			final String universe = fields.getObject("universe", String.class);
+			final String id = fields.getObject("id", String.class);
+			f = FactionColls.get().getForUniverse(universe).get(id); // getForUniverse creates a new "Coll" if none exists
+			if (f == null)
+				throw new StreamCorruptedException("Invalid faction " + id + " in universe " + universe);
 		}
 		
 		@Override
@@ -193,13 +206,8 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 	}
 	
 	@Override
-	protected Region deserializeRegion_i(final String s) {
-		final String[] split = s.split(":", 2);
-		if (split.length != 2)
-			return null;
-		final Faction f = FactionColls.get().getForUniverse(split[0]).get(split[1]);
-		if (f == null)
-			return null;
-		return new FactionsRegion(f);
+	protected Class<? extends Region> getRegionClass() {
+		return FactionsRegion.class;
 	}
+	
 }

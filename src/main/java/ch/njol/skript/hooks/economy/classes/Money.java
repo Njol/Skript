@@ -133,7 +133,7 @@ public class Money {
 		return amount;
 	}
 	
-	public static final Money parse(final String s) {
+	public final static Money parse(final String s) {
 		if (VaultHook.economy == null) {
 //			Skript.error("No economy plugin detected");
 			return null;

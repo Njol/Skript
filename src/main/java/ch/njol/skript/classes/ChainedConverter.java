@@ -30,7 +30,7 @@ import ch.njol.skript.registrations.Converters;
  * @param <F> same as Converter's <F> (from)
  * @param <M> the middle type, i.e. the type the first converter converts to and the second converter comverts from.
  * @param <T> same as Converter's <T> (to)
- * @see Converters#registerConverter(Class, Class, Converter)
+ * @see Converters#registerConverter(Class, Class, SerializableConverter)
  * @see Converter
  */
 @SuppressWarnings("serial")

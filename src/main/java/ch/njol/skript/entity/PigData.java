@@ -32,7 +32,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 @SuppressWarnings("serial")
 public class PigData extends EntityData<Pig> {
 	static {
-		register(PigData.class, "pig", Pig.class, "unsaddled pig", "pig", "saddled pig");
+		register(PigData.class, "pig", Pig.class, 1, "unsaddled pig", "pig", "saddled pig");
 	}
 	
 	private int saddled = 0;
@@ -49,11 +49,7 @@ public class PigData extends EntityData<Pig> {
 		return true;
 	}
 	
-	@Override
-	public String serialize() {
-		return "" + saddled;
-	}
-	
+//		return "" + saddled;
 	@Override
 	protected boolean deserialize(final String s) {
 		try {
@@ -81,11 +77,7 @@ public class PigData extends EntityData<Pig> {
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof PigData))
 			return false;
 		final PigData other = (PigData) obj;
@@ -93,7 +85,7 @@ public class PigData extends EntityData<Pig> {
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		return saddled;
 	}
 	

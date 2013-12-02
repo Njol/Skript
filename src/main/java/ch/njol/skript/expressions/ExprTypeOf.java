@@ -71,7 +71,7 @@ public class ExprTypeOf extends SimplePropertyExpression<Object, Object> {
 	}
 	
 	@Override
-	protected <R> ConvertedExpression<Object, ? extends R> getConvertedExpr(final Class<R> to) {
+	protected <R> ConvertedExpression<Object, ? extends R> getConvertedExpr(final Class<R>... to) {
 		if (!Converters.converterExists(EntityData.class, to) && !Converters.converterExists(ItemStack.class, to))
 			return null;
 		return super.getConvertedExpr(to);

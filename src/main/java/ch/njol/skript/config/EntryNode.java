@@ -54,13 +54,12 @@ public class EntryNode extends Node implements Entry<String, String> {
 	public String setValue(final String v) {
 		final String r = value;
 		value = v;
-		modified();
 		return r;
 	}
 	
 	@Override
-	String save() {
-		return key + config.separator + " " + value;
+	String save_i() {
+		return key + config.getSaveSeparator() + value;
 	}
 	
 }

@@ -31,15 +31,36 @@ import org.bukkit.plugin.Plugin;
 
 import ch.njol.skript.hooks.Hook;
 import ch.njol.skript.hooks.regions.classes.Region;
+import ch.njol.skript.variables.Variables;
+import ch.njol.yggdrasil.ClassResolver;
 
 /**
  * @author Peter Güttinger
  */
-// TODO support GriefPrevention, PreciousStones and maybe other plugins
-// TODO add 'region(s) at <location>', 'owner of <region>', '<player> is member of <region>', 'members of <region>', etc.
+// REMIND support more plugins?
 public abstract class RegionsPlugin<P extends Plugin> extends Hook<P> {
 	
 	public static Collection<RegionsPlugin<?>> plugins = new ArrayList<RegionsPlugin<?>>(2);
+	
+	static {
+		Variables.yggdrasil.registerClassResolver(new ClassResolver() {
+			@Override
+			public String getID(final Class<?> c) {
+				for (final RegionsPlugin<?> p : plugins)
+					if (p.getRegionClass() == c)
+						return c.getClass().getSimpleName();
+				return null;
+			}
+			
+			@Override
+			public Class<?> getClass(final String id) {
+				for (final RegionsPlugin<?> p : plugins)
+					if (id.equals(p.getRegionClass().getSimpleName()))
+						return p.getRegionClass();
+				return null;
+			}
+		});
+	}
 	
 	@Override
 	protected boolean init() {
@@ -86,21 +107,7 @@ public abstract class RegionsPlugin<P extends Plugin> extends Hook<P> {
 		return false;
 	}
 	
-	public final static String serializeRegion(final Region r) {
-		return r.getPlugin() + ":" + r.serialize();
-	}
-	
-	protected abstract Region deserializeRegion_i(String s);
-	
-	public final static Region deserializeRegion(final String s) {
-		final String[] split = s.split(":", 2);
-		if (split.length < 2)
-			return null;
-		final RegionsPlugin<?> p = getPlugin(split[0]);
-		if (p == null)
-			return null;
-		return p.deserializeRegion_i(split[1]);
-	}
+	protected abstract Class<? extends Region> getRegionClass();
 	
 	public static RegionsPlugin<?> getPlugin(final String name) {
 		for (final RegionsPlugin<?> pl : plugins) {

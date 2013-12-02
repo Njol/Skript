@@ -63,9 +63,8 @@ public class ExperienceSpawnEvent extends Event implements Cancellable {
 		return xp;
 	}
 	
-	// TODO create an 'experience' expression
 	public void setSpawnedXP(final int xp) {
-		this.xp = xp;
+		this.xp = Math.max(0, xp);
 	}
 	
 	public Location getLocation() {
@@ -85,7 +84,7 @@ public class ExperienceSpawnEvent extends Event implements Cancellable {
 	}
 	
 	// Bukkit stuff
-	private static final HandlerList handlers = new HandlerList();
+	private final static HandlerList handlers = new HandlerList();
 	
 	@Override
 	public HandlerList getHandlers() {

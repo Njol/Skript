@@ -81,7 +81,7 @@ public class ExprElement extends SimpleExpression<Object> {
 			final Object[] os = expr.getArray(e);
 			if (os.length == 0)
 				return null;
-			o = CollectionUtils.random(os);
+			o = CollectionUtils.getRandom(os);
 		}
 		final Object[] r = (Object[]) Array.newInstance(getReturnType(), 1);
 		r[0] = o;

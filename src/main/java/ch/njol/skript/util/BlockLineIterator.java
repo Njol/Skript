@@ -26,7 +26,9 @@ import org.bukkit.block.Block;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 
+import ch.njol.skript.Skript;
 import ch.njol.util.Checker;
+import ch.njol.util.Math2;
 import ch.njol.util.coll.iterator.StoppableIterator;
 
 /**
@@ -40,7 +42,7 @@ public class BlockLineIterator extends StoppableIterator<Block> {
 	 * @throws IllegalStateException randomly (Bukkit bug)
 	 */
 	public BlockLineIterator(final Block start, final Block end) throws IllegalStateException {
-		super(new BlockIterator(start.getWorld(), start.getLocation().add(0.5, 0.5, 0.5).toVector(),
+		super(new BlockIterator(start.getWorld(), fitInWorld(start.getLocation().add(0.5, 0.5, 0.5), end.getLocation().subtract(start.getLocation()).toVector()),
 				end.equals(start) ? new Vector(1, 0, 0) : end.getLocation().subtract(start.getLocation()).toVector(), 0, 0), // should prevent an error if start = end
 		new Checker<Block>() {
 			private final double overshotSq = Math.pow(start.getLocation().distance(end.getLocation()) + 2, 2);
@@ -61,7 +63,7 @@ public class BlockLineIterator extends StoppableIterator<Block> {
 	 * @throws IllegalStateException randomly (Bukkit bug)
 	 */
 	public BlockLineIterator(final Location start, final Vector dir, final double dist) throws IllegalStateException {
-		super(new BlockIterator(start.getWorld(), start.toVector(), dir, 0, 0), new Checker<Block>() {
+		super(new BlockIterator(start.getWorld(), fitInWorld(start, dir), dir, 0, 0), new Checker<Block>() {
 			private final double distSq = dist * dist;
 			
 			@Override
@@ -79,5 +81,16 @@ public class BlockLineIterator extends StoppableIterator<Block> {
 	 */
 	public BlockLineIterator(final Block start, final Vector dir, final double dist) throws IllegalStateException {
 		this(start.getLocation().add(0.5, 0.5, 0.5), dir, dist);
+	}
+	
+	private final static Vector fitInWorld(final Location l, final Vector dir) {
+		if (0 <= l.getBlockY() && l.getBlockY() < l.getWorld().getMaxHeight())
+			return l.toVector();
+		final double y = Math2.fit(0, l.getY(), l.getWorld().getMaxHeight());
+		if (Math.abs(dir.getY()) < Skript.EPSILON)
+			return new Vector(l.getX(), y, l.getZ());
+		final double dy = y - l.getY();
+		final double n = dy / dir.getY();
+		return l.toVector().add(dir.clone().multiply(n));
 	}
 }

@@ -26,8 +26,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
@@ -42,6 +40,8 @@ import ch.njol.util.coll.iterator.CheckedIterator;
  */
 public class SectionNode extends Node implements Iterable<Node> {
 	
+	private final ArrayList<Node> nodes = new ArrayList<Node>();
+	
 	public SectionNode(final String key, final SectionNode parent, final ConfigReader r) {
 		super(key, parent, r);
 	}
@@ -50,34 +50,90 @@ public class SectionNode extends Node implements Iterable<Node> {
 		super(c);
 	}
 	
+	public SectionNode(final String key) {
+		this.key = key;
+	}
+	
 	public SectionNode(final String key, final SectionNode parent, final String orig, final int lineNum) {
 		super(key, parent, orig, lineNum);
 	}
 	
-	private final ArrayList<Node> nodes = new ArrayList<Node>();
-	private transient Map<String, Node> nodeMap = null;
+	/**
+	 * Note to self: use getNodeMap()
+	 */
+	private NodeMap nodeMap = null;
 	
+	private NodeMap getNodeMap() {
+		if (nodeMap == null) {
+			nodeMap = new NodeMap();
+			for (final Node node : nodes)
+				nodeMap.put(node);
+		}
+		return nodeMap;
+	}
+	
+	/**
+	 * Total amount of nodes (including void nodes) in this section.
+	 * 
+	 * @return
+	 */
 	public int size() {
 		return nodes.size();
 	}
 	
+	/**
+	 * Adds the given node at the end of this section.
+	 * 
+	 * @param n
+	 */
 	public void add(final Node n) {
-		modified();
+		n.remove();
 		nodes.add(n);
-		nodeMap.put(n.key.toLowerCase(Locale.ENGLISH), n);
+		n.parent = this;
+		getNodeMap().put(n);
 	}
 	
+	/**
+	 * Inserts the given node into this section at the specified position.
+	 * 
+	 * @param n
+	 * @param index between 0 and {@link #size()}, inclusive
+	 */
+	public void insert(final Node n, final int index) {
+		nodes.add(index, n);
+		n.parent = this;
+		getNodeMap().put(n);
+	}
+	
+	/**
+	 * Removes the given node from this section.
+	 * 
+	 * @param n
+	 */
 	public void remove(final Node n) {
-		modified();
 		nodes.remove(n);
-		nodeMap.remove(n.key.toLowerCase(Locale.ENGLISH));
+		n.parent = null;
+		getNodeMap().remove(n);
 	}
 	
-	public void remove(final String key) {
-		modified();
-		nodes.remove(nodeMap.remove(key.toLowerCase(Locale.ENGLISH)));
+	/**
+	 * Removes an entry with the given key.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public Node remove(final String key) {
+		final Node n = getNodeMap().remove(key);
+		if (n == null)
+			return null;
+		nodes.remove(n);
+		n.parent = null;
+		return n;
 	}
 	
+	/**
+	 * Iterator over all non-void nodes of this section.
+	 */
 	@Override
 	public Iterator<Node> iterator() {
 		return new CheckedIterator<Node>(nodes.iterator(), new Checker<Node>() {
@@ -109,21 +165,20 @@ public class SectionNode extends Node implements Iterable<Node> {
 	}
 	
 	/**
-	 * Get a subnode (EntryNode or SectionNode) with the specified name
+	 * Gets a subnode (EntryNode or SectionNode) with the specified name.
 	 * 
 	 * @param key
-	 * @return
+	 * @return The node with the given name
 	 */
 	public Node get(final String key) {
-		if (nodeMap == null) {
-			nodeMap = new HashMap<String, Node>();
-			for (final Node node : nodes) {
-				if (node.isVoid())
-					continue;
-				nodeMap.put(node.key.toLowerCase(Locale.ENGLISH), node);
-			}
-		}
-		return nodeMap.get(key.toLowerCase(Locale.ENGLISH));
+		return getNodeMap().get(key);
+	}
+	
+	public String getValue(final String key) {
+		final Node n = get(key);
+		if (n instanceof EntryNode)
+			return ((EntryNode) n).getValue();
+		return null;
 	}
 	
 	/**
@@ -131,7 +186,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 	 * 
 	 * @param name The name of the node (case insensitive)
 	 * @param def The default value
-	 * @return
+	 * @return The value of the entry node with the give node, or <tt>def</tt> if there's no entry with the given name.
 	 */
 	public String get(final String name, final String def) {
 		final Node n = this.get(name);
@@ -144,9 +199,16 @@ public class SectionNode extends Node implements Iterable<Node> {
 		final Node n = get(key);
 		if (n instanceof EntryNode) {
 			((EntryNode) n).setValue(value);
-		} else if (n == null) {
+		} else {
 			add(new EntryNode(key, value, this));
 		}
+	}
+	
+	void renamed(final Node node, final String oldKey) {
+		if (!nodes.contains(node))
+			throw new IllegalArgumentException();
+		getNodeMap().remove(oldKey);
+		getNodeMap().put(node);
 	}
 	
 	public boolean isEmpty() {
@@ -157,11 +219,11 @@ public class SectionNode extends Node implements Iterable<Node> {
 		return true;
 	}
 	
-	static final SectionNode load(final Config c, final ConfigReader r) throws IOException {
+	final static SectionNode load(final Config c, final ConfigReader r) throws IOException {
 		return new SectionNode(c).load_i(r);
 	}
 	
-	static final SectionNode load(final String name, final SectionNode parent, final ConfigReader r) throws IOException {
+	final static SectionNode load(final String name, final SectionNode parent, final ConfigReader r) throws IOException {
 		parent.config.level++;
 		final SectionNode node = new SectionNode(name, parent, r).load_i(r);
 		SkriptLogger.setNode(parent);
@@ -263,16 +325,16 @@ public class SectionNode extends Node implements Iterable<Node> {
 		return this;
 	}
 	
-	private final Node getEntry(final String line, final String orig, final int lineNum, final String separator) {
-		final int x = line.indexOf(separator);
+	private Node getEntry(final String keyAndValue, final String orig, final int lineNum, final String separator) {
+		final int x = keyAndValue.indexOf(separator);
 		if (x == -1) {
-			final InvalidNode n = new InvalidNode(this, line, lineNum);
-			EntryValidator.notAnEntryError(n);
+			final InvalidNode in = new InvalidNode(this, orig, lineNum);
+			EntryValidator.notAnEntryError(in);
 			SkriptLogger.setNode(this);
-			return n;
+			return in;
 		}
-		final String key = line.substring(0, x).trim();
-		final String value = line.substring(x + separator.length()).trim();
+		final String key = keyAndValue.substring(0, x).trim();
+		final String value = keyAndValue.substring(x + separator.length()).trim();
 		return new EntryNode(key, value, orig, this, lineNum);
 	}
 	
@@ -285,7 +347,12 @@ public class SectionNode extends Node implements Iterable<Node> {
 		convertToEntries(levels, config.separator);
 	}
 	
-	// TODO breaks saving!
+	/**
+	 * REMIND breaks saving - separator argument can be different from config.sepator
+	 * 
+	 * @param levels Maximum depth of recursion, <tt>-1</tt> for no limit.
+	 * @param separator Some separator, e.g. ":" or "=".
+	 */
 	public void convertToEntries(final int levels, final String separator) {
 		if (levels < -1)
 			throw new IllegalArgumentException("levels must be >= -1");
@@ -298,27 +365,21 @@ public class SectionNode extends Node implements Iterable<Node> {
 			}
 			if (!(n instanceof SimpleNode))
 				continue;
-			nodes.set(i, getEntry(n.getKey(), n.getOrig(), n.lineNum, separator));
+			nodes.set(i, getEntry(n.key, n.save(), n.lineNum, separator));
 		}
 	}
 	
 	@Override
-	void save(final PrintWriter w) {
-		if (parent != null) {
-			if (!modified) {
-				w.println(getIndentation() + orig.trim());
-			} else {
-				w.println(getIndentation() + key + ":" + getComment());
-			}
-		}
+	public void save(final PrintWriter w) {
+		if (parent != null)
+			w.println(save());
 		for (final Node node : nodes)
 			node.save(w);
 	}
 	
 	@Override
-	String save() {
-		assert false;
-		return key + ":" + getComment();
+	String save_i() {
+		return key + ":";
 	}
 	
 	public boolean validate(final SectionValidator validator) {
@@ -337,7 +398,11 @@ public class SectionNode extends Node implements Iterable<Node> {
 		return r;
 	}
 	
-	boolean setValues(final SectionNode other) {
+	/**
+	 * @param other
+	 * @return <tt>false</tt> iff this and the other SectionNode contain the exact same set of keys
+	 */
+	public boolean setValues(final SectionNode other) {
 		boolean r = false;
 		for (final Node n : this) {
 			final Node o = other.get(n.key);

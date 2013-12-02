@@ -37,15 +37,19 @@ import ch.njol.util.Kleenean;
 public class ExprSubstring extends SimpleExpression<String> {
 	static {
 		Skript.registerExpression(ExprSubstring.class, String.class, ExpressionType.COMBINED,
-				"split %string% between %number% and %number%)");
+				"[the] (part|sub(string|text)) of %strings% (between|from) (ind(ex|ices)|character[s]|) %number% (and|to) (index|character|) %number%",
+				"[the] (1¦first|2¦last) [%-number%] character[s] of %strings%", "[the] %number% (0¦first|1¦last) characters of %strings%");
 	}
 	
 	private Expression<String> string;
 	private Expression<Number> start, end;
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		// TODO Auto-generated method stub
+		string = (Expression<String>) exprs[parseResult.mark == 0 ? 0 : 1];
+		start = parseResult.mark == 1 ? null : (Expression<Number>) exprs[parseResult.mark == 0 ? 1 : 0];
+		end = parseResult.mark == 2 ? null : (Expression<Number>) exprs[parseResult.mark == 0 ? 2 : 0];
 		return true;
 	}
 	
@@ -54,13 +58,16 @@ public class ExprSubstring extends SimpleExpression<String> {
 		final String s = string.getSingle(e);
 		if (s == null)
 			return null;
-		final Number d1 = start == null ? 0 : start.getSingle(e), d2 = end == null ? s.length() : end.getSingle(e);
+		Number d1 = start == null ? 1 : start.getSingle(e);
+		final Number d2 = end == null ? s.length() : end.getSingle(e);
 		if (d1 == null || d2 == null)
 			return null;
-		final int i1 = (int) Math.round(d1.doubleValue()), i2 = (int) Math.round(d2.doubleValue());
-		if (i1 > i2)
+		if (end == null)
+			d1 = s.length() - d1.doubleValue() + 1;
+		final int i1 = Math.max(0, (int) Math.round(d1.doubleValue()) - 1), i2 = Math.min((int) Math.round(d2.doubleValue()), s.length());
+		if (i1 >= i2)
 			return null;
-		return new String[] {s.substring(Math.max(0, i1 - 1), Math.min(i2, s.length()))};
+		return new String[] {s.substring(i1, i2)};
 	}
 	
 	@Override
@@ -75,7 +82,6 @@ public class ExprSubstring extends SimpleExpression<String> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	

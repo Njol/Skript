@@ -46,7 +46,7 @@ public class ScriptCommandEvent extends CommandEvent {
 	}
 	
 	// Bukkit stuff
-	private static final HandlerList handlers = new HandlerList();
+	private final static HandlerList handlers = new HandlerList();
 	
 	@Override
 	public HandlerList getHandlers() {

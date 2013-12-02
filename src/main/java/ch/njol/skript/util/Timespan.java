@@ -30,12 +30,13 @@ import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.skript.localization.Noun;
 import ch.njol.util.Pair;
 import ch.njol.util.coll.CollectionUtils;
+import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-public class Timespan implements Serializable { // TODO unit
+public class Timespan implements Serializable, YggdrasilSerializable, Comparable<Timespan> { // REMIND unit
 
 	private final static Noun m_tick = new Noun("time.tick");
 	private final static Noun m_second = new Noun("time.second");
@@ -44,29 +45,29 @@ public class Timespan implements Serializable { // TODO unit
 	private final static Noun m_day = new Noun("time.day");
 	private final static Noun[] names = {m_tick, m_second, m_minute, m_hour, m_day};
 	private final static int[] times = {50, 1000, 1000 * 60, 1000 * 60 * 60, 1000 * 60 * 60 * 24};
-	static final HashMap<String, Integer> parseValues = new HashMap<String, Integer>();
+	final static HashMap<String, Integer> parseValues = new HashMap<String, Integer>();
 	static {
 		Language.addListener(new LanguageChangeListener() {
 			@Override
 			public void onLanguageChange() {
 				for (int i = 0; i < names.length; i++) {
-					parseValues.put(names[i].getSingular(), times[i]);
-					parseValues.put(names[i].getPlural(), times[i]);
+					parseValues.put(names[i].getSingular().toLowerCase(), times[i]);
+					parseValues.put(names[i].getPlural().toLowerCase(), times[i]);
 				}
 			}
 		});
 	}
 	
-	public static final Timespan parse(final String s) {
+	public final static Timespan parse(final String s) {
 		if (s.isEmpty())
 			return null;
 		int t = 0;
 		boolean minecraftTime = false;
 		boolean isMinecraftTimeSet = false;
-		if (s.matches("^\\d+:\\d\\d(:\\d\\d)?(\\.\\d{1,4})?$")) {
+		if (s.matches("^\\d+:\\d\\d(:\\d\\d)?(\\.\\d{1,4})?$")) { // MM:SS[.ms] or HH:MM:SS[.ms]
 			final String[] ss = s.split("[:.]");
-			final int[] times = {1000 * 60 * 60, 1000 * 60, 1000, 1};
-			final int offset = ss.length == 3 && !s.contains(".") || ss.length == 4 ? 1 : 0;
+			final int[] times = {1000 * 60 * 60, 1000 * 60, 1000, 1}; // h, m, s, ms
+			final int offset = ss.length == 3 && !s.contains(".") || ss.length == 4 ? 0 : 1;
 			for (int i = 0; i < ss.length; i++) {
 				t += times[offset + i] * Utils.parseInt(ss[i]);
 			}
@@ -105,22 +106,17 @@ public class Timespan implements Serializable { // TODO unit
 					sub = subs[++i];
 				}
 				
-				if (minecraftTime)
-					amount /= 72f;
-				
 				if (sub.endsWith(","))
 					sub = sub.substring(0, sub.length() - 1);
 				
-				final Pair<String, Boolean> p = Utils.getEnglishPlural(sub);
-				sub = p.first;
-				
-				if (!parseValues.containsKey(sub))
+				final Integer d = parseValues.get(sub.toLowerCase());
+				if (d == null)
 					return null;
 				
-				if (sub.equals("tick") && minecraftTime)
+				if (minecraftTime && d != times[0]) // times[0] == tick
 					amount *= 72f;
 				
-				t += Math.round(amount * parseValues.get(sub));
+				t += Math.round(amount * d);
 				
 				isMinecraftTimeSet = true;
 				
@@ -130,6 +126,10 @@ public class Timespan implements Serializable { // TODO unit
 	}
 	
 	private final long millis;
+	
+	public Timespan() {
+		millis = 0;
+	}
 	
 	public Timespan(final long millis) {
 		if (millis < 0)
@@ -185,6 +185,34 @@ public class Timespan implements Serializable { // TODO unit
 	
 	private static String toString(final double amount, final Pair<Noun, Integer> p, final int flags) {
 		return p.first.withAmount(amount, flags);
+	}
+	
+	@Override
+	public int compareTo(final Timespan o) {
+		final long d = millis - o.millis;
+		return d > 0 ? 1 : d < 0 ? -1 : 0;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (int) (millis ^ (millis >>> 32));
+		return result;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof Timespan))
+			return false;
+		final Timespan other = (Timespan) obj;
+		if (millis != other.millis)
+			return false;
+		return true;
 	}
 	
 }

@@ -30,14 +30,19 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.SingleItemIterator;
+import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings({"serial", "deprecation"})
-public class ItemData implements Serializable, Cloneable {
+public class ItemData implements Serializable, Cloneable, YggdrasilSerializable {
+	static {
+		Variables.yggdrasil.registerSingleClass(ItemData.class, "ItemData");
+	}
 	
 	/**
 	 * Only ItemType may set this directly.
@@ -91,10 +96,10 @@ public class ItemData implements Serializable, Cloneable {
 	}
 	
 	/**
-	 * Tests whether the given item is of this type. Returns true if null was passed and this type's typeid is 0.
+	 * Tests whether the given item is of this type.
 	 * 
 	 * @param item
-	 * @return
+	 * @return Whether the given item is of this type. If <tt>item</tt> is <tt>null</tt> this returns <tt>getId() == 0</tt>.
 	 */
 	public boolean isOfType(final ItemStack item) {
 		if (item == null)
@@ -111,15 +116,22 @@ public class ItemData implements Serializable, Cloneable {
 	}
 	
 	/**
-	 * Returns <code>Aliases.{@link Aliases#getMaterialName(int, short, short) getMaterialName}(typeid, dataMin, dataMax, 0)</code>
+	 * Returns <code>Aliases.{@link Aliases#getMaterialName(int, short, short, boolean) getMaterialName}(typeid, dataMin, dataMax, false)</code>
 	 */
 	@Override
 	public String toString() {
-		return Aliases.getMaterialName(typeid, dataMin, dataMax, 0);
+		return Aliases.getMaterialName(typeid, dataMin, dataMax, false);
 	}
 	
-	public String toString(final boolean debug, final int flags) {
-		return debug ? Aliases.getDebugMaterialName(typeid, dataMin, dataMax, flags) : Aliases.getMaterialName(typeid, dataMin, dataMax, flags);
+	public String toString(final boolean debug, final boolean plural) {
+		return debug ? Aliases.getDebugMaterialName(typeid, dataMin, dataMax, plural) : Aliases.getMaterialName(typeid, dataMin, dataMax, plural);
+	}
+	
+	/**
+	 * @return The ietm's gender or -1 if no name is found
+	 */
+	public int getGender() {
+		return Aliases.getGender(typeid, dataMin, dataMax);
 	}
 	
 	@Override
@@ -134,7 +146,7 @@ public class ItemData implements Serializable, Cloneable {
 	
 	@Override
 	public int hashCode() {
-		return typeid ^ dataMin << 8 ^ dataMax << 16;
+		return (typeid * 31 + dataMin) * 31 + dataMax;
 	}
 	
 	/**
@@ -142,7 +154,7 @@ public class ItemData implements Serializable, Cloneable {
 	 * set if any.
 	 * 
 	 * @param other
-	 * @return a new ItemData which is the intersection of the given types, or null if the intersection of the data ranges is empty or both datas have an id != -1 which are not the
+	 * @return A new ItemData which is the intersection of the given types, or null if the intersection of the data ranges is empty or both datas have an id != -1 which are not the
 	 *         same.
 	 */
 	public ItemData intersection(final ItemData other) {

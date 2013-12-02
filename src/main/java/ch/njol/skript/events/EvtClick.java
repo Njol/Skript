@@ -53,8 +53,8 @@ public class EvtClick extends SkriptEvent {
 	
 	static {
 		Skript.registerEvent("Click", EvtClick.class, CollectionUtils.array(PlayerInteractEvent.class, PlayerInteractEntityEvent.class),
-				"[(1¦right|2¦left)(| |-)][mouse(| |-)]click[ing] [on %-entitydata/itemtype%] [(with|using|holding) %itemtype%]",
-				"[(1¦right|2¦left)(| |-)][mouse(| |-)]click[ing] (with|using|holding) %itemtype% on %entitydata/itemtype%")
+				"[(" + RIGHT + "¦right|" + LEFT + "¦left)(| |-)][mouse(| |-)]click[ing] [on %-entitydata/itemtype%] [(with|using|holding) %itemtype%]",
+				"[(" + RIGHT + "¦right|" + LEFT + "¦left)(| |-)][mouse(| |-)]click[ing] (with|using|holding) %itemtype% on %entitydata/itemtype%")
 				.description("Called when a user clicks on a block, an entity or air with or without an item in their hand.",
 						"Please note that rightclick events with an empty hand while not looking at a block are not sent to the server, so there's no way to detect them.")
 				.examples("on click",
@@ -72,7 +72,7 @@ public class EvtClick extends SkriptEvent {
 	
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
-		click = parser.mark == -1 ? ANY : parser.mark;
+		click = parser.mark == 0 ? ANY : parser.mark;
 		types = args[matchedPattern];
 		if (types != null && !ItemType.class.isAssignableFrom(types.getReturnType())) {
 			if (click == LEFT) {
@@ -87,7 +87,7 @@ public class EvtClick extends SkriptEvent {
 	}
 	
 	@Override
-	public boolean check(final Event e) { // TODO rightclick on door with weapon = left click?
+	public boolean check(final Event e) {
 		final Player player;
 		final Block block;
 		final Entity entity;
@@ -99,9 +99,22 @@ public class EvtClick extends SkriptEvent {
 			entity = ((PlayerInteractEntityEvent) e).getRightClicked();
 			block = null;
 		} else if (e instanceof PlayerInteractEvent) {
-			if (click == LEFT && !(((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_AIR || ((PlayerInteractEvent) e).getAction() == Action.LEFT_CLICK_BLOCK))
-				return false;
-			else if (click == RIGHT && !(((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_AIR || ((PlayerInteractEvent) e).getAction() == Action.RIGHT_CLICK_BLOCK))
+			final Action a = ((PlayerInteractEvent) e).getAction();
+			final int click;
+			switch (a) {
+				case LEFT_CLICK_AIR:
+				case LEFT_CLICK_BLOCK:
+					click = LEFT;
+					break;
+				case RIGHT_CLICK_AIR:
+				case RIGHT_CLICK_BLOCK:
+					click = RIGHT;
+					break;
+				case PHYSICAL:
+				default:
+					return false;
+			}
+			if ((this.click & click) == 0)
 				return false;
 			player = ((PlayerInteractEvent) e).getPlayer();
 			block = ((PlayerInteractEvent) e).getClickedBlock();

@@ -42,7 +42,7 @@ public abstract class SkriptLogger {
 	static boolean debug;
 	
 	public final static Level DEBUG = new Level("DEBUG", Level.INFO.intValue()) {
-		private static final long serialVersionUID = 8959282461654206205L;
+		private final static long serialVersionUID = 8959282461654206205L;
 	};
 	
 	public final static Logger LOGGER = Bukkit.getServer() != null ? Bukkit.getLogger() : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME); // cannot use Bukkit in tests
@@ -99,9 +99,9 @@ public abstract class SkriptLogger {
 	final static void removeHandler(final LogHandler h) {
 		if (!handlers.contains(h))
 			return;
-		if (handlers.remove() != h) {
+		if (!h.equals(handlers.remove())) {
 			int i = 1;
-			while (handlers.remove() != h)
+			while (!h.equals(handlers.remove()))
 				i++;
 			LOGGER.severe("[Skript] " + i + " log handler" + (i == 1 ? " was" : "s were") + " not stopped properly! (at " + getCaller() + ") [if you're a server admin and you see this message please file a bug report at http://dev.bukkit.org/server-mods/skript/tickets/ if there is not already one]");
 		}
@@ -179,10 +179,10 @@ public abstract class SkriptLogger {
 	}
 	
 	/**
-	 * checks whether messages should be logged for the given verbosity.
+	 * Checks whether messages should be logged for the given verbosity.
 	 * 
 	 * @param minVerb minimal verbosity
-	 * @return
+	 * @return Whether messages should be logged for the given verbosity.
 	 */
 	public static boolean log(final Verbosity minVerb) {
 		return minVerb.compareTo(verbosity) <= 0;

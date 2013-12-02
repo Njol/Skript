@@ -3,9 +3,30 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>ch.njol</groupId>
 	<artifactId>skript</artifactId>
-	<version>2.1-SNAPSHOT</version>
+	<version>2.1</version>
 	<name>Skript</name>
+	<description>A plugin for the Minecraft server API Bukkit that allows to create scripts in natural language.</description>
 	<url>http://njol.ch/projects/skript/</url>
+	<licenses>
+		<license>
+			<name>GNU General Public License 3.0</name>
+			<url>http://www.gnu.org/licenses/gpl-3.0</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<inceptionYear>2011</inceptionYear>
+	<scm>
+		<developerConnection>scm:git:git://github.com/Njol/Skript.git</developerConnection>
+		<connection>scm:git:git://github.com/Njol/Skript.git</connection>
+		<url>http://github.com/Njol/Skript</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub</system>
+		<url>http://github.com/Njol/Skript/issues</url>
+	</issueManagement>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>ch.njol</groupId>
@@ -14,15 +35,28 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
+			<groupId>ch.njol</groupId>
+			<artifactId>yggdrasil</artifactId>
+			<version>1.0-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>org.bukkit</groupId>
 			<artifactId>bukkit</artifactId>
-			<version>1.6.2-R1.0</version>
+			<version>1.6.2-R1.0</version><!-- R2.0 doesn't have a source -->
 			<scope>provided</scope>
 		</dependency>
-		<!-- <dependency> <groupId>org.bukkit</groupId> <artifactId>craftbukkit</artifactId> 
-			<version>1.6.4-R0.1-SNAPSHOT</version> <scope>provided</scope> </dependency> -->
+		<!-- For the source -->
+		<dependency>
+			<groupId>org.bukkit</groupId>
+			<artifactId>craftbukkit</artifactId>
+			<version>1.6.4-R0.1-SNAPSHOT</version><!-- R2.0 doesn't have a source -->
+			<scope>provided</scope>
+		</dependency>
 		<!-- <dependency> <groupId>org.bukkit</groupId> <artifactId>minecraft-server</artifactId> 
 			<version>1.5.2</version> <scope>provided</scope> </dependency> -->
+
 		<dependency>
 			<groupId>patpeter</groupId>
 			<artifactId>sqlibrary</artifactId>
@@ -96,6 +130,10 @@
 			<url>http://maven.sk89q.com/repo/</url>
 		</repository>
 		<repository>
+			<id>vault-repo</id>
+			<url>http://ci.herocraftonline.com/plugin/repository/everything/</url>
+		</repository>
+		<repository>
 			<!-- added by WorldGuard, but doesn't seem to exist anymore -->
 			<id>zml-repo</id>
 			<url>http://files.zachsthings.com/repo/</url>
@@ -109,8 +147,17 @@
 			</snapshots>
 		</repository>
 		<repository>
-			<id>vault-repo</id>
-			<url>http://ci.herocraftonline.com/plugin/repository/everything/</url>
+			<!-- Unreliable -->
+			<id>spout-repo</id>
+			<url>http://repo.spout.org/</url>
+			<releases>
+				<updatePolicy>never</updatePolicy>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<updatePolicy>never</updatePolicy>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 		<!-- <repository> <id>Plugin Metrics Repo</id> <url>http://repo.mcstats.org/content/repositories/public</url> 
 			</repository> -->
@@ -125,6 +172,7 @@
 					<include>plugin.yml</include>
 					<include>version</include>
 					<include>config.sk</include>
+					<include>lang/*</include>
 				</includes>
 			</resource>
 			<resource>
@@ -137,6 +185,7 @@
 					<exclude>plugin.yml</exclude>
 					<exclude>version</exclude>
 					<exclude>config.sk</exclude>
+					<exclude>lang/*</exclude>
 				</excludes>
 			</resource>
 			<resource>
@@ -151,7 +200,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.10</version>
+				<version>2.16</version>
 				<configuration>
 					<useFile>false</useFile>
 				</configuration>
@@ -160,8 +209,10 @@
 				<!-- not used; compiled with Eclipse -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
+				<version>3.1</version>
 				<configuration>
+					<skipMain>true</skipMain>
+					<skip>true</skip>
 					<source>1.6</source>
 					<target>1.6</target>
 					<compilerVersion>1.7</compilerVersion>
@@ -171,34 +222,73 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>1.7.1</version>
+				<version>2.1</version>
 				<executions>
 					<execution>
+						<id>shade</id>
 						<phase>package</phase>
 						<goals>
 							<goal>shade</goal>
 						</goals>
-						<configuration>
-							<createDependencyReducedPom>false</createDependencyReducedPom>
-							<artifactSet>
-								<includes>
-									<include>ch.njol:utils</include>
-									<!-- <include>org.mcstats:metrics</include> -->
-								</includes>
-							</artifactSet>
-						</configuration>
 					</execution>
 				</executions>
+				<configuration>
+					<createDependencyReducedPom>false</createDependencyReducedPom>
+					<artifactSet>
+						<includes>
+							<include>ch.njol:utils</include>
+							<include>ch.njol:yggdrasil</include>
+							<!-- <include>org.mcstats:metrics</include> -->
+						</includes>
+					</artifactSet>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>2.5</version>
+				<version>2.6</version>
 				<configuration>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.apache.maven.plugins
+										</groupId>
+										<artifactId>
+											maven-compiler-plugin
+										</artifactId>
+										<versionRange>
+											[3.1,)
+										</versionRange>
+										<goals>
+											<goal>compile</goal>
+											<goal>testCompile</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 	<profiles>
 		<profile>
@@ -213,32 +303,55 @@
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-shade-plugin</artifactId>
-						<version>1.7.1</version>
-						<executions>
-							<execution>
-								<phase>package</phase>
-								<goals>
-									<goal>shade</goal>
-								</goals>
-								<configuration>
-									<minimizeJar>true</minimizeJar>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
 						<version>2.2.1</version>
 						<executions>
 							<execution>
 								<id>attach-sources</id>
+								<phase>package</phase>
 								<goals>
 									<goal>jar</goal>
 								</goals>
 							</execution>
 						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<version>2.1</version>
+						<executions>
+							<execution>
+								<id>shade</id>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<createSourcesJar>true</createSourcesJar>
+							<minimizeJar>true</minimizeJar>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>2.9.1</version>
+						<executions>
+							<execution>
+								<id>javadoc</id>
+								<phase>package</phase>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<quiet>true</quiet>
+							<dependencySourceIncludes>
+								<dependencySourceInclude>ch.njol:*</dependencySourceInclude>
+							</dependencySourceIncludes>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>

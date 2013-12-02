@@ -1,5 +1,5 @@
 # Default German language file by Peter Güttinger (Njol)
-version: 2.0 beta 10
+version: ${project.version}
 
 # -- General --
 and: und
@@ -25,21 +25,24 @@ genders:
 		id: f
 		definite article: die
 		indefinite article: eine
-	# none:
-		# id: -
-		# definite article: #-#
-		# indefinite article: #-#
 	plural:
 		# id: x
 		definite article: die
 		# indefinite article: #-#
+	# none:
+		# id: -
+		# definite article: #-#
+		# indefinite article: #-#
+	# nominative:
+		# id: +
+		# used for adjectives only
 
 # -- Skript --
 skript:
 	copyright: ~ erstellt von & © Peter Güttinger alias Njol ~
 	prefix: <gray>[<gold>Skript<gray>]
 	quotes error: Unerlaubte Verwendung von Anführungszeichen ("). Wenn du solche in "Text mit Anführungszeichen" einfügen willst, verdopple sie: "".
-	quotes error: Ungültige Anzahl/Anordnung von Klammern. Bitte sorge dafür, dass auf jede öffnende Klammer eine Schliessende folgt.
+	brackets error: Ungültige Anzahl/Anordnung von Klammern. Bitte sorge dafür, dass auf jede öffnende Klammer eine Schliessende folgt.
 	invalid reload: Skript darf nur mittles Bukkits '/reload' oder Skripts '/skript reload' neu geladen werden
 
 # -- Skript command --
@@ -48,15 +51,15 @@ skript command:
 		description: Skript-Hauptbefehl
 		help: Zeigt diese Hilfe an. Benutze '/skript reload/enable/disable/update' um mehr Infos zu erhalten
 		reload:
-			description: Lädt die Konfigurationen, Skripte, alles oder nur bestimmte Skripte erneut
+			description: Lädt die Konfigurationen, Skripte, alles oder nur bestimmte Skripte neu
 			all: Lädt alle Konfigurationen und Skripte neu
-			config: Lädt alle Konfigurationen erneut
+			config: Lädt alle Konfigurationen neu
 			aliases: Lädt die Itemnamen neu (aliases-*.sk)
 			scripts: Lädt alle Skripte neu
 			<script>: Lädt ein bestimmtes Skript oder einen Ordner neu
 		enable:
 			description: Aktiviert alle Skripte oder nur bestimmte
-			all: Aktiviert alle Skripte im 'scripts' Ordner
+			all: Aktiviert alle Skripte
 			<script>: Aktiviert ein bestimmtes Skript oder einen Ordner
 		disable:
 			description: Deaktiviert alle Skripte oder nur bestimmte
@@ -164,6 +167,7 @@ aliases:
 	of: von(?: irgendeine[mr])?
 	# messages
 	brackets error: Klammern haben eine spezielle Bedeutung in Itemnamen und können nicht normal benutzt werden
+	invalid brackets: Ungülgige Anzahl und/oder Platzierung der Klammern '%s'
 	empty alias: '%s' resultiert in einem leeren Item (d.h. es repräsentiert keine ID/Werte), es wird deshalb ignoriert
 	unknown variation: Die Variation {%s} wurde nicht definiert
 	starting with number: Itemnamen dürfen nicht mit einer Nummer beginnen
@@ -183,6 +187,7 @@ aliases:
 	loaded x aliases from: %s deutsche Itemnamen aus %s geladen
 	loaded x aliases: %s deutsche Itemnamen geladen
 	anything: etwas
+	named: namens
 
 # -- Enchantments --
 enchantments:
@@ -339,22 +344,54 @@ time:
 
 # -- Chat and Wool Colours --
 colors:
-	black: schwarz
-	dark_grey: dunkelgrau
-	light_grey: grau, hellgrau, silber
-	white: weiss
-	dark_blue: blau, dunkelblau
-	brown: braun, hellblau, indigo
-	dark_cyan: cyan, aqua, dunkelcyan, dunkelaqua, dunkeltürkis
-	light_cyan: türkis, hellcyan, hellaqua
-	dark_green: grün, dunkelgrün
-	light_green: hellgrün, limettengrün
-	yellow: gelb, hellgelb, zitronengelb
-	orange: orange, gold, dunkelgelb
-	dark_red: rot, dunkelrot
-	light_red: pink, rosa, hellrot
-	dark_purple: violett, dunkelviolett, dunkelpurpur
-	light_purple: magenta, hellviolett, purpur, hellpurpur
+	black:
+		adjective: schwarz@f:e@n:es@m:er@x:e@+:e@-:@
+		names: schwarz
+	dark_grey:
+		adjective: dunkelgrau@f:e@n:es@m:er@x:e@+:e@-:@
+		names: dunkelgrau
+	light_grey:
+		adjective: grau@f:e@n:es@m:er@x:e@+:e@-:@
+		names: grau, hellgrau, silber
+	white:
+		adjective: weiss@f:e@n:es@m:er@x:e@+:e@-:@
+		names: weiss
+	dark_blue:
+		adjective: blau@f:e@n:es@m:er@x:e@+:e@-:@
+		names: blau, dunkelblau
+	brown:
+		adjective: braun@f:e@n:es@m:er@x:e@+:e@-:@
+		names: braun, hellblau, indigo
+	dark_cyan:
+		adjective: cyan
+		names: cyan, aqua, dunkelcyan, dunkelaqua, dunkeltürkis
+	light_cyan:
+		adjective: türkis@f:e@n:es@m:er@x:e@+:e@-:@
+		names: türkis, hellcyan, hellaqua
+	dark_green:
+		adjective: grün@f:e@n:es@m:er@x:e@+:e@-:@
+		names: grün, dunkelgrün
+	light_green:
+		adjective: hellgrün@f:e@n:es@m:er@x:e@+:e@-:@
+		names: hellgrün, limettengrün
+	yellow:
+		adjective: gelb@f:e@n:es@m:er@x:e@+:e@-:@
+		names: gelb, hellgelb, zitronengelb
+	orange:
+		adjective: orange@f:e@n:s@m:r@x:e@+:e@-:@
+		names: orange, gold, dunkelgelb
+	dark_red:
+		adjective: rot@f:e@n:es@m:er@x:e@+:e@-:@
+		names: rot, dunkelrot
+	light_red:
+		adjective: pink@f:e@n:es@m:er@x:e@+:e@-:@
+		names: pink, rosa, hellrot
+	dark_purple:
+		adjective: violett@f:e@n:es@m:er@x:e@+:e@-:@
+		names: violett, dunkelviolett, dunkelpurpur
+	light_purple:
+		adjective: magenta
+		names: magenta, hellviolett, purpur, hellpurpur
 
 # -- Chat Styles -
 chat styles:
@@ -388,6 +425,9 @@ directions:
 # -- Entities --
 entities:
 	age pattern: (|4¦jung[e[(r|s)]]|4¦baby|8¦erwachsen[e[(r|s)]])
+	age adjectives:
+		baby: junge@f:@n:s@m:r@x:@+:@-:@
+		adult: erwachsene@f:@n:s@m:r@x:@+:@-:@
 	entity:
 		name: Wesen @n
 		pattern: <age> Wesen
@@ -432,7 +472,7 @@ entities:
 		pattern: unaufgeladene[r] Creeper
 	powered creeper:
 		name: aufgeladene¦r¦¦ Creeper @m
-		pattern: aufgeladene[r] Creeper @m
+		pattern: aufgeladene[r] Creeper
 	egg:
 		name: Ei¦er @n
 		pattern: Ei[er]
@@ -467,9 +507,6 @@ entities:
 	iron golem:
 		name: Eisengolem¦s @m
 		pattern: Eisengolem[s]
-	dropped item:
-		name: Drop¦s @m
-		pattern: (fallengelassene[r]|gedroppte[r]) (Item[s]|Gegenst(and|ände))|Drop[s]
 	item frame:
 		name: Itemrahmen @m
 		pattern: (Item|Gegenstands)rahmen
@@ -536,7 +573,6 @@ entities:
 	sheep:
 		name: Schaf¦e @n
 		pattern: <age> [%-colors%] Schaf[e]|(4¦)[%-colors%] L(amm|ämmer)
-		format: %2$s %1$s
 	unsheared sheep:
 		name: ungeschorene¦s Schaf¦ Schafe @n
 		pattern: <age> ungeschorene[s] [%-colors%] Schaf[e]
@@ -567,9 +603,6 @@ entities:
 	bottle of enchanting:
 		name: Erfahrungsfläschchen @n
 		pattern: ([e]xp[-]|Erfahrungs)fl(asche|äschchen)
-	thrown potion:
-		name: geworfene¦r Trank¦ Tränke @m
-		pattern: geworfene[r] Tr(ank|änke)
 	tnt:
 		name: gezündete¦s TNT¦ TNT @n
 		pattern: gezündete[s] TNT[s]
@@ -626,11 +659,36 @@ entities:
 		pattern: ([e]xp(-| |)|Erfahrungs)(orb[s]|kugel[n])
 		format: %2$s-xp %1$s
 	firework:
-		name: Feuerwerksrakete¦n
+		name: Feuerwerksrakete¦n @f
 		pattern: Feuerwerk[srakete[n]]
+	falling block:
+		name: fallende¦r¦¦ Bl¦ock¦öcke @m
+		pattern: fallende(r|s|) (Bl(ock|öcke)|(2¦)%-itemtype%)
+		adjective: fallende@f:@m:r@n:s@x:n@+:@-:@
+		not a block error: Fallende Blöcke können keine Gegenstände sein
+	thrown potion:
+		name: geworfene¦r Trank¦ Tränke @m
+		pattern: geworfene(r|s|) (Tr(ank|änke)|%-itemtypes%)
+		adjective: geworfene@f:@m:r@n:s@x:n@+:@-:@
+	dropped item:
+		name: Drop¦s @m
+		pattern: (fallengelassene(r|s|)|gedroppte(r|s|)) (Item[s]|Gegenst(and|ände)|%-itemtypes%)|Drop[s]
+		adjective: gedroppte@f:@m:r@n:s@x:n@+:@-:@
 	horse:
-		name: Pferd¦e
+		name: Pferd¦e @n
 		pattern: <age> Pferd[e]|(4¦)Fohlen
+	donkey:
+		name: Esel @m
+		pattern: <age> Esel
+	mule:
+		name: Maultier¦e @n
+		pattern: <age> Maultier[e]
+	undead horse:
+		name: untote¦s¦¦ Pferd¦e @n
+		pattern: <age> untote[s] Pferd[e])|untote[s] <age> Pferd[e]|(4¦)untote[s] Fohlen
+	skeleton horse:
+		name: Skelettpferd¦e @n
+		pattern: <age> Skelettpferd[e]|(4¦)Skelettfohlen
 
 # -- Damage Causes --
 damage causes:
@@ -663,6 +721,36 @@ game modes:
 	creative: Kreativmodus
 	adventure: Abenteuermodus
 
+# -- Visual Effects --
+visual effects:
+	ender_signal:
+		name: Endersignal¦e @n
+		pattern: Ender[auge[n]]signal[e]
+	mobspawner_flames:
+		name: Mobspawnerflamme¦n @f
+		pattern: [mo(b|nster)[ ]]spawner[-]flamme[n]
+	potion_break:
+		name: Trank...
+		pattern: [%potioneffecttype%][-]trank...
+	smoke:
+		name: Rauch @m
+		pattern: Rauch [%direction%]
+	hurt:
+		name: Verletzung¦en @f
+		pattern: Schaden|Verletzung[en]
+	sheep_eat:
+		name: 
+		pattern: sheep eat[ing] [a] [grass] [block]
+	wolf_hearts:
+		name: Wolfherzen @x
+		pattern: wolfherzen
+	wolf_shake:
+		name: Wolfschütteln @n
+		pattern: Wolfschütteln
+	wolf_smoke:
+		name: Wolfrauch @m
+		pattern: Wolfrauch
+
 # -- Boolean --
 boolean:
 	true:
@@ -683,7 +771,7 @@ types:
 	byte: ganze Zahl¦en @f
 	double: Zahl¦en @f
 	float: Zahl¦en @f
-	boolean: boolesche¦r Wert (ja/nein)¦ Werte (ja/nein) @m
+	boolean: boolesche¦r¦¦ Wert¦¦e¦ (ja/nein) @m
 	string: Text¦e @m
 	chunk: Chunk¦s @m
 	
@@ -724,9 +812,11 @@ types:
 	experience: Erfahrungspunkt¦e @m
 	experience.pattern: (e?xp|Erfahrung(spunkte?)?)
 	classinfo: Typ¦en @m
+	visualeffect: visuelle¦r¦¦ Effekt¦e @m
 	
 	# Hooks
 	money: Geld @n
+	region: Region¦en @f
 
 # -- IO Exceptions --
 io exceptions:

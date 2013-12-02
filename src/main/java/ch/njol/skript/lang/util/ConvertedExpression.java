@@ -36,9 +36,11 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
- * Represents a expression converted to another type. This, and not Expression, is the required return type of {@link SimpleExpression#getConvertedExpr(Class)} because this class
+ * Represents a expression converted to another type. This, and not Expression, is the required return type of {@link SimpleExpression#getConvertedExpr(Class...)} because this
+ * class
  * <ol>
  * <li>automatically lets the source expression handle everything apart from the get() methods</li>
  * <li>will never convert itself to another type, but rather request a new converted expression from the source expression.</li>
@@ -59,16 +61,19 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 		this.conv = conv;
 	}
 	
-	public static <F, T> ConvertedExpression<F, T> newInstance(final Expression<F> v, final Class<T> to) {
+	public static <F, T> ConvertedExpression<F, T> newInstance(final Expression<F> v, final Class<T>... to) {
 		assert v != null;
 		assert to != null;
-		assert !to.isAssignableFrom(v.getReturnType());
-		// casting <? super ? extends F> to <? super F> is wrong, but since the converter is only used for values returned by the expression
-		// (which are instances of "<? extends F>") this won't result in any ClassCastExceptions.
-		final SerializableConverter<? super F, ? extends T> c = (SerializableConverter<? super F, ? extends T>) Converters.getConverter(v.getReturnType(), to);
-		if (c == null)
-			return null;
-		return new ConvertedExpression<F, T>(v, to, c);
+		assert !CollectionUtils.containsSuperclass(to, v.getReturnType());
+		for (final Class<T> c : to) { // REMIND try more converters? -> also change WrapperExpression (and maybe ExprLoopValue)
+			// casting <? super ? extends F> to <? super F> is wrong, but since the converter is only used for values returned by the expression
+			// (which are instances of "<? extends F>") this won't result in any ClassCastExceptions.
+			final SerializableConverter<? super F, ? extends T> conv = (SerializableConverter<? super F, ? extends T>) Converters.getConverter(v.getReturnType(), c);
+			if (c == null)
+				continue;
+			return new ConvertedExpression<F, T>(v, c, conv);
+		}
+		return null;
 	}
 	
 	@Override
@@ -100,8 +105,8 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
-		if (to.isAssignableFrom(this.to))
+	public <R> Expression<? extends R> getConvertedExpression(final Class<R>... to) {
+		if (CollectionUtils.containsSuperclass(to, this.to))
 			return (Expression<? extends R>) this;
 		return source.getConvertedExpression(to);
 	}
@@ -222,6 +227,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 		return source;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public Expression<? extends T> simplify() {
 		return source.simplify().getConvertedExpression(to);

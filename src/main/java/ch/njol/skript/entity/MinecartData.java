@@ -32,6 +32,7 @@ import org.bukkit.entity.minecart.SpawnerMinecart;
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.variables.Variables;
 
 /**
  * @author Peter Güttinger
@@ -71,10 +72,18 @@ public class MinecartData extends EntityData<Minecart> {
 	}
 	
 	static {
-		register(MinecartData.class, "minecart", Minecart.class, MinecartType.codeNames);
+		register(MinecartData.class, "minecart", Minecart.class, 0, MinecartType.codeNames);
+		
+		Variables.yggdrasil.registerSingleClass(MinecartType.class, "MinecartType");
 	}
 	
 	private MinecartType type = MinecartType.ANY;
+	
+	public MinecartData() {}
+	
+	public MinecartData(final MinecartType type) {
+		this.type = type;
+	}
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
@@ -111,27 +120,19 @@ public class MinecartData extends EntityData<Minecart> {
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		return type.hashCode();
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof MinecartData))
 			return false;
 		final MinecartData other = (MinecartData) obj;
 		return type == other.type;
 	}
 	
-	@Override
-	public String serialize() {
-		return type.name();
-	}
-	
+//		return type.name();
 	@Override
 	protected boolean deserialize(final String s) {
 		try {
@@ -151,7 +152,7 @@ public class MinecartData extends EntityData<Minecart> {
 	
 	@Override
 	public EntityData getSuperType() {
-		return new MinecartData();
+		return new MinecartData(type);
 	}
 	
 }

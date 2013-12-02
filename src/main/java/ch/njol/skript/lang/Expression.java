@@ -39,7 +39,7 @@ import ch.njol.util.Checker;
  * Represents an expression. Expressions are used within conditions, effects and other expressions.
  * 
  * @author Peter Güttinger
- * @see Skript#registerExpression(Class, Class, String...)
+ * @see Skript#registerExpression(Class, Class, ExpressionType, String...)
  * @see SimpleExpression
  * @see SyntaxElement
  */
@@ -114,12 +114,12 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * Please note that expressions whose {@link #getReturnType() returnType} is not Object will not be parsed at all for a certain class if there's no converter from the
 	 * expression's returnType to the desired class. Thus this method should only be overridden if this expression's returnType is Object.
 	 * 
-	 * @param to The desired return type of the returned expression //TODO allow multiple types?
+	 * @param to The desired return type of the returned expression
 	 * @return Expression with the desired return type or null if the expression can't be converted to the given type. Returns the expression itself if it already returns the
 	 *         desired type.
 	 * @see Converter
 	 */
-	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to);
+	public <R> Expression<? extends R> getConvertedExpression(final Class<R>... to);
 	
 	/**
 	 * Gets the return type of this expression.
@@ -129,14 +129,14 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public abstract Class<? extends T> getReturnType();
 	
 	/**
-	 * Returns true if this expression returns all possible values, false if it only returns one.
+	 * Returns true if this expression returns all possible values, false if it only returns some of them.
 	 * <p>
 	 * This method significantly influences {@link #check(Event, Checker)}, {@link #check(Event, Checker, boolean)} and {@link CondIsSet} and thus breaks conditions that use this
 	 * expression if it returns a wrong value.
 	 * <p>
 	 * This method must return true if this is a {@link #isSingle() single} expression.
 	 * 
-	 * @return
+	 * @return Whether this expression returns all values at once or only part of them.
 	 */
 	public boolean getAnd();
 	
@@ -170,7 +170,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * <p>
 	 * This method might be removed in the future as it's better to check whether value == e.getXyz() for every value an expression returns.
 	 * 
-	 * @return
+	 * @return Whether is is the return types' default expression
 	 */
 	public boolean isDefault();
 	
@@ -218,13 +218,13 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * Tests whether this expression supports the given mode, and if yes what type it expects the <code>delta</code> to be.
 	 * <p>
 	 * Please note that if a changer is registered for this expression's {@link #getReturnType() returnType} this method does not have to be overridden. If you override it though
-	 * make sure to return <tt>super.acceptChange(mode)</tt>, and to handle the appropriate ChangeMode(s) in {@link #change(Event, Object, ChangeMode)} with
+	 * make sure to return <tt>super.acceptChange(mode)</tt>, and to handle the appropriate ChangeMode(s) in {@link #change(Event, Object[], ChangeMode)} with
 	 * <tt>super.change(...)</tt>.
 	 * <p>
 	 * Unlike {@link Changer#acceptChange(ChangeMode)} this method may print errors.
 	 * 
 	 * @param mode
-	 * @return An array of types that {@link #change(Event, Object, ChangeMode)} accepts as its <code>delta</code> parameter (which can be arrays to denote that multiple of
+	 * @return An array of types that {@link #change(Event, Object[], ChangeMode)} accepts as its <code>delta</code> parameter (which can be arrays to denote that multiple of
 	 *         that type are accepted), or null if the given mode is not supported. For {@link ChangeMode#DELETE} and {@link ChangeMode#RESET} this can return any non-null array to
 	 *         mark them as supported.
 	 */

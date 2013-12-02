@@ -43,12 +43,13 @@ import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.localization.Noun;
 import ch.njol.util.Kleenean;
+import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-public class Direction implements Serializable {
+public class Direction implements Serializable, YggdrasilSerializable {
 	
 	/**
 	 * A direction that doesn't point anywhere, i.e. equal to 'at'.
@@ -92,6 +93,10 @@ public class Direction implements Serializable {
 	 * Use this as pitch to force a horizontal direction
 	 */
 	public final static double IGNORE_PITCH = 0xF1A7; // FLAT
+	
+	public Direction() {
+		this(0, 0, 0);
+	}
 	
 	public Direction(final double pitch, final double yaw, final double length) {
 		this.pitch = pitch;
@@ -153,7 +158,7 @@ public class Direction implements Serializable {
 	
 	@Override
 	public int hashCode() {
-		return relative ? Arrays.asList(pitch, yaw, length).hashCode() : Arrays.hashCode(mod);
+		return relative ? Arrays.hashCode(new double[] {pitch, yaw, length}) : ~Arrays.hashCode(mod);
 	}
 	
 	@Override
@@ -219,10 +224,8 @@ public class Direction implements Serializable {
 		return ((Directional) m.getNewData(b.getData())).getFacing();
 	}
 	
-	public final static BlockFace getFacing(final Location l, final boolean horizontal) {
-		final double yaw = (yawToRadians(l.getYaw()) + 2 * Math.PI) % (2 * Math.PI);
-		final double pitch = horizontal ? 0 : pitchToRadians(l.getPitch());
-		if (horizontal || -Math.PI / 4 < pitch && pitch < Math.PI / 4) {
+	public final static BlockFace getFacing(final double yaw, final double pitch) {
+		if (-Math.PI / 4 < pitch && pitch < Math.PI / 4) {
 			if (yaw < Math.PI / 4 || yaw >= Math.PI * 7 / 4)
 				return BF_X;
 			if (yaw < Math.PI * 3 / 4)
@@ -235,6 +238,18 @@ public class Direction implements Serializable {
 		if (pitch > 0)
 			return BlockFace.UP;
 		return BlockFace.DOWN;
+	}
+	
+	public final static BlockFace getFacing(final Location l, final boolean horizontal) {
+		final double yaw = (yawToRadians(l.getYaw()) + 2 * Math.PI) % (2 * Math.PI);
+		final double pitch = horizontal ? 0 : pitchToRadians(l.getPitch());
+		return getFacing(yaw, pitch);
+	}
+	
+	public final static BlockFace getFacing(final Vector v, final boolean horizontal) {
+		final double pitch = horizontal ? 0 : Math.atan2(v.getY(), Math.sqrt(Math.pow(v.getX(), 2) + Math.pow(v.getZ(), 2)));
+		final double yaw = Math.atan2(v.getZ(), v.getX());
+		return getFacing(yaw, pitch);
 	}
 	
 	public final static Location[] getRelatives(final Block[] blocks, final Direction[] directions) {
@@ -325,18 +340,16 @@ public class Direction implements Serializable {
 		b.append(d > 0 ? direction : oppositeDirection);
 	}
 	
-	public String serialize() {
-		return "" + relative + ":" + (relative ? pitch + "," + yaw + "," + length : mod[0] + "," + mod[1] + "," + mod[2]);
-	}
-	
+//		return "" + relative + ":" + (relative ? pitch + "," + yaw + "," + length : mod[0] + "," + mod[1] + "," + mod[2]);
+	@Deprecated
 	public static Direction deserialize(final String s) {
 		final String[] split = s.split(":");
 		if (split.length != 2)
 			return null;
 		final boolean relative = Boolean.parseBoolean(split[0]);
 		if (relative) {
-			final String[] split2 = s.split(",");
-			if (split.length != 3)
+			final String[] split2 = split[1].split(",");
+			if (split2.length != 3)
 				return null;
 			try {
 				return new Direction(Double.parseDouble(split2[0]), Double.parseDouble(split2[1]), Double.parseDouble(split2[2]));
@@ -344,8 +357,8 @@ public class Direction implements Serializable {
 				return null;
 			}
 		} else {
-			final String[] split2 = s.split(",");
-			if (split.length != 3)
+			final String[] split2 = split[1].split(",");
+			if (split2.length != 3)
 				return null;
 			try {
 				return new Direction(new double[] {Double.parseDouble(split2[0]), Double.parseDouble(split2[1]), Double.parseDouble(split2[2])});
@@ -357,7 +370,7 @@ public class Direction implements Serializable {
 	
 	public final static Expression<Location> combine(final Expression<? extends Direction> dirs, final Expression<? extends Location> locs) {
 		return new SimpleExpression<Location>() {
-			private static final long serialVersionUID = 1316369726663020906L;
+			private final static long serialVersionUID = 1316369726663020906L;
 			
 			@Override
 			protected Location[] get(final Event e) {

@@ -37,13 +37,13 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
-import ch.njol.skript.lang.Variable;
 import ch.njol.skript.log.CountingLogHandler;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Patterns;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
@@ -105,6 +105,7 @@ public class EffChange extends Effect {
 	
 //	private Changer<?, ?> c = null;
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		
@@ -193,37 +194,17 @@ public class EffChange extends Effect {
 		
 		if (changer != null) {
 			Expression<?> v = null;
-			Class<?> x = null;
 			final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 			try {
 				for (final Class<?> r : rs) {
 					log.clear();
 					if ((r.isArray() ? r.getComponentType() : r).isAssignableFrom(changer.getReturnType())) {
 						v = changer.getConvertedExpression(Object.class);
-						x = r;
 						break; // break even if v == null as it won't convert to Object apparently
 					}
 				}
-				if (v == null) {
-					if (changer instanceof Variable) {
-						if (allSingle && !changer.isSingle()) {
-							v = changer;
-							x = rs.length == 1 ? rs[0] : Object.class;
-						} else {
-							v = ((Variable<?>) changer).getConvertedExpression(rs2);
-							x = Object.class;
-						}
-					} else {
-						for (final Class<?> r : rs) {
-							log.clear();
-							v = changer.getConvertedExpression(r.isArray() ? r.getComponentType() : r);
-							if (v != null) {
-								x = r;
-								break;
-							}
-						}
-					}
-				}
+				if (v == null)
+					v = changer.getConvertedExpression((Class<Object>[]) rs2);
 				if (v == null) {
 					if (log.hasError()) {
 						log.printError();
@@ -247,9 +228,15 @@ public class EffChange extends Effect {
 				log.stop();
 			}
 			
-			single = !x.isArray();
-			if (x.isArray())
-				x = x.getComponentType();
+			Class<?> x = Utils.getSuperType(rs2);
+			single = allSingle;
+			for (int i = 0; i < rs.length; i++) {
+				if (rs2[i].isAssignableFrom(v.getReturnType())) {
+					single = !rs[i].isArray();
+					x = rs2[i];
+					break;
+				}
+			}
 			changer = v;
 			
 			if (!changer.isSingle() && single) {
@@ -268,7 +255,7 @@ public class EffChange extends Effect {
 		final Object[] delta = changer == null ? null : changer.getArray(e);
 		if (delta != null && delta.length == 0)
 			return;
-		changed.change(e, delta, mode);
+		changed.change(e, delta, mode); // REMIND use a random element out of delta if changed only supports changing a single instance
 //		changed.change(e, new Changer2<Object>() {
 //			@Override
 //			public Object change(Object o) {

@@ -59,7 +59,7 @@ public class Language {
 	 */
 	private static String name = "english";
 	
-	static final HashMap<String, String> english = new HashMap<String, String>();
+	final static HashMap<String, String> english = new HashMap<String, String>();
 	/**
 	 * May be null.
 	 */
@@ -88,8 +88,8 @@ public class Language {
 	 * Gets a string from the language file with the given key, or the english variant if the string is missing from the chosen language's file, or the key itself if the key does
 	 * not exist.
 	 * 
-	 * @param key
-	 * @return
+	 * @param key The message's key (case-insensitive)
+	 * @return The requested message if it exists or the key otherwise
 	 */
 	public static String get(final String key) {
 		final String s = get_i(key.toLowerCase(Locale.ENGLISH));
@@ -99,8 +99,8 @@ public class Language {
 	/**
 	 * Equal to {@link #get(String)}, but returns null instead of the key if the key cannot be found.
 	 * 
-	 * @param key
-	 * @return
+	 * @param key The message's key (case-insensitive)
+	 * @return The requested message or null if it doesn't exist
 	 */
 	public static String get_(final String key) {
 		return get_i(key.toLowerCase(Locale.ENGLISH));

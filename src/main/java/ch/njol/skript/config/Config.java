@@ -46,11 +46,11 @@ public class Config {
 	/**
 	 * One level of the indentation, e.g. a tab or 4 spaces.
 	 */
-	private String indentation = null;
+	private String indentation = "\t";
 	/**
 	 * The indentation's name, i.e. 'tab' or 'space'.
 	 */
-	private String indentationName = null;
+	private String indentationName = "tab";
 	
 	final String defaultSeparator;
 	String separator;
@@ -61,7 +61,6 @@ public class Config {
 	
 	private final SectionNode main;
 	
-	boolean modified = false;
 	int errors = 0;
 	
 	final boolean allowEmptySections;
@@ -118,11 +117,13 @@ public class Config {
 	}
 	
 	void setIndentation(final String indent) {
+		assert indentation.length() > 0;
 		indentation = indent;
 		indentationName = (indent.charAt(0) == ' ' ? "space" : "tab");
 	}
 	
 	String getIndentation() {
+		assert indentation.length() > 0;
 		return indentation;
 	}
 	
@@ -140,21 +141,15 @@ public class Config {
 	
 	/**
 	 * Saves the config to a file.
-	 * <p>
-	 * Please note that the behaviour of this method is undefined if any nodes have been added, renamed, deleted or moved, or {@link SectionNode#convertToEntries(int)} has been
-	 * used. // TODO fix this?
 	 * 
 	 * @param f The file to save to
 	 * @throws IOException If the file could not be written to.
 	 */
 	public void save(final File f) throws IOException {
-//		if (!modified)
-//			return;
 		separator = defaultSeparator;
 		final PrintWriter w = new PrintWriter(f, "UTF-8");
 		try {
 			main.save(w);
-			modified = false;
 		} finally {
 			w.flush();
 			w.close();
@@ -185,10 +180,21 @@ public class Config {
 	}
 	
 	/**
+	 * @return A separator string useful for saving, e.g. ": " or " = ".
+	 */
+	public String getSaveSeparator() {
+		if (separator.equals(":"))
+			return ": ";
+		if (separator.equals("="))
+			return " = ";
+		return " " + separator + " ";
+	}
+	
+	/**
 	 * Splits the given path at the dot character and passes the result to {@link #get(String...)}.
 	 * 
 	 * @param path
-	 * @return
+	 * @return <tt>get(path.split("\\."))</tt>
 	 */
 	public String getByPath(final String path) {
 		return get(path.split("\\."));
@@ -237,8 +243,8 @@ public class Config {
 			f.setAccessible(true);
 			if (o != null || Modifier.isStatic(f.getModifiers())) {
 				try {
-					if (Section.class.isAssignableFrom(f.getType())) {
-						load(f.get(o).getClass(), f.get(o), path + ((Section) f.get(o)).name + ".");
+					if (OptionSection.class.isAssignableFrom(f.getType())) {
+						load(f.get(o).getClass(), f.get(o), path + ((OptionSection) f.get(o)).name + ".");
 					} else if (Option.class.isAssignableFrom(f.getType())) {
 						((Option<?>) f.get(o)).set(this, path);
 					}

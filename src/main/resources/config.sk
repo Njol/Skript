@@ -1,18 +1,18 @@
-#     ___________________________________________________________
-#    / /                                                    / /\ \
-#    \_\____________________________________________________\_\/ /
-#        / /    _______  __             __           __       / /
-#       / /    / _____/ / /            /_/          / /      / /
-#      / /    / /____  / /___  _____  __  ______ __/ /_     / /
-#     / /    /____  / /   __/ / ___/ / / / __  //_  __/    / /
-#    / /    _____/ / / /\ \  / /    / / / /_/ /  / /      / /
-#   / /    /______/ /_/ /_/ /_/    /_/ / ____/  /_/      / /__
-#  / /    =========================== / / ==========    / / \ \
-# | |                                /_/               | |   | |
-#  \_\__________________________________________________\_\_/_/
+#     __________________________________________________________
+#    / /                                                   / /\ \
+#    \_\___________________________________________________\_\/ /
+#        / /    _____    __            __                    / /
+#       / /    / ____\  / /           /_/          /\       / /
+#      / /    / /__    / /___  ___   __  ______ __/ /_     / /
+#     / /     \___ \  /   __/ / __\ / / / __  //_  __/    / /
+#    / /     ____/ / / /\ \  / /   / / / /_/ /  / /      / /
+#   / /     \_____/ /_/ /_/ /_/   /_/ / ____/  /_/      / /__
+#  / /    ========================== / / ==========    / / \ \
+# | |                               /_/               | |   | |
+#  \_\_________________________________________________\_\_/_/
 #
 # == Introduction ==
-# This file contains the general options. To write scripts, make a new .sk file in the scripts folder or edit any existing one.
+# This file contains Skript's general options. To write scripts, create a new .sk file in the scripts folder or edit any existing one.
 #
 # Script files prefixed with a hyphen (-) will not be loaded, e.g. renaming 'plant with hoe.sk' to '-plant with hoe.sk' will disable the whole file.
 # This can e.g. be used to temporarily disable scripts and is also used for Skript's example scripts.
@@ -26,23 +26,30 @@
 # - If you use special characters (§, äöü, éèàôç, ñ, etc.) you have to encode the file in UTF-8.
 #
 
+
+
+# ==== General Options ====
+
 language: english
 # Which language to use. Currently english and german are included in the download, but custom languages can be created as well.
 # Please note that not everything can be translated yet, so part of Skript will still be english if you use another language.
 # If you want to translate Skript to your language please read the readme.txt located in the /lang/ folder in the jar
 # (open the jar as zip or rename it to Skript.zip to access it)
 
+
 check for new version: true
 # Whether Skript should check for whether a new version of Skript is available when the server starts.
 # If this is set to true Skript will announce a new version to all players with the "skript.admin" permission.
 # If set to false you can still check for a new version with '/skript update check'
 # Please note that Skript will not detect beta releases even if you are running one as they are not neccessarily stable.
+
 update check interval: 12 hours
 # If 'check for new version' is enabled, this sets how often to check for a new update.
 # A first check will always be made when the server starts, after that checks will be made in intervals set by this option.
 # Set this to 0 to disable repeated checks, in which case only one check will be made when the server starts.
 # Please note that this option is currently the only means of making Skript check for an update more than once,
 # as '/skript update check' does only display the results of the last check if a check has been made before.
+
 automatically download new version: false
 # Whether Skript should automatically download & install the newest version if one is available.
 # I suggest to disable this feature if your server restarts automatically as you likely won't be informed
@@ -50,69 +57,26 @@ automatically download new version: false
 # If you disable this you can still use '/skript update download' to make Skript download the newest version.
 # If you're concerned about changes use '/skript update changes' for a full list of changes since your current version.
 
+
 enable effect commands: false
 effect command token: !
 # If 'enable effect commands' is set to true, chat messages starting with the 'effect command token' will be interpreted as effects and executed.
-# A player needs the "skript.effectcommands" permission to use such commands,
-# which does not default to OPs since these commands can do severe damage to the world or crash the server.
+# A player needs the permission "skript.effectcommands" to use such commands,
+# which does not default to OPs by default since these commands can do severe damage to the world or crash the server (see below).
 # Some example commands which can be used if this setting is enabled:
 #	!heal player - heals the player (doesn't do anything if used from the console)
 #	!repair tool - repairs the currently held item
 #	!broadcast "<red>Please read the rules!" - if you want to get rid of the quotes you have to define a custom command
 #	!set time to 6:00 - sets the time in the current world
-# The command can also be abused, so only give permission to trusted playes, like owners & co-owners:
+# The command can also be abused, so only give the permission to trusted playes, like owners & co-owners:
 #	!spawn 20 ender dragons - ultimate griefing, will destroy a large part of the world in a short time
 #	!create explosion of force 10000 - likely crashes the server or at least hangs it up for a long time
 #	!ban all players - as the effect implies
 
+allow ops to use effect commands: false
+# Whether server operators which do not have the permission "skript.effectcommands" should have access to effect commands.
+# This setting is mainly useful for servers that do not run any permissions plugin.
 
-
-# ==== Variables ====
-
-variables backup interval: 2 hours
-# If this is set to something other than 0 the variables file will be backed up repeatedly.
-# Please note that variables are saved constantly no matter what is set here.
-# Backing up the file could cause Skript to hang while the backup is created. This does likely not happen if your server is running Java 7 though.
-
-database:
-	# Database to store variables in. This can either be used as a simple one-server-storage
-	# where variables are written constantly but only read at server start,
-	# or as a connection between multiple servers by monitoring the database for changes.
-	#
-	# To be able to use a database you'll need to download the plugin 'SQLibrary' from http://dev.bukkit.org/server-mods/sqlibrary/files/
-	# and install it in your server's plugin directory like other plugins.
-	#
-	# !! Please note that this feature is experimental, i.e. might contain severe bugs!
-	
-	# Please also note that '/skript reload' will not reload this section, i.e. you'll have to restart Skript for changes to take effect.
-	
-	type: none
-	# The type of the database. Currently only MySQL and SQLite are supported. Use 'none' for Skript's default CSV flatfile storage.
-	
-	pattern: .*
-	# If you only want to store part of your variables in the database (e.g. only player stats), set this pattern to match only those variables.
-	# Variables that don't match the pattern will be saved in the default flatfile format.
-	# This pattern uses Regex syntax, e.g. use 'db_.*' (without the quotes) to store all variables prefixed with 'db_' in the database,
-	# or use '.*' (the default value) to store all variables in the database.
-	
-	monitor changes: false
-	monitor interval: 20 seconds
-	# If 'monitor changes' is set to true, variables will repeatedly be checked for updates in the database (in intervals set in 'monitor interval').
-	# ! Please note that you should set 'pattern', 'monitor changes' and 'monitor interval' to the same on all servers that access the same database!
-	
-	# MySQL configuration
-	host: localhost
-	port: 3306
-	user: root
-	password: pass
-	database: skript
-	
-	# SQLite configuration
-	file: ./plugins/Skript/variables.db
-
-
-
-# ==== Miscellaneous Settings ====
 
 date format: default
 # The date format to be used when dates should be displayed.
@@ -122,12 +86,14 @@ date format: default
 #  d/M/yyyy h:mm a => 15/7/2012 8:53 PM
 #  dd.MM.yyyy, HH:mm => 16.03.2013, 09:33
 
+
 verbosity: normal
 # Determines how much info is logged.
 # Allowed values: low, normal, high, very high, debug
 # The highest you should go is very high, which prints quite a lot of useful information,
 # including how much time each trigger takes to execute.
 # Only use debug if you're programming an add-on for Skript, but even then you might usually not need it.
+
 
 plugin priority: high
 # Allowed values: lowest, low, normal, high, highest
@@ -140,27 +106,135 @@ plugin priority: high
 # - effects 'remove ... from drops'/'clear drops': Drops added by other plugins are not removed => increase priority
 #                                                  Skript removes drops it shouldn't => decrease priority or specify which item types to remove
 
+
 log player commands: true
 # Whether Skript should log the usage of custom commands.
 # They will be logged as [INFORMATION] in this format: '<player>: /<command> <arguments>'
 
+
 number accuracy: 2
 # How many digits should be displayed after the dot at maximum when displaying numbers.
 # Zeroes will never be displayed at all, so this setting only applies to numbers that actually have a decimal part with one or more non-zero digits.
+
 
 maximum target block distance: 100
 # How far to search for a player's targeted block in blocks/meters.
 # Lower values improve performance, but might reduce the usability of your scripts.
 # This value is limited by the server (e.g. by 'view-distance' in the server.properties), but is guaranteed to work up to 100 meters.
 
+
 case sensitive: false
 # Whether Skript's functions should be case sensitive or not.
 # This e.g. applies to the effect 'replace' and the conditions 'contains' and 'is/is not'.
+
 
 disable variable conflict warnings: false
 # Disables warnings of potential variable name conflicts if set to true.
 # I recommend to not touch this option, but if you do so you should at least set it back to false
 # whenever you create new scripts with new variables.
+
+
+
+# ==== Variables ====
+
+databases:
+	# Databases to store variables in. These can either be used as a simple one-server-storage
+	# where variables are written constantly but only read at server start,
+	# or as a connection between multiple servers by monitoring the database(s) for changes.
+	#
+	# You can define as many databases as you want, just make sure to choose a distinct name for each one, and don't forget to set all options correctly.
+	#
+	# To be able to use a database you'll need to download the plugin 'SQLibrary' from http://dev.bukkit.org/server-mods/sqlibrary/files/
+	# and install it in your server's plugin directory like other plugins.
+	#
+	# Please note that '/skript reload' will not reload this section, i.e. you'll have to restart Skript for changes to take effect.
+	
+	# Each database definition must be in a separate section. You can choose any name for the sections, as long as it's not already used.
+	database 1:
+		# an example database to describe all possible options.
+		
+		type: disabled
+		# The type of this database. Allowed values are 'CSV', 'SQLite', 'MySQL' and 'disabled'.
+		
+		pattern: .*
+		# Defines which variables to save in this database.
+		# This pattern uses Regex syntax, e.g. use 'db_.*' (without the quotes) to store all variables prefixed with 'db_' in this database,
+		# or use '.*' (the default value) to store all variables here (recommended for the last database in this list, as otherwise some variables might not be saved).
+		# Please note that variables are only stored in one database, and databases are checked from top to bottom,
+		# e.g. if a variable matches the topmost database's pattern it will be saved there and nowhere else.
+		
+		monitor changes: false
+		monitor interval: 20 seconds
+		# If 'monitor changes' is set to true, variables will repeatedly be checked for updates in the database (in intervals set in 'monitor interval').
+		# ! Please note that you should set 'pattern', 'monitor changes' and 'monitor interval' to the same values on all servers that access the same database!
+		
+		# == MySQL configuration ==
+		host: localhost # Where the database server is located at, e.g. 'example.com', 'localhost', or '192.168.1.100'
+		port: 3306 # 3306 is the default port, i.e. you likely won't need to change this value
+		user: root
+		password: pass
+		database: skript # The database to use. Skript will automaticlly create a table 'variables' in this database if it doesn't exist.
+		
+		# == SQLite/CSV configuration ==
+		file: ./plugins/Skript/variables.db
+		# Where to save the variables to. For a CSV file, the file extension '.csv' is recommended, but not required, but SQLite database files must end in '.db'.
+		# The file path can either be absolute (e.g. 'C:\whatever\...' [Windows] or '/usr/whatever/...' [Unix]), or relative to the server directory (e.g. './plugins/Skript/...').
+		
+		backup interval: 2 hours
+		# Creates a backup of the file every so often. This can be useful if you ever want to revert variables to an older state.
+		# Variables are saved constantly no matter what is set here, thus a server crash will never make you loose any variables.
+		# Set this to 0 to disable this feature.
+		
+	
+	MySQL example:
+		# an example MySQL database.
+		
+		type: disabled # change to line below to enable this database
+		# type: MySQL
+		
+		pattern: synced_.* # this pattern will save all variabes that start with 'synced_' in this MySQL database.
+		
+		host: localhost
+		port: 3306
+		user: root
+		password: pass
+		database: skript
+		
+		monitor changes: true
+		monitor interval: 20 seconds
+	
+	SQLite example:
+		# An example SQLite database.
+		
+		type: disabled # change to line below to enable this database
+		# type: SQLite
+		
+		pattern: db_.* # this pattern will save all variabes that start with 'db_' in this SQLite database.
+		
+		file: ./plugins/Skript/variables.db
+		# SQLite databases must end in '.db'
+    	
+		backup interval: 0 # 0 = don't create backups
+		monitor changes: false
+	
+	default:
+		# The default "database" is a simple text file.
+		# This is the last database in this list to catch all variables that have not been saved anywhere else.
+		# You can modify this database freely, but make sure to know what you're doing if you don't want to loose any variables.
+		
+		type: CSV
+		
+		pattern: .*
+		
+		file: ./plugins/Skript/variables.csv
+		
+		backup interval: 2 hours
+	
+	# PS: If you don't want some variables to be saved in any database (e.g. variables that contain an %entity% which usually despawn when the server is shut down)
+	# you can modify the last database's pattern to not match all variables, e.g. use '[^x][^_].*' to match all variables that don't start with 'x_'.
+	# Be very cautios when doing this however as unsaved variables cannot be recovered after the server has been stopped.
+	# PPS: '[^x][^_].* will actually not match variables with a name of length 1, which can cause issues when using longer prefixes than 'x_'.
+	# I recommend to use a single character to denote unsaved variables, e.g. #, in which case the last database's patten should be '[^#].*'.
 
 
 

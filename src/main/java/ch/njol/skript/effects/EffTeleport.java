@@ -84,20 +84,20 @@ public class EffTeleport extends Effect {
 				to.setY(on.getY() + Utils.getBlockHeight(on.getTypeId(), on.getData()));
 			}
 		}
-		if (e instanceof PlayerRespawnEvent && entities.isDefault() && !Delay.isDelayed(e)) {
-			((PlayerRespawnEvent) e).setRespawnLocation(to);
-			return;
-		}
 		for (final Entity entity : entities.getArray(e)) {
+			final Location loc;
 			if (ignoreDirection(to.getYaw(), to.getPitch())) {
-				final Location loc = to.clone();
+				loc = to.clone();
 				loc.setPitch(entity.getLocation().getPitch());
 				loc.setYaw(entity.getLocation().getYaw());
-				loc.getChunk().load();
-				entity.teleport(loc);
 			} else {
-				to.getChunk().load();
-				entity.teleport(to);
+				loc = to;
+			}
+			loc.getChunk().load();
+			if (e instanceof PlayerRespawnEvent && entity.equals(((PlayerRespawnEvent) e).getPlayer()) && !Delay.isDelayed(e)) {
+				((PlayerRespawnEvent) e).setRespawnLocation(loc);
+			} else {
+				entity.teleport(loc);
 			}
 		}
 	}
@@ -105,7 +105,7 @@ public class EffTeleport extends Effect {
 	/**
 	 * @param yaw Notch-yaw
 	 * @param pitch Notch-pitch
-	 * @return
+	 * @return Whether the given pitch and yaw represent a cartesian coordinate direction
 	 */
 	private final static boolean ignoreDirection(final float yaw, final float pitch) {
 		return (pitch == 0 || Math.abs(pitch - 90) < Skript.EPSILON || Math.abs(pitch + 90) < Skript.EPSILON)

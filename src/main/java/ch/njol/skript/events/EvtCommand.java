@@ -62,12 +62,13 @@ public class EvtCommand extends SkriptEvent { // TODO condition to check whether
 			return true;
 		final String message;
 		if (e instanceof PlayerCommandPreprocessEvent) {
+			assert ((PlayerCommandPreprocessEvent) e).getMessage().startsWith("/");
 			message = ((PlayerCommandPreprocessEvent) e).getMessage().substring(1);
 		} else {
 			message = ((ServerCommandEvent) e).getCommand();
 		}
 		return StringUtils.startsWithIgnoreCase(message, command)
-				&& (command.contains(" ") || message.length() == command.length() || Character.isWhitespace(message.charAt(command.length())));
+				&& (command.contains(" ") || message.length() == command.length() || Character.isWhitespace(message.charAt(command.length()))); // if only the command is given, match that command only
 	}
 	
 	@Override

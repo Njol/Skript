@@ -21,6 +21,8 @@
 
 package ch.njol.skript.classes.data;
 
+import java.io.StreamCorruptedException;
+
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.NumberArithmetic;
@@ -34,6 +36,7 @@ import ch.njol.skript.localization.RegexMessage;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
+import ch.njol.yggdrasil.Fields;
 
 /**
  * @author Peter Güttinger
@@ -61,6 +64,7 @@ public class JavaClasses {
 						"set {_temp} to 2*{_temp} - 2.5")
 				.since("1.0")
 				// is registered after all other number classes
+				.defaultExpression(new SimpleLiteral<Number>(1, true))
 				.parser(new Parser<Number>() {
 					@Override
 					public Number parse(final String s, final ParseContext context) {
@@ -90,10 +94,17 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Number>() {
 					@Override
-					public String serialize(final Number n) {
-						return "" + n;
+					public Fields serialize(final Number n) {
+						assert false;
+						return null;
 					}
 					
+					@Override
+					public void deserialize(final Number o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+//						return "" + n;
 					@Override
 					public Number deserialize(final String s) {
 						try {
@@ -143,10 +154,17 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Long>() {
 					@Override
-					public String serialize(final Long l) {
-						return "" + l;
+					public Fields serialize(final Long n) {
+						assert false;
+						return null;
 					}
 					
+					@Override
+					public void deserialize(final Long o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+//						return "" + l;
 					@Override
 					public Long deserialize(final String s) {
 						try {
@@ -191,10 +209,17 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Integer>() {
 					@Override
-					public String serialize(final Integer i) {
-						return "" + i;
+					public Fields serialize(final Integer n) {
+						assert false;
+						return null;
 					}
 					
+					@Override
+					public void deserialize(final Integer o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+//						return "" + i;
 					@Override
 					public Integer deserialize(final String s) {
 						try {
@@ -241,10 +266,17 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Double>() {
 					@Override
-					public String serialize(final Double d) {
-						return "" + d;
+					public Fields serialize(final Double n) {
+						assert false;
+						return null;
 					}
 					
+					@Override
+					public void deserialize(final Double o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+//						return "" + d;
 					@Override
 					public Double deserialize(final String s) {
 						try {
@@ -289,10 +321,17 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Float>() {
 					@Override
-					public String serialize(final Float f) {
-						return "" + f;
+					public Fields serialize(final Float n) {
+						assert false;
+						return null;
 					}
 					
+					@Override
+					public void deserialize(final Float o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+//						return "" + f;
 					@Override
 					public Float deserialize(final String s) {
 						try {
@@ -347,10 +386,17 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Boolean>() {
 					@Override
-					public String serialize(final Boolean b) {
-						return "" + b;
+					public Fields serialize(final Boolean n) {
+						assert false;
+						return null;
 					}
 					
+					@Override
+					public void deserialize(final Boolean o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+//						return "" + b;
 					@Override
 					public Boolean deserialize(final String s) {
 						if (s.equals("true"))
@@ -395,10 +441,17 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Short>() {
 					@Override
-					public String serialize(final Short s) {
-						return "" + s;
+					public Fields serialize(final Short n) {
+						assert false;
+						return null;
 					}
 					
+					@Override
+					public void deserialize(final Short o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+//						return "" + s;
 					@Override
 					public Short deserialize(final String s) {
 						try {
@@ -443,10 +496,17 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Byte>() {
 					@Override
-					public String serialize(final Byte b) {
-						return "" + b;
+					public Fields serialize(final Byte n) {
+						assert false;
+						return null;
 					}
 					
+					@Override
+					public void deserialize(final Byte o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+//						return "" + b;
 					@Override
 					public Byte deserialize(final String s) {
 						try {
@@ -481,8 +541,10 @@ public class JavaClasses {
 					@Override
 					public String parse(final String s, final ParseContext context) {
 						switch (context) {
-							case DEFAULT:
-							case CONFIG:
+							case DEFAULT: // in DEFAULT, parsing is handled by VariableString
+								return null;
+							case CONFIG: // duh
+								return s;
 							case EVENT:
 								if (VariableString.isQuotedCorrectly(s, true))
 									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
@@ -520,10 +582,17 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<String>() {
 					@Override
-					public String serialize(final String s) {
-						return s;
+					public Fields serialize(final String n) {
+						assert false; // natively supported by Yggdrasil
+						return null;
 					}
 					
+					@Override
+					public void deserialize(final String o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+//						return s;
 					@Override
 					public String deserialize(final String s) {
 						return s;

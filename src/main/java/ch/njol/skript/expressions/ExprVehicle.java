@@ -23,14 +23,19 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
+import org.bukkit.event.vehicle.VehicleEnterEvent;
+import org.bukkit.event.vehicle.VehicleExitEvent;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
+import ch.njol.skript.effects.Delay;
+import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -48,18 +53,23 @@ public class ExprVehicle extends SimplePropertyExpression<Entity, Entity> {
 	
 	@Override
 	protected Entity[] get(final Event e, final Entity[] source) {
-		// TODO find out when entity.getVehicle() is changed
-//		if (getTime() == -1 && e instanceof VehicleEnterEvent && !Delay.isDelayed(e)) {
-//			((VehicleEnterEvent) e).
-//		}
-//		if (getTime() == -1 && e instanceof VehicleExitEvent && !Delay.isDelayed(e)) {
-//			((VehicleExitEvent) e).
-//		}
-		return super.get(e, source);
+		return get(source, new Converter<Entity, Entity>() {
+			@Override
+			public Entity convert(final Entity p) {
+				if (getTime() >= 0 && e instanceof VehicleEnterEvent && p.equals(((VehicleEnterEvent) e).getEntered()) && !Delay.isDelayed(e)) {
+					return ((VehicleEnterEvent) e).getVehicle();
+				}
+				if (getTime() >= 0 && e instanceof VehicleExitEvent && p.equals(((VehicleExitEvent) e).getExited()) && !Delay.isDelayed(e)) {
+					return ((VehicleExitEvent) e).getVehicle();
+				}
+				return p.getVehicle();
+			}
+		});
 	}
 	
 	@Override
 	public Entity convert(final Entity e) {
+		assert false;
 		return e.getVehicle();
 	}
 	
@@ -76,16 +86,42 @@ public class ExprVehicle extends SimplePropertyExpression<Entity, Entity> {
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET) {
-			Skript.error("Use the 'make <entity> ride <entity/entity type>' effect to make an entity ride another.");
-			return null;
+			return new Class[] {Entity.class, EntityData.class};
 		}
 		return super.acceptChange(mode);
 	}
 	
-//	@SuppressWarnings("unchecked")
-//	@Override
-//	public boolean setTime(int time) {
-//		return super.setTime(time, getExpr(), VehicleEnterEvent.class, VehicleExitEvent.class);
-//	}
+	@Override
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		if (mode == ChangeMode.SET) {
+			final Entity[] ps = getExpr().getArray(e);
+			if (ps.length == 0)
+				return;
+			final Object o = delta[0];
+			if (o instanceof Entity) {
+				((Entity) o).eject();
+				final Entity p = CollectionUtils.getRandom(ps);
+				p.leaveVehicle();
+				((Entity) o).setPassenger(p);
+			} else if (o instanceof EntityData) {
+				for (final Entity p : ps) {
+					final Entity v = ((EntityData<?>) o).spawn(p.getLocation());
+					if (v == null)
+						continue;
+					v.setPassenger(p);
+				}
+			} else {
+				assert false;
+			}
+		} else {
+			super.change(e, delta, mode);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean setTime(final int time) {
+		return super.setTime(time, getExpr(), VehicleEnterEvent.class, VehicleExitEvent.class);
+	}
 	
 }

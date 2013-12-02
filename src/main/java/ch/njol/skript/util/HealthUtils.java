@@ -117,15 +117,15 @@ public abstract class HealthUtils {
 	
 	/**
 	 * @param e
-	 * @return How many hearts the entity can have at most
+	 * @param health How many hearts the entity can have at most
 	 */
 	public final static void setMaxHealth(final LivingEntity e, final double health) {
 		if (usesDoubles) {
-			e.setMaxHealth(Math.max(0, health * 2));
+			e.setMaxHealth(Math.max(Skript.EPSILON / 2, health * 2)); // 0 is not allowed, so just use a small value - smaller than Skript.EPSILON though to compare as 0
 			return;
 		}
 		try {
-			setMaxHealth.invoke(e, Math.max(0, (int) Math.round(health * 2)));
+			setMaxHealth.invoke(e, Math.max(1, (int) Math.round(health * 2)));
 		} catch (final IllegalAccessException ex) {
 			Skript.exception(ex);
 		} catch (final IllegalArgumentException ex) {

@@ -27,6 +27,7 @@ import org.bukkit.entity.Villager.Profession;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.coll.CollectionUtils;
 
 /**
@@ -37,8 +38,10 @@ public class VillagerData extends EntityData<Villager> {
 	static {
 		// professions in order!
 		// FARMER(0), LIBRARIAN(1), PRIEST(2), BLACKSMITH(3), BUTCHER(4);
-		register(VillagerData.class, "villager", Villager.class,
+		register(VillagerData.class, "villager", Villager.class, 0,
 				"villager", "farmer", "librarian", "priest", "blacksmith", "butcher");
+		
+		Variables.yggdrasil.registerSingleClass(Profession.class, "Villager.Profession");
 	}
 	
 	private Profession profession = null;
@@ -66,7 +69,7 @@ public class VillagerData extends EntityData<Villager> {
 	public Villager spawn(final Location loc) {
 		final Villager v = super.spawn(loc);
 		if (profession == null)
-			v.setProfession(CollectionUtils.random(Profession.values()));
+			v.setProfession(CollectionUtils.getRandom(Profession.values()));
 		return v;
 	}
 	
@@ -81,27 +84,19 @@ public class VillagerData extends EntityData<Villager> {
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		return profession == null ? 0 : profession.hashCode();
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof VillagerData))
 			return false;
 		final VillagerData other = (VillagerData) obj;
 		return profession == other.profession;
 	}
 	
-	@Override
-	public String serialize() {
-		return profession == null ? "" : profession.name();
-	}
-	
+//		return profession == null ? "" : profession.name();
 	@Override
 	protected boolean deserialize(final String s) {
 		if (s.isEmpty())

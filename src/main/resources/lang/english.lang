@@ -1,7 +1,7 @@
 # Default English language file
 
 # Which version of Skript this language file was written for
-version: 2.0 beta 10
+version: ${project.version}
 
 # -- General --
 and: and
@@ -23,14 +23,17 @@ genders:
 		id: an
 		definite article: the
 		indefinite article: an
-	# none:
-		# id: -
-		# definite article: #-#
-		# indefinite article: #-#
 	plural:
 		# id: x
 		definite article: the
 		# indefinite article: #-#
+	# none:
+		# id: -
+		# definite article: #-#
+		# indefinite article: #-#
+	# nominative:
+		# id: +
+		# used for adjectives only
 
 # -- Skript --
 skript:
@@ -54,7 +57,7 @@ skript command:
 			<script>: Reloads a specific script or a folder of scripts
 		enable:
 			description: Enables all scripts or a specific one
-			all: Enables all scripts in the 'scripts' folder
+			all: Enables all scripts
 			<script>: Enables a specific script or a folder of scripts
 		disable:
 			description: Disables all scripts or a specific one
@@ -162,6 +165,7 @@ aliases:
 	of: of(?: any)?
 	# messages
 	brackets error: Brackets have a special meaning in aliases and cannot be used as usual
+	invalid brackets: Invalid amount and/or placement of '%s' brackets in alias
 	empty alias: '%s' results in an empty alias (i.e. it doesn't map to any id/data), it will thus be ignored
 	unknown variation: The variation {%s} was never defined
 	starting with number: Aliases must not start with a number
@@ -181,6 +185,7 @@ aliases:
 	loaded x aliases from: Loaded %s english aliases from %s
 	loaded x aliases: Loaded a total of %s english aliases
 	anything: anything
+	named: named
 
 # -- Enchantments --
 enchantments:
@@ -337,22 +342,54 @@ time:
 
 # -- Chat and Wool Colours --
 colors:
-	black: black 
-	dark_grey: dark grey, dark gray
-	light_grey: grey, light grey, gray, light gray, silver
-	white: white
-	dark_blue: blue, dark blue
-	brown: brown, light blue, indigo
-	dark_cyan: cyan, aqua, dark cyan, dark aqua, dark turquoise, dark turquois
-	light_cyan: light cyan, light aqua, turquoise, turquois
-	dark_green: green, dark green
-	light_green: light green, lime, lime green
-	yellow: yellow, light yellow
-	orange: orange, gold, dark yellow
-	dark_red: red, dark red
-	light_red: pink, light red
-	dark_purple: purple, dark purple
-	light_purple: magenta, light purple
+	black:
+		adjective: black
+		names: black 
+	dark_grey:
+		adjective: dark grey
+		names: dark grey, dark gray
+	light_grey:
+		adjective: grey
+		names: grey, light grey, gray, light gray, silver
+	white:
+		adjective: white
+		names: white
+	dark_blue:
+		adjective: blue
+		names: blue, dark blue
+	brown:
+		adjective: brown
+		names: brown, light blue, indigo
+	dark_cyan:
+		adjective: cyan
+		names: cyan, aqua, dark cyan, dark aqua, dark turquoise, dark turquois
+	light_cyan:
+		adjective: light cyan
+		names: light cyan, light aqua, turquoise, turquois
+	dark_green:
+		adjective: green
+		names: green, dark green
+	light_green:
+		adjective: light green
+		names: light green, lime, lime green
+	yellow:
+		adjective: yellow
+		names: yellow, light yellow
+	orange:
+		adjective: orange
+		names: orange, gold, dark yellow
+	dark_red:
+		adjective: red
+		names: red, dark red
+	light_red:
+		adjective: pink
+		names: pink, light red
+	dark_purple:
+		adjective: purple
+		names: purple, dark purple
+	light_purple:
+		adjective: magenta
+		names: magenta, light purple
 
 # -- Chat Styles --
 chat styles:
@@ -389,6 +426,9 @@ directions:
 #	the exception to this rule is the 'age pattern' and the corresponding marks (4¦ and 8¦)
 entities:
 	age pattern: (|4¦baby|4¦young|8¦adult)
+	age adjectives:
+		baby: baby
+		adult: adult
 	entity:
 		name: entit¦y¦ies @an
 		pattern: <age> entit(y|1¦ies)
@@ -471,9 +511,6 @@ entities:
 	iron golem:
 		name: iron golems¦s @an
 		pattern: iron golem(|1¦s)
-	dropped item:
-		name: dropped item¦s
-		pattern: dropped item(|1¦s)|item entit(y|1¦ies)
 	item frame:
 		name: item frame¦s @an
 		pattern: item[ ]frame(|1¦s)
@@ -539,9 +576,8 @@ entities:
 		pattern: <age> zombie pigm(an|1¦en)|(4¦)zombie pigletboy(|1¦s)
 	sheep:
 		name: sheep
-		# while sheep is unclear, sheeps is plural (even though it's wrong)
+		# while sheep is ambiguous, sheeps is plural (even though it's wrong)
 		pattern: [%-colors%] <age> sheep(2¦|1¦s)|(4¦)[%-colors%] lamb(|1¦s)
-		format: %2$s %1$s
 	unsheared sheep:
 		name: unsheared sheep @an
 		pattern: unsheared [%-colors%] sheep(2¦|1¦s)
@@ -571,10 +607,7 @@ entities:
 		pattern: squid(|1¦s)
 	bottle of enchanting:
 		name: bottle¦ of enchanting¦s of enchanting
-		pattern: bottle(|1¦s) o(f|') enchanting|[e]xp[erience] bottle(|1¦s)
-	thrown potion:
-		name: thrown potions¦s
-		pattern: thrown potion(|1¦s)
+		pattern: [thrown] bottle(|1¦s) o(f|') enchanting|[e]xp[erience] bottle(|1¦s)
 	tnt:
 		name: TNT
 		pattern: ([primed] TNT(2¦|1¦s)|TNT entit(y|1¦ies))
@@ -633,9 +666,34 @@ entities:
 	firework:
 		name: firework rocket¦s
 		pattern: firework(|1¦s) [rocket(|1¦s)]
+	falling block:
+		name: falling block¦s
+		pattern: falling (block(|1¦s)|(2¦)%-itemtype%)
+		adjective: falling
+		not a block error: Falling blocks must be blocks, not items
+	thrown potion:
+		name: thrown potions¦s
+		pattern: thrown (potion(|1¦s)|(¦2)%-itemtypes%)
+		adjective: thrown
+	dropped item:
+		name: dropped item¦s
+		pattern: dropped (item(|1¦s)|(¦2)%-itemtypes%)|item entit(y|1¦ies)
+		adjective: dropped
 	horse:
 		name: horse¦s
 		pattern: <age> horse(|1¦s)|(4¦)foal(|1¦s)
+	donkey:
+		name: donkey¦s
+		pattern: <age> donkey(|1¦s)
+	mule:
+		name: mule¦s
+		pattern: <age> mule(|1¦s)
+	undead horse:
+		name: undead horse¦s @an
+		pattern: <age> undead horse(|1¦s)|undead <age> horse(|1¦s)|undead (4¦)foal(|1¦s)
+	skeleton horse:
+		name: skeleton horse¦s
+		pattern: <age> skeleton horse(|1¦s)|skeleton <age> horse(|1¦s)|skeleton (4¦)foal(|1¦s)
 
 # -- Damage Causes --
 damage causes:
@@ -667,6 +725,36 @@ game modes:
 	survival: survival
 	creative: creative
 	adventure: adventure
+
+# -- Visual Effects --
+visual effects:
+	ender_signal:
+		name: ender signal @an
+		pattern: ender [eye] signal[s]
+	mobspawner_flames:
+		name: mobspawner flames  @x
+		pattern: [mo(b|nster)][ ]spawner flames
+	potion_break:
+		name: potion break @a
+		pattern: [%potioneffecttype%] potion break[ing]
+	smoke:
+		name: smoke @-
+		pattern: smoke [%direction%]
+	hurt:
+		name: hurt @-
+		pattern: hurt|damage
+	sheep_eat:
+		name: sheep eating @a
+		pattern: sheep eat[ing] [a] [grass] [block]
+	wolf_hearts:
+		name: wolf hearts @x
+		pattern: wolf (hearts|tame|being tamed)
+	wolf_shake:
+		name: wolf shaking @a
+		pattern: wolf shak(e|ing)
+	wolf_smoke:
+		name: wolf smoke @-
+		pattern: wolf smok(e|ing)
 
 # -- Boolean --
 boolean:
@@ -729,9 +817,11 @@ types:
 	experience: experience point¦s @an
 	experience.pattern: (e?xp|experience( points?)?)
 	classinfo: type¦s @a
+	visualeffect: visual effect¦s @a
 	
 	# Hooks
 	money: money
+	region: region¦s
 
 # -- IO Exceptions --
 io exceptions:

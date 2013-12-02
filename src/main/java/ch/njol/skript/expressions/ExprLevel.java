@@ -135,8 +135,7 @@ public class ExprLevel extends SimplePropertyExpression<Player, Integer> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean setTime(final int time) {
-		super.setTime(time);
-		return getExpr().isDefault() && ScriptLoader.isCurrentEvent(PlayerLevelChangeEvent.class, PlayerDeathEvent.class);
+		return super.setTime(time, getExpr(), PlayerLevelChangeEvent.class, PlayerDeathEvent.class);
 	}
 	
 	@Override

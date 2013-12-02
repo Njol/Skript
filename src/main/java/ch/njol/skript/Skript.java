@@ -21,7 +21,6 @@
 
 package ch.njol.skript;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -63,7 +62,8 @@ import ch.njol.skript.Updater.UpdateState;
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
-import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.SerializableConverter;
+import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.classes.data.BukkitClasses;
 import ch.njol.skript.classes.data.BukkitEventValues;
 import ch.njol.skript.classes.data.DefaultComparators;
@@ -102,7 +102,6 @@ import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.FileUtils;
-import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
@@ -121,7 +120,7 @@ import ch.njol.util.coll.iterator.EnumerationIterable;
  * Use this class to extend this plugin's functionality by adding more {@link Condition conditions}, {@link Effect effects}, {@link SimpleExpression expressions}, etc.
  * <p>
  * If your plugin.yml contains <tt>'depend: [Skript]'</tt> then your plugin will not start at all if Skript is not present. Add <tt>'softdepend: [Skript]'</tt> to your plugin.yml
- * if you want your plugin to work even if Skript isn't present, but want to make sure that it's loaded after Skript.
+ * if you want your plugin to work even if Skript isn't present, but want to make sure that Skript gets loaded before your plugin.
  * <p>
  * If you use 'softdepend' you can test whether Skript is loaded with <tt>'Bukkit.getPluginManager().getPlugin(&quot;Skript&quot;) != null'</tt>
  * <p>
@@ -132,12 +131,12 @@ import ch.njol.util.coll.iterator.EnumerationIterable;
  * @see #registerAddon(JavaPlugin)
  * @see #registerCondition(Class, String...)
  * @see #registerEffect(Class, String...)
- * @see #registerExpression(Class, Class, String...)
- * @see #registerEvent(Class, Class, String...)
- * @see EventValues#registerEventValue(Class, Class, Getter)
+ * @see #registerExpression(Class, Class, ExpressionType, String...)
+ * @see #registerEvent(String, Class, Class, String...)
+ * @see EventValues#registerEventValue(Class, Class, SerializableGetter, int)
  * @see Classes#registerClass(ClassInfo)
  * @see Comparators#registerComparator(Class, Class, Comparator)
- * @see Converters#registerConverter(Class, Class, Converter)
+ * @see Converters#registerConverter(Class, Class, SerializableConverter)
  */
 public final class Skript extends JavaPlugin implements Listener {
 	
@@ -151,9 +150,9 @@ public final class Skript extends JavaPlugin implements Listener {
 		return instance;
 	}
 	
-	public Skript() throws IllegalAccessException {
+	public Skript() throws IllegalStateException {
 		if (instance != null)
-			throw new IllegalAccessException("Cannot create multiple instances of Skript!");
+			throw new IllegalStateException("Cannot create multiple instances of Skript!");
 		instance = this;
 	}
 	
@@ -163,7 +162,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		return version;
 	}
 	
-	public static final Message m_invalid_reload = new Message("skript.invalid reload");
+	public final static Message m_invalid_reload = new Message("skript.invalid reload");
 	
 	@Override
 	public void onEnable() {
@@ -297,7 +296,8 @@ public final class Skript extends JavaPlugin implements Listener {
 						e.printStackTrace();
 				}
 				
-				Skript.stopAcceptingRegistrations();
+				stopAcceptingRegistrations();
+				
 				Documentation.generate();
 				
 				final LogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler() {
@@ -428,8 +428,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 	}
 	
-	private static Version minecraftVersion = null;
-	private static boolean runningCraftBukkit;
+	private static Version minecraftVersion = new Version(666);
+	private static boolean runningCraftBukkit = false;
 	
 	public static Version getMinecraftVersion() {
 		return minecraftVersion;
@@ -505,7 +505,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		Aliases.load();
 	}
 	
-	private final static Collection<Closeable> closeOnDisable = Collections.synchronizedCollection(new ArrayList<Closeable>());
+	private final static Collection<AutoCloseable> closeOnDisable = Collections.synchronizedCollection(new ArrayList<AutoCloseable>());
 	
 	/**
 	 * Registers a Closeable that should be closed when this plugin is disabled.
@@ -514,7 +514,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * 
 	 * @param closeable
 	 */
-	public static void closeOnDisable(final Closeable closeable) {
+	public static void closeOnDisable(final AutoCloseable closeable) {
 		closeOnDisable.add(closeable);
 	}
 	
@@ -530,10 +530,12 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		Bukkit.getScheduler().cancelTasks(this);
 		
-		for (final Closeable c : closeOnDisable) {
+		for (final AutoCloseable c : closeOnDisable) {
 			try {
 				c.close();
-			} catch (final IOException e) {}
+			} catch (final IOException e) {} catch (final Exception e) {
+				Skript.exception(e, "An error occurred while shutting down.", "This might or might not cause any issues.");
+			}
 		}
 		
 		// unset static fields to prevent memory leaks as Bukkit reloads the classes with a different classloader on reload
@@ -581,7 +583,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ CONSTANTS, OPTIONS & OTHER ================
 	
-	public static final String SCRIPTSFOLDER = "scripts";
+	public final static String SCRIPTSFOLDER = "scripts";
 	
 	public static void outdatedError() {
 		error("Skript v" + instance.getDescription().getVersion() + " is not fully compatible with Bukkit " + Bukkit.getVersion() + ". Some feature(s) will be broken until you update Skript.");
@@ -610,18 +612,18 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * 
 	 * @see #EPSILON_MULT
 	 */
-	public static final double EPSILON = 1e-10;
+	public final static double EPSILON = 1e-10;
 	/**
 	 * A value a bit larger than 1
 	 * 
 	 * @see #EPSILON
 	 */
-	public static final double EPSILON_MULT = 1.00001;
+	public final static double EPSILON_MULT = 1.00001;
 	
 	/**
 	 * The maximum ID a block can have in Minecraft.
 	 */
-	public static final int MAXBLOCKID = 255;
+	public final static int MAXBLOCKID = 255;
 	/**
 	 * The maximum data value of Minecraft, i.e. Short.MAX_VALUE - Short.MIN_VALUE.
 	 */
@@ -638,6 +640,9 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 	};
 	
+	/**
+	 * Creates a new Thread and sets its UncaughtExceptionHandler. The Thread is not started autmatically.
+	 */
 	public final static Thread newThread(final Runnable r, final String name) {
 		final Thread t = new Thread(r, name);
 		t.setUncaughtExceptionHandler(UEH);
@@ -646,7 +651,11 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ REGISTRATIONS ================
 	
-	public static boolean acceptRegistrations = true;
+	private static boolean acceptRegistrations = true;
+	
+	public static boolean isAcceptRegistrations() {
+		return acceptRegistrations;
+	}
 	
 	public static void checkAcceptRegistrations() {
 		if (!acceptRegistrations)
@@ -658,15 +667,6 @@ public final class Skript extends JavaPlugin implements Listener {
 		Converters.createMissingConverters();
 		
 		Classes.onRegistrationsStop();
-		if (debug()) {
-			final StringBuilder b = new StringBuilder();
-			for (final ClassInfo<?> ci : Classes.getClassInfos()) {
-				if (b.length() != 0)
-					b.append(", ");
-				b.append(ci.getCodeName());
-			}
-			Skript.info("All registered classes in order: " + b.toString());
-		}
 	}
 	
 	// ================ ADDONS ================
@@ -716,14 +716,15 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ CONDITIONS & EFFECTS ================
 	
-	private static final Collection<SyntaxElementInfo<? extends Condition>> conditions = new ArrayList<SyntaxElementInfo<? extends Condition>>(20);
-	private static final Collection<SyntaxElementInfo<? extends Effect>> effects = new ArrayList<SyntaxElementInfo<? extends Effect>>(20);
-	private static final Collection<SyntaxElementInfo<? extends Statement>> statements = new ArrayList<SyntaxElementInfo<? extends Statement>>(40);
+	private final static Collection<SyntaxElementInfo<? extends Condition>> conditions = new ArrayList<SyntaxElementInfo<? extends Condition>>(50);
+	private final static Collection<SyntaxElementInfo<? extends Effect>> effects = new ArrayList<SyntaxElementInfo<? extends Effect>>(50);
+	private final static Collection<SyntaxElementInfo<? extends Statement>> statements = new ArrayList<SyntaxElementInfo<? extends Statement>>(100);
 	
 	/**
 	 * registers a {@link Condition}.
 	 * 
-	 * @param condition
+	 * @param condition The condition's class
+	 * @param patterns Skript patterns to match this condition
 	 */
 	public static <E extends Condition> void registerCondition(final Class<E> condition, final String... patterns) throws IllegalArgumentException {
 		checkAcceptRegistrations();
@@ -733,9 +734,10 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * registers an {@link Effect}.
+	 * Registers an {@link Effect}.
 	 * 
-	 * @param effect
+	 * @param effect The effect's class
+	 * @param patterns Skript patterns to match this effect
 	 */
 	public static <E extends Effect> void registerEffect(final Class<E> effect, final String... patterns) throws IllegalArgumentException {
 		checkAcceptRegistrations();
@@ -758,22 +760,24 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ EXPRESSIONS ================
 	
-	private static final List<ExpressionInfo<?, ?>> expressions = new ArrayList<ExpressionInfo<?, ?>>(30);
+	private final static List<ExpressionInfo<?, ?>> expressions = new ArrayList<ExpressionInfo<?, ?>>(100);
 	
 	private final static int[] expressionTypesStartIndices = new int[ExpressionType.values().length];
 	
 	/**
 	 * Registers an expression.
 	 * 
-	 * @param c The expression class.
-	 * @param returnType
-	 * @param patterns
+	 * @param c The expression's class
+	 * @param returnType The superclass of all values returned by the expression
+	 * @param type The expression's {@link ExpressionType type}. This is used to determine in which order to try to parse expressions.
+	 * @param patterns Skript patterns that match this expression
+	 * @throws IllegalArgumentException if returnType is not a normal class
 	 */
 	public static <E extends Expression<T>, T> void registerExpression(final Class<E> c, final Class<T> returnType, final ExpressionType type, final String... patterns) throws IllegalArgumentException {
 		checkAcceptRegistrations();
 		if (returnType.isAnnotation() || returnType.isArray() || returnType.isPrimitive())
 			throw new IllegalArgumentException("returnType must be a normal type");
-		final ExpressionInfo<?, ?> info = new ExpressionInfo<E, T>(patterns, returnType, c);
+		final ExpressionInfo<E, T> info = new ExpressionInfo<E, T>(patterns, returnType, c);
 		for (int i = type.ordinal() + 1; i < ExpressionType.values().length; i++) {
 			expressionTypesStartIndices[i]++;
 		}
@@ -801,24 +805,42 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ EVENTS ================
 	
-	private static final Collection<SkriptEventInfo<?>> events = new ArrayList<SkriptEventInfo<?>>(50);
+	private final static Collection<SkriptEventInfo<?>> events = new ArrayList<SkriptEventInfo<?>>(50);
 	
+	/**
+	 * Registers an event.
+	 * 
+	 * @param name The name of the event, used for error messages
+	 * @param c The event's class
+	 * @param event The Bukkit event this event applies to
+	 * @param patterns Skript patterns to match this event
+	 * @return A SkriptEventInfo representing the registered event. Used to generate Skript's documentation.
+	 */
 	@SuppressWarnings("unchecked")
-	public static <E extends SkriptEvent> SkriptEventInfo<E> registerEvent(final String name, final Class<E> c, final Class<? extends Event> event, final String... patterns) throws IllegalArgumentException {
+	public static <E extends SkriptEvent> SkriptEventInfo<E> registerEvent(final String name, final Class<E> c, final Class<? extends Event> event, final String... patterns) {
 		checkAcceptRegistrations();
 		final SkriptEventInfo<E> r = new SkriptEventInfo<E>(name, patterns, c, CollectionUtils.array(event));
 		events.add(r);
 		return r;
 	}
 	
-	public static <E extends SkriptEvent> SkriptEventInfo<E> registerEvent(final String name, final Class<E> c, final Class<? extends Event>[] events, final String... patterns) throws IllegalArgumentException {
+	/**
+	 * Registers an event.
+	 * 
+	 * @param name The name of the event, used for error messages
+	 * @param c The event's class
+	 * @param events The Bukkit events this event applies to
+	 * @param patterns Skript patterns to match this event
+	 * @return A SkriptEventInfo representing the registered event. Used to generate Skript's documentation.
+	 */
+	public static <E extends SkriptEvent> SkriptEventInfo<E> registerEvent(final String name, final Class<E> c, final Class<? extends Event>[] events, final String... patterns) {
 		checkAcceptRegistrations();
 		final SkriptEventInfo<E> r = new SkriptEventInfo<E>(name, patterns, c, events);
 		Skript.events.add(r);
 		return r;
 	}
 	
-	public static final Collection<SkriptEventInfo<?>> getEvents() {
+	public final static Collection<SkriptEventInfo<?>> getEvents() {
 		return events;
 	}
 	
@@ -829,14 +851,14 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * 
 	 * @param sender
 	 * @param command
-	 * @return
+	 * @return Whether the command was run
 	 */
 	public final static boolean dispatchCommand(final CommandSender sender, final String command) {
 		try {
 			if (sender instanceof Player) {
 				final PlayerCommandPreprocessEvent e = new PlayerCommandPreprocessEvent((Player) sender, "/" + command);
 				Bukkit.getPluginManager().callEvent(e);
-				if (e.isCancelled() || !e.getMessage().startsWith("/"))
+				if (e.isCancelled() || e.getMessage() == null || !e.getMessage().startsWith("/"))
 					return false;
 				return Bukkit.dispatchCommand(e.getPlayer(), e.getMessage().substring(1));
 			} else {
@@ -854,27 +876,27 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ LOGGING ================
 	
-	public static final boolean logNormal() {
+	public final static boolean logNormal() {
 		return SkriptLogger.log(Verbosity.NORMAL);
 	}
 	
-	public static final boolean logHigh() {
+	public final static boolean logHigh() {
 		return SkriptLogger.log(Verbosity.HIGH);
 	}
 	
-	public static final boolean logVeryHigh() {
+	public final static boolean logVeryHigh() {
 		return SkriptLogger.log(Verbosity.VERY_HIGH);
 	}
 	
-	public static final boolean debug() {
+	public final static boolean debug() {
 		return SkriptLogger.debug();
 	}
 	
-	public static final boolean testing() {
+	public final static boolean testing() {
 		return debug() || Skript.class.desiredAssertionStatus();
 	}
 	
-	public static final boolean log(final Verbosity minVerb) {
+	public final static boolean log(final Verbosity minVerb) {
 		return SkriptLogger.log(minVerb);
 	}
 	
@@ -990,12 +1012,12 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	private final static void logEx() {
-		Bukkit.getLogger().severe(EXCEPTION_PREFIX);
+		SkriptLogger.LOGGER.severe(EXCEPTION_PREFIX);
 	}
 	
 	private final static void logEx(final String... lines) {
 		for (final String line : lines)
-			Bukkit.getLogger().severe(EXCEPTION_PREFIX + line);
+			SkriptLogger.LOGGER.severe(EXCEPTION_PREFIX + line);
 	}
 	
 	public static String SKRIPT_PREFIX = ChatColor.GRAY + "[" + ChatColor.GOLD + "Skript" + ChatColor.GRAY + "]" + ChatColor.RESET + " ";

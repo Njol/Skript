@@ -124,10 +124,10 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	protected <R> ConvertedExpression<Object, ? extends R> getConvertedExpr(final Class<R> to) {
+	protected <R> ConvertedExpression<Object, ? extends R> getConvertedExpr(final Class<R>... to) {
 		if (isVariableLoop && !isIndex) {
-			return new ConvertedExpression<Object, R>(this, to, new SerializableConverter<Object, R>() {
-				private static final long serialVersionUID = 7703898357092613043L;
+			return new ConvertedExpression<Object, R>(this, (Class<R>) Utils.getSuperType(to), new SerializableConverter<Object, R>() {
+				private final static long serialVersionUID = 7703898357092613043L;
 				
 				@Override
 				public R convert(final Object o) {

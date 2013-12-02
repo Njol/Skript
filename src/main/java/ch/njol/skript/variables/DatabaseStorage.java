@@ -21,19 +21,20 @@
 
 package ch.njol.skript.variables;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
+import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import lib.PatPeter.SQLibrary.Database;
+import lib.PatPeter.SQLibrary.DatabaseException;
 import lib.PatPeter.SQLibrary.MySQL;
 import lib.PatPeter.SQLibrary.SQLibrary;
 import lib.PatPeter.SQLibrary.SQLite;
@@ -42,108 +43,111 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.config.SectionNode;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
+import ch.njol.util.Pair;
 
 /**
  * @author Peter Güttinger
  */
 public class DatabaseStorage extends VariablesStorage {
 	
-	private final static String MISSINGINFORMATION = "The config is missing relevant information on the database";
+	public final static int MAX_VARIABLE_NAME_LENGTH = 500,
+			MAX_CLASS_CODENAME_LENGTH = 50,
+			MAX_VALUE_SIZE = 10000;
 	
-	// can't be a Database or loading this class will result in a NoClassDefFoundError if SQLibrary is not present
+	private final static String TABLE_NAME = "variables21",
+			OLD_TABLE_NAME = "variables";
+	
+	private final static String SELECT_ORDER = "name, type, value, rowid";
+	
+	public static enum Type {
+		MYSQL("CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+				"rowid        BIGINT  NOT NULL  AUTO_INCREMENT  PRIMARY KEY," +
+				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  UNIQUE," +
+				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
+				"value        BLOB(" + MAX_VALUE_SIZE + ")," +
+				"update_guid  CHAR(36)  NOT NULL" +
+				")") {
+			@Override
+			protected Object initialise(final DatabaseStorage s, final SectionNode n) {
+				final String host = s.getValue(n, "host");
+				final Integer port = s.getValue(n, "port", Integer.class);
+				final String user = s.getValue(n, "user");
+				final String password = s.getValue(n, "password");
+				final String database = s.getValue(n, "database");
+				if (host == null || port == null || user == null || password == null || database == null)
+					return null;
+				return new MySQL(SkriptLogger.LOGGER, "[Skript]", host, port, database, user, password);
+			}
+		},
+		SQLITE("CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+				"name         VARCHAR(" + MAX_VARIABLE_NAME_LENGTH + ")  NOT NULL  PRIMARY KEY," +
+				"type         VARCHAR(" + MAX_CLASS_CODENAME_LENGTH + ")," +
+				"value        BLOB(" + MAX_VALUE_SIZE + ")," +
+				"update_guid  CHAR(36)  NOT NULL" +
+				")") {
+			@Override
+			protected Object initialise(final DatabaseStorage s, final SectionNode config) {
+				final String name = s.file.getName();
+				assert name.endsWith(".db");
+				return new SQLite(SkriptLogger.LOGGER, "[Skript]", s.file.getParent(), name.substring(0, name.length() - ".db".length()));
+			}
+		};
+		
+		final String createQuery;
+		
+		Type(final String cq) {
+			createQuery = cq;
+		}
+		
+		protected abstract Object initialise(DatabaseStorage s, SectionNode config);
+	}
+	
+	private final Type type;
+	
+	// can't be a Database as otherwise loading this class will result in a NoClassDefFoundError if SQLibrary is not present
 	private Object db;
-	// TODO pattern for each table & patterns for different .csv files
-	private static Pattern variablePattern;
 	
 	private boolean monitor = false;
 	private long monitor_interval;
 	
-	public final static boolean accept(final String name) {
-		return variablePattern == null ? false : variablePattern.matcher(name).matches();
-	}
-	
 	private final static String guid = UUID.randomUUID().toString();
 	
+	DatabaseStorage(final SectionNode n, final Type type) {
+		super(n);
+		this.type = type;
+	}
+	
 	@Override
-	protected boolean load_i() {
-		
-		final String type = SkriptConfig.database.get("type");
-		if (type == null) {
-			Skript.error(MISSINGINFORMATION);
-			return false;
-		}
-		if (type.equalsIgnoreCase("none"))
-			return true;
-		
+	protected boolean load_i(final SectionNode n) {
 		final Plugin p = Bukkit.getPluginManager().getPlugin("SQLibrary");
 		if (p == null || !(p instanceof SQLibrary)) {
 			Skript.error("You need the plugin SQLibrary in order to use a database with Skript. You can download the latest version from http://dev.bukkit.org/server-mods/sqlibrary/files/");
 			return false;
 		}
 		
-		final String pattern = SkriptConfig.database.get("pattern");
-		if (pattern == null) {
-			Skript.error(MISSINGINFORMATION);
+		final Boolean monitor_changes = getValue(n, "monitor changes", Boolean.class);
+		final Timespan monitor_interval = getValue(n, "monitor interval", Timespan.class);
+		if (monitor_changes == null || monitor_interval == null)
 			return false;
-		}
-		try {
-			variablePattern = Pattern.compile(pattern);
-		} catch (final PatternSyntaxException e) {
-			Skript.error("Invalid pattern '" + pattern + "': " + e.getLocalizedMessage());
-			return false;
-		}
-		
-		final Boolean monitor_changes = SkriptConfig.database.get("monitor changes");
-		final Timespan monitor_interval = SkriptConfig.database.get("monitor interval");
-		if (monitor_changes == null || monitor_interval == null) {
-			Skript.error(MISSINGINFORMATION);
-			return false;
-		}
 		monitor = monitor_changes;
 		this.monitor_interval = monitor_interval.getMilliSeconds();
 		
-		if (type.equalsIgnoreCase("mysql")) {
-			final String host = SkriptConfig.database.get("host");
-			final Integer port = SkriptConfig.database.get("port");
-			final String user = SkriptConfig.database.get("user");
-			final String password = SkriptConfig.database.get("password");
-			final String database = SkriptConfig.database.get("database");
-			if (host == null || port == null || user == null || password == null || database == null) {
-				Skript.error(MISSINGINFORMATION);
+		try {
+			db = type.initialise(this, n);
+			if (db == null)
+				return false;
+		} catch (final RuntimeException e) {
+			if (e instanceof DatabaseException) {// not in a catch clause to not produce a ClassNotFoundException when this class is loaded and SQLibrary is not present
+				Skript.error(e.getMessage());
 				return false;
 			}
-			db = new MySQL(Bukkit.getLogger(), "[Skript]", host, port, database, user, password);
-		} else if (type.equalsIgnoreCase("sqlite")) {
-			String file = (String) SkriptConfig.database.get("file");
-			if (file == null) {
-				Skript.error(MISSINGINFORMATION);
-				return false;
-			}
-			if (!file.endsWith(".db"))
-				file = file + ".db";
-			File f = new File(file);
-			if (f.exists() && !f.isFile()) {
-				Skript.error("The database file must be an actual file, not a directory.");
-				return false;
-			} else {
-				try {
-					f.createNewFile();
-				} catch (final IOException e) {
-					Skript.error("Cannot create the database file: " + e.getLocalizedMessage());
-					return false;
-				}
-			}
-			f = f.getAbsoluteFile();
-			final String name = f.getName();
-			db = new SQLite(Bukkit.getLogger(), "[Skript]", f.getParent(), name.substring(0, name.length() - ".db".length()));
-		} else {
-			Skript.error("Invalid database type '" + type + "', only 'MySQL', 'SQLite' and 'none' are allowed.");
-			return false;
+			throw e;
 		}
 		
 		if (!((Database) db).open()) {
@@ -152,35 +156,50 @@ public class DatabaseStorage extends VariablesStorage {
 		}
 		
 		try {
-			if (db instanceof SQLite) {
-				((Database) db).query("CREATE TABLE IF NOT EXISTS variables (" +
-						"name         VARCHAR(500)   NOT NULL  PRIMARY KEY," +
-						"type         VARCHAR(50)    ," +
-						"value        VARCHAR(5000)  ," +
-						"update_guid  CHAR(36)       NOT NULL" +
-						")");
-			} else {
-				((Database) db).query("CREATE TABLE IF NOT EXISTS variables (" +
-						"rowid        BIGINT         NOT NULL  AUTO_INCREMENT PRIMARY KEY," +
-						"name         VARCHAR(500)   NOT NULL  UNIQUE," +
-						"type         VARCHAR(50)    ," +
-						"value        VARCHAR(5000)  ," +
-						"update_guid  CHAR(36)       NOT NULL" +
-						")");
+			try {
+				((Database) db).query(type.createQuery);
+			} catch (final SQLException e) {
+				Skript.error("Could not create the variables table: " + e.getLocalizedMessage() + ". Please create the table yourself using the following query: " + type.createQuery);
+				return false;
 			}
 			
-			writeQuery = ((Database) db).prepare("REPLACE INTO variables (name, type, value, update_guid) VALUES (?, ?, ?, ?)");
+			writeQuery = ((Database) db).prepare("REPLACE INTO " + TABLE_NAME + " (name, type, value, update_guid) VALUES (?, ?, ?, ?)");
 			
-			deleteQuery = ((Database) db).prepare("DELETE FROM variables WHERE name = ?");
+			deleteQuery = ((Database) db).prepare("DELETE FROM " + TABLE_NAME + " WHERE name = ?");
 			
-			monitorQuery = ((Database) db).prepare("SELECT name, type, value, rowid FROM variables WHERE rowid > ? AND update_guid != ?");
-			monitorCleanUpQuery = ((Database) db).prepare("DELETE FROM variables WHERE type IS NULL AND rowid < ?");
+			monitorQuery = ((Database) db).prepare("SELECT " + SELECT_ORDER + " FROM " + TABLE_NAME + " WHERE rowid > ? AND update_guid != ?");
+			monitorCleanUpQuery = ((Database) db).prepare("DELETE FROM " + TABLE_NAME + " WHERE value IS NULL AND rowid < ?");
 			
+			// old
+			boolean hasOldDatabase = false;
+			Statement old = null;
+			try {
+				old = ((Database) db).getConnection().createStatement();
+				if (old.execute("SELECT " + SELECT_ORDER + " " + OLD_TABLE_NAME)) {
+					ResultSet r = null;
+					try {
+						r = old.getResultSet();
+						if (oldLoadVariables(r))
+							hasOldDatabase = true;
+					} finally {
+						if (r != null)
+							r.close();
+					}
+					
+				}
+			} finally {
+				if (old != null) {
+					try {
+						old.close();
+					} catch (final SQLException e) {}
+				}
+			}
+			
+			// new - loaded even if an old version is found, as dropping the table might have been denied
 			Statement s = null;
 			try {
 				s = ((Database) db).getConnection().createStatement();
-				
-				s.execute("SELECT name, type, value, rowid from variables");
+				s.execute("SELECT " + SELECT_ORDER + " from " + TABLE_NAME);
 				ResultSet r = null;
 				try {
 					r = s.getResultSet();
@@ -195,6 +214,40 @@ public class DatabaseStorage extends VariablesStorage {
 						s.close();
 					} catch (final SQLException e) {}
 				}
+			}
+			
+			// store old variables in new table and delete the old table
+			if (hasOldDatabase) {
+				Skript.info("[2.1] Updating the database '" + name + "' to the new format...");
+				try {
+					Variables.getReadLock().lock();
+					for (final Entry<String, Object> v : Variables.getVariablesHashMap().entrySet()) {
+						save(new Pair<String, Object>(v));
+					}
+					Skript.info("Updated " + Variables.getVariablesHashMap().size() + " variables");
+				} finally {
+					Variables.getReadLock().unlock();
+				}
+				Statement drop = null;
+				try {
+					boolean error = false;
+					try {
+						drop = ((Database) db).getConnection().createStatement();
+						drop.execute("DROP TABLE " + OLD_TABLE_NAME);
+					} catch (final SQLException e) {
+						Skript.error("There was an error deleting the old variables table, please delete it yourself: " + e.getLocalizedMessage());
+						error = true;
+					}
+					if (!error)
+						Skript.info("Successfully deleted the old variables table");
+				} finally {
+					if (drop != null) {
+						try {
+							drop.close();
+						} catch (final SQLException e) {}
+					}
+				}
+				Skript.info("Database '" + name + "' successfully updated.");
 			}
 		} catch (final SQLException e) {
 			sqlException(e);
@@ -231,10 +284,42 @@ public class DatabaseStorage extends VariablesStorage {
 		return true;
 	}
 	
+	@Override
+	protected boolean requiresFile() {
+		return type == Type.SQLITE;
+	}
+	
+	@Override
+	protected File getFile(String file) {
+		if (!file.endsWith(".db"))
+			file = file + ".db"; // required by SQLibrary
+		return new File(file);
+	}
+	
+	@Override
+	protected void connect() {
+		if (((Database) db).isConnected())
+			return;
+		if (!((Database) db).open()) {
+			Skript.exception("Cannot reconnect to the database '" + name + "'!"); // shouldn't ever happen as this is only used for SQLite
+		}
+	}
+	
+	@Override
+	protected void disconnect() {
+		if (((Database) db).isConnected())
+			((Database) db).close();
+	}
+	
 	private PreparedStatement writeQuery, deleteQuery, monitorQuery, monitorCleanUpQuery;
 	
 	@Override
-	protected void save(final String name, final String type, final String value) {
+	protected void save(final String name, final String type, final byte[] value) {
+		// REMIND get the actual maximum size from the database
+		if (name.length() > MAX_VARIABLE_NAME_LENGTH)
+			Skript.error("The name of the variable '" + name + "' is too long to be saved in a database (length: " + name.length() + ", maximum allowed: " + MAX_VARIABLE_NAME_LENGTH + ")! It will be truncated and won't bet available under the same name again when loaded.");
+		if (value != null && value.length > MAX_VALUE_SIZE)
+			Skript.error("The variable '" + name + "' cannot be saved in the database as its value size (" + value.length + ") exceeds the maximum allowed size of " + MAX_VALUE_SIZE + "! An attempt to save the variable will be made nonetheless.");
 		try {
 			if (!monitor && type == null) {
 				assert value == null;
@@ -244,7 +329,7 @@ public class DatabaseStorage extends VariablesStorage {
 				int i = 1;
 				writeQuery.setString(i++, name);
 				writeQuery.setString(i++, type);
-				writeQuery.setString(i++, value);
+				writeQuery.setBlob(i++, value == null ? null : new ByteArrayInputStream(value), value == null ? 0 : value.length);
 				writeQuery.setString(i++, guid);
 				writeQuery.executeUpdate();
 			}
@@ -298,10 +383,10 @@ public class DatabaseStorage extends VariablesStorage {
 	
 	private final static class VariableInfo {
 		final String name;
-		final String value;
+		final Blob value;
 		final ClassInfo<?> ci;
 		
-		public VariableInfo(final String name, final String value, final ClassInfo<?> ci) {
+		public VariableInfo(final String name, final Blob value, final ClassInfo<?> ci) {
 			this.name = name;
 			this.value = value;
 			this.ci = ci;
@@ -316,25 +401,25 @@ public class DatabaseStorage extends VariablesStorage {
 				int i = 1;
 				final String name = r.getString(i++);
 				final String type = r.getString(i++);
-				final String value = r.getString(i++);
+				final Blob value = r.getBlob(i++);
 				lastRowID = r.getLong(i++);
-				if (type == null) {
-					Variables.setVariable(name, null, this);
+				if (value == null) {
+					Variables.variableLoaded(name, null, this);
 				} else {
 					final ClassInfo<?> c = Classes.getClassInfo(type);
 					if (c == null || c.getSerializer() == null) {
-						Skript.error("Cannot load the variable {" + name + "} from the database, because the type '" + type + "' cannot be recognized or not stored in variables");
+						Skript.error("Cannot load the variable {" + name + "} from the database, because the type '" + type + "' cannot be recognised or not stored in variables");
 						continue;
 					}
 					if (c.getSerializer().mustSyncDeserialization()) {
 						syncDeserializing.add(new VariableInfo(name, value, c));
 					} else {
-						final Object d = c.getSerializer().deserialize(value);
+						final Object d = Classes.deserialize(c, value);
 						if (d == null) {
-							Skript.error("Cannot load the variable {" + name + "} from the database, because '" + value + "' cannot be parsed as a " + type);
+							Skript.error("Cannot load the variable {" + name + "} from the database, because '" + value + "' cannot be loaded as a " + type);
 							continue;
 						}
-						Variables.setVariable(name, d, this);
+						Variables.variableLoaded(name, d, this);
 					}
 				}
 			}
@@ -344,12 +429,16 @@ public class DatabaseStorage extends VariablesStorage {
 					public Void call() throws Exception {
 						synchronized (syncDeserializing) {
 							for (final VariableInfo o : syncDeserializing) {
-								final Object d = o.ci.getSerializer().deserialize(o.value);
-								if (d == null) {
-									Skript.error("Cannot load the variable {" + o.name + "} from the database, because '" + o.value + "' cannot be parsed as a " + o.ci.getCodeName());
-									continue;
+								try {
+									final Object d = Classes.deserialize(o.ci, o.value);
+									if (d == null) {
+										Skript.error("Cannot load the variable {" + o.name + "} from the database, because '" + o.value + "' cannot be parsed as a " + o.ci.getCodeName());
+										continue;
+									}
+									Variables.variableLoaded(o.name, d, DatabaseStorage.this);
+								} catch (final SQLException e) {
+									Skript.error("Cannot load the variable {" + o.name + "} from the database: " + e.getLocalizedMessage());
 								}
-								Variables.setVariable(o.name, d, DatabaseStorage.this);
 							}
 							syncDeserializing.clear();
 							return null;
@@ -360,15 +449,78 @@ public class DatabaseStorage extends VariablesStorage {
 		}
 	}
 	
+	private final static class OldVariableInfo {
+		final String name;
+		final String value;
+		final ClassInfo<?> ci;
+		
+		public OldVariableInfo(final String name, final String value, final ClassInfo<?> ci) {
+			this.name = name;
+			this.value = value;
+			this.ci = ci;
+		}
+	}
+	
+	private final static LinkedList<OldVariableInfo> oldSyncDeserializing = new LinkedList<OldVariableInfo>();
+	
+	@Deprecated
+	private boolean oldLoadVariables(final ResultSet r) throws SQLException {
+		boolean hasRow = false;
+		synchronized (oldSyncDeserializing) {
+			while (r.next()) {
+				hasRow = true;
+				int i = 1;
+				final String name = r.getString(i++);
+				final String type = r.getString(i++);
+				final String value = r.getString(i++);
+				lastRowID = r.getLong(i++);
+				if (type == null) {
+					Variables.variableLoaded(name, null, this);
+				} else {
+					final ClassInfo<?> c = Classes.getClassInfo(type);
+					if (c == null || c.getSerializer() == null) {
+						Skript.error("Cannot load the variable {" + name + "} from the database, because the type '" + type + "' cannot be recognized or not stored in variables");
+						continue;
+					}
+					if (c.getSerializer().mustSyncDeserialization()) {
+						oldSyncDeserializing.add(new OldVariableInfo(name, value, c));
+					} else {
+						final Object d = c.getSerializer().deserialize(value);
+						if (d == null) {
+							Skript.error("Cannot load the variable {" + name + "} from the database, because '" + value + "' cannot be parsed as a " + type);
+							continue;
+						}
+						Variables.variableLoaded(name, d, this);
+					}
+				}
+			}
+			if (!oldSyncDeserializing.isEmpty()) {
+				Task.callSync(new Callable<Void>() {
+					@Override
+					public Void call() throws Exception {
+						synchronized (oldSyncDeserializing) {
+							for (final OldVariableInfo o : oldSyncDeserializing) {
+								final Object d = o.ci.getSerializer().deserialize(o.value);
+								if (d == null) {
+									Skript.error("Cannot load the variable {" + o.name + "} from the database, because '" + o.value + "' cannot be parsed as a " + o.ci.getCodeName());
+									continue;
+								}
+								Variables.variableLoaded(o.name, d, DatabaseStorage.this);
+							}
+							oldSyncDeserializing.clear();
+							return null;
+						}
+					}
+				});
+			}
+		}
+		return hasRow;
+	}
+	
 	private static void sqlException(final SQLException e) {
 		Skript.error("database error: " + e.getLocalizedMessage());
 		if (Skript.testing())
 			e.printStackTrace();
-	}
-	
-	@Override
-	protected String type() {
-		return "database";
 	}
 	
 }

@@ -98,17 +98,17 @@ public class Variable<T> implements Expression<T> {
 	
 	/**
 	 * Prints errors
-	 * 
-	 * @param name
-	 * @param type
-	 * @return
 	 */
-	public static <T> Variable<T> newInstance(final String name, final Class<? extends T>[] types) {
+	public static <T> Variable<T> newInstance(String name, final Class<? extends T>[] types) {
 //		if (name.startsWith(LOCAL_VARIABLE_TOKEN) && name.contains(SEPARATOR)) {
 //			Skript.error("Local variables cannot be lists, i.e. must not contain the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
 //			return null;
 //		} else 
-		if (name.startsWith(SEPARATOR) || name.endsWith(SEPARATOR)) {
+		name = name.trim();
+		if (name.startsWith("#")) {
+			Skript.error("Variables must not start with '#'."); // used as comment character in CSV
+			return null;
+		} else if (name.startsWith(SEPARATOR) || name.endsWith(SEPARATOR)) {
 			Skript.error("A variable's name must neither start nor end with the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
 			return null;
 		} else if (name.contains("*") && (name.indexOf("*") != name.length() - 1 || !name.endsWith(SEPARATOR + "*"))) {
@@ -121,7 +121,7 @@ public class Variable<T> implements Expression<T> {
 			Skript.error("A variable's name must not contain the separator '" + SEPARATOR + "' multiple times in a row (error in variable {" + name + "})");
 			return null;
 		}
-		final VariableString vs = VariableString.newInstance(name.startsWith(LOCAL_VARIABLE_TOKEN) ? name.substring(LOCAL_VARIABLE_TOKEN.length()) : name, StringMode.VARIABLE_NAME);
+		final VariableString vs = VariableString.newInstance(name.startsWith(LOCAL_VARIABLE_TOKEN) ? name.substring(LOCAL_VARIABLE_TOKEN.length()).trim() : name, StringMode.VARIABLE_NAME);
 		if (vs == null)
 			return null;
 		return new Variable<T>(vs, types, name.startsWith(LOCAL_VARIABLE_TOKEN), name.endsWith(SEPARATOR + "*"), null);
@@ -154,21 +154,13 @@ public class Variable<T> implements Expression<T> {
 		return toString(null, false);
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
-		return new Variable<R>(name, new Class[] {to}, local, list, this);
-	}
-	
-	public <R> Variable<R> getConvertedExpression(final Class<? extends R>... to) {
+	public <R> Variable<R> getConvertedExpression(final Class<R>... to) {
 		return new Variable<R>(name, to, local, list, this);
 	}
 	
 	/**
 	 * Gets the value of this variable as stored in the variables map.
-	 * 
-	 * @param e
-	 * @return
 	 */
 	private Object getRaw(final Event e) {
 		final Object val = Variables.getVariable(name.toString(e).toLowerCase(Locale.ENGLISH), e, local);
@@ -410,6 +402,7 @@ public class Variable<T> implements Expression<T> {
 								ci = Classes.getSuperClassInfo(d.getClass());
 								if (ci.getMath() != null)
 									o = d;
+								changed = true;
 								continue;
 							}
 							final Object diff = Converters.convert(d, ci.getMathRelativeType());

@@ -64,7 +64,7 @@ public enum WeatherType {
 		});
 	}
 	
-	public static final WeatherType parse(final String s) {
+	public final static WeatherType parse(final String s) {
 		return byName.get(s);
 	}
 	
@@ -109,7 +109,7 @@ public enum WeatherType {
 		return names[0];
 	}
 	
-	// TODO flags?
+	// REMIND flags?
 	public String toString(final int flags) {
 		return names[0];
 	}

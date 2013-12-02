@@ -19,39 +19,37 @@
  * 
  */
 
-package ch.njol.skript.config;
+package ch.njol.skript.util;
 
-import java.lang.reflect.Field;
-import java.util.Locale;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.bukkit.entity.Player;
+
+import ch.njol.skript.Skript;
 
 /**
  * @author Peter Güttinger
  */
-public class Section {
+public abstract class PlayerUtils {
+	private PlayerUtils() {}
 	
-	public final String name;
+	private final static Set<Player> inviUpdate = new HashSet<Player>();
 	
-	public Section(final String name) {
-		this.name = name;
+	public final static void updateInventory(final Player p) {
+		inviUpdate.add(p);
 	}
 	
-	public final <T> T get(String key) {
-		key = key.toLowerCase(Locale.ENGLISH);
-		for (final Field f : this.getClass().getDeclaredFields()) {
-			f.setAccessible(true);
-			if (Option.class.isAssignableFrom(f.getType())) {
-				try {
-					final Option<?> o = (Option<?>) f.get(this);
-					if (o.key.equals(key))
-						return (T) o.value();
-				} catch (final IllegalArgumentException e) {
-					assert false;
-				} catch (final IllegalAccessException e) {
-					assert false;
-				}
-			}
+	// created when first used
+	@SuppressWarnings("unused")
+	private final static Task task = new Task(Skript.getInstance(), 1, 1) {
+		@SuppressWarnings("deprecation")
+		@Override
+		public void run() {
+			for (final Player p : inviUpdate)
+				p.updateInventory();
+			inviUpdate.clear();
 		}
-		return null;
-	}
+	};
 	
 }

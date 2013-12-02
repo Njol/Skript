@@ -161,18 +161,16 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	
 	@Override
 	protected Slot[] get(final Event e, final Block[] source) {
-		if (getExpr().isDefault() && (e instanceof FurnaceSmeltEvent || e instanceof FurnaceBurnEvent) && !Delay.isDelayed(e)) {
-			final Block b = getExpr().getSingle(e);
-			if (b.getType() != Material.FURNACE && b.getType() != Material.BURNING_FURNACE)
-				return null;
-			return new Slot[] {new FurnaceEventSlot(e, ((Furnace) b.getState()).getInventory())};
-		}
 		return get(source, new Getter<Slot, Block>() {
 			@Override
 			public Slot get(final Block b) {
 				if (b.getType() != Material.FURNACE && b.getType() != Material.BURNING_FURNACE)
 					return null;
-				return new InventorySlot(((Furnace) b.getState()).getInventory(), slot);
+				if (getTime() >= 0 && (e instanceof FurnaceSmeltEvent && b.equals(((FurnaceSmeltEvent) e).getBlock()) || e instanceof FurnaceBurnEvent && b.equals(((FurnaceBurnEvent) e).getBlock())) && !Delay.isDelayed(e)) {
+					return new FurnaceEventSlot(e, ((Furnace) b.getState()).getInventory());
+				} else {
+					return new InventorySlot(((Furnace) b.getState()).getInventory(), slot);
+				}
 			}
 		});
 	}

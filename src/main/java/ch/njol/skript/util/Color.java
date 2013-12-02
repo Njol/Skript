@@ -27,14 +27,16 @@ import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 
+import ch.njol.skript.localization.Adjective;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
+import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("deprecation")
-public enum Color {
+public enum Color implements YggdrasilSerializable {
 	
 	BLACK(DyeColor.BLACK, ChatColor.BLACK, org.bukkit.Color.fromRGB(0x191919)),
 	DARK_GREY(DyeColor.GRAY, ChatColor.DARK_GRAY, org.bukkit.Color.fromRGB(0x4C4C4C)),
@@ -58,10 +60,12 @@ public enum Color {
 	DARK_PURPLE(DyeColor.PURPLE, ChatColor.DARK_PURPLE, org.bukkit.Color.fromRGB(0x7F3FB2)),
 	LIGHT_PURPLE(DyeColor.MAGENTA, ChatColor.LIGHT_PURPLE, org.bukkit.Color.fromRGB(0xB24CD8)), ;
 	
+	private final static String LANGUAGE_NODE = "colors";
+	
 	private final DyeColor wool;
 	private final ChatColor chat;
 	private final org.bukkit.Color bukkit;
-	private String[] names = null;
+	private Adjective adjective;
 	
 	private Color(final DyeColor wool, final ChatColor chat, final org.bukkit.Color bukkit) {
 		this.wool = wool;
@@ -85,12 +89,13 @@ public enum Color {
 				final boolean english = byEnglishName.isEmpty();
 				byName.clear();
 				for (final Color c : values()) {
-					c.names = Language.getList("colors." + c.name());
-					for (final String name : c.names) {
+					final String[] names = Language.getList(LANGUAGE_NODE + "." + c.name() + ".names");
+					for (final String name : names) {
 						byName.put(name.toLowerCase(), c);
 						if (english)
 							byEnglishName.put(name.toLowerCase(), c);
 					}
+					c.adjective = new Adjective(LANGUAGE_NODE + "." + c.name() + ".adjective");
 				}
 			}
 		});
@@ -112,32 +117,37 @@ public enum Color {
 		return chat.toString();
 	}
 	
-	@Override
-	public String toString() {
-		return names[0];
+	// currently only used by SheepData
+	public Adjective getAdjective() {
+		return adjective;
 	}
 	
-	public static final Color byName(final String name) {
+	@Override
+	public String toString() {
+		return adjective.toString(-1, 0);
+	}
+	
+	public final static Color byName(final String name) {
 		return byName.get(name.toLowerCase());
 	}
 	
-	public static final Color byEnglishName(final String name) {
+	public final static Color byEnglishName(final String name) {
 		return byEnglishName.get(name.toLowerCase());
 	}
 	
-	public static final Color byWool(final short data) {
+	public final static Color byWool(final short data) {
 		if (data < 0 || data >= 16)
 			return null;
 		return byWool[data];
 	}
 	
-	public static final Color byDye(final short data) {
+	public final static Color byDye(final short data) {
 		if (data < 0 || data >= 16)
 			return null;
 		return byWool[15 - data];
 	}
 	
-	public static final Color byWoolColor(final DyeColor color) {
+	public final static Color byWoolColor(final DyeColor color) {
 		return byWool(color.getData());
 	}
 	

@@ -83,7 +83,7 @@ public final class Updater {
 	
 	public final static ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock();
 	/**
-	 * must be synchronized with {@link #stateLock}
+	 * must be synchronised with {@link #stateLock}
 	 */
 	public static volatile UpdateState state = UpdateState.NOT_STARTED;
 	private final static SynchronizedReference<String> error = new SynchronizedReference<String>();
@@ -122,7 +122,7 @@ public final class Updater {
 	}
 	
 	/**
-	 * @param sender Sender to recieve messages
+	 * @param sender Sender to receive messages
 	 * @param download Whether to directly download the newest version if one is found
 	 * @param isAutomatic
 	 */

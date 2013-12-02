@@ -21,7 +21,7 @@
 
 package ch.njol.skript.config;
 
-import java.io.PrintWriter;
+import ch.njol.util.StringUtils;
 
 /**
  * An empty line or a comment.
@@ -32,30 +32,42 @@ import java.io.PrintWriter;
  */
 public class VoidNode extends Node {
 	
+	private final int initialLevel;
+	private final String initialIndentation;
+	
 	VoidNode(final SectionNode parent, final String line, final int lineNum) {
-		super(line, parent, line, lineNum);
+		super(line.trim(), "", parent, lineNum);
+		initialLevel = getLevel();
+		initialIndentation = line.replaceFirst("\\S.*$", "");
 	}
 	
 	VoidNode(final SectionNode parent, final ConfigReader r) {
-		super(r.getLine(), parent, r.getLine(), r.getLineNum());
+		this(parent, r.getLine(), r.getLineNum());
 	}
 	
 	public void set(final String s) {
-		orig = s;
-		modified();
-	}
-	
-	/**
-	 * Overridden to use the original indentation
-	 */
-	@Override
-	void save(final PrintWriter w) {
-		w.println(orig);
+		key = s;
 	}
 	
 	@Override
-	String save() {
-		assert false;
-		return orig.trim();
+	protected String getIndentation() {
+		int levelDiff = getLevel() - initialLevel;
+		if (levelDiff >= 0) {
+			return StringUtils.multiply(config.getIndentation(), levelDiff) + initialIndentation;
+		} else {
+			final String ci = config.getIndentation();
+			String ind = initialIndentation;
+			while (levelDiff < 0 && ind.startsWith(ci)) {
+				levelDiff++;
+				ind = ind.substring(ci.length());
+			}
+			return ind;
+		}
 	}
+	
+	@Override
+	String save_i() {
+		return key;
+	}
+	
 }

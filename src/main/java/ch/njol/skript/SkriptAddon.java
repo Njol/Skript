@@ -81,7 +81,6 @@ public final class SkriptAddon {
 	/**
 	 * Loads classes of the plugin by package. Useful for registering many syntax elements like Skript does it.
 	 * 
-	 * @param plugins Plugin to load the classes from
 	 * @param basePackage The base package to add to all sub packages, e.g. <tt>"ch.njol.skript"</tt>.
 	 * @param subPackages Which subpackages of the base package should be loaded, e.g. <tt>"expressions", "conditions", "effects"</tt>. Subpackages of these packages will be loaded
 	 *            as well. Use an empty array to load all subpackages of the base package.

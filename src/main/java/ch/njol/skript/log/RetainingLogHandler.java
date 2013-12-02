@@ -21,6 +21,7 @@
 
 package ch.njol.skript.log;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -40,15 +41,16 @@ public class RetainingLogHandler extends LogHandler {
 	private final Deque<LogEntry> log = new LinkedList<LogEntry>();
 	private int numErrors = 0;
 	
+	boolean printedErrorOrLog = false;
+	
 	@Override
 	public boolean log(final LogEntry entry) {
 		log.add(entry);
 		if (entry.getLevel() == Level.SEVERE)
 			numErrors++;
+		printedErrorOrLog = false;
 		return false;
 	}
-	
-	boolean printedErrorOrLog = false;
 	
 	@Override
 	public void onStop() {
@@ -65,8 +67,8 @@ public class RetainingLogHandler extends LogHandler {
 	 * <p>
 	 * This handler is stopped if not already done.
 	 * 
-	 * @param def error to print if no errors were logged, can be null to not print any error if there are none
-	 * @return whether there were any errors
+	 * @param def Error to print if no errors were logged, can be null to not print any error if there are none
+	 * @return Whether there were any errors
 	 */
 	public final boolean printErrors(final String def) {
 		printedErrorOrLog = true;
@@ -89,8 +91,8 @@ public class RetainingLogHandler extends LogHandler {
 	 * This handler is stopped if not already done.
 	 * 
 	 * @param recipient
-	 * @param def error to send if no errors were logged, can be null to not print any error if there are none
-	 * @return whether there were any errors to send
+	 * @param def Error to send if no errors were logged, can be null to not print any error if there are none
+	 * @return Whether there were any errors to send
 	 */
 	public final boolean printErrors(final CommandSender recipient, final String def) {
 		printedErrorOrLog = true;
@@ -113,8 +115,6 @@ public class RetainingLogHandler extends LogHandler {
 	 * Prints all retained log messages.
 	 * <p>
 	 * This handler is stopped if not already done.
-	 * 
-	 * @return
 	 */
 	public final void printLog() {
 		printedErrorOrLog = true;
@@ -156,6 +156,15 @@ public class RetainingLogHandler extends LogHandler {
 	
 	public Collection<LogEntry> getLog() {
 		return Collections.unmodifiableCollection(log);
+	}
+	
+	public Collection<LogEntry> getErrors() {
+		final Collection<LogEntry> r = new ArrayList<LogEntry>();
+		for (final LogEntry e : log) {
+			if (e.getLevel() == Level.SEVERE)
+				r.add(e);
+		}
+		return r;
 	}
 	
 	public int getNumErrors() {

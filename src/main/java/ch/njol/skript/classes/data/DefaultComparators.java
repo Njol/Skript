@@ -35,6 +35,7 @@ import org.bukkit.entity.Chicken;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Fish;
 import org.bukkit.entity.Item;
@@ -190,7 +191,7 @@ public class DefaultComparators {
 		entityMaterials.put(EnderPearl.class, Material.ENDER_PEARL);
 		entityMaterials.put(Snowball.class, Material.SNOW_BALL);
 		entityMaterials.put(ThrownExpBottle.class, Material.EXP_BOTTLE);
-		entityMaterials.put(Fish.class, Material.RAW_FISH);
+		entityMaterials.put(Fish.class, Material.RAW_FISH); // REMIND 1.7
 		entityMaterials.put(TNTPrimed.class, Material.TNT);
 		entityMaterials.put(Slime.class, Material.SLIME_BALL);
 		if (Skript.isRunningMinecraft(1, 4))
@@ -396,12 +397,12 @@ public class DefaultComparators {
 				switch (dc) {
 					case ENTITY_ATTACK:
 						return Relation.get(e.isSupertypeOf(EntityData.fromClass(Entity.class)));
-//					case FALLING_BLOCK: // TODO after adding falling blocks (only 'falling block', not 'falling anvil')
-//						return ;
 					case PROJECTILE:
 						return Relation.get(e.isSupertypeOf(EntityData.fromClass(Projectile.class)));
 					case WITHER:
 						return Relation.get(e.isSupertypeOf(EntityData.fromClass(Wither.class)));
+					case FALLING_BLOCK:
+						return Relation.get(e.isSupertypeOf(EntityData.fromClass(FallingBlock.class)));
 					default:
 						return Relation.NOT_EQUAL;
 				}

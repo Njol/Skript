@@ -65,6 +65,7 @@ public class ExprDifference extends SimpleExpression<Object> {
 	private Arithmetic<?, ?> math;
 	private Class<?> relativeType;
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		first = exprs[0];

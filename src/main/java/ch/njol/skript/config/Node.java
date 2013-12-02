@@ -25,8 +25,8 @@ import java.io.PrintWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.log.SkriptLogger;
+import ch.njol.util.StringUtils;
 
 /**
  * @author Peter Güttinger
@@ -35,62 +35,70 @@ public abstract class Node {
 	
 	protected String key;
 	
+	protected String comment = "";
+	
 	protected final int lineNum;
-	/**
-	 * "original", untrimmed String. This is not final as void nodes directly change this if they are modified.
-	 */
-	protected String orig;
-	protected boolean modified = false;
+	
 	private final boolean debug;
 	
-	protected final SectionNode parent;
-	protected final Config config;
+	protected SectionNode parent;
+	protected Config config;
 	
-	protected Node(final String key, final SectionNode parent, final String orig, final int lineNum) {
-		this.key = key;
-		config = parent.getConfig();
-		this.parent = parent;
-		this.orig = orig;
-		debug = orig.endsWith("#DEBUG#");
-		this.lineNum = lineNum;
+	private final static Pattern commentPattern = Pattern.compile("\\s*(?<!#)#(?!#).*$");
+	
+	protected Node() {
+		key = null;
+		debug = false;
+		lineNum = -1;
 		SkriptLogger.setNode(this);
 	}
 	
-	protected Node(final String key, final SectionNode parent, final ConfigReader r) {
-		this.key = key;
-		config = parent.getConfig();
-		this.parent = parent;
-		orig = r.getLine();
-		debug = orig.endsWith("#DEBUG#");
-		lineNum = r.getLineNum();
-		SkriptLogger.setNode(this);
-	}
-	
-	/**
-	 * Reserved for {@link SectionNode#SectionNode(Config)}
-	 * 
-	 * @param c
-	 */
 	protected Node(final Config c) {
 		key = null;
-		orig = null;
 		debug = false;
 		lineNum = -1;
 		config = c;
-		parent = null;
 		SkriptLogger.setNode(this);
 	}
 	
 	protected Node(final String key, final SectionNode parent) {
 		this.key = key;
-		config = parent.getConfig();
-		this.parent = parent;
-		orig = null;
 		debug = false;
 		lineNum = -1;
+		this.parent = parent;
+		config = parent.getConfig();
 		SkriptLogger.setNode(this);
 	}
 	
+	protected Node(final String key, final SectionNode parent, final String line, final int lineNum) {
+		this.key = key;
+		comment = getComment(line);
+		debug = comment == null ? false : comment.endsWith("#DEBUG#");
+		this.lineNum = lineNum;
+		this.parent = parent;
+		config = parent.getConfig();
+		SkriptLogger.setNode(this);
+	}
+	
+	protected Node(final String key, final String comment, final SectionNode parent, final int lineNum) {
+		this.key = key;
+		this.comment = comment;
+		debug = comment == null ? false : comment.endsWith("#DEBUG#");
+		this.lineNum = lineNum;
+		this.parent = parent;
+		config = parent.getConfig();
+		SkriptLogger.setNode(this);
+	}
+	
+	protected Node(final String key, final SectionNode parent, final ConfigReader r) {
+		this(key, parent, r.getLine(), r.getLineNum());
+	}
+	
+	/**
+	 * Key of this node. <tt>null</tt> for empty or invalid nodes.
+	 * 
+	 * @return
+	 */
 	public final String getKey() {
 		return key;
 	}
@@ -100,69 +108,76 @@ public abstract class Node {
 	}
 	
 	public void rename(final String newname) {
-		if (key == null) {
-			Skript.error("can't rename an anonymous node!");
-			return;
-		}
+		if (key == null)
+			throw new IllegalStateException("can't rename an anonymous node");
+		final String oldKey = key;
 		key = newname;
-		modified();
+		if (parent != null)
+			parent.renamed(this, oldKey);
 	}
 	
-//	public void move(final SectionNode newParent) {
-//		if (parent == null) {
-//			Skript.error("can't move the main node!");
-//			return;
-//		}
-//		parent.getNodeList().remove(this);
-//		parent = newParent;
-//		newParent.getNodeList().add(this);
-//		config.modified = true;
-//	}
-	
-	protected void modified() {
-		modified = true;
-		config.modified = true;
+	public void move(final SectionNode newParent) {
+		if (parent == null)
+			throw new IllegalStateException("can't move the main node");
+		parent.remove(this);
+		newParent.add(this);
 	}
 	
-	private final static Pattern commentPattern = Pattern.compile("\\s*(?<!#)#(?!#).*$");
+	final static String getComment(final String line) {
+		if (line == null)
+			return "";
+		final Matcher m = commentPattern.matcher(line);
+		if (m.find())
+			return m.group();
+		return "";
+	}
 	
 	protected String getComment() {
-		final Matcher m = commentPattern.matcher(orig);
-		if (!m.find())
-			return "";
-		return m.group();
+		return comment;
+	}
+	
+	int getLevel() {
+		int l = 0;
+		Node n = this;
+		while ((n = n.parent) != null) {
+			l++;
+		}
+		return Math.max(0, l - 1);
 	}
 	
 	protected String getIndentation() {
-		String s = "";
-		Node n = this;
-		while ((n = n.parent) != config.getMainNode()) {
-			s += config.getIndentation();
-		}
-		return s;
+		return StringUtils.multiply(config.getIndentation(), getLevel());
 	}
 	
-	void save(final PrintWriter w) {
-		if (!modified)
-			w.println(getIndentation() + orig.trim());
-		else
-			w.println(getIndentation() + save() + getComment());
+	/**
+	 * @return String to save this node as. The correct indentation and the comment will be added automatically.
+	 */
+	abstract String save_i();
+	
+	public String save() {
+		return getIndentation() + save_i() + comment;
 	}
 	
-	abstract String save();
+	public void save(final PrintWriter w) {
+		w.println(save());
+	}
 	
 	public SectionNode getParent() {
 		return parent;
 	}
 	
-	public void delete() {
+	/**
+	 * Removes this node from its parent. Does nothing if this node does not have a parent node.
+	 */
+	public void remove() {
+		if (parent == null)
+			return;
 		parent.remove(this);
 	}
 	
-	public String getOrig() {
-		return orig;
-	}
-	
+	/**
+	 * @return Original line of this node at the time it was loaded. <tt>-1</tt> if this node was created dynamically.
+	 */
 	public int getLine() {
 		return lineNum;
 	}
@@ -174,13 +189,13 @@ public abstract class Node {
 		return this instanceof VoidNode;// || this instanceof ParseOptionNode;
 	}
 	
-	/**
-	 * get a node via path:to:the:node. relative paths are possible by starting with a ':'; a double colon '::' will go up a node.<br/>
-	 * selecting the n-th node can be done with #n.
-	 * 
-	 * @param path
-	 * @return the node at the given path or null if the path is invalid
-	 */
+//	/**
+//	 * get a node via path:to:the:node. relative paths are possible by starting with a ':'; a double colon '::' will go up a node.<br/>
+//	 * selecting the n-th node can be done with #n.
+//	 * 
+//	 * @param path
+//	 * @return the node at the given path or null if the path is invalid
+//	 */
 //	public Node getNode(final String path) {
 //		return getNode(path, false);
 //	}
@@ -229,13 +244,17 @@ public abstract class Node {
 	
 	/**
 	 * returns information about this node which looks like the following:<br/>
-	 * <code>original node line #including comments (config.cfg, line xyz)</code>
+	 * <code>node value #including comments (config.sk, line xyz)</code>
 	 */
 	@Override
 	public String toString() {
+		if (config == null) {
+			assert false;
+			return "<invalid>";
+		}
 		if (parent == null)
 			return config.getFileName();
-		return getOrig().trim() + " (" + getConfig().getFileName() + ", line " + getLine() + ")";
+		return save_i() + comment + " (" + config.getFileName() + ", " + (lineNum == -1 ? "unknown line" : "line " + lineNum) + ")";
 	}
 	
 	public boolean debug() {

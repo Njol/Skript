@@ -37,6 +37,7 @@ import org.bukkit.potion.PotionEffectType;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.SerializableChanger;
 import ch.njol.skript.util.Experience;
+import ch.njol.skript.util.PlayerUtils;
 import ch.njol.util.coll.CollectionUtils;
 
 /**
@@ -61,14 +62,13 @@ public class DefaultChangers {
 				case REMOVE_ALL:
 					return CollectionUtils.array(PotionEffectType[].class, ItemType[].class);
 				case SET:
-				case RESET: // TODO reset entity? (unshear, remove held item, ...)
+				case RESET: // REMIND reset entity? (unshear, remove held item, reset weapon/armour, ...)
 					return null;
 			}
 			assert false;
 			return null;
 		}
 		
-		@SuppressWarnings("deprecation")
 		@Override
 		public void change(final Entity[] entities, final Object[] delta, final ChangeMode mode) {
 			if (delta == null) {
@@ -113,7 +113,7 @@ public class DefaultChangers {
 					}
 				}
 				if (e instanceof Player)
-					((Player) e).updateInventory();// TODO find out if this is required (at least for adding)
+					PlayerUtils.updateInventory((Player) e);
 			}
 		}
 	};
@@ -252,7 +252,7 @@ public class DefaultChangers {
 		@Override
 		public Class<?>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.RESET)
-				return null; // TODO regenerate?
+				return null; // REMIND regenerate?
 			if (mode == ChangeMode.SET)
 				return CollectionUtils.array(ItemType.class);
 			return CollectionUtils.array(ItemType[].class, Inventory[].class);

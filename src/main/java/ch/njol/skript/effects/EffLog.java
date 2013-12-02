@@ -30,7 +30,6 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.logging.Level;
 
-import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
@@ -42,6 +41,7 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.util.Kleenean;
 
@@ -96,12 +96,12 @@ public class EffLog extends Effect {
 					if (!s.endsWith(".log"))
 						s += ".log";
 					if (s.equals("server.log")) {
-						Bukkit.getLogger().log(Level.INFO, message);
+						SkriptLogger.LOGGER.log(Level.INFO, message);
 						continue;
 					}
 					PrintWriter w = writers.get(s);
 					if (w == null) {
-						final File f = new File(logsFolder, s); // TODO what if s contains '..'?
+						final File f = new File(logsFolder, s); // REMIND what if s contains '..'?
 						try {
 							f.getParentFile().mkdirs();
 							w = new PrintWriter(new BufferedWriter(new FileWriter(f, true)));

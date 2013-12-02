@@ -21,6 +21,7 @@
 
 package ch.njol.skript.hooks.regions;
 
+import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,17 +39,19 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
+import ch.njol.skript.hooks.regions.Factions2Hook.FactionsRegion;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.AABB;
 import ch.njol.util.Checker;
 import ch.njol.util.coll.iterator.CheckedIterator;
+import ch.njol.yggdrasil.Fields;
 
 /**
  * @author Peter Güttinger
  */
-public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {
-	
+public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {// TODO source
+
 	@Override
 	public String getName() {
 		return "PreciousStones";
@@ -61,7 +64,7 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {
 	
 	public final class PreciousStonesRegion extends Region {
 		
-		private final Field f;
+		private transient Field f;
 		
 		public PreciousStonesRegion(final Field f) {
 			this.f = f;
@@ -108,8 +111,18 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {
 		}
 		
 		@Override
-		public String serialize() {
-			return Classes.serialize(f.getBlock()).second;
+		public Fields serialize() {
+			final Fields f = new Fields();
+			f.putObject("block", this.f.getBlock());
+			return f;
+		}
+		
+		@Override
+		public void deserialize(final Fields fields) throws StreamCorruptedException {
+			final Block b = fields.getObject("block", Block.class);
+			f = plugin.getForceFieldManager().getField(b);
+			if (f == null)
+				throw new StreamCorruptedException("No field at block " + b);
 		}
 		
 		@Override
@@ -143,7 +156,7 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {
 	@Override
 	public Collection<? extends Region> getRegionsAt_i(final Location l) {
 		final Collection<Field> fields = plugin.getForceFieldManager().getSourceFields(l, FieldFlag.ALL); // includes disabled fields
-		final Collection<Region> r = new ArrayList<Region>();
+		final Collection<Region> r = new ArrayList<Region>(fields.size());
 		for (final Field f : fields)
 			r.add(new PreciousStonesRegion(f));
 		return r;
@@ -160,14 +173,8 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {
 	}
 	
 	@Override
-	protected Region deserializeRegion_i(final String s) {
-		final Block b = (Block) Classes.deserialize("block", s);
-		if (b == null)
-			return null;
-		final Field f = plugin.getForceFieldManager().getField(b);
-		if (f == null)
-			return null;
-		return new PreciousStonesRegion(f);
+	protected Class<? extends Region> getRegionClass() {
+		return FactionsRegion.class;
 	}
 	
 }

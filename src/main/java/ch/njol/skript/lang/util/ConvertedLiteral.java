@@ -52,7 +52,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 			throw new SkriptAPIException(data.getClass().getComponentType().getName() + " is not registered");
 		out.writeUTF(codeName);
 		@SuppressWarnings("unchecked")
-		final Pair<String, String>[] d = new Pair[data.length];
+		final Pair<String, byte[]>[] d = new Pair[data.length];
 		for (int i = 0; i < data.length; i++) {
 			if ((d[i] = Classes.serialize(data[i])) == null) {
 				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
@@ -64,7 +64,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
 		in.defaultReadObject();
 		final String codeName = in.readUTF();
-		final Pair<String, String>[] d = (Pair<String, String>[]) in.readObject();
+		final Pair<String, byte[]>[] d = (Pair<String, byte[]>[]) in.readObject();
 		final ClassInfo<?> ci = Classes.getClassInfo(codeName);
 		data = (T[]) Array.newInstance(ci.getC(), d.length);
 		for (int i = 0; i < data.length; i++) {
@@ -79,8 +79,8 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to) {
-		if (to.isAssignableFrom(this.to))
+	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
+		if (CollectionUtils.containsSuperclass(to, this.to))
 			return (Literal<? extends R>) this;
 		return ((Literal<F>) source).getConvertedExpression(to);
 	}
@@ -109,7 +109,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	public T getSingle() {
 		if (getAnd() && data.length > 1)
 			throw new SkriptAPIException("Call to getSingle on a non-single expression");
-		return CollectionUtils.random(data);
+		return CollectionUtils.getRandom(data);
 	}
 	
 	@Override

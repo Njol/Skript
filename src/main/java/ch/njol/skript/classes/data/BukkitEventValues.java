@@ -155,7 +155,7 @@ public final class BukkitEventValues {
 				return e.getBlock().getWorld();
 			}
 		}, 0);
-		// TODO workaround of the event's location being at the entity in block events that have an entity event value
+		// REMIND workaround of the event's location being at the entity in block events that have an entity event value
 		EventValues.registerEventValue(BlockEvent.class, Location.class, new SerializableGetter<Location, BlockEvent>() {
 			@Override
 			public Location get(final BlockEvent e) {

@@ -80,16 +80,17 @@ public class ExprWorld extends PropertyExpression<Object, World> {
 	
 	@Override
 	protected World[] get(final Event e, final Object[] source) {
-		if (getExpr().isDefault() && e instanceof PlayerTeleportEvent && getTime() > 0 && !Delay.isDelayed(e)) {
-			return new World[] {((PlayerTeleportEvent) e).getTo().getWorld()};
-		}
 		if (source instanceof World[]) // event value (see init)
 			return (World[]) source;
 		return get(source, new Converter<Object, World>() {
 			@Override
 			public World convert(final Object o) {
-				if (o instanceof Entity)
-					return ((Entity) o).getWorld();
+				if (o instanceof Entity) {
+					if (getTime() > 0 && e instanceof PlayerTeleportEvent && o.equals(((PlayerTeleportEvent) e).getPlayer()) && !Delay.isDelayed(e))
+						return ((PlayerTeleportEvent) e).getTo().getWorld();
+					else
+						return ((Entity) o).getWorld();
+				}
 				if (o instanceof Location)
 					return ((Location) o).getWorld();
 				assert false : o;

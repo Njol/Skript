@@ -99,13 +99,13 @@ final public class ScriptLoader {
 	
 	public static List<TriggerSection> currentSections = new ArrayList<TriggerSection>();
 	public static List<Loop> currentLoops = new ArrayList<Loop>();
-	public static final Map<String, ItemType> currentAliases = new HashMap<String, ItemType>();
-	public static final HashMap<String, String> currentOptions = new HashMap<String, String>();
+	public final static Map<String, ItemType> currentAliases = new HashMap<String, ItemType>();
+	public final static HashMap<String, String> currentOptions = new HashMap<String, String>();
 	
 	/**
 	 * must be synchronized
 	 */
-	private static final ScriptInfo loadedScripts = new ScriptInfo();
+	private final static ScriptInfo loadedScripts = new ScriptInfo();
 	
 	public static Kleenean hasDelayBefore = Kleenean.FALSE;
 	
@@ -134,7 +134,7 @@ final public class ScriptLoader {
 	}
 	
 	private final static class SerializedScript implements Serializable {
-		static final long serialVersionUID = -6209530262798192214L;
+		final static long serialVersionUID = -6209530262798192214L;
 		
 		public final List<Trigger> triggers = new ArrayList<Trigger>();
 		public final List<ScriptCommand> commands = new ArrayList<ScriptCommand>();
@@ -193,10 +193,10 @@ final public class ScriptLoader {
 	};
 	
 	/**
-	 * loads enabled scripts from the specified directory and it's subdirectories.
+	 * Loads enabled scripts from the specified directory and it's subdirectories.
 	 * 
 	 * @param directory
-	 * @return
+	 * @return Info on the loaded scripts
 	 */
 	public final static ScriptInfo loadScripts(final File directory) {
 		final ScriptInfo i = new ScriptInfo();
@@ -222,7 +222,7 @@ final public class ScriptLoader {
 	 * Loads the specified scripts.
 	 * 
 	 * @param files
-	 * @return
+	 * @return Info on the loaded scripts
 	 */
 	public final static ScriptInfo loadScripts(final File[] files) {
 		Arrays.sort(files);
@@ -332,7 +332,7 @@ final public class ScriptLoader {
 						node.convertToEntries(0, "=");
 						for (final Node n : node) {
 							if (!(n instanceof EntryNode)) {
-								Skript.error("invalid line in alias section");
+								Skript.error("invalid line in aliases section");
 								continue;
 							}
 							final ItemType t = Aliases.parseAlias(((EntryNode) n).getValue());
@@ -386,12 +386,17 @@ final public class ScriptLoader {
 							}
 							if (Variables.getVariable(name, null, false) != null)
 								continue;
+							Object o;
 							final ParseLogHandler log = SkriptLogger.startParseLogHandler();
-							Object o = Classes.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.CONFIG);
-							log.stop();
-							if (o == null) {
-								log.printError("Can't understand the value '" + ((EntryNode) n).getValue() + "'");
-								continue;
+							try {
+								o = Classes.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.CONFIG);
+								if (o == null) {
+									log.printError("Can't understand the value '" + ((EntryNode) n).getValue() + "'");
+									continue;
+								}
+								log.printLog();
+							} finally {
+								log.stop();
 							}
 							final ClassInfo<?> ci = Classes.getSuperClassInfo(o.getClass());
 							if (ci.getSerializer() == null) {
@@ -522,7 +527,7 @@ final public class ScriptLoader {
 	 * Unloads enabled scripts from the specified directory and it's subdirectories.
 	 * 
 	 * @param folder
-	 * @return
+	 * @return Info on the unloaded scripts
 	 */
 	final static ScriptInfo unloadScripts(final File folder) {
 		final ScriptInfo info = new ScriptInfo();
@@ -541,7 +546,7 @@ final public class ScriptLoader {
 	 * Unloads the specified script.
 	 * 
 	 * @param script
-	 * @return
+	 * @return Info on the unloaded script
 	 */
 	final static ScriptInfo unloadScript(final File script) {
 		final ScriptInfo info = SkriptEventHandler.removeTriggers(script);
@@ -695,7 +700,7 @@ final public class ScriptLoader {
 	 * For unit testing
 	 * 
 	 * @param node
-	 * @return
+	 * @return The loaded Trigger
 	 */
 	static Trigger loadTrigger(final SectionNode node) {
 		String event = node.getKey();

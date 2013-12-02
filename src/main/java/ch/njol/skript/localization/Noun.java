@@ -39,6 +39,7 @@ public class Noun extends Message {
 	
 	public final static String GENDERS_SECTION = "genders.";
 	
+	// FIXME remove NO_GENDER and add boolean uncountable (e.g. Luft: 'die Luft', aber nicht 'eine Luft')
 	public final static int PLURAL = -2, NO_GENDER = -3; // -1 is sometimes used as 'not set'
 	public final static String PLURAL_TOKEN = "x", NO_GENDER_TOKEN = "-";
 	
@@ -104,19 +105,43 @@ public class Noun extends Message {
 		return gender == PLURAL ? definitePluralArticle : gender == NO_GENDER ? "" : definiteArticles.get(gender);
 	}
 	
-	public String toString(final int flags) {
+	public int getGender() {
 		validate();
-		final StringBuilder b = new StringBuilder();
+		return gender;
+	}
+	
+	/**
+	 * Returns the article appropriate for the given gender & flags.
+	 * 
+	 * @param flags
+	 * @return The article with a trailing space (as no article is possible in which case the empty string is returned)
+	 */
+	public final static String getArticleWithSpace(final int gender, final int flags) {
 		if (gender == PLURAL) {
 			if ((flags & Language.F_DEFINITE_ARTICLE) != 0)
-				b.append(definitePluralArticle).append(" ");
+				return definitePluralArticle + " ";
 		} else if (gender == NO_GENDER) {
 			// nothing
 		} else if ((flags & Language.F_DEFINITE_ARTICLE) != 0) {
-			b.append(definiteArticles.get(gender)).append(" ");;
+			return definiteArticles.get(gender) + " ";
 		} else if ((flags & Language.F_INDEFINITE_ARTICLE) != 0) {
-			b.append(indefiniteArticles.get(gender)).append(" ");;
+			return indefiniteArticles.get(gender) + " ";
 		}
+		return "";
+	}
+	
+	/**
+	 * @param flags
+	 * @return <tt>{@link #getArticleWithSpace(int, int) getArticleWithSpace}(getGender(), flags)</tt>
+	 */
+	public final String getArticleWithSpace(final int flags) {
+		return getArticleWithSpace(getGender(), flags);
+	}
+	
+	public String toString(final int flags) {
+		validate();
+		final StringBuilder b = new StringBuilder();
+		b.append(getArticleWithSpace(flags));
 		b.append((flags & Language.F_PLURAL) != 0 ? plural : singular);
 		return b.toString();
 	}
@@ -144,6 +169,28 @@ public class Noun extends Message {
 				return plural;
 		}
 		return Skript.toString(amount) + " " + (amount == 1 ? singular : plural);
+	}
+	
+	public String toString(final Adjective a, final int flags) {
+		validate();
+		final StringBuilder b = new StringBuilder();
+		b.append(getArticleWithSpace(flags));
+		b.append(a.toString(gender, flags));
+		b.append(" ");
+		b.append((flags & Language.F_PLURAL) != 0 ? plural : singular);
+		return b.toString();
+	}
+	
+	public String toString(final Adjective[] adjectives, final int flags, final boolean and) {
+		validate();
+		if (adjectives.length == 0)
+			return toString(flags);
+		final StringBuilder b = new StringBuilder();
+		b.append(getArticleWithSpace(flags));
+		b.append(Adjective.toString(adjectives, getGender(), flags, and));
+		b.append(" ");
+		b.append(toString(flags));
+		return b.toString();
 	}
 	
 	public String getSingular() {
@@ -211,11 +258,11 @@ public class Noun extends Message {
 	private final static HashMap<String, Integer> genders = new HashMap<String, Integer>();
 	
 	/**
-	 * @param gender Gender id as defined in [language].lang (without the leading @)
+	 * @param gender Gender id as defined in [language].lang (i.e. without the leading @)
 	 * @param key Key to use in error messages§
-	 * @return
+	 * @return The gender's id
 	 */
-	private static int getGender(final String gender, final String key) {
+	public final static int getGender(final String gender, final String key) {
 		if (gender.equalsIgnoreCase(PLURAL_TOKEN))
 			return PLURAL;
 		if (gender.equalsIgnoreCase(NO_GENDER_TOKEN))
@@ -306,15 +353,8 @@ public class Noun extends Message {
 		return definiteArticles.contains(s.toLowerCase());
 	}
 	
-	public final static String toString(final String singular, final String plural, int gender, final int flags) {
-		if (gender == NO_GENDER)
-			return (flags & Language.F_PLURAL) != 0 ? plural : singular;
-		if (gender == PLURAL)
-			return (flags & Language.F_DEFINITE_ARTICLE) != 0 ? definitePluralArticle + " " + plural : plural;
-		if (gender < 0 || gender >= indefiniteArticles.size())
-			gender = 0;
-		return ((flags & Language.F_INDEFINITE_ARTICLE) != 0 ? indefiniteArticles.get(gender) : (flags & Language.F_DEFINITE_ARTICLE) != 0 ? definiteArticles.get(gender) : "") +
-				((flags & Language.F_PLURAL) != 0 ? plural : singular);
+	public final static String toString(final String singular, final String plural, final int gender, final int flags) {
+		return getArticleWithSpace(flags, gender) + ((flags & Language.F_PLURAL) != 0 ? plural : singular);
 	}
 	
 }

@@ -23,13 +23,19 @@ package ch.njol.skript.util;
 
 import java.io.Serializable;
 
+import ch.njol.yggdrasil.YggdrasilSerializable;
+
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-public class Timeperiod implements Serializable {
+public class Timeperiod implements Serializable, YggdrasilSerializable {
 	
 	public final int start, end;
+	
+	public Timeperiod() {
+		start = end = 0;
+	}
 	
 	public Timeperiod(final int start, final int end) {
 		this.start = (start + 24000) % 24000;

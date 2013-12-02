@@ -24,6 +24,7 @@ package ch.njol.skript.lang;
 import java.lang.reflect.Array;
 
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.util.Utils;
 
 /**
  * A list of literals. Can contain {@link UnparsedLiteral}s.
@@ -57,13 +58,13 @@ public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 	}
 	
 	@Override
-	public <R> Literal<? extends R> getConvertedExpression(final Class<R> to) {
+	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
 		@SuppressWarnings("unchecked")
 		final Literal<? extends R>[] exprs = new Literal[expressions.length];
 		for (int i = 0; i < exprs.length; i++)
 			if ((exprs[i] = (Literal<? extends R>) expressions[i].getConvertedExpression(to)) == null)
 				return null;
-		return new LiteralList<R>(exprs, to, and, this);
+		return new LiteralList<R>(exprs, (Class<R>) Utils.getSuperType(to), and, this);
 	}
 	
 	@Override

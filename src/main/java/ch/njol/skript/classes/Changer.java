@@ -21,6 +21,8 @@
 
 package ch.njol.skript.classes;
 
+import org.bukkit.event.Event;
+
 import ch.njol.skript.classes.data.DefaultChangers;
 import ch.njol.skript.lang.Expression;
 
@@ -64,7 +66,7 @@ public interface Changer<T> {
 	public static abstract class ChangerUtils {
 		
 		@SuppressWarnings("unchecked")
-		public static final <T, V> void change(final Changer<T> changer, final Object[] what, final Object[] delta, final ChangeMode mode) {
+		public final static <T, V> void change(final Changer<T> changer, final Object[] what, final Object[] delta, final ChangeMode mode) {
 			changer.change((T[]) what, delta, mode);
 		}
 		
@@ -74,7 +76,7 @@ public interface Changer<T> {
 		 * @param e The expression to test
 		 * @param mode The ChangeMode to use in the test
 		 * @param types The types to test for
-		 * @return Whether <tt>e.{@link Expression#change(org.bukkit.event.Event, Object[], ChangeMode) change}(event, type[], mode)</tt> can be used or not.
+		 * @return Whether <tt>e.{@link Expression#change(Event, Object[], ChangeMode) change}(event, type[], mode)</tt> can be used or not.
 		 */
 		public final static boolean acceptsChange(final Expression<?> e, final ChangeMode mode, final Class<?>... types) {
 			final Class<?>[] cs = e.acceptChange(mode);

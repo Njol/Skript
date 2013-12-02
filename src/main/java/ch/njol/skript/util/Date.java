@@ -24,12 +24,13 @@ package ch.njol.skript.util;
 import java.io.Serializable;
 
 import ch.njol.skript.SkriptConfig;
+import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-public class Date implements Serializable, Comparable<Date> {
+public class Date implements Serializable, Comparable<Date>, YggdrasilSerializable {
 	
 	private long timestamp;
 	
@@ -68,6 +69,28 @@ public class Date implements Serializable, Comparable<Date> {
 	
 	public void subtract(final Timespan span) {
 		timestamp -= span.getMilliSeconds();
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (int) (timestamp ^ (timestamp >>> 32));
+		return result;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof Date))
+			return false;
+		final Date other = (Date) obj;
+		if (timestamp != other.timestamp)
+			return false;
+		return true;
 	}
 	
 }

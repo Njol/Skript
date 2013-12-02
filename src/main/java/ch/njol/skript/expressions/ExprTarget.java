@@ -21,8 +21,6 @@
 
 package ch.njol.skript.expressions;
 
-import java.lang.reflect.Array;
-
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -76,20 +74,15 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	
 	@Override
 	protected Entity[] get(final Event e, final LivingEntity[] source) {
-		if (getTime() >= 0 && e instanceof EntityTargetEvent && getExpr().isDefault() && !Delay.isDelayed(e)) {
-			final Entity en = ((EntityTargetEvent) e).getTarget();
-			if (en != null) { // untarget event
-				if (type != null && !type.isInstance(en)) {
-					return (Entity[]) Array.newInstance(getReturnType(), 0);
-				}
-				final Entity[] r = (Entity[]) Array.newInstance(getReturnType(), 1);
-				r[0] = en;
-				return r;
-			}
-		}
 		return get(source, new Converter<LivingEntity, Entity>() {
 			@Override
 			public Entity convert(final LivingEntity en) {
+				if (getTime() >= 0 && e instanceof EntityTargetEvent && en.equals(((EntityTargetEvent) e).getEntity()) && !Delay.isDelayed(e)) {
+					final Entity t = ((EntityTargetEvent) e).getTarget();
+					if (t == null || type != null && !type.isInstance(t))
+						return null;
+					return t;
+				}
 				return Utils.getTarget(en, type);
 			}
 		});
@@ -124,14 +117,13 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
 		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE) {
 			final LivingEntity target = delta == null ? null : (LivingEntity) delta[0];
-			if (getTime() >= 0 && e instanceof EntityTargetEvent && getExpr().isDefault() && !Delay.isDelayed(e)) {
-				((EntityTargetEvent) e).setTarget(target);
-				return;
-			}
 			for (final LivingEntity entity : getExpr().getArray(e)) {
-				if (!(entity instanceof Creature))
-					continue;
-				((Creature) entity).setTarget(target);
+				if (getTime() >= 0 && e instanceof EntityTargetEvent && entity.equals(((EntityTargetEvent) e).getEntity()) && !Delay.isDelayed(e)) {
+					((EntityTargetEvent) e).setTarget(target);
+				} else {
+					if (entity instanceof Creature)
+						((Creature) entity).setTarget(target);
+				}
 			}
 		} else {
 			super.change(e, delta, mode);

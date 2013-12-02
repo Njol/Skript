@@ -66,7 +66,7 @@ public class EvtBlock extends SkriptEvent {
 				.description("Called when a block is destroyed by fire.")
 				.examples("on burn", "on burn of wood, fences, or chests")
 				.since("1.0");
-		Skript.registerEvent("Place", EvtBlock.class, new Class[] {BlockPlaceEvent.class, PlayerBucketEmptyEvent.class, Skript.isRunningMinecraft(1, 4, 3) ? HangingPlaceEvent.class : PaintingPlaceEvent.class}, "[block] plac(e|ing) [[of] %itemtypes%]")
+		Skript.registerEvent("Place", EvtBlock.class, new Class[] {BlockPlaceEvent.class, PlayerBucketEmptyEvent.class, Skript.isRunningMinecraft(1, 4, 3) ? HangingPlaceEvent.class : PaintingPlaceEvent.class}, "[block] (plac(e|ing)|build[ing]) [[of] %itemtypes%]")
 				.description("Called when a player places a block.")
 				.examples("on place", "on place of a furnace, workbench or chest")
 				.since("1.0");

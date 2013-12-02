@@ -32,7 +32,6 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Checker;
-import ch.njol.util.Pair;
 import ch.njol.util.coll.CollectionUtils;
 
 /**
@@ -63,7 +62,7 @@ public class EndermanData extends EntityData<Enderman> {
 	@Override
 	public void set(final Enderman entity) {
 		if (hand != null)
-			entity.setCarriedMaterial(CollectionUtils.random(hand).getBlock().getRandom().getData());
+			entity.setCarriedMaterial(CollectionUtils.getRandom(hand).getBlock().getRandom().getData());
 	}
 	
 	@Override
@@ -85,48 +84,41 @@ public class EndermanData extends EntityData<Enderman> {
 	private final static ArgsMessage format = new ArgsMessage("entities.enderman.format");
 	
 	@Override
-	public String toString() {
+	public String toString(final int flags) {
 		if (hand == null)
-			return super.toString();
-		return format.toString(super.toString(), Classes.toString(hand, false));
+			return super.toString(flags);
+		return format.toString(super.toString(flags), Classes.toString(hand, false));
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		return Arrays.hashCode(hand);
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof EndermanData))
 			return false;
 		final EndermanData other = (EndermanData) obj;
 		return Arrays.equals(hand, other.hand);
 	}
 	
+//		if (hand == null)
+//			return "";
+//		final StringBuilder b = new StringBuilder();
+//		for (final ItemType h : hand) {
+//			final Pair<String, String> s = Classes.serialize(h);
+//			if (s == null)
+//				return null;
+//			if (b.length() != 0)
+//				b.append(",");
+//			b.append(s.first);
+//			b.append(":");
+//			b.append(s.second.replace(",", ",,").replace(":", "::"));
+//		}
+//		return b.toString();
 	@Override
-	public String serialize() {
-		if (hand == null)
-			return "";
-		final StringBuilder b = new StringBuilder();
-		for (final ItemType h : hand) {
-			final Pair<String, String> s = Classes.serialize(h);
-			if (s == null)
-				return null;
-			if (b.length() != 0)
-				b.append(",");
-			b.append(s.first);
-			b.append(":");
-			b.append(s.second.replace(",", ",,").replace(":", "::"));
-		}
-		return b.toString();
-	}
-	
-	@Override
+	@Deprecated
 	protected boolean deserialize(final String s) {
 		if (s.isEmpty())
 			return true;
@@ -149,14 +141,7 @@ public class EndermanData extends EntityData<Enderman> {
 			return true;
 		if (sub == null)
 			return false;
-		outer: for (final ItemType s : sub) {
-			for (final ItemType h : hand) {
-				if (h.isSupertypeOf(s))
-					continue outer;
-			}
-			return false;
-		}
-		return true;
+		return ItemType.isSubset(hand, sub);
 	}
 	
 	@Override

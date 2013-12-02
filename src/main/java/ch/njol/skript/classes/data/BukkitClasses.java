@@ -21,6 +21,8 @@
 
 package ch.njol.skript.classes.data;
 
+import java.io.NotSerializableException;
+import java.io.StreamCorruptedException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
@@ -29,7 +31,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
@@ -66,7 +67,9 @@ import ch.njol.skript.util.DamageCauseUtils;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.PotionEffectUtils;
 import ch.njol.skript.util.StringMode;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.StringUtils;
+import ch.njol.yggdrasil.Fields;
 
 /**
  * @author Peter Güttinger
@@ -184,10 +187,33 @@ public class BukkitClasses {
 				.changer(DefaultChangers.blockChanger)
 				.serializer(new Serializer<Block>() {
 					@Override
-					public String serialize(final Block b) {
-						return b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ();
+					public Fields serialize(final Block b) {
+						final Fields f = new Fields();
+						f.putObject("world", b.getWorld());
+						f.putPrimitive("x", b.getX());
+						f.putPrimitive("y", b.getY());
+						f.putPrimitive("z", b.getZ());
+						return f;
 					}
 					
+					@Override
+					public void deserialize(final Block o, final Fields f) {
+						assert false;
+					}
+					
+					@Override
+					protected Block deserialize(final Fields fields) throws StreamCorruptedException {
+						final World w = fields.getObject("world", World.class);
+						final int x = fields.getPrimitive("x", int.class), y = fields.getPrimitive("y", int.class), z = fields.getPrimitive("z", int.class);
+						return w.getBlockAt(x, y, z);
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return true;
+					}
+					
+//					return b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ();
 					@Override
 					public Block deserialize(final String s) {
 						final String[] split = s.split("[:,]");
@@ -205,11 +231,6 @@ public class BukkitClasses {
 						} catch (final NumberFormatException e) {
 							return null;
 						}
-					}
-					
-					@Override
-					public boolean mustSyncDeserialization() {
-						return true;
 					}
 				}));
 		
@@ -254,10 +275,33 @@ public class BukkitClasses {
 					}
 				}).serializer(new Serializer<Location>() {
 					@Override
-					public String serialize(final Location l) {
-						return l.getWorld().getName() + ":" + l.getX() + "," + l.getY() + "," + l.getZ() + "|" + l.getYaw() + "/" + l.getPitch();
+					public Fields serialize(final Location l) throws NotSerializableException {
+						return new Fields(l);
 					}
 					
+					@Override
+					public void deserialize(final Location o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+					@Override
+					public Location deserialize(final Fields f) throws StreamCorruptedException, NotSerializableException {
+						final Location l = new Location(null, 0, 0, 0); // null is allowed
+						f.setFields(l, Variables.yggdrasil);
+						return l;
+					}
+					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends Location> c) {
+						return false; // no nullary constructor
+					}
+					
+					@Override
+					public boolean mustSyncDeserialization() {
+						return true;
+					}
+					
+//					return l.getWorld().getName() + ":" + l.getX() + "," + l.getY() + "," + l.getZ() + "|" + l.getYaw() + "/" + l.getPitch();
 					@Override
 					public Location deserialize(final String s) {
 						final String[] split = s.split("[:,|/]");
@@ -275,11 +319,6 @@ public class BukkitClasses {
 							return null;
 						}
 					}
-					
-					@Override
-					public boolean mustSyncDeserialization() {
-						return true;
-					}
 				}));
 		
 		Classes.registerClass(new ClassInfo<World>(World.class, "world")
@@ -295,7 +334,7 @@ public class BukkitClasses {
 				.parser(new Parser<World>() {
 					@Override
 					public World parse(final String s, final ParseContext context) {
-						// TODO allow shortcuts '[over]world', 'nether' and '[the_]end' (server.properties: 'level-name=world') // inconsistent with 'world is "..."'
+						// REMIND allow shortcuts '[over]world', 'nether' and '[the_]end' (server.properties: 'level-name=world') // inconsistent with 'world is "..."'
 						if (context == ParseContext.COMMAND || context == ParseContext.CONFIG)
 							return Bukkit.getWorld(s);
 						if (s.matches("\".+\""))
@@ -319,10 +358,27 @@ public class BukkitClasses {
 					}
 				}).serializer(new Serializer<World>() {
 					@Override
-					public String serialize(final World w) {
-						return w.getName();
+					public Fields serialize(final World w) {
+						final Fields f = new Fields();
+						f.putObject("name", w.getName());
+						return f;
 					}
 					
+					@Override
+					public void deserialize(final World o, final Fields f) {
+						assert false;
+					}
+					
+					@Override
+					protected World deserialize(final Fields fields) throws StreamCorruptedException {
+						final String name = fields.getObject("name", String.class);
+						final World w = Bukkit.getWorld(name);
+						if (w == null)
+							throw new StreamCorruptedException("Missing world " + name);
+						return w;
+					}
+					
+//					return w.getName();
 					@Override
 					public World deserialize(final String s) {
 						return Bukkit.getWorld(s);
@@ -388,7 +444,7 @@ public class BukkitClasses {
 				.examples("")
 				.since("1.0")
 				.defaultExpression(new EventValueExpression<Player>(Player.class))
-				.after("string")
+				.after("string", "world")
 				.parser(new Parser<Player>() {
 					@Override
 					public Player parse(final String s, final ParseContext context) {
@@ -445,7 +501,7 @@ public class BukkitClasses {
 				.examples("")
 				.since("")
 				.defaultExpression(new EventValueExpression<OfflinePlayer>(OfflinePlayer.class))
-				.after("string")
+				.after("string", "world")
 				.parser(new Parser<OfflinePlayer>() {
 					@Override
 					public OfflinePlayer parse(final String s, final ParseContext context) {
@@ -488,10 +544,24 @@ public class BukkitClasses {
 					}
 				}).serializer(new Serializer<OfflinePlayer>() {
 					@Override
-					public String serialize(final OfflinePlayer p) {
-						return p.getName();
+					public Fields serialize(final OfflinePlayer p) {
+						final Fields f = new Fields();
+						f.putObject("name", p.getName());
+						return f;
 					}
 					
+					@Override
+					public void deserialize(final OfflinePlayer o, final Fields f) {
+						assert false;
+					}
+					
+					@Override
+					protected OfflinePlayer deserialize(final Fields fields) throws StreamCorruptedException {
+						final String name = fields.getObject("name", String.class);
+						return Bukkit.getOfflinePlayer(name);
+					}
+					
+//					return p.getName();
 					@Override
 					public OfflinePlayer deserialize(final String s) {
 						return Bukkit.getOfflinePlayer(s);
@@ -649,63 +719,7 @@ public class BukkitClasses {
 					public String getVariableNamePattern() {
 						return "item:.+";
 					}
-				}).serializer(new Serializer<ItemStack>() {
-					@Override
-					public String serialize(final ItemStack i) {
-						return ConfigurationSerializer.serializeCS(i);
-						// old
-//						final StringBuilder b = new StringBuilder();
-//						b.append(i.getTypeId());
-//						b.append(":" + i.getDurability());
-//						b.append("*" + i.getAmount());
-//						for (final Entry<Enchantment, Integer> e : i.getEnchantments().entrySet()) {
-//							b.append("#" + e.getKey().getId());
-//							b.append(":" + e.getValue());
-//						}
-//						return b.toString();
-					}
-					
-					@Override
-					public ItemStack deserialize(final String s) {
-						final ItemStack i = deserializeOld(s);
-						if (i != null)
-							return i;
-						return ConfigurationSerializer.deserializeCS(s, ItemStack.class);
-					}
-					
-					@SuppressWarnings("deprecation")
-					private ItemStack deserializeOld(final String s) {
-						final String[] split = s.split("[:*#]");
-						if (split.length < 3 || split.length % 2 != 1)
-							return null;
-						int typeId = -1;
-						try {
-							typeId = Material.valueOf(split[0]).getId();
-						} catch (final IllegalArgumentException e) {}
-						try {
-							final ItemStack is = new ItemStack(
-									typeId == -1 ? Integer.parseInt(split[0]) : typeId,
-									Integer.parseInt(split[2]),
-									Short.parseShort(split[1]));
-							for (int i = 3; i < split.length; i += 2) {
-								final Enchantment ench = Enchantment.getById(Integer.parseInt(split[i]));
-								if (ench == null)
-									return null;
-								is.addUnsafeEnchantment(ench, Integer.parseInt(split[i + 1]));
-							}
-							return is;
-						} catch (final NumberFormatException e) {
-							return null;
-						} catch (final IllegalArgumentException e) {
-							return null;
-						}
-					}
-					
-					@Override
-					public boolean mustSyncDeserialization() {
-						return false;
-					}
-				}));
+				}).serializer(new ConfigurationSerializer<ItemStack>()));
 		
 		Classes.registerClass(new ClassInfo<Item>(Item.class, "itementity")
 				.name(ClassInfo.NO_DOC)
@@ -742,10 +756,11 @@ public class BukkitClasses {
 				})
 				.serializer(new EnumSerializer<Biome>(Biome.class)));
 		
+//		PotionEffect is not used; ItemType is used instead
 		Classes.registerClass(new ClassInfo<PotionEffectType>(PotionEffectType.class, "potioneffecttype")
-				.user("potions?( ?effects?)?( ?types?)?")
+				.user("potion( ?effect)?( ?type)?s?")
 				.name("Potion Effect Type")
-				.description("A potion effect, e.g. 'strength' or 'swiftness'.")
+				.description("A <a href='#potioneffect'>potion effect</a> type, e.g. 'strength' or 'swiftness'.")
 				.usage(StringUtils.join(PotionEffectUtils.getNames(), ", "))
 				.examples("apply swiftness 5 to the player",
 						"apply potion of speed 2 to the player for 60 seconds",
@@ -754,7 +769,7 @@ public class BukkitClasses {
 				.parser(new Parser<PotionEffectType>() {
 					@Override
 					public PotionEffectType parse(final String s, final ParseContext context) {
-						return PotionEffectUtils.parse(s);
+						return PotionEffectUtils.parseType(s);
 					}
 					
 					@Override
@@ -774,10 +789,32 @@ public class BukkitClasses {
 				})
 				.serializer(new Serializer<PotionEffectType>() {
 					@Override
-					public String serialize(final PotionEffectType o) {
-						return o.getName();
+					public Fields serialize(final PotionEffectType o) {
+						final Fields f = new Fields();
+						f.putObject("name", o.getName());
+						return f;
 					}
 					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends PotionEffectType> c) {
+						return false;
+					}
+					
+					@Override
+					public void deserialize(final PotionEffectType o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+					@Override
+					protected PotionEffectType deserialize(final Fields fields) throws StreamCorruptedException {
+						final String name = fields.getObject("name", String.class);
+						final PotionEffectType t = PotionEffectType.getByName(name);
+						if (t == null)
+							throw new StreamCorruptedException("Invalid PotionEffectType " + name);
+						return t;
+					}
+					
+//					return o.getName();
 					@Override
 					public PotionEffectType deserialize(final String s) {
 						return PotionEffectType.getByName(s);
@@ -789,7 +826,7 @@ public class BukkitClasses {
 					}
 				}));
 		
-		// TODO make my own damage cause class (that e.g. stores the attacker entity, the projectile, or the attacking block)
+		// REMIND make my own damage cause class (that e.g. stores the attacker entity, the projectile, or the attacking block)
 		Classes.registerClass(new ClassInfo<DamageCause>(DamageCause.class, "damagecause")
 				.user("damage causes?")
 				.name("Damage Cause")
@@ -857,10 +894,27 @@ public class BukkitClasses {
 				})
 				.serializer(new Serializer<Chunk>() {
 					@Override
-					public String serialize(final Chunk c) {
-						return c.getWorld().getName() + ":" + c.getX() + "," + c.getZ();
+					public Fields serialize(final Chunk c) {
+						final Fields f = new Fields();
+						f.putObject("world", c.getWorld());
+						f.putPrimitive("x", c.getX());
+						f.putPrimitive("z", c.getZ());
+						return f;
 					}
 					
+					@Override
+					public void deserialize(final Chunk o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+					@Override
+					protected Chunk deserialize(final Fields fields) throws StreamCorruptedException {
+						final World w = fields.getObject("world", World.class);
+						final int x = fields.getPrimitive("x", int.class), z = fields.getPrimitive("z", int.class);
+						return w.getChunkAt(x, z);
+					}
+					
+//					return c.getWorld().getName() + ":" + c.getX() + "," + c.getZ();
 					@Override
 					public Chunk deserialize(final String s) {
 						final String[] split = s.split("[:,]");
@@ -887,7 +941,7 @@ public class BukkitClasses {
 		Classes.registerClass(new ClassInfo<Enchantment>(Enchantment.class, "enchantment")
 				.user("enchantments?")
 				.name("Enchantment")
-				.description("An enchantment, e.g. 'sharpness' or 'furtune'. Unlike <a href='#enchantmenttype'>enchantment type</a> this type has no level, but you usually don't need to use this type anyways.")
+				.description("An enchantment, e.g. 'sharpness' or 'furtune'. Unlike <a href='#enchantmenttype'>enchantment type</a> this type has no level, but you usually don't need to use this type anyway.")
 				.usage(StringUtils.join(EnchantmentType.getNames(), ", "))
 				.examples("")
 				.since("1.4.6")
@@ -914,12 +968,33 @@ public class BukkitClasses {
 					}
 				})
 				.serializer(new Serializer<Enchantment>() {
-					@SuppressWarnings("deprecation")
 					@Override
-					public String serialize(final Enchantment e) {
-						return "" + e.getId();
+					public Fields serialize(final Enchantment e) {
+						final Fields f = new Fields();
+						f.putObject("name", e.getName());
+						return f;
 					}
 					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends Enchantment> c) {
+						return false;
+					}
+					
+					@Override
+					public void deserialize(final Enchantment o, final Fields f) throws StreamCorruptedException {
+						assert false;
+					}
+					
+					@Override
+					protected Enchantment deserialize(final Fields fields) throws StreamCorruptedException {
+						final String name = fields.getObject("name", String.class);
+						final Enchantment e = Enchantment.getByName(name);
+						if (e == null)
+							throw new StreamCorruptedException("Invalid enchantment " + name);
+						return e;
+					}
+					
+//					return "" + e.getId();
 					@SuppressWarnings("deprecation")
 					@Override
 					public Enchantment deserialize(final String s) {

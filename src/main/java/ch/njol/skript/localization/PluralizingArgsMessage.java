@@ -24,7 +24,7 @@ package ch.njol.skript.localization;
 import ch.njol.util.StringUtils;
 
 /**
- * An {@link ArgsMessage} that pluralizes words following numbers. The plurals have to be in the format <tt>shel¦f¦ves¦</tt>.
+ * An {@link ArgsMessage} that pluralises words following numbers. The plurals have to be in the format <tt>shel¦f¦ves¦</tt> (i.e. use 3 '¦'s).
  * 
  * @author Peter Güttinger
  */

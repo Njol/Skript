@@ -90,7 +90,7 @@ public class Message {
 	/**
 	 * Checks whether this value is set in the current language or the english default.
 	 * 
-	 * @return
+	 * @return Whether this message will display an actual value instead of its key when used
 	 */
 	public final boolean isSet() {
 		validate();

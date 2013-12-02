@@ -21,29 +21,60 @@
 
 package ch.njol.skript.classes;
 
+import java.io.NotSerializableException;
+import java.io.StreamCorruptedException;
+
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 
+import ch.njol.yggdrasil.Fields;
+
 /**
+ * Uses strings for serialisation because the whole ConfigurationSerializable interface is badly documented, and especially DelegateDeserialization doesn't work well with
+ * Yggdrasil.
+ * 
  * @author Peter Güttinger
  */
-public class ConfigurationSerializer<T extends ConfigurationSerializable> implements Serializer<T> {
+public class ConfigurationSerializer<T extends ConfigurationSerializable> extends Serializer<T> {
 	
-	private final Class<T> c;
-	
-	public ConfigurationSerializer(final Class<T> c) {
-		this.c = c;
+	@Override
+	public Fields serialize(final T o) throws NotSerializableException {
+		final Fields f = new Fields();
+		f.putObject("value", serializeCS(o));
+		return f;
 	}
 	
 	@Override
-	public String serialize(final T o) {
-		return serializeCS(o);
+	public boolean canBeInstantiated(final Class<? extends T> c) {
+		return false;
 	}
 	
 	@Override
+	public <E extends T> E newInstance(final Class<E> c) {
+		assert false;
+		return null;
+	}
+	
+	@Override
+	public void deserialize(final T o, final Fields fields) throws StreamCorruptedException {
+		assert false;
+	}
+	
+	@Override
+	protected T deserialize(final Fields fields) throws StreamCorruptedException {
+		return deserializeCS(fields.getObject("value", String.class), info.getC());
+	}
+	
+	@Override
+	public boolean mustSyncDeserialization() {
+		return false;
+	}
+	
+	@Override
+	@Deprecated
 	public T deserialize(final String s) {
-		return deserializeCS(s, c);
+		return deserializeCS(s, info.getC());
 	}
 	
 	public final static String serializeCS(final ConfigurationSerializable o) {
@@ -64,11 +95,6 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> implem
 		if (!c.isInstance(o))
 			return null;
 		return (T) o;
-	}
-	
-	@Override
-	public boolean mustSyncDeserialization() {
-		return false;
 	}
 	
 }

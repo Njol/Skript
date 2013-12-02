@@ -36,7 +36,7 @@ public class HandlerList implements Iterable<LogHandler> {
 	}
 	
 	public LogHandler remove() {
-		return list.pollFirst();
+		return list.pop();
 	}
 	
 	@Override

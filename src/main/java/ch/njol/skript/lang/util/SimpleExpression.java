@@ -34,16 +34,18 @@ import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.ArrayIterator;
 
 /**
  * An implementation of the {@link Expression} interface. You should usually extend this class to make a new expression.
  * 
- * @see Skript#registerExpression(Class, Class, String...)
+ * @see Skript#registerExpression(Class, Class, ExpressionType, String...)
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
@@ -178,17 +180,15 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 * @see ConvertedExpression#newInstance(Expression, Class)
 	 * @see Converter
 	 */
-	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R> to) {
-		if (to.isAssignableFrom(getReturnType())) {
-			throw new SkriptAPIException("invalid call to SimpleExpression.getConvertedExpr (current type: " + getReturnType().getName() + ", requested type: " + to.getName() + ")");
-		}
+	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R>... to) {
+		assert !CollectionUtils.containsSuperclass(to, getReturnType());
 		return ConvertedExpression.newInstance(this, to);
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public final <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
-		if (to.isAssignableFrom(getReturnType()))
+	public final <R> Expression<? extends R> getConvertedExpression(final Class<R>... to) {
+		if (CollectionUtils.containsSuperclass(to, getReturnType()))
 			return (Expression<? extends R>) this;
 		return this.getConvertedExpr(to);
 	}

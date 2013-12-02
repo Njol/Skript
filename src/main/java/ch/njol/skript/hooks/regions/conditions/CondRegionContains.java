@@ -25,6 +25,8 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Name;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
@@ -37,6 +39,9 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
+@Name("Region Contains")
+@Description({"Checks whether a location is contained in a particular <a href='../classes/#region'>region</a>.",
+		"This condition requires a supported regions plugin to be installed."})
 public class CondRegionContains extends Condition {
 	static {
 		Skript.registerCondition(CondRegionContains.class,

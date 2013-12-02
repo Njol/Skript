@@ -48,7 +48,7 @@ public class RedirectingLogHandler extends LogHandler {
 		if (recipient != null)
 			recipient.sendMessage(prefix + entry.toString());
 		else
-			Bukkit.getLogger().log(entry.getLevel(), prefix + entry.toString());
+			SkriptLogger.LOGGER.log(entry.getLevel(), prefix + entry.toString());
 		if (entry.level == Level.SEVERE)
 			numErrors++;
 		return false;

@@ -21,9 +21,13 @@
 
 package ch.njol.skript.effects;
 
+import org.bukkit.Material;
+import org.bukkit.entity.Horse;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Pig;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.inventory.HorseInventory;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
@@ -36,16 +40,16 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Testable;
+import ch.njol.skript.util.PlayerUtils;
 import ch.njol.util.Kleenean;
 
 /**
- * TODO add mob support (zombies, skeletons, horses, pigs, ...) -> tool/weapon -> is wearing -> armour slot -> etc...
- * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
 @Name("Equip")
 @Description("Equips a player with some given armor. This will replace any armor that the player is wearing.")
+// FIXME update documentation
 @Examples({"equip player with diamond helmet",
 		"equip player with all diamond armor"})
 @Since("1.0")
@@ -77,9 +81,34 @@ public class EffEquip extends Effect implements Testable {
 	protected void execute(final Event e) {
 		final ItemType[] ts = types.getArray(e);
 		for (final LivingEntity en : entities.getArray(e)) {
+			if (en instanceof Pig) {
+				for (final ItemType t : ts) {
+					if (t.isOfType(Material.SADDLE.getId(), (short) 0)) {
+						((Pig) en).setSaddle(true);
+						break;
+					}
+				}
+				continue;
+			} else if (Skript.isRunningMinecraft(1, 6) && en instanceof Horse) {
+				final HorseInventory invi = ((Horse) en).getInventory();
+				for (final ItemType t : ts) {
+					for (final ItemStack item : t.getAll()) {
+						if (item.getType() == Material.SADDLE) {
+							invi.setSaddle(item);
+						} else if (item.getType() == Material.IRON_BARDING || item.getType() == Material.GOLD_BARDING || item.getType() == Material.DIAMOND_BARDING) {
+							invi.setArmor(item);
+						} else if (item.getType() == Material.CHEST) {
+							((Horse) en).setCarryingChest(true);
+						}
+					}
+				}
+				continue;
+			}
+			if (en.getEquipment() == null)
+				continue;
 			for (final ItemType t : ts) {
 				for (final ItemStack item : t.getAll()) {
-					switch (item.getType()) {
+					switch (item.getType()) {// TODO !Update with every version [items]
 						case LEATHER_BOOTS:
 						case IRON_BOOTS:
 						case GOLD_BOOTS:
@@ -115,7 +144,7 @@ public class EffEquip extends Effect implements Testable {
 				}
 			}
 			if (en instanceof Player)
-				((Player) en).updateInventory();
+				PlayerUtils.updateInventory((Player) en);
 		}
 	}
 	
@@ -124,7 +153,7 @@ public class EffEquip extends Effect implements Testable {
 //		final Iterable<Player> ps = players.getArray(e);
 //		for (final ItemType t : types.getArray(e)) {
 //			for (final Player p : ps) {
-//				//TODO this + think...
+//				//REMIND this + think...
 //			}
 //		}
 		return false;

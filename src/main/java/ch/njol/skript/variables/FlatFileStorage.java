@@ -32,104 +32,66 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map.Entry;
-import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.log.LogEntry;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Task;
-import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
 import ch.njol.util.Pair;
 
 /**
- * TODO use a database (SQLite) instead and only load a limited amount of variables into RAM
+ * TODO use a database (SQLite) instead and only load a limited amount of variables into RAM - e.g. 2 GB (configurable). If more variables are available they will be loaded when
+ * accessed. (rem: print a warning when Skript starts)
  * rem: store null variables to prevent looking up the same variables over and over again
  * 
  * @author Peter Güttinger
  */
 public class FlatFileStorage extends VariablesStorage {
 	
-	private File file;
 	private volatile PrintWriter changesWriter;
-	private final Object changesWriterLock = new Object();
 	
-	private volatile int changes = 0;
-	private final int REQUIRED_CHANGES_FOR_RESAVE = 50;
+	private final AtomicInteger changes = new AtomicInteger(0);
+	private final int REQUIRED_CHANGES_FOR_RESAVE = 1000;
 	
 	private Task saveTask;
 	
-	public Task backupTask = null;
-	
 	private boolean loadError = false;
 	
-	public void startBackupTask(final Timespan t) {
-		backupTask = new Task(Skript.getInstance(), t.getTicks(), t.getTicks(), true) {
-			@Override
-			public void run() {
-				synchronized (changesWriterLock) {
-					try {
-						Variables.getReadLock().lock();
-						closeChangesWriter();
-						try {
-							FileUtils.backup(file);
-						} catch (final IOException e) {
-							Skript.error("Automatic variables backup failed: " + e.getLocalizedMessage());
-						} finally {
-							setupChangesWriter();
-							changesWriterLock.notifyAll();
-						}
-					} finally {
-						Variables.getReadLock().unlock();
-					}
-				}
-			}
-		};
+	protected FlatFileStorage(final SectionNode n) {
+		super(n);
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
-	protected boolean load_i() {
-		file = new File(Skript.getInstance().getDataFolder(), "variables.csv");
-		try {
-			file.createNewFile();
-		} catch (final IOException e) {
-			Skript.error("Cannot create the variables file: " + e.getLocalizedMessage());
-			return false;
-		}
-		if (!file.canWrite()) {
-			Skript.error("Cannot write to the variables file - no variables will be saved!");
-		}
-		if (!file.canRead()) {
-			Skript.error("Cannot read from the variables file!");
-			Skript.error("This means that no variables will be available and can also prevent new variables from being saved!");
-			try {
-				final File backup = FileUtils.backup(file);
-				Skript.error("A backup of your variables.csv was created as " + backup.getName());
-			} catch (final IOException e) {
-				Skript.error("Failed to create a backup of your variables.csv: " + e.getLocalizedMessage());
-				loadError = true;
-			}
-			return false;
-		}
-		
+	protected boolean load_i(final SectionNode n) {
 		IOException ioEx = null;
 		int unsuccessful = 0;
 		final StringBuilder invalid = new StringBuilder();
+		
+		Version varVersion = Skript.getVersion(); // will be set later
+		
+		final Version v2_0_beta3 = new Version(2, 0, "beta 3");
+		boolean update2_0_beta3 = false;
+		final Version v2_1 = new Version(2, 1);
+		boolean update2_1 = false;
+		
 		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		Collection<LogEntry> errors = null;
 		try {
-			Version varVersion = Skript.getVersion();
-			final Version v2_0_beta3 = new Version(2, 0, "beta 3");
-			
 			BufferedReader r = null;
 			try {
 				r = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
@@ -142,6 +104,8 @@ public class FlatFileStorage extends VariablesStorage {
 						if (line.startsWith("# version:")) {
 							try {
 								varVersion = new Version(line.substring("# version:".length()).trim());
+								update2_0_beta3 = varVersion.isSmallerThan(v2_0_beta3);
+								update2_1 = varVersion.isSmallerThan(v2_1);
 							} catch (final IllegalArgumentException e) {}
 						}
 						continue;
@@ -156,9 +120,13 @@ public class FlatFileStorage extends VariablesStorage {
 						continue;
 					}
 					if (split[1].equals("null")) {
-						Variables.setVariable(split[0], null, this);
+						Variables.variableLoaded(split[0], null, this);
 					} else {
-						Object d = Classes.deserialize(split[1], split[2]);
+						Object d;
+						if (update2_1)
+							d = Classes.deserialize(split[1], split[2]);
+						else
+							d = Classes.deserialize(split[1], decode(split[2]));
 						if (d == null) {
 							if (invalid.length() != 0)
 								invalid.append(", ");
@@ -166,10 +134,10 @@ public class FlatFileStorage extends VariablesStorage {
 							unsuccessful++;
 							continue;
 						}
-						if (d instanceof String && varVersion.isSmallerThan(v2_0_beta3)) {
+						if (d instanceof String && update2_0_beta3) {
 							d = Utils.replaceChatStyles((String) d);
 						}
-						Variables.setVariable(split[0], d, this);
+						Variables.variableLoaded(split[0], d, this);
 					}
 				}
 			} catch (final IOException e) {
@@ -183,15 +151,19 @@ public class FlatFileStorage extends VariablesStorage {
 				}
 			}
 		} finally {
+			errors = log.getErrors();
+			log.clear();
+			log.printLog();
 			log.stop();
 		}
-		if (ioEx != null || unsuccessful > 0) {
+		
+		if (ioEx != null || unsuccessful > 0 || update2_1) {
 			if (unsuccessful > 0) {
 				Skript.error(unsuccessful + " variable" + (unsuccessful == 1 ? "" : "s") + " could not be loaded!");
 				Skript.error("Affected variables: " + invalid.toString());
-				if (log.hasErrors()) {
+				if (!errors.isEmpty()) {
 					Skript.error("further information:");
-					log.printErrors(null);
+					SkriptLogger.logAll(errors);
 				}
 			}
 			if (ioEx != null) {
@@ -199,24 +171,34 @@ public class FlatFileStorage extends VariablesStorage {
 				Skript.error("This means that some to all variables could not be loaded!");
 			}
 			try {
-				final File backup = FileUtils.backup(file);
-				Skript.info("Created a backup of variables.csv as " + backup.getName());
+				if (update2_1) {
+					Skript.info("[2.1] updating " + file.getName() + " to the new format...");
+				}
+				final File bu = FileUtils.backup(file);
+				Skript.info("Created a backup of " + file.getName() + " as " + bu.getName());
 				loadError = false;
 			} catch (final IOException ex) {
-				Skript.error("Could not backup variables.csv: " + ex.getMessage());
+				Skript.error("Could not backup " + file.getName() + ": " + ex.getMessage());
 			}
 		}
 		
-		setupChangesWriter();
+		if (update2_1) {
+			saveVariables(false);
+			Skript.info(file.getName() + " successfully updated.");
+		}
+		
+		synchronized (connectionLock) { // only synchronised because of the assertion in connect()
+			connect();
+		}
 		
 		saveTask = new Task(Skript.getInstance(), 5 * 60 * 20, 5 * 60 * 20, true) {
 			@Override
 			public void run() {
-				if (changes >= REQUIRED_CHANGES_FOR_RESAVE) {
+				if (changes.get() >= REQUIRED_CHANGES_FOR_RESAVE) {
 					try {
 						Variables.getReadLock().lock();
 						saveVariables(false);
-						changes = 0;
+						changes.set(0);
 					} finally {
 						Variables.getReadLock().unlock();
 					}
@@ -224,10 +206,34 @@ public class FlatFileStorage extends VariablesStorage {
 			}
 		};
 		
-		if (backupTask == null && SkriptConfig.variableBackupInterval.value() != null)
-			startBackupTask(SkriptConfig.variableBackupInterval.value());
-		
 		return ioEx == null;
+	}
+	
+	@Override
+	protected boolean requiresFile() {
+		return true;
+	}
+	
+	@Override
+	protected File getFile(final String file) {
+		return new File(file);
+	}
+	
+	final static String encode(final byte[] data) {
+		final char[] r = new char[data.length * 2];
+		for (int i = 0; i < data.length; i++) {
+			r[2 * i] = Character.toUpperCase(Character.forDigit((data[i] & 0xF0) >>> 4, 16));
+			r[2 * i + 1] = Character.toUpperCase(Character.forDigit(data[i] & 0xF, 16));
+		}
+		return new String(r);
+	}
+	
+	final static byte[] decode(final String hex) {
+		final byte[] r = new byte[hex.length() / 2];
+		for (int i = 0; i < r.length; i++) {
+			r[i] = (byte) ((Character.digit(hex.charAt(2 * i), 16) << 4) + Character.digit(hex.charAt(2 * i + 1), 16));
+		}
+		return r;
 	}
 	
 	private final static Pattern csv = Pattern.compile("\\s*([^\",]+|\"([^\"]|\"\")*\")\\s*(,|$)");
@@ -251,21 +257,21 @@ public class FlatFileStorage extends VariablesStorage {
 	}
 	
 	@Override
-	protected void save(final String name, final String type, final String value) {
-		synchronized (changesWriterLock) {
+	protected void save(final String name, final String type, final byte[] value) {
+		synchronized (connectionLock) {
 			while (changesWriter == null) {
 				try {
-					changesWriterLock.wait();
+					connectionLock.wait();
 				} catch (final InterruptedException e) {}
 			}
+			writeCSV(changesWriter, name, type, new String(encode(value)));
+			changesWriter.flush();
+			changes.incrementAndGet();
 		}
-		writeCSV(changesWriter, name, "" + type, "" + value);
-		changesWriter.flush();
-		final int c = changes; // FindBugs workaround - 'changes' is only changed here and on a full save and only acts as a hint to not save if not many modifications were done, so lost increments do not matter.
-		changes = c + 1;
 	}
 	
 	private final static void writeCSV(final PrintWriter pw, final String... values) {
+		assert values.length == 3; // name, type, value
 		for (int i = 0; i < values.length; i++) {
 			if (i != 0)
 				pw.print(", ");
@@ -277,8 +283,9 @@ public class FlatFileStorage extends VariablesStorage {
 		pw.println();
 	}
 	
-	final void closeChangesWriter() {
-		assert Thread.holdsLock(changesWriterLock);
+	@Override
+	protected final void disconnect() {
+		assert Thread.holdsLock(connectionLock);
 		clearChangesQueue();
 		if (changesWriter != null) {
 			changesWriter.close();
@@ -286,7 +293,11 @@ public class FlatFileStorage extends VariablesStorage {
 		}
 	}
 	
-	private final void setupChangesWriter() {
+	@Override
+	protected final void connect() {
+		assert Thread.holdsLock(connectionLock);
+		if (changesWriter != null)
+			return;
 		try {
 			changesWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
 		} catch (final FileNotFoundException e) {
@@ -300,19 +311,24 @@ public class FlatFileStorage extends VariablesStorage {
 	public void close() {
 		clearChangesQueue();
 		super.close();
-		saveVariables(true);
+		saveVariables(true); // also closes the writer
 	}
 	
+	/**
+	 * Completely rewrites the while file
+	 * 
+	 * @param finalSave whether this is the last save in this session or not.
+	 */
 	public final void saveVariables(final boolean finalSave) {
 		if (finalSave) {
 			saveTask.cancel();
 			if (backupTask != null)
 				backupTask.cancel();
 		}
-		synchronized (changesWriterLock) {
+		synchronized (connectionLock) {
 			try {
 				Variables.getReadLock().lock();
-				closeChangesWriter();
+				disconnect();
 				if (loadError) {
 					try {
 						final File backup = FileUtils.backup(file);
@@ -347,8 +363,8 @@ public class FlatFileStorage extends VariablesStorage {
 			} finally {
 				Variables.getReadLock().unlock();
 				if (!finalSave) {
-					setupChangesWriter();
-					changesWriterLock.notifyAll();
+					connect();
+					connectionLock.notifyAll();
 				}
 			}
 		}
@@ -363,7 +379,7 @@ public class FlatFileStorage extends VariablesStorage {
 	 * @param parent The parent's name with {@link Variable#SEPARATOR} at the end
 	 * @param map
 	 */
-	private final void save(final PrintWriter pw, final String parent, final SortedMap<String, Object> map) {
+	private final void save(final PrintWriter pw, final String parent, final TreeMap<String, Object> map) {
 		for (final Entry<String, Object> e : map.entrySet()) {
 			if (e.getValue() == null)
 				continue;
@@ -371,18 +387,11 @@ public class FlatFileStorage extends VariablesStorage {
 				save(pw, parent + e.getKey() + Variable.SEPARATOR, (TreeMap<String, Object>) e.getValue());
 			} else {
 				final String name = (e.getKey() == null ? parent.substring(0, parent.length() - Variable.SEPARATOR.length()) : parent + e.getKey());
-				if (!DatabaseStorage.accept(name)) {
-					final Pair<String, String> s = Classes.serialize(e.getValue());
-					if (s != null)
-						writeCSV(pw, name, s.first, s.second);
-				}
+				final Pair<String, byte[]> value = Classes.serialize(e.getValue());
+				if (value != null)
+					writeCSV(pw, name, value.first, new String(encode(value.second)));
 			}
 		}
-	}
-	
-	@Override
-	protected String type() {
-		return "file";
 	}
 	
 }

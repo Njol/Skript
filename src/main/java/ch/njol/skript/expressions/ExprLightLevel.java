@@ -53,19 +53,18 @@ import ch.njol.util.Kleenean;
 		"		ignite the loop-player for 5 seconds"})
 @Since("1.3.4")
 public class ExprLightLevel extends PropertyExpression<Location, Byte> {
-	
 	static {
 		Skript.registerExpression(ExprLightLevel.class, Byte.class, ExpressionType.PROPERTY, "[(1¦sky|1¦sun|2¦block)[ ]]light[ ]level [(of|%direction%) %location%]");
 	}
 	
-	private final int SKY = 1, BLOCK = 2, ANY = -1;
+	private final int SKY = 1, BLOCK = 2, ANY = SKY | BLOCK;
 	private int whatLight = ANY;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr(Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]));
-		whatLight = parseResult.mark;
+		whatLight = parseResult.mark == 0 ? ANY : parseResult.mark;
 		return true;
 	}
 	

@@ -28,12 +28,13 @@ import java.util.regex.Pattern;
 import ch.njol.skript.Skript;
 import ch.njol.skript.localization.Message;
 import ch.njol.util.Math2;
+import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
-public class Time implements Serializable {
+public class Time implements Serializable, YggdrasilSerializable {
 	
 	private final static int TICKS_PER_HOUR = 1000, TICKS_PER_DAY = 24 * TICKS_PER_HOUR;
 	private final static double TICKS_PER_MINUTE = 1000. / 60;
@@ -43,6 +44,10 @@ public class Time implements Serializable {
 	private final static int HOUR_ZERO = 6 * TICKS_PER_HOUR;
 	
 	private final int time;
+	
+	public Time() {
+		time = 0;
+	}
 	
 	public Time(final int time) {
 		this.time = Math2.mod(time, TICKS_PER_DAY);

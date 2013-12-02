@@ -34,13 +34,13 @@ import ch.njol.skript.classes.Converter;
 import ch.njol.skript.config.Config;
 import ch.njol.skript.config.EnumParser;
 import ch.njol.skript.config.Option;
-import ch.njol.skript.config.Section;
+import ch.njol.skript.config.OptionSection;
+import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Timespan;
-import ch.njol.skript.variables.Variables;
 import ch.njol.util.Setter;
 
 /**
@@ -70,9 +70,9 @@ public abstract class SkriptConfig {
 				}
 			});
 	
-	static final Option<Boolean> checkForNewVersion = new Option<Boolean>("check for new version", Boolean.class)
+	final static Option<Boolean> checkForNewVersion = new Option<Boolean>("check for new version", Boolean.class)
 			.defaultValue(false);
-	static final Option<Timespan> updateCheckInterval = new Option<Timespan>("update check interval", Timespan.class)
+	final static Option<Timespan> updateCheckInterval = new Option<Timespan>("update check interval", Timespan.class)
 			.defaultValue(new Timespan(12 * 60 * 60 * 1000))
 			.setter(new Setter<Timespan>() {
 				@Override
@@ -81,43 +81,20 @@ public abstract class SkriptConfig {
 						Updater.checkerTask.setNextExecution(t.getTicks());
 				}
 			});
-	static final Option<Boolean> automaticallyDownloadNewVersion = new Option<Boolean>("automatically download new version", Boolean.class)
+	final static Option<Boolean> automaticallyDownloadNewVersion = new Option<Boolean>("automatically download new version", Boolean.class)
 			.defaultValue(false);
 	
-	public static final Option<Boolean> enableEffectCommands = new Option<Boolean>("enable effect commands", Boolean.class)
+	public final static Option<Boolean> enableEffectCommands = new Option<Boolean>("enable effect commands", Boolean.class)
 			.defaultValue(false);
-	public static final Option<String> effectCommandToken = new Option<String>("effect command token", String.class)
+	public final static Option<String> effectCommandToken = new Option<String>("effect command token", String.class)
 			.defaultValue("!");
+	public final static Option<Boolean> allowOpsToUseEffectCommands = new Option<Boolean>("allow ops to use effect commands", Boolean.class)
+			.defaultValue(false);
 	
-	public static final Option<Timespan> variableBackupInterval = new Option<Timespan>("variables backup interval", Timespan.class)
-			.defaultValue(new Timespan(0))
-			.setter(new Setter<Timespan>() {
-				@Override
-				public void set(final Timespan t) {
-					if (Variables.file.backupTask != null) { // initial schedule accesses this value directly
-						if (t.getTicks() == 0)
-							Variables.file.backupTask.cancel();
-						else
-							Variables.file.backupTask.setPeriod(t.getTicks());
-					}
-				}
-			});
+	// everything handled by Variables
+	public final static OptionSection databases = new OptionSection("databases");
 	
-	public final static Section database = new Section("database") {
-		// no default values, everything is handled by VariablesStorage
-		private final Option<String> type = new Option<String>("type", String.class);
-		private final Option<String> pattern = new Option<String>("pattern", String.class);
-		private final Option<Boolean> monitor_changes = new Option<Boolean>("monitor changes", Boolean.class);
-		private final Option<Timespan> monitor_interval = new Option<Timespan>("monitor interval", Timespan.class);
-		private final Option<String> host = new Option<String>("host", String.class);
-		private final Option<Integer> port = new Option<Integer>("port", Integer.class);
-		private final Option<String> user = new Option<String>("user", String.class);
-		private final Option<String> password = new Option<String>("password", String.class);
-		private final Option<String> database = new Option<String>("database", String.class);
-		private final Option<String> file = new Option<String>("file", String.class);
-	};
-	
-	private static final Option<DateFormat> dateFormat = new Option<DateFormat>("date format", new Converter<String, DateFormat>() {
+	private final static Option<DateFormat> dateFormat = new Option<DateFormat>("date format", new Converter<String, DateFormat>() {
 		@Override
 		public DateFormat convert(final String s) {
 			try {
@@ -159,31 +136,38 @@ public abstract class SkriptConfig {
 		}
 	}).defaultValue(EventPriority.NORMAL);
 	
-	public static final Option<Boolean> logPlayerCommands = new Option<Boolean>("log player commands", Boolean.class)
+	public final static Option<Boolean> logPlayerCommands = new Option<Boolean>("log player commands", Boolean.class)
 			.defaultValue(false);
 	
 	/**
 	 * Maximum number of digits to display after the period for floats and doubles
 	 */
-	public static final Option<Integer> numberAccuracy = new Option<Integer>("number accuracy", Integer.class)
+	public final static Option<Integer> numberAccuracy = new Option<Integer>("number accuracy", Integer.class)
 			.defaultValue(2);
 	
-	public static final Option<Integer> maxTargetBlockDistance = new Option<Integer>("maximum target block distance", Integer.class)
+	public final static Option<Integer> maxTargetBlockDistance = new Option<Integer>("maximum target block distance", Integer.class)
 			.defaultValue(100);
 	
 	public final static Option<Boolean> caseSensitive = new Option<Boolean>("case sensitive", Boolean.class)
 			.defaultValue(false);
 	
-	public static final Option<Boolean> disableVariableConflictWarnings = new Option<Boolean>("disable variable conflict warnings", Boolean.class)
+	public final static Option<Boolean> disableVariableConflictWarnings = new Option<Boolean>("disable variable conflict warnings", Boolean.class)
 			.defaultValue(false);
 	
-	public static final Option<Boolean> enableScriptCaching = new Option<Boolean>("enable script caching", Boolean.class)
+	public final static Option<Boolean> enableScriptCaching = new Option<Boolean>("enable script caching", Boolean.class)
 			.optional(true)
 			.defaultValue(false);
 	
 	public final static Option<Boolean> keepConfigsLoaded = new Option<Boolean>("keep configs loaded", Boolean.class)
 			.optional(true)
 			.defaultValue(false);
+	
+	/**
+	 * This should only be used in special cases
+	 */
+	public final static Config getConfig() {
+		return mainConfig;
+	}
 	
 	static boolean load() {
 		try {
@@ -198,7 +182,7 @@ public abstract class SkriptConfig {
 				}
 			}
 			if (!config.exists()) {
-				Skript.error("Config file 'config.sk' does not exist! Please make sure that you downloaded the .zip file (i.e. not the .jar) from Skript's BukkitDev page and extracted it correctly.");
+				Skript.error("Config file 'config.sk' does not exist!");
 				return false;
 			}
 			if (!config.canRead()) {
@@ -216,7 +200,33 @@ public abstract class SkriptConfig {
 			if (!Skript.getVersion().toString().equals(mainConfig.get(version.key))) {
 				try {
 					final Config newConfig = new Config(Skript.getInstance().getResource("config.sk"), "Skript.jar/config.sk", false, false, ":");
-					if (newConfig.setValues(mainConfig)) {
+					
+					boolean manualUpdate = false;
+					
+					if (mainConfig.getMainNode().get("database") != null) { // old database layout
+						manualUpdate = true;
+						try {
+							final SectionNode oldDB = (SectionNode) mainConfig.getMainNode().get("database");
+							final SectionNode dbs = (SectionNode) newConfig.getMainNode().get("databases");
+							final SectionNode newDB = (SectionNode) dbs.get("database 1");
+							newDB.setValues(oldDB);
+							
+							// was dynamically added before
+							final String file = newDB.getValue("file");
+							if (!file.endsWith(".db"))
+								newDB.set("file", file + ".db");
+							
+							final SectionNode def = (SectionNode) dbs.get("default");
+							def.set("backup interval", mainConfig.get("variables backup interval"));
+						} catch (final Exception e) {
+							Skript.exception("An error occurred while trying to update the config's database section.",
+									"You'll have to update the config yourself:",
+									"Open the new config.sk as well as the created backup, and move the 'database' section from the backup to the start of the 'databases' section",
+									"of the new config (i.e. the line 'databases:' should be directly above 'database:'), and add a tab in front of every line that you just copied.");
+						}
+					}
+					
+					if (manualUpdate | newConfig.setValues(mainConfig)) {
 						final File bu = FileUtils.backup(config);
 						mainConfig = newConfig;
 						mainConfig.getMainNode().set("version", Skript.getVersion().toString());
@@ -233,8 +243,8 @@ public abstract class SkriptConfig {
 			
 			mainConfig.load(SkriptConfig.class);
 			
-			if (!keepConfigsLoaded.value())
-				mainConfig = null;
+//			if (!keepConfigsLoaded.value())
+//				mainConfig = null;
 		} catch (final Exception e) {
 			Skript.exception(e, "An error occurred while loading the config");
 			return false;

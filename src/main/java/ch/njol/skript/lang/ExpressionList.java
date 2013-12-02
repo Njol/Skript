@@ -32,6 +32,7 @@ import org.bukkit.event.Event;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
+import ch.njol.skript.util.Utils;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
@@ -176,13 +177,13 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
-	public <R> Expression<? extends R> getConvertedExpression(final Class<R> to) {
+	public <R> Expression<? extends R> getConvertedExpression(final Class<R>... to) {
 		@SuppressWarnings("unchecked")
 		final Expression<? extends R>[] exprs = new Expression[expressions.length];
 		for (int i = 0; i < exprs.length; i++)
 			if ((exprs[i] = expressions[i].getConvertedExpression(to)) == null)
 				return null;
-		return new ExpressionList<R>(exprs, to, and, this);
+		return new ExpressionList<R>(exprs, (Class<R>) Utils.getSuperType(to), and, this);
 	}
 	
 	@Override

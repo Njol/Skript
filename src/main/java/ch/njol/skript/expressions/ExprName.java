@@ -67,14 +67,14 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	final static String[] types = {"slots/itemstacks", "livingentities", "players"};
 	
 	private static enum NameType {
-		NAME("name", "name", PLAYER | ITEMSTACK | ENTITY, ITEMSTACK | ENTITY) {
+		NAME("name", "name[s]", PLAYER | ITEMSTACK | ENTITY, ITEMSTACK | ENTITY) {
 			@Override
 			void set(final Object o, final String s) {
 				if (o == null)
 					return;
 				if (o instanceof LivingEntity) {
 					((LivingEntity) o).setCustomName(s);
-					((LivingEntity) o).setCustomNameVisible(s != null);
+					((LivingEntity) o).setRemoveWhenFarAway(false);
 				} else if (o instanceof ItemStack) {
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
 					if (m != null) {
@@ -105,7 +105,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 				}
 			}
 		},
-		DISPLAY_NAME("display name", "(display|nick|chat)[ ]name", PLAYER | ITEMSTACK | ENTITY, PLAYER | ITEMSTACK | ENTITY) {
+		DISPLAY_NAME("display name", "(display|nick|chat)[ ]name[s]", PLAYER | ITEMSTACK | ENTITY, PLAYER | ITEMSTACK | ENTITY) {
 			@Override
 			void set(final Object o, final String s) {
 				if (o == null)
@@ -114,7 +114,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 					((Player) o).setDisplayName(s == null ? ((Player) o).getName() : s + ChatColor.RESET);
 				} else if (o instanceof LivingEntity) {
 					((LivingEntity) o).setCustomName(s);
-					((LivingEntity) o).setCustomNameVisible(s != null);
+					((LivingEntity) o).setCustomNameVisible(s != null); // FIXME update documentation
+					((LivingEntity) o).setRemoveWhenFarAway(false);
 				} else if (o instanceof ItemStack) {
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
 					if (m != null) {
@@ -145,7 +146,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 				}
 			}
 		},
-		TABLIST_NAME("player list name", "(player|tab)[ ]list name", PLAYER, PLAYER) {
+		TABLIST_NAME("player list name", "(player|tab)[ ]list name[s]", PLAYER, PLAYER) {
 			@Override
 			void set(final Object o, final String s) {
 				if (o == null)
@@ -235,7 +236,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	
 	private int changeType = 0;
 	
-	// TODO find a better method of handling changes (in general)
+	// TODO find a better method for handling changes (in general)
 	// e.g. a Changer that takes an object and returns another which should then be saved if applicable (the Changer includes the ChangeMode)
 	@SuppressWarnings("unchecked")
 	@Override

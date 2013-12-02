@@ -33,7 +33,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 @SuppressWarnings("serial")
 public class PlayerData extends EntityData<Player> {
 	static {
-		EntityData.register(PlayerData.class, "player", Player.class, "non-op", "player", "op");
+		EntityData.register(PlayerData.class, "player", Player.class, 1, "non-op", "player", "op");
 	}
 	
 	// used by EntityData.getAll
@@ -73,27 +73,19 @@ public class PlayerData extends EntityData<Player> {
 	}
 	
 	@Override
-	public int hashCode() {
+	protected int hashCode_i() {
 		return op;
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
+	protected boolean equals_i(final EntityData<?> obj) {
 		if (!(obj instanceof PlayerData))
 			return false;
 		final PlayerData other = (PlayerData) obj;
 		return op == other.op;
 	}
 	
-	@Override
-	public String serialize() {
-		return "" + op;
-	}
-	
+//		return "" + op;
 	@Override
 	protected boolean deserialize(final String s) {
 		try {

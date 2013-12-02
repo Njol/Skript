@@ -68,7 +68,7 @@ public abstract class Parser<T> {
 	 * 
 	 * @param o
 	 * @param mode
-	 * @return
+	 * @return A string representation of the given object.
 	 */
 	public final String toString(final T o, final StringMode mode) {
 		switch (mode) {
@@ -94,26 +94,27 @@ public abstract class Parser<T> {
 	 * Returns an object's string representation in a variable name.
 	 * 
 	 * @param o
-	 * @return
+	 * @return The given object's representation in a variable name.
 	 */
 	public abstract String toVariableNameString(final T o);
 	
 	/**
-	 * Returns a pattern that matches all possible outputs of {@link #toVariableNameString(Object)}. This is used to test for variable conflicts.<br>
-	 * This pattern is inserted directly into a pattern, i.e. without any surrounding parantheses, and the pattern is compiled without any checks, thus an invalid pattern will
-	 * crash Skript.
+	 * Returns a pattern that matches all possible outputs of {@link #toVariableNameString(Object)}. This is used to test for variable conflicts.
+	 * <p>
+	 * This pattern is inserted directly into another pattern, i.e. without any surrounding parantheses, and the pattern is compiled without any checks, thus an invalid pattern
+	 * will crash Skript.
 	 * 
-	 * @return
+	 * @return A valid Regex pattern string matching all possible return values of {@link #toVariableNameString(Object)}
 	 */
 	public abstract String getVariableNamePattern();
 	
 	/**
 	 * Returns a string representation of the given object to be used for debugging.<br>
 	 * The Parser of 'Block' for example returns the block's type in toString, while this method also returns the coordinates of the block.<br>
-	 * The default implementation of this method returns exactly the same as {@link #toString(Object)}.
+	 * The default implementation of this method returns {@link #toString(Object, int) toString}(o, 0).
 	 * 
 	 * @param o
-	 * @return
+	 * @return A message containing debug information about the given object
 	 */
 	public String getDebugMessage(final T o) {
 		return toString(o, 0);

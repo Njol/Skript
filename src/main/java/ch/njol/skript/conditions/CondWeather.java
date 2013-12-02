@@ -66,21 +66,19 @@ public class CondWeather extends Condition {
 	
 	@Override
 	public boolean check(final Event e) {
-		if (worlds.isDefault() && e instanceof WeatherEvent && !Delay.isDelayed(e)) {
-			return weathers.check(e, new Checker<WeatherType>() {
-				@Override
-				public boolean check(final WeatherType t) {
-					return t == WeatherType.fromEvent((WeatherEvent) e);
-				}
-			}, isNegated());
-		}
-		return weathers.check(e, new Checker<WeatherType>() {
+		return worlds.check(e, new Checker<World>() {
 			@Override
-			public boolean check(final WeatherType wt) {
-				return worlds.check(e, new Checker<World>() {
+			public boolean check(final World w) {
+				final WeatherType t;
+				if (e instanceof WeatherEvent && w.equals(((WeatherEvent) e).getWorld()) && !Delay.isDelayed(e)) {
+					t = WeatherType.fromEvent((WeatherEvent) e);
+				} else {
+					t = WeatherType.fromWorld(w);
+				}
+				return weathers.check(e, new Checker<WeatherType>() {
 					@Override
-					public boolean check(final World w) {
-						return wt.isWeather(w);
+					public boolean check(final WeatherType wt) {
+						return wt == t;
 					}
 				}, isNegated());
 			}

@@ -34,6 +34,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -47,42 +48,66 @@ import ch.njol.util.Kleenean;
 public class EffVehicle extends Effect {
 	static {
 		Skript.registerEffect(EffVehicle.class,
-				"make %entity% (ride|mount) [(in|on)] %entity/entitydata%"); // TODO eject/dismount effect
+				"(make|let|force) %entities% [to] (ride|mount) [(in|on)] %entity/entitydatas%",
+				"(make|let|force) %entities% [to] (dismount|(dismount|leave) (from|of|) (any|the[ir]|his|her|) vehicle[s])",
+				"(eject|dismount) (any|the|) passenger[s] (of|from) %entities%");
 	}
 	
-	private Expression<Entity> passenger;
-	private Expression<?> vehicle;
+	private Expression<Entity> passengers;
+	private Expression<?> vehicles;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		passenger = (Expression<Entity>) exprs[0];
-		vehicle = exprs[1];
+		passengers = matchedPattern == 2 ? null : (Expression<Entity>) exprs[0];
+		vehicles = matchedPattern == 1 ? null : exprs[exprs.length - 1];
+		if (passengers != null && vehicles != null && !passengers.isSingle() && vehicles.isSingle() && Entity.class.isAssignableFrom(vehicles.getReturnType()))
+			Skript.warning("An entity can only have one passenger");
 		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		final Object v = vehicle.getSingle(e);
-		if (v == null)
+		if (vehicles == null) {
+			for (final Entity p : passengers.getArray(e))
+				p.leaveVehicle();
 			return;
-		final Entity p = passenger.getSingle(e);
-		if (p == null)
+		}
+		if (passengers == null) {
+			for (final Object v : vehicles.getArray(e))
+				((Entity) v).eject();
 			return;
-		if (v instanceof Entity) {
-			((Entity) v).eject();
-			((Entity) v).setPassenger(p);
-		} else {
-			final Entity en = ((EntityData<?>) v).spawn(p.getLocation());
-			if (en == null)
-				return;
-			en.setPassenger(p);
+		}
+		final Object[] vs = vehicles.getArray(e);
+		if (vs.length == 0)
+			return;
+		final Entity[] ps = passengers.getArray(e);
+		if (ps.length == 0)
+			return;
+		for (final Object v : vs) {
+			if (v instanceof Entity) {
+				((Entity) v).eject();
+				final Entity p = CollectionUtils.getRandom(ps);
+				p.leaveVehicle();
+				((Entity) v).setPassenger(p);
+			} else {
+				for (final Entity p : ps) {
+					final Entity en = ((EntityData<?>) v).spawn(p.getLocation());
+					if (en == null)
+						return;
+					en.setPassenger(p);
+				}
+			}
 		}
 	}
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "make " + passenger.toString(e, debug) + " ride " + vehicle.toString(e, debug);
+		if (vehicles == null)
+			return "make " + passengers.toString(e, debug) + " dismount";
+		if (passengers == null)
+			return "eject passenger" + (vehicles.isSingle() ? "" : "s") + " of " + vehicles.toString(e, debug);
+		return "make " + passengers.toString(e, debug) + " ride " + vehicles.toString(e, debug);
 	}
 	
 }
