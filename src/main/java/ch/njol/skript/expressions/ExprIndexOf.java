@@ -24,6 +24,10 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,6 +38,12 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
+@Name("Index Of")
+@Description("The first of last index of a character (or text) in a text, or -1 if it doesn't occur in the text. Indices range from 1 to the <a href='#ExprIndexOf'>length</a> of the text.")
+@Examples({"set {_@} to the first index of \"@\" in the text argument",
+		"if {_s} contains \"abc\":",
+		"	set {_s} to the first (index of \"abc\" in {_s} + 3) characters of {_s} # removes everything after the first \"abc\" from {_s}"})
+@Since("2.1")
 public class ExprIndexOf extends SimpleExpression<Integer> {
 	static {
 		Skript.registerExpression(ExprIndexOf.class, Integer.class, ExpressionType.COMBINED, "[the] (0¦|0¦first|1¦last) index of %string% in %string%");
@@ -57,7 +67,7 @@ public class ExprIndexOf extends SimpleExpression<Integer> {
 		final String h = haystack.getSingle(e), n = needle.getSingle(e);
 		if (h == null || n == null)
 			return null;
-		return new Integer[] {Integer.valueOf(first ? h.indexOf(n) : h.lastIndexOf(n))};
+		return new Integer[] {Integer.valueOf(first ? h.indexOf(n) + 1 : h.lastIndexOf(n) + 1)};
 	}
 	
 	@Override

@@ -179,7 +179,7 @@ public class DefaultComparators {
 	}
 	
 	// EntityData - ItemType
-	private final static LinkedHashMap<Class<? extends Entity>, Material> entityMaterials = new LinkedHashMap<Class<? extends Entity>, Material>();
+	final static LinkedHashMap<Class<? extends Entity>, Material> entityMaterials = new LinkedHashMap<Class<? extends Entity>, Material>();
 	static {
 		// to fix comparisons of eggs, arrows, etc. (e.g. 'projectile is an arrow')
 		// TODO !Update with every version [entities]
@@ -191,7 +191,7 @@ public class DefaultComparators {
 		entityMaterials.put(EnderPearl.class, Material.ENDER_PEARL);
 		entityMaterials.put(Snowball.class, Material.SNOW_BALL);
 		entityMaterials.put(ThrownExpBottle.class, Material.EXP_BOTTLE);
-		entityMaterials.put(Fish.class, Material.RAW_FISH); // REMIND 1.7
+		entityMaterials.put(Fish.class, Material.RAW_FISH); // TODO 1.7
 		entityMaterials.put(TNTPrimed.class, Material.TNT);
 		entityMaterials.put(Slime.class, Material.SLIME_BALL);
 		if (Skript.isRunningMinecraft(1, 4))

@@ -54,12 +54,12 @@ public class EvtChat extends SelfRegisteringSkriptEvent {
 				.since("1.4.1");
 	}
 	
-	private final static Collection<Trigger> triggers = new ArrayList<Trigger>();
+	final static Collection<Trigger> triggers = new ArrayList<Trigger>();
 	
 	private static boolean registeredExecutor = false;
 	private final static EventExecutor executor = new EventExecutor() {
 		
-		private final void execute(final Event e) {
+		final void execute(final Event e) {
 			SkriptEventHandler.logEventStart(e);
 			for (final Trigger t : triggers) {
 				SkriptEventHandler.logTriggerStart(t);

@@ -53,7 +53,7 @@ public class CondIsInWorld extends Condition {
 	}
 	
 	private Expression<Entity> entities;
-	private Expression<World> worlds;
+	Expression<World> worlds;
 	
 	@SuppressWarnings("unchecked")
 	@Override

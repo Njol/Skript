@@ -62,7 +62,7 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 				"%livingentities%'[s] target[[ed] %-*entitydata%]");
 	}
 	
-	private EntityData<?> type;
+	EntityData<?> type;
 	
 	@SuppressWarnings("unchecked")
 	@Override

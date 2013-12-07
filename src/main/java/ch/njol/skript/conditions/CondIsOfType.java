@@ -54,7 +54,8 @@ public class CondIsOfType extends Condition {
 				"%itemstacks/entities% (is|are) of type[s] %itemtypes/entitydatas%", "%itemstacks/entities% (isn't|is not|aren't|are not) of type[s] %itemtypes/entitydatas%");
 	}
 	
-	private Expression<?> what, types;
+	private Expression<?> what;
+	Expression<?> types;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {

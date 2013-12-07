@@ -311,7 +311,7 @@ public class SkriptClasses {
 							if (sss.length == 2) {
 								if (!Skript.isRunningMinecraft(1, 4, 5))
 									return null;
-								final ItemMeta m = ConfigurationSerializer.deserializeCS(sss[1].replace("¦¦", "¦"), ItemMeta.class);
+								final ItemMeta m = ConfigurationSerializer.deserializeCSOld(sss[1].replace("¦¦", "¦"), ItemMeta.class);
 								if (m == null)
 									return null;
 								t.setItemMeta(m);
@@ -822,8 +822,11 @@ public class SkriptClasses {
 		Classes.registerClass(new ClassInfo<VisualEffect>(VisualEffect.class, "visualeffect")
 				.name("Visual Effect")
 				.description("A visible effect, e.g. particles.")
-				.user("(visual|particle) effects?")
+				.examples("show wolf hearts on the clicked wolf",
+						"play mob spawner flames at the targeted block to the player")
 				.usage(VisualEffect.getAllNames())
+				.since("2.1")
+				.user("(visual|particle) effects?")
 				.parser(new Parser<VisualEffect>() {
 					@Override
 					public VisualEffect parse(final String s, final ParseContext context) {

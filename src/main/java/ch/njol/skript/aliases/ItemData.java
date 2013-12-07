@@ -128,7 +128,7 @@ public class ItemData implements Serializable, Cloneable, YggdrasilSerializable 
 	}
 	
 	/**
-	 * @return The ietm's gender or -1 if no name is found
+	 * @return The item's gender or -1 if no name is found
 	 */
 	public int getGender() {
 		return Aliases.getGender(typeid, dataMin, dataMax);

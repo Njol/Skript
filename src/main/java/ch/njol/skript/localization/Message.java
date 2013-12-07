@@ -35,8 +35,8 @@ import ch.njol.skript.Skript;
 public class Message {
 	
 	// this is most likely faster than registering a listener for each Message
-	private final static Collection<Message> messages = new ArrayList<Message>(50);
-	private static boolean firstChange = true;
+	final static Collection<Message> messages = new ArrayList<Message>(50);
+	static boolean firstChange = true;
 	static {
 		Language.addListener(new LanguageChangeListener() {
 			@Override
@@ -57,7 +57,7 @@ public class Message {
 	
 	public final String key;
 	private String value;
-	private boolean revalidate = true;
+	boolean revalidate = true;
 	
 	public Message(final String key) {
 		this.key = key.toLowerCase(Locale.ENGLISH);

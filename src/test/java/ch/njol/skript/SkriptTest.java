@@ -67,7 +67,7 @@ public class SkriptTest {
 		}, 2);
 	}
 	
-	private final static void test() {
+	final static void test() {
 		
 		final Trigger t = ScriptLoader.loadTrigger(nodeFromString("on rightclick on air:\n kill player"));
 		t.execute(new PlayerInteractEvent(njol, Action.LEFT_CLICK_AIR, null, null, null));

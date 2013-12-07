@@ -90,8 +90,8 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent { // TODO on jump
 	}
 	
 //	private final static HashMap<BlockLocation, List<Trigger>> blockTriggers = new HashMap<BlockLocation, List<Trigger>>();
-	private final static HashMap<Integer, List<Trigger>> itemTypeTriggers = new HashMap<Integer, List<Trigger>>();
-	private ItemType[] types = null;
+	final static HashMap<Integer, List<Trigger>> itemTypeTriggers = new HashMap<Integer, List<Trigger>>();
+	ItemType[] types = null;
 //	private World world;
 //	private int x, y, z;
 	
@@ -139,7 +139,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent { // TODO on jump
 		}
 	};
 	
-	private final static int getOnBlock(final Location l) {
+	final static int getOnBlock(final Location l) {
 		int id = l.getWorld().getBlockTypeIdAt(l.getBlockX(), (int) Math.ceil(l.getY()) - 1, l.getBlockZ());
 		if (id == 0 && Math.abs((l.getY() - l.getBlockY()) - 0.5) < Skript.EPSILON) { // fences
 			id = l.getWorld().getBlockTypeIdAt(l.getBlockX(), l.getBlockY() - 1, l.getBlockZ());
@@ -149,7 +149,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent { // TODO on jump
 		return id;
 	}
 	
-	private final static int getBlockY(final double y, final int id) {
+	final static int getBlockY(final double y, final int id) {
 		if ((id == Material.FENCE.getId() || id == 107 || id == 113) && Math.abs((y - Math.floor(y)) - 0.5) < Skript.EPSILON) // fence gate // nether fence
 			return (int) Math.floor(y) - 1;
 		return (int) Math.ceil(y) - 1;

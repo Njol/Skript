@@ -56,7 +56,7 @@ public class CondItemInHand extends Condition {
 	}
 	
 	private Expression<LivingEntity> entities;
-	private Expression<ItemType> types;
+	Expression<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override

@@ -54,7 +54,7 @@ public class CondIsEnchanted extends Condition {
 	}
 	
 	private Expression<ItemType> items;
-	private Expression<EnchantmentType> enchs;
+	Expression<EnchantmentType> enchs;
 	
 	@SuppressWarnings("unchecked")
 	@Override

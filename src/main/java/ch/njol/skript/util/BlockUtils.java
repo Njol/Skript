@@ -244,6 +244,16 @@ public abstract class BlockUtils {
 			return true;
 		}
 		
+		// LARGE FLOWER
+		if (type == 175) {
+			if (b.getRelative(BlockFace.UP).getType() == Material.AIR) {
+				final byte data = (byte) Utils.random(dataMin, dataMax + 1);
+				b.getRelative(BlockFace.UP).setTypeIdAndData(type, (byte) (data | 0x4), false);
+				b.setTypeIdAndData(type, (byte) (data & ~0x4), applyPhysics);
+				return true;
+			}
+		}
+		
 		// REMIND rails?
 		
 		// DEFAULT
@@ -252,7 +262,7 @@ public abstract class BlockUtils {
 	}
 	
 	// Material.isSolid() treats e.g. steps as solid...
-	// TODO !Update with every version [blocks] // FIXME updated this, above and rest to follow!
+	// TODO !Update with every version [blocks]
 	private final static int[] solid = {
 			1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29, 33, 35, 41, 42, 43, 45, 46, 47, 48, 49,
 			52, 54, 56, 57, 58, 60, 61, 62, 73, 74, 79, 80, 82, 84, 86, 87, 88, 89, 91, 95, 97, 98, 99,

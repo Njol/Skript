@@ -75,13 +75,13 @@ public class ExprBalance extends SimplePropertyExpression<OfflinePlayer, Money> 
 		assert mode != ChangeMode.REMOVE_ALL;
 		
 		if (delta == null) {
-			for (final OfflinePlayer p : getExpr().getAll(e))
+			for (final OfflinePlayer p : getExpr().getArray(e))
 				VaultHook.economy.withdrawPlayer(p.getName(), VaultHook.economy.getBalance(p.getName()));
 			return;
 		}
 		
 		final double m = delta[0] instanceof Number ? ((Number) delta[0]).doubleValue() : ((Money) delta[0]).getAmount();
-		for (final OfflinePlayer p : getExpr().getAll(e)) {
+		for (final OfflinePlayer p : getExpr().getArray(e)) {
 			switch (mode) {
 				case SET:
 					final double b = VaultHook.economy.getBalance(p.getName());

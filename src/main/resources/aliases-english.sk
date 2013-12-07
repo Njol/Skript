@@ -141,6 +141,28 @@ default aliases:
 
 
 	# ====== Blocks ======
+	
+	# -- wool colours: used for wool, stained glass and stained clay
+	# note: it's not possible to make a {colour} variation, as dye and wool colour data values are different.
+	{wool}:
+		<any> = :0-15
+		white = :0
+		orange = :1
+		magenta = :2
+		light blue = :3
+		yellow = :4
+		light green = :5
+		pink = :6
+		gray = :7
+		light gray = :8
+		cyan = :9
+		purple = :10
+		blue = :11
+		brown = :12
+		[dark] green = :13
+		red = :14
+		black = :15
+	
 
 	# -- air --
 	air @- = 0
@@ -178,21 +200,25 @@ default aliases:
 
 
 	# -- water & lava --
+	water = 8
+	water = 9
 	water = 8, 9
 	water (item|block)¦s = 9
-	stationary water = 9
-	water source = 9
-	flowing water = 8 # change to '8:0-7' if you want to exclude falling water
-	falling water = 8:8
-	moving water = 8
+	stationary water = 8:0, 9:0
+	water source = 8:0, 9:0
+	flowing water = 8:1-8, 9:1-8 # change to ':1-7' if you want to exclude falling water
+	falling water = 8:8, 9:8
+	moving water = 8:1-8, 9:1-8
 
+	lava = 10
+	lava = 11
 	lava = 10, 11
 	lava (item|block)¦s = 11
-	stationary lava = 11
-	lava source = 11
-	flowing lava = 10 # change to '10:0-7' if you want to exclude falling lava
-	falling lava = 10:8
-	moving lava = 10
+	stationary lava = 10:0, 11:0
+	lava source = 10:0, 11:0
+	flowing lava = 10:1-8, 11:1-8 # change to ':1-7' if you want to exclude falling lava
+	falling lava = 10:8, 11:8
+	moving lava = 10:1-8, 11:1-8
 
 
 	# -- sand & gravel--
@@ -230,12 +256,25 @@ default aliases:
 
 
 	# -- wood, leaves, saplings & planks --
-	{tree type}: # also used for wooden slabs
+	{tree type}:
 		{default} = :0-15
 		(normal|regular|oak) = :0, :4, :8, :12
 		(pine|redwood|fir|spruce) = :1, :5, :9, :13
 		birch = :2, :6, :10, :14
 		jungle = :3, :7, :11, :15
+	{tree type 2}:
+		{default} = :0-15
+		acacia = :0, :4, :8, :12, :2, :6, :10, :14
+		dark oak = :1, :5, :9, :13, :3, :7, :11, :15
+	{wood type}:
+		{default} = :0-5
+		<any> = :0-5
+		(oak|regular|normal) = :0
+		(spruce|fir|redwood|pine) = :1
+		birch = :2
+		jungle = :3
+		acacia = :4
+		dark oak = :5
 
 	{log direction}:
 		{default} = :0-3
@@ -247,7 +286,7 @@ default aliases:
 		horizontal = :4-11
 		rotated = :4-11
 		full[[ ]block] = :12-15
-		any = :0-15
+		<any> = :0-15
 	{log direction no default}:
 		vertical = :0-3
 		east-west = :4-7
@@ -257,15 +296,26 @@ default aliases:
 		horizontal = :4-11
 		rotated = :4-11
 		full[[ ]block] = :12-15
-		any = :0-15
+		<any> = :0-15
 
+	{wood type} sapling¦s = 6
+	{wood type} plank¦s = 5
+	{wood type} wood[en] plank¦s = 5
+	
 	{log direction no default} {tree type} (log¦s|wood) = 17
-	{log direction} {tree type} (log|wood) (item¦s|block¦s) = 17
-	{tree type} leaves = 18
-	{tree type} permanent leaves = 18:4-7, 18:12-15
-	{tree type} sapling¦s = 6:0-3
-	{tree type} plank¦s = 5:0-3
-	{tree type} wood[en] plank¦s = 5:0-3
+	{log direction} {tree type} (log|wood) <item/block> = 17
+	{tree type} leaves @x = 18
+	{tree type} permanent leaves @x = 18:4-7, 18:12-15
+	
+	{log direction no default} {tree type 2} (log¦s|wood) = 162
+	{log direction} {tree type 2} (log|wood) <item/block> = 162
+	{tree type 2} leaves @x = 161
+	{tree type 2} permanent leaves @x = 161:4-7, 161:12-15
+	
+	{log direction no default} (log¦s|wood) = 17, 161
+	{log direction} log <item/block> = 17, 161
+	[<any>] leaves @x = 18:0-15, 161:0-15
+	[<any>] permanent leaves @x = 18:4-7, 18:12-15, 161:4-7, 161:12-15
 
 
 	# -- sponge --
@@ -273,12 +323,16 @@ default aliases:
 
 
 	# -- glass --
+	{wool} [stained] glass [pane] = 160
 	glass = 20
 	glass pane¦s = 102
 	thin glass = 102
 	window¦s = 102
 	window glass = 102
-
+	
+	<any> glass pane = any stained glass pane, glass pane
+	<any> glass = any glass pane, glass
+	
 
 	# -- lapis lazuli --
 	# lapis ore & block: see ores & blocks
@@ -370,12 +424,33 @@ default aliases:
 	dead shrub¦s = 32
 	dead bush¦es = 32
 	
+	double( |-)(tall|long) grass = 175:2
+	large fern¦s = 175:3
+	
 	dandelion¦s = 37
 	yellow flower¦s = 37
-	rose¦s = 38
-	red rose¦s = 38
-	red flower¦s = 38
-	flower¦s = 37, 38
+	rose¦s = 38:0
+	red rose¦s = 38:0
+	red flower¦s = 38:0
+	popp¦y¦ies = 38:0
+	blue orchid¦s = 38:1
+	allium¦s @an = 38:2
+	azure bluet¦s @an = 38:3
+	red tulip¦s = 38:4
+	orange tulip¦s @an = 38:5
+	white tulip¦s = 38:6
+	pink tulip¦s = 38:7
+	oxeye dais¦y¦ies @an = 38:8
+	[<any>] small flower¦s = 37, 38:0-8
+	
+	sunflower¦s = 175:0
+	lilac¦s = 175:1
+	rose bush¦es = 175:4
+	peon¦y¦ies = 175:5
+	[<any>] large flower = 175:0-1, 175:4-5
+	[<any>] large plant = 175:0-5
+	
+	[<any>] flower = any small flower, any large flower
 	
 	mushroom¦s = 39, 40
 	brown mushroom¦s = 39
@@ -467,25 +542,7 @@ default aliases:
 
 
 	# -- wool, carpets and dyes --
-	# note: it's not possible to make a {colour} variation, as dye and wool colour data values are different.
-	{wool}: # also used for stained clay
-		any = :0-15
-		white = :0
-		orange = :1
-		magenta = :2
-		light blue = :3
-		yellow = :4
-		light green = :5
-		pink = :6
-		gray = :7
-		light gray = :8
-		cyan = :9
-		purple = :10
-		blue = :11
-		brown = :12
-		[dark] green = :13
-		red = :14
-		black = :15
+	# {wool}: see top
 	{wool} wool = 35:0-15
 	{wool} (carpet|rug)¦s = 171:0-15
 	
@@ -553,27 +610,35 @@ default aliases:
 		upside-down = :8-15
 		any = :0-15
 	
+	{wooden slab type}:
+		{default} = :0-5, :8-13
+		<any> = :0-5, :8-13
+		(oak|regular|normal) = :0, :8
+		(spruce|fir|redwood|pine) = :1, :9
+		birch = :2, :10
+		jungle = :3, :11
+		acacia = :4, :12
+		dark oak = :5, :13
 	{stone slab type}:
 		{default} = :0-1, :3-5, :8-9, :11-13
-		any = :0-1, :3-5, :8-9, :11-13
+		<any> = :0-1, :3-5, :8-9, :11-13
 		stone = :0, :8
 		sandstone = :1, :9
 		cobble[stone] = :3, :11
 		brick = :4, :12
 		stone brick[s]) = :5, :13
 	{stone slab type no default}:
-		any = :0-1, :3-5, :8-9, :11-13
+		<any> = :0-1, :3-5, :8-9, :11-13
 		stone = :0, :8
 		sandstone = :1, :9
 		cobble[stone] = :3, :11
 		brick = :4, :12
 		stone brick[s]) = :5, :13
 	
-	# variation {tree type}: see wood
 	{slab facing no default} {stone slab} {stone slab type no default} (step|slab)¦s = :
 	{slab facing} {stone slab} {stone slab type} (step|slab) (block|item)¦s = :
-	{slab facing no default} {wooden slab} {tree type} [wood[en]] (step|slab)¦s = :0-3, :8-11
-	{slab facing} {wooden slab} {tree type} (step|slab) (block|item)¦s = :
+	{slab facing no default} {wooden slab} {wooden slab type} [wood[en]] (step|slab)¦s = :
+	{slab facing} {wooden slab} {wooden slab type} (step|slab) (block|item)¦s = :
 	{slab facing no default} {any slab} (step|slab)¦s = :
 	{slab facing} {any slab} (step|slab) (block|item)¦s = :
 
@@ -643,6 +708,8 @@ default aliases:
 		nether [brick[s]] = 114
 		sand[ ]stone = 128
 		[nether] quarz = 156
+		acacia [wood] = 163
+		dark oak [wood] = 164
 	{stairs direction}:
 		{default} = :0-3
 		any = :0-7
@@ -869,8 +936,12 @@ default aliases:
 
 	# -- snow & ice --
 	snow layer¦s = 78
-	ice [block¦s] @an = 79
-	snow [block¦s] = 80
+	ice @- = 79
+	ice <block> @an = 79
+	snow = 80
+	snow <block> = 80
+	packed ice = 174
+	packed ice <block> = 174
 
 
 	# -- cactus --
@@ -1107,6 +1178,9 @@ default aliases:
 	# -- stained clay: see clay
 	
 	
+	# -- stained glass: see glass
+	
+	
 	# -- hay block --
 	(hay|wheat) block¦s = 170
 	block¦¦s¦ of (hay|wheat) = 170
@@ -1120,6 +1194,11 @@ default aliases:
 	
 	# -- block of coal: see coal
 
+
+	# -- packed ice: see ice
+	
+	
+	# -- large flower: see vegetation
 
 
 
@@ -1316,7 +1395,12 @@ default aliases:
 	powered minecart¦s = 343
 	minecart¦¦s¦ with furnace = 343
 	minecart¦¦s¦ with TNT = 407
+	TNT minecart¦¦s¦ = 407
+	explosive minecart¦¦s¦ = 407
 	minecart¦¦s¦ with hopper = 408
+	hopper minecart¦¦s¦ = 408
+	minecart¦¦s¦ with command block = 422
+	command block minecart¦¦s¦ = 422
 
 
 	# -- saddle --
@@ -1672,6 +1756,9 @@ default aliases:
 	
 	# -- name tag --
 	name tag¦s = 421
+	
+	
+	# -- minecart with command block: see minecarts
 	
 
 	# -- music discs --

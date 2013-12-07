@@ -72,7 +72,7 @@ public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 		return "experience spawn";
 	}
 	
-	private static Collection<Trigger> triggers = new ArrayList<Trigger>();
+	static Collection<Trigger> triggers = new ArrayList<Trigger>();
 	
 	@Override
 	public void register(final Trigger t) {

@@ -62,7 +62,7 @@ public class Adjective extends Message {
 				Skript.error("Missing colon (:) to separate the gender in the adjective '" + key + "' in the " + Language.getName() + " language file at index " + c + ": " + v);
 				return;
 			}
-			final String gender = v.substring(c, d);
+			final String gender = v.substring(c + 1, d);
 			final int g = gender.equals(DEFINITE_ARTICLE_TOKEN) ? DEFINITE_ARTICLE : Noun.getGender(gender, key);
 			if (!genders.containsKey(g))
 				genders.put(g, v.substring(0, s) + v.substring(d + 1, c2) + v.substring(e + 1));

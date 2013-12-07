@@ -55,6 +55,11 @@ public class Language {
 	public final static int F_PLURAL = 1, F_DEFINITE_ARTICLE = 2, F_INDEFINITE_ARTICLE = 4;
 	
 	/**
+	 * masks out article flags - useful if the article has been added already (e.g. by an adjective)
+	 */
+	public final static int NO_ARTICLE_MASK = ~(F_DEFINITE_ARTICLE | F_INDEFINITE_ARTICLE);
+	
+	/**
 	 * Name of the localised language
 	 */
 	private static String name = "english";

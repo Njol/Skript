@@ -104,7 +104,7 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 	
 	private String indentation = null;
 	
-	protected String getIndentation() {
+	public String getIndentation() {
 		if (indentation == null) {
 			int level = 0;
 			TriggerItem i = this;

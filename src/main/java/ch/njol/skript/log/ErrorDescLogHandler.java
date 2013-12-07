@@ -71,7 +71,7 @@ public class ErrorDescLogHandler extends LogHandler {
 	}
 	
 	@Override
-	public void onStop() {
+	protected void onStop() {
 		if (!hadError)
 			onSuccess();
 		else

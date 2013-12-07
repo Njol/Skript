@@ -64,7 +64,7 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {// TODO s
 	
 	public final class PreciousStonesRegion extends Region {
 		
-		private transient Field f;
+		transient Field f;
 		
 		public PreciousStonesRegion(final Field f) {
 			this.f = f;

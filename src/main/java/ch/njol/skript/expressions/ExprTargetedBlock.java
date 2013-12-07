@@ -82,7 +82,7 @@ public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 		return Classes.getDebugMessage(getAll(e));
 	}
 	
-	private Block getTargetedBlock(final Player p, final Event e) {
+	Block getTargetedBlock(final Player p, final Event e) {
 		if (p == null)
 			return null;
 		final long time = Bukkit.getWorlds().get(0).getFullTime();

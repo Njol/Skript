@@ -51,7 +51,7 @@ public class CondPvP extends Condition {
 	}
 	
 	private Expression<World> worlds;
-	private boolean enabled;
+	boolean enabled;
 	
 	@SuppressWarnings("unchecked")
 	@Override

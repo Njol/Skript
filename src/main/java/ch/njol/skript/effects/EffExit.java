@@ -54,7 +54,7 @@ import ch.njol.util.Kleenean;
 		"		exit 2 sections",
 		"	set loop-block to water"})
 @Since("")
-public class EffExit extends Effect {
+public class EffExit extends Effect { // TODO [code style] warn user about code after a stop effect
 	static {
 		Skript.registerEffect(EffExit.class,
 				"(exit|stop) [trigger]",
@@ -80,17 +80,17 @@ public class EffExit extends Effect {
 			case 2:
 				breakLevels = matchedPattern == 1 ? 1 : Integer.parseInt(parser.regexes.get(0).group());
 				type = parser.mark;
-				if (breakLevels > numLevels()) {
-					if (numLevels() == 0)
+				if (breakLevels > numLevels(type)) {
+					if (numLevels(type) == 0)
 						Skript.error("can't stop any " + names[type] + " as there are no " + names[type] + " present", ErrorQuality.SEMANTIC_ERROR);
 					else
-						Skript.error("can't stop " + breakLevels + " " + names[type] + " as there are only " + numLevels() + " " + names[type] + " present", ErrorQuality.SEMANTIC_ERROR);
+						Skript.error("can't stop " + breakLevels + " " + names[type] + " as there are only " + numLevels(type) + " " + names[type] + " present", ErrorQuality.SEMANTIC_ERROR);
 					return false;
 				}
 				break;
 			case 3:
 				type = parser.mark;
-				breakLevels = numLevels();
+				breakLevels = numLevels(type);
 				if (breakLevels == 0) {
 					Skript.error("can't stop any " + names[type] + " as there are no " + names[type] + " present", ErrorQuality.SEMANTIC_ERROR);
 					return false;
@@ -100,7 +100,7 @@ public class EffExit extends Effect {
 		return true;
 	}
 	
-	private final int numLevels() {
+	private final static int numLevels(final int type) {
 		if (type == EVERYTHING)
 			return ScriptLoader.currentSections.size();
 		int r = 0;

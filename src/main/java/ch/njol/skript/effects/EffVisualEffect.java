@@ -27,6 +27,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
@@ -39,6 +43,12 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
+@Name("Play Effect")
+@Description({"Plays a <a href='../classes/#visualeffect'>visual effect</a> at a given location or on a given entity.",
+		"Please note that some effects can only be played on entities, e..g wolf hearts or the hurt effect, and that these are always visible to all players."})
+@Examples({"show wolf hearts on the clicked wolf",
+		"play mob spawner flames at the targeted block to the player"})
+@Since("2.1")
 public class EffVisualEffect extends Effect {
 	static {
 		Skript.registerEffect(EffVisualEffect.class, "(play|show) %visualeffects% (on|%directions%) %entities/locations% [to %-players%]");

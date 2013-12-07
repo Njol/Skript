@@ -74,15 +74,15 @@ public class ExprEntities extends SimpleExpression<Entity> {
 				"[all] entities of type[s] %entitydatas% in radius %number% (of|around) %location%");
 	}
 	
-	private Expression<? extends EntityData<?>> types;
+	Expression<? extends EntityData<?>> types;
 	
-	private Expression<World> worlds;
+	Expression<World> worlds;
 	
 	private Expression<Number> radius;
 	private Expression<Location> center;
 	private Expression<? extends Entity> centerEntity;
 	
-	private Class<? extends Entity> returnType = Entity.class;
+	Class<? extends Entity> returnType = Entity.class;
 	
 	private int matchedPattern;
 	

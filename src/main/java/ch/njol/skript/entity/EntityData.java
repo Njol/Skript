@@ -113,6 +113,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		
 //		return getInfo((Class<? extends EntityData<?>>) d.getClass()).codeName + ":" + d.serialize();
 		@Override
+		@Deprecated
 		public EntityData deserialize(final String s) {
 			final String[] split = s.split(":", 2);
 			if (split.length != 2)
@@ -243,7 +244,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		infos.add(info);
 	}
 	
-	private transient EntityDataInfo<?> info;
+	transient EntityDataInfo<?> info;
 	protected int matchedPattern = 0;
 	private Kleenean plural = Kleenean.UNKNOWN;
 	private Kleenean baby = Kleenean.UNKNOWN;

@@ -58,7 +58,7 @@ public class CondDate extends Condition {
 	}
 	
 	private Expression<Date> date;
-	private Expression<Timespan> delta;
+	Expression<Timespan> delta;
 	
 	@SuppressWarnings("unchecked")
 	@Override

@@ -65,7 +65,7 @@ public enum Color implements YggdrasilSerializable {
 	private final DyeColor wool;
 	private final ChatColor chat;
 	private final org.bukkit.Color bukkit;
-	private Adjective adjective;
+	Adjective adjective;
 	
 	private Color(final DyeColor wool, final ChatColor chat, final org.bukkit.Color bukkit) {
 		this.wool = wool;
@@ -80,8 +80,8 @@ public enum Color implements YggdrasilSerializable {
 		}
 	}
 	
-	private final static Map<String, Color> byName = new HashMap<String, Color>();
-	private final static Map<String, Color> byEnglishName = new HashMap<String, Color>();
+	final static Map<String, Color> byName = new HashMap<String, Color>();
+	final static Map<String, Color> byEnglishName = new HashMap<String, Color>();
 	static {
 		Language.addListener(new LanguageChangeListener() {
 			@Override

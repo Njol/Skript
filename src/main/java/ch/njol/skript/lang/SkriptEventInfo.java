@@ -64,6 +64,8 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 		} else {
 			this.name = "On " + name;
 		}
+		
+		// uses the name without 'on ' or '*'
 		this.id = name.toLowerCase(Locale.ENGLISH).replaceAll("[#'\"<>/&]", "").replaceAll("\\s+", "_");
 	}
 	

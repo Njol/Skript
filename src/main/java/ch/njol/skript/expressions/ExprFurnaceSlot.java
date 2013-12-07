@@ -66,7 +66,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 		register(ExprFurnaceSlot.class, Slot.class, "(" + ORE + "¦ore|" + FUEL + "¦fuel|" + RESULT + "¦result)[s] [slot[s]]", "blocks");
 	}
 	
-	private int slot;
+	int slot;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -119,6 +119,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 			}
 		}
 		
+		@SuppressWarnings("synthetic-access")
 		@Override
 		public void setItem(final ItemStack item) {
 			if (e instanceof FurnaceSmeltEvent) {

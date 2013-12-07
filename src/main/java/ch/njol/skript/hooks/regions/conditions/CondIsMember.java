@@ -56,9 +56,9 @@ public class CondIsMember extends Condition {
 	}
 	
 	private Expression<OfflinePlayer> players;
-	private Expression<Region> regions;
+	Expression<Region> regions;
 	
-	private boolean owner;
+	boolean owner;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {

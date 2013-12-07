@@ -87,7 +87,7 @@ public class Metrics {
 	/**
 	 * All of the custom graphs to submit to metrics
 	 */
-	private final Set<Graph> graphs = Collections.synchronizedSet(new HashSet<Graph>());
+	final Set<Graph> graphs = Collections.synchronizedSet(new HashSet<Graph>());
 	
 	/**
 	 * The plugin configuration file
@@ -107,17 +107,17 @@ public class Metrics {
 	/**
 	 * Debug mode
 	 */
-	private final boolean debug;
+	final boolean debug;
 	
 	/**
 	 * Lock for synchronization
 	 */
-	private final Object optOutLock = new Object();
+	final Object optOutLock = new Object();
 	
 	/**
 	 * The scheduled task
 	 */
-	private Task task = null;
+	Task task = null;
 	
 	public Metrics(final Plugin plugin) {
 		if (plugin == null) {
@@ -331,7 +331,7 @@ public class Metrics {
 	/**
 	 * Generic method that posts a plugin to the metrics website
 	 */
-	private void postPlugin(final boolean isPing) throws IOException {
+	void postPlugin(final boolean isPing) throws IOException {
 		// Server software specific section
 		final PluginDescriptionFile description = plugin.getDescription();
 		final String pluginName = description.getName();
@@ -633,7 +633,7 @@ public class Metrics {
 		 */
 		private final Set<Plotter> plotters = new LinkedHashSet<Plotter>();
 		
-		private Graph(final String name) {
+		Graph(final String name) {
 			this.name = name;
 		}
 		

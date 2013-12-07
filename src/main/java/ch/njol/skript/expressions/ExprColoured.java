@@ -55,7 +55,7 @@ public class ExprColoured extends PropertyExpression<String, String> {
 				"(colo[u]r-|colo[u]red )%strings%", "(un|non)[-](colo[u]r-|colo[u]red )%strings%");
 	}
 	
-	private boolean color;
+	boolean color;
 	
 	@SuppressWarnings("unchecked")
 	@Override

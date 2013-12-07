@@ -52,7 +52,7 @@ public class CondPermission extends Condition {
 				"[%commandsenders%] ha(s|ve) [the] permission[s] %strings%");
 	}
 	
-	private Expression<String> permissions;
+	Expression<String> permissions;
 	private Expression<CommandSender> senders;
 	
 	@SuppressWarnings("unchecked")

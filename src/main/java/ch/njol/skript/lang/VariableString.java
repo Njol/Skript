@@ -211,16 +211,14 @@ public class VariableString implements Expression<String> {
 										string.set(string.size() - 1, last.substring(0, last.length() - 1));
 										c2++; // remove the '>'
 									} else {
-										final int l = last.lastIndexOf(' ', last.endsWith(" ") ? last.length() - 1 : last.length());
-										if (l != -1) {
-											final String lastWord = last.substring(l + 1).trim();
-											if (Noun.isIndefiniteArticle(lastWord))
-												i.flags |= Language.F_INDEFINITE_ARTICLE;
-											else if (Noun.isDefiniteArticle(lastWord))
-												i.flags |= Language.F_DEFINITE_ARTICLE;
-											if ((i.flags & (Language.F_INDEFINITE_ARTICLE | Language.F_DEFINITE_ARTICLE)) != 0)
-												string.set(string.size() - 1, last.substring(0, l));
-										}
+										final int l = last.lastIndexOf(' ', last.endsWith(" ") ? last.length() - 2 : last.length() - 1);
+										final String lastWord = last.substring(l + 1).trim();
+										if (Noun.isIndefiniteArticle(lastWord))
+											i.flags |= Language.F_INDEFINITE_ARTICLE;
+										else if (Noun.isDefiniteArticle(lastWord))
+											i.flags |= Language.F_DEFINITE_ARTICLE;
+										if ((i.flags & (Language.F_INDEFINITE_ARTICLE | Language.F_DEFINITE_ARTICLE)) != 0)
+											string.set(string.size() - 1, last.substring(0, l + 1));
 									}
 								}
 								string.add(i);
@@ -348,7 +346,6 @@ public class VariableString implements Expression<String> {
 	
 	/**
 	 * Parses all expressions in the string and returns it.
-	 * FIXME make <%expr%> work like before // should work now -- test!
 	 * 
 	 * @param e Event to pass to the expressions.
 	 * @return The input string with all expressions replaced.

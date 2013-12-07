@@ -43,8 +43,8 @@ public class Timespan implements Serializable, YggdrasilSerializable, Comparable
 	private final static Noun m_minute = new Noun("time.minute");
 	private final static Noun m_hour = new Noun("time.hour");
 	private final static Noun m_day = new Noun("time.day");
-	private final static Noun[] names = {m_tick, m_second, m_minute, m_hour, m_day};
-	private final static int[] times = {50, 1000, 1000 * 60, 1000 * 60 * 60, 1000 * 60 * 60 * 24};
+	final static Noun[] names = {m_tick, m_second, m_minute, m_hour, m_day};
+	final static int[] times = {50, 1000, 1000 * 60, 1000 * 60 * 60, 1000 * 60 * 60 * 24};
 	final static HashMap<String, Integer> parseValues = new HashMap<String, Integer>();
 	static {
 		Language.addListener(new LanguageChangeListener() {

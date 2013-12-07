@@ -123,7 +123,7 @@ public class Money {
 		});
 	}
 	
-	private final double amount;
+	final double amount;
 	
 	public Money(final double amount) {
 		this.amount = amount;

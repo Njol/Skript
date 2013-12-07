@@ -114,6 +114,16 @@ public class DefaultConverters {
 			}
 		});
 		
+		// Entity - Inventory
+		Converters.registerConverter(Entity.class, Inventory.class, new SerializableConverter<Entity, Inventory>() {
+			@Override
+			public Inventory convert(final Entity e) {
+				if (e instanceof InventoryHolder)
+					return ((InventoryHolder) e).getInventory();
+				return null;
+			}
+		});
+		
 		// Block - ItemStack
 		Converters.registerConverter(Block.class, ItemStack.class, new SerializableConverter<Block, ItemStack>() {
 			@SuppressWarnings("deprecation")

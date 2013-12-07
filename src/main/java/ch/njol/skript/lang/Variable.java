@@ -72,9 +72,9 @@ public class Variable<T> implements Expression<T> {
 	private final VariableString name;
 	
 	private final Class<T> superType;
-	private final Class<? extends T>[] types;
+	final Class<? extends T>[] types;
 	
-	private final boolean local;
+	final boolean local;
 	private final boolean list;
 	
 	private final Variable<?> source;

@@ -62,7 +62,7 @@ public class EffLog extends Effect {
 	
 	private final static File logsFolder = new File(Skript.getInstance().getDataFolder(), "logs");
 	
-	private final static HashMap<String, PrintWriter> writers = new HashMap<String, PrintWriter>();
+	final static HashMap<String, PrintWriter> writers = new HashMap<String, PrintWriter>();
 	static {
 		Skript.closeOnDisable(new Closeable() {
 			@Override

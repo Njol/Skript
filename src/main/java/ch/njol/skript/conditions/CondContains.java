@@ -61,8 +61,8 @@ public class CondContains extends Condition {
 				"%inventories/strings/objects% do[es](n't| not) contain %itemtypes/strings/objects%");
 	}
 	
-	private Expression<?> containers;
-	private Expression<?> items;
+	Expression<?> containers;
+	Expression<?> items;
 	
 	@SuppressWarnings("unchecked")
 	@Override

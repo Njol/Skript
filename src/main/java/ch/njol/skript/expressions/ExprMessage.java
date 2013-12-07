@@ -131,8 +131,9 @@ public class ExprMessage extends SimpleExpression<String> {
 			}
 		};
 		
-		private final String name, pattern;
-		private final Class<? extends Event>[] events;
+		final String name;
+		private final String pattern;
+		final Class<? extends Event>[] events;
 		
 		MessageType(final String name, final String pattern, final Class<? extends Event>... events) {
 			this.name = name;

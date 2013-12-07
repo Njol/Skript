@@ -36,7 +36,7 @@ public abstract class Hook<P extends Plugin> {
 	
 	private final static ArgsMessage m_hooked = new ArgsMessage("hooks.hooked");
 	
-	protected P plugin;
+	public P plugin;
 	
 	public final P getPlugin() {
 		return plugin;

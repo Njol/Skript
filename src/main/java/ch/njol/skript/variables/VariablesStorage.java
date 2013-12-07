@@ -21,6 +21,7 @@
 
 package ch.njol.skript.variables;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -41,11 +42,11 @@ import ch.njol.util.Pair;
 /**
  * @author Peter Güttinger
  */
-public abstract class VariablesStorage implements AutoCloseable {
+public abstract class VariablesStorage implements Closeable {
 	
 	private final static int QUEUE_SIZE = 1000, FIRST_WARNING = 300;
 	
-	private final LinkedBlockingQueue<Pair<String, Object>> changesQueue = new LinkedBlockingQueue<Pair<String, Object>>(QUEUE_SIZE);
+	final LinkedBlockingQueue<Pair<String, Object>> changesQueue = new LinkedBlockingQueue<Pair<String, Object>>(QUEUE_SIZE);
 	
 	protected volatile boolean closed = false;
 	
@@ -187,6 +188,7 @@ public abstract class VariablesStorage implements AutoCloseable {
 	protected Task backupTask = null;
 	
 	public void startBackupTask(final Timespan t) {
+		assert file != null;
 		if (t.getTicks() == 0)
 			return;
 		backupTask = new Task(Skript.getInstance(), t.getTicks(), t.getTicks(), true) {
@@ -221,6 +223,9 @@ public abstract class VariablesStorage implements AutoCloseable {
 	private long lastError = Long.MIN_VALUE;
 	private final static int ERROR_INTERVAL = 10;
 	
+	/**
+	 * Called from a different thread than Bukkit's main thread.
+	 */
 	final void save(final Pair<String, Object> var) {
 		if (changesQueue.size() > FIRST_WARNING && lastWarning < System.currentTimeMillis() - WARNING_INTERVAL * 1000) {
 			Skript.warning("Cannot write variables to the database '" + name + "' at sufficient speed; server performance may suffer and many variables will be lost if the server crashes. (this warning will be repeated at most once every " + ERROR_INTERVAL + " seconds)");
@@ -253,7 +258,7 @@ public abstract class VariablesStorage implements AutoCloseable {
 	}
 	
 	/**
-	 * Clears the queue of unsaved variables.
+	 * Clears the queue of unsaved variables. Only used if all variables are saved immediately after calling this method.
 	 */
 	protected void clearChangesQueue() {
 		changesQueue.clear();

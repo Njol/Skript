@@ -255,7 +255,7 @@ public class Noun extends Message {
 		return s.substring(0, x) + "¦" + s.substring(x, g) + "¦" + s.substring(g);
 	}
 	
-	private final static HashMap<String, Integer> genders = new HashMap<String, Integer>();
+	final static HashMap<String, Integer> genders = new HashMap<String, Integer>();
 	
 	/**
 	 * @param gender Gender id as defined in [language].lang (i.e. without the leading @)
@@ -299,9 +299,9 @@ public class Noun extends Message {
 		return new Pair<String, Integer>(s, g);
 	}
 	
-	private final static List<String> indefiniteArticles = new ArrayList<String>(3);
-	private final static List<String> definiteArticles = new ArrayList<String>(3);
-	private static String definitePluralArticle = "";
+	final static List<String> indefiniteArticles = new ArrayList<String>(3);
+	final static List<String> definiteArticles = new ArrayList<String>(3);
+	static String definitePluralArticle = "";
 	static {
 		Language.addListener(new LanguageChangeListener() {
 			@Override

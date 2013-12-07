@@ -84,22 +84,26 @@ Standardnamen:
 
 
 	# -- Wasser & Lava --
+	Wasser @n = 8
+	Wasser @n = 9
 	Wasser @n = 8, 9
 	Wasser <item/block> = 9
-	stationäres Wasser @n = 9
-	Wasserquelle @f = 9
-	Quelle @f = 9
-	fliessendes Wasser @n= 8 # change to '8:0-7' if you want to exclude falling water
-	fallendes Wasser @n = 8:8
-	bewegtes Wasser @n = 8
+	stationäres Wasser @n = 8:0, 9:0
+	Wasserquelle @f = 8:0, 9:0
+	Quelle @f = 8:0, 9:0
+	fliessendes Wasser @n= 8:1-8, 9:1-8 # change to '8:0-7' if you want to exclude falling water
+	fallendes Wasser @n = 8:8, 9:8
+	bewegtes Wasser @n = 8:1-8, 9:1-8
 
+	Lava @f = 10
+	Lava @f = 11
 	Lava @f = 10, 11
 	Lava <item/block> = 11
-	stationäre Lava @f = 11
-	Lavaquelle @f = 11
-	fliessende Lava @f = 10 # change to '10:0-7' if you want to exclude falling lava
-	fallende Lava @f = 10:8
-	gewegte Lava @f = 10
+	stationäre Lava @f = 10:0, 11:0
+	Lavaquelle @f = 10:0, 11:0
+	fliessende Lava @f = 10:1-8, 11:1-8 # change to '10:0-7' if you want to exclude falling lava
+	fallende Lava @f = 10:8, 11:8
+	gewegte Lava @f = 10:1-8, 11:1-8
 
 
 	# -- Sand & Geröll --
@@ -130,12 +134,27 @@ Standardnamen:
 
 
 	# -- Holz, Blätter, Setzlinge & Planken --
-	{tree type}: # wird auch für hölzerne Stufen evrwendet
+	{tree type}:
 		{default} = :0-15
 		(Eichen|normale(r|s|) ) = :0, :4, :8, :12
 		(Tannen|Fichten) = :1, :5, :9, :13
 		Birken = :2, :6, :10, :14
+		Dschungel = :3, :7, :11, :15
 		Jungel = :3, :7, :11, :15
+	{tree type 2}:
+		{default} = :0-15
+		Akazien = :0, :4, :8, :12, :2, :6, :10, :14
+		(dunkles Eichen|dunkles) = :1, :5, :9, :13, :3, :7, :11, :15
+	{wood type}: # also used elsewhere
+		{default} = :0-5
+		<any> = :0-5
+		(Eichen|normale(r|s|) ) = :0
+		(Tannen|Fichten) = :1
+		Birken = :2
+		Dschungel = :3
+		Jungel = :3
+		Akazien = :4
+		(dunkles Eichen|dunkles) = :5
 
 	{log direction}:
 		{default} = :0-3
@@ -159,12 +178,23 @@ Standardnamen:
 		(volle(r|s|)|ganze(r|s|)) = :12-15
 		<any> = :0-15
 
+	{wood type}Setzling¦e @m = 6
+	{wood type}[Holz]Planke¦n @f = 5
+	
 	{log direction no default} {tree type}(St¦amm¦ämme @m|H¦olz¦ölzer @n) = 17
 	{log direction} {tree type}(Stamm|Holz) <item/block> = 17
 	{tree type}Blätter @x = 18
-	{tree type}Setzling¦e @m = 6:0-3
-	{tree type}Planke¦n @f = 5:0-3
-	{tree type}Holzplanke¦n @f = 5:0-3
+	[<any>] permanente {tree type}Blätter @x = 18:4-7, 18:12-15
+
+	{log direction no default} {tree type 2}(St¦amm¦ämme @m|H¦olz¦ölzer @n) = 162
+	{log direction} {tree type 2}(Stamm|Holz) <item/block> = 162
+	{tree type 2}Blätter @x = 161
+	[<any>] permanente {tree type 2}Blätter @x = 161:4-7, 161:12-15
+
+	{log direction no default} (St¦amm¦ämme @m|H¦olz¦ölzer @n) = 17, 161
+	{log direction} (Stamm|Holz) <item/block> = 17, 161
+	[<any>] Blätter @x = 18:0-15, 161:0-15
+	[<any>] permanente Blätter @x = 18:4-7, 18:12-15, 161:4-7, 161:12-15
 
 
 	# -- Schwamm --
@@ -176,7 +206,12 @@ Standardnamen:
 	[Glas]Scheibe¦n @f = 102
 	dünne¦s Glas¦ Gläser @n = 102
 	Fenster[gl¦as¦äser] @n = 102
-
+	
+	gefärbte(s Gl¦as¦äser| [Glas]Scheibe¦n) = 160
+	<any> gefärbte(s Gl¦as¦äser| [Glas]Scheibe¦n) = 160:0-15
+	weiss[ ]gefärbte(s Gl¦as¦äser| [Glas]Scheibe¦n) = 160:0
+	# etc...
+	
 
 	# -- Lapislazuli --
 	# Lapiserz & -block: siehe Erze
@@ -263,16 +298,37 @@ Standardnamen:
 	<any> (hohe|lange)¦s Gras¦ Gräser @n = 31:1-2
 	tote¦s Gras¦ Gräser @n = 31:0
 	(hohe|lange)¦s Gras¦ Gräser @n = 31:1
-	Farne¦e @m = 31:2
+	Farn¦e @m = 31:2
 	
 	tote¦r Busch¦ Büsche @m = 32
+	
+	doppelt(-||es | so )(hohe|lange)¦s Gras¦ Gräser @n = 175:2
+	(grosse|hohe)¦r Farn¦ Farne @m = 175:3
 	
 	Löwenzahn @m = 37
 	gelbe Blume¦n @f = 37
 	Rose¦n @f = 38
 	rote Rose¦n @f = 38
 	rote Blume¦n @f = 38
-	<any> Blume¦n @f = 37, 38
+	popp¦y¦ies = 38:0
+	blue orchid¦s = 38:1
+	allium¦s = 38:2
+	azure bluet¦s = 38:3
+	red tulip¦s = 38:4
+	orange tulip¦s = 38:5
+	white tulip¦s = 38:6
+	pink tulip¦s = 38:7
+	oxeye dais¦y¦ies @an = 38:8
+	[<any>] small flower¦s = 37, 38:0-8
+	
+	sunflower¦s = 175:0
+	lilac¦s = 175:1
+	rose bush¦es = 175:4
+	peon¦y¦ies = 175:5
+	[<any>] large flower = 175:0-1, 175:4-5
+	[<any>] large plant = 175:0-5
+	
+	[<any>] flower = any small flower, any large flower
 	
 	Pilz¦e @m = 39, 40
 	braune¦r Pilz¦ Pilze @m = 39
@@ -362,7 +418,8 @@ Standardnamen:
 
 
 	# -- Wolle und Färbemittel --
-	Wolle @f = 35:0-15
+	Wolle @f = 35
+	<any> Wolle @f = 35:0-15
 	weisse Wolle @f = 35:0
 	orange Wolle @f = 35:1
 	(magenta|rosa) Wolle @f = 35:2
@@ -380,7 +437,10 @@ Standardnamen:
 	rote Wolle @f = 35:14
 	schwarze Wolle @f = 35:15
 	
-	(Färbemittel @n|Farbe¦n @f) = 351:0-15
+	(carpet|rug)¦s = 171:0-15
+
+	(Färbemittel @n|Farbe¦n @f) = 351
+	<any> (Färbemittel @n|Farbe¦n @f) = 351:0-15
 	weisse(¦s¦¦ Färbemittel @n| Farbe¦n @f) = 351:15
 	Knochenmehl¦e @n = 351:15
 	orange(¦s¦¦ Färbemittel @n| Farbe¦n @f) = 351:14
@@ -405,10 +465,10 @@ Standardnamen:
 	Rosenrot = 351:1
 	schwarze(¦s¦¦ Färbemittel @n| Farbe¦n @f) = 351:0
 	Tintens¦ack¦äcke @m = 351:0
-
+	
 
 	# -- Block 36 --
-	Block 36 = 36
+	Block 36 @m = 36
 	bewegte¦r¦¦ <block> = 36
 
 
@@ -444,6 +504,15 @@ Standardnamen:
 		upside-down = :8-15
 		any = :0-15
 	
+	{wooden slab type}:
+		{default} = :0-5, :8-13
+		<any> = :0-5, :8-13
+		(oak|regular|normal) = :0, :8
+		(spruce|fir|redwood|pine) = :1, :9
+		birch = :2, :10
+		jungle = :3, :11
+		acacia = :4, :12
+		dark oak = :5, :13
 	{stone slab type}:
 		{default} = :0-1, :3-5, :8-9, :11-13
 		any = :0-1, :3-5, :8-9, :11-13
@@ -460,18 +529,27 @@ Standardnamen:
 		brick = :4, :12
 		stone brick[s]) = :5, :13
 	
-	# variation {tree type}: see wood
 	{slab facing no default} {stone slab} {stone slab type no default} (step|slab)¦s = :
 	{slab facing} {stone slab} {stone slab type} (step|slab) (block|item)¦s = :
-	{slab facing no default} {wooden slab} {tree type} [wood[en]] (step|slab)¦s = :0-3, :8-11
-	{slab facing} {wooden slab} {tree type} (step|slab) (block|item)¦s = :
+	{slab facing no default} {wooden slab} {wooden slab type} [wood[en]] (step|slab)¦s = :
+	{slab facing} {wooden slab} {wooden slab type} (step|slab) (block|item)¦s = :
 	{slab facing no default} {any slab} (step|slab)¦s = :
 	{slab facing} {any slab} (step|slab) (block|item)¦s = :
 
 
 	# -- bricks --
 	[clay] bricks = 45
-	[clay] brick[s] block¦s = 45
+	[clay] brick[s] <block> = 45
+	[clay] brick[s] <item> = 336
+
+	[stained] [hard[ened]] clay = 159
+	
+	clay = 82, 337
+	clay <block> = 82
+	clay <item> = 337
+	clay ball¦s = 337
+	
+	hard[ened] clay = 172
 
 
 	# -- TNT --
@@ -524,6 +602,8 @@ Standardnamen:
 		nether [brick[s]] = 114
 		sand[ ]stone = 128
 		[nether] quarz = 156
+		acacia [wood] = 163
+		dark oak [wood] = 164
 	{stairs direction}:
 		{default} = :0-3
 		any = :0-7
@@ -750,8 +830,12 @@ Standardnamen:
 
 	# -- snow & ice --
 	snow layer¦s = 78
-	ice = 79
-	snow [block¦s] = 80
+	ice @- = 79
+	ice <block> = 79
+	snow = 80
+	snow <block> = 80
+	packed ice = 174
+	packed ice <block> = 174
 
 
 	# -- cactus --
@@ -759,8 +843,7 @@ Standardnamen:
 	cactuses = 81
 
 
-	# -- clay block --
-	clay block¦s = 82
+	# -- clay block: see bricks
 
 
 	# -- sugar cane --
@@ -983,6 +1066,32 @@ Standardnamen:
 	
 	# -- dropper: see redstone
 
+	
+	# -- stained clay: see clay
+	
+	
+	# -- stained glass: see glass
+	
+	
+	# -- hay block --
+	(hay|wheat) block¦s = 170
+	block¦¦s¦ of (hay|wheat) = 170
+	
+	
+	# -- carpet: see wool
+	
+	
+	# -- hardened clay: see clay
+	
+	
+	# -- block of coal: see coal
+
+
+	# -- packed ice: see ice
+	
+	
+	# -- large flower: see vegetation
+
 
 
 
@@ -1010,9 +1119,12 @@ Standardnamen:
 
 
 	# -- coal --
-	any coal = 263:0-1
-	coal = 263:0
+	<any> coal = 263:0-1
 	charcoal = 263:1
+	coal = 263:0, 173
+	coal <item> = 263:0
+	coal <block> = 173
+	block¦¦s¦ of coal = 173
 
 
 	# -- diamond & ingots --
@@ -1167,14 +1279,19 @@ Standardnamen:
 
 
 	# -- minecarts --
-	[any] minecart¦s = 328, 342, 343
+	[<any>] minecart¦s = 328, 342, 343
 	minecart item¦s = 328
 	storage minecart¦s = 342
 	minecart¦¦s¦ with chest = 342
 	powered minecart¦s = 343
 	minecart¦¦s¦ with furnace = 343
 	minecart¦¦s¦ with TNT = 407
+	TNT minecart¦¦s¦ = 407
+	explosive minecart¦¦s¦ = 407
 	minecart¦¦s¦ with hopper = 408
+	hopper minecart¦¦s¦ = 408
+	minecart¦¦s¦ with command block = 422
+	command block minecart¦¦s¦ = 422
 
 
 	# -- saddle --
@@ -1204,9 +1321,7 @@ Standardnamen:
 	# -- milk: see buckets
 
 
-	# -- clay & clay brick --
-	[clay] brick¦s = 336
-	clay [ball¦s] = 337
+	# -- clay & clay brick: see bricks
 
 
 	# -- sugar cane: see sugar cane block
@@ -1509,6 +1624,23 @@ Standardnamen:
 	
 	
 	# -- minecart with TNT/hopper: see minecarts
+	
+	
+	# -- horse armour --
+	iron horse armo[u]r¦s = 417
+	gold horse armo[u]r¦s = 418
+	diamond horse armo[u]r¦s = 419
+	
+	
+	# -- lead --
+	lead¦s = 420
+	
+	
+	# -- name tag --
+	name tag¦s = 421
+	
+	
+	# -- minecart with command block: see minecarts
 	
 
 	# -- music discs --

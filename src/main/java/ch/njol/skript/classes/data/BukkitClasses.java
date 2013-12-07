@@ -760,7 +760,7 @@ public class BukkitClasses {
 		Classes.registerClass(new ClassInfo<PotionEffectType>(PotionEffectType.class, "potioneffecttype")
 				.user("potion( ?effect)?( ?type)?s?")
 				.name("Potion Effect Type")
-				.description("A <a href='#potioneffect'>potion effect</a> type, e.g. 'strength' or 'swiftness'.")
+				.description("A potion effect type, e.g. 'strength' or 'swiftness'.")
 				.usage(StringUtils.join(PotionEffectUtils.getNames(), ", "))
 				.examples("apply swiftness 5 to the player",
 						"apply potion of speed 2 to the player for 60 seconds",

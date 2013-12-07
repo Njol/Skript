@@ -76,7 +76,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	/**
 	 * Note to self: use {@link #add_(ItemData)} to add item datas, don't add them directly to this list.
 	 */
-	private final ArrayList<ItemData> types = new ArrayList<ItemData>();
+	final ArrayList<ItemData> types = new ArrayList<ItemData>();
 	
 	private boolean all = false;
 	
@@ -87,12 +87,12 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 */
 	private int numItems = 0;
 	
-	private transient Map<Enchantment, Integer> enchantments = null;
+	transient Map<Enchantment, Integer> enchantments = null;
 	
 	/**
 	 * Guaranteed to be of type ItemMeta.
 	 */
-	private transient Object meta = null;
+	transient Object meta = null;
 	
 	/**
 	 * ItemTypes to use instead of this one if adding to an inventory or setting a block.

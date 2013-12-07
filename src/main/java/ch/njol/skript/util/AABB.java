@@ -39,8 +39,8 @@ import ch.njol.skript.Skript;
  */
 public class AABB implements Iterable<Block> {
 	
-	private final World world;
-	private final Vector lowerBound, upperBound;
+	final World world;
+	final Vector lowerBound, upperBound;
 	
 	//	private final static Vector EPSILON = new Vector(Skript.EPSILON, Skript.EPSILON, Skript.EPSILON);
 	

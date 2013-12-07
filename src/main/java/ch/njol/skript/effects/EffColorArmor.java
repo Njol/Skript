@@ -105,6 +105,8 @@ public class EffColorArmor extends Effect {
 		
 		for (final Object o : items.getArray(e)) {
 			final ItemStack i = o instanceof Slot ? ((Slot) o).getItem() : (ItemStack) o;
+			if (i == null)
+				continue;
 			if (i.getType() == Material.LEATHER_BOOTS || i.getType() == Material.LEATHER_CHESTPLATE || i.getType() == Material.LEATHER_HELMET || i.getType() == Material.LEATHER_LEGGINGS) {
 				final LeatherArmorMeta m = (LeatherArmorMeta) i.getItemMeta();
 				m.setColor(c);

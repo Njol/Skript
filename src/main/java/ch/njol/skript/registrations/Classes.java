@@ -31,15 +31,16 @@ import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
@@ -57,7 +58,6 @@ import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
-import ch.njol.util.coll.iterator.ArrayIterator;
 import ch.njol.yggdrasil.Tag;
 import ch.njol.yggdrasil.YggdrasilConstants;
 import ch.njol.yggdrasil.YggdrasilInputStream;
@@ -213,14 +213,9 @@ public abstract class Classes {
 			throw new IllegalStateException("Cannot use classinfos until registration is over");
 	}
 	
-	public static Iterable<ClassInfo<?>> getClassInfos() {
+	public static List<ClassInfo<?>> getClassInfos() {
 		checkAllowClassInfoInteraction();
-		return new Iterable<ClassInfo<?>>() {
-			@Override
-			public Iterator<ClassInfo<?>> iterator() {
-				return new ArrayIterator<ClassInfo<?>>(classInfos);
-			}
-		};
+		return Collections.unmodifiableList(Arrays.asList(classInfos));
 	}
 	
 	/**
@@ -641,14 +636,24 @@ public abstract class Classes {
 			final byte[] r2 = new byte[r.length - start.length];
 			System.arraycopy(r, start.length, r2, 0, r2.length);
 			
-			final Object d;
-			assert o.equals(d = deserialize(ci, new ByteArrayInputStream(r2))) : o + " (" + o.getClass() + ") != " + d + " (" + (d == null ? null : d.getClass()) + "): " + Arrays.toString(r);
+			Object d;
+			assert equals(o, d = deserialize(ci, new ByteArrayInputStream(r2))) : o + " (" + o.getClass() + ") != " + d + " (" + (d == null ? null : d.getClass()) + "): " + Arrays.toString(r);
 			
 			return new Pair<String, byte[]>(ci.getCodeName(), r2);
 		} catch (final IOException e) { // shouldn't happen
 			Skript.exception(e);
 			return null;
 		}
+	}
+	
+	private final static boolean equals(final Object o, final Object d) {
+		if (o instanceof Chunk) { // CraftChunk does neither override equals nor is it a "coordinate-specific singleton" like Block
+			if (!(d instanceof Chunk))
+				return false;
+			final Chunk c1 = (Chunk) o, c2 = (Chunk) d;
+			return c1.getWorld().equals(c2.getWorld()) && c1.getX() == c2.getX() && c1.getZ() == c2.getZ();
+		}
+		return o.equals(d);
 	}
 	
 	public final static Object deserialize(final ClassInfo<?> type, final Blob value) throws SQLException {

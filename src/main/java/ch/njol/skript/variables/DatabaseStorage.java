@@ -114,7 +114,7 @@ public class DatabaseStorage extends VariablesStorage {
 	private Object db;
 	
 	private boolean monitor = false;
-	private long monitor_interval;
+	long monitor_interval;
 	
 	private final static String guid = UUID.randomUUID().toString();
 	
@@ -311,7 +311,9 @@ public class DatabaseStorage extends VariablesStorage {
 			((Database) db).close();
 	}
 	
-	private PreparedStatement writeQuery, deleteQuery, monitorQuery, monitorCleanUpQuery;
+	private PreparedStatement writeQuery, deleteQuery, monitorQuery;
+	
+	PreparedStatement monitorCleanUpQuery;
 	
 	@Override
 	protected void save(final String name, final String type, final byte[] value) {
@@ -393,7 +395,7 @@ public class DatabaseStorage extends VariablesStorage {
 		}
 	}
 	
-	private final static LinkedList<VariableInfo> syncDeserializing = new LinkedList<VariableInfo>();
+	final static LinkedList<VariableInfo> syncDeserializing = new LinkedList<VariableInfo>();
 	
 	private void loadVariables(final ResultSet r) throws SQLException {
 		synchronized (syncDeserializing) {
@@ -461,7 +463,7 @@ public class DatabaseStorage extends VariablesStorage {
 		}
 	}
 	
-	private final static LinkedList<OldVariableInfo> oldSyncDeserializing = new LinkedList<OldVariableInfo>();
+	final static LinkedList<OldVariableInfo> oldSyncDeserializing = new LinkedList<OldVariableInfo>();
 	
 	@Deprecated
 	private boolean oldLoadVariables(final ResultSet r) throws SQLException {
@@ -517,7 +519,7 @@ public class DatabaseStorage extends VariablesStorage {
 		return hasRow;
 	}
 	
-	private static void sqlException(final SQLException e) {
+	static void sqlException(final SQLException e) {
 		Skript.error("database error: " + e.getLocalizedMessage());
 		if (Skript.testing())
 			e.printStackTrace();

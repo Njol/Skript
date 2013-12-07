@@ -164,7 +164,7 @@ public abstract class Commands {
 		}
 	};
 	
-	private static boolean suppressUnknownCommandMessage = false;
+	static boolean suppressUnknownCommandMessage = false;
 	static {
 		BukkitLoggerFilter.addFilter(new Filter() {
 			@Override
@@ -222,7 +222,7 @@ public abstract class Commands {
 	 * @param command full command string without the slash
 	 * @return whether to cancel the event
 	 */
-	private final static boolean handleCommand(final CommandSender sender, final String command) {
+	final static boolean handleCommand(final CommandSender sender, final String command) {
 		final String[] cmd = command.split("\\s+", 2);
 		cmd[0] = cmd[0].toLowerCase();
 		if (cmd[0].endsWith("?")) {
@@ -247,7 +247,7 @@ public abstract class Commands {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private final static boolean handleEffectCommand(final CommandSender sender, String command) {
+	final static boolean handleEffectCommand(final CommandSender sender, String command) {
 		if (!(sender.hasPermission("skript.effectcommands") || SkriptConfig.allowOpsToUseEffectCommands.value() && sender.isOp()))
 			return false;
 		try {

@@ -83,7 +83,12 @@ public abstract class Aliases {
 		return Language.isUsingLocal() ? materialNames_localised : materialNames_english;
 	}
 	
-	private static String itemSingular = "item", itemPlural = "items", itemGender = null, blockSingular = "block", blockPlural = "blocks", blockGender = null;
+	static String itemSingular = "item";
+	static String itemPlural = "items";
+	static String itemGender = null;
+	static String blockSingular = "block";
+	static String blockPlural = "blocks";
+	static String blockGender = null;
 	
 	// this is not an alias!
 	private final static ItemType everything = new ItemType();
@@ -175,10 +180,8 @@ public abstract class Aliases {
 			final char c = name.charAt(i);
 			if ("[({".indexOf(c) != -1) {
 				final int end = nextBracket(name, "])}".charAt("[({".indexOf(c)), c, i);
-				if (end == -1) {
-					Skript.error(m_invalid_brackets.toString(c + "" + "])}".charAt("[({".indexOf(c))));
+				if (end == -1)
 					return r;
-				}
 				if (c == '[') {
 					r.putAll(getAliases(concatenate(name.substring(0, i), name.substring(i + 1, end), name.substring(end + 1)), value, variations));
 					r.putAll(getAliases(concatenate(name.substring(0, i), name.substring(end + 1)), value, variations));
@@ -207,72 +210,89 @@ public abstract class Aliases {
 					r.putAll(getAliases(concatenate(name.substring(0, i), name.substring(last + 1, end), name.substring(end + 1)), value, variations));
 				} else {
 					assert c == '{';
-					final String var = name.substring(i + 1, end);
-					if (variations.containsKey(var)) {
-						boolean hasDefault = false;
-						for (final Entry<String, ItemType> v : variations.get(var).entrySet()) {
-							final String n;
-							if (v.getKey().equalsIgnoreCase("{default}")) {
-								hasDefault = true;
-								n = concatenate(name.substring(0, i), name.substring(end + 1));
-							} else {
-								final int g = v.getKey().lastIndexOf('@');
-								if (g == -1) {
-									n = concatenate(name.substring(0, i), v.getKey(), name.substring(end + 1));
-								} else {
-									final String n0 = concatenate(name.substring(0, i), v.getKey().substring(0, g), name.substring(end + 1));
-									final int c0 = n0.lastIndexOf('@');
-									n = (c0 == -1 ? n0 : n0.substring(0, c0).trim() + v.getKey().substring(g));
-								}
-							}
-							final ItemType t = v.getValue().intersection(value);
-							if (t != null)
-								r.putAll(getAliases(n, t, variations));
-							else
-								Skript.warning(m_empty_alias.toString(n));
-						}
-						if (!hasDefault)
-							r.putAll(getAliases(concatenate(name.substring(0, i), name.substring(end + 1)), value, variations));
-					} else {
-						Skript.error(m_unknown_variation.toString(var));
-					}
+					continue;
 				}
 				return r;
-			} else if (c == '<') {
-				final int end = name.indexOf('>', i + 1);
-				if (end != -1) {
-					final String x = name.substring(i + 1, end);
-					if (x.equalsIgnoreCase("any")) {
-						String s = name.substring(0, i) + m_any.toString() + name.substring(end + 1);
-						final int g = s.lastIndexOf('@');
-						if (g != -1)
-							s = s.substring(0, g + 1) + "-";
-						r.putAll(getAliases(s, value, variations));
-						return r;
+			}
+		}
+		
+		// variations and <any>/<block>/etc. are replaced last because they replace genders
+		
+		int i = name.indexOf('{');
+		if (i != -1) {
+			final int end = name.indexOf('}', i + 1);
+			if (end == -1) {// checked above
+				assert false;
+				return r;
+			}
+			final String var = name.substring(i + 1, end);
+			if (variations.containsKey(var)) {
+				boolean hasDefault = false;
+				for (final Entry<String, ItemType> v : variations.get(var).entrySet()) {
+					final String n;
+					if (v.getKey().equalsIgnoreCase("{default}")) {
+						hasDefault = true;
+						n = concatenate(name.substring(0, i), name.substring(end + 1));
 					} else {
-						final String[][] os = {
-								{"item", itemSingular, itemPlural, itemGender},
-								{"block", blockSingular, blockPlural, blockGender},
-								{"item/block", itemSingular, itemPlural, itemGender, blockSingular, blockPlural, blockGender},
-								{"block/item", blockSingular, blockPlural, blockGender, itemSingular, itemPlural, itemGender},
-						};
-						for (final String[] o : os) {
-							if (x.equalsIgnoreCase(o[0])) {
-								for (int j = 1; j < o.length; j += 3) {
-									String s = name.substring(0, i) + "¦" + o[j] + "¦" + o[j + 1] + "¦" + name.substring(end + 1);
-									if (o[j + 2] != null) {
-										final Pair<String, Integer> p = Noun.stripGender(s, s);
-										s = p.first + "@" + o[j + 2];
-									}
-									r.put(s, value);
+						final int g = v.getKey().lastIndexOf('@');
+						if (g == -1) {
+							n = concatenate(name.substring(0, i), v.getKey(), name.substring(end + 1));
+						} else {
+							final String n0 = concatenate(name.substring(0, i), v.getKey().substring(0, g), name.substring(end + 1));
+							final int c0 = n0.lastIndexOf('@');
+							n = (c0 == -1 ? n0 : n0.substring(0, c0).trim() + v.getKey().substring(g));
+						}
+					}
+					final ItemType t = v.getValue().intersection(value);
+					if (t != null)
+						r.putAll(getAliases(n, t, variations));
+					else
+						Skript.warning(m_empty_alias.toString(n));
+				}
+				if (!hasDefault)
+					r.putAll(getAliases(concatenate(name.substring(0, i), name.substring(end + 1)), value, variations));
+			} else {
+				Skript.error(m_unknown_variation.toString(var));
+			}
+			return r;
+		}
+		
+		i = name.indexOf('<');
+		if (i != -1) {
+			final int end = name.indexOf('>', i + 1);
+			if (end != -1) {
+				final String x = name.substring(i + 1, end);
+				if (x.equalsIgnoreCase("any")) {
+					String s = name.substring(0, i) + m_any.toString() + name.substring(end + 1);
+					final int g = s.lastIndexOf('@');
+					if (g != -1)
+						s = s.substring(0, g + 1) + "-";
+					r.putAll(getAliases(s, value, variations));
+					return r;
+				} else {
+					final String[][] os = {
+							{"item", itemSingular, itemPlural, itemGender},
+							{"block", blockSingular, blockPlural, blockGender},
+							{"item/block", itemSingular, itemPlural, itemGender, blockSingular, blockPlural, blockGender},
+							{"block/item", blockSingular, blockPlural, blockGender, itemSingular, itemPlural, itemGender},
+					};
+					for (final String[] o : os) {
+						if (x.equalsIgnoreCase(o[0])) {
+							for (int j = 1; j < o.length; j += 3) {
+								String s = name.substring(0, i) + "¦" + o[j] + "¦" + o[j + 1] + "¦" + name.substring(end + 1);
+								if (o[j + 2] != null) {
+									final Pair<String, Integer> p = Noun.stripGender(s, s);
+									s = p.first + "@" + o[j + 2];
 								}
-								return r;
+								r.put(s, value);
 							}
+							return r;
 						}
 					}
 				}
 			}
 		}
+		
 		r.put(name, value);
 		r.remove("");
 		return r;

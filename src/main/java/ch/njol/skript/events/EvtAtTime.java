@@ -59,15 +59,17 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 	private final static int CHECKPERIOD = 10;
 	
 	private final static class EvtAtInfo {
+		public EvtAtInfo() {}
+		
 		int lastTick; // as Bukkit's scheduler is inconsistent this saves the exact tick when the events were last checked
 		int currentIndex;
 		ArrayList<EvtAtTime> list = new ArrayList<EvtAtTime>();
 	}
 	
-	private final static HashMap<World, EvtAtInfo> triggers = new HashMap<World, EvtAtInfo>();
+	final static HashMap<World, EvtAtInfo> triggers = new HashMap<World, EvtAtInfo>();
 	
 	private Trigger t;
-	private int tick;
+	int tick;
 	private transient World[] worlds;
 	/**
 	 * null if all worlds
@@ -129,7 +131,7 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 		}, 0, CHECKPERIOD);
 	}
 	
-	private void execute(final World w) {
+	void execute(final World w) {
 		final ScheduledEvent e = new ScheduledWorldEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerEnd(t);

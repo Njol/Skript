@@ -40,6 +40,8 @@ import ch.njol.skript.util.Utils;
 
 /**
  * Represents an argument of a command
+ * <p>
+ * TODO allow named arguments
  * 
  * @author Peter Güttinger
  */

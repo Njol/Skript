@@ -21,6 +21,7 @@
 
 package ch.njol.skript;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -255,6 +256,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		final long tick = testing() ? Bukkit.getWorlds().get(0).getFullTime() : 0;
 		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+			@SuppressWarnings("synthetic-access")
 			@Override
 			public void run() {
 				assert Bukkit.getWorlds().get(0).getFullTime() == tick;
@@ -301,11 +303,18 @@ public final class Skript extends JavaPlugin implements Listener {
 				Documentation.generate();
 				
 				final LogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler() {
+					private final List<LogEntry> log = new ArrayList<LogEntry>();
+					
 					@Override
 					public boolean log(final LogEntry entry) {
 						super.log(entry);
-						logEx(entry.message); // no [Skript] prefix
-						return false;
+						if (entry.level == Level.SEVERE) {
+							logEx(entry.message); // no [Skript] prefix
+							return false;
+						} else {
+							log.add(entry);
+							return false;
+						}
 					}
 					
 					@Override
@@ -320,6 +329,11 @@ public final class Skript extends JavaPlugin implements Listener {
 						logEx();
 						logEx("Skript will work properly, but old variables might not be available at all and new ones may or may not be saved until Skript is able to create a backup of the old file and/or is able to connect to the database (which requires a restart of Skript)!");
 						logEx();
+					}
+					
+					@Override
+					protected void onStop() {
+						SkriptLogger.logAll(log);
 					}
 				});
 				final CountingLogHandler c = SkriptLogger.startLogHandler(new CountingLogHandler(Level.SEVERE));
@@ -457,7 +471,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		return minecraftVersion.compareTo(v) >= 0;
 	}
 	
-	private static Metrics metrics;
+	static Metrics metrics;
 	
 	public static Metrics getMetrics() {
 		return metrics;
@@ -505,7 +519,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		Aliases.load();
 	}
 	
-	private final static Collection<AutoCloseable> closeOnDisable = Collections.synchronizedCollection(new ArrayList<AutoCloseable>());
+	private final static Collection<Closeable> closeOnDisable = Collections.synchronizedCollection(new ArrayList<Closeable>());
 	
 	/**
 	 * Registers a Closeable that should be closed when this plugin is disabled.
@@ -514,7 +528,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * 
 	 * @param closeable
 	 */
-	public static void closeOnDisable(final AutoCloseable closeable) {
+	public static void closeOnDisable(final Closeable closeable) {
 		closeOnDisable.add(closeable);
 	}
 	
@@ -541,6 +555,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		// unset static fields to prevent memory leaks as Bukkit reloads the classes with a different classloader on reload
 		// async to not slow down server reload, delayed to not slow down server shutdown
 		final Thread t = newThread(new Runnable() {
+			@SuppressWarnings("synthetic-access")
 			@Override
 			public void run() {
 				try {
@@ -957,7 +972,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	public final static EmptyStackException exception(final Throwable cause, final TriggerItem item, final String... info) {
-		return exception(cause, null, null, info);
+		return exception(cause, null, item, info);
 	}
 	
 	/**
@@ -1011,11 +1026,11 @@ public final class Skript extends JavaPlugin implements Listener {
 		return new EmptyStackException();
 	}
 	
-	private final static void logEx() {
+	final static void logEx() {
 		SkriptLogger.LOGGER.severe(EXCEPTION_PREFIX);
 	}
 	
-	private final static void logEx(final String... lines) {
+	final static void logEx(final String... lines) {
 		for (final String line : lines)
 			SkriptLogger.LOGGER.severe(EXCEPTION_PREFIX + line);
 	}

@@ -21,6 +21,11 @@
 
 package ch.njol.skript.lang;
 
+/**
+ * Used to define in which order to parse expressions.
+ * 
+ * @author Peter Güttinger
+ */
 public enum ExpressionType {
 	SIMPLE, NORMAL, COMBINED, PROPERTY, PATTERN_MATCHES_EVERYTHING;
 }

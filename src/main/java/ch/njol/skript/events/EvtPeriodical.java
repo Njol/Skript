@@ -78,7 +78,7 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 		return true;
 	}
 	
-	private void execute(final World w) {
+	void execute(final World w) {
 		final ScheduledEvent e = w == null ? new ScheduledEvent() : new ScheduledWorldEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerStart(t);

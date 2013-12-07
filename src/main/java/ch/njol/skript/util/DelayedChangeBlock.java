@@ -48,7 +48,7 @@ import ch.njol.skript.Skript;
 @SuppressWarnings("deprecation")
 public class DelayedChangeBlock implements Block {
 	
-	private final Block b;
+	final Block b;
 	private final BlockState newState;
 	
 	public DelayedChangeBlock(final Block b) {

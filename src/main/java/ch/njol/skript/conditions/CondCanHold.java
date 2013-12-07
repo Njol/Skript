@@ -56,7 +56,7 @@ public class CondCanHold extends Condition {
 	}
 	
 	private Expression<Inventory> invis;
-	private Expression<ItemType> items;
+	Expression<ItemType> items;
 	
 	@SuppressWarnings("unchecked")
 	@Override

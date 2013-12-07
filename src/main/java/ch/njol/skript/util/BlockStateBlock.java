@@ -49,7 +49,7 @@ import ch.njol.skript.Skript;
 @SuppressWarnings("deprecation")
 public class BlockStateBlock implements Block {
 	
-	private final BlockState state;
+	final BlockState state;
 	private final boolean delayChanges;
 	
 	public BlockStateBlock(final BlockState state) {

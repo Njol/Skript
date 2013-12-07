@@ -58,7 +58,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	}
 	
 	private Expression<Number> start, end;
-	private boolean integer;
+	boolean integer;
 	
 	@SuppressWarnings("unchecked")
 	@Override

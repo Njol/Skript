@@ -43,7 +43,7 @@ skript:
 	prefix: <gray>[<gold>Skript<gray>]
 	quotes error: Unerlaubte Verwendung von Anführungszeichen ("). Wenn du solche in "Text mit Anführungszeichen" einfügen willst, verdopple sie: "".
 	brackets error: Ungültige Anzahl/Anordnung von Klammern. Bitte sorge dafür, dass auf jede öffnende Klammer eine Schliessende folgt.
-	invalid reload: Skript darf nur mittles Bukkits '/reload' oder Skripts '/skript reload' neu geladen werden
+	invalid reload: Skript darf nur mittles Bukkits '/reload' oder Skripts '/skript reload' neu geladen werden.
 
 # -- Skript command --
 skript command:
@@ -193,28 +193,30 @@ aliases:
 enchantments:
 	of: #-#
 	names:
-		protection_environmental: des Schutzes
-		protection_fire: des Feuerschutzes
-		protection_fall: des Federfalls
-		protection_explosions: des Explosionsschutzes
-		protection_projectile: der Schusssicherheit
-		oxygen: der Atmung
-		water_worker: der Wasseraffinität
-		damage_all: der Schärfe
-		damage_undead: des Banns
-		damage_arthropods: der Nemesis der Gliederfüsser
-		knockback: des Rückstosses
-		fire_aspect: der Verbrennung
-		loot_bonus_mobs: der Plünderung
-		dig_speed: der Effizienz
-		silk_touch: der Behutsamkeit
-		durability: der Haltbarkeit
-		loot_bonus_blocks: des Glücks
-		arrow_damage: der Stärke
-		arrow_knockback: des Schlags
-		arrow_fire: des Feuers
-		arrow_infinite: der Unendlichkeit
-		thorns: der Dornen
+		protection_environmental: des Schutzes, Schutz
+		protection_fire: des Feuerschutzes, Feuerschutz
+		protection_fall: des Federfalls, Federfall
+		protection_explosions: des Explosionsschutzes, Explosionsschutz
+		protection_projectile: der Schusssicherheit, Schusssicherheit
+		oxygen: der Atmung, Atmung
+		water_worker: der Wasseraffinität, Wasseraffinität
+		damage_all: der Schärfe, Schärfe
+		damage_undead: des Banns, Bann
+		damage_arthropods: der Nemesis der Gliederfüsser, Nemesis der Gliederfüsser
+		knockback: des Rückstosses, Rückstoss
+		fire_aspect: der Verbrennung, Verbrennung
+		loot_bonus_mobs: der Plünderung, Plünderung
+		dig_speed: der Effizienz, Effizienz
+		silk_touch: der Behutsamkeit, Behutsamkeit
+		durability: der Haltbarkeit, Haltbarkeit
+		loot_bonus_blocks: des Glücks, Glück
+		arrow_damage: der Stärke, Stärke
+		arrow_knockback: des Schlags, Schlag
+		arrow_fire: des Feuers, Feuer
+		arrow_infinite: der Unendlichkeit, Unendlichkeit
+		thorns: der Dornen, Dornen
+		unknown_enchant_61: des Glücks des Meeres, Glück des Meeres
+		unknown_enchant_62: des Köders, Köder
 
 # -- Potion Effects --
 potions:
@@ -279,6 +281,45 @@ biomes:
 	small_mountains: kleine Berge, Hügel
 	jungle: Dschungel, Jungel, Urwald
 	jungle_hills: Dschungelhügel, Jungelhügel, Urwaldhügel
+	
+	jungle_edge: Dschungelrand, Jungelrand
+	deep_ocean: tiefer Ozean
+	stone_beach: Steinstrand
+	cold_beach: kalter Strand
+	birch_forest: Birkenwald
+	birch_forest_hills: Birkenwaldhügel
+	roofed_forest: gedeckter Wald, schwarzer Wald, Schwarzwald
+	cold_taiga: kalte Taiga
+	cold_taiga_hills: kalte Taigahügel
+	mega_taiga: Mega-Taiga, Megataiga
+	mega_taiga_hills: Mega-Taigahügel, Megataigahügel
+	extreme_hills_plus: extreme Hügel Plus
+	savanna: Savanne
+	savanna_plateau: Sanavannenebene, Savannenplateau
+	mesa: Tafelberg
+	mesa_plateau_forest: Tafelbergwald
+	mesa_plateau: Tafelbergebene
+	sunflower_plains: Sonnenblumenebene
+	desert_mountains: Wüstenberge
+	flower_forest: Blumenwald
+	taiga_mountains: Taigaberge
+	swampland_mountains: Sumpfberge
+	ice_plains_spikes: Eisebene mit Stacheln, stachelige Eisebene
+	jungle_mountains: Dschungelberge, Jungelberge
+	jungle_edge_mountains: Dschungelrandberge, Jungelrandberge
+	cold_taiga_mountains: kalte Taigaberge
+	savanna_mountains: Savannenberge
+	savanna_plateau_mountains: Savannenebenenberge
+	mesa_bryce: Hoodoos, Bryce, Bryce-Tafelberge, Brycetafelberge
+	mesa_plateau_forest_mountains: Tafelberg-Bergwald, Tafelbergwaldberge, Tafelbergbergwald
+	mesa_plateau_mountains: Tafelberg-Berge, Tafelbergberge
+	birch_forest_mountains: Birkenwaldberge, Birkenbergwald
+	birch_forest_hills_mountains: Birkenwaldhügelberge # was zum...
+	roofed_forest_mountains: gedeckte Waldberge, gedeckter Bergwald, Schwarzwaldberge, schwarzer Bergwald
+	mega_spruce_taiga: Mega-Fichtentaiga, Megafichtentaige, Mega-Tannentaiga, Megatannentaiga
+	extreme_hills_mountains: extreme Hügelberge, extreme Berghügel
+	extreme_hills_plus_mountains: extreme Hügelberge Plus, extreme Berghügel Plus
+	mega_spruce_taiga_hills: Mega-Fichtentaigahügel, Megafichtentaigahügel
 
 # -- Tree Types --
 tree types:
@@ -345,49 +386,49 @@ time:
 # -- Chat and Wool Colours --
 colors:
 	black:
-		adjective: schwarz@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: schwarze@f:@n:s@m:r@x:@+:@-:@
 		names: schwarz
 	dark_grey:
-		adjective: dunkelgrau@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: dunkelgraue@f:@n:s@m:r@x:@+:@-:@
 		names: dunkelgrau
 	light_grey:
-		adjective: grau@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: graue@f:@n:s@m:r@x:@+:@-:@
 		names: grau, hellgrau, silber
 	white:
-		adjective: weiss@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: weisse@f:@n:s@m:r@x:@+:@-:@
 		names: weiss
 	dark_blue:
-		adjective: blau@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: blaue@f:@n:s@m:r@x:@+:@-:@
 		names: blau, dunkelblau
 	brown:
-		adjective: braun@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: braune@f:@n:s@m:r@x:@+:@-e@
 		names: braun, hellblau, indigo
 	dark_cyan:
 		adjective: cyan
 		names: cyan, aqua, dunkelcyan, dunkelaqua, dunkeltürkis
 	light_cyan:
-		adjective: türkis@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: türkise@f:@n:s@m:r@x:@+:@-:@
 		names: türkis, hellcyan, hellaqua
 	dark_green:
-		adjective: grün@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: grüne@f:@n:s@m:r@x:@+:@-:@
 		names: grün, dunkelgrün
 	light_green:
-		adjective: hellgrün@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: hellgrüne@f:@n:s@m:r@x:@+:@-:@
 		names: hellgrün, limettengrün
 	yellow:
-		adjective: gelb@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: gelbe@f:@n:s@m:r@x:@+:@-:@
 		names: gelb, hellgelb, zitronengelb
 	orange:
-		adjective: orange@f:e@n:s@m:r@x:e@+:e@-:@
+		adjective: orange@f:@n:s@m:r@x:@+:@-:@
 		names: orange, gold, dunkelgelb
 	dark_red:
-		adjective: rot@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: rote@f:@n:s@m:r@x:@+:@-:@
 		names: rot, dunkelrot
 	light_red:
-		adjective: pink@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: pinke@f:@n:s@m:r@x:@+:@-:@
 		names: pink, rosa, hellrot
 	dark_purple:
-		adjective: violett@f:e@n:es@m:er@x:e@+:e@-:@
+		adjective: violette@f:@n:s@m:r@x:@+:@-:@
 		names: violett, dunkelviolett, dunkelpurpur
 	light_purple:
 		adjective: magenta
@@ -739,8 +780,8 @@ visual effects:
 		name: Verletzung¦en @f
 		pattern: Schaden|Verletzung[en]
 	sheep_eat:
-		name: 
-		pattern: sheep eat[ing] [a] [grass] [block]
+		name: Grasen @m
+		pattern: Grasen|Gras essen
 	wolf_hearts:
 		name: Wolfherzen @x
 		pattern: wolfherzen

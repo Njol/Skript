@@ -64,7 +64,7 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 				"[(all|every)] block(s|[ ]types)", "blocks of type[s] %itemtypes%");
 	}
 	
-	private Expression<ItemType> types = null;
+	Expression<ItemType> types = null;
 	private boolean blocks = false;
 	
 	@SuppressWarnings("unchecked")

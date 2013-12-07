@@ -21,9 +21,9 @@
 
 package ch.njol.skript.util;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bukkit.enchantments.Enchantment;
@@ -37,6 +37,8 @@ import ch.njol.yggdrasil.YggdrasilSerializable;
  * @author Peter Güttinger
  */
 public class EnchantmentType implements YggdrasilSerializable {
+	
+	private final static String LANGUAGE_NODE = "enchantments";
 	
 	private final Enchantment type;
 	private final int level;
@@ -86,26 +88,31 @@ public class EnchantmentType implements YggdrasilSerializable {
 	
 	@Override
 	public String toString() {
-		return Language.get("enchantments.names." + type.getName()) + (level == -1 ? "" : " " + level);
+		return toString(type) + (level == -1 ? "" : " " + level);
 	}
 	
 	public static String toString(final Enchantment e) {
-		return Language.get("enchantments.names." + e.getName());
+		return enchantmentNames.get(e);
 	}
 	
 	// REMIND flags?
 	public static String toString(final Enchantment e, final int flags) {
-		return Language.get("enchantments.names." + e.getName());
+		return enchantmentNames.get(e);
 	}
 	
-	private final static Map<String, Enchantment> enchantmentNames = new HashMap<String, Enchantment>();
+	final static Map<Enchantment, String> enchantmentNames = new HashMap<Enchantment, String>();
+	final static Map<String, Enchantment> enchantmentPatterns = new HashMap<String, Enchantment>();
 	static {
 		Language.addListener(new LanguageChangeListener() {
 			@Override
 			public void onLanguageChange() {
 				enchantmentNames.clear();
-				for (final Enchantment e : Enchantment.values())
-					enchantmentNames.put(Language.get("enchantments.names." + e.getName()).toLowerCase(), e);
+				for (final Enchantment e : Enchantment.values()) {
+					final String[] names = Language.getList(LANGUAGE_NODE + ".names." + e.getName());
+					enchantmentNames.put(e, names[0]);
+					for (final String n : names)
+						enchantmentPatterns.put(n.toLowerCase(), e);
+				}
 			}
 		});
 	}
@@ -114,23 +121,23 @@ public class EnchantmentType implements YggdrasilSerializable {
 	
 	public static EnchantmentType parse(final String s) {
 		if (pattern.matcher(s).matches()) {
-			final Enchantment ench = enchantmentNames.get(s.substring(0, s.lastIndexOf(' ')).toLowerCase());
+			final Enchantment ench = parseEnchantment(s.substring(0, s.lastIndexOf(' ')));
 			if (ench == null)
 				return null;
 			return new EnchantmentType(ench, Utils.parseInt(s.substring(s.lastIndexOf(' ') + 1)));
 		}
-		final Enchantment ench = enchantmentNames.get(s.toLowerCase());
+		final Enchantment ench = parseEnchantment(s);
 		if (ench == null)
 			return null;
 		return new EnchantmentType(ench, -1);
 	}
 	
 	public static Enchantment parseEnchantment(final String s) {
-		return enchantmentNames.get(s.toLowerCase());
+		return enchantmentPatterns.get(s.toLowerCase());
 	}
 	
-	public final static Set<String> getNames() {
-		return enchantmentNames.keySet();
+	public final static Collection<String> getNames() {
+		return enchantmentNames.values();
 	}
 	
 	@Override

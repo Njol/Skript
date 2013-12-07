@@ -60,7 +60,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 	
 	public final class WorldGuardRegion extends Region {
 		
-		private final World world;
+		final World world;
 		private transient ProtectedRegion region;
 		
 		public WorldGuardRegion(final World w, final ProtectedRegion r) {

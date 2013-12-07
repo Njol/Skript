@@ -24,6 +24,10 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,10 +38,16 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
+@Name("Subtext")
+@Description("Extracts part of a text. You can either get the first &lt;x&gt; characters, the last &lt;x&gt; characters, or the characters between indices &lt;x&gt; and &lt;y&gt;."
+		+ " The indices &lt;x&gt; and &lt;y&gt; should be between 1 and the <a href='#ExprLength'>length</a> of the text (other values will be fit into this range).")
+@Examples({"set {_s} to the first 5 characters of the text argument"
+		, "message \"%subtext of {_s} from characters 2 to (the length of {_s} - 1)%\" # removes the first and last character from {_s} and sends it to the player or console"})
+@Since("2.1")
 public class ExprSubstring extends SimpleExpression<String> {
 	static {
 		Skript.registerExpression(ExprSubstring.class, String.class, ExpressionType.COMBINED,
-				"[the] (part|sub(string|text)) of %strings% (between|from) (ind(ex|ices)|character[s]|) %number% (and|to) (index|character|) %number%",
+				"[the] (part|sub[ ](text|string)) of %strings% (between|from) (ind(ex|ices)|character[s]|) %number% (and|to) (index|character|) %number%",
 				"[the] (1¦first|2¦last) [%-number%] character[s] of %strings%", "[the] %number% (0¦first|1¦last) characters of %strings%");
 	}
 	

@@ -92,10 +92,12 @@ public class CondCompare extends Condition {
 		Skript.registerCondition(CondCompare.class, patterns.getPatterns());
 	}
 	
-	private Expression<?> first, second, third;
-	private Relation relation;
+	private Expression<?> first;
+	Expression<?> second;
+	Expression<?> third;
+	Relation relation;
 	@SuppressWarnings("rawtypes")
-	private Comparator comp;
+	Comparator comp;
 	
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {

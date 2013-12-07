@@ -39,10 +39,10 @@ public enum WeatherType {
 	
 	CLEAR, RAIN, THUNDER;
 	
-	private String[] names;
-	private String adjective;
+	String[] names;
+	String adjective;
 	
-	private final static Map<String, WeatherType> byName = new HashMap<String, WeatherType>();
+	final static Map<String, WeatherType> byName = new HashMap<String, WeatherType>();
 	
 	private WeatherType(final String... names) {
 		this.names = names;

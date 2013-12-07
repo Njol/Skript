@@ -35,7 +35,7 @@ public abstract class LogHandler {
 	/**
 	 * Called just after the handler is removed from the active handlers stack.
 	 */
-	public void onStop() {}
+	protected void onStop() {}
 	
 	public final void stop() {
 		SkriptLogger.removeHandler(this);

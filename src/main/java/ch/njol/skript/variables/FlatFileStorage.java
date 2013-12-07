@@ -64,7 +64,7 @@ public class FlatFileStorage extends VariablesStorage {
 	
 	private volatile PrintWriter changesWriter;
 	
-	private final AtomicInteger changes = new AtomicInteger(0);
+	final AtomicInteger changes = new AtomicInteger(0);
 	private final int REQUIRED_CHANGES_FOR_RESAVE = 1000;
 	
 	private Task saveTask;

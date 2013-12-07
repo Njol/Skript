@@ -136,9 +136,10 @@ final public class ScriptLoader {
 	private final static class SerializedScript implements Serializable {
 		final static long serialVersionUID = -6209530262798192214L;
 		
+		public SerializedScript() {}
+		
 		public final List<Trigger> triggers = new ArrayList<Trigger>();
 		public final List<ScriptCommand> commands = new ArrayList<ScriptCommand>();
-		
 	}
 	
 	private static String indentation = "";

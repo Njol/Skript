@@ -86,7 +86,7 @@ public final class Updater {
 	 * must be synchronised with {@link #stateLock}
 	 */
 	public static volatile UpdateState state = UpdateState.NOT_STARTED;
-	private final static SynchronizedReference<String> error = new SynchronizedReference<String>();
+	final static SynchronizedReference<String> error = new SynchronizedReference<String>();
 	
 	public final static List<VersionInfo> infos = new ArrayList<VersionInfo>();
 	public final static SynchronizedReference<VersionInfo> latest = new SynchronizedReference<VersionInfo>();
@@ -139,6 +139,7 @@ public final class Updater {
 		if (!isAutomatic || Skript.logNormal())
 			Skript.info(sender, "" + m_checking);
 		Skript.newThread(new Runnable() {
+			@SuppressWarnings("synthetic-access")
 			@Override
 			public void run() {
 				InputStream in = null;
@@ -298,7 +299,7 @@ public final class Updater {
 	 * @param sender
 	 * @param isAutomatic
 	 */
-	private static void download_i(final CommandSender sender, final boolean isAutomatic) {
+	static void download_i(final CommandSender sender, final boolean isAutomatic) {
 		assert sender != null;
 		stateLock.readLock().lock();
 		try {

@@ -31,8 +31,8 @@ import ch.njol.util.StringUtils;
  * @author Peter Güttinger
  */
 public final class EnumUtils<E extends Enum<E>> {
-	private final HashMap<String, E> parseMap = new HashMap<String, E>();
-	private final String[] names;
+	final HashMap<String, E> parseMap = new HashMap<String, E>();
+	final String[] names;
 	
 	public EnumUtils(final Class<E> c, final String languageNode) {
 		assert c != null && c.isEnum() && languageNode != null && !languageNode.isEmpty();

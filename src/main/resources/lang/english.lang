@@ -41,7 +41,7 @@ skript:
 	prefix: <gray>[<gold>Skript<gray>] # not used
 	quotes error: Invalid use of quotes ("). If you want to use quotes in "quoted text", double them: "".
 	brackets error: Invalid amount or placement of brackets. Please make sure that each opening bracket has a corresponding closing bracket.
-	invalid reload: Skript may only be reloaded by either Bukkit's '/reload' or Skript's '/skript reload' command
+	invalid reload: Skript may only be reloaded by either Bukkit's '/reload' or Skript's '/skript reload' command.
 
 # -- Skript command --
 skript command:
@@ -213,6 +213,9 @@ enchantments:
 		arrow_fire: Flame
 		arrow_infinite: Infinity
 		thorns: Thorns
+		# will likely be properly added to Bukkit later
+		unknown_enchant_61: Luck of the Sea
+		unknown_enchant_62: Lure
 
 # -- Potion Effects --
 potions:
@@ -277,6 +280,44 @@ biomes:
 	small_mountains: small mountains, hills
 	jungle: jungle
 	jungle_hills: jungle hills
+	jungle_edge: jungle edge
+	deep_ocean: deep ocean
+	stone_beach: stone beach
+	cold_beach: cold beach
+	birch_forest: birch forest
+	birch_forest_hills: birch forest hills
+	roofed_forest: roofed forest, black forest
+	cold_taiga: cold taiga
+	cold_taiga_hills: cold taiga hills
+	mega_taiga: mega taiga, extreme taiga
+	mega_taiga_hills: mega taiga hills, extreme taiga hills
+	extreme_hills_plus: extreme hills plus
+	savanna: savanna
+	savanna_plateau: savanna plateau
+	mesa: mesa
+	mesa_plateau_forest: mesa plateau forest
+	mesa_plateau: mesa plateau
+	sunflower_plains: sunflower plains
+	desert_mountains: desert mountains
+	flower_forest: flower forest
+	taiga_mountains: taiga mountains
+	swampland_mountains: swampland mountains
+	ice_plains_spikes: ice plains spikes, spiked ice plains, ice plains with spikes
+	jungle_mountains: jungle mountains
+	jungle_edge_mountains: jungle edge mountains
+	cold_taiga_mountains: cold taiga mountains
+	savanna_mountains: savanna mountains
+	savanna_plateau_mountains: savanna plateau mountains
+	mesa_bryce: Hoodoos, Bryce, mesa bryce, mesa (bryce)
+	mesa_plateau_forest_mountains: mesa plateau forest mountains
+	mesa_plateau_mountains: mesa plateau mountains
+	birch_forest_mountains: birch forest mountains
+	birch_forest_hills_mountains: birch forest hills mountains
+	roofed_forest_mountains: roofed forest mountains
+	mega_spruce_taiga: mega spruce taiga
+	extreme_hills_mountains: extreme hills mountains
+	extreme_hills_plus_mountains: extreme hills plus mountains
+	mega_spruce_taiga_hills: mega spruce taiga hills
 
 # -- Tree Types --
 tree types:

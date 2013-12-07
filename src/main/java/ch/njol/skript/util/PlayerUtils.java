@@ -29,12 +29,14 @@ import org.bukkit.entity.Player;
 import ch.njol.skript.Skript;
 
 /**
+ * TODO check all updates and find out which ones are not required
+ * 
  * @author Peter Güttinger
  */
 public abstract class PlayerUtils {
 	private PlayerUtils() {}
 	
-	private final static Set<Player> inviUpdate = new HashSet<Player>();
+	final static Set<Player> inviUpdate = new HashSet<Player>();
 	
 	public final static void updateInventory(final Player p) {
 		inviUpdate.add(p);

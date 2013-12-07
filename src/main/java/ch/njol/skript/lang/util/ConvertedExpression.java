@@ -53,9 +53,13 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	
 	protected Expression<? extends F> source;
 	protected Class<T> to;
-	private final Converter<? super F, ? extends T> conv;
+	final Converter<? super F, ? extends T> conv;
 	
 	public ConvertedExpression(final Expression<? extends F> source, final Class<T> to, final SerializableConverter<? super F, ? extends T> conv) {
+		assert source != null;
+		assert to != null;
+		assert conv != null;
+		
 		this.source = source;
 		this.to = to;
 		this.conv = conv;
@@ -69,7 +73,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 			// casting <? super ? extends F> to <? super F> is wrong, but since the converter is only used for values returned by the expression
 			// (which are instances of "<? extends F>") this won't result in any ClassCastExceptions.
 			final SerializableConverter<? super F, ? extends T> conv = (SerializableConverter<? super F, ? extends T>) Converters.getConverter(v.getReturnType(), c);
-			if (c == null)
+			if (conv == null)
 				continue;
 			return new ConvertedExpression<F, T>(v, c, conv);
 		}

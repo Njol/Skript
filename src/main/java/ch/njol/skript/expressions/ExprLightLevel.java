@@ -58,7 +58,7 @@ public class ExprLightLevel extends PropertyExpression<Location, Byte> {
 	}
 	
 	private final int SKY = 1, BLOCK = 2, ANY = SKY | BLOCK;
-	private int whatLight = ANY;
+	int whatLight = ANY;
 	
 	@SuppressWarnings("unchecked")
 	@Override

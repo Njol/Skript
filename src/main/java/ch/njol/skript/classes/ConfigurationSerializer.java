@@ -46,8 +46,38 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> extend
 	}
 	
 	@Override
+	public boolean mustSyncDeserialization() {
+		return false;
+	}
+	
+	@Override
 	public boolean canBeInstantiated(final Class<? extends T> c) {
 		return false;
+	}
+	
+	@Override
+	protected T deserialize(final Fields fields) throws StreamCorruptedException {
+		return deserializeCS(fields.getObject("value", String.class), info.getC());
+	}
+	
+	public final static String serializeCS(final ConfigurationSerializable o) {
+		final YamlConfiguration y = new YamlConfiguration();
+		y.set("value", o);
+		return y.saveToString();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public final static <T extends ConfigurationSerializable> T deserializeCS(final String s, final Class<T> c) {
+		final YamlConfiguration y = new YamlConfiguration();
+		try {
+			y.loadFromString(s);
+		} catch (final InvalidConfigurationException e) {
+			return null;
+		}
+		final Object o = y.get("value");
+		if (!c.isInstance(o))
+			return null;
+		return (T) o;
 	}
 	
 	@Override
@@ -62,29 +92,14 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> extend
 	}
 	
 	@Override
-	protected T deserialize(final Fields fields) throws StreamCorruptedException {
-		return deserializeCS(fields.getObject("value", String.class), info.getC());
-	}
-	
-	@Override
-	public boolean mustSyncDeserialization() {
-		return false;
-	}
-	
-	@Override
 	@Deprecated
 	public T deserialize(final String s) {
-		return deserializeCS(s, info.getC());
-	}
-	
-	public final static String serializeCS(final ConfigurationSerializable o) {
-		final YamlConfiguration y = new YamlConfiguration();
-		y.set("value", o);
-		return y.saveToString().replace("\n", "\uFEFF");
+		return deserializeCSOld(s, info.getC());
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final static <T extends ConfigurationSerializable> T deserializeCS(final String s, final Class<T> c) {
+	@Deprecated
+	public final static <T extends ConfigurationSerializable> T deserializeCSOld(final String s, final Class<T> c) {
 		final YamlConfiguration y = new YamlConfiguration();
 		try {
 			y.loadFromString(s.replace("\uFEFF", "\n"));

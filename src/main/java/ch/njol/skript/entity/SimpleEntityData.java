@@ -62,7 +62,6 @@ import org.bukkit.entity.Spider;
 import org.bukkit.entity.Squid;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.entity.ThrownExpBottle;
-import org.bukkit.entity.ThrownPotion;
 import org.bukkit.entity.Witch;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.WitherSkull;
@@ -122,6 +121,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		types.add(new SimpleEntityDataInfo("boat", Boat.class));
 		types.add(new SimpleEntityDataInfo("blaze", Blaze.class));
 		types.add(new SimpleEntityDataInfo("chicken", Chicken.class));
+		types.add(new SimpleEntityDataInfo("mooshroom", MushroomCow.class));
 		types.add(new SimpleEntityDataInfo("cow", Cow.class));
 		types.add(new SimpleEntityDataInfo("cave spider", CaveSpider.class));
 		types.add(new SimpleEntityDataInfo("egg", Egg.class));
@@ -135,17 +135,15 @@ public class SimpleEntityData extends EntityData<Entity> {
 		types.add(new SimpleEntityDataInfo("giant", Giant.class));
 		types.add(new SimpleEntityDataInfo("iron golem", IronGolem.class));
 		types.add(new SimpleEntityDataInfo("magma cube", MagmaCube.class));
-		types.add(new SimpleEntityDataInfo("mooshroom", MushroomCow.class));
+		types.add(new SimpleEntityDataInfo("slime", Slime.class));
 		types.add(new SimpleEntityDataInfo("painting", Painting.class));
 		types.add(new SimpleEntityDataInfo("zombie pigman", PigZombie.class));
 		types.add(new SimpleEntityDataInfo("silverfish", Silverfish.class));
-		types.add(new SimpleEntityDataInfo("slime", Slime.class));
 		types.add(new SimpleEntityDataInfo("snowball", Snowball.class));
 		types.add(new SimpleEntityDataInfo("snow golem", Snowman.class));
 		types.add(new SimpleEntityDataInfo("spider", Spider.class));
 		types.add(new SimpleEntityDataInfo("squid", Squid.class));
 		types.add(new SimpleEntityDataInfo("bottle of enchanting", ThrownExpBottle.class));
-		types.add(new SimpleEntityDataInfo("thrown potion", ThrownPotion.class));
 		types.add(new SimpleEntityDataInfo("tnt", TNTPrimed.class));
 		types.add(new SimpleEntityDataInfo("zombie", Zombie.class));
 		

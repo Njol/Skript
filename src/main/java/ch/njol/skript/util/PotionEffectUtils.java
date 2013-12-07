@@ -41,8 +41,20 @@ public abstract class PotionEffectUtils {
 	
 	private PotionEffectUtils() {}
 	
-	private final static Map<String, PotionEffectType> types = new HashMap<String, PotionEffectType>();
-	private final static String[] names = new String[PotionEffectType.values().length];
+	final static Map<String, PotionEffectType> types = new HashMap<String, PotionEffectType>();
+	
+	final static String[] names = new String[getMaxPotionId() + 1];
+	
+	// MCPC+ workaround
+	private final static int getMaxPotionId() {
+		int i = 0;
+		for (final PotionEffectType t : PotionEffectType.values()) {
+			if (t != null && t.getId() > i)
+				i = t.getId();
+		}
+		return i;
+	}
+	
 	static {
 		Language.addListener(new LanguageChangeListener() {
 			@Override

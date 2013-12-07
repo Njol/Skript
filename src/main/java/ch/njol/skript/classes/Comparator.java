@@ -77,7 +77,7 @@ public interface Comparator<T1, T2> extends Serializable {
 		 * Test whether this relation is fulfilled if another is, e.g. GREATER_OR_EQUAL.is(EQUAL) returns true.
 		 * 
 		 * @param other
-		 * @return Whether is relation is part of the given relation
+		 * @return Whether this relation is part of the given relation
 		 */
 		public boolean is(final Relation other) {
 			if (other == this)

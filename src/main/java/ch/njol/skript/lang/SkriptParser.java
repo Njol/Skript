@@ -68,7 +68,7 @@ import ch.njol.util.coll.CollectionUtils;
  */
 public class SkriptParser {
 	
-	private final String expr;
+	final String expr;
 	
 	public final static int PARSE_EXPRESSIONS = 1;
 	public final static int PARSE_LITERALS = 2;
@@ -576,6 +576,8 @@ public class SkriptParser {
 	
 	/**
 	 * Prints parse errors (i.e. must start a ParseLog before calling this method)
+	 * <p>
+	 * FIXME tries to parse entitydata as player which is definitely not desired, especially since it prints an unrelated error message
 	 */
 	public static boolean parseArguments(final String args, final ScriptCommand command, final ScriptCommandEvent event) {
 		final SkriptParser parser = new SkriptParser(args, PARSE_LITERALS, ParseContext.COMMAND);
@@ -711,7 +713,7 @@ public class SkriptParser {
 	 * @param c The character to search for
 	 * @return The number of unescaped occurrences of the given character
 	 */
-	private static int countUnescaped(final String pattern, final char c) {
+	static int countUnescaped(final String pattern, final char c) {
 		int r = 0;
 		for (int i = 0; i < pattern.length(); i++) {
 			if (pattern.charAt(i) == '\\') {
@@ -1067,11 +1069,15 @@ public class SkriptParser {
 				groupLevel++;
 				groups.addLast(c);
 			} else if (c == '|') {
-				if (groupLevel == 0 || groups.peekLast() != '(')
-					return error("Cannot use the pipe character '|' outside of groups");
+				if (groupLevel == 0 || groups.peekLast() != '(' && groups.peekLast() != '|')
+					return error("Cannot use the pipe character '|' outside of groups. Escape it if you want to match a literal pipe: '\\|'");
+				groups.removeLast();
+				groups.addLast(c);
 			} else if (c == ')') {
-				if (groupLevel == 0 || groups.peekLast() != '(')
-					return error("Unexpected closing group bracket ')'");
+				if (groupLevel == 0 || groups.peekLast() != '(' && groups.peekLast() != '|')
+					return error("Unexpected closing group bracket ')'. Escape it if you want to match a literal bracket: '\\)'");
+				if (groups.peekLast() == '(')
+					return error("(...|...) groups have to contain at least one pipe character '|' to separate it into parts. Escape the brackets if you want to match literal brackets: \"\\(not a group\\)\"");
 				groupLevel--;
 				groups.removeLast();
 			} else if (c == '[') {
@@ -1079,29 +1085,29 @@ public class SkriptParser {
 				groups.addLast(c);
 			} else if (c == ']') {
 				if (optionalLevel == 0 || groups.peekLast() != '[')
-					return error("Unexpected closing optional bracket ']'");
+					return error("Unexpected closing optional bracket ']'. Escape it if you want to match a literal bracket: '\\]'");
 				optionalLevel--;
 				groups.removeLast();
 			} else if (c == '<') {
 				final int j = pattern.indexOf('>', i + 1);
 				if (j == -1)
-					return error("Missing closing regex bracket '>'");
+					return error("Missing closing regex bracket '>'. Escape the '<' if you want to match a literal bracket: '\\<'");
 				try {
 					Pattern.compile(pattern.substring(i + 1, j));
 				} catch (final PatternSyntaxException e) {
-					return error("Invalid regex '" + pattern.substring(i + 1, j) + "': " + e.getLocalizedMessage());
+					return error("Invalid Regular Expression '" + pattern.substring(i + 1, j) + "': " + e.getLocalizedMessage());
 				}
 				i = j;
 			} else if (c == '>') {
-				return error("Unexpected closing regex bracket '>'");
+				return error("Unexpected closing regex bracket '>'. Escape it if you want to match a literal bracket: '\\>'");
 			} else if (c == '%') {
 				final int j = pattern.indexOf('%', i + 1);
 				if (j == -1)
-					return error("Missing end sign '%' of expression");
+					return error("Missing end sign '%' of expression. Escape the percent sign to match a literal '%': '\\%'");
 				final Pair<String, Boolean> p = Utils.getEnglishPlural(pattern.substring(i + 1, j));
 				final ClassInfo<?> ci = Classes.getClassInfoFromUserInput(p.first);
 				if (ci == null)
-					return error("The type '" + p.first + "' could not be found");
+					return error("The type '" + p.first + "' could not be found. Please check your spelling or escape the percent signs if you want to match literal %s: \"\\%not an expression\\%\"");
 				ps.add(p.second);
 				b.append(pattern.substring(last, i + 1));
 				b.append(Utils.toEnglishPlural(ci.getCodeName(), p.second));
@@ -1109,7 +1115,7 @@ public class SkriptParser {
 				i = j;
 			} else if (c == '\\') {
 				if (i == pattern.length() - 1)
-					return error("Pattern must not end in a backslash");
+					return error("Pattern must not end in an unescaped backslash. Add another backslash to escape it, or remove it altogether.");
 				i++;
 			}
 		}
@@ -1143,6 +1149,8 @@ public class SkriptParser {
 	}
 	
 	private final static class ExprInfo {
+		public ExprInfo() {}
+		
 		ClassInfo<?>[] classes;
 		boolean[] isPlural;
 		boolean isOptional;

@@ -52,7 +52,7 @@ import ch.njol.skript.lang.Trigger;
 public abstract class SkriptEventHandler {
 	private SkriptEventHandler() {}
 	
-	private final static Map<Class<? extends Event>, List<Trigger>> triggers = new HashMap<Class<? extends Event>, List<Trigger>>();
+	final static Map<Class<? extends Event>, List<Trigger>> triggers = new HashMap<Class<? extends Event>, List<Trigger>>();
 	
 	private final static List<Trigger> selfRegisteredTriggers = new ArrayList<Trigger>();
 	
@@ -87,7 +87,7 @@ public abstract class SkriptEventHandler {
 		};
 	}
 	
-	private static Event last = null;
+	static Event last = null;
 	
 	final static EventExecutor ee = new EventExecutor() {
 		@Override

@@ -79,13 +79,15 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 	public final static Message m_executable_by_players = new Message("commands.executable by players");
 	public final static Message m_executable_by_console = new Message("commands.executable by console");
 	
-	private final String name, label;
+	final String name;
+	private final String label;
 	private final List<String> aliases;
 	private List<String> activeAliases;
 	private final String permission, permissionMessage;
-	private final String description, usage;
+	private final String description;
+	final String usage;
 	
-	private final Trigger trigger;
+	final Trigger trigger;
 	
 	private final String pattern;
 	private final List<Argument<?>> arguments;
@@ -234,13 +236,13 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		return pattern;
 	}
 	
-	private transient Command overriden = null;
-	private transient Map<String, Command> overridenAliases;
+	private transient Command overridden = null;
+	private transient Map<String, Command> overriddenAliases;
 	
 	public void register(final SimpleCommandMap commandMap, final Map<String, Command> knownCommands, final Set<String> aliases) {
 		synchronized (commandMap) {
-			overridenAliases = new HashMap<String, Command>();
-			overriden = knownCommands.put(label, bukkitCommand);
+			overriddenAliases = new HashMap<String, Command>();
+			overridden = knownCommands.put(label, bukkitCommand);
 			aliases.remove(label);
 			final Iterator<String> as = activeAliases.iterator();
 			while (as.hasNext()) {
@@ -249,7 +251,7 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 					as.remove();
 					continue;
 				}
-				overridenAliases.put(lowerAlias, knownCommands.put(lowerAlias, bukkitCommand));
+				overriddenAliases.put(lowerAlias, knownCommands.put(lowerAlias, bukkitCommand));
 				aliases.add(lowerAlias);
 			}
 			bukkitCommand.setAliases(activeAliases);
@@ -266,17 +268,17 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 			activeAliases = new ArrayList<String>(this.aliases);
 			bukkitCommand.unregister(commandMap);
 			bukkitCommand.setAliases(this.aliases);
-			if (overriden != null) {
-				knownCommands.put(label, overriden);
-				overriden = null;
+			if (overridden != null) {
+				knownCommands.put(label, overridden);
+				overridden = null;
 			}
-			for (final Entry<String, Command> e : overridenAliases.entrySet()) {
+			for (final Entry<String, Command> e : overriddenAliases.entrySet()) {
 				if (e.getValue() == null)
 					continue;
 				knownCommands.put(e.getKey(), e.getValue());
 				aliases.add(e.getKey());
 			}
-			overridenAliases.clear();
+			overriddenAliases.clear();
 		}
 	}
 	

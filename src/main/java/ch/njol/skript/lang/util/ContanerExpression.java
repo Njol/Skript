@@ -37,7 +37,7 @@ import ch.njol.util.Kleenean;
 @SuppressWarnings("serial")
 public class ContanerExpression extends SimpleExpression<Object> {
 	
-	private final Expression<?> expr;
+	final Expression<?> expr;
 	private final Class<?> c;
 	
 	public ContanerExpression(final Expression<?> expr, final Class<?> c) {

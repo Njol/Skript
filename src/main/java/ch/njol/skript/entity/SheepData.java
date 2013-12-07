@@ -29,6 +29,7 @@ import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.Adjective;
+import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.util.Color;
 import ch.njol.util.Checker;
@@ -97,8 +98,8 @@ public class SheepData extends EntityData<Sheep> {
 		}
 		final Noun name = getName();
 		final Adjective age = getAgeAdjective();
-		return name.getArticleWithSpace(flags) + (age == null ? "" : " " + age.toString(name.getGender(), flags))
-				+ " " + Adjective.toString(adjectives, name.getGender(), flags, false) + " " + name.toString(flags);
+		return name.getArticleWithSpace(flags) + (age == null ? "" : age.toString(name.getGender(), flags) + " ")
+				+ Adjective.toString(adjectives, name.getGender(), flags, false) + " " + name.toString(flags & Language.NO_ARTICLE_MASK);
 	}
 	
 	@Override

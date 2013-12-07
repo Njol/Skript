@@ -39,7 +39,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
-import ch.njol.skript.util.Task;
+import ch.njol.skript.util.PlayerUtils;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
@@ -79,7 +79,6 @@ public class EffCancelEvent extends Effect {
 		return false;
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
 	public void execute(final Event e) {
 		if (e instanceof Cancellable)
@@ -90,12 +89,7 @@ public class EffCancelEvent extends Effect {
 		} else if (e instanceof BlockCanBuildEvent) {
 			((BlockCanBuildEvent) e).setBuildable(!cancel);
 		} else if (e instanceof PlayerDropItemEvent) {
-			new Task(Skript.getInstance(), 0) {
-				@Override
-				public void run() {
-					((PlayerDropItemEvent) e).getPlayer().updateInventory();
-				}
-			};
+			PlayerUtils.updateInventory(((PlayerDropItemEvent) e).getPlayer());
 		}
 	}
 	

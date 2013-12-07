@@ -26,7 +26,9 @@ import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
@@ -42,15 +44,20 @@ import ch.njol.util.Kleenean;
 @Name("Region Contains")
 @Description({"Checks whether a location is contained in a particular <a href='../classes/#region'>region</a>.",
 		"This condition requires a supported regions plugin to be installed."})
+@Examples({"player is in the region {regions::3}",
+		"on region enter:",
+		"	region contains {flags.%world%.red}",
+		"	message \"The red flag is near!\""})
+@Since("2.1")
 public class CondRegionContains extends Condition {
 	static {
 		Skript.registerCondition(CondRegionContains.class,
-				"[[the] region] %regions% contain[s] %directions% %locations%", "%locations% (is|are) (contained in|part of) [[the] region] %regions%",
+				"[[the] region] %regions% contain[s] %directions% %locations%", "%locations% (is|are) ([contained] in|part of) [[the] region] %regions%",
 				"[[the] region] %regions% (do|does)(n't| not) contain %directions% %locations%", "%locations% (is|are)(n't| not) (contained in|part of) [[the] region] %regions%");
 	}
 	
 	private Expression<Region> regions;
-	private Expression<Location> locs;
+	Expression<Location> locs;
 	
 	@SuppressWarnings("unchecked")
 	@Override

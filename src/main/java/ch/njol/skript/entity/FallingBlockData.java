@@ -138,7 +138,7 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 		b.append(Noun.getArticleWithSpace(types[0].getTypes().get(0).getGender(), flags));
 		b.append(m_adjective.toString(types[0].getTypes().get(0).getGender(), flags));
 		b.append(" ");
-		b.append(Classes.toString(types, flags & ~(Language.F_DEFINITE_ARTICLE | Language.F_INDEFINITE_ARTICLE), false));
+		b.append(Classes.toString(types, flags & Language.NO_ARTICLE_MASK, false));
 		return b.toString();
 	}
 	

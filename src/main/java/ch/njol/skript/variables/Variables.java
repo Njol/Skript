@@ -58,7 +58,7 @@ public abstract class Variables implements Closeable {
 		yggdrasil.registerSingleClass(Kleenean.class, "Kleenean");
 	}
 	
-	private static List<VariablesStorage> storages = new ArrayList<VariablesStorage>();
+	static List<VariablesStorage> storages = new ArrayList<VariablesStorage>();
 	
 	@SuppressWarnings("resource")
 	public static boolean load() {
@@ -222,9 +222,9 @@ public abstract class Variables implements Closeable {
 		queue.add(new Pair<String, Object>(name, value));
 	}
 	
-	private final static BlockingQueue<Pair<String, Object>> queue = new LinkedBlockingQueue<Pair<String, Object>>();
+	final static BlockingQueue<Pair<String, Object>> queue = new LinkedBlockingQueue<Pair<String, Object>>();
 	
-	private static volatile boolean closed = false;
+	static volatile boolean closed = false;
 	
 	private final static Thread saveThread = Skript.newThread(new Runnable() {
 		@Override

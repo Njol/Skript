@@ -25,11 +25,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.bukkit.Material;
 import org.bukkit.event.Event;
+import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemData;
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -40,6 +43,7 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
+import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.SingleItemIterator;
 
 /**
@@ -91,6 +95,61 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 			}
 		}
 		return r.toArray(new Integer[0]);
+	}
+	
+	boolean changeItemStack;
+	
+	@Override
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (!getExpr().isSingle())
+			return null;
+		if (!CollectionUtils.containsAnySuperclass(getExpr().acceptChange(mode), ItemStack.class, ItemType.class))
+			return null;
+		changeItemStack = CollectionUtils.containsSuperclass(getExpr().acceptChange(mode), ItemStack.class);
+		switch (mode) {
+			case ADD:
+			case REMOVE:
+			case SET:
+				return new Class[] {Number.class};
+			case RESET:
+			case DELETE:
+			case REMOVE_ALL:
+			default:
+				return null;
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	@Override
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		final int i = ((Number) delta[0]).intValue();
+		final ItemStack is = getExpr().getSingle(e).getRandom();
+		int type = is.getTypeId();
+		switch (mode) {
+			case ADD:
+				type += i;
+				break;
+			case REMOVE:
+				type -= i;
+				break;
+			case SET:
+				type = i;
+				break;
+			case RESET:
+			case DELETE:
+			case REMOVE_ALL:
+			default:
+				assert false;
+				return;
+		}
+		final Material m = Material.getMaterial(type);
+		if (m != null) {
+			is.setType(m);
+			if (changeItemStack)
+				getExpr().change(e, new ItemStack[] {is}, mode);
+			else
+				getExpr().change(e, new ItemType[] {new ItemType(is)}, mode);
+		}
 	}
 	
 	@Override

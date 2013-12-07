@@ -57,7 +57,7 @@ import ch.njol.util.coll.iterator.EmptyIterator;
 public class ExprItemsIn extends SimpleExpression<Slot> {
 	static {
 		Skript.registerExpression(ExprItemsIn.class, Slot.class, ExpressionType.PROPERTY,
-				"[all] items (in|of|contained in|out of) %inventories%");
+				"[all] items (in|of|contained in|out of) %inventories%"); // TODO "items in {list var::*} doesn't work as expected
 	}
 	
 	Expression<Inventory> invis;

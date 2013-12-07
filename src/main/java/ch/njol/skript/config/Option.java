@@ -58,7 +58,7 @@ public class Option<T> {
 		} else {
 			final ClassInfo<T> ci = Classes.getExactClassInfo(c);
 			if (ci == null || ci.getParser() == null)
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException(c.getName());
 			this.parser = new Converter<String, T>() {
 				@Override
 				public T convert(final String s) {

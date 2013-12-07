@@ -21,12 +21,20 @@
 
 package ch.njol.skript.expressions;
 
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Examples;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
 
 /**
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")
+@Name("Length")
+@Description("The length of a text, in number of characters.")
+@Examples("set {_l} to length of the string argument")
+@Since("2.1")
 public class ExprLength extends SimplePropertyExpression<String, Integer> {
 	static {
 		register(ExprLength.class, Integer.class, "length", "strings");

@@ -52,7 +52,7 @@ public class CondIsRiding extends Condition {
 	}
 	
 	private Expression<Entity> entities;
-	private Expression<EntityData<?>> types;
+	Expression<EntityData<?>> types;
 	
 	@SuppressWarnings("unchecked")
 	@Override

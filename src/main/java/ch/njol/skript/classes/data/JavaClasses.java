@@ -523,7 +523,7 @@ public class JavaClasses {
 				}).math(Number.class, new NumberArithmetic()));
 		
 		Classes.registerClass(new ClassInfo<String>(String.class, "string")
-				.user("texts?")
+				.user("(text|string)s?")
 				.name("Text")
 				.description("Text is simply text, i.e. a sequence of characters, which can optionally contain expressions which will be replaced with a meaningful representation " +
 						"(e.g. %player% will be replaced with the player's name).",

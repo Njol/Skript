@@ -61,7 +61,7 @@ public class CondCanBuild extends Condition {
 	}
 	
 	private Expression<Player> players;
-	private Expression<Location> locations;
+	Expression<Location> locations;
 	
 	@SuppressWarnings("unchecked")
 	@Override
