@@ -1,12 +1,12 @@
 ﻿
 #
 # == Deutsches aliases.sk ==
-# Diese Itemnamen werden verwendet, falls Skript auf deutsch konfiguriert wurde (siehe config.sk).
-# Die englishen Itemnamen werden weiterhin in Skripten verwendet, z.B. 'give a diamond sword to the player',
+# Diese Gegenstandsnamen werden verwendet, falls Skript auf deutsch konfiguriert wurde (siehe config.sk).
+# Die englishen Gegenstandsnamen werden weiterhin in Skripten verwendet, z.B. 'give a diamond sword to the player',
 # aber sämtliche Texte und Befehle verwenden die deutschen Namen, z.B. "Das ist ein %item%" ergibt "Das ist eine Karotte",
 # und 'command /item <items>' kann wie '/item 5 Diamanten und eine rote Wolle' benutzt werden.
 #
-# == WICHTIG: DIESE ITEMNAMEN SIND NOCH NICHT ALLE ÜBERSETZT!
+# == WICHTIG: DIESE GEGENSTANDSNAMEN SIND NOCH NICHT ALLE ÜBERSETZT!
 #   bitte melde dich bei mir (njol@gmx.ch) falls du beim Übersetzen helfen möchtest :)
 #
 
@@ -139,18 +139,20 @@ Standardnamen:
 		(Eichen|normale(r|s|) ) = :0, :4, :8, :12
 		(Tannen|Fichten) = :1, :5, :9, :13
 		Birken = :2, :6, :10, :14
+		Tropen = :3, :7, :11, :15
 		Dschungel = :3, :7, :11, :15
 		Jungel = :3, :7, :11, :15
 	{tree type 2}:
 		{default} = :0-15
 		Akazien = :0, :4, :8, :12, :2, :6, :10, :14
-		(dunkles Eichen|dunkles) = :1, :5, :9, :13, :3, :7, :11, :15
+		(dunkles Eichen|dunkles ) = :1, :5, :9, :13, :3, :7, :11, :15
 	{wood type}: # also used elsewhere
 		{default} = :0-5
 		<any> = :0-5
 		(Eichen|normale(r|s|) ) = :0
 		(Tannen|Fichten) = :1
 		Birken = :2
+		Tropen = :3
 		Dschungel = :3
 		Jungel = :3
 		Akazien = :4
@@ -318,7 +320,7 @@ Standardnamen:
 	orange tulip¦s = 38:5
 	white tulip¦s = 38:6
 	pink tulip¦s = 38:7
-	oxeye dais¦y¦ies @an = 38:8
+	oxeye dais¦y¦ies = 38:8
 	[<any>] small flower¦s = 37, 38:0-8
 	
 	sunflower¦s = 175:0

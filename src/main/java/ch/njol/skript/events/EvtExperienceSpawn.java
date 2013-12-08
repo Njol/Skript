@@ -31,6 +31,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockExpEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.ExpBottleEvent;
+import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.plugin.EventExecutor;
 
 import ch.njol.skript.Skript;
@@ -96,7 +97,7 @@ public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 	private final static void registerExecutor() {
 		if (registeredExecutor)
 			return;
-		for (final Class<? extends Event> c : new Class[] {BlockExpEvent.class, EntityDeathEvent.class, ExpBottleEvent.class})
+		for (final Class<? extends Event> c : new Class[] {BlockExpEvent.class, EntityDeathEvent.class, ExpBottleEvent.class, PlayerFishEvent.class})
 			Bukkit.getPluginManager().registerEvent(c, new Listener() {}, SkriptConfig.defaultEventPriority.value(), executor, Skript.getInstance(), true);
 	}
 	
@@ -110,6 +111,8 @@ public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 				es = new ExperienceSpawnEvent(((EntityDeathEvent) e).getDroppedExp(), ((EntityDeathEvent) e).getEntity().getLocation());
 			} else if (e instanceof ExpBottleEvent) {
 				es = new ExperienceSpawnEvent(((ExpBottleEvent) e).getExperience(), ((ExpBottleEvent) e).getEntity().getLocation());
+			} else if (e instanceof PlayerFishEvent) {
+				es = new ExperienceSpawnEvent(((PlayerFishEvent) e).getExpToDrop(), ((PlayerFishEvent) e).getPlayer().getLocation());
 			} else {
 				assert false;
 				return;
@@ -131,6 +134,8 @@ public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 				((EntityDeathEvent) e).setDroppedExp(es.getSpawnedXP());
 			} else if (e instanceof ExpBottleEvent) {
 				((ExpBottleEvent) e).setExperience(es.getSpawnedXP());
+			} else if (e instanceof PlayerFishEvent) {
+				((PlayerFishEvent) e).setExpToDrop(es.getSpawnedXP());
 			}
 		}
 	};

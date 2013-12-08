@@ -40,6 +40,7 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.easymock.EasyMock;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -74,6 +75,8 @@ public class ClassesTest {
 	@Before
 	public void before() throws Exception {
 		final File f = new File("target/classes/");
+		final File jar = new File("target/", "skript.jar");
+		Assume.assumeTrue(jar.exists());
 		
 		final Logger l = Logger.getLogger(getClass().getCanonicalName());
 		l.setParent(SkriptLogger.LOGGER);
@@ -98,7 +101,7 @@ public class ClassesTest {
 		final JavaPlugin p = new JavaPlugin() {
 			{
 				final PluginDescriptionFile pdf = new PluginDescriptionFile(new FileInputStream(new File(f, "plugin.yml")));
-				initialize(null, s, pdf, f, new File("target/", "skript.jar"), getClass().getClassLoader());
+				initialize(null, s, pdf, f, jar, getClass().getClassLoader());
 			}
 			
 			@Override

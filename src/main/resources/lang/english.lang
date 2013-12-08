@@ -713,7 +713,7 @@ entities:
 		adjective: falling
 		not a block error: Falling blocks must be blocks, not items
 	thrown potion:
-		name: thrown potions¦s
+		name: thrown potion¦s
 		pattern: thrown (potion(|1¦s)|(¦2)%-itemtypes%)
 		adjective: thrown
 	dropped item:

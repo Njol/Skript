@@ -22,12 +22,15 @@
 package ch.njol.skript.entity;
 
 import java.util.Arrays;
+import java.util.Iterator;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.inventory.ItemStack;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemData;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.Literal;
@@ -61,10 +64,15 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 			types = Converters.convert(((Literal<ItemType>) exprs[0]).getAll(), ItemType.class, new Converter<ItemType, ItemType>() {
 				@Override
 				public ItemType convert(ItemType t) {
-					t = t.getBlock();
-					if (!t.hasBlock())
+					t = t.getBlock().clone();
+					final Iterator<ItemData> iter = t.iterator();
+					while (iter.hasNext()) {
+						final int id = iter.next().getId();
+						if (id <= 0 || id > Skript.MAXBLOCKID)
+							iter.remove();
+					}
+					if (t.numTypes() == 0)
 						return null;
-					t = t.clone();
 					t.setAmount(-1);
 					t.setAll(false);
 					t.clearEnchantments();
@@ -102,6 +110,10 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 	@Override
 	public FallingBlock spawn(final Location loc) {
 		final ItemStack t = CollectionUtils.getRandom(types).getRandom();
+		if (t.getType() == Material.AIR || !t.getType().isBlock()) {
+			assert false : t;
+			return null;
+		}
 		return loc.getWorld().spawnFallingBlock(loc, t.getType(), (byte) t.getDurability());
 	}
 	
@@ -134,6 +146,8 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 	
 	@Override
 	public String toString(final int flags) {// FIXME test
+		if (types == null)
+			return super.toString(flags);
 		final StringBuilder b = new StringBuilder();
 		b.append(Noun.getArticleWithSpace(types[0].getTypes().get(0).getGender(), flags));
 		b.append(m_adjective.toString(types[0].getTypes().get(0).getGender(), flags));

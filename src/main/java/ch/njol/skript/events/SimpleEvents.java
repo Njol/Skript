@@ -223,6 +223,7 @@ public class SimpleEvents {
 						"as this event is intended to support changing the hatched mob and its chance to hatch, but Skript does not yet support that.")
 				.examples("")
 				.since("1.0");
+		// TODO improve - on fish [of %entitydata%] (and/or itemtype), on reel, etc.
 		Skript.registerEvent("Fishing", SimpleEvent.class, PlayerFishEvent.class, "[player] fish[ing]")
 				.description("Called when a player fishes something. This is not of much use yet.")
 				.examples("")
@@ -248,8 +249,9 @@ public class SimpleEvents {
 				.description("Called when a player is kicked from the server. You can change the <a href='../expressions/#ExprMessage'>kick message</a> or <a href='../effects/#EffCancelEvent'>cancel the event</a> entirely.")
 				.examples("")
 				.since("1.0");
-		Skript.registerEvent("Level Change", SimpleEvent.class, PlayerLevelChangeEvent.class, "[player] level [change]") // TODO level up/down
-		.description("Called when a player's <a href='../expressions/#ExprLevel'>level</a> changes, e.g. by gathering experience or by enchanting something.")
+		// TODO level up/down
+		Skript.registerEvent("Level Change", SimpleEvent.class, PlayerLevelChangeEvent.class, "[player] level [change]")
+				.description("Called when a player's <a href='../expressions/#ExprLevel'>level</a> changes, e.g. by gathering experience or by enchanting something.")
 				.examples("")
 				.since("");
 		Skript.registerEvent("Portal", SimpleEvent.class, PlayerPortalEvent.class, "[player] portal")

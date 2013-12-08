@@ -99,6 +99,8 @@ public class DroppedItemData extends EntityData<Item> {
 	
 	@Override
 	public String toString(final int flags) {
+		if (types == null)
+			return super.toString(flags);
 		final StringBuilder b = new StringBuilder();
 		b.append(Noun.getArticleWithSpace(types[0].getTypes().get(0).getGender(), flags));
 		b.append(m_adjective.toString(types[0].getTypes().get(0).getGender(), flags));

@@ -302,6 +302,11 @@ public class Noun extends Message {
 	final static List<String> indefiniteArticles = new ArrayList<String>(3);
 	final static List<String> definiteArticles = new ArrayList<String>(3);
 	static String definitePluralArticle = "";
+	
+	final static List<String> localIndefiniteArticles = new ArrayList<String>(3);
+	final static List<String> localDefiniteArticles = new ArrayList<String>(3);
+	static String localDefinitePluralArticle = "";
+	
 	static {
 		Language.addListener(new LanguageChangeListener() {
 			@Override
@@ -333,6 +338,14 @@ public class Noun extends Message {
 				if (dpa == null)
 					Skript.error("Missing entry '" + GENDERS_SECTION + "plural.definite article' in the " + Language.getName() + " language file!");
 				definitePluralArticle = dpa == null ? "" : dpa;
+				
+				if (Language.useLocal || localIndefiniteArticles.isEmpty()) {
+					localIndefiniteArticles.clear();
+					localIndefiniteArticles.addAll(indefiniteArticles);
+					localDefiniteArticles.clear();
+					localDefiniteArticles.addAll(definiteArticles);
+					localDefinitePluralArticle = definitePluralArticle;
+				}
 			}
 		}, LanguageListenerPriority.EARLIEST);
 	}
@@ -349,8 +362,16 @@ public class Noun extends Message {
 		return indefiniteArticles.contains(s.toLowerCase());
 	}
 	
+	public final static boolean isLocalIndefiniteArticle(final String s) {
+		return localIndefiniteArticles.contains(s.toLowerCase());
+	}
+	
 	public final static boolean isDefiniteArticle(final String s) {
-		return definiteArticles.contains(s.toLowerCase());
+		return definiteArticles.contains(s.toLowerCase()) || definitePluralArticle.equalsIgnoreCase(s);
+	}
+	
+	public final static boolean isLocalDefiniteArticle(final String s) {
+		return localDefiniteArticles.contains(s.toLowerCase()) || localDefinitePluralArticle.equalsIgnoreCase(s);
 	}
 	
 	public final static String toString(final String singular, final String plural, final int gender, final int flags) {

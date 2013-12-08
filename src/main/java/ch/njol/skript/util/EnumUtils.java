@@ -35,8 +35,8 @@ public final class EnumUtils<E extends Enum<E>> {
 	final String[] names;
 	
 	public EnumUtils(final Class<E> c, final String languageNode) {
-		assert c != null && c.isEnum() && languageNode != null && !languageNode.isEmpty();
-		assert !languageNode.endsWith(".");
+		assert c != null && c.isEnum() : c;
+		assert languageNode != null && !languageNode.isEmpty() && !languageNode.endsWith(".") : languageNode;
 		
 		names = new String[c.getEnumConstants().length];
 		
@@ -48,7 +48,7 @@ public final class EnumUtils<E extends Enum<E>> {
 					final String[] ls = Language.getList(languageNode + "." + e.name());
 					names[e.ordinal()] = ls[0];
 					for (final String l : ls)
-						parseMap.put(l, e);
+						parseMap.put(l.toLowerCase(), e);
 				}
 			}
 		});

@@ -213,9 +213,9 @@ public class VariableString implements Expression<String> {
 									} else {
 										final int l = last.lastIndexOf(' ', last.endsWith(" ") ? last.length() - 2 : last.length() - 1);
 										final String lastWord = last.substring(l + 1).trim();
-										if (Noun.isIndefiniteArticle(lastWord))
+										if (Noun.isLocalIndefiniteArticle(lastWord))
 											i.flags |= Language.F_INDEFINITE_ARTICLE;
-										else if (Noun.isDefiniteArticle(lastWord))
+										else if (Noun.isLocalDefiniteArticle(lastWord))
 											i.flags |= Language.F_DEFINITE_ARTICLE;
 										if ((i.flags & (Language.F_INDEFINITE_ARTICLE | Language.F_DEFINITE_ARTICLE)) != 0)
 											string.set(string.size() - 1, last.substring(0, l + 1));

@@ -192,9 +192,10 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		final File scripts = new File(getDataFolder(), SCRIPTSFOLDER);
 		if (!scripts.isDirectory()) {
-			scripts.mkdirs();
 			ZipFile f = null;
 			try {
+				if (!scripts.mkdirs())
+					throw new IOException("Could not create the directory " + scripts);
 				f = new ZipFile(getFile());
 				for (final ZipEntry e : new EnumerationIterable<ZipEntry>(f.entries())) {
 					if (e.isDirectory())
@@ -300,7 +301,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				
 				stopAcceptingRegistrations();
 				
-				Documentation.generate();
+				Documentation.generate(); // TODO move to test classes?
 				
 				final LogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler() {
 					private final List<LogEntry> log = new ArrayList<LogEntry>();

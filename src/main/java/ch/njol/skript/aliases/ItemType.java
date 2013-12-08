@@ -436,6 +436,12 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		}
 	}
 	
+	void remove(final int index) {
+		final ItemData type = types.remove(index);
+		numItems -= type.numItems();
+		modified();
+	}
+	
 	public void addEnchantment(final Enchantment e, final int level) {
 		if (enchantments == null)
 			enchantments = new HashMap<Enchantment, Integer>();
@@ -621,7 +627,8 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	}
 	
 	/**
-	 * @return List of ItemDatas. The returned list is not modifyable, use {@link #add(ItemData)} and {@link #remove(ItemData)} if you need to change the list.
+	 * @return List of ItemDatas. The returned list is not modifiable, use {@link #add(ItemData)} and {@link #remove(ItemData)} if you need to change the list, or use the
+	 *         {@link #iterator()}.
 	 */
 	public List<ItemData> getTypes() {
 		return Collections.unmodifiableList(types);
@@ -640,7 +647,28 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	
 	@Override
 	public Iterator<ItemData> iterator() {
-		return Collections.unmodifiableList(types).iterator();
+		return new Iterator<ItemData>() {
+			private int next = 0;
+			
+			@Override
+			public boolean hasNext() {
+				return next < types.size();
+			}
+			
+			@Override
+			public ItemData next() {
+				if (!hasNext())
+					throw new NoSuchElementException();
+				return types.get(next++);
+			}
+			
+			@Override
+			public void remove() {
+				if (next <= 0)
+					throw new IllegalStateException();
+				ItemType.this.remove(--next);
+			}
+		};
 	}
 	
 	public boolean isContainedIn(final Inventory invi) {

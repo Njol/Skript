@@ -166,26 +166,26 @@ aliases:
 	of every: von (?:jede[mr]|allen)
 	of: von(?: irgendeine[mr])?
 	# messages
-	brackets error: Klammern haben eine spezielle Bedeutung in Itemnamen und können nicht normal benutzt werden
+	brackets error: Klammern haben eine spezielle Bedeutung in Gegenstandsnamen und können nicht normal benutzt werden
 	invalid brackets: Ungülgige Anzahl und/oder Platzierung der Klammern '%s'
-	empty alias: '%s' resultiert in einem leeren Item (d.h. es repräsentiert keine ID/Werte), es wird deshalb ignoriert
+	empty alias: '%s' resultiert in einem leeren Gegenstand (d.h. es repräsentiert keine ID/Werte), es wird deshalb ignoriert
 	unknown variation: Die Variation {%s} wurde nicht definiert
-	starting with number: Itemnamen dürfen nicht mit einer Nummer beginnen
-	missing aliases: Für folgende IDs sind keine Itemnamen definiert:
-	empty string: '' ist kein Itemtyp
-	invalid item data: '%s' ist kein Itemwert
+	starting with number: Gegenstandsnamen dürfen nicht mit einer Zahl beginnen
+	missing aliases: Für folgende IDs sind keine Gegenstandsnamen definiert:
+	empty string: '' ist kein Gegenstandstyp
+	invalid item data: '%s' ist kein Gegenstandswert
 	invalid id: Es gibt kein Material mit ID %s!
 	invalid block data: Blöcke können nur Werte von 0 bis 15 haben
-	invalid item type: '%s' ist kein Itemtyp
-	out of data range: Itemwerte müssen zwischen 0 und %s (inklusive) liegen
-	invalid range: Die erste Nummer eines Itemwertepaars muss kleiner als die Zweite sein
-	invalid section: Ungültiger Abschnitt '%s'. Falls dies ein Itemnamenabschnitt ist, füge ihn zu 'aliases' hinzu damit er geladen wird.
+	invalid item type: '%s' ist kein Gegenstandstyp
+	out of data range: Gegenstandswerte müssen zwischen 0 und %s (inklusive) liegen
+	invalid range: Die erste Nummer eines Gegenstandswertepaars muss kleiner als die Zweite sein
+	invalid section: Ungültiger Abschnitt '%s'. Falls dies ein Gegenstandsnamenabschnitt ist, füge ihn zu 'aliases' hinzu damit er geladen wird.
 	section not found: Abschnitt '%s' nicht gefunden!
-	not a section: Itemnamen müssen in Abschnitten unterteilt sein, aber '%s' ist kein Abschnitt!
+	not a section: Gegenstandsnamen müssen in Abschnitten unterteilt sein, aber '%s' ist kein Abschnitt!
 	unexpected non-variation section: Unerwarteter nicht-Variations-Abschnitt
 	unexpected section: Unerwarteter Abschnitt
-	loaded x aliases from: %s deutsche Itemnamen aus %s geladen
-	loaded x aliases: %s deutsche Itemnamen geladen
+	loaded x aliases from: %s deutsche Gegenstandsnamen aus %s geladen
+	loaded x aliases: %s deutsche Gegenstandsnamen geladen
 	anything: etwas
 	named: namens
 
