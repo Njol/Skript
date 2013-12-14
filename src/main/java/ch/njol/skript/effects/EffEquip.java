@@ -49,7 +49,7 @@ import ch.njol.util.Kleenean;
 @SuppressWarnings("serial")
 @Name("Equip")
 @Description("Equips a player with some given armor. This will replace any armor that the player is wearing.")
-// FIXME update documentation
+// FIXME update documentation - create a backup as well
 @Examples({"equip player with diamond helmet",
 		"equip player with all diamond armor"})
 @Since("1.0")

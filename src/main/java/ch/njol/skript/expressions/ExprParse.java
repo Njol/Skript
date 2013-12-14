@@ -94,7 +94,21 @@ public class ExprParse extends SimpleExpression<Object> {
 				Skript.error("Invalid amount and/or placement of double quotes in '" + pattern + "'");
 				return false;
 			}
-			pattern = pattern.replace("¦", "\\¦"); // not useful for users
+			// escape '¦'
+			final StringBuilder b = new StringBuilder(pattern.length());
+			for (int i = 0; i < b.length(); i++) {
+				final char c = pattern.charAt(i);
+				if (c == '\\') {
+					b.append(c);
+					b.append(pattern.charAt(i + 1));
+					i++;
+				} else if (c == '¦') {
+					b.append("\\¦");
+				} else {
+					b.append(c);
+				}
+			}
+			pattern = b.toString();
 			final Pair<String, boolean[]> p = SkriptParser.validatePattern(pattern);
 			if (p == null)
 				return false;

@@ -219,6 +219,7 @@ databases:
     	
 		backup interval: 0 # 0 = don't create backups
 		monitor changes: false
+		monitor interval: 20 seconds
 	
 	default:
 		# The default "database" is a simple text file, with each variable on a separate line and the variable's name, type, and value separated by commas.

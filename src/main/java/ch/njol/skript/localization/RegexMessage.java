@@ -21,6 +21,7 @@
 
 package ch.njol.skript.localization;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -48,12 +49,12 @@ public class RegexMessage extends Message {
 		this(key, prefix, suffix, 0);
 	}
 	
-	public RegexMessage(final String key) {
-		this(key, "", "", 0);
-	}
-	
 	public RegexMessage(final String key, final int flags) {
 		this(key, "", "", flags);
+	}
+	
+	public RegexMessage(final String key) {
+		this(key, "", "", 0);
 	}
 	
 	public Pattern getPattern() {
@@ -61,8 +62,21 @@ public class RegexMessage extends Message {
 		return pattern;
 	}
 	
+	public Matcher matcher(final String s) {
+		return getPattern().matcher(s);
+	}
+	
+	public boolean matches(final String s) {
+		return getPattern().matcher(s).matches();
+	}
+	
+	public boolean find(final String s) {
+		return getPattern().matcher(s).find();
+	}
+	
 	@Override
 	public String toString() {
+		validate();
 		return prefix + getValue() + suffix;
 	}
 	
@@ -71,7 +85,7 @@ public class RegexMessage extends Message {
 		try {
 			pattern = Pattern.compile(prefix + getValue() + suffix, flags);
 		} catch (final PatternSyntaxException e) {
-			Skript.error("Invalid Regex pattern '" + getValue() + "' found in language entry '" + key + "': " + e.getLocalizedMessage());
+			Skript.error("Invalid Regex pattern '" + getValue() + "' found at '" + key + "' in the " + Language.getName() + " language file: " + e.getLocalizedMessage());
 		}
 	}
 	

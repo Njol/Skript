@@ -62,15 +62,15 @@ public abstract class Aliases {
 	/**
 	 * Note to self: never use this, use {@link #getAlias_i(String)} instead.
 	 */
-	private final static HashMap<String, ItemType> aliases_english = new HashMap<String, ItemType>(2500);
-	private final static HashMap<String, ItemType> aliases_localised = new HashMap<String, ItemType>(2500);
+	private final static HashMap<String, ItemType> aliases_english = new HashMap<String, ItemType>(10000);
+	private final static HashMap<String, ItemType> aliases_localised = new HashMap<String, ItemType>(1000);
 	
 	private final static HashMap<String, ItemType> getAliases() {
 		return Language.isUsingLocal() ? aliases_localised : aliases_english;
 	}
 	
 	private final static ItemType getAlias_i(final String s) {
-		final ItemType t = ScriptLoader.currentAliases.get(s);
+		final ItemType t = ScriptLoader.getScriptAliases().get(s);
 		if (t != null)
 			return t;
 		return getAliases().get(s);
@@ -232,6 +232,8 @@ public abstract class Aliases {
 					final String n;
 					if (v.getKey().equalsIgnoreCase("{default}")) {
 						hasDefault = true;
+						if (v.getValue() == null)
+							continue;
 						n = concatenate(name.substring(0, i), name.substring(end + 1));
 					} else {
 						final int g = v.getKey().lastIndexOf('@');
@@ -517,14 +519,14 @@ public abstract class Aliases {
 		final ItemType t = new ItemType();
 		
 		Matcher m;
-		if ((m = p_of_every.getPattern().matcher(s)).matches()) {
+		if ((m = p_of_every.matcher(s)).matches()) {
 			t.setAmount(Utils.parseInt(m.group(1)));
 			t.setAll(true);
 			s = m.group(m.groupCount());
-		} else if ((m = p_of.getPattern().matcher(s)).matches()) {
+		} else if ((m = p_of.matcher(s)).matches()) {
 			t.setAmount(Utils.parseInt(m.group(1)));
 			s = m.group(m.groupCount());
-		} else if ((m = p_every.getPattern().matcher(s)).matches()) {
+		} else if ((m = p_every.matcher(s)).matches()) {
 			t.setAll(true);
 			s = m.group(m.groupCount());
 		} else {
@@ -812,9 +814,12 @@ public abstract class Aliases {
 							if (a instanceof SectionNode) {
 								Skript.error(m_unexpected_section.toString());
 								continue;
+							} else if (!(a instanceof EntryNode)) {
+								continue;
 							}
-							final ItemType t = parseAlias(((EntryNode) a).getValue());
-							if (t != null)
+							final boolean noDefault = ((EntryNode) a).getValue().isEmpty() && ((EntryNode) a).getKey().equalsIgnoreCase("{default}");
+							final ItemType t = noDefault ? null : parseAlias(((EntryNode) a).getValue());
+							if (t != null || noDefault)
 								vs.put(Noun.normalizePluralMarkers(((EntryNode) a).getKey()), t);
 						}
 						variations.put(n.getKey().substring(1, n.getKey().length() - 1), vs);

@@ -23,6 +23,7 @@ package ch.njol.skript.hooks.regions.events;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -139,7 +140,7 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 			final Location to = e.getTo(), from = e.getFrom();
 			if (to.equals(from))
 				return;
-			final Collection<? extends Region> oldRs = RegionsPlugin.getRegionsAt(from), newRs = RegionsPlugin.getRegionsAt(to);
+			final Set<? extends Region> oldRs = RegionsPlugin.getRegionsAt(from), newRs = RegionsPlugin.getRegionsAt(to);
 			for (final Region r : oldRs) {
 				if (!newRs.contains(r))
 					callEvent(r, e, false);

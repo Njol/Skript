@@ -163,7 +163,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		return version;
 	}
 	
-	public final static Message m_invalid_reload = new Message("skript.invalid reload");
+	public final static Message m_invalid_reload = new Message("skript.invalid reload"),
+			m_finished_loading = new Message("skript.finished loading");
 	
 	@Override
 	public void onEnable() {
@@ -180,7 +181,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		final String bukkitV = Bukkit.getBukkitVersion();
 		final Matcher m = Pattern.compile("\\d+\\.\\d+(\\.\\d+)?").matcher(bukkitV);
 		if (!m.find()) {
-			Skript.error("The Bukkit version '" + Bukkit.getBukkitVersion() + "' does not contain a version number which is required for Skript to enable or disable certain features. " +
+			Skript.error("The Bukkit version '" + bukkitV + "' does not contain a version number which is required for Skript to enable or disable certain features. " +
 					"Skript will still work, but you might get random errors if you use features that are not available in your version of Bukkit.");
 			minecraftVersion = new Version(666, 0, 0);
 		} else {
@@ -299,6 +300,8 @@ public final class Skript extends JavaPlugin implements Listener {
 						e.printStackTrace();
 				}
 				
+				Language.setUseLocal(false);
+				
 				stopAcceptingRegistrations();
 				
 				Documentation.generate(); // TODO move to test classes?
@@ -334,6 +337,7 @@ public final class Skript extends JavaPlugin implements Listener {
 					
 					@Override
 					protected void onStop() {
+						super.onStop();
 						SkriptLogger.logAll(log);
 					}
 				});
@@ -349,7 +353,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				
 				ScriptLoader.loadScripts();
 				
-				Skript.info("Skript finished loading!");
+				Skript.info(m_finished_loading.toString());
 				
 				EvtSkript.onSkriptStart();
 				

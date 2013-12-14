@@ -36,6 +36,7 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.InventorySlot;
 import ch.njol.skript.util.Slot;
@@ -57,15 +58,17 @@ import ch.njol.util.coll.iterator.EmptyIterator;
 public class ExprItemsIn extends SimpleExpression<Slot> {
 	static {
 		Skript.registerExpression(ExprItemsIn.class, Slot.class, ExpressionType.PROPERTY,
-				"[all] items (in|of|contained in|out of) %inventories%"); // TODO "items in {list var::*} doesn't work as expected
+				"[all] items (in|of|contained in|out of) (|1¦inventor(y|ies)) %inventories%");
 	}
 	
-	Expression<Inventory> invis;
+	private Expression<Inventory> invis;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		invis = (Expression<Inventory>) exprs[0];
+		if (invis instanceof Variable && !invis.isSingle() && parseResult.mark != 1)
+			Skript.warning("'items in {variable::*}' does not actually represent the items stored in the variable. Use either '{variable::*}' (e.g. 'loop {variable::*}') if the variable contains items, or 'items in inventories {variable::*}' if the variable contains inventories.");
 		return true;
 	}
 	

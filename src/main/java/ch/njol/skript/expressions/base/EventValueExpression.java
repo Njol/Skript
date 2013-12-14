@@ -118,7 +118,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			boolean hasValue = false;
-			for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
+			for (final Class<? extends Event> e : ScriptLoader.getCurrentEvents()) {
 				if (getters.containsKey(e)) {
 					hasValue = true;
 					continue;
@@ -173,7 +173,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	
 	@Override
 	public boolean setTime(final int time) {
-		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
+		for (final Class<? extends Event> e : ScriptLoader.getCurrentEvents()) {
 			if (EventValues.doesEventValueHaveTimeStates(e, c)) {
 				super.setTime(time);
 				return true;

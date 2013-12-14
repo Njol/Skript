@@ -46,7 +46,8 @@
 # please note that 'wood = 17' is also resolved for '{tree type} wood = 17'. This is usually what you want.
 # This does not work with variations where ids are varied and not only data values. There you
 # have to add a '{default}' to the variation, which is treated like all other values in the variation
-# but without adding it's name to the alias. For examples see 'huge mushrooms' or 'doors'.
+# but without adding its name to the alias. For examples see 'huge mushrooms' or 'doors'.
+# If you don't want a default value, use '{default} = #-#'. See {fish} for an example.
 #
 # If an item has a block with a different ID you should add another two aliases called 'x item' and 'x block', e.g.
 #	cauldron block = 118
@@ -433,24 +434,26 @@ default aliases:
 	red rose¦s = 38:0
 	red flower¦s = 38:0
 	popp¦y¦ies = 38:0
-	blue orchid¦s = 38:1
+	[blue] orchid¦s = 38:1
 	allium¦s @an = 38:2
 	azure bluet¦s @an = 38:3
 	red tulip¦s = 38:4
 	orange tulip¦s @an = 38:5
 	white tulip¦s = 38:6
 	pink tulip¦s = 38:7
-	oxeye dais¦y¦ies @an = 38:8
+	ox[-]eye dais¦y¦ies @an = 38:8
+	ox[-]eye¦s @an = 38:8
+	dais¦y¦ies = 38:8
 	[<any>] small flower¦s = 37, 38:0-8
 	
 	sunflower¦s = 175:0
 	lilac¦s = 175:1
 	rose bush¦es = 175:4
 	peon¦y¦ies = 175:5
-	[<any>] large flower = 175:0-1, 175:4-5
-	[<any>] large plant = 175:0-5
+	[<any>] large flower¦s = 175:0-1, 175:4-5
+	[<any>] large plant¦s = 175:0-5
 	
-	[<any>] flower = any small flower, any large flower
+	[<any>] flower¦s = any small flower, any large flower
 	
 	mushroom¦s = 39, 40
 	brown mushroom¦s = 39
@@ -724,7 +727,7 @@ default aliases:
 
 	# -- chest --
 	chest¦s = 54
-	ender chest¦s = 130
+	ender chest¦s @an = 130
 	trapped chest¦s = 146
 
 
@@ -1472,10 +1475,16 @@ default aliases:
 
 
 	# -- fish --
-	[<any>] fish¦es = 349, 350
-	fish item¦s = 349
-	raw fish¦es = 349
-	cooked fish¦es = 350
+	{fish}:
+		{default} = #-#
+		fish¦es = :0
+		salmon¦s = :1
+		clownfish¦es = :2
+		pufferfish¦es = :3
+	[<any>] {fish} = 349, 350
+	{fish} item¦s = 349
+	raw {fish} = 349
+	cooked {fish} = 350
 
 
 	# -- dyes: see wool & dyes

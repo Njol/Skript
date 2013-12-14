@@ -33,7 +33,7 @@ import ch.njol.skript.Skript;
 import ch.njol.util.coll.CollectionUtils;
 
 /**
- * TODO !Update with every version [blocks] - also update aliases-xyz.sk
+ * TODO !Update with every version [blocks] - also update aliases-*.sk
  * 
  * @author Peter Güttinger
  */

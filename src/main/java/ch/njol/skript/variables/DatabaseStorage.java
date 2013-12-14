@@ -21,9 +21,7 @@
 
 package ch.njol.skript.variables;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -49,9 +47,10 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
-import ch.njol.util.Pair;
 
 /**
+ * FIXME test this
+ * 
  * @author Peter Güttinger
  */
 public class DatabaseStorage extends VariablesStorage {
@@ -174,8 +173,9 @@ public class DatabaseStorage extends VariablesStorage {
 			boolean hasOldDatabase = false;
 			Statement old = null;
 			try {
+				
 				old = ((Database) db).getConnection().createStatement();
-				if (old.execute("SELECT " + SELECT_ORDER + " " + OLD_TABLE_NAME)) {
+				if (((Database) db).isTable(OLD_TABLE_NAME) && old.execute("SELECT " + SELECT_ORDER + " FROM " + OLD_TABLE_NAME)) {
 					ResultSet r = null;
 					try {
 						r = old.getResultSet();
@@ -199,7 +199,7 @@ public class DatabaseStorage extends VariablesStorage {
 			Statement s = null;
 			try {
 				s = ((Database) db).getConnection().createStatement();
-				s.execute("SELECT " + SELECT_ORDER + " from " + TABLE_NAME);
+				s.execute("SELECT " + SELECT_ORDER + " FROM " + TABLE_NAME);
 				ResultSet r = null;
 				try {
 					r = s.getResultSet();
@@ -222,7 +222,8 @@ public class DatabaseStorage extends VariablesStorage {
 				try {
 					Variables.getReadLock().lock();
 					for (final Entry<String, Object> v : Variables.getVariablesHashMap().entrySet()) {
-						save(new Pair<String, Object>(v));
+						if (accept(v.getKey())) // only one database was possible, so only checking this database is correct
+							save(Variables.serialize(v.getKey(), v.getValue()));
 					}
 					Skript.info("Updated " + Variables.getVariablesHashMap().size() + " variables");
 				} finally {
@@ -331,7 +332,7 @@ public class DatabaseStorage extends VariablesStorage {
 				int i = 1;
 				writeQuery.setString(i++, name);
 				writeQuery.setString(i++, type);
-				writeQuery.setBlob(i++, value == null ? null : new ByteArrayInputStream(value), value == null ? 0 : value.length);
+				writeQuery.setBytes(i++, value); // SQLite desn't support setBlob
 				writeQuery.setString(i++, guid);
 				writeQuery.executeUpdate();
 			}
@@ -385,10 +386,10 @@ public class DatabaseStorage extends VariablesStorage {
 	
 	private final static class VariableInfo {
 		final String name;
-		final Blob value;
+		final byte[] value;
 		final ClassInfo<?> ci;
 		
-		public VariableInfo(final String name, final Blob value, final ClassInfo<?> ci) {
+		public VariableInfo(final String name, final byte[] value, final ClassInfo<?> ci) {
 			this.name = name;
 			this.value = value;
 			this.ci = ci;
@@ -403,14 +404,14 @@ public class DatabaseStorage extends VariablesStorage {
 				int i = 1;
 				final String name = r.getString(i++);
 				final String type = r.getString(i++);
-				final Blob value = r.getBlob(i++);
+				final byte[] value = r.getBytes(i++); // Blob not supported by SQLite
 				lastRowID = r.getLong(i++);
 				if (value == null) {
 					Variables.variableLoaded(name, null, this);
 				} else {
 					final ClassInfo<?> c = Classes.getClassInfo(type);
 					if (c == null || c.getSerializer() == null) {
-						Skript.error("Cannot load the variable {" + name + "} from the database, because the type '" + type + "' cannot be recognised or not stored in variables");
+						Skript.error("Cannot load the variable {" + name + "} from the database, because the type '" + type + "' cannot be recognised or cannot be not stored in variables");
 						continue;
 					}
 					if (c.getSerializer().mustSyncDeserialization()) {
@@ -418,7 +419,7 @@ public class DatabaseStorage extends VariablesStorage {
 					} else {
 						final Object d = Classes.deserialize(c, value);
 						if (d == null) {
-							Skript.error("Cannot load the variable {" + name + "} from the database, because '" + value + "' cannot be loaded as a " + type);
+							Skript.error("Cannot load the variable {" + name + "} from the database, because it cannot be loaded as a " + type);
 							continue;
 						}
 						Variables.variableLoaded(name, d, this);
@@ -431,16 +432,12 @@ public class DatabaseStorage extends VariablesStorage {
 					public Void call() throws Exception {
 						synchronized (syncDeserializing) {
 							for (final VariableInfo o : syncDeserializing) {
-								try {
-									final Object d = Classes.deserialize(o.ci, o.value);
-									if (d == null) {
-										Skript.error("Cannot load the variable {" + o.name + "} from the database, because '" + o.value + "' cannot be parsed as a " + o.ci.getCodeName());
-										continue;
-									}
-									Variables.variableLoaded(o.name, d, DatabaseStorage.this);
-								} catch (final SQLException e) {
-									Skript.error("Cannot load the variable {" + o.name + "} from the database: " + e.getLocalizedMessage());
+								final Object d = Classes.deserialize(o.ci, o.value);
+								if (d == null) {
+									Skript.error("Cannot load the variable {" + o.name + "} from the database, because it cannot be parsed as a " + o.ci.getName());
+									continue;
 								}
+								Variables.variableLoaded(o.name, d, DatabaseStorage.this);
 							}
 							syncDeserializing.clear();
 							return null;

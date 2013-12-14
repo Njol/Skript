@@ -45,6 +45,7 @@ import ch.njol.util.Kleenean;
  */
 @SuppressWarnings("serial")
 @Name("Last Spawned Entity")
+// FIXME update documentation?
 @Description("Holds the entity that was spawned most recently with the <a href='../effects/#EffSpawn'>spawn effect</a>, or shot with the <a href='../effects/#EffShoot'>shoot effect</a>. " +
 		"Please note that even though you can spawn multiple mobs simultaneously (e.g. with 'spawn 5 creepers'), only the last spawned mob is saved and can be used. " +
 		"If you spawn an entity and shoot a projectile you can however access both.")

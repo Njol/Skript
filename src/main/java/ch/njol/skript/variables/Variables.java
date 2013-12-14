@@ -35,13 +35,19 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
+import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.ConfigurationSerializer;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.lang.Variable;
+import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.variables.DatabaseStorage.Type;
 import ch.njol.util.Kleenean;
 import ch.njol.util.Pair;
@@ -54,8 +60,31 @@ public abstract class Variables implements Closeable {
 	private Variables() {}
 	
 	public final static Yggdrasil yggdrasil = new Yggdrasil();
+	
+	private final static String ConfigurationSerializablePrefix = "ConfigurationSerializable_";
 	static {
 		yggdrasil.registerSingleClass(Kleenean.class, "Kleenean");
+		yggdrasil.registerClassResolver(new ConfigurationSerializer<ConfigurationSerializable>() {
+			{
+				// used by asserts
+				info = (ClassInfo<? extends ConfigurationSerializable>) Classes.getExactClassInfo(Object.class);
+			}
+			
+			@SuppressWarnings("unchecked")
+			@Override
+			public String getID(final Class<?> c) {
+				if (ConfigurationSerializable.class.isAssignableFrom(c) && Classes.getSuperClassInfo(c) == Classes.getExactClassInfo(Object.class))
+					return ConfigurationSerializablePrefix + ConfigurationSerialization.getAlias((Class<? extends ConfigurationSerializable>) c);
+				return null;
+			}
+			
+			@Override
+			public Class<? extends ConfigurationSerializable> getClass(final String id) {
+				if (id.startsWith(ConfigurationSerializablePrefix))
+					return ConfigurationSerialization.getClassByAlias(id.substring(ConfigurationSerializablePrefix.length()));
+				return null;
+			}
+		});
 	}
 	
 	static List<VariablesStorage> storages = new ArrayList<VariablesStorage>();
@@ -212,17 +241,28 @@ public abstract class Variables implements Closeable {
 			if (s == source)
 				continue;
 			if (s.accept(name)) {
-				s.save(new Pair<String, Object>(name, value));
+				s.save(serialize(name, value));
 				break;
 			}
 		}
 	}
 	
-	private final static void saveVariableChange(final String name, final Object value) {
-		queue.add(new Pair<String, Object>(name, value));
+	public final static Pair<String, Pair<String, byte[]>> serialize(final String name, final Object value) {
+		assert Bukkit.isPrimaryThread();
+		final Pair<String, byte[]> var = serialize(value);
+		return new Pair<String, Pair<String, byte[]>>(name, var);
 	}
 	
-	final static BlockingQueue<Pair<String, Object>> queue = new LinkedBlockingQueue<Pair<String, Object>>();
+	public final static Pair<String, byte[]> serialize(final Object value) {
+		assert Bukkit.isPrimaryThread();
+		return Classes.serialize(value);
+	}
+	
+	private final static void saveVariableChange(final String name, final Object value) {
+		queue.add(serialize(name, value));
+	}
+	
+	final static BlockingQueue<Pair<String, Pair<String, byte[]>>> queue = new LinkedBlockingQueue<Pair<String, Pair<String, byte[]>>>();
 	
 	static volatile boolean closed = false;
 	
@@ -231,7 +271,7 @@ public abstract class Variables implements Closeable {
 		public void run() {
 			while (!closed) {
 				try {
-					final Pair<String, Object> v = queue.take();
+					final Pair<String, Pair<String, byte[]>> v = queue.take();
 					for (final VariablesStorage s : storages) {
 						if (s.accept(v.first)) {
 							s.save(v);

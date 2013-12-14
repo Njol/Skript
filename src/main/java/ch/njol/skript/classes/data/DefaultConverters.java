@@ -37,7 +37,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import ch.njol.skript.aliases.ItemType;
-import ch.njol.skript.classes.Converter.ConverterOptions;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.entity.EntityType;
@@ -66,14 +66,14 @@ public class DefaultConverters {
 					return null;
 				return p.getPlayer().getInventory();
 			}
-		});
+		}, Converter.NO_COMMAND_ARGUMENTS);
 		// OfflinePlayer - Player
 		Converters.registerConverter(OfflinePlayer.class, Player.class, new SerializableConverter<OfflinePlayer, Player>() {
 			@Override
 			public Player convert(final OfflinePlayer p) {
 				return p.getPlayer();
 			}
-		});
+		}, Converter.NO_COMMAND_ARGUMENTS);
 		
 		// TODO improve handling of interfaces
 		// CommandSender - Player
@@ -112,7 +112,7 @@ public class DefaultConverters {
 					return ((InventoryHolder) b.getState()).getInventory();
 				return null;
 			}
-		});
+		}, Converter.NO_COMMAND_ARGUMENTS);
 		
 		// Entity - Inventory
 		Converters.registerConverter(Entity.class, Inventory.class, new SerializableConverter<Entity, Inventory>() {
@@ -122,7 +122,7 @@ public class DefaultConverters {
 					return ((InventoryHolder) e).getInventory();
 				return null;
 			}
-		});
+		}, Converter.NO_COMMAND_ARGUMENTS);
 		
 		// Block - ItemStack
 		Converters.registerConverter(Block.class, ItemStack.class, new SerializableConverter<Block, ItemStack>() {
@@ -131,7 +131,7 @@ public class DefaultConverters {
 			public ItemStack convert(final Block b) {
 				return new ItemStack(b.getTypeId(), 1, b.getData());
 			}
-		}, ConverterOptions.NO_LEFT_CHAINING);
+		}, Converter.NO_LEFT_CHAINING | Converter.NO_COMMAND_ARGUMENTS);
 		
 		// Location - Block
 //		Converters.registerConverter(Location.class, Block.class, new SerializableConverter<Location, Block>() {
@@ -145,7 +145,7 @@ public class DefaultConverters {
 			public Location convert(final Block b) {
 				return BlockUtils.getLocation(b);
 			}
-		});
+		}, Converter.NO_COMMAND_ARGUMENTS);
 		
 		// Entity - Location
 		Converters.registerConverter(Entity.class, Location.class, new SerializableConverter<Entity, Location>() {
@@ -153,14 +153,14 @@ public class DefaultConverters {
 			public Location convert(final Entity e) {
 				return e.getLocation();
 			}
-		});
+		}, Converter.NO_COMMAND_ARGUMENTS);
 		// Entity - EntityData
 		Converters.registerConverter(Entity.class, EntityData.class, new SerializableConverter<Entity, EntityData>() {
 			@Override
 			public EntityData convert(final Entity e) {
 				return EntityData.fromEntity(e);
 			}
-		});
+		}, Converter.NO_COMMAND_ARGUMENTS);
 		// EntityData - EntityType
 		Converters.registerConverter(EntityData.class, EntityType.class, new SerializableConverter<EntityData, EntityType>() {
 			@Override
@@ -248,7 +248,7 @@ public class DefaultConverters {
 					return (InventoryHolder) s;
 				return null;
 			}
-		});
+		}, Converter.NO_COMMAND_ARGUMENTS);
 //		Skript.registerConverter(InventoryHolder.class, Block.class, new SerializableConverter<InventoryHolder, Block>() {
 //			@Override
 //			public Block convert(final InventoryHolder h) {

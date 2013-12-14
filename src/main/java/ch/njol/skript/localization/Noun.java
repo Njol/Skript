@@ -39,7 +39,7 @@ public class Noun extends Message {
 	
 	public final static String GENDERS_SECTION = "genders.";
 	
-	// FIXME remove NO_GENDER and add boolean uncountable (e.g. Luft: 'die Luft', aber nicht 'eine Luft')
+	// FIXME remove NO_GENDER and add boolean/flag uncountable (e.g. Luft: 'die Luft', aber nicht 'eine Luft')
 	public final static int PLURAL = -2, NO_GENDER = -3; // -1 is sometimes used as 'not set'
 	public final static String PLURAL_TOKEN = "x", NO_GENDER_TOKEN = "-";
 	

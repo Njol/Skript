@@ -27,8 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.NotSerializableException;
 import java.io.SequenceInputStream;
-import java.sql.Blob;
-import java.sql.SQLException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -408,6 +407,8 @@ public abstract class Classes {
 				return t;
 			}
 			for (final ConverterInfo<?, ?> conv : Converters.getConverters()) {
+				if (context == ParseContext.COMMAND && (conv.options & Converter.NO_COMMAND_ARGUMENTS) != 0)
+					continue;
 				if (c.isAssignableFrom(conv.to)) {
 					log.clear();
 					final Object o = parseSimple(s, conv.from, context);
@@ -596,7 +597,7 @@ public abstract class Classes {
 		assert Enum.class.isAssignableFrom(Kleenean.class) && Tag.getType(Kleenean.class) == Tag.T_ENUM : Tag.getType(Kleenean.class);
 		final Tag t = Tag.getType(c.getC());
 		assert t.isWrapper() || t == Tag.T_STRING || t == Tag.T_OBJECT || t == Tag.T_ENUM;
-		final byte[] cn = t == Tag.T_OBJECT || t == Tag.T_ENUM ? Variables.yggdrasil.getID(c.getC()).getBytes(YggdrasilConstants.utf8) : null;
+		final byte[] cn = t == Tag.T_OBJECT || t == Tag.T_ENUM ? Variables.yggdrasil.getID(c.getC()).getBytes(StandardCharsets.UTF_8) : null;
 		final byte[] r = new byte[YGGDRASIL_START.length + 1 + (cn == null ? 0 : 1 + cn.length)];
 		int i = 0;
 		for (; i < YGGDRASIL_START.length; i++)
@@ -612,6 +613,8 @@ public abstract class Classes {
 	}
 	
 	public final static Pair<String, byte[]> serialize(Object o) {
+		if (o == null)
+			return null;
 		ClassInfo<?> ci = getSuperClassInfo(o.getClass());
 		if (ci == null)
 			return null;
@@ -656,8 +659,8 @@ public abstract class Classes {
 		return o.equals(d);
 	}
 	
-	public final static Object deserialize(final ClassInfo<?> type, final Blob value) throws SQLException {
-		return deserialize(type, value.getBinaryStream());
+	public final static Object deserialize(final ClassInfo<?> type, final byte[] value) {
+		return deserialize(type, new ByteArrayInputStream(value));
 	}
 	
 	public final static Object deserialize(final String type, final byte[] value) {

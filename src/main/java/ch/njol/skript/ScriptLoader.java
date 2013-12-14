@@ -69,6 +69,8 @@ import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.TriggerSection;
 import ch.njol.skript.lang.While;
 import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Message;
+import ch.njol.skript.localization.PluralizingArgsMessage;
 import ch.njol.skript.log.CountingLogHandler;
 import ch.njol.skript.log.ErrorDescLogHandler;
 import ch.njol.skript.log.ParseLogHandler;
@@ -91,16 +93,24 @@ import ch.njol.util.coll.CollectionUtils;
 final public class ScriptLoader {
 	private ScriptLoader() {}
 	
+	private final static Message m_no_errors = new Message("skript.no errors"),
+			m_no_scripts = new Message("skript.no scripts");
+	private final static PluralizingArgsMessage m_scripts_loaded = new PluralizingArgsMessage("skript.scripts loaded");
+	
 	public static Config currentScript = null;
 	
 	public static String currentEventName = null;
-	public static SkriptEvent currentEvent = null;
-	public static Class<? extends Event>[] currentEvents = null;
+//	private static SkriptEvent currentEvent = null;
+	private static Class<? extends Event>[] currentEvents = null;
 	
 	public static List<TriggerSection> currentSections = new ArrayList<TriggerSection>();
 	public static List<Loop> currentLoops = new ArrayList<Loop>();
-	public final static Map<String, ItemType> currentAliases = new HashMap<String, ItemType>();
-	public final static HashMap<String, String> currentOptions = new HashMap<String, String>();
+	private final static Map<String, ItemType> currentAliases = new HashMap<String, ItemType>();
+	final static HashMap<String, String> currentOptions = new HashMap<String, String>();
+	
+	public static Map<String, ItemType> getScriptAliases() {
+		return currentAliases;
+	}
 	
 	/**
 	 * must be synchronized
@@ -149,34 +159,28 @@ final public class ScriptLoader {
 		if (!scriptsFolder.isDirectory())
 			scriptsFolder.mkdirs();
 		
+		final Date start = new Date();
+		
 		final ScriptInfo i;
 		
-		Language.setUseLocal(false);
+		final ErrorDescLogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler(null, null, m_no_errors.toString()));
 		try {
+			Language.setUseLocal(false);
 			
-			final Date start = new Date();
+			i = loadScripts(scriptsFolder);
 			
-			final ErrorDescLogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler(null, null, "All scripts loaded without errors!"));
-			try {
-				i = loadScripts(scriptsFolder);
-				
-				synchronized (loadedScripts) {
-					loadedScripts.add(i);
-				}
-			} finally {
-				h.stop();
+			synchronized (loadedScripts) {
+				loadedScripts.add(i);
 			}
-			
-			if (i.files == 0)
-				Skript.warning("No scripts were found, maybe you should write some ;)");
-			if (Skript.logNormal() && i.files > 0)
-				Skript.info("loaded " + i.files + " script" + (i.files == 1 ? "" : "s")
-						+ " with a total of " + i.triggers + " trigger" + (i.triggers == 1 ? "" : "s")
-						+ " and " + i.commands + " command" + (i.commands == 1 ? "" : "s")
-						+ " in " + start.difference(new Date()));
 		} finally {
 			Language.setUseLocal(true);
+			h.stop();
 		}
+		
+		if (i.files == 0)
+			Skript.warning(m_no_scripts.toString());
+		if (Skript.logNormal() && i.files > 0)
+			Skript.info(m_scripts_loaded.toString(i.files, i.triggers, i.commands, start.difference(new Date())));
 		
 		SkriptEventHandler.registerBukkitEvents();
 		
@@ -420,7 +424,7 @@ final public class ScriptLoader {
 						continue;
 					
 					if (event.toLowerCase().startsWith("command ")) {
-						currentEvent = null;
+//						currentEvent = null;
 						currentEventName = "command";
 						currentEvents = CollectionUtils.array(CommandEvent.class);
 						hasDelayBefore = Kleenean.FALSE;
@@ -431,7 +435,7 @@ final public class ScriptLoader {
 							script.commands.add(c);
 						}
 						
-						currentEvent = null;
+//						currentEvent = null;
 						currentEventName = null;
 						currentEvents = null;
 						hasDelayBefore = Kleenean.FALSE;
@@ -456,14 +460,14 @@ final public class ScriptLoader {
 					if (Skript.debug() || node.debug())
 						Skript.debug(event + " (" + parsedEvent.second.toString(null, true) + "):");
 					
-					currentEvent = parsedEvent.second;
+//					currentEvent = parsedEvent.second;
 					currentEventName = parsedEvent.first.getName().toLowerCase(Locale.ENGLISH);
 					currentEvents = parsedEvent.first.events;
 					hasDelayBefore = Kleenean.FALSE;
 					
 					final Trigger trigger = new Trigger(config.getFile(), event, parsedEvent.second, loadItems(node));
 					
-					currentEvent = null;
+//					currentEvent = null;
 					currentEventName = null;
 					currentEvents = null;
 					hasDelayBefore = Kleenean.FALSE;
@@ -710,12 +714,12 @@ final public class ScriptLoader {
 		
 		final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getKey() + "'");
 		
-		currentEvent = parsedEvent.second;
+//		currentEvent = parsedEvent.second;
 		currentEvents = parsedEvent.first.events;
 		
 		final Trigger t = new Trigger(null, event, parsedEvent.second, loadItems(node));
 		
-		currentEvent = null;
+//		currentEvent = null;
 		currentEvents = null;
 		
 		return t;
@@ -745,6 +749,17 @@ final public class ScriptLoader {
 	
 	public final static boolean isCurrentEvent(final Class<? extends Event>... events) {
 		return CollectionUtils.containsAnySuperclass(currentEvents, events);
+	}
+	
+	/**
+	 * @see #isCurrentEvent(Class)
+	 */
+	public static Class<? extends Event>[] getCurrentEvents() {
+		return currentEvents;
+	}
+	
+	public static void setCurrentEvents(final Class<? extends Event>... currentEvents) {
+		ScriptLoader.currentEvents = currentEvents;
 	}
 	
 }

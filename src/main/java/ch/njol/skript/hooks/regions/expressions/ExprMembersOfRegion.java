@@ -49,9 +49,9 @@ import ch.njol.util.Kleenean;
 @Examples({"on entering of a region:",
 		"	message \"You're entering %region% whose owners are %owners of region%\"."})
 @Since("2.1")
-public class ExprMemberOfRegion extends SimpleExpression<OfflinePlayer> {
+public class ExprMembersOfRegion extends SimpleExpression<OfflinePlayer> {
 	static {
-		Skript.registerExpression(ExprMemberOfRegion.class, OfflinePlayer.class, ExpressionType.PROPERTY,
+		Skript.registerExpression(ExprMembersOfRegion.class, OfflinePlayer.class, ExpressionType.PROPERTY,
 				"(all|the|) (0¦members|1¦owner[s]) of [[the] region[s]] %regions%", "[[the] region[s]] %regions%'[s] (0¦members|1¦owner[s])");
 	}
 	

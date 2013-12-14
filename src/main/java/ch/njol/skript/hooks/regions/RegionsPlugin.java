@@ -23,6 +23,8 @@ package ch.njol.skript.hooks.regions;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -80,8 +82,8 @@ public abstract class RegionsPlugin<P extends Plugin> extends Hook<P> {
 	
 	public abstract Collection<? extends Region> getRegionsAt_i(Location l);
 	
-	public final static Collection<? extends Region> getRegionsAt(final Location l) {
-		final ArrayList<Region> r = new ArrayList<Region>();
+	public final static Set<? extends Region> getRegionsAt(final Location l) {
+		final Set<Region> r = new HashSet<Region>();
 		for (final RegionsPlugin<?> pl : plugins) {
 			r.addAll(pl.getRegionsAt_i(l));
 		}

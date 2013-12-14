@@ -46,7 +46,7 @@ public abstract class VariablesStorage implements Closeable {
 	
 	private final static int QUEUE_SIZE = 1000, FIRST_WARNING = 300;
 	
-	final LinkedBlockingQueue<Pair<String, Object>> changesQueue = new LinkedBlockingQueue<Pair<String, Object>>(QUEUE_SIZE);
+	final LinkedBlockingQueue<Pair<String, Pair<String, byte[]>>> changesQueue = new LinkedBlockingQueue<Pair<String, Pair<String, byte[]>>>(QUEUE_SIZE);
 	
 	protected volatile boolean closed = false;
 	
@@ -68,10 +68,9 @@ public abstract class VariablesStorage implements Closeable {
 			public void run() {
 				while (!closed) {
 					try {
-						final Pair<String, Object> var = changesQueue.take();
-						final Pair<String, byte[]> value = var.second == null ? null : Classes.serialize(var.second);
-						if (value != null)
-							save(var.first, value.first, value.second);
+						final Pair<String, Pair<String, byte[]>> var = changesQueue.take();
+						if (var.second != null)
+							save(var.first, var.second.first, var.second.second);
 						else
 							save(var.first, null, null);
 					} catch (final InterruptedException e) {}
@@ -224,9 +223,9 @@ public abstract class VariablesStorage implements Closeable {
 	private final static int ERROR_INTERVAL = 10;
 	
 	/**
-	 * Called from a different thread than Bukkit's main thread.
+	 * May be called from a different thread than Bukkit's main thread.
 	 */
-	final void save(final Pair<String, Object> var) {
+	final void save(final Pair<String, Pair<String, byte[]>> var) {
 		if (changesQueue.size() > FIRST_WARNING && lastWarning < System.currentTimeMillis() - WARNING_INTERVAL * 1000) {
 			Skript.warning("Cannot write variables to the database '" + name + "' at sufficient speed; server performance may suffer and many variables will be lost if the server crashes. (this warning will be repeated at most once every " + ERROR_INTERVAL + " seconds)");
 			lastWarning = System.currentTimeMillis();

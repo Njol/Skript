@@ -57,7 +57,10 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> extend
 	
 	@Override
 	protected T deserialize(final Fields fields) throws StreamCorruptedException {
-		return deserializeCS(fields.getObject("value", String.class), info.getC());
+		final T t = deserializeCS(fields.getObject("value", String.class), info.getC());
+		if (t == null)
+			throw new StreamCorruptedException();
+		return t;
 	}
 	
 	public final static String serializeCS(final ConfigurationSerializable o) {

@@ -26,6 +26,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -65,6 +66,23 @@ public class ExprShooter extends PropertyExpression<Projectile, LivingEntity> {
 				return o.getShooter();
 			}
 		});
+	}
+	
+	@Override
+	public Class<?>[] acceptChange(final ChangeMode mode) {
+		if (mode == ChangeMode.SET)
+			return new Class[] {LivingEntity.class};
+		return super.acceptChange(mode);
+	}
+	
+	@Override
+	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+		if (mode == ChangeMode.SET) {
+			for (final Projectile p : getExpr().getArray(e))
+				p.setShooter((LivingEntity) delta[0]);
+		} else {
+			super.change(e, delta, mode);
+		}
 	}
 	
 	@Override

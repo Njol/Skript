@@ -163,7 +163,10 @@ public class Variable<T> implements Expression<T> {
 	 * Gets the value of this variable as stored in the variables map.
 	 */
 	private Object getRaw(final Event e) {
-		final Object val = Variables.getVariable(name.toString(e).toLowerCase(Locale.ENGLISH), e, local);
+		final String n = name.toString(e).toLowerCase(Locale.ENGLISH);
+		if (n.endsWith(Variable.SEPARATOR + "*") != list) // prevents e.g. {%expr%} where "%expr%" ends with "::*" from returning a Map
+			return null;
+		final Object val = Variables.getVariable(n, e, local);
 		if (val == null)
 			return Variables.getVariable((local ? LOCAL_VARIABLE_TOKEN : "") + name.getDefaultVariableName().toLowerCase(Locale.ENGLISH), e, false);
 		return val;

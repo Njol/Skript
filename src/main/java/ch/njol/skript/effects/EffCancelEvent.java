@@ -68,7 +68,7 @@ public class EffCancelEvent extends Effect {
 			return false;
 		}
 		cancel = matchedPattern == 0;
-		for (final Class<? extends Event> e : ScriptLoader.currentEvents) {
+		for (final Class<? extends Event> e : ScriptLoader.getCurrentEvents()) {
 			if (Cancellable.class.isAssignableFrom(e) || BlockCanBuildEvent.class.isAssignableFrom(e))
 				return true; // TODO warning if some event(s) cannot be cancelled even though some can (needs a way to be suppressed)
 		}

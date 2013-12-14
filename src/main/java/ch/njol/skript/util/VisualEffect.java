@@ -36,6 +36,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
@@ -89,24 +90,32 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 		}
 	}
 	
-	private final static String TYPE_ID = VisualEffect.class.getSimpleName() + "." + Type.class.getSimpleName();
+	private final static String TYPE_ID = "VisualEffect.Type";
 	static {
 		Variables.yggdrasil.registerSingleClass(Type.class, TYPE_ID);
+		Variables.yggdrasil.registerSingleClass(Effect.class, "Bukkit_Effect");
+		Variables.yggdrasil.registerSingleClass(EntityEffect.class, "Bukkit_EntityEffect");
 	}
 	
-	private static SyntaxElementInfo<VisualEffect> info;
-	private final static Noun[] names = new Noun[Type.values().length];
+	static SyntaxElementInfo<VisualEffect> info;
+	final static Noun[] names = new Noun[Type.values().length];
 	static {
-		final Type[] ts = Type.values();
-		final String[] patterns = new String[ts.length];
-		for (int i = 0; i < ts.length; i++) {
-			final String node = LANGUAGE_NODE + "." + ts[i].name();
-			patterns[i] = Language.get_(node + ".pattern");
-			names[i] = new Noun(node + ".name");
-			if (patterns[i] == null)
-				throw Skript.exception("Missing pattern at '" + (node + ".pattern") + "' in the " + Language.getName() + " language file");
-		}
-		info = new SyntaxElementInfo<VisualEffect>(patterns, VisualEffect.class);
+		Language.addListener(new LanguageChangeListener() {
+			@Override
+			public void onLanguageChange() {
+				final Type[] ts = Type.values();
+				final String[] patterns = new String[ts.length];
+				for (int i = 0; i < ts.length; i++) {
+					final String node = LANGUAGE_NODE + "." + ts[i].name();
+					patterns[i] = Language.get_(node + ".pattern");
+					if (patterns[i] == null)
+						throw Skript.exception("Missing pattern at '" + (node + ".pattern") + "' in the " + Language.getName() + " language file");
+					if (names[i] == null)
+						names[i] = new Noun(node + ".name");
+				}
+				info = new SyntaxElementInfo<VisualEffect>(patterns, VisualEffect.class);
+			}
+		});
 	}
 	
 	private Type type;

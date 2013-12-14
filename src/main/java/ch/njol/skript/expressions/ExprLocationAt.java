@@ -37,6 +37,8 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 
 /**
+ * FIXME doesn't parse - update documentation when fixed
+ * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")

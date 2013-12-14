@@ -266,7 +266,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		this.matchedPattern = matchedPattern;
 		// plural bits (0x3): 0 = singular, 1 = plural, 2 = unknown
 		final int pluralBits = parseResult.mark & 0x3;
-		this.plural = pluralBits == 1 ? Kleenean.TRUE : pluralBits == 1 ? Kleenean.FALSE : Kleenean.UNKNOWN;
+		this.plural = pluralBits == 1 ? Kleenean.TRUE : pluralBits == 0 ? Kleenean.FALSE : Kleenean.UNKNOWN;
 		// age bits (0xC): 0 = unknown, 4 = baby, 8 = adult
 		final int ageBits = parseResult.mark & 0xC;
 		this.baby = ageBits == 4 ? Kleenean.TRUE : ageBits == 8 ? Kleenean.FALSE : Kleenean.UNKNOWN;

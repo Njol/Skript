@@ -33,6 +33,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemData;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -43,7 +44,6 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
-import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.SingleItemIterator;
 
 /**
@@ -103,9 +103,9 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (!getExpr().isSingle())
 			return null;
-		if (!CollectionUtils.containsAnySuperclass(getExpr().acceptChange(mode), ItemStack.class, ItemType.class))
+		if (!ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, ItemStack.class, ItemType.class))
 			return null;
-		changeItemStack = CollectionUtils.containsSuperclass(getExpr().acceptChange(mode), ItemStack.class);
+		changeItemStack = ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, ItemStack.class);
 		switch (mode) {
 			case ADD:
 			case REMOVE:
@@ -146,9 +146,9 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 		if (m != null) {
 			is.setType(m);
 			if (changeItemStack)
-				getExpr().change(e, new ItemStack[] {is}, mode);
+				getExpr().change(e, new ItemStack[] {is}, ChangeMode.SET);
 			else
-				getExpr().change(e, new ItemType[] {new ItemType(is)}, mode);
+				getExpr().change(e, new ItemType[] {new ItemType(is)}, ChangeMode.SET);
 		}
 	}
 	

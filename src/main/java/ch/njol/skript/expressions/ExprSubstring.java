@@ -48,7 +48,7 @@ public class ExprSubstring extends SimpleExpression<String> {
 	static {
 		Skript.registerExpression(ExprSubstring.class, String.class, ExpressionType.COMBINED,
 				"[the] (part|sub[ ](text|string)) of %strings% (between|from) (ind(ex|ices)|character[s]|) %number% (and|to) (index|character|) %number%",
-				"[the] (1¦first|2¦last) [%-number%] character[s] of %strings%", "[the] %number% (0¦first|1¦last) characters of %strings%");
+				"[the] (1¦first|2¦last) [%-number%] character[s] of %strings%", "[the] %number% (1¦first|2¦last) characters of %strings%");
 	}
 	
 	private Expression<String> string;

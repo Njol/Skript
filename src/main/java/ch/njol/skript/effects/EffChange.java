@@ -37,6 +37,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.log.CountingLogHandler;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.ParseLogHandler;
@@ -245,6 +246,12 @@ public class EffChange extends Effect {
 				else
 					Skript.error("only one " + Classes.getSuperClassInfo(x).getName() + " can be " + (mode == ChangeMode.ADD ? "added to" : "removed from") + " " + changed + ", not more", ErrorQuality.SEMANTIC_ERROR);
 				return false;
+			}
+			
+			if (changed instanceof Variable && mode == ChangeMode.SET) {
+				final ClassInfo<?> ci = Classes.getSuperClassInfo(changer.getReturnType());
+				if (ci.getC() != Object.class && ci.getSerializer() == null && ci.getSerializeAs() == null)
+					Skript.warning(ci.getName().withIndefiniteArticle() + " cannot be saved, i.e. the contents of the variable " + changed + " will be lost when the server stops.");
 			}
 		}
 		return true;

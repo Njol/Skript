@@ -37,12 +37,13 @@ import ch.njol.skript.variables.Variables;
 @SuppressWarnings("serial")
 public class HorseData extends EntityData<Horse> {
 	static {
-		if (Skript.isRunningMinecraft(1, 6))
+		if (Skript.isRunningMinecraft(1, 6)) {
 			register(HorseData.class, "horse", Horse.class, 0, "horse", "donkey", "mule", "undead horse", "skeleton horse");
-		
-		Variables.yggdrasil.registerSingleClass(Variant.class, "Horse.Variant");
-		Variables.yggdrasil.registerSingleClass(Color.class, "Horse.Color");
-		Variables.yggdrasil.registerSingleClass(Style.class, "Horse.Style");
+			
+			Variables.yggdrasil.registerSingleClass(Variant.class, "Horse.Variant");
+			Variables.yggdrasil.registerSingleClass(Color.class, "Horse.Color");
+			Variables.yggdrasil.registerSingleClass(Style.class, "Horse.Style");
+		}
 	}
 	
 	private Variant variant;

@@ -44,6 +44,10 @@ skript:
 	quotes error: Unerlaubte Verwendung von Anführungszeichen ("). Wenn du solche in "Text mit Anführungszeichen" einfügen willst, verdopple sie: "".
 	brackets error: Ungültige Anzahl/Anordnung von Klammern. Bitte sorge dafür, dass auf jede öffnende Klammer eine Schliessende folgt.
 	invalid reload: Skript darf nur mittles Bukkits '/reload' oder Skripts '/skript reload' neu geladen werden.
+	no scripts: Keine Skripte wurden gefunden, vielleicht solltest du einige schreiben ;)
+	no errors: Alle Skripte wurden fehlerfrei geladen.
+	scripts loaded: %s Skript¦¦e¦ mit total %s Trigger¦¦n¦ und %s Befehl¦¦en¦ wurden in %s geladen
+	finished loading: Skript wurde fertig geladen.
 
 # -- Skript command --
 skript command:
@@ -136,7 +140,7 @@ updater:
 	running latest version: Auf diesem Server läuft die neueste Version von Skript.
 	running latest version (beta): Auf diesem Server läuft eine <i>Beta<r>-Version von Skript, und es is keine neue <i>stabile<r> Version verfügbar. Auf neuere Beta-Versionen muss manuell aktualisiert werden!
 	update available: Eine neue Version von Skript ist verfügbar: <gold>%s<reset> (Auf diesem Server läuft Version <gold>%s<reset>)
-	downloading: Lädt Skript <gold>%s<reset> herunter...
+	downloading: Lade Skript <gold>%s<reset> herunter...
 	download in progress: Die neueste Version wird gerade heruntergeladen.
 	download error: <red>Beim Herunterladen der neuesten Version ist ein Fehler aufgetreten:<light red> %s
 	downloaded: Die neueste Version von Skript wurde heruntergeladen! Starte den Server neu oder benutze /reload um die Änderungen zu übernehmen.
@@ -160,11 +164,11 @@ hooks:
 # -- Aliases --
 aliases:
 	# regexes
-	any: irgendein(?:es?)?
-	any-skp: irgendein[e[s]]
+	any: (?:irgend(?:ein(?:es?)?|welche)|beliebige[rs]?)
+	any-skp: (irgend(ein[e[s]]|welche)|beliebige(r|s|))
 	every: (?:jede[rs]?|alle)
 	of every: von (?:jede[mr]|allen)
-	of: von(?: irgendeine[mr])?
+	of: von(?: (?:irgendeine[mr]|(?:eine[rm] )?beliebige[rmn]))?
 	# messages
 	brackets error: Klammern haben eine spezielle Bedeutung in Gegenstandsnamen und können nicht normal benutzt werden
 	invalid brackets: Ungülgige Anzahl und/oder Platzierung der Klammern '%s'
@@ -536,6 +540,9 @@ entities:
 	small fireball:
 		name: kleine¦r Feuerball¦ Feuerbälle @m
 		pattern: kleine[r] Feuerb(all|älle)
+	any fireball:
+		name: beliebige¦r Feuerball¦ Feuerbälle @m
+		pattern: (irgend(ein|welche)|beliebige[r]) Feuerb(all|älle)
 	fish:
 		name: Fisch¦e @m
 		pattern: Fisch[e]
@@ -784,7 +791,7 @@ visual effects:
 		pattern: Grasen|Gras essen
 	wolf_hearts:
 		name: Wolfherzen @x
-		pattern: wolfherzen
+		pattern: Wolfherzen
 	wolf_shake:
 		name: Wolfschütteln @n
 		pattern: Wolfschütteln

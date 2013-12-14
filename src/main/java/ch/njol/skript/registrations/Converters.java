@@ -33,7 +33,6 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ChainedConverter;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.Converter.ConverterInfo;
-import ch.njol.skript.classes.Converter.ConverterOptions;
 import ch.njol.skript.classes.Converter.ConverterUtils;
 import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.util.Pair;
@@ -81,10 +80,10 @@ public abstract class Converters {
 			final ConverterInfo<?, ?> info = converters.get(i);
 			for (int j = 0; j < converters.size(); j++) {// not from j = i+1 since new converters get added during the loops
 				final ConverterInfo<?, ?> info2 = converters.get(j);
-				if ((info.options & ConverterOptions.NO_RIGHT_CHAINING) == 0 && (info2.options & ConverterOptions.NO_LEFT_CHAINING) == 0
+				if ((info.options & Converter.NO_RIGHT_CHAINING) == 0 && (info2.options & Converter.NO_LEFT_CHAINING) == 0
 						&& info2.from.isAssignableFrom(info.to) && !converterExistsSlow(info.from, info2.to)) {
 					converters.add(createChainedConverter(info, info2));
-				} else if ((info.options & ConverterOptions.NO_LEFT_CHAINING) == 0 && (info2.options & ConverterOptions.NO_RIGHT_CHAINING) == 0
+				} else if ((info.options & Converter.NO_LEFT_CHAINING) == 0 && (info2.options & Converter.NO_RIGHT_CHAINING) == 0
 						&& info.from.isAssignableFrom(info2.to) && !converterExistsSlow(info2.from, info.to)) {
 					converters.add(createChainedConverter(info2, info));
 				}

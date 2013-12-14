@@ -29,6 +29,7 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.conditions.CondIsSet;
 import ch.njol.skript.lang.util.SimpleExpression;
@@ -165,10 +166,9 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	public int getTime();
 	
 	/**
-	 * Returns whether this value represents the default value of it's type for the event, i.e. it can be replaced with a call to event.getXyz() if one knows the event & value
-	 * type.
+	 * Returns whether this value represents the default value of its type for the event, i.e. it can be replaced with a call to event.getXyz() if one knows the event & value type.
 	 * <p>
-	 * This method might be removed in the future as it's better to check whether value == e.getXyz() for every value an expression returns.
+	 * This method might be removed in the future as it's better to check whether value == event.getXyz() for every value an expression returns.
 	 * 
 	 * @return Whether is is the return types' default expression
 	 */
@@ -186,7 +186,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * Checks whether the given 'loop-...' expression should match this loop, e.g. loop-block matches any loops that loop through blocks and loop-argument matches an
 	 * argument loop.
 	 * <p>
-	 * You should usually just return false as e.g. loop-block will automatically match the expression if it's returnType is Block or a subtype of it.
+	 * You should usually just return false as e.g. loop-block will automatically match the expression if its returnType is Block or a subtype of it.
 	 * 
 	 * @param s The entered string
 	 * @return Whether this loop matches the given string
@@ -216,6 +216,8 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	
 	/**
 	 * Tests whether this expression supports the given mode, and if yes what type it expects the <code>delta</code> to be.
+	 * <p>
+	 * <b>Use {@link ChangerUtils#acceptsChange(Expression, ChangeMode, Class...)} to test whether an expression supports changing</b>, don't directly use this method!
 	 * <p>
 	 * Please note that if a changer is registered for this expression's {@link #getReturnType() returnType} this method does not have to be overridden. If you override it though
 	 * make sure to return <tt>super.acceptChange(mode)</tt>, and to handle the appropriate ChangeMode(s) in {@link #change(Event, Object[], ChangeMode)} with

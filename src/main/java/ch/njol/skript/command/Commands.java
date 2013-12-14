@@ -76,7 +76,6 @@ import ch.njol.skript.util.Utils;
 import ch.njol.util.Callback;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
-import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -255,9 +254,9 @@ public abstract class Commands {
 			final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 			final Effect e;
 			try {
-				ScriptLoader.currentEvents = CollectionUtils.array(CommandEvent.class);
+				ScriptLoader.setCurrentEvents(CommandEvent.class);
 				e = Effect.parse(command, null);
-				ScriptLoader.currentEvents = null;
+				ScriptLoader.setCurrentEvents((Class[]) null);
 			} finally {
 				log.stop();
 			}

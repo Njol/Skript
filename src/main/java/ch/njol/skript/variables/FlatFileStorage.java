@@ -380,13 +380,17 @@ public class FlatFileStorage extends VariablesStorage {
 	 * @param map
 	 */
 	private final void save(final PrintWriter pw, final String parent, final TreeMap<String, Object> map) {
-		for (final Entry<String, Object> e : map.entrySet()) {
+		outer: for (final Entry<String, Object> e : map.entrySet()) {
 			if (e.getValue() == null)
 				continue;
 			if (e.getValue() instanceof TreeMap) {
 				save(pw, parent + e.getKey() + Variable.SEPARATOR, (TreeMap<String, Object>) e.getValue());
 			} else {
 				final String name = (e.getKey() == null ? parent.substring(0, parent.length() - Variable.SEPARATOR.length()) : parent + e.getKey());
+				for (final VariablesStorage s : Variables.storages) {
+					if (s != this && s.accept(name))
+						continue outer;
+				}
 				final Pair<String, byte[]> value = Classes.serialize(e.getValue());
 				if (value != null)
 					writeCSV(pw, name, value.first, new String(encode(value.second)));

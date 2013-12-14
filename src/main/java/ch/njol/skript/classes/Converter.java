@@ -33,13 +33,10 @@ import ch.njol.skript.registrations.Converters;
  */
 public interface Converter<F, T> {
 	
-	public static abstract class ConverterOptions {
-		private ConverterOptions() {}
-		
-		public final static int NO_LEFT_CHAINING = 1;
-		public final static int NO_RIGHT_CHAINING = 2;
-		public final static int NO_CHAINING = NO_LEFT_CHAINING | NO_RIGHT_CHAINING;
-	}
+	public final static int NO_LEFT_CHAINING = 1;
+	public final static int NO_RIGHT_CHAINING = 2;
+	public final static int NO_CHAINING = NO_LEFT_CHAINING | NO_RIGHT_CHAINING;
+	public final static int NO_COMMAND_ARGUMENTS = 4;
 	
 	/**
 	 * holds information about a converter

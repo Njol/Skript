@@ -51,11 +51,10 @@ import ch.njol.util.coll.iterator.IteratorIterable;
 @Examples("loop blocks in radius 5 around the player:")
 @Since("1.0")
 public class ExprBlockSphere extends SimpleExpression<Block> {
-	
 	static {
 		Skript.registerExpression(ExprBlockSphere.class, Block.class, ExpressionType.NORMAL,
-				"blocks in radius %number% [(of|around) %location%]",
-				"blocks around %location% in radius %number%");
+				"(all|the|) blocks in radius %number% [(of|around) %location%]",
+				"(all|the|) blocks around %location% in radius %number%");
 	}
 	
 	private Expression<Number> radius;

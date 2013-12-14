@@ -46,8 +46,8 @@ import ch.njol.util.Kleenean;
 @Name("Play Effect")
 @Description({"Plays a <a href='../classes/#visualeffect'>visual effect</a> at a given location or on a given entity.",
 		"Please note that some effects can only be played on entities, e..g wolf hearts or the hurt effect, and that these are always visible to all players."})
-@Examples({"show wolf hearts on the clicked wolf",
-		"play mob spawner flames at the targeted block to the player"})
+@Examples({"play wolf hearts on the clicked wolf",
+		"show mob spawner flames at the targeted block to the player"})
 @Since("2.1")
 public class EffVisualEffect extends Effect {
 	static {
@@ -68,7 +68,6 @@ public class EffVisualEffect extends Effect {
 		players = (Expression<Player>) exprs[3];
 		if (effects instanceof Literal) {
 			final VisualEffect[] effs = effects.getAll(null);
-			@SuppressWarnings("unused")
 			boolean hasLocationEffect = false, hasEntityEffect = false;
 			for (final VisualEffect e : effs) {
 				if (e.isEntityEffect())
@@ -80,8 +79,10 @@ public class EffVisualEffect extends Effect {
 				Skript.warning("Entity effects are visible to all players");
 			if (!hasLocationEffect && !direction.isDefault())
 				Skript.warning("Entity effects are always played on an entity");
+			if (hasEntityEffect && !Entity.class.isAssignableFrom(where.getReturnType()))
+				Skript.warning("Entity effects can only be played on entities");
 		}
-		return false;
+		return true;
 	}
 	
 	@Override

@@ -110,8 +110,8 @@ public class SkriptParser {
 		public final List<MatchResult> regexes = new ArrayList<MatchResult>(1);
 		public final String expr;
 		/**
-		 * FIXME default was -1 before
-		 * Defaults to 0. The first mark in a pattern will set this value accordingly, but any subsequent marks will be XORed with the existing value.
+		 * Defaults to 0. Any marks encountered in the pattern will be XORed with the existing value, in particular if only one mark is encountered this value will be set to that
+		 * mark.
 		 */
 		public int mark = 0;
 		
@@ -330,7 +330,7 @@ public class SkriptParser {
 				}
 			}
 			if (end != expectedEnd) {
-				log.printError("'" + lastExpr + "' is " + notOfType(types));
+				log.printError("'" + lastExpr + "' " + Language.get("is") + " " + notOfType(types));
 				return null;
 			}
 			log.printLog();
@@ -448,18 +448,20 @@ public class SkriptParser {
 			return new SkriptParser(expr.substring(1, expr.length() - 1), flags, context).parseSingleExpr(types);
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
-			final Variable<? extends T> var = parseVariable(expr, types);
-			if (var != null) {
-				if ((flags & PARSE_EXPRESSIONS) == 0) {
-					Skript.error("Variables cannot be used here.");
+			if (context != ParseContext.COMMAND && context != ParseContext.CONFIG) {
+				final Variable<? extends T> var = parseVariable(expr, types);
+				if (var != null) {
+					if ((flags & PARSE_EXPRESSIONS) == 0) {
+						Skript.error("Variables cannot be used here.");
+						log.printError();
+						return null;
+					}
+					log.printLog();
+					return var;
+				} else if (log.hasError()) {
 					log.printError();
 					return null;
 				}
-				log.printLog();
-				return var;
-			} else if (log.hasError()) {
-				log.printError(null);
-				return null;
 			}
 			log.clear();
 			if ((flags & PARSE_EXPRESSIONS) != 0) {
@@ -483,14 +485,14 @@ public class SkriptParser {
 							return r;
 						}
 					}
-					log.error(e.toString(null, false) + " is " + notOfType(types), ErrorQuality.NOT_AN_EXPRESSION);
-					log.printError(null);
+					log.error(e.toString(null, false) + " " + Language.get("is") + " " + notOfType(types), ErrorQuality.NOT_AN_EXPRESSION);
+					log.printError();
 					return null;
 				}
 				log.clear();
 			}
 			if ((flags & PARSE_LITERALS) == 0) {
-				log.printError(null);
+				log.printError();
 				return null;
 			}
 			if (types[0] == Object.class) {
@@ -576,8 +578,6 @@ public class SkriptParser {
 	
 	/**
 	 * Prints parse errors (i.e. must start a ParseLog before calling this method)
-	 * <p>
-	 * FIXME tries to parse entitydata as player which is definitely not desired, especially since it prints an unrelated error message
 	 */
 	public static boolean parseArguments(final String args, final ScriptCommand command, final ScriptCommandEvent event) {
 		final SkriptParser parser = new SkriptParser(args, PARSE_LITERALS, ParseContext.COMMAND);
@@ -587,7 +587,6 @@ public class SkriptParser {
 		
 		final List<Argument<?>> as = command.getArguments();
 		assert as.size() == res.exprs.length;
-		
 		for (int i = 0; i < res.exprs.length; i++) {
 			if (res.exprs[i] == null)
 				as.get(i).setToDefault(event);
@@ -714,11 +713,17 @@ public class SkriptParser {
 	 * @return The number of unescaped occurrences of the given character
 	 */
 	static int countUnescaped(final String pattern, final char c) {
+		return countUnescaped(pattern, c, 0, pattern.length());
+	}
+	
+	static int countUnescaped(final String pattern, final char c, final int start, final int end) {
+		assert start >= 0 && start <= end && end <= pattern.length() : start + ", " + end + "; " + pattern.length();
 		int r = 0;
-		for (int i = 0; i < pattern.length(); i++) {
-			if (pattern.charAt(i) == '\\') {
+		for (int i = start; i < end; i++) {
+			final char x = pattern.charAt(i);
+			if (x == '\\') {
 				i++;
-			} else if (pattern.charAt(i) == c) {
+			} else if (x == c) {
 				r++;
 			}
 		}
@@ -934,7 +939,7 @@ public class SkriptParser {
 										@SuppressWarnings("unchecked")
 										final Expression<?> e = new SkriptParser(expr.substring(i, i2), flags & vi.flagMask, context).parseExpression(vi.classes[k].getC());
 										if (e != null) {
-											if (!vi.isPlural[k] && !((Expression<?>) e).isSingle()) {
+											if (!vi.isPlural[k] && !e.isSingle()) {
 												if (context == ParseContext.COMMAND) {
 													Skript.error(Commands.m_too_many_arguments.toString(vi.classes[k].getName().getIndefiniteArticle(), vi.classes[k].getName().toString()), ErrorQuality.SEMANTIC_ERROR);
 													return null;
@@ -950,14 +955,14 @@ public class SkriptParser {
 													Skript.error("Cannot use time states after the event has already passed", ErrorQuality.SEMANTIC_ERROR);
 													return null;
 												}
-												if (!((Expression<?>) e).setTime(vi.time)) {
+												if (!e.setTime(vi.time)) {
 													Skript.error(e + " does not have a " + (vi.time == -1 ? "past" : "future") + " state", ErrorQuality.SEMANTIC_ERROR);
 													return null;
 												}
 											}
 											log2.printLog();
 											log.printLog();
-											res.exprs[StringUtils.count(pattern, '%', 0, j - 1) / 2] = e;
+											res.exprs[countUnescaped(pattern, '%', 0, j) / 2] = e;
 											return res;
 										}
 									}

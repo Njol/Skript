@@ -21,12 +21,12 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
-import org.bukkit.entity.Sheep;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Colorable;
+import org.bukkit.material.MaterialData;
 
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -58,12 +58,11 @@ public class ExprColorOf extends SimplePropertyExpression<Object, Color> {
 	public Color convert(final Object o) {
 		if (o instanceof ItemStack || o instanceof Item) {
 			final ItemStack is = o instanceof ItemStack ? (ItemStack) o : ((Item) o).getItemStack();
-			if (is.getType() == Material.WOOL)
-				return Color.byWool(is.getDurability());
-			if (is.getType() == Material.INK_SACK)
-				return Color.byDye(is.getDurability());
-		} else if (o instanceof Sheep) {
-			return Color.byWoolColor(((Sheep) o).getColor());
+			final MaterialData d = is.getData();
+			if (d instanceof Colorable)
+				return Color.byWoolColor(((Colorable) d).getColor());
+		} else if (o instanceof Colorable) { // Sheep
+			return Color.byWoolColor(((Colorable) o).getColor());
 		}
 		return null;
 	}
@@ -78,6 +77,8 @@ public class ExprColorOf extends SimplePropertyExpression<Object, Color> {
 		return Color.class;
 	}
 	
+	boolean changeItemStack = false;
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<?>[] acceptChange(final ChangeMode mode) {
@@ -87,8 +88,10 @@ public class ExprColorOf extends SimplePropertyExpression<Object, Color> {
 			return CollectionUtils.array(Color.class);
 		if (!getExpr().isSingle())
 			return null;
-		if (ChangerUtils.acceptsChange(getExpr(), mode, ItemStack.class, ItemType.class))
+		if (ChangerUtils.acceptsChange(getExpr(), mode, ItemStack.class, ItemType.class)) {
+			changeItemStack = ChangerUtils.acceptsChange(getExpr(), mode, ItemStack.class);
 			return CollectionUtils.array(Color.class);
+		}
 		return null;
 	}
 	
@@ -104,23 +107,22 @@ public class ExprColorOf extends SimplePropertyExpression<Object, Color> {
 		for (final Object o : os) {
 			if (o instanceof ItemStack || o instanceof Item) {
 				final ItemStack is = o instanceof ItemStack ? (ItemStack) o : ((Item) o).getItemStack();
-				if (is.getType() == Material.WOOL)
-					is.setDurability((c).getWool());
-				else if (is.getType() == Material.INK_SACK)
-					is.setDurability((c).getDye());
+				final MaterialData d = is.getData();
+				if (d instanceof Colorable)
+					((Colorable) d).setColor(c.getWoolColor());
 				else
 					continue;
 				
 				if (o instanceof ItemStack) {
-					if (ChangerUtils.acceptsChange(getExpr(), mode, ItemStack.class))
+					if (changeItemStack)
 						getExpr().change(e, new ItemStack[] {is}, mode);
 					else
 						getExpr().change(e, new ItemType[] {new ItemType(is)}, mode);
 				} else {
 					((Item) o).setItemStack(is);
 				}
-			} else if (o instanceof Sheep) {
-				((Sheep) o).setColor((c).getWoolColor());
+			} else if (o instanceof Colorable) {
+				((Colorable) o).setColor((c).getWoolColor());
 			}
 		}
 	}

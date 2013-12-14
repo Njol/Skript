@@ -36,6 +36,7 @@ import ch.njol.skript.lang.Trigger;
 @SuppressWarnings("serial")
 public class EvtScript extends SelfRegisteringSkriptEvent {
 	static {
+		// FIXME remove #script_load from the database
 		Skript.registerEvent("Script Load/Unload", EvtScript.class, ScriptEvent.class, "[script] (load|init|enable)", "[script] (unload|stop|disable)")
 				.description("Called directly after the trigger is loaded, or directly before the whole script is unloaded.")
 				.examples("on load:",

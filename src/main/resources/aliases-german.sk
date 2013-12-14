@@ -10,8 +10,8 @@
 #   bitte melde dich bei mir (njol@gmx.ch) falls du beim Übersetzen helfen möchtest :)
 #
 
-item = item¦s @n
-block = bl¦ock¦öcke @m
+item = Gegenst¦and¦ände @m
+block = Bl¦ock¦öcke @m
 
 aliases = Standardnamen, Sammlungen, eigene Namen
 
@@ -22,20 +22,20 @@ Sammlungen:
 	# === Sammlungen ===
 
 	# Erze
-	Erz¦e = Kohlenerz, Eisenerz, Golderz, Diamanterz, Lapiserz, jedes Rotsteinerz
+	Erz¦e = Kohlenerz, Eisenerz, Golderz, Diamanterz, Lapiserz, beliebiges Rotsteinerz
 	# Bennmaterialien für Schmelzöfen
-	Brennmaterial¦ien = Lavaeimer, Lohenstab, Kohle, Holzkohle, Planke, Bammstamm, grosser Pilz, Werkbank, Zaun, Holztreppe, Falltür, Setzling, Stock, Kiste, verschlossene Kiste, Musikbox, Notenblock
+	Brennmaterial¦ien = Lavaeimer, Lohenstab, Kohle, Holzkohle, Planke, Baumstamm, grosser Pilz, Werkbank, Zaun, Holztreppe, Falltür, Setzling, Stock, Kiste, verschlossene Kiste, Musikbox, Notenblock
 
 	# Essen exkl. Kuchen
-	Essen = jeder Apfel, Pilzsuppe, Brot, jedes Schweinefleisch, jeder Fisch, Keks, Melonenschnitz, jedes Rindfleisch, jedes Huhn, verrottetes Fleisch
+	Essen = beliebiger Apfel, Pilzsuppe, Brot, beliebiges Schweinefleisch, beliebiger Fisch, Keks, Melonenschnitz, beliebiges Rindfleisch, beliebiges Huhn, verrottetes Fleisch
 	# die gleiche Liste ohne rohes & verrottetes Fleisch
-	gesundes Essen = jeder Apfel, Pilzsuppe, Brot, gekochtes Schweinefleisch, gekochter Fisch, Keks, Melonenschnitz, gekochtes Rindfleisch, gekochtes Huhn
+	gesundes Essen = beliebiger Apfel, Pilzsuppe, Brot, gekochtes Schweinefleisch, gekochter Fisch, Keks, Melonenschnitz, gekochtes Rindfleisch, gekochtes Huhn
 
 	# Transportmittel
-	Transportmittel = jede Lore, Boot
+	Transportmittel = beliebige Lore, Boot
 
 	# Pflanzen ohne Kürbisse & Melonen
-	Pflanze¦n = Blätter, jedes hohe Gras, toter Busch, jede Blume, jeder Pilz, Seerose, Rebe, Melonenstiel, Kürbisstiel, Netherwarze
+	Pflanze¦n = Blätter, beliebiges hohes Gras, toter Busch, beliebige Blume, beliebiger Pilz, Seerose, Rebe, Melonenstiel, Kürbisstiel, Netherwarze
 
 
 Standardnamen:
@@ -183,18 +183,18 @@ Standardnamen:
 	{wood type}Setzling¦e @m = 6
 	{wood type}[Holz]Planke¦n @f = 5
 	
-	{log direction no default} {tree type}(St¦amm¦ämme @m|H¦olz¦ölzer @n) = 17
-	{log direction} {tree type}(Stamm|Holz) <item/block> = 17
+	{log direction no default} {tree type}([Baum]St¦amm¦ämme @m|H¦olz¦ölzer @n) = 17
+	{log direction} {tree type}([Baum]Stamm|Holz) <item/block> = 17
 	{tree type}Blätter @x = 18
 	[<any>] permanente {tree type}Blätter @x = 18:4-7, 18:12-15
 
-	{log direction no default} {tree type 2}(St¦amm¦ämme @m|H¦olz¦ölzer @n) = 162
-	{log direction} {tree type 2}(Stamm|Holz) <item/block> = 162
+	{log direction no default} {tree type 2}([Baum]St¦amm¦ämme @m|H¦olz¦ölzer @n) = 162
+	{log direction} {tree type 2}([Baum]Stamm|Holz) <item/block> = 162
 	{tree type 2}Blätter @x = 161
 	[<any>] permanente {tree type 2}Blätter @x = 161:4-7, 161:12-15
 
-	{log direction no default} (St¦amm¦ämme @m|H¦olz¦ölzer @n) = 17, 161
-	{log direction} (Stamm|Holz) <item/block> = 17, 161
+	{log direction no default} ([Baum]St¦amm¦ämme @m|H¦olz¦ölzer @n) = 17, 161
+	{log direction} ([Baum]Stamm|Holz) <item/block> = 17, 161
 	[<any>] Blätter @x = 18:0-15, 161:0-15
 	[<any>] permanente Blätter @x = 18:4-7, 18:12-15, 161:4-7, 161:12-15
 
@@ -309,28 +309,30 @@ Standardnamen:
 	
 	Löwenzahn @m = 37
 	gelbe Blume¦n @f = 37
-	Rose¦n @f = 38
-	rote Rose¦n @f = 38
-	rote Blume¦n @f = 38
-	popp¦y¦ies = 38:0
-	blue orchid¦s = 38:1
-	allium¦s = 38:2
-	azure bluet¦s = 38:3
-	red tulip¦s = 38:4
-	orange tulip¦s = 38:5
-	white tulip¦s = 38:6
-	pink tulip¦s = 38:7
-	oxeye dais¦y¦ies = 38:8
-	[<any>] small flower¦s = 37, 38:0-8
+	Rose¦n @f = 38:0
+	rote Rose¦n @f = 38:0
+	rote Blume¦n @f = 38:0
+	Mohn @m = 38:0
+	[blaue] Orchidee¦n @f = 38:1
+	[Stern]Lauch @m = 38:2
+	Porzellansternchen @n = 38:3
+	rote Tulpe¦n @f = 38:4
+	orange Tulpe¦n @f = 38:5
+	weisse Tulpe¦n @f = 38:6
+	(lila|rosa) Tulpe¦n @f = 38:7
+	Margerite¦n @f = 38:8
+	Ochsenauge = 38:8
+	Sonnenauge = 38:8
+	[<any>] kleine Blume¦n = 37, 38:0-8
 	
-	sunflower¦s = 175:0
-	lilac¦s = 175:1
-	rose bush¦es = 175:4
-	peon¦y¦ies = 175:5
-	[<any>] large flower = 175:0-1, 175:4-5
-	[<any>] large plant = 175:0-5
+	Sonnenblume¦n @f = 175:0
+	Flieder @m = 175:1
+	Rosenb¦usch¦üsche @m = 175:4
+	Pfingstrose¦n @f = 175:5
+	[<any>] grosse Blume¦n = 175:0-1, 175:4-5
+	[<any>] grosse Pflanze¦n = 175:0-5
 	
-	[<any>] flower = any small flower, any large flower
+	[<any>] Blume¦n = kleine Blume, grosse Blume
 	
 	Pilz¦e @m = 39, 40
 	braune¦r Pilz¦ Pilze @m = 39
@@ -348,6 +350,7 @@ Standardnamen:
 	Kübrislaterne¦n @f = 91
 	leuchtende¦r¦¦ Kürbis¦¦se¦ @m = 91
 	Kürbispflanze¦n @f = 104
+	Kürbisstiel¦e @m = 104
 	Kürbissame¦n @m = 361
 	Kürbiskuchen @m = 400
 	
@@ -355,6 +358,7 @@ Standardnamen:
 	Melonen<block> = 103
 	Melonenschnitz¦e @m = 360
 	Melonenpflanze¦n @f = 105
+	Melonenstiel¦e @m = 105
 	Melonensame¦n @m = 362
 	
 	Rebe¦n @f = 106
@@ -555,8 +559,8 @@ Standardnamen:
 
 
 	# -- TNT --
-	TNT¦s = 46
-	dynamite = 46
+	TNT¦s @n = 46
+	Dynamit @m = 46
 
 
 	# -- bookshelf --
@@ -567,26 +571,25 @@ Standardnamen:
 
 
 	# -- obsidian --
-	obsidian = 49
+	Obsidian @m = 49
 
 
 	# -- torch --
 	{torch}: #also used for redstone torches
-		ground = :5
-		floor = :5
-		wall = :1-4
-	{torch} torch¦es = 50
+		Boden = :5
+		Wand = :1-4
+	{torch}Fackel¦n @f = 50
 
 
 	# -- fire --
-	fire¦s = 51
+	Feuer @n = 51
 	(eternal|infinite) fire¦s = 51:15 #never tested this myself
 	finite fire¦s = 51:0-14
 	(new|fresh) fire¦s = 51:0
 
 
 	# -- monster spawner --
-	monster spawner¦s = 52
+	Monsterspawner @m = 52
 	mob spawner¦s = 52
 
 
@@ -619,9 +622,10 @@ Standardnamen:
 
 
 	# -- chest --
-	chest¦s = 54
-	ender chest¦s = 130
-	trapped chest¦s = 146
+	Truhe¦n @f = 54
+	Endertruhe¦n @f = 130
+	Redstonetruhe¦n = 146
+	Rotsteintruhe¦n = 146
 
 
 	# -- redstone wire: see redstone
@@ -631,8 +635,8 @@ Standardnamen:
 
 
 	# -- crafting table --
+	Werkb¦ank¦änke @f = 58
 	crafting table¦s = 58
-	workbench¦es = 58
 
 
 	# -- crops / wheat --
@@ -715,7 +719,7 @@ Standardnamen:
 	active [redstone] wire¦s = redstone wire on
 	inactive [redstone] wire¦s = redstone wire off
 
-	redstone ore¦s = 73, 74
+	Rotsteinerz¦e = 73, 74
 	(active|glowing) redstone ore¦s = 74
 	(inactive|non-glowing) redstone ore¦s = 73
 	redstone ore¦ on¦s on = 74
@@ -859,7 +863,7 @@ Standardnamen:
 
 
 	# -- fence --
-	fence¦s = 85
+	Z¦aun¦äune @m = 85
 
 
 	# -- pumpkin & lack-o-lantern: see vegetation
@@ -1103,37 +1107,37 @@ Standardnamen:
 	# ====== Items ======
 
 	# -- flint and steel --
-	flint and steel¦s = 259
-	flint'n'steel¦s = 259
+	Feuerzeug¦e @n = 259
 
 
 	# -- apples --
-	any apple¦s = 260, 322:0-1
-	[red] apple¦s = 260
-	golden apple¦s = 322:0-1
-	golden apple item¦s = 322:0
-	enchanted golden apple¦s = 322:1
+	<any> ¦A¦Ä¦pfel @m = 260, 322:0-1
+	¦A¦Ä¦pfel @m = 260
+	rote¦r A¦ Ä¦pfel @m = 260
+	goldene¦r A¦ Ä¦pfel @m = 322:0-1
+	goldene¦r A¦ Ä¦pfel <item> = 322:0
+	verzauberte¦r¦¦ goldene¦r A¦ Ä¦pfel @m = 322:1
 
 
 	# -- bow & arrow --
-	bow¦s = 261
-	arrow¦s = 262
+	B¦o¦ö¦gen @m = 261
+	Pfeil¦e @m = 262
 
 
 	# -- coal --
-	<any> coal = 263:0-1
-	charcoal = 263:1
-	coal = 263:0, 173
-	coal <item> = 263:0
-	coal <block> = 173
-	block¦¦s¦ of coal = 173
+	<any> Kohle @f = 263:0-1
+	Holzkohle @f = 263:1
+	Kohle @f = 263:0, 173
+	Kohle <item> = 263:0
+	Kohle <block> = 173
+	Kohlenblock @m = 173
 
 
 	# -- diamond & ingots --
-	diamond¦s = 264
-	iron (ingot|bar)¦s = 265
-	gold[en] (ingot|bar)¦s = 266
-	(ingot|bar)¦s = 265, 266
+	Diamant¦en @m = 264
+	Eisenbarren @m = 265
+	Goldbarren @m = 266
+	Barren @m = 265, 266
 
 
 	# -- tools --
@@ -1182,29 +1186,29 @@ Standardnamen:
 
 
 	# -- stick --
-	stick¦s = 280
+	St¦ock¦öcke @m = 280
 
 
 	# -- bowl & stew --
-	[empty] bowl¦s = 281
-	[mushroom] (stew|soup)¦s = 282
+	Schüssel¦n @f = 281
+	leere Schüssel¦n @f = 281
+	[Pilz]Suppe¦n @f = 282
 
 
 	# -- string --
-	string¦s = 287
+	F¦a¦ä¦den @m = 287
 
 
 	# -- feather --
-	feather¦s = 288
+	Feder¦n @f = 288
 
 
 	# -- gunpowder --
-	gunpowder = 289
-	sulphur = 289
+	Schwarzpulver @n = 289
 
 
 	# -- wheat & seeds: see crops / wheat
-	bread¦s = 297
+	Brot¦e @n = 297
 
 
 	# -- armour --
@@ -1246,19 +1250,19 @@ Standardnamen:
 
 
 	# -- flint --
-	flint¦s = 318
+	Feuerstein¦e @m = 318
 
 
 	# -- porkchop --
-	[any] pork[chop]¦s = 319, 320
-	pork[chop] item¦s = 319
-	raw pork[chop]¦s = 319
-	(cooked|grilled) pork[chop]¦s = 320
+	[<any>] Schweinefleisch @n = 319, 320
+	Schweinefleisch <item> = 319
+	rohes Schweinefleisch @n = 319
+	(gekochtes|gebratenes) Schweinefleisch @n = 320
 
 
 	# -- painting --
-	painting¦s = 321
-	painting item¦s = 321
+	Bild¦er @n = 321
+	Gemälde @n = 321
 
 
 	# -- golden apple: see apples
@@ -1271,17 +1275,16 @@ Standardnamen:
 
 
 	# -- buckets --
-	[empty] bucket¦s = 325
-	water bucket¦s = 326
-	bucket¦¦s¦ of water = 326
-	lava bucket¦s = 327
-	bucket¦¦s¦ of lava = 327
-	milk [bucket¦s] = 335
-	bucket¦¦s¦ of milk = 335
+	Eimer @m = 325
+	leere[r] Eimer @m = 325
+	Wassereimer @m = 326
+	Lavaeimer @m = 327
+	Milch @f = 335
+	Milcheimer @m = 335
 
 
 	# -- minecarts --
-	[<any>] minecart¦s = 328, 342, 343
+	[<any>] Lore¦n @f = 328, 342, 343
 	minecart item¦s = 328
 	storage minecart¦s = 342
 	minecart¦¦s¦ with chest = 342
@@ -1297,27 +1300,28 @@ Standardnamen:
 
 
 	# -- saddle --
-	saddle¦s = 329
+	S¦a¦ä¦ttel @m = 329
 
 
 	# -- iron door: see doors
 
 
 	# -- redstone dust --
-	redstone = 331
-	redstone dust = 331
+	Rotstein @m = 331
+	Rotsteinstaub @m = 331
+	Redstone @m = 331
 
 
 	# -- snowball --
-	snowball¦s = 332
+	Schneeb¦all¦älle @m = 332
 
 
 	# -- boat --
-	boat¦s = 333
+	Boot¦e @n = 333
 
 
 	# -- leather --
-	leather = 334
+	Leder @n = 334
 
 
 	# -- milk: see buckets
@@ -1344,42 +1348,49 @@ Standardnamen:
 
 
 	# -- [chicken] egg --
-	egg¦s = 344
-	[chicken] egg¦s = 344
+	Ei¦er @n = 344
+	Hühnerei¦er @n = 344
 
 
 	# -- compass --
-	compass¦es = 345
+	Kompass¦e @m = 345
 
 
 	# -- fishing rod --
-	fishing rod¦s = 346
+	Angel¦n @f = 346
+	Fischerrute @f = 346
 
 
 	# -- clock --
-	clock¦s = 347
+	Uhr¦rn @f = 347
 
 
 	# -- glowstone dust --
-	glowstone dust = 348
+	Glühsteinstaub @m = 348
 
 
 	# -- fish --
-	[any] fish¦es = 349, 350
-	fish item¦s = 349
-	raw fish¦es = 349
-	cooked fish¦es = 350
+	{Fisch}:
+		{default} = #-#
+		Fisch¦e @m = :0
+		Lachs¦e @m = :1
+		Clownfisch¦e @m = :2
+		Kugelfisch¦e @m = :3
+	[<any>] {Fisch} = 349, 350
+	{Fisch} <item> = 349
+	rohe¦r¦¦ {Fisch} = 349
+	(gekochte|gebratene)¦r¦¦ {Fisch} = 350
 
 
 	# -- dyes: see wool & dyes
 
 
 	# -- bone --
-	bone¦s = 352
+	Knochen @m = 352
 
 
 	# -- sugar --
-	sugar = 353
+	Zucker @m = 353
 
 
 	# -- cake: see cake block
@@ -1392,57 +1403,57 @@ Standardnamen:
 
 
 	# -- cookie --
-	cookie¦s = 357
+	Keks¦e @m = 357
 
 
 	# -- map --
-	map¦s = 358
-	any map¦s = 358:0-32767
-	empty map¦s = 395
+	Karte¦n @f = 358
+	<any> Karte¦n @f = 358:0-32767
+	leere Karte¦n @f = 395
 	# You can get a specific map with map:#, e.g. map:0 for map_0 (the first map crafted)
 	# (The maximum map number is 65536, but Skript currently only supports numbers up to 32767)
 
 
 	# -- shears --
-	shears = 359
+	Schere¦n @f = 359
 
 
 	# -- melon slice, pumpkin seeds & melon seeds: see vegetation
 
 
 	# -- beef --
-	[any] beef = 363, 364
-	beef item¦s = 363, 364
-	[raw] beef = 363
-	steak¦s = 364
-	cooked beef = 364
+	[<any>] Rindfleisch = 363, 364
+	Rindfleisch <item> = 363, 364
+	[rohes] Rindfleisch = 363
+	Steak¦s = 364
+	(gekochtes|gebratenes) Rindfleisch = 364
 
 
 	# -- chicken --
-	[any] chicken¦s = 365, 366
-	chicken item¦s = 365
-	raw chicken¦s = 365
-	cooked chicken¦s = 366
+	[<any>] (Huhn|Hühnchen) @- = 365, 366
+	(Huhn|Hühnchen) <item> = 365
+	rohes (Huhn|Hühnchen) @- = 365
+	(gekochte|gebratene)¦s¦¦ (Huhn|Hühnchen) @- = 366
 
 
 	# -- rotten flesh --
-	rotten flesh = 367
+	verrottetes Fleisch @n = 367
 
 
 	# -- ender pearl --
-	ender pearl¦s = 368
+	Enderperle¦n @f = 368
 
 
 	# -- blaze rod --
-	blaze rod¦s = 369
+	Lohenst¦ab¦äbe @m = 369
 
 
 	# -- ghast tear --
-	ghast tear¦s = 370
+	Ghastträne¦n @f = 370
 
 
 	# -- gold nugget --
-	gold nugget¦s = 371
+	[Gold]Nugget¦s @n = 371
 
 
 	# -- nether wart: see vegetation
@@ -1500,12 +1511,12 @@ Standardnamen:
 
 
 	# -- spider eye & fermented spider eye --
-	spider eye¦s = 375
+	Spinnenauge¦n @n = 375
 	fermented spider eye¦s = 376
 
 
 	# -- blaze powder --
-	blaze powder = 377
+	Lohenpulver @m = 377
 
 
 	# -- magma cream --
@@ -1575,7 +1586,7 @@ Standardnamen:
 
 
 	# -- emerald --
-	emerald¦s = 388
+	Smaragd¦e @m = 388
 
 
 	# -- item frame --
@@ -1601,19 +1612,19 @@ Standardnamen:
 
 
 	# -- nether star --
-	nether star¦s = 399
+	Netherstern¦e @m = 399
 
 
 	# -- pumpkin pie: see vegetation --
 
 
 	# -- Fireworks --
-	firework rocket¦s = 401
-	firework star¦s = 402
+	Feuerwerksrakete¦n @f = 401
+	Feuerwerksstern¦e @m = 402
 
 
 	# -- Enchanted Book --
-	enchanted book¦s = 403
+	verzauberte¦s¦¦ B¦uch¦ücher @n = 403
 
 	
 	# -- redstone comparator: see redstone

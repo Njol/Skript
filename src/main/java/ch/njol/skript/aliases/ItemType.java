@@ -931,6 +931,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		int result = 1;
 		result = prime * result + (all ? 1231 : 1237);
 		result = prime * result + amount;
+		result = prime * result + ((enchantments == null) ? 0 : enchantments.hashCode());
 		result = prime * result + ((meta == null) ? 0 : meta.hashCode());
 		result = prime * result + ((types == null) ? 0 : types.hashCode());
 		return result;
@@ -948,6 +949,11 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		if (all != other.all)
 			return false;
 		if (amount != other.amount)
+			return false;
+		if (enchantments == null) {
+			if (other.enchantments != null)
+				return false;
+		} else if (!enchantments.equals(other.enchantments))
 			return false;
 		if (meta == null) {
 			if (other.meta != null)
@@ -1087,6 +1093,10 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	
 	@Override
 	public void deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
+		enchantments = fields.getAndRemoveObject("enchantments", Map.class);
+		meta = fields.getAndRemoveObject("meta", Object.class);
+		if (meta != null && !(meta instanceof ItemMeta))
+			throw new StreamCorruptedException();
 		fields.setFields(this, Variables.yggdrasil);
 	}
 	

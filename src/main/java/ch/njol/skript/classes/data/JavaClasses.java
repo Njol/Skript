@@ -542,6 +542,7 @@ public class JavaClasses {
 					public String parse(final String s, final ParseContext context) {
 						switch (context) {
 							case DEFAULT: // in DEFAULT, parsing is handled by VariableString
+								assert false;
 								return null;
 							case CONFIG: // duh
 								return s;
@@ -550,7 +551,7 @@ public class JavaClasses {
 									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
 								return null;
 							case COMMAND:
-								return s; // TODO document this
+								return s; // FIXME document this
 						}
 						assert false;
 						return null;
@@ -558,6 +559,8 @@ public class JavaClasses {
 					
 					@Override
 					public boolean canParse(final ParseContext context) {
+						if (context == ParseContext.DEFAULT)
+							return false;
 						return true;
 					}
 					
