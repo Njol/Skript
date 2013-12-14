@@ -238,8 +238,12 @@ public abstract class Variables implements Closeable {
 		variables.setVariable(name, value);
 		
 		for (final VariablesStorage s : storages) {
-			if (s == source)
-				continue;
+			if (s == source) {
+				if (s.accept(name))
+					break;
+				else
+					continue;
+			}
 			if (s.accept(name)) {
 				s.save(serialize(name, value));
 				break;

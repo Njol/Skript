@@ -47,6 +47,7 @@ import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
+import ch.njol.util.Pair;
 
 /**
  * FIXME test this
@@ -169,18 +170,18 @@ public class DatabaseStorage extends VariablesStorage {
 			monitorQuery = ((Database) db).prepare("SELECT " + SELECT_ORDER + " FROM " + TABLE_NAME + " WHERE rowid > ? AND update_guid != ?");
 			monitorCleanUpQuery = ((Database) db).prepare("DELETE FROM " + TABLE_NAME + " WHERE value IS NULL AND rowid < ?");
 			
+			final boolean hasOldTable = ((Database) db).isTable(OLD_TABLE_NAME);
+			final boolean hadNewTable = ((Database) db).isTable(TABLE_NAME);
+			
 			// old
-			boolean hasOldDatabase = false;
 			Statement old = null;
 			try {
-				
 				old = ((Database) db).getConnection().createStatement();
-				if (((Database) db).isTable(OLD_TABLE_NAME) && old.execute("SELECT " + SELECT_ORDER + " FROM " + OLD_TABLE_NAME)) {
+				if (hasOldTable && !hadNewTable && old.execute("SELECT " + SELECT_ORDER + " FROM " + OLD_TABLE_NAME)) {
 					ResultSet r = null;
 					try {
 						r = old.getResultSet();
-						if (oldLoadVariables(r))
-							hasOldDatabase = true;
+						oldLoadVariables(r);
 					} finally {
 						if (r != null)
 							r.close();
@@ -195,7 +196,7 @@ public class DatabaseStorage extends VariablesStorage {
 				}
 			}
 			
-			// new - loaded even if an old version is found, as dropping the table might have been denied
+			// new
 			Statement s = null;
 			try {
 				s = ((Database) db).getConnection().createStatement();
@@ -217,22 +218,28 @@ public class DatabaseStorage extends VariablesStorage {
 			}
 			
 			// store old variables in new table and delete the old table
-			if (hasOldDatabase) {
-				Skript.info("[2.1] Updating the database '" + name + "' to the new format...");
-				try {
-					Variables.getReadLock().lock();
-					for (final Entry<String, Object> v : Variables.getVariablesHashMap().entrySet()) {
-						if (accept(v.getKey())) // only one database was possible, so only checking this database is correct
-							save(Variables.serialize(v.getKey(), v.getValue()));
+			if (hasOldTable) {
+				if (!hadNewTable) {
+					Skript.info("[2.1] Updating the database '" + name + "' to the new format...");
+					try {
+						Variables.getReadLock().lock();
+						for (final Entry<String, Object> v : Variables.getVariablesHashMap().entrySet()) {
+							if (accept(v.getKey())) {// only one database was possible, so only checking this database is correct
+								final Pair<String, Pair<String, byte[]>> var = Variables.serialize(v.getKey(), v.getValue());
+								save(var.first, var.second.first, var.second.second);
+							}
+						}
+						Skript.info("Updated " + Variables.getVariablesHashMap().size() + " variables");
+					} finally {
+						Variables.getReadLock().unlock();
 					}
-					Skript.info("Updated " + Variables.getVariablesHashMap().size() + " variables");
-				} finally {
-					Variables.getReadLock().unlock();
 				}
 				Statement drop = null;
 				try {
 					boolean error = false;
 					try {
+						disconnect(); // prevents SQLITE_LOCKED error
+						connect();
 						drop = ((Database) db).getConnection().createStatement();
 						drop.execute("DROP TABLE " + OLD_TABLE_NAME);
 					} catch (final SQLException e) {
@@ -248,7 +255,8 @@ public class DatabaseStorage extends VariablesStorage {
 						} catch (final SQLException e) {}
 					}
 				}
-				Skript.info("Database '" + name + "' successfully updated.");
+				if (!hadNewTable)
+					Skript.info("Database '" + name + "' successfully updated.");
 			}
 		} catch (final SQLException e) {
 			sqlException(e);
@@ -299,8 +307,9 @@ public class DatabaseStorage extends VariablesStorage {
 	
 	@Override
 	protected void connect() {
-		if (((Database) db).isConnected())
-			return;
+		// isConnected doesn't work in SQLite
+//		if (((Database) db).isConnected())
+//			return;
 		if (!((Database) db).open()) {
 			Skript.exception("Cannot reconnect to the database '" + name + "'!"); // shouldn't ever happen as this is only used for SQLite
 		}
@@ -308,8 +317,8 @@ public class DatabaseStorage extends VariablesStorage {
 	
 	@Override
 	protected void disconnect() {
-		if (((Database) db).isConnected())
-			((Database) db).close();
+//		if (((Database) db).isConnected())
+		((Database) db).close();
 	}
 	
 	private PreparedStatement writeQuery, deleteQuery, monitorQuery;
@@ -463,11 +472,9 @@ public class DatabaseStorage extends VariablesStorage {
 	final static LinkedList<OldVariableInfo> oldSyncDeserializing = new LinkedList<OldVariableInfo>();
 	
 	@Deprecated
-	private boolean oldLoadVariables(final ResultSet r) throws SQLException {
-		boolean hasRow = false;
+	private void oldLoadVariables(final ResultSet r) throws SQLException {
 		synchronized (oldSyncDeserializing) {
 			while (r.next()) {
-				hasRow = true;
 				int i = 1;
 				final String name = r.getString(i++);
 				final String type = r.getString(i++);
@@ -513,7 +520,6 @@ public class DatabaseStorage extends VariablesStorage {
 				});
 			}
 		}
-		return hasRow;
 	}
 	
 	static void sqlException(final SQLException e) {
