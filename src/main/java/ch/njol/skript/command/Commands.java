@@ -468,7 +468,7 @@ public abstract class Commands {
 	}
 	
 	/**
-	 * copied from CraftBukkit ({@link org.bukkit.craftbukkit.help.CommandAliasHelpTopic})
+	 * copied from CraftBukkit (org.bukkit.craftbukkit.help.CommandAliasHelpTopic)
 	 */
 	public final static class CommandAliasHelpTopic extends HelpTopic {
 		

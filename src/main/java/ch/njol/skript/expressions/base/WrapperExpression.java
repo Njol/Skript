@@ -29,6 +29,7 @@ import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.SyntaxElement;
 import ch.njol.skript.lang.util.ConvertedExpression;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.registrations.Converters;
@@ -36,7 +37,7 @@ import ch.njol.util.Kleenean;
 
 /**
  * Represents an expression which is a wrapper of another one. Remember to set the wrapped expression in the constructor ({@link #WrapperExpression(SimpleExpression)})
- * or with {@link #setExpr(Expression)} in {@link #init(Expression[], int, Kleenean, ParseResult)}.<br/>
+ * or with {@link #setExpr(Expression)} in {@link SyntaxElement#init(Expression[], int, Kleenean, ParseResult) init()}.<br/>
  * If you override {@link #get(Event)} you must override {@link #iterator(Event)} as well.
  * 
  * @author Peter Güttinger

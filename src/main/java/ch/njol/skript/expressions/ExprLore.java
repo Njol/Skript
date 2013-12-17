@@ -21,11 +21,12 @@
 
 package ch.njol.skript.expressions;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -44,15 +45,18 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Math2;
 import ch.njol.util.StringUtils;
 
 /**
+ * TODO make a 'line %number% of %text%' expression and figure out how to deal with signs (4 lines, delete = empty, etc...)
+ * 
  * @author joeuguce99
  */
 @SuppressWarnings("serial")
 @Name("Lore")
-@Description("Sets an item's lore.")
-@Examples("set the item's lore 1 to \"<orange>The mighty sword Njol used\"")
+@Description("An item's lore. ")
+@Examples("set the 1st line of the item's lore to \"<orange>Excalibur 2.0\"")
 @Since("2.1")
 public class ExprLore extends SimpleExpression<String> {
 	static {
@@ -60,17 +64,21 @@ public class ExprLore extends SimpleExpression<String> {
 			ItemMeta.class.getName();
 			
 			Skript.registerExpression(ExprLore.class, String.class, ExpressionType.PROPERTY,
-					"[the] lore of [%itemstack/itemtype%]", "%itemstack/itemtype%'[s] lore");
+					"[the] line %number% of [the] lore of [%itemstack/itemtype%]", "[the] line %number% of %itemstack/itemtype%'[s] lore",
+					"[the] %number%(st|nd|rd|th) line of [the] lore of [%itemstack/itemtype%]", "[the] %number%(st|nd|rd|th) line of %itemstack/itemtype%'[s] lore");
 			
 		} catch (final NoClassDefFoundError e) {}
 	}
 	
-	private Expression<ItemStack> item;
+	private Expression<Number> line;
+	
+	private Expression<?> item;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		item = (Expression<ItemStack>) exprs[exprs.length - 1];
+		line = (Expression<Number>) exprs[0];
+		item = exprs[exprs.length - 1];
 		return true;
 	}
 	
@@ -81,7 +89,7 @@ public class ExprLore extends SimpleExpression<String> {
 	
 	@Override
 	public String toString(final Event e, final boolean debug) {
-		return "the lore of " + item.toString(e, debug);
+		return "the line " + line.toString(e, debug) + " of the lore of " + item.toString(e, debug);
 	}
 	
 	@Override
@@ -115,35 +123,42 @@ public class ExprLore extends SimpleExpression<String> {
 		final Object i = item.getSingle(e);
 		if (i == null || i instanceof ItemStack && ((ItemStack) i).getType() == Material.AIR)
 			return;
-		final ItemMeta meta = i instanceof ItemStack ? ((ItemStack) i).getItemMeta() : (ItemMeta) ((ItemType) i).getItemMeta();
+		final Number n = line.getSingle(e);
+		if (n == null)
+			return;
+		final int l = Math2.fit(0, n.intValue() - 1, 99); // TODO figure out the actual maximum
+		ItemMeta meta = i instanceof ItemStack ? ((ItemStack) i).getItemMeta() : (ItemMeta) ((ItemType) i).getItemMeta();
+		if (meta == null)
+			meta = Bukkit.getItemFactory().getItemMeta(Material.STONE);
+		final List<String> lore = meta.hasLore() ? new ArrayList<String>(meta.getLore()) : new ArrayList<String>();
+		for (int j = lore.size(); j <= l; j++)
+			lore.add("");
 		switch (mode) {
 			case SET:
-				meta.setLore(Arrays.asList(((String) delta[0]).split("\n")));
+				lore.set(l, (String) delta[0]);
 				break;
 			case DELETE:
-				meta.setLore(null);
+				if (l == lore.size())
+					lore.remove(lore.size() - 1);
+				else
+					lore.set(l, "");
 				break;
-			case ADD: {
-				final List<String> l = meta.hasLore() ? meta.getLore() : Arrays.asList("");
-				l.set(l.size() - 1, l.get(l.size() - 1) + (String) delta[0]);
-				meta.setLore(l);
+			case ADD:
+				lore.set(l, lore.get(l) + (String) delta[0]);
 				break;
-			}
 			case REMOVE:
-			case REMOVE_ALL: {
-				String l = meta.hasLore() ? StringUtils.join(meta.getLore(), "\n") : "";
+			case REMOVE_ALL:
 				if (SkriptConfig.caseSensitive.value()) {
-					l = mode == ChangeMode.REMOVE ? l.replaceFirst(Pattern.quote((String) delta[0]), "") : l.replace((CharSequence) delta[0], "");
+					lore.set(l, mode == ChangeMode.REMOVE ? lore.get(l).replaceFirst(Pattern.quote((String) delta[0]), "") : lore.get(l).replace((CharSequence) delta[0], ""));
 				} else {
-					final Matcher m = Pattern.compile(Pattern.quote((String) delta[0]), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE).matcher(l);
-					l = mode == ChangeMode.REMOVE ? m.replaceFirst("") : m.replaceAll("");
+					final Matcher m = Pattern.compile(Pattern.quote((String) delta[0]), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE).matcher(lore.get(l));
+					lore.set(l, mode == ChangeMode.REMOVE ? m.replaceFirst("") : m.replaceAll(""));
 				}
-				meta.setLore(l.isEmpty() ? null : Arrays.asList(l.split("\n")));
 				break;
-			}
 			case RESET:
-				break;
+				return;
 		}
+		meta.setLore(lore.size() == 0 ? null : lore);
 		if (i instanceof ItemStack)
 			((ItemStack) i).setItemMeta(meta);
 		else

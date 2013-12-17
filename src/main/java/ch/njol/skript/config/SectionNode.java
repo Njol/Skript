@@ -73,9 +73,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 	}
 	
 	/**
-	 * Total amount of nodes (including void nodes) in this section.
-	 * 
-	 * @return
+	 * @return Total amount of nodes (including void nodes) in this section.
 	 */
 	public int size() {
 		return nodes.size();
@@ -120,7 +118,7 @@ public class SectionNode extends Node implements Iterable<Node> {
 	 * Removes an entry with the given key.
 	 * 
 	 * @param key
-	 * @return
+	 * @return The removed node, or null if the key didn0t match any node.
 	 */
 	public Node remove(final String key) {
 		final Node n = getNodeMap().remove(key);

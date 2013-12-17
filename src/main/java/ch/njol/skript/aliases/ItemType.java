@@ -877,7 +877,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 * 
 	 * @param set
 	 * @param sub
-	 * @return
+	 * @return Whether all item types in <tt>sub</tt> have at least one {@link #isSupertypeOf(ItemType) super type} in <tt>set</tt>
 	 */
 	public final static boolean isSubset(final ItemType[] set, final ItemType[] sub) {
 		outer: for (final ItemType i : sub) {

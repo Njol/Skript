@@ -146,7 +146,6 @@ public abstract class Aliases {
 	 * single one and trims the resulting string.
 	 * 
 	 * @param parts
-	 * @return
 	 */
 	private final static String concatenate(final String... parts) {
 		assert parts.length >= 2;

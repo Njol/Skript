@@ -176,8 +176,8 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 * 
 	 * @param to The desired return type of the returned expression
 	 * @return Expression with the desired return type or null if it can't be converted to the given type
-	 * @see Expression#getConvertedExpression(Class)
-	 * @see ConvertedExpression#newInstance(Expression, Class)
+	 * @see Expression#getConvertedExpression(Class...)
+	 * @see ConvertedExpression#newInstance(Expression, Class...)
 	 * @see Converter
 	 */
 	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R>... to) {

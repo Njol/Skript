@@ -235,7 +235,7 @@ public abstract class Classes {
 	 * This method can be called even while Skript is loading.
 	 * 
 	 * @param codeName
-	 * @return
+	 * @return The class info registered with the given code name or null if the code name is invalid or not yet registered
 	 */
 	public static ClassInfo<?> getClassInfoNoError(final String codeName) {
 		return classInfosByCodeName.get(codeName);

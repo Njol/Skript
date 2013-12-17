@@ -96,8 +96,6 @@ public abstract class Node {
 	
 	/**
 	 * Key of this node. <tt>null</tt> for empty or invalid nodes.
-	 * 
-	 * @return
 	 */
 	public final String getKey() {
 		return key;
