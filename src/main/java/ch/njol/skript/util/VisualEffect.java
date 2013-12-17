@@ -45,8 +45,6 @@ import ch.njol.util.coll.iterator.SingleItemIterator;
 import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
- * FIXME test this
- * 
  * @author Peter Güttinger
  */
 @SuppressWarnings("serial")

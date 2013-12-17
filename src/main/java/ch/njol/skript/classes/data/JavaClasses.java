@@ -546,12 +546,13 @@ public class JavaClasses {
 								return null;
 							case CONFIG: // duh
 								return s;
+							case SCRIPT:
 							case EVENT:
 								if (VariableString.isQuotedCorrectly(s, true))
 									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
 								return null;
 							case COMMAND:
-								return s; // FIXME document this
+								return s;
 						}
 						assert false;
 						return null;

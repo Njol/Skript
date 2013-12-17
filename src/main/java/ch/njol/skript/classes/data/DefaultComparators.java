@@ -380,6 +380,7 @@ public class DefaultComparators {
 						return Relation.get(t.isOfType(Material.LAVA.getId(), (short) -1) && t.isOfType(Material.STATIONARY_LAVA.getId(), (short) -1));
 					case MAGIC:
 						return Relation.get(t.isOfType(Material.POTION.getId(), (short) -1));
+						//$CASES-OMITTED$
 					default:
 						return Relation.NOT_EQUAL;
 				}
@@ -403,6 +404,7 @@ public class DefaultComparators {
 						return Relation.get(e.isSupertypeOf(EntityData.fromClass(Wither.class)));
 					case FALLING_BLOCK:
 						return Relation.get(e.isSupertypeOf(EntityData.fromClass(FallingBlock.class)));
+						//$CASES-OMITTED$
 					default:
 						return Relation.NOT_EQUAL;
 				}

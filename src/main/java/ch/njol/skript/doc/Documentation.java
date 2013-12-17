@@ -132,12 +132,14 @@ public class Documentation { // TODO list special expressions for events
 				Skript.warning("Class " + c.getCodeName() + "'s description, usage or 'since' is invalid");
 				continue;
 			}
-			insert(pw, "classes",
+			final String patterns = c.getUserInputPatterns() == null ? "" : convertRegex(StringUtils.join(c.getUserInputPatterns(), "\n"));
+			insertOnDuplicateKeyUpdate(pw, "classes",
 					"id, name, description, patterns, `usage`, examples, since",
+					"patterns = TRIM(LEADING '\n' FROM CONCAT(patterns, '\n', '" + escapeSQL(patterns) + "'))",
 					escapeHTML(c.getCodeName()),
 					escapeHTML(c.getDocName()),
 					desc,
-					c.getUserInputPatterns() == null ? "" : convertRegex(StringUtils.join(c.getUserInputPatterns(), "\n")),
+					patterns,
 					usage,
 					escapeHTML(StringUtils.join(c.getExamples(), "\n")),
 					since);
@@ -252,13 +254,6 @@ public class Documentation { // TODO list special expressions for events
 				desc,
 				escapeHTML(StringUtils.join(info.getExamples(), "\n")),
 				since);
-	}
-	
-	private final static void insert(final PrintWriter pw, final String table, final String fields, final String... values) {
-		for (int i = 0; i < values.length; i++) {
-			values[i] = escapeSQL(values[i]);
-		}
-		pw.println("INSERT IGNORE INTO " + table + " (" + fields + ") VALUES ('" + StringUtils.join(values, "','") + "');");
 	}
 	
 	private final static void insertOnDuplicateKeyUpdate(final PrintWriter pw, final String table, final String fields, final String update, final String... values) {

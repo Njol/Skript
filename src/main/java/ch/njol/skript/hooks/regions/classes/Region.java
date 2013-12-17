@@ -54,6 +54,7 @@ public abstract class Region implements YggdrasilExtendedSerializable {
 				.examples("")
 				.after("string", "world", "offlineplayer", "player")
 				.since("2.1")
+				.user("regions?")
 				.parser(new Parser<Region>() {
 					@Override
 					public Region parse(String s, final ParseContext context) {
@@ -61,6 +62,7 @@ public abstract class Region implements YggdrasilExtendedSerializable {
 						switch (context) {
 							case DEFAULT:
 							case EVENT:
+							case SCRIPT:
 								quoted = true;
 								break;
 							case COMMAND:

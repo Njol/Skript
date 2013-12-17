@@ -81,6 +81,9 @@ public class ExprTime extends PropertyExpression<World, Time> {
 				return CollectionUtils.array(Timespan.class);
 			case SET:
 				return CollectionUtils.array(Time.class);
+			case DELETE:
+			case REMOVE_ALL:
+			case RESET:
 			default:
 				return null;
 		}

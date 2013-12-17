@@ -40,5 +40,9 @@ public enum ParseContext {
 	/**
 	 * Used for parsing values from a config
 	 */
-	CONFIG;
+	CONFIG,
+	/**
+	 * Used for parsing variables in a script's variables section
+	 */
+	SCRIPT;
 }

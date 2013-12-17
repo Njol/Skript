@@ -394,7 +394,7 @@ final public class ScriptLoader {
 							Object o;
 							final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 							try {
-								o = Classes.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.CONFIG);
+								o = Classes.parseSimple(((EntryNode) n).getValue(), Object.class, ParseContext.SCRIPT);
 								if (o == null) {
 									log.printError("Can't understand the value '" + ((EntryNode) n).getValue() + "'");
 									continue;

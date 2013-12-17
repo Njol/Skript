@@ -50,8 +50,6 @@ import ch.njol.skript.util.Timespan;
 import ch.njol.util.Pair;
 
 /**
- * FIXME test this
- * 
  * @author Peter Güttinger
  */
 public class DatabaseStorage extends VariablesStorage {

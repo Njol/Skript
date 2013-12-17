@@ -49,7 +49,6 @@ import ch.njol.util.Kleenean;
 @SuppressWarnings("serial")
 @Name("Equip")
 @Description("Equips a player with some given armor. This will replace any armor that the player is wearing.")
-// FIXME update documentation - create a backup as well
 @Examples({"equip player with diamond helmet",
 		"equip player with all diamond armor"})
 @Since("1.0")
@@ -130,6 +129,7 @@ public class EffEquip extends Effect implements Testable {
 						case DIAMOND_CHESTPLATE:
 							en.getEquipment().setChestplate(item);
 							break;
+						//$CASES-OMITTED$
 						default:
 							if (!(item.getType().isBlock() || item.getTypeId() == 397 /* mob head */))
 								continue;

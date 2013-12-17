@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.xml.stream.XMLEventReader;
@@ -45,6 +46,9 @@ import javax.xml.stream.events.XMLEvent;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import ch.njol.skript.localization.FormattedMessage;
 import ch.njol.skript.localization.Message;
@@ -54,7 +58,6 @@ import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Version;
-import ch.njol.util.SynchronizedReference;
 
 /**
  * @author Peter Güttinger
@@ -63,7 +66,7 @@ public final class Updater {
 	
 	public final static class VersionInfo {
 		Version version;
-		String pageURL;
+		String name; // exact name
 		String changelog;
 		Date date;
 		
@@ -73,7 +76,16 @@ public final class Updater {
 		}
 	}
 	
+	/**
+	 * Used to get the file download link as required by the Bukkit guidelines
+	 */
+	private final static String filesURL = "https://api.curseforge.com/servermods/files?projectIds=32084";
+	/**
+	 * Used to get the changelog + release date
+	 */
 	private final static String rssURL = "http://dev.bukkit.org/server-mods/skript/files.rss";
+	
+	private final static String manualDownloadURL = "http://dev.bukkit.org/bukkit-plugins/skript/files/";
 	
 	private final static DateFormat RFC2822 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
 	
@@ -86,10 +98,10 @@ public final class Updater {
 	 * must be synchronised with {@link #stateLock}
 	 */
 	public static volatile UpdateState state = UpdateState.NOT_STARTED;
-	final static SynchronizedReference<String> error = new SynchronizedReference<String>();
+	final static AtomicReference<String> error = new AtomicReference<String>();
 	
 	public final static List<VersionInfo> infos = new ArrayList<VersionInfo>();
-	public final static SynchronizedReference<VersionInfo> latest = new SynchronizedReference<VersionInfo>();
+	public final static AtomicReference<VersionInfo> latest = new AtomicReference<VersionInfo>();
 	
 	// must be down here as they reference 'error' and 'latest' which are defined above
 	public final static Message m_not_started = new Message("updater.not started");
@@ -163,16 +175,14 @@ public final class Updater {
 								}
 							} else {
 								if (element.equalsIgnoreCase("title")) {
-									final String version = reader.nextEvent().asCharacters().getData();
-									if (!version.matches("\\d+\\.\\d+(\\.\\d+)?( \\(jar( only)?\\))?")) {// not the default version pattern to not match beta/etc. versions
+									current.name = reader.nextEvent().asCharacters().getData().trim();
+									if (!current.name.matches("\\d+\\.\\d+(\\.\\d+)?( \\(jar( only)?\\))?")) {// not the default version pattern to not match beta/etc. versions
 										current = null;
 										continue;
 									}
-									current.version = new Version(version.contains(" ") ? version.substring(0, version.indexOf(' ')) : version);
+									current.version = new Version(current.name.contains(" ") ? current.name.substring(0, current.name.indexOf(' ')) : current.name);
 									if (current.version.compareTo(Skript.getVersion()) <= 0)
 										break;
-								} else if (element.equalsIgnoreCase("link")) {
-									current.pageURL = reader.nextEvent().asCharacters().getData();
 								} else if (element.equalsIgnoreCase("description")) {
 									String cl = "";
 									while ((e = reader.nextEvent()).isCharacters())
@@ -261,24 +271,25 @@ public final class Updater {
 		}, "Skript update thread").start();
 	}
 	
-	private final static String getFileURL(final String pageURL) throws MalformedURLException, IOException {
+	private final static String getFileURL(final String name) throws MalformedURLException, IOException {
 		InputStream in = null;
 		try {
-			final URLConnection conn = new URL(pageURL).openConnection();
+			final URLConnection conn = new URL(filesURL).openConnection();
+			conn.setRequestProperty("User-Agent", "Skript/v" + Skript.getVersion() + " (by Njol)");
 			in = conn.getInputStream();
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(in, conn.getContentEncoding() == null ? "UTF-8" : conn.getContentEncoding()));
 			try {
-				String line;
-				while ((line = reader.readLine()) != null) {
-					// the line with the download link looks like this:
-					// #whitespace#<li class="user-action user-action-download"><span><a href="http://dev.bukkit.org/media/files/#number#/#number#/#name#.#ext#">Download</a></span></li>
-					final int s = line.indexOf("<a href=\"http://dev.bukkit.org/media/files/");
-					if (s == -1)
-						continue;
-					final int e = line.indexOf("\">", s + "<a href=\"http://dev.bukkit.org/media/files/".length());
-					if (e == -1)
-						continue;
-					return line.substring(s + "<a href=\"".length(), e);
+				final String line = reader.readLine();
+				if (line != null) {
+					final JSONArray a = (JSONArray) JSONValue.parse(line);
+					for (final Object o : a) {
+						final Object n = ((JSONObject) o).get("name");
+						if (!(n instanceof String) || !n.equals(name))
+							continue;
+						final Object url = ((JSONObject) o).get("downloadUrl");
+						if (url instanceof String)
+							return (String) url;
+					}
 				}
 			} finally {
 				reader.close();
@@ -290,7 +301,7 @@ public final class Updater {
 				} catch (final IOException e) {}
 			}
 		}
-		throw new IOException("Could not get the file's URL. You can however download Skript manually from " + pageURL);
+		throw new IOException("Could not get the file's URL. You can however download Skript manually from " + manualDownloadURL);
 	}
 	
 	/**
@@ -313,7 +324,7 @@ public final class Updater {
 //		ZipInputStream zip = null;
 		InputStream in = null;
 		try {
-			final URLConnection conn = new URL(getFileURL(latest.get().pageURL)).openConnection();
+			final URLConnection conn = new URL(getFileURL(latest.get().name)).openConnection();
 			FileUtils.save(in = conn.getInputStream(), new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
 //			zip = new ZipInputStream(conn.getInputStream());
 //			ZipEntry entry;

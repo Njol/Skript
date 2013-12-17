@@ -114,7 +114,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 					((Player) o).setDisplayName(s == null ? ((Player) o).getName() : s + ChatColor.RESET);
 				} else if (o instanceof LivingEntity) {
 					((LivingEntity) o).setCustomName(s);
-					((LivingEntity) o).setCustomNameVisible(s != null); // FIXME update documentation
+					((LivingEntity) o).setCustomNameVisible(s != null);
 					((LivingEntity) o).setRemoveWhenFarAway(false);
 				} else if (o instanceof ItemStack) {
 					final ItemMeta m = ((ItemStack) o).getItemMeta();
