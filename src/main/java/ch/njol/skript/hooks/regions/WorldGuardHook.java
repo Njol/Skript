@@ -26,6 +26,7 @@ import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -122,7 +123,9 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 				
 				@Override
 				public Block next() {
-					return world.getBlockAt(current.getBlockX(), height, current.getBlockZ());
+					if (!hasNext())
+						throw new NoSuchElementException();
+					return world.getBlockAt(current.getBlockX(), height++, current.getBlockZ());
 				}
 				
 				@Override

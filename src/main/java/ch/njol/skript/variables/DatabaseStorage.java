@@ -418,7 +418,7 @@ public class DatabaseStorage extends VariablesStorage {
 				} else {
 					final ClassInfo<?> c = Classes.getClassInfo(type);
 					if (c == null || c.getSerializer() == null) {
-						Skript.error("Cannot load the variable {" + name + "} from the database, because the type '" + type + "' cannot be recognised or cannot be not stored in variables");
+						Skript.error("Cannot load the variable {" + name + "} from the database " + name + ", because the type '" + type + "' cannot be recognised or cannot be not stored in variables");
 						continue;
 					}
 					if (c.getSerializer().mustSyncDeserialization()) {
@@ -426,7 +426,7 @@ public class DatabaseStorage extends VariablesStorage {
 					} else {
 						final Object d = Classes.deserialize(c, value);
 						if (d == null) {
-							Skript.error("Cannot load the variable {" + name + "} from the database, because it cannot be loaded as a " + type);
+							Skript.error("Cannot load the variable {" + name + "} from the database " + name + ", because it cannot be loaded as a " + type);
 							continue;
 						}
 						Variables.variableLoaded(name, d, this);
@@ -441,7 +441,7 @@ public class DatabaseStorage extends VariablesStorage {
 							for (final VariableInfo o : syncDeserializing) {
 								final Object d = Classes.deserialize(o.ci, o.value);
 								if (d == null) {
-									Skript.error("Cannot load the variable {" + o.name + "} from the database, because it cannot be parsed as a " + o.ci.getName());
+									Skript.error("Cannot load the variable {" + o.name + "} from the database " + name + ", because it cannot be loaded as a " + o.ci.getName());
 									continue;
 								}
 								Variables.variableLoaded(o.name, d, DatabaseStorage.this);
@@ -483,7 +483,7 @@ public class DatabaseStorage extends VariablesStorage {
 				} else {
 					final ClassInfo<?> c = Classes.getClassInfo(type);
 					if (c == null || c.getSerializer() == null) {
-						Skript.error("Cannot load the variable {" + name + "} from the database, because the type '" + type + "' cannot be recognized or not stored in variables");
+						Skript.error("Cannot load the variable {" + name + "} from the database, because the type '" + type + "' cannot be recognised or not stored in variables");
 						continue;
 					}
 					if (c.getSerializer().mustSyncDeserialization()) {
