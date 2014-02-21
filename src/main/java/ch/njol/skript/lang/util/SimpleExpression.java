@@ -25,6 +25,7 @@ import java.lang.reflect.Array;
 import java.util.Iterator;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -48,7 +49,6 @@ import ch.njol.util.coll.iterator.ArrayIterator;
  * @see Skript#registerExpression(Class, Class, ExpressionType, String...)
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public abstract class SimpleExpression<T> implements Expression<T> {
 	
 	private int time = 0;
@@ -56,6 +56,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	protected SimpleExpression() {}
 	
 	@Override
+	@Nullable
 	public final T getSingle(final Event e) {
 		final T[] all = getArray(e);
 		if (all.length == 0)
@@ -70,6 +71,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 * <p>
 	 * Unlike {@link #get(Event)} you have to make sure that the this method's returned array is neither null nor contains null elements.
 	 */
+	@SuppressWarnings("null")
 	@Override
 	public T[] getAll(final Event e) {
 		final T[] all = get(e);
@@ -91,6 +93,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		return r;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public final T[] getArray(final Event e) {
 		final T[] all = get(e);
@@ -138,6 +141,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 * @param e The event
 	 * @return An array of values for this event. May not contain nulls.
 	 */
+	@Nullable
 	protected abstract T[] get(Event e);
 	
 	@Override
@@ -150,7 +154,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		return check(get(e), c, negated, getAnd());
 	}
 	
-	public final static <T> boolean check(final T[] all, final Checker<? super T> c, final boolean invert, final boolean and) {
+	public final static <T> boolean check(final @Nullable T[] all, final Checker<? super T> c, final boolean invert, final boolean and) {
 		if (all == null)
 			return false;
 		boolean hasElement = false;
@@ -180,6 +184,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 * @see ConvertedExpression#newInstance(Expression, Class...)
 	 * @see Converter
 	 */
+	@Nullable
 	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R>... to) {
 		assert !CollectionUtils.containsSuperclass(to, getReturnType());
 		return ConvertedExpression.newInstance(this, to);
@@ -187,26 +192,38 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	
 	@Override
 	@SuppressWarnings("unchecked")
+	@Nullable
 	public final <R> Expression<? extends R> getConvertedExpression(final Class<R>... to) {
 		if (CollectionUtils.containsSuperclass(to, getReturnType()))
 			return (Expression<? extends R>) this;
 		return this.getConvertedExpr(to);
 	}
 	
+	@Nullable
 	private ClassInfo<?> returnTypeInfo;
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (returnTypeInfo == null)
-			returnTypeInfo = Classes.getSuperClassInfo(getReturnType());
-		if (returnTypeInfo.getChanger() == null)
+		ClassInfo<?> rti = returnTypeInfo;
+		if (rti == null)
+			returnTypeInfo = rti = Classes.getSuperClassInfo(getReturnType());
+		final Changer<?> c = rti.getChanger();
+		if (c == null)
 			return null;
-		return returnTypeInfo.getChanger().acceptChange(mode);
+		return c.acceptChange(mode);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
-		((Changer<T>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
+		final ClassInfo<?> rti = returnTypeInfo;
+		if (rti == null)
+			throw new UnsupportedOperationException();
+		final Changer<?> c = rti.getChanger();
+		if (c == null)
+			throw new UnsupportedOperationException();
+		((Changer<T>) c).change(getArray(e), delta, mode);
 	}
 	
 	/**
@@ -275,6 +292,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	}
 	
 	@Override
+	@Nullable
 	public Iterator<? extends T> iterator(final Event e) {
 		return new ArrayIterator<T>(getArray(e));
 	}

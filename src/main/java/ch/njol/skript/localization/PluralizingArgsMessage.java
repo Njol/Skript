@@ -35,7 +35,10 @@ public class PluralizingArgsMessage extends Message {
 	}
 	
 	public String toString(final Object... args) {
-		return format(String.format(getValue(), args));
+		final String val = getValue();
+		if (val == null)
+			return key;
+		return format("" + String.format(val, args));
 	}
 	
 	public final static String format(final String s) {
@@ -63,7 +66,7 @@ public class PluralizingArgsMessage extends Message {
 		if (last == 0)
 			return s;
 		b.append(s.substring(last, s.length()));
-		return b.toString();
+		return "" + b;
 	}
 	
 }

@@ -24,21 +24,25 @@ package ch.njol.skript.expressions;
 import java.lang.reflect.Array;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.Language;
+import ch.njol.skript.log.LogEntry;
 import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Kleenean;
@@ -47,7 +51,6 @@ import ch.njol.util.Pair;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Parse")
 @Description({"Parses text as a given type, or as a given pattern.",
 		"This expression can be used in two different ways: One which parses the entire text as a single instance of a type, e.g. as a number, " +
@@ -75,21 +78,26 @@ public class ExprParse extends SimpleExpression<Object> {
 				"%string% parsed as (%-*classinfo%|\"<.*>\")");
 	}
 	
+	@Nullable
 	static String lastError = null;
 	
+	@SuppressWarnings("null")
 	private Expression<String> text;
 	
+	@Nullable
 	private String pattern;
+	@Nullable
 	private boolean[] plurals;
 	
+	@Nullable
 	private ClassInfo<?> c;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		text = (Expression<String>) exprs[0];
 		if (exprs[1] == null) {
-			pattern = parseResult.regexes.get(0).group();
+			String pattern = "" + parseResult.regexes.get(0).group();
 			if (!VariableString.isQuotedCorrectly(pattern, false)) {
 				Skript.error("Invalid amount and/or placement of double quotes in '" + pattern + "'");
 				return false;
@@ -108,15 +116,16 @@ public class ExprParse extends SimpleExpression<Object> {
 					b.append(c);
 				}
 			}
-			pattern = b.toString();
+			pattern = "" + b.toString();
 			final Pair<String, boolean[]> p = SkriptParser.validatePattern(pattern);
 			if (p == null)
 				return false;
-			pattern = p.first;
+			this.pattern = p.first;
 			plurals = p.second;
 		} else {
-			c = (ClassInfo<?>) exprs[1].getSingle(null);
-			if (c.getParser() == null || !c.getParser().canParse(ParseContext.COMMAND)) {
+			c = ((Literal<ClassInfo<?>>) exprs[1]).getSingle();
+			final Parser<?> p = c.getParser();
+			if (p == null || !p.canParse(ParseContext.COMMAND)) {
 				Skript.error("Text cannot be parsed as " + c.getName().withIndefiniteArticle());
 				return false;
 			}
@@ -124,7 +133,9 @@ public class ExprParse extends SimpleExpression<Object> {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
+	@Nullable
 	protected Object[] get(final Event e) {
 		final String t = text.getSingle(e);
 		if (t == null)
@@ -132,13 +143,16 @@ public class ExprParse extends SimpleExpression<Object> {
 		final ParseLogHandler h = SkriptLogger.startParseLogHandler();
 		try {
 			if (c != null) {
-				final Object o = c.getParser().parse(t, ParseContext.COMMAND);
+				final Parser<?> p = c.getParser();
+				assert p != null; // checked in init()
+				final Object o = p.parse(t, ParseContext.COMMAND);
 				if (o != null) {
 					final Object[] one = (Object[]) Array.newInstance(c.getC(), 1);
 					one[0] = o;
 					return one;
 				}
 			} else {
+				assert pattern != null && plurals != null;
 				final ParseResult r = SkriptParser.parse(t, pattern);
 				if (r != null) {
 					assert plurals.length == r.exprs.length;
@@ -148,7 +162,8 @@ public class ExprParse extends SimpleExpression<Object> {
 					return os;
 				}
 			}
-			lastError = h.hasError() ? h.getError().getMessage() : null;
+			final LogEntry err = h.getError();
+			lastError = err != null ? err.getMessage() : null;
 			return null;
 		} finally {
 			h.clear();
@@ -167,7 +182,7 @@ public class ExprParse extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return text.toString(e, debug) + " parsed as " + (c != null ? c.toString(Language.F_INDEFINITE_ARTICLE) : pattern);
 	}
 	

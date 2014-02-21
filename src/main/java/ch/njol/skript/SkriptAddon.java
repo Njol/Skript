@@ -31,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.util.Utils;
@@ -53,6 +54,7 @@ public final class SkriptAddon {
 	 * 
 	 * @param p
 	 */
+	@SuppressWarnings("null")
 	SkriptAddon(final JavaPlugin p) {
 		plugin = p;
 		name = p.getName();
@@ -124,6 +126,7 @@ public final class SkriptAddon {
 		return this;
 	}
 	
+	@Nullable
 	private String languageFileDirectory = null;
 	
 	/**
@@ -134,27 +137,29 @@ public final class SkriptAddon {
 	 * @return This SkriptAddon
 	 */
 	public SkriptAddon setLanguageFileDirectory(String directory) {
-		assert directory != null;
 		if (languageFileDirectory != null)
 			throw new IllegalStateException();
-		directory = directory.replace('\\', '/');
+		directory = "" + directory.replace('\\', '/');
 		if (directory.endsWith("/"))
-			directory = directory.substring(0, directory.length() - 1);
+			directory = "" + directory.substring(0, directory.length() - 1);
 		languageFileDirectory = directory;
 		Language.loadDefault(this);
 		return this;
 	}
 	
+	@Nullable
 	public String getLanguageFileDirectory() {
 		return languageFileDirectory;
 	}
 	
+	@Nullable
 	private File file = null;
 	
 	/**
 	 * @return The jar file of the plugin. The first invocation of this method uses reflection to invoke the protected method {@link JavaPlugin#getFile()} to get the plugin's jar
 	 *         file. The file is then cached and returned upon subsequent calls to this method to reduce usage of reflection.
 	 */
+	@Nullable
 	public File getFile() {
 		if (file != null)
 			return file;

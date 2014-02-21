@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import java.util.Random;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -35,11 +36,11 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Random Number")
 @Description({"A random number or integer between two given numbers. Use 'number' if you want any number with decimal parts, or use use 'integer' if you only want whole numbers.",
 		"Please note that the order of the numbers doesn't matter, i.e. <code>random number between 2 and 1</code> will work as well as <code>random number between 1 and 2</code>."})
@@ -48,17 +49,18 @@ import ch.njol.util.Kleenean;
 @Since("1.4")
 public class ExprRandomNumber extends SimpleExpression<Number> {
 	static {
-		Skript.registerExpression(ExprRandomNumber.class, Number.class, ExpressionType.NORMAL,
+		Skript.registerExpression(ExprRandomNumber.class, Number.class, ExpressionType.COMBINED,
 				"[a] random (1¦integer|2¦number) (from|between) %number% (to|and) %number%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<? extends Number> lower, upper;
 	
 	private final Random rand = new Random();
 	
 	private boolean integer;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		lower = (Expression<Number>) exprs[0];
@@ -68,6 +70,7 @@ public class ExprRandomNumber extends SimpleExpression<Number> {
 	}
 	
 	@Override
+	@Nullable
 	protected Number[] get(final Event e) {
 		final Number l = lower.getSingle(e);
 		final Number u = upper.getSingle(e);
@@ -76,7 +79,7 @@ public class ExprRandomNumber extends SimpleExpression<Number> {
 		final double ll = Math.min(l.doubleValue(), u.doubleValue());
 		final double uu = Math.max(l.doubleValue(), u.doubleValue());
 		if (integer) {
-			return new Integer[] {(int) (Math.ceil(ll) + rand.nextInt((int) (Math.floor(uu) - Math.ceil(ll) + 1)))};
+			return new Long[] {Math2.ceil(ll) + Math2.mod(rand.nextLong(), Math2.floor(uu) - Math2.ceil(ll) + 1)};
 		} else {
 			return new Double[] {ll + rand.nextDouble() * (uu - ll)};
 		}
@@ -84,11 +87,11 @@ public class ExprRandomNumber extends SimpleExpression<Number> {
 	
 	@Override
 	public Class<? extends Number> getReturnType() {
-		return integer ? Integer.class : Double.class;
+		return integer ? Long.class : Double.class;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "a random " + (integer ? "integer" : "number") + " between " + lower.toString(e, debug) + " and " + upper.toString(e, debug);
 	}
 	

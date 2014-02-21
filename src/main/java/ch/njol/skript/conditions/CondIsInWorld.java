@@ -24,6 +24,7 @@ package ch.njol.skript.conditions;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,7 +40,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is in World")
 @Description("Checks whether an entity is in a specific world")
 @Examples({"player is in \"world\"",
@@ -52,10 +52,12 @@ public class CondIsInWorld extends Condition {
 		Skript.registerCondition(CondIsInWorld.class, "%entities% (is|are) in [[the] world[s]] %worlds%", "%entities% (is not|isn't|are not|aren't) in [[the] world[s]] %worlds%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Entity> entities;
+	@SuppressWarnings("null")
 	Expression<World> worlds;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		entities = (Expression<Entity>) exprs[0];
@@ -80,7 +82,7 @@ public class CondIsInWorld extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return entities.toString(e, debug) + " " + (entities.isSingle() ? "is" : "are") + " " + (isNegated() ? "not" : "") + " in world " + worlds.toString(e, debug);
 	}
 	

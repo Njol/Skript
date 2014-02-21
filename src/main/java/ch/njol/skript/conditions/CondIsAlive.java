@@ -35,7 +35,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Alive")
 @Description("Checks whetehr an entity is alive. This is mostly useful to check whether an entity stored in a variable does still exist")
 @Examples({"{villagerbuddy.%player%} is dead"})

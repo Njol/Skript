@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Command")
 @Description("The command that caused an 'on command' event (excluding the leading slash and all arguments)")
 @Examples({"# prevent any commands except for the /exit command during some game",
@@ -55,6 +55,7 @@ public class ExprCommand extends SimpleExpression<String> {
 		Skript.registerExpression(ExprCommand.class, String.class, ExpressionType.SIMPLE,
 				"[the] (full|complete|whole) command", "[the] command [label]", "[the] arguments");
 	}
+	
 	private final static int FULL = 0, LABEL = 1, ARGS = 2;
 	private int what;
 	
@@ -71,6 +72,7 @@ public class ExprCommand extends SimpleExpression<String> {
 	}
 	
 	@Override
+	@Nullable
 	protected String[] get(final Event e) {
 		final String s;
 		if (e instanceof PlayerCommandPreprocessEvent) {
@@ -103,7 +105,7 @@ public class ExprCommand extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return what == 0 ? "the full command" : what == 1 ? "the command" : "the arguments";
 	}
 	

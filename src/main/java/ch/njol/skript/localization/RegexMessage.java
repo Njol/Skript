@@ -25,6 +25,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 
 /**
@@ -36,9 +38,16 @@ public class RegexMessage extends Message {
 	
 	private final int flags;
 	
+	@Nullable
 	private Pattern pattern = null;
 	
-	public RegexMessage(final String key, final String prefix, final String suffix, final int flags) {
+	/**
+	 * A pattern that doesn't match anything
+	 */
+	@SuppressWarnings("null")
+	public final static Pattern nop = Pattern.compile("(?!)");
+	
+	public RegexMessage(final String key, final @Nullable String prefix, final @Nullable String suffix, final int flags) {
 		super(key);
 		this.prefix = prefix == null ? "" : prefix;
 		this.suffix = suffix == null ? "" : suffix;
@@ -57,21 +66,26 @@ public class RegexMessage extends Message {
 		this(key, "", "", 0);
 	}
 	
+	@Nullable
 	public Pattern getPattern() {
 		validate();
 		return pattern;
 	}
 	
+	@SuppressWarnings("null")
 	public Matcher matcher(final String s) {
-		return getPattern().matcher(s);
+		final Pattern p = getPattern();
+		return p == null ? nop.matcher(s) : p.matcher(s);
 	}
 	
 	public boolean matches(final String s) {
-		return getPattern().matcher(s).matches();
+		final Pattern p = getPattern();
+		return p == null ? false : p.matcher(s).matches();
 	}
 	
 	public boolean find(final String s) {
-		return getPattern().matcher(s).find();
+		final Pattern p = getPattern();
+		return p == null ? false : p.matcher(s).find();
 	}
 	
 	@Override

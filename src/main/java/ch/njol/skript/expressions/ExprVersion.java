@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Version")
 @Description("The version of Bukkit, Minecraft or Skript respectively.")
 @Examples({"message \"This server is running Minecraft %minecraft version% on Bukkit %bukkit version%\"",
@@ -50,7 +50,7 @@ public class ExprVersion extends SimpleExpression<String> {
 		BUKKIT("Bukkit") {
 			@Override
 			public String get() {
-				return Bukkit.getBukkitVersion();
+				return "" + Bukkit.getBukkitVersion();
 			}
 		},
 		MINECRAFT("Minecraft") {
@@ -84,8 +84,10 @@ public class ExprVersion extends SimpleExpression<String> {
 		Skript.registerExpression(ExprVersion.class, String.class, ExpressionType.SIMPLE, "(0¦[craft]bukkit|1¦minecraft|2¦skript)( |-)version");
 	}
 	
+	@SuppressWarnings("null")
 	private VersionType type;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		type = VersionType.values()[parseResult.mark];
@@ -98,7 +100,7 @@ public class ExprVersion extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return type + " version";
 	}
 	

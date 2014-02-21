@@ -23,6 +23,8 @@ package ch.njol.skript.util;
 
 import java.util.HashMap;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.util.StringUtils;
@@ -54,10 +56,12 @@ public final class EnumUtils<E extends Enum<E>> {
 		});
 	}
 	
+	@Nullable
 	public final E parse(final String s) {
 		return parseMap.get(s.toLowerCase());
 	}
 	
+	@SuppressWarnings("null")
 	public final String toString(final E e, final int flags) {
 		return names[e.ordinal()];
 	}

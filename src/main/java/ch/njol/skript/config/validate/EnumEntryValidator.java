@@ -21,6 +21,8 @@
 
 package ch.njol.skript.config.validate;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
@@ -33,6 +35,7 @@ public class EnumEntryValidator<E extends Enum<E>> extends EntryValidator {
 	
 	private final Class<E> enumType;
 	private final Setter<E> setter;
+	@Nullable
 	private String allowedValues = null;
 	
 	public EnumEntryValidator(final Class<E> enumType, final Setter<E> setter) {
@@ -46,7 +49,7 @@ public class EnumEntryValidator<E extends Enum<E>> extends EntryValidator {
 					b.append(", ");
 				b.append(e.name());
 			}
-			allowedValues = b.toString();
+			allowedValues = "" + b.toString();
 		}
 	}
 	
@@ -64,8 +67,9 @@ public class EnumEntryValidator<E extends Enum<E>> extends EntryValidator {
 		final EntryNode n = (EntryNode) node;
 		try {
 			final E e = Enum.valueOf(enumType, n.getValue().toUpperCase().replace(' ', '_'));
-			if (setter != null)
-				setter.set(e);
+			assert e != null;
+//			if (setter != null)
+			setter.set(e);
 		} catch (final IllegalArgumentException e) {
 			Skript.error("'" + n.getValue() + "' is not a valid value for '" + n.getKey() + "'" + (allowedValues == null ? "" : ". Allowed values are: " + allowedValues));
 			return false;

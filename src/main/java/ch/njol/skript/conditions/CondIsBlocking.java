@@ -32,7 +32,6 @@ import ch.njol.skript.doc.Since;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Blocking")
 @Description("Checks whether a player is blocking with his sword.")
 @Examples("victim is blocking")

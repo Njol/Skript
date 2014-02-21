@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.bukkit.enchantments.Enchantment;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.localization.Language;
@@ -46,7 +47,8 @@ public class EnchantmentType implements YggdrasilSerializable {
 	/**
 	 * Used for deserialisation only
 	 */
-	public EnchantmentType() {
+	@SuppressWarnings({"unused", "null"})
+	private EnchantmentType() {
 		type = null;
 		level = -1;
 	}
@@ -71,14 +73,16 @@ public class EnchantmentType implements YggdrasilSerializable {
 		return level;
 	}
 	
+	@Nullable
 	public Enchantment getType() {
 		return type;
 	}
 	
 	public boolean has(final ItemType item) {
-		if (item.getEnchantments() == null)
+		final Map<Enchantment, Integer> enchs = item.getEnchantments();
+		if (enchs == null)
 			return false;
-		final Integer l = item.getEnchantments().get(type);
+		final Integer l = enchs.get(type);
 		if (l == null)
 			return false;
 		if (level == -1)
@@ -91,11 +95,13 @@ public class EnchantmentType implements YggdrasilSerializable {
 		return toString(type) + (level == -1 ? "" : " " + level);
 	}
 	
+	@SuppressWarnings("null")
 	public static String toString(final Enchantment e) {
 		return enchantmentNames.get(e);
 	}
 	
 	// REMIND flags?
+	@SuppressWarnings("null")
 	public static String toString(final Enchantment e, final int flags) {
 		return enchantmentNames.get(e);
 	}
@@ -117,8 +123,11 @@ public class EnchantmentType implements YggdrasilSerializable {
 		});
 	}
 	
+	@SuppressWarnings("null")
 	private final static Pattern pattern = Pattern.compile(".+ \\d+");
 	
+	@SuppressWarnings("null")
+	@Nullable
 	public static EnchantmentType parse(final String s) {
 		if (pattern.matcher(s).matches()) {
 			final Enchantment ench = parseEnchantment(s.substring(0, s.lastIndexOf(' ')));
@@ -132,10 +141,12 @@ public class EnchantmentType implements YggdrasilSerializable {
 		return new EnchantmentType(ench, -1);
 	}
 	
+	@Nullable
 	public static Enchantment parseEnchantment(final String s) {
 		return enchantmentPatterns.get(s.toLowerCase());
 	}
 	
+	@SuppressWarnings("null")
 	public final static Collection<String> getNames() {
 		return enchantmentNames.values();
 	}
@@ -150,7 +161,7 @@ public class EnchantmentType implements YggdrasilSerializable {
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

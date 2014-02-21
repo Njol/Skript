@@ -22,6 +22,7 @@
 package ch.njol.skript.entity;
 
 import org.bukkit.entity.Pig;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -29,7 +30,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class PigData extends EntityData<Pig> {
 	static {
 		register(PigData.class, "pig", Pig.class, 1, "unsaddled pig", "pig", "saddled pig");
@@ -44,7 +44,7 @@ public class PigData extends EntityData<Pig> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Pig> c, final Pig e) {
+	protected boolean init(final @Nullable Class<? extends Pig> c, final @Nullable Pig e) {
 		saddled = e == null ? 0 : e.hasSaddle() ? 1 : -1;
 		return true;
 	}

@@ -23,6 +23,7 @@ package ch.njol.skript.events;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityTargetEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -32,7 +33,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"serial"})
 public class EvtEntityTarget extends SkriptEvent {
 	static {
 		Skript.registerEvent("Target", EvtEntityTarget.class, EntityTargetEvent.class, "[entity] target", "[entity] un[-]target")
@@ -55,7 +55,7 @@ public class EvtEntityTarget extends SkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "entity " + (target ? "" : "un") + "target";
 	}
 	

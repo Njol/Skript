@@ -23,6 +23,7 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.World;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("PvP")
 @Description("Checks the PvP status of a world.")
 @Examples({"PvP is enabled",
@@ -50,10 +50,11 @@ public class CondPvP extends Condition {
 		Skript.registerCondition(CondPvP.class, "(is PvP|PvP is) enabled [in %worlds%]", "(is PvP|PvP is) disabled [in %worlds%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<World> worlds;
 	boolean enabled;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		worlds = (Expression<World>) exprs[0];
@@ -62,7 +63,7 @@ public class CondPvP extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "is PvP " + (enabled ? "enabled" : "disabled") + " in " + worlds.toString(e, debug);
 	}
 	

@@ -23,6 +23,7 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
@@ -46,7 +47,6 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Contains")
 @Description("Checks whether an inventory contains the given item, a text contains another piece of text, or a list of objects (e.g. a {list variable::*}) contains another object.")
 @Examples({"block contains 20 cobblestone",
@@ -61,10 +61,12 @@ public class CondContains extends Condition {
 				"%inventories/strings/objects% do[es](n't| not) contain %itemtypes/strings/objects%");
 	}
 	
+	@SuppressWarnings("null")
 	Expression<?> containers;
+	@SuppressWarnings("null")
 	Expression<?> items;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null", "unused"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		containers = exprs[0].getConvertedExpression(Object.class);
@@ -130,7 +132,7 @@ public class CondContains extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return containers.toString(e, debug) + (isNegated() ? " doesn't contain " : " contains ") + items.toString(e, debug);
 	}
 	

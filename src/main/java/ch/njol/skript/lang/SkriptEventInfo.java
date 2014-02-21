@@ -24,6 +24,7 @@ package ch.njol.skript.lang;
 import java.util.Locale;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.SkriptAPIException;
 
@@ -33,8 +34,12 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 	public final String name;
 	
 	private final String id;
+	
+	@Nullable
 	private String[] description;
+	@Nullable
 	private String[] examples;
+	@Nullable
 	private String since;
 	
 	/**
@@ -60,13 +65,13 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 		this.events = events;
 		
 		if (name.startsWith("*")) {
-			this.name = name = name.substring(1);
+			this.name = name = "" + name.substring(1);
 		} else {
 			this.name = "On " + name;
 		}
 		
 		// uses the name without 'on ' or '*'
-		this.id = name.toLowerCase(Locale.ENGLISH).replaceAll("[#'\"<>/&]", "").replaceAll("\\s+", "_");
+		this.id = "" + name.toLowerCase(Locale.ENGLISH).replaceAll("[#'\"<>/&]", "").replaceAll("\\s+", "_");
 	}
 	
 	/**
@@ -118,14 +123,17 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 		return name;
 	}
 	
+	@Nullable
 	public String[] getDescription() {
 		return description;
 	}
 	
+	@Nullable
 	public String[] getExamples() {
 		return examples;
 	}
 	
+	@Nullable
 	public String getSince() {
 		return since;
 	}

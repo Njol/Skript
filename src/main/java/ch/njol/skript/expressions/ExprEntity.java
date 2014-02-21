@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.Aliases;
@@ -45,7 +46,6 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Creature/Entity/Player/Projectile/Villager/Powered Creeper/etc.")
 @Description({"The entity involved in an event (an entity is a player, a creature or an inanimate object like ignited TNT, a dropped item or an arrow).",
 		"You can use the specific type of the entity that's involved in the event, e.g. in a 'death of a creeper' event you can use 'the creeper' instead of 'the entity'."})
@@ -59,8 +59,10 @@ public class ExprEntity extends SimpleExpression<Entity> {
 		Skript.registerExpression(ExprEntity.class, Entity.class, ExpressionType.PATTERN_MATCHES_EVERYTHING, "[the] [event-]<.+>");
 	}
 	
+	@SuppressWarnings("null")
 	private EntityData<?> type;
 	
+	@SuppressWarnings("null")
 	private EventValueExpression<Entity> entity;
 	
 	@Override
@@ -68,18 +70,19 @@ public class ExprEntity extends SimpleExpression<Entity> {
 		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 		try {
 			if (!StringUtils.startsWithIgnoreCase(parseResult.expr, "the ") && !StringUtils.startsWithIgnoreCase(parseResult.expr, "event-")) {
-				final ItemType item = Aliases.parseItemType(parseResult.regexes.get(0).group());
+				final ItemType item = Aliases.parseItemType("" + parseResult.regexes.get(0).group());
 				log.clear();
 				if (item != null) {
 					log.printLog();
 					return false;
 				}
 			}
-			type = EntityData.parseWithoutIndefiniteArticle(parseResult.regexes.get(0).group());
+			final EntityData<?> type = EntityData.parseWithoutIndefiniteArticle("" + parseResult.regexes.get(0).group());
 			log.clear();
 			log.printLog();
 			if (type == null || type.isPlural().isTrue())
 				return false;
+			this.type = type;
 		} finally {
 			log.stop();
 		}
@@ -98,6 +101,7 @@ public class ExprEntity extends SimpleExpression<Entity> {
 	}
 	
 	@Override
+	@Nullable
 	protected Entity[] get(final Event e) {
 		final Entity[] es = entity.getArray(e);
 		if (es.length == 0 || type.isInstance(es[0]))
@@ -106,7 +110,7 @@ public class ExprEntity extends SimpleExpression<Entity> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the " + type;
 	}
 	

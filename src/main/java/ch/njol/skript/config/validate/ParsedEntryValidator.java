@@ -24,6 +24,7 @@ package ch.njol.skript.config.validate;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.util.Setter;
 
 /**
@@ -45,7 +46,7 @@ public class ParsedEntryValidator<T> extends EntryValidator {
 	public boolean validate(final Node node) {
 		if (!super.validate(node))
 			return false;
-		final T t = parser.parse(((EntryNode) node).getValue(), null);
+		final T t = parser.parse(((EntryNode) node).getValue(), ParseContext.CONFIG);
 		if (t == null)
 			return false;
 		setter.set(t);

@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import java.lang.reflect.Array;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Arithmetic;
@@ -47,7 +48,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Difference")
 @Description("The difference between two values, e.g. <a href='../classes/#number'>numbers</a>, <a href='../classes/#date'>dates</a> or <a href='../classes/#time'>times</a>.")
 @Examples({"difference between {command.%player%.lastuse} and now is smaller than a minute:",
@@ -60,12 +60,15 @@ public class ExprDifference extends SimpleExpression<Object> {
 		Skript.registerExpression(ExprDifference.class, Object.class, ExpressionType.COMBINED, "difference (between|of) %object% and %object%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<?> first, second;
 	
-	private Arithmetic<?, ?> math;
+	@SuppressWarnings({"null", "rawtypes"})
+	private Arithmetic math;
+	@SuppressWarnings("null")
 	private Class<?> relativeType;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null", "unused"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		first = exprs[0];
@@ -96,8 +99,10 @@ public class ExprDifference extends SimpleExpression<Object> {
 			} else if (second instanceof Variable) {
 				second = second.getConvertedExpression(first.getReturnType());
 			}
+			assert first != null && second != null;
 			ci = Classes.getSuperClassInfo(Utils.getSuperType(first.getReturnType(), second.getReturnType()));
 		}
+		assert ci != null;
 		if (ci.getMath() == null) {
 			Skript.error("Can't get the difference of " + CondCompare.f(first) + " and " + CondCompare.f(second), ErrorQuality.SEMANTIC_ERROR);
 			return false;
@@ -107,19 +112,16 @@ public class ExprDifference extends SimpleExpression<Object> {
 		return true;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	protected Object[] get(final Event e) {
 		final Object f = first.getSingle(e), s = second.getSingle(e);
 		if (f == null || s == null)
 			return null;
 		final Object[] one = (Object[]) Array.newInstance(relativeType, 1);
-		one[0] = diff(math, f, s);
+		one[0] = math.difference(f, s);
 		return one;
-	}
-	
-	@SuppressWarnings("unchecked")
-	private static <A> Object diff(final Arithmetic<A, ?> math, final Object f, final Object s) {
-		return math.difference((A) f, (A) s);
 	}
 	
 	@Override
@@ -128,7 +130,7 @@ public class ExprDifference extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "difference between " + first.toString(e, debug) + " and " + second.toString(e, debug);
 	}
 	

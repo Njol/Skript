@@ -19,19 +19,20 @@
  * 
  */
 
-package ch.njol.skript.util;
+package ch.njol.skript.command;
 
 import static org.bukkit.ChatColor.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.localization.Message;
+import ch.njol.skript.util.Color;
 
 /**
  * @author Peter Güttinger
@@ -44,25 +45,28 @@ public class CommandHelp {
 	private final static Message m_usage = new Message("commands.usage");
 	
 	private String command;
+	@Nullable
 	private Message description = null;
 	private final String argsColor;
 	
+	@Nullable
 	private String langNode = null;
 	
 	private final LinkedHashMap<String, Object> arguments = new LinkedHashMap<String, Object>();
 	
+	@Nullable
 	private Message wildcardArg = null;
 	
-	public CommandHelp(final String command, final ChatColor argsColor, final String langNode) {
+	public CommandHelp(final String command, final Color argsColor, final String langNode) {
 		this.command = command;
-		this.argsColor = argsColor.toString();
+		this.argsColor = "" + argsColor.getChat();
 		this.langNode = langNode;
 		description = new Message(langNode + "." + DEFAULTENTRY);
 	}
 	
-	public CommandHelp(final String command, final ChatColor argsColor) {
+	public CommandHelp(final String command, final Color argsColor) {
 		this.command = command;
-		this.argsColor = argsColor.toString();
+		this.argsColor = "" + argsColor.getChat();
 	}
 	
 	public CommandHelp add(final String argument) {
@@ -141,7 +145,7 @@ public class CommandHelp {
 	
 	@Override
 	public String toString() {
-		return description.toString();
+		return "" + description;
 	}
 	
 }

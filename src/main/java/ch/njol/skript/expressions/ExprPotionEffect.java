@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
 import org.bukkit.potion.PotionEffect;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -32,7 +33,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class ExprPotionEffect extends SimpleExpression<PotionEffect> {
 	static {
 		// REMIND create
@@ -45,6 +45,7 @@ public class ExprPotionEffect extends SimpleExpression<PotionEffect> {
 	}
 	
 	@Override
+	@Nullable
 	protected PotionEffect[] get(final Event e) {
 		return null;
 	}
@@ -56,12 +57,12 @@ public class ExprPotionEffect extends SimpleExpression<PotionEffect> {
 	
 	@Override
 	public Class<? extends PotionEffect> getReturnType() {
-		return null;
+		return PotionEffect.class;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return null;
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "";
 	}
 	
 }

@@ -23,6 +23,8 @@ package ch.njol.skript.log;
 
 import java.util.logging.Level;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 
 /**
@@ -31,14 +33,14 @@ import ch.njol.skript.Skript;
  * @author Peter Güttinger
  */
 public class ErrorDescLogHandler extends LogHandler {
-	
+	@Nullable
 	private final String before, after, success;
 	
 	public ErrorDescLogHandler() {
 		this(null, null, null);
 	}
 	
-	public ErrorDescLogHandler(final String before, final String after, final String success) {
+	public ErrorDescLogHandler(final @Nullable String before, final @Nullable String after, final @Nullable String success) {
 		this.before = before;
 		this.after = after;
 		this.success = success;

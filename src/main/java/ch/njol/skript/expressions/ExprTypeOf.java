@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -35,7 +36,6 @@ import ch.njol.skript.registrations.Converters;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Type of")
 @Description("The type of a block/item or entity. The type of an item is only it's id and data value, i.e. it ignores the amount, enchantments etc., and the type of an entity is e.g. 'wolf' or 'player'.")
 @Examples({"on rightclick on an entity:",
@@ -52,9 +52,8 @@ public class ExprTypeOf extends SimplePropertyExpression<Object, Object> {
 	}
 	
 	@Override
+	@Nullable
 	public Object convert(final Object o) {
-		if (o == null)
-			return null;
 		if (o instanceof EntityData) {
 			return ((EntityData<?>) o).getSuperType();
 		} else if (o instanceof ItemStack) {
@@ -71,6 +70,7 @@ public class ExprTypeOf extends SimplePropertyExpression<Object, Object> {
 	}
 	
 	@Override
+	@Nullable
 	protected <R> ConvertedExpression<Object, ? extends R> getConvertedExpr(final Class<R>... to) {
 		if (!Converters.converterExists(EntityData.class, to) && !Converters.converterExists(ItemStack.class, to))
 			return null;

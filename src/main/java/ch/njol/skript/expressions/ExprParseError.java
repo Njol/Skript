@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -37,7 +38,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Parse Error")
 @Description("The error which caused the last <a href='#ExprParse'>parse operation</a> to fail, which might not be set if a pattern was used and the pattern didn't match the provided text at all.")
 @Examples({"set {var} to line 1 parsed as integer",
@@ -73,7 +73,7 @@ public class ExprParseError extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the last parse error";
 	}
 	

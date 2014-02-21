@@ -23,9 +23,12 @@ package ch.njol.skript.config;
 
 import java.util.Locale;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Setter;
@@ -38,15 +41,20 @@ public class Option<T> {
 	public final String key;
 	private boolean optional = false;
 	
+	@Nullable
 	private String value = null;
 	private final Converter<String, ? extends T> parser;
-	private T defaultValue = null;
-	private T parsedValue = null;
+	private final T defaultValue;
+	private T parsedValue;
 	
+	@Nullable
 	private Setter<? super T> setter;
 	
-	public Option(final String key, final Class<T> c) {
-		this.key = key.toLowerCase(Locale.ENGLISH);
+	public Option(final String key, final T defaultValue) {
+		this.key = "" + key.toLowerCase(Locale.ENGLISH);
+		this.defaultValue = defaultValue;
+		parsedValue = defaultValue;
+		final Class<T> c = (Class<T>) defaultValue.getClass();
 		if (c == String.class) {
 			parser = new Converter<String, T>() {
 				@SuppressWarnings("unchecked")
@@ -57,12 +65,14 @@ public class Option<T> {
 			};
 		} else {
 			final ClassInfo<T> ci = Classes.getExactClassInfo(c);
-			if (ci == null || ci.getParser() == null)
+			final Parser<? extends T> p;
+			if (ci == null || (p = ci.getParser()) == null)
 				throw new IllegalArgumentException(c.getName());
 			this.parser = new Converter<String, T>() {
 				@Override
+				@Nullable
 				public T convert(final String s) {
-					final T t = ci.getParser().parse(s, ParseContext.CONFIG);
+					final T t = p.parse(s, ParseContext.CONFIG);
 					if (t != null)
 						return t;
 					Skript.error("'" + s + "' is not " + ci.getName().withIndefiniteArticle());
@@ -72,10 +82,10 @@ public class Option<T> {
 		}
 	}
 	
-	public Option(final String key, final Converter<String, ? extends T> parser) {
-		if (parser == null)
-			throw new IllegalArgumentException();
-		this.key = key.toLowerCase(Locale.ENGLISH);
+	public Option(final String key, final T defaultValue, final Converter<String, ? extends T> parser) {
+		this.key = "" + key.toLowerCase(Locale.ENGLISH);
+		this.defaultValue = defaultValue;
+		parsedValue = defaultValue;
 		this.parser = parser;
 	}
 	
@@ -89,21 +99,16 @@ public class Option<T> {
 		return this;
 	}
 	
-	public final Option<T> defaultValue(final T def) {
-		this.defaultValue = def;
-		parsedValue = def;
-		return this;
-	}
-	
 	public final void set(final Config config, final String path) {
 		final String oldValue = value;
 		value = config.getByPath(path + key);
 		if (value == null && !optional)
 			Skript.error("Required entry '" + path + key + "' is missing in " + config.getFileName() + ". Please make sure that you have the latest version of the config.");
 		if ((value == null ^ oldValue == null) || value != null && !value.equals(oldValue)) {
-			parsedValue = value == null ? defaultValue : parser.convert(value);
+			T parsedValue = value != null ? parser.convert(value) : defaultValue;
 			if (parsedValue == null)
 				parsedValue = defaultValue;
+			this.parsedValue = parsedValue;
 			onValueChange();
 		}
 	}

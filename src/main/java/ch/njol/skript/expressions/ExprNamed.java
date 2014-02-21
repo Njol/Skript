@@ -25,6 +25,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Named Item")
 @Description("Directly names an item, useful for defining a named item in a script. " +
 		"If you want to (re)name existing items you can either use this expression or use <code>set <a href='#ExprName'>name of &lt;item&gt;</a> to &lt;text&gt;</code>.")
@@ -54,9 +54,10 @@ public class ExprNamed extends PropertyExpression<ItemType, ItemType> {
 		Skript.registerExpression(ExprNamed.class, ItemType.class, ExpressionType.PROPERTY, "%itemtypes% (named|with name[s]) %string%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<String> name;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		if (!Skript.isRunningMinecraft(1, 4, 5)) {
@@ -76,7 +77,10 @@ public class ExprNamed extends PropertyExpression<ItemType, ItemType> {
 		final ItemType[] r = source.clone();
 		for (int i = 0; i < r.length; i++) {
 			r[i] = source[i].clone();
-			final ItemMeta m = r[i].getItemMeta() == null ? Bukkit.getItemFactory().getItemMeta(Material.STONE) /* AIR results in null */: (ItemMeta) r[i].getItemMeta();
+			ItemMeta m = (ItemMeta) r[i].getItemMeta();
+			if (m == null)
+				m = Bukkit.getItemFactory().getItemMeta(Material.STONE); // AIR results in null
+			assert m != null : r[i];
 			m.setDisplayName(n);
 			r[i].setItemMeta(m);
 		}
@@ -89,7 +93,7 @@ public class ExprNamed extends PropertyExpression<ItemType, ItemType> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return getExpr().toString(e, debug) + " named " + name;
 	}
 	

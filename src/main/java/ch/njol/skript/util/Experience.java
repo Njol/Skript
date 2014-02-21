@@ -21,15 +21,14 @@
 
 package ch.njol.skript.util;
 
-import java.io.Serializable;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public class Experience implements Serializable, YggdrasilSerializable {
+public class Experience implements YggdrasilSerializable {
 	
 	private final int xp;
 	
@@ -63,7 +62,7 @@ public class Experience implements Serializable, YggdrasilSerializable {
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

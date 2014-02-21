@@ -25,11 +25,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.localization.Language.LanguageListenerPriority;
-import ch.njol.util.Pair;
+import ch.njol.util.NonNullPair;
 import ch.njol.util.StringUtils;
 
 /**
@@ -43,6 +46,7 @@ public class Noun extends Message {
 	public final static int PLURAL = -2, NO_GENDER = -3; // -1 is sometimes used as 'not set'
 	public final static String PLURAL_TOKEN = "x", NO_GENDER_TOKEN = "-";
 	
+	@Nullable
 	private String singular, plural;
 	private int gender = 0;
 	
@@ -60,27 +64,27 @@ public class Noun extends Message {
 		}
 		final int g = value.lastIndexOf('@');
 		if (g != -1) {
-			gender = getGender(value.substring(g + 1).trim(), key);
-			value = value.substring(0, g).trim();
+			gender = getGender("" + value.substring(g + 1).trim(), key);
+			value = "" + value.substring(0, g).trim();
 		} else {
 			gender = 0;
 		}
-		final Pair<String, String> p = Noun.getPlural(value);
+		final NonNullPair<String, String> p = Noun.getPlural(value);
 		singular = p.first;
 		plural = p.second;
-		if (gender == PLURAL && !singular.equals(plural))
+		if (gender == PLURAL && !Objects.equals(singular, plural))
 			Skript.warning("Noun '" + key + "' is of gender 'plural', but has different singular and plural values.");
 	}
 	
 	@Override
 	public String toString() {
 		validate();
-		return singular;
+		return "" + singular;
 	}
 	
 	public String toString(final boolean plural) {
 		validate();
-		return plural ? this.plural : singular;
+		return plural ? "" + this.plural : "" + singular;
 	}
 	
 	public String withIndefiniteArticle() {
@@ -89,7 +93,7 @@ public class Noun extends Message {
 	
 	public String getIndefiniteArticle() {
 		validate();
-		return gender == PLURAL || gender == NO_GENDER ? "" : indefiniteArticles.get(gender);
+		return gender == PLURAL || gender == NO_GENDER ? "" : "" + indefiniteArticles.get(gender);
 	}
 	
 	public String withDefiniteArticle() {
@@ -102,7 +106,7 @@ public class Noun extends Message {
 	
 	public String getDefiniteArticle() {
 		validate();
-		return gender == PLURAL ? definitePluralArticle : gender == NO_GENDER ? "" : definiteArticles.get(gender);
+		return gender == PLURAL ? definitePluralArticle : gender == NO_GENDER ? "" : "" + definiteArticles.get(gender);
 	}
 	
 	public int getGender() {
@@ -143,7 +147,7 @@ public class Noun extends Message {
 		final StringBuilder b = new StringBuilder();
 		b.append(getArticleWithSpace(flags));
 		b.append((flags & Language.F_PLURAL) != 0 ? plural : singular);
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 	public String withAmount(final double amount) {
@@ -159,14 +163,14 @@ public class Noun extends Message {
 			if (gender == PLURAL) {
 				if ((flags & Language.F_DEFINITE_ARTICLE) != 0)
 					return definitePluralArticle + " " + plural;
-				return plural;
+				return "" + plural;
 			}
 			if ((flags & Language.F_DEFINITE_ARTICLE) != 0)
 				return (flags & Language.F_PLURAL) != 0 ? definitePluralArticle + " " + plural : definiteArticles.get(gender) + " " + singular;
 			if ((flags & Language.F_INDEFINITE_ARTICLE) != 0)
 				return indefiniteArticles.get(gender) + " " + singular;
 			if ((flags & Language.F_PLURAL) != 0)
-				return plural;
+				return "" + plural;
 		}
 		return Skript.toString(amount) + " " + (amount == 1 ? singular : plural);
 	}
@@ -178,7 +182,7 @@ public class Noun extends Message {
 		b.append(a.toString(gender, flags));
 		b.append(" ");
 		b.append((flags & Language.F_PLURAL) != 0 ? plural : singular);
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 	public String toString(final Adjective[] adjectives, final int flags, final boolean and) {
@@ -190,25 +194,25 @@ public class Noun extends Message {
 		b.append(Adjective.toString(adjectives, getGender(), flags, and));
 		b.append(" ");
 		b.append(toString(flags));
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 	public String getSingular() {
 		validate();
-		return singular;
+		return "" + singular;
 	}
 	
 	public String getPlural() {
 		validate();
-		return plural;
+		return "" + plural;
 	}
 	
 	/**
 	 * @param s String with ¦ plural markers but without a @gender
 	 * @return (singular, plural)
 	 */
-	public static Pair<String, String> getPlural(final String s) {
-		final Pair<String, String> r = new Pair<String, String>("", "");
+	public static NonNullPair<String, String> getPlural(final String s) {
+		final NonNullPair<String, String> r = new NonNullPair<String, String>("", "");
 		int part = 3; // 1 = singular, 2 = plural, 3 = both
 		int i = StringUtils.count(s, '¦');
 		int last = 0, c = -1;
@@ -274,6 +278,7 @@ public class Noun extends Message {
 		return 0;
 	}
 	
+	@Nullable
 	public final static String getGenderID(final int gender) {
 		if (gender == PLURAL)
 			return PLURAL_TOKEN;
@@ -289,14 +294,14 @@ public class Noun extends Message {
 	 * @param key Key to report in case of error
 	 * @return (stripped string, gender or -1 if none)
 	 */
-	public final static Pair<String, Integer> stripGender(String s, final String key) {
+	public final static NonNullPair<String, Integer> stripGender(String s, final String key) {
 		final int c = s.lastIndexOf('@');
 		int g = -1;
 		if (c != -1) {
-			g = getGender(s.substring(c + 1).trim(), key);
-			s = s.substring(0, c).trim();
+			g = getGender("" + s.substring(c + 1).trim(), key);
+			s = "" + s.substring(0, c).trim();
 		}
-		return new Pair<String, Integer>(s, g);
+		return new NonNullPair<String, Integer>(s, g);
 	}
 	
 	final static List<String> indefiniteArticles = new ArrayList<String>(3);
@@ -311,7 +316,9 @@ public class Noun extends Message {
 		Language.addListener(new LanguageChangeListener() {
 			@Override
 			public void onLanguageChange() {
-				final Map<String, String> lang = Language.useLocal ? Language.localized : Language.english;
+				Map<String, String> lang = Language.useLocal ? Language.localized : Language.english;
+				if (lang == null)
+					lang = Language.english;
 				genders.clear();
 				indefiniteArticles.clear();
 				definiteArticles.clear();
@@ -353,7 +360,7 @@ public class Noun extends Message {
 	public final static String stripIndefiniteArticle(final String s) {
 		for (final String a : indefiniteArticles) {
 			if (StringUtils.startsWithIgnoreCase(s, a + " "))
-				return s.substring(a.length() + 1);
+				return "" + s.substring(a.length() + 1);
 		}
 		return s;
 	}

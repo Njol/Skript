@@ -22,6 +22,7 @@
 package ch.njol.skript.entity;
 
 import org.bukkit.entity.Creeper;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -29,7 +30,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class CreeperData extends EntityData<Creeper> {
 	static {
 		EntityData.register(CreeperData.class, "creeper", Creeper.class, 1, "unpowered creeper", "creeper", "powered creeper");
@@ -44,7 +44,7 @@ public class CreeperData extends EntityData<Creeper> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Creeper> c, final Creeper e) {
+	protected boolean init(final @Nullable Class<? extends Creeper> c, final @Nullable Creeper e) {
 		powered = e == null ? 0 : e.isPowered() ? 1 : -1;
 		return true;
 	}

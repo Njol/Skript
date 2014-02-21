@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.SkriptAPIException;
@@ -41,7 +42,6 @@ import ch.njol.skript.util.Container.ContainerType;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class Loop extends TriggerSection {
 	
 	private final Expression<?> expr;
@@ -55,6 +55,7 @@ public class Loop extends TriggerSection {
 		currentIter = new WeakHashMap<Event, Iterator<?>>();
 	}
 	
+	@Nullable
 	private TriggerItem actualNext;
 	
 	public <T> Loop(final Expression<?> expr, final SectionNode node) {
@@ -77,6 +78,7 @@ public class Loop extends TriggerSection {
 	}
 	
 	@Override
+	@Nullable
 	protected TriggerItem walk(final Event e) {
 		Iterator<?> iter = currentIter.get(e);
 		if (iter == null) {
@@ -100,10 +102,11 @@ public class Loop extends TriggerSection {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "loop " + expr.toString(e, debug);
 	}
 	
+	@Nullable
 	public Object getCurrent(final Event e) {
 		return current.get(e);
 	}
@@ -113,10 +116,12 @@ public class Loop extends TriggerSection {
 	}
 	
 	@Override
-	public void setNext(final TriggerItem next) {
+	public Loop setNext(final @Nullable TriggerItem next) {
 		actualNext = next;
+		return this;
 	}
 	
+	@Nullable
 	public TriggerItem getActualNext() {
 		return actualNext;
 	}

@@ -4,23 +4,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.ChatPaginator;
 import org.bukkit.util.ChatPaginator.ChatPage;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader.ScriptInfo;
 import ch.njol.skript.Updater.UpdateState;
 import ch.njol.skript.Updater.VersionInfo;
 import ch.njol.skript.classes.Converter;
+import ch.njol.skript.command.CommandHelp;
 import ch.njol.skript.localization.ArgsMessage;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.PluralizingArgsMessage;
 import ch.njol.skript.log.RedirectingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.util.CommandHelp;
+import ch.njol.skript.util.Color;
 import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Utils;
@@ -53,20 +54,20 @@ import ch.njol.util.StringUtils;
 public class SkriptCommand implements CommandExecutor {
 	private final static String NODE = "skript command";
 	
-	private final static CommandHelp skriptCommandHelp = new CommandHelp("<gray>/<gold>skript", ChatColor.AQUA, NODE + ".help")
-			.add(new CommandHelp("reload", ChatColor.DARK_RED)
+	private final static CommandHelp skriptCommandHelp = new CommandHelp("<gray>/<gold>skript", Color.LIGHT_CYAN, NODE + ".help")
+			.add(new CommandHelp("reload", Color.DARK_RED)
 					.add("all")
 					.add("config")
 					.add("aliases")
 					.add("scripts")
 					.add("<script>")
-			).add(new CommandHelp("enable", ChatColor.DARK_RED)
+			).add(new CommandHelp("enable", Color.DARK_RED)
 					.add("all")
 					.add("<script>")
-			).add(new CommandHelp("disable", ChatColor.DARK_RED)
+			).add(new CommandHelp("disable", Color.DARK_RED)
 					.add("all")
 					.add("<script>")
-			).add(new CommandHelp("update", ChatColor.DARK_RED)
+			).add(new CommandHelp("update", Color.DARK_RED)
 					.add("check")
 					.add("changes")
 					.add("download")
@@ -111,8 +112,11 @@ public class SkriptCommand implements CommandExecutor {
 		Skript.error(sender, StringUtils.fixCapitalization(what));
 	}
 	
+	@SuppressWarnings("null")
 	@Override
-	public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
+	public boolean onCommand(final @Nullable CommandSender sender, final @Nullable Command command, final @Nullable String label, final @Nullable String[] args) {
+		if (sender == null || command == null || label == null || args == null)
+			throw new IllegalArgumentException();
 		if (!skriptCommandHelp.test(sender, args))
 			return true;
 		final RedirectingLogHandler r = SkriptLogger.startLogHandler(new RedirectingLogHandler(sender, ""));
@@ -398,6 +402,7 @@ public class SkriptCommand implements CommandExecutor {
 	private final static ArgsMessage m_invalid_script = new ArgsMessage(NODE + ".invalid script");
 	private final static ArgsMessage m_invalid_folder = new ArgsMessage(NODE + ".invalid folder");
 	
+	@Nullable
 	private static File getScriptFromArgs(final CommandSender sender, final String[] args, final int start) {
 		String script = StringUtils.join(args, " ", start, args.length);
 		final boolean isFolder = script.endsWith("/") || script.endsWith("\\");
@@ -422,6 +427,7 @@ public class SkriptCommand implements CommandExecutor {
 	private final static Collection<File> toggleScripts(final File folder, final boolean enable) throws IOException {
 		return FileUtils.renameAll(folder, new Converter<String, String>() {
 			@Override
+			@Nullable
 			public String convert(final String name) {
 				if (StringUtils.endsWithIgnoreCase(name, ".sk") && name.startsWith("-") == enable)
 					return enable ? name.substring(1) : "-" + name;

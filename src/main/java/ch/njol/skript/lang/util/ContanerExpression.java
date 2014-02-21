@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -34,7 +35,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class ContanerExpression extends SimpleExpression<Object> {
 	
 	final Expression<?> expr;
@@ -51,25 +51,33 @@ public class ContanerExpression extends SimpleExpression<Object> {
 	}
 	
 	@Override
+	@Nullable
 	public Iterator<Object> iterator(final Event e) {
+		final Iterator<? extends Container<?>> iter = (Iterator<? extends Container<?>>) expr.iterator(e);
+		if (iter == null)
+			return null;
 		return new Iterator<Object>() {
-			
-			private final Iterator<? extends Container<?>> iter = (Iterator<? extends Container<?>>) expr.iterator(e);
+			@Nullable
 			private Iterator<?> current;
 			
 			@Override
 			public boolean hasNext() {
-				while (iter.hasNext() && (current == null || !current.hasNext())) {
-					current = iter.next().containerIterator();
+				Iterator<?> c = current;
+				while (iter.hasNext() && (c == null || !c.hasNext())) {
+					current = c = iter.next().containerIterator();
 				}
-				return current != null && current.hasNext();
+				return c != null && c.hasNext();
 			}
 			
+			@SuppressWarnings("null")
 			@Override
 			public Object next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
-				return current.next();
+				final Iterator<?> c = current;
+				if (c == null)
+					throw new NoSuchElementException();
+				return c.next();
 			}
 			
 			@Override
@@ -95,7 +103,7 @@ public class ContanerExpression extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return expr.toString(e, debug);
 	}
 	

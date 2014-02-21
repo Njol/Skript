@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import org.bukkit.Location;
 import org.bukkit.TreeType;
 import org.bukkit.block.Block;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
@@ -103,6 +104,7 @@ public enum StructureType {
 		});
 	}
 	
+	@Nullable
 	public static StructureType fromName(String s) {
 		if (parseMap.isEmpty()) {
 			for (final StructureType t : values()) {
@@ -110,7 +112,7 @@ public enum StructureType {
 				parseMap.put(Pattern.compile(pattern, Pattern.CASE_INSENSITIVE), t);
 			}
 		}
-		s = s.toLowerCase();
+		s = "" + s.toLowerCase();
 		for (final Entry<Pattern, StructureType> e : parseMap.entrySet()) {
 			if (e.getKey().matcher(s).matches())
 				return e.getValue();

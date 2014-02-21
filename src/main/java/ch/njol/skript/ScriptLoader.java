@@ -23,16 +23,9 @@ package ch.njol.skript;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -41,6 +34,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemType;
@@ -83,7 +77,7 @@ import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Callback;
 import ch.njol.util.Kleenean;
-import ch.njol.util.Pair;
+import ch.njol.util.NonNullPair;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.CollectionUtils;
 
@@ -97,10 +91,13 @@ final public class ScriptLoader {
 			m_no_scripts = new Message("skript.no scripts");
 	private final static PluralizingArgsMessage m_scripts_loaded = new PluralizingArgsMessage("skript.scripts loaded");
 	
+	@Nullable
 	public static Config currentScript = null;
 	
+	@Nullable
 	public static String currentEventName = null;
 //	private static SkriptEvent currentEvent = null;
+	@Nullable
 	private static Class<? extends Event>[] currentEvents = null;
 	
 	public static List<TriggerSection> currentSections = new ArrayList<TriggerSection>();
@@ -143,14 +140,12 @@ final public class ScriptLoader {
 		}
 	}
 	
-	private final static class SerializedScript implements Serializable {
-		final static long serialVersionUID = -6209530262798192214L;
-		
-		public SerializedScript() {}
-		
-		public final List<Trigger> triggers = new ArrayList<Trigger>();
-		public final List<ScriptCommand> commands = new ArrayList<ScriptCommand>();
-	}
+//	private final static class SerializedScript {
+//		public SerializedScript() {}
+//		
+//		public final List<Trigger> triggers = new ArrayList<Trigger>();
+//		public final List<ScriptCommand> commands = new ArrayList<ScriptCommand>();
+//	}
 	
 	private static String indentation = "";
 	
@@ -192,8 +187,8 @@ final public class ScriptLoader {
 	 */
 	private final static FileFilter scriptFilter = new FileFilter() {
 		@Override
-		public boolean accept(final File f) {
-			return (f.isDirectory() || StringUtils.endsWithIgnoreCase(f.getName(), ".sk")) && !f.getName().startsWith("-");
+		public boolean accept(final @Nullable File f) {
+			return f != null && (f.isDirectory() || StringUtils.endsWithIgnoreCase("" + f.getName(), ".sk")) && !f.getName().startsWith("-");
 		}
 	};
 	
@@ -229,6 +224,7 @@ final public class ScriptLoader {
 	 * @param files
 	 * @return Info on the loaded scripts
 	 */
+	@SuppressWarnings("null")
 	public final static ScriptInfo loadScripts(final File[] files) {
 		Arrays.sort(files);
 		final ScriptInfo i = new ScriptInfo();
@@ -251,63 +247,63 @@ final public class ScriptLoader {
 		return i;
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	private final static ScriptInfo loadScript(final File f) {
-		File cache = null;
-		if (SkriptConfig.enableScriptCaching.value()) {
-			cache = new File(f.getParentFile(), "cache" + File.separator + f.getName() + "c");
-			if (cache.exists()) {
-				final RetainingLogHandler log = SkriptLogger.startRetainingLog();
-				ObjectInputStream in = null;
-				try {
-					in = new ObjectInputStream(new FileInputStream(cache));
-					final long lastModified = in.readLong();
-					if (lastModified == f.lastModified()) {
-						final SerializedScript script = (SerializedScript) in.readObject();
-						triggersLoop: for (final Trigger t : script.triggers) {
-							if (t.getEvent() instanceof SelfRegisteringSkriptEvent) {
-								((SelfRegisteringSkriptEvent) t.getEvent()).register(t);
-								SkriptEventHandler.addSelfRegisteringTrigger(t);
-							} else {
-								for (final SkriptEventInfo<?> e : Skript.getEvents()) {
-									if (e.c == t.getEvent().getClass()) {
-										SkriptEventHandler.addTrigger(e.events, t);
-										continue triggersLoop;
-									}
-								}
-								throw new EmptyStackException();
-							}
-						}
-						for (final ScriptCommand c : script.commands) {
-							Commands.registerCommand(c);
-						}
-						log.printLog();
-						return new ScriptInfo(1, script.triggers.size(), script.commands.size());
-					} else {
-						cache.delete();
-					}
-				} catch (final Exception e) {
-					if (Skript.testing()) {
-						System.err.println("[debug] Error loading cached script '" + f.getName() + "':");
-						e.printStackTrace();
-					}
-					unloadScript(f);
-					if (in != null) {
-						try {
-							in.close();
-						} catch (final IOException e1) {}
-					}
-					cache.delete();
-				} finally {
-					log.stop();
-					if (in != null) {
-						try {
-							in.close();
-						} catch (final IOException e) {}
-					}
-				}
-			}
-		}
+//		File cache = null;
+//		if (SkriptConfig.enableScriptCaching.value()) {
+//			cache = new File(f.getParentFile(), "cache" + File.separator + f.getName() + "c");
+//			if (cache.exists()) {
+//				final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+//				ObjectInputStream in = null;
+//				try {
+//					in = new ObjectInputStream(new FileInputStream(cache));
+//					final long lastModified = in.readLong();
+//					if (lastModified == f.lastModified()) {
+//						final SerializedScript script = (SerializedScript) in.readObject();
+//						triggersLoop: for (final Trigger t : script.triggers) {
+//							if (t.getEvent() instanceof SelfRegisteringSkriptEvent) {
+//								((SelfRegisteringSkriptEvent) t.getEvent()).register(t);
+//								SkriptEventHandler.addSelfRegisteringTrigger(t);
+//							} else {
+//								for (final SkriptEventInfo<?> e : Skript.getEvents()) {
+//									if (e.c == t.getEvent().getClass()) {
+//										SkriptEventHandler.addTrigger(e.events, t);
+//										continue triggersLoop;
+//									}
+//								}
+//								throw new EmptyStackException();
+//							}
+//						}
+//						for (final ScriptCommand c : script.commands) {
+//							Commands.registerCommand(c);
+//						}
+//						log.printLog();
+//						return new ScriptInfo(1, script.triggers.size(), script.commands.size());
+//					} else {
+//						cache.delete();
+//					}
+//				} catch (final Exception e) {
+//					if (Skript.testing()) {
+//						System.err.println("[debug] Error loading cached script '" + f.getName() + "':");
+//						e.printStackTrace();
+//					}
+//					unloadScript(f);
+//					if (in != null) {
+//						try {
+//							in.close();
+//						} catch (final IOException e1) {}
+//					}
+//					cache.delete();
+//				} finally {
+//					log.stop();
+//					if (in != null) {
+//						try {
+//							in.close();
+//						} catch (final IOException e) {}
+//					}
+//				}
+//			}
+//		}
 		try {
 			final Config config = new Config(f, true, false, ":");
 			if (SkriptConfig.keepConfigsLoaded.value())
@@ -319,7 +315,7 @@ final public class ScriptLoader {
 			currentOptions.clear();
 			currentScript = config;
 			
-			final SerializedScript script = new SerializedScript();
+//			final SerializedScript script = new SerializedScript();
 			
 			final CountingLogHandler numErrors = SkriptLogger.startLogHandler(new CountingLogHandler(Level.SEVERE));
 			
@@ -332,6 +328,8 @@ final public class ScriptLoader {
 					
 					final SectionNode node = ((SectionNode) cnode);
 					String event = node.getKey();
+					if (event == null)
+						continue;
 					
 					if (event.equalsIgnoreCase("aliases")) {
 						node.convertToEntries(0, "=");
@@ -366,10 +364,11 @@ final public class ScriptLoader {
 							}
 							String name = ((EntryNode) n).getKey().toLowerCase(Locale.ENGLISH);
 							if (name.startsWith("{") && name.endsWith("}"))
-								name = name.substring(1, name.length() - 1);
+								name = "" + name.substring(1, name.length() - 1);
 							final String var = name;
 							name = StringUtils.replaceAll(name, "%(.+)?%", new Callback<String, Matcher>() {
 								@Override
+								@Nullable
 								public String run(final Matcher m) {
 									if (m.group(1).contains("{") || m.group(1).contains("}") || m.group(1).contains("%")) {
 										Skript.error("'" + var + "' is not a valid name for a default variable");
@@ -409,6 +408,10 @@ final public class ScriptLoader {
 								continue;
 							} else if (ci.getSerializeAs() != null) {
 								final ClassInfo<?> as = Classes.getExactClassInfo(ci.getSerializeAs());
+								if (as == null) {
+									assert false : ci;
+									continue;
+								}
 								o = Converters.convert(o, as.getC());
 								if (o == null) {
 									Skript.error("Can't save '" + ((EntryNode) n).getValue() + "' in a variable");
@@ -432,7 +435,7 @@ final public class ScriptLoader {
 						final ScriptCommand c = Commands.loadCommand(node);
 						if (c != null) {
 							numCommands++;
-							script.commands.add(c);
+//							script.commands.add(c);
 						}
 						
 //						currentEvent = null;
@@ -450,10 +453,8 @@ final public class ScriptLoader {
 						event = event.substring("on ".length());
 					
 					event = replaceOptions(event);
-					if (event == null)
-						continue;
 					
-					final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getKey() + "'");
+					final NonNullPair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getKey() + "'");
 					if (parsedEvent == null)
 						continue;
 					
@@ -479,7 +480,7 @@ final public class ScriptLoader {
 						SkriptEventHandler.addTrigger(parsedEvent.first.events, trigger);
 					}
 					
-					script.triggers.add(trigger);
+//					script.triggers.add(trigger);
 					
 					numTriggers++;
 				}
@@ -492,30 +493,30 @@ final public class ScriptLoader {
 				numErrors.stop();
 			}
 			
-			if (SkriptConfig.enableScriptCaching.value()) {
-				if (numErrors.getCount() > 0) {
-					ObjectOutputStream out = null;
-					try {
-						cache.getParentFile().mkdirs();
-						out = new ObjectOutputStream(new FileOutputStream(cache));
-						out.writeLong(f.lastModified());
-						out.writeObject(script);
-					} catch (final NotSerializableException e) {
-						Skript.exception(e, "Cannot cache " + f.getName());
-						if (out != null)
-							out.close();
-						cache.delete();
-					} catch (final IOException e) {
-						Skript.warning("Cannot cache " + f.getName() + ": " + e.getLocalizedMessage());
-						if (out != null)
-							out.close();
-						cache.delete();
-					} finally {
-						if (out != null)
-							out.close();
-					}
-				}
-			}
+//			if (SkriptConfig.enableScriptCaching.value() && cache != null) {
+//				if (numErrors.getCount() > 0) {
+//					ObjectOutputStream out = null;
+//					try {
+//						cache.getParentFile().mkdirs();
+//						out = new ObjectOutputStream(new FileOutputStream(cache));
+//						out.writeLong(f.lastModified());
+//						out.writeObject(script);
+//					} catch (final NotSerializableException e) {
+//						Skript.exception(e, "Cannot cache " + f.getName());
+//						if (out != null)
+//							out.close();
+//						cache.delete();
+//					} catch (final IOException e) {
+//						Skript.warning("Cannot cache " + f.getName() + ": " + e.getLocalizedMessage());
+//						if (out != null)
+//							out.close();
+//						cache.delete();
+//					} finally {
+//						if (out != null)
+//							out.close();
+//					}
+//				}
+//			}
 			
 			return new ScriptInfo(1, numTriggers, numCommands);
 		} catch (final IOException e) {
@@ -562,22 +563,23 @@ final public class ScriptLoader {
 	}
 	
 	public final static String replaceOptions(final String s) {
-		if (s == null)
-			return null;
-		return StringUtils.replaceAll(s, "\\{@(.+?)\\}", new Callback<String, Matcher>() {
+		final String r = StringUtils.replaceAll(s, "\\{@(.+?)\\}", new Callback<String, Matcher>() {
 			@Override
+			@Nullable
 			public String run(final Matcher m) {
 				final String option = currentOptions.get(m.group(1));
 				if (option == null) {
 					Skript.error("undefined option " + m.group());
-					return null;
+					return m.group();
 				}
 				return option;
 			}
 		});
+		assert r != null;
+		return r;
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	public static ArrayList<TriggerItem> loadItems(final SectionNode node) {
 		
 		if (Skript.debug())
@@ -592,8 +594,6 @@ final public class ScriptLoader {
 			if (n instanceof SimpleNode) {
 				final SimpleNode e = (SimpleNode) n;
 				final String s = replaceOptions(e.getKey());
-				if (s == null)
-					continue;
 				if (!SkriptParser.validateLine(s))
 					continue;
 				final Statement stmt = Statement.parse(s, "Can't understand this condition/effect: " + s);
@@ -606,8 +606,6 @@ final public class ScriptLoader {
 					hasDelayBefore = Kleenean.TRUE;
 			} else if (n instanceof SectionNode) {
 				String name = replaceOptions(n.getKey());
-				if (name == null)
-					continue;
 				if (!SkriptParser.validateLine(name))
 					continue;
 				
@@ -664,7 +662,7 @@ final public class ScriptLoader {
 						Skript.error("'else if' has to be placed just after another 'if' or 'else if' section");
 						continue;
 					}
-					name = name.substring("else if ".length());
+					name = "" + name.substring("else if ".length());
 					final Condition cond = Condition.parse(name, "can't understand this condition: '" + name + "'");
 					if (cond == null)
 						continue;
@@ -676,7 +674,7 @@ final public class ScriptLoader {
 					hasDelayBefore = hadDelayBeforeLastIf.or(hadDelayAfterLastIf.and(hasDelayBefore.and(Kleenean.UNKNOWN)));
 				} else {
 					if (StringUtils.startsWithIgnoreCase(name, "if "))
-						name = name.substring(3);
+						name = "" + name.substring(3);
 					final Condition cond = Condition.parse(name, "can't understand this condition: '" + name + "'");
 					if (cond == null)
 						continue;
@@ -707,12 +705,21 @@ final public class ScriptLoader {
 	 * @param node
 	 * @return The loaded Trigger
 	 */
+	@Nullable
 	static Trigger loadTrigger(final SectionNode node) {
 		String event = node.getKey();
+		if (event == null) {
+			assert false : node;
+			return null;
+		}
 		if (event.toLowerCase().startsWith("on "))
-			event = event.substring("on ".length());
+			event = "" + event.substring("on ".length());
 		
-		final Pair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getKey() + "'");
+		final NonNullPair<SkriptEventInfo<?>, SkriptEvent> parsedEvent = SkriptParser.parseEvent(event, "can't understand this event: '" + node.getKey() + "'");
+		if (parsedEvent == null) {
+			assert false;
+			return null;
+		}
 		
 //		currentEvent = parsedEvent.second;
 		currentEvents = parsedEvent.first.events;
@@ -743,7 +750,7 @@ final public class ScriptLoader {
 		}
 	}
 	
-	public final static boolean isCurrentEvent(final Class<? extends Event> event) {
+	public final static boolean isCurrentEvent(final @Nullable Class<? extends Event> event) {
 		return CollectionUtils.containsSuperclass(currentEvents, event);
 	}
 	
@@ -754,11 +761,12 @@ final public class ScriptLoader {
 	/**
 	 * @see #isCurrentEvent(Class)
 	 */
+	@Nullable
 	public static Class<? extends Event>[] getCurrentEvents() {
 		return currentEvents;
 	}
 	
-	public static void setCurrentEvents(final Class<? extends Event>... currentEvents) {
+	public static void setCurrentEvents(final @Nullable Class<? extends Event>... currentEvents) {
 		ScriptLoader.currentEvents = currentEvents;
 	}
 	

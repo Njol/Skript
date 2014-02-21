@@ -28,6 +28,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.material.Directional;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.util.coll.CollectionUtils;
@@ -281,19 +282,22 @@ public abstract class BlockUtils {
 		return isSolid[type];
 	}
 	
+	@SuppressWarnings("null")
 	public static Iterable<Block> getBlocksAround(final Block b) {
 		return Arrays.asList(b.getRelative(BlockFace.NORTH), b.getRelative(BlockFace.EAST), b.getRelative(BlockFace.SOUTH), b.getRelative(BlockFace.WEST));
 	}
 	
+	@SuppressWarnings("null")
 	public static Iterable<BlockFace> getFaces() {
 		return Arrays.asList(BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST);
 	}
 	
 	/**
 	 * @param b A block
-	 * @return Location of the block, including it's direction
+	 * @return Location of the block, including its direction
 	 */
-	public static Location getLocation(final Block b) {
+	@Nullable
+	public static Location getLocation(final @Nullable Block b) {
 		if (b == null)
 			return null;
 		final Location l = b.getLocation().add(0.5, 0.5, 0.5);

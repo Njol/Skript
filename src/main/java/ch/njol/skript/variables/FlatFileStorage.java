@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -38,6 +38,8 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
@@ -51,7 +53,6 @@ import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
-import ch.njol.util.Pair;
 
 /**
  * TODO use a database (SQLite) instead and only load a limited amount of variables into RAM - e.g. 2 GB (configurable). If more variables are available they will be loaded when
@@ -62,11 +63,13 @@ import ch.njol.util.Pair;
  */
 public class FlatFileStorage extends VariablesStorage {
 	
+	@Nullable
 	private volatile PrintWriter changesWriter;
 	
 	final AtomicInteger changes = new AtomicInteger(0);
 	private final int REQUIRED_CHANGES_FOR_RESAVE = 1000;
 	
+	@Nullable
 	private Task saveTask;
 	
 	private boolean loadError = false;
@@ -75,7 +78,7 @@ public class FlatFileStorage extends VariablesStorage {
 		super(n);
 	}
 	
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({"deprecation", "null"})
 	@Override
 	protected boolean load_i(final SectionNode n) {
 		IOException ioEx = null;
@@ -157,6 +160,12 @@ public class FlatFileStorage extends VariablesStorage {
 			log.stop();
 		}
 		
+		final File file = this.file;
+		if (file == null) {
+			assert false : this;
+			return false;
+		}
+		
 		if (ioEx != null || unsuccessful > 0 || update2_1) {
 			if (unsuccessful > 0) {
 				Skript.error(unsuccessful + " variable" + (unsuccessful == 1 ? "" : "s") + " could not be loaded!");
@@ -236,8 +245,10 @@ public class FlatFileStorage extends VariablesStorage {
 		return r;
 	}
 	
+	@SuppressWarnings("null")
 	private final static Pattern csv = Pattern.compile("\\s*([^\",]+|\"([^\"]|\"\")*\")\\s*(,|$)");
 	
+	@Nullable
 	private final static String[] splitCSV(final String line) {
 		final Matcher m = csv.matcher(line);
 		int lastEnd = 0;
@@ -257,17 +268,19 @@ public class FlatFileStorage extends VariablesStorage {
 	}
 	
 	@Override
-	protected void save(final String name, final String type, final byte[] value) {
+	protected boolean save(final String name, final @Nullable String type, final @Nullable byte[] value) {
 		synchronized (connectionLock) {
-			while (changesWriter == null) {
+			PrintWriter cw;
+			while ((cw = changesWriter) == null) {
 				try {
 					connectionLock.wait();
 				} catch (final InterruptedException e) {}
 			}
-			writeCSV(changesWriter, name, type, new String(encode(value)));
-			changesWriter.flush();
+			writeCSV(cw, name, type, value == null ? "" : encode(value));
+			cw.flush();
 			changes.incrementAndGet();
 		}
+		return true;
 	}
 	
 	private final static void writeCSV(final PrintWriter pw, final String... values) {
@@ -276,7 +289,7 @@ public class FlatFileStorage extends VariablesStorage {
 			if (i != 0)
 				pw.print(", ");
 			String v = values[i];
-			if (v.contains(",") || v.contains("\""))
+			if (v != null && (v.contains(",") || v.contains("\"")))
 				v = '"' + v.replace("\"", "\"\"") + '"';
 			pw.print(v);
 		}
@@ -285,25 +298,28 @@ public class FlatFileStorage extends VariablesStorage {
 	
 	@Override
 	protected final void disconnect() {
-		assert Thread.holdsLock(connectionLock);
-		clearChangesQueue();
-		if (changesWriter != null) {
-			changesWriter.close();
-			changesWriter = null;
+		synchronized (connectionLock) {
+			clearChangesQueue();
+			final PrintWriter cw = changesWriter;
+			if (cw != null) {
+				cw.close();
+				changesWriter = null;
+			}
 		}
 	}
 	
 	@Override
-	protected final void connect() {
-		assert Thread.holdsLock(connectionLock);
-		if (changesWriter != null)
-			return;
-		try {
-			changesWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
-		} catch (final FileNotFoundException e) {
-			Skript.exception(e);
-		} catch (final UnsupportedEncodingException e) {
-			Skript.exception(e);
+	protected final boolean connect() {
+		synchronized (connectionLock) {
+			if (changesWriter != null)
+				return true;
+			try {
+				changesWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file, true), StandardCharsets.UTF_8));
+				return true;
+			} catch (final FileNotFoundException e) {
+				Skript.exception(e);
+				return false;
+			}
 		}
 	}
 	
@@ -321,17 +337,25 @@ public class FlatFileStorage extends VariablesStorage {
 	 */
 	public final void saveVariables(final boolean finalSave) {
 		if (finalSave) {
-			saveTask.cancel();
-			if (backupTask != null)
-				backupTask.cancel();
+			final Task st = saveTask;
+			if (st != null)
+				st.cancel();
+			final Task bt = backupTask;
+			if (bt != null)
+				bt.cancel();
 		}
 		synchronized (connectionLock) {
 			try {
+				final File f = file;
+				if (f == null) {
+					assert false : this;
+					return;
+				}
 				Variables.getReadLock().lock();
 				disconnect();
 				if (loadError) {
 					try {
-						final File backup = FileUtils.backup(file);
+						final File backup = FileUtils.backup(f);
 						Skript.info("Created a backup of your old variables.csv as " + backup.getName());
 						loadError = false;
 					} catch (final IOException e) {
@@ -353,7 +377,7 @@ public class FlatFileStorage extends VariablesStorage {
 					pw.println();
 					pw.flush();
 					pw.close();
-					FileUtils.move(tempFile, file, true);
+					FileUtils.move(tempFile, f, true);
 				} catch (final IOException e) {
 					Skript.error("Unable to save variables: " + e.getLocalizedMessage());
 				} finally {
@@ -379,21 +403,23 @@ public class FlatFileStorage extends VariablesStorage {
 	 * @param parent The parent's name with {@link Variable#SEPARATOR} at the end
 	 * @param map
 	 */
+	@SuppressWarnings("unchecked")
 	private final void save(final PrintWriter pw, final String parent, final TreeMap<String, Object> map) {
 		outer: for (final Entry<String, Object> e : map.entrySet()) {
-			if (e.getValue() == null)
+			final Object val = e.getValue();
+			if (val == null)
 				continue;
-			if (e.getValue() instanceof TreeMap) {
-				save(pw, parent + e.getKey() + Variable.SEPARATOR, (TreeMap<String, Object>) e.getValue());
+			if (val instanceof TreeMap) {
+				save(pw, parent + e.getKey() + Variable.SEPARATOR, (TreeMap<String, Object>) val);
 			} else {
 				final String name = (e.getKey() == null ? parent.substring(0, parent.length() - Variable.SEPARATOR.length()) : parent + e.getKey());
 				for (final VariablesStorage s : Variables.storages) {
 					if (s != this && s.accept(name))
 						continue outer;
 				}
-				final Pair<String, byte[]> value = Classes.serialize(e.getValue());
+				final SerializedVariable.Value value = Classes.serialize(val);
 				if (value != null)
-					writeCSV(pw, name, value.first, new String(encode(value.second)));
+					writeCSV(pw, name, value.type, encode(value.data));
 			}
 		}
 	}

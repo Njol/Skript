@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import java.lang.reflect.Array;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Arithmetic")
 @Description("Arithmetic expressions, e.g. 1+2, (2 - health of player)/3, etc.")
 @Examples({"set the player's health to 10 - the player's health",
@@ -52,42 +52,51 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	
 	private static enum Operator {
 		PLUS('+') {
+			@SuppressWarnings("null")
 			@Override
 			public Number calculate(final Number n1, final Number n2, final boolean integer) {
 				if (integer)
-					return Integer.valueOf(n1.intValue() + n2.intValue());
+					return Long.valueOf(n1.longValue() + n2.longValue());
 				return Double.valueOf(n1.doubleValue() + n2.doubleValue());
 			}
 		},
 		MINUS('-') {
+			@SuppressWarnings("null")
 			@Override
 			public Number calculate(final Number n1, final Number n2, final boolean integer) {
 				if (integer)
-					return Integer.valueOf(n1.intValue() - n2.intValue());
+					return Long.valueOf(n1.longValue() - n2.longValue());
 				return Double.valueOf(n1.doubleValue() - n2.doubleValue());
 			}
 		},
 		MULT('*') {
+			@SuppressWarnings("null")
 			@Override
 			public Number calculate(final Number n1, final Number n2, final boolean integer) {
 				if (integer)
-					return Integer.valueOf(n1.intValue() * n2.intValue());
+					return Long.valueOf(n1.longValue() * n2.longValue());
 				return Double.valueOf(n1.doubleValue() * n2.doubleValue());
 			}
 		},
 		DIV('/') {
+			@SuppressWarnings("null")
 			@Override
 			public Number calculate(final Number n1, final Number n2, final boolean integer) {
-				if (integer)
-					return Integer.valueOf(n1.intValue() / n2.intValue());
+				if (integer) {
+					final long div = n2.longValue();
+					if (div == 0)
+						return Long.MAX_VALUE;
+					return Long.valueOf(n1.longValue() / div);
+				}
 				return Double.valueOf(n1.doubleValue() / n2.doubleValue());
 			}
 		},
 		EXP('^') {
+			@SuppressWarnings("null")
 			@Override
 			public Number calculate(final Number n1, final Number n2, final boolean integer) {
 				if (integer)
-					return Integer.valueOf((int) Math.pow(n1.intValue(), n2.intValue()));
+					return Long.valueOf((int) Math.pow(n1.intValue(), n2.intValue()));
 				return Double.valueOf(Math.pow(n1.doubleValue(), n2.doubleValue()));
 			}
 		};
@@ -115,9 +124,6 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 			{"%number%[ ]/[ ]%number%", Operator.DIV},
 			
 			{"%number%[ ]^[ ]%number%", Operator.EXP},
-			
-			// more general in SkriptParser now
-//			{"\\(%number%\\)", null}
 	
 	});
 	
@@ -125,21 +131,22 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 		Skript.registerExpression(ExprArithmetic.class, Number.class, ExpressionType.PATTERN_MATCHES_EVERYTHING, patterns.getPatterns());
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<? extends Number> first, second;
+	@SuppressWarnings("null")
 	private Operator op;
 	
+	@SuppressWarnings("null")
 	private Class<? extends Number> returnType;
 	private boolean integer;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		first = (Expression<? extends Number>) exprs[0];
-		second = exprs.length == 1 ? null : (Expression<? extends Number>) exprs[1];
+		second = (Expression<? extends Number>) exprs[1];
 		op = patterns.getInfo(matchedPattern);
-		if (op == null) {
-			returnType = first.getReturnType();
-		} else if (op == Operator.DIV || op == Operator.EXP) {
+		if (op == Operator.DIV || op == Operator.EXP) {
 			returnType = Double.class;
 		} else {
 			final Class<?> f = first.getReturnType(), s = second.getReturnType();
@@ -150,18 +157,17 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 				secondIsInt |= i.isAssignableFrom(s);
 			}
 			if (firstIsInt && secondIsInt)
-				returnType = Integer.class;
+				returnType = Long.class;
 			else
 				returnType = Double.class;
 		}
-		integer = returnType == Integer.class;
+		integer = returnType == Long.class;
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	protected Number[] get(final Event e) {
-		if (op == null)
-			return first.getArray(e);
 		final Number[] one = (Number[]) Array.newInstance(returnType, 1);
 		Number n1 = first.getSingle(e), n2 = second.getSingle(e);
 		if (n1 == null)
@@ -183,17 +189,12 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		if (op == null) {
-			return "(" + first.toString(e, debug) + ")";
-		}
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return first.toString(e, debug) + " " + op + " " + second.toString(e, debug);
 	}
 	
 	@Override
 	public Expression<? extends Number> simplify() {
-		if (op == null)
-			return first;
 		return this;
 	}
 	

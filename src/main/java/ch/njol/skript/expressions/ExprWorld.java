@@ -26,6 +26,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Converter;
@@ -36,7 +37,6 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.effects.Delay;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.expressions.base.PropertyExpression;
-import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -45,7 +45,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("World")
 @Description("The world the event occurred in.")
 @Examples({"world is \"world_nether\"",
@@ -59,18 +58,14 @@ public class ExprWorld extends PropertyExpression<Object, World> {
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
-		if (exprs[0] == null) {
-			exprs[0] = new EventValueExpression<World>(World.class);
-			if (!((DefaultExpression<?>) exprs[0]).init())
+		Expression<?> expr = exprs[0];
+		if (expr == null) {
+			expr = new EventValueExpression<World>(World.class);
+			if (!((EventValueExpression<?>) expr).init())
 				return false;
 		}
-		setExpr(exprs[0]);
+		setExpr(expr);
 		return true;
-	}
-	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the world" + (getExpr().isDefault() ? "" : " of " + getExpr().toString(e, debug));
 	}
 	
 	@Override
@@ -84,6 +79,7 @@ public class ExprWorld extends PropertyExpression<Object, World> {
 			return (World[]) source;
 		return get(source, new Converter<Object, World>() {
 			@Override
+			@Nullable
 			public World convert(final Object o) {
 				if (o instanceof Entity) {
 					if (getTime() > 0 && e instanceof PlayerTeleportEvent && o.equals(((PlayerTeleportEvent) e).getPlayer()) && !Delay.isDelayed(e))
@@ -97,6 +93,11 @@ public class ExprWorld extends PropertyExpression<Object, World> {
 				return null;
 			}
 		});
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "the world" + (getExpr().isDefault() ? "" : " of " + getExpr().toString(e, debug));
 	}
 	
 	@SuppressWarnings("unchecked")

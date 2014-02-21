@@ -28,6 +28,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -44,7 +45,7 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"unchecked", "serial"})
+@SuppressWarnings("unchecked")
 public class EvtClick extends SkriptEvent {
 	
 	// Important: a click on an entity fires both an PlayerInteractEntityEvent and a PlayerInteractEvent
@@ -65,7 +66,9 @@ public class EvtClick extends SkriptEvent {
 				.since("1.0");
 	}
 	
+	@Nullable
 	private Literal<?> types = null;
+	@Nullable
 	private Literal<ItemType> tools;
 	
 	private int click = ANY;
@@ -133,23 +136,24 @@ public class EvtClick extends SkriptEvent {
 			return false;
 		}
 		
-		if (types == null)
-			return true;
-		return types.check(e, new Checker<Object>() {
-			@Override
-			public boolean check(final Object o) {
-				if (entity != null) {
-					return o instanceof EntityData ? ((EntityData<?>) o).isInstance(entity) : Relation.EQUAL.is(DefaultComparators.entityItemComparator.compare(EntityData.fromEntity(entity), (ItemType) o));
-				} else {
-					return o instanceof EntityData ? false : ((ItemType) o).isOfType(block);
+		if (types != null) {
+			return types.check(e, new Checker<Object>() {
+				@Override
+				public boolean check(final Object o) {
+					if (entity != null) {
+						return o instanceof EntityData ? ((EntityData<?>) o).isInstance(entity) : Relation.EQUAL.is(DefaultComparators.entityItemComparator.compare(EntityData.fromEntity(entity), (ItemType) o));
+					} else {
+						return o instanceof EntityData ? false : ((ItemType) o).isOfType(block);
+					}
 				}
-			}
-		});
+			});
+		}
+		return true;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return (click == LEFT ? "left" : click == RIGHT ? "right" : "") + "click" + (types == null ? "" : " on " + types.toString(e, debug)) + (tools == null ? "" : " holding " + tools.toString(e, debug));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return (click == LEFT ? "left" : click == RIGHT ? "right" : "") + "click" + (types != null ? " on " + types.toString(e, debug) : "") + (tools != null ? " holding " + tools.toString(e, debug) : "");
 	}
 	
 }

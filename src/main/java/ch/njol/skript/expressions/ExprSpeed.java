@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -39,7 +40,6 @@ import ch.njol.util.Math2;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Speed")
 @Description({"A player's walking or flying speed. Both can be changed, but values must be between -1 and 1 (excessive values will be changed to -1 or 1 respectively). Negative values reverse directions.",
 		"Please note that changing a player's speed will change his FOV just like potions do."})
@@ -64,12 +64,14 @@ public class ExprSpeed extends SimplePropertyExpression<Player, Float> {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Float convert(final Player p) {
 		return walk ? p.getWalkSpeed() : p.getFlySpeed();
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET || mode == ChangeMode.RESET)
 			return new Class[] {Number.class};
@@ -77,7 +79,7 @@ public class ExprSpeed extends SimplePropertyExpression<Player, Float> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		final float d = delta == null ? 0 : Math2.fit(-1, ((Number) delta[0]).floatValue(), 1);
 		for (final Player p : getExpr().getArray(e)) {
 			if (walk)

@@ -27,6 +27,7 @@ import java.util.WeakHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -43,7 +44,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Delay")
 @Description("Delays the script's execution by a given timespan. Please note that delays are not persistent, e.g. trying to create a tempban script with <code>ban player → wait 7 days → unban player</code> will not work if you restart your server anytime within these 7 days. You also have to be careful even when using small delays! ")
 @Examples({"wait 2 minutes",
@@ -56,9 +56,10 @@ public class Delay extends Effect {
 		Skript.registerEffect(Delay.class, "(wait|halt) [for] %timespan%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Timespan> duration;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		duration = (Expression<Timespan>) exprs[0];
@@ -66,10 +67,12 @@ public class Delay extends Effect {
 	}
 	
 	@Override
+	@Nullable
 	protected TriggerItem walk(final Event e) {
 		debug(e, true);
 		final long start = Skript.debug() ? System.nanoTime() : 0;
-		if (getNext() != null) {
+		final TriggerItem next = getNext();
+		if (next != null) {
 			delayed.add(e);
 			final Timespan d = duration.getSingle(e);
 			if (d == null)
@@ -79,13 +82,14 @@ public class Delay extends Effect {
 				public void run() {
 					if (Skript.debug())
 						Skript.info(getIndentation() + "... continuing after " + (System.nanoTime() - start) / 1000000000. + "s");
-					TriggerItem.walk(getNext(), e);
+					TriggerItem.walk(next, e);
 				}
 			}, d.getTicks());
 		}
 		return null;
 	}
 	
+	@SuppressWarnings("null")
 	private final static Set<Event> delayed = Collections.newSetFromMap(new WeakHashMap<Event, Boolean>());
 	
 	public final static boolean isDelayed(final Event e) {
@@ -98,7 +102,7 @@ public class Delay extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "wait for " + duration.toString(e, debug) + (e == null ? "" : "...");
 	}
 	

@@ -24,6 +24,7 @@ package ch.njol.skript.effects;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Spawn")
 @Description("Spawn a creature.")
 @Examples({"spawn 3 creepers at the targeted block",
@@ -53,13 +53,17 @@ public class EffSpawn extends Effect {
 				"spawn %number% of %entitytypes% [%directions% %locations%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Location> locations;
+	@SuppressWarnings("null")
 	private Expression<EntityType> types;
+	@Nullable
 	private Expression<Number> amount;
 	
+	@Nullable
 	public static Entity lastSpawned = null;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		amount = matchedPattern == 0 ? null : (Expression<Number>) (exprs[0]);
@@ -71,13 +75,12 @@ public class EffSpawn extends Effect {
 	@Override
 	public void execute(final Event e) {
 		lastSpawned = null;
-		if (amount != null && amount.getSingle(e) == null)
-			return;
-		final EntityType[] ts = types.getArray(e);
-		final Number a = amount == null ? 1 : amount.getSingle(e);
+		final Number a = amount != null ? amount.getSingle(e) : 1;
 		if (a == null)
 			return;
+		final EntityType[] ts = types.getArray(e);
 		for (final Location l : locations.getArray(e)) {
+			assert l != null : locations;
 			for (final EntityType type : ts) {
 				for (int i = 0; i < a.doubleValue() * type.getAmount(); i++) {
 					lastSpawned = type.data.spawn(l);
@@ -87,8 +90,8 @@ public class EffSpawn extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "spawn " + types.toString(e, debug) + " " + locations.toString(e, debug);
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "spawn " + (amount != null ? amount.toString(e, debug) + " " : "") + types.toString(e, debug) + " " + locations.toString(e, debug);
 	}
 	
 }

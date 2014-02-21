@@ -25,36 +25,40 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * @author Peter Güttinger
  */
 public class ConfigReader extends BufferedReader {
 	
-	private String line, lastLine;
+	@Nullable
+	private String line;
 	private boolean reset = false;
 	private int ln = 0;
 	
 	private boolean hasNonEmptyLine = false;
 	
-	public ConfigReader(final InputStream source) throws UnsupportedEncodingException {
-		super(new InputStreamReader(source, "UTF-8"));
+	public ConfigReader(final InputStream source) {
+		super(new InputStreamReader(source, StandardCharsets.UTF_8));
 	}
 	
 	@Override
+	@Nullable
 	public String readLine() throws IOException {
 		if (reset) {
 			reset = false;
-			return lastLine;
+		} else {
+			line = stripUTF8BOM(super.readLine());
+			ln++;
 		}
-		lastLine = line;
-		line = stripUTF8BOM(super.readLine());
-		ln++;
 		return line;
 	}
 	
-	private final String stripUTF8BOM(final String line) {
+	@Nullable
+	private final String stripUTF8BOM(final @Nullable String line) {
 		if (!hasNonEmptyLine && line != null && !line.isEmpty()) {
 			hasNonEmptyLine = true;
 			if (line.startsWith("\uFEFF")) {
@@ -67,7 +71,7 @@ public class ConfigReader extends BufferedReader {
 	@Override
 	public void reset() {
 		if (reset)
-			throw new RuntimeException("reset was called twice without a readLine inbetween");
+			throw new IllegalStateException("reset was called twice without a readLine inbetween");
 		reset = true;
 	}
 	
@@ -75,6 +79,7 @@ public class ConfigReader extends BufferedReader {
 		return ln;
 	}
 	
+	@Nullable
 	public String getLine() {
 		return line;
 	}
@@ -82,6 +87,11 @@ public class ConfigReader extends BufferedReader {
 	@Override
 	public boolean markSupported() {
 		return false;
+	}
+	
+	@Override
+	public void mark(final int readAheadLimit) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 	
 }

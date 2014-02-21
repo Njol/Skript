@@ -8,7 +8,7 @@ a: ein, eine
 is: ist
 are: sind
 not: nicht
-not a: kein(e) # @m:kein @f:keine @n:kein @x:keine
+# not a: kein(e) # @m:kein @f:keine @n:kein @x:keine
 neither: weder
 nor: noch
 
@@ -46,8 +46,8 @@ skript:
 	invalid reload: Skript darf nur mittles Bukkits '/reload' oder Skripts '/skript reload' neu geladen werden.
 	no scripts: Keine Skripte wurden gefunden, vielleicht solltest du einige schreiben ;)
 	no errors: Alle Skripte wurden fehlerfrei geladen.
-	scripts loaded: %s Skript¦¦e¦ mit total %s Trigger¦¦n¦ und %s Befehl¦¦en¦ wurden in %s geladen
-	finished loading: Skript wurde fertig geladen.
+	scripts loaded: %s Skript¦¦e¦ mit insgesamt %s Trigger¦¦n¦ und %s Befehl¦¦en¦ wurden in %s geladen
+	finished loading: Laden abgeschlossen.
 
 # -- Skript command --
 skript command:
@@ -160,6 +160,7 @@ commands:
 # -- Hooks --
 hooks:
 	hooked: Erfolgreich in %s eingehängt
+	error: Konnte nich in %1$s einhängen. Dies kann passieren wenn Skript nicht die installierte version von %1$s unterstützt
 
 # -- Aliases --
 aliases:
@@ -220,7 +221,9 @@ enchantments:
 		arrow_infinite: der Unendlichkeit, Unendlichkeit
 		thorns: der Dornen, Dornen
 		unknown_enchant_61: des Glücks des Meeres, Glück des Meeres
+		luck: des Glücks des Meeres, Glück des Meeres
 		unknown_enchant_62: des Köders, Köder
+		lure: des Köders, Köder
 
 # -- Potion Effects --
 potions:

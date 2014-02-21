@@ -24,21 +24,24 @@ package ch.njol.skript.config;
 import java.lang.reflect.Field;
 import java.util.Locale;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 /**
  * @author Peter Güttinger
  */
 public class OptionSection {
 	
-	public final String name;
+	public final String key;
 	
-	public OptionSection(final String name) {
-		this.name = name;
+	public OptionSection(final String key) {
+		this.key = key;
 	}
 	
+	@Nullable
 	public final <T> T get(String key) {
 		if (this.getClass() == OptionSection.class)
 			return null;
-		key = key.toLowerCase(Locale.ENGLISH);
+		key = "" + key.toLowerCase(Locale.ENGLISH);
 		for (final Field f : this.getClass().getDeclaredFields()) {
 			f.setAccessible(true);
 			if (Option.class.isAssignableFrom(f.getType())) {

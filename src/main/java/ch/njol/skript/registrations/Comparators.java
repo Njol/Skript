@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.classes.Comparator.ComparatorInfo;
@@ -59,12 +61,13 @@ public class Comparators {
 	}
 	
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	public final static Relation compare(final Object o1, final Object o2) {
+	public final static Relation compare(final @Nullable Object o1, final @Nullable Object o2) {
 		if (o1 == null || o2 == null)
 			return Relation.NOT_EQUAL;
+		@SuppressWarnings("null")
 		final Comparator c = getComparator(o1.getClass(), o2.getClass());
 		if (c == null)
-			return null;
+			return Relation.NOT_EQUAL;
 		return c.compare(o1, o2);
 	}
 	
@@ -82,6 +85,7 @@ public class Comparators {
 	private final static Map<Pair<Class<?>, Class<?>>, Comparator<?, ?>> comparatorsQuickAccess = new HashMap<Pair<Class<?>, Class<?>>, Comparator<?, ?>>();
 	
 	@SuppressWarnings("unchecked")
+	@Nullable
 	public final static <F, S> Comparator<? super F, ? super S> getComparator(final Class<F> f, final Class<S> s) {
 		final Pair<Class<?>, Class<?>> p = new Pair<Class<?>, Class<?>>(f, s);
 		if (comparatorsQuickAccess.containsKey(p))
@@ -92,6 +96,7 @@ public class Comparators {
 	}
 	
 	@SuppressWarnings("unchecked")
+	@Nullable
 	private final static <F, S> Comparator<?, ?> getComparator_i(final Class<F> f, final Class<S> s) {
 		
 		// perfect match
@@ -144,12 +149,12 @@ public class Comparators {
 		return null;
 	}
 	
-	@SuppressWarnings("serial")
 	private final static class ConvertedComparator<T1, T2> implements Comparator<T1, T2> {
 		
 		@SuppressWarnings("rawtypes")
 		private final Comparator c;
 		@SuppressWarnings("rawtypes")
+		@Nullable
 		private final Converter c1, c2;
 		
 		public ConvertedComparator(final Converter<? super T1, ?> c1, final Comparator<?, ?> c) {
@@ -170,11 +175,14 @@ public class Comparators {
 			this.c2 = c2;
 		}
 		
+		@SuppressWarnings({"rawtypes", "unchecked"})
 		@Override
 		public Relation compare(final T1 o1, final T2 o2) {
+			final Converter c1 = this.c1;
 			final Object t1 = c1 == null ? o1 : c1.convert(o1);
 			if (t1 == null)
 				return Relation.NOT_EQUAL;
+			final Converter c2 = this.c2;
 			final Object t2 = c2 == null ? o2 : c2.convert(o2);
 			if (t2 == null)
 				return Relation.NOT_EQUAL;

@@ -28,6 +28,7 @@ import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -46,7 +47,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Cancel Event")
 @Description("Cancels the event (e.g. prevent blocks from being placed, or damage being taken).")
 @Examples({"on damage:",
@@ -61,6 +61,7 @@ public class EffCancelEvent extends Effect {
 	
 	private boolean cancel;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		if (isDelayed == Kleenean.TRUE) {
@@ -68,7 +69,10 @@ public class EffCancelEvent extends Effect {
 			return false;
 		}
 		cancel = matchedPattern == 0;
-		for (final Class<? extends Event> e : ScriptLoader.getCurrentEvents()) {
+		final Class<? extends Event>[] es = ScriptLoader.getCurrentEvents();
+		if (es == null)
+			return false;
+		for (final Class<? extends Event> e : es) {
 			if (Cancellable.class.isAssignableFrom(e) || BlockCanBuildEvent.class.isAssignableFrom(e))
 				return true; // TODO warning if some event(s) cannot be cancelled even though some can (needs a way to be suppressed)
 		}
@@ -94,7 +98,7 @@ public class EffCancelEvent extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return (cancel ? "" : "un") + "cancel event";
 	}
 	

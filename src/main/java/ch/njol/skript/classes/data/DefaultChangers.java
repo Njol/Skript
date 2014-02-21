@@ -33,9 +33,10 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffectType;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.ItemType;
-import ch.njol.skript.classes.SerializableChanger;
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.util.Experience;
 import ch.njol.skript.util.PlayerUtils;
 import ch.njol.util.coll.CollectionUtils;
@@ -47,10 +48,10 @@ public class DefaultChangers {
 	
 	public DefaultChangers() {}
 	
-	@SuppressWarnings("serial")
-	public final static SerializableChanger<Entity> entityChanger = new SerializableChanger<Entity>() {
+	public final static Changer<Entity> entityChanger = new Changer<Entity>() {
 		@SuppressWarnings("unchecked")
 		@Override
+		@Nullable
 		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
 			switch (mode) {
 				case ADD:
@@ -70,7 +71,7 @@ public class DefaultChangers {
 		}
 		
 		@Override
-		public void change(final Entity[] entities, final Object[] delta, final ChangeMode mode) {
+		public void change(final Entity[] entities, final @Nullable Object[] delta, final ChangeMode mode) {
 			if (delta == null) {
 				for (final Entity e : entities) {
 					if (!(e instanceof Player))
@@ -102,6 +103,8 @@ public class DefaultChangers {
 								}
 							} else if (d instanceof ItemType) {
 								final PlayerInventory invi = p.getInventory();
+								if (invi == null)
+									continue;
 								if (mode == ChangeMode.ADD)
 									((ItemType) d).addTo(invi);
 								else if (mode == ChangeMode.REMOVE)
@@ -118,9 +121,9 @@ public class DefaultChangers {
 		}
 	};
 	
-	@SuppressWarnings("serial")
-	public final static SerializableChanger<Player> playerChanger = new SerializableChanger<Player>() {
+	public final static Changer<Player> playerChanger = new Changer<Player>() {
 		@Override
+		@Nullable
 		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.DELETE)
 				return null;
@@ -133,10 +136,10 @@ public class DefaultChangers {
 		}
 	};
 	
-	@SuppressWarnings("serial")
-	public final static SerializableChanger<Entity> nonLivingEntityChanger = new SerializableChanger<Entity>() {
+	public final static Changer<Entity> nonLivingEntityChanger = new Changer<Entity>() {
 		@SuppressWarnings("unchecked")
 		@Override
+		@Nullable
 		public Class<Object>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.DELETE)
 				return CollectionUtils.array();
@@ -144,7 +147,7 @@ public class DefaultChangers {
 		}
 		
 		@Override
-		public void change(final Entity[] entities, final Object[] delta, final ChangeMode mode) {
+		public void change(final Entity[] entities, final @Nullable Object[] delta, final ChangeMode mode) {
 			assert mode == ChangeMode.DELETE;
 			for (final Entity e : entities) {
 				if (e instanceof Player)
@@ -154,10 +157,10 @@ public class DefaultChangers {
 		}
 	};
 	
-	@SuppressWarnings("serial")
-	public final static SerializableChanger<Item> itemChanger = new SerializableChanger<Item>() {
+	public final static Changer<Item> itemChanger = new Changer<Item>() {
 		@SuppressWarnings("unchecked")
 		@Override
+		@Nullable
 		public Class<?>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.SET)
 				return CollectionUtils.array(ItemStack.class);
@@ -165,8 +168,9 @@ public class DefaultChangers {
 		}
 		
 		@Override
-		public void change(final Item[] what, final Object[] delta, final ChangeMode mode) {
+		public void change(final Item[] what, final @Nullable Object[] delta, final ChangeMode mode) {
 			if (mode == ChangeMode.SET) {
+				assert delta != null;
 				for (final Item i : what)
 					i.setItemStack((ItemStack) delta[0]);
 			} else {
@@ -175,10 +179,10 @@ public class DefaultChangers {
 		}
 	};
 	
-	@SuppressWarnings("serial")
-	public final static SerializableChanger<Inventory> inventoryChanger = new SerializableChanger<Inventory>() {
+	public final static Changer<Inventory> inventoryChanger = new Changer<Inventory>() {
 		@SuppressWarnings("unchecked")
 		@Override
+		@Nullable
 		public Class<? extends Object>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.RESET)
 				return null;
@@ -191,8 +195,9 @@ public class DefaultChangers {
 		
 		@SuppressWarnings("deprecation")
 		@Override
-		public void change(final Inventory[] invis, final Object[] delta, final ChangeMode mode) {
+		public void change(final Inventory[] invis, final @Nullable Object[] delta, final ChangeMode mode) {
 			for (final Inventory invi : invis) {
+				assert invi != null;
 				switch (mode) {
 					case DELETE:
 						invi.clear();
@@ -211,6 +216,7 @@ public class DefaultChangers {
 						invi.clear();
 						//$FALL-THROUGH$
 					case ADD:
+						assert delta != null;
 						for (final Object d : delta) {
 							if (d instanceof Inventory) {
 								for (final ItemStack i : (Inventory) d) {
@@ -224,6 +230,7 @@ public class DefaultChangers {
 						break;
 					case REMOVE:
 					case REMOVE_ALL:
+						assert delta != null;
 						for (final Object d : delta) {
 							if (d instanceof Inventory) {
 								assert mode == ChangeMode.REMOVE;
@@ -246,10 +253,10 @@ public class DefaultChangers {
 		}
 	};
 	
-	@SuppressWarnings("serial")
-	public final static SerializableChanger<Block> blockChanger = new SerializableChanger<Block>() {
+	public final static Changer<Block> blockChanger = new Changer<Block>() {
 		@SuppressWarnings("unchecked")
 		@Override
+		@Nullable
 		public Class<?>[] acceptChange(final ChangeMode mode) {
 			if (mode == ChangeMode.RESET)
 				return null; // REMIND regenerate?
@@ -260,10 +267,12 @@ public class DefaultChangers {
 		
 		@SuppressWarnings("deprecation")
 		@Override
-		public void change(final Block[] blocks, final Object[] delta, final ChangeMode mode) {
+		public void change(final Block[] blocks, final @Nullable Object[] delta, final ChangeMode mode) {
 			for (final Block block : blocks) {
+				assert block != null;
 				switch (mode) {
 					case SET:
+						assert delta != null;
 						((ItemType) delta[0]).getBlock().setBlock(block, true);
 						break;
 					case DELETE:
@@ -272,10 +281,13 @@ public class DefaultChangers {
 					case ADD:
 					case REMOVE:
 					case REMOVE_ALL:
+						assert delta != null;
 						final BlockState state = block.getState();
 						if (!(state instanceof InventoryHolder))
 							break;
 						final Inventory invi = ((InventoryHolder) state).getInventory();
+						if (invi == null)
+							continue;
 						if (mode == ChangeMode.ADD) {
 							for (final Object d : delta) {
 								if (d instanceof Inventory) {

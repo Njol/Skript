@@ -25,19 +25,20 @@ import java.io.File;
 import java.util.List;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class Trigger extends TriggerSection {
 	
 	private final String name;
 	private final SkriptEvent event;
 	
+	@Nullable
 	private final File script;
 	
-	public Trigger(final File script, final String name, final SkriptEvent event, final List<TriggerItem> items) {
+	public Trigger(final @Nullable File script, final String name, final SkriptEvent event, final List<TriggerItem> items) {
 		super(items);
 		this.script = script;
 		this.name = name;
@@ -53,12 +54,13 @@ public class Trigger extends TriggerSection {
 	}
 	
 	@Override
+	@Nullable
 	protected TriggerItem walk(final Event e) {
 		return walk(e, true);
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return name + " (" + event.toString(e, debug) + ")";
 	}
 	
@@ -70,6 +72,7 @@ public class Trigger extends TriggerSection {
 		return event;
 	}
 	
+	@Nullable
 	public File getScript() {
 		return script;
 	}

@@ -23,6 +23,7 @@ package ch.njol.skript.effects;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -37,7 +38,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Message")
 @Description("Sends a message to the given player.")
 @Examples({"message \"A wild %player% appeared!\"",
@@ -51,10 +51,12 @@ public class EffMessage extends Effect {
 		Skript.registerEffect(EffMessage.class, "(message|send [message]) %strings% [to %commandsenders%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<String> messages;
+	@SuppressWarnings("null")
 	private Expression<CommandSender> recipients;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		messages = (Expression<String>) exprs[0];
@@ -73,7 +75,7 @@ public class EffMessage extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "send " + messages.toString(e, debug) + " to " + recipients.toString(e, debug);
 	}
 }

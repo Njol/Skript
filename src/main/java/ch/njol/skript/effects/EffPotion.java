@@ -25,6 +25,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Potion Effects")
 @Description("Apply or remove potion effects to/from entities.")
 @Examples({"apply swiftness 2 to the player",
@@ -58,13 +58,17 @@ public class EffPotion extends Effect {
 	
 	private final static int DEFAULT_DURATION = 15 * 20; // 15 seconds, same as EffPoison
 	
+	@SuppressWarnings("null")
 	private Expression<PotionEffectType> potions;
+	@Nullable
 	private Expression<Number> tier;
+	@SuppressWarnings("null")
 	private Expression<LivingEntity> entities;
+	@Nullable
 	private Expression<Timespan> duration;
 	private boolean apply;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		apply = matchedPattern == 0;
@@ -78,14 +82,6 @@ public class EffPotion extends Effect {
 			entities = (Expression<LivingEntity>) exprs[1];
 		}
 		return true;
-	}
-	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		if (apply)
-			return "apply " + potions.toString(e, debug) + (tier == null ? "" : " of tier " + tier.toString(e, debug)) + " to " + entities.toString(e, debug) + (duration == null ? "" : " for " + duration.toString(e, debug));
-		else
-			return "remove " + potions.toString(e, debug) + " from " + entities.toString(e, debug);
 	}
 	
 	@Override
@@ -128,6 +124,14 @@ public class EffPotion extends Effect {
 				en.addPotionEffect(new PotionEffect(t, duration, a), true);
 			}
 		}
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		if (apply)
+			return "apply " + potions.toString(e, debug) + (tier != null ? " of tier " + tier.toString(e, debug) : "") + " to " + entities.toString(e, debug) + (duration != null ? " for " + duration.toString(e, debug) : "");
+		else
+			return "remove " + potions.toString(e, debug) + " from " + entities.toString(e, debug);
 	}
 	
 }

@@ -22,6 +22,7 @@
 package ch.njol.skript.hooks.regions.expressions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -35,7 +36,6 @@ import ch.njol.skript.lang.ExpressionType;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Region")
 @Description({"The <a href='../classes/#region'>region</a> involved in an event.",
 		"This expression requires a supported regions plugin to be installed."})
@@ -53,7 +53,7 @@ public class ExprRegion extends EventValueExpression<Region> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the region";
 	}
 	

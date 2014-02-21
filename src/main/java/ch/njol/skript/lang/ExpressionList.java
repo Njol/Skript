@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -42,20 +43,20 @@ import ch.njol.util.coll.CollectionUtils;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class ExpressionList<T> implements Expression<T> {
 	
 	protected final Expression<? extends T>[] expressions;
 	protected final boolean and;
 	private final boolean single;
 	private final Class<T> returnType;
+	@Nullable
 	private ExpressionList<?> source;
 	
 	public ExpressionList(final Expression<? extends T>[] expressions, final Class<T> returnType, final boolean and) {
 		this(expressions, returnType, and, null);
 	}
 	
-	protected ExpressionList(final Expression<? extends T>[] expressions, final Class<T> returnType, final boolean and, final ExpressionList<?> source) {
+	protected ExpressionList(final Expression<? extends T>[] expressions, final Class<T> returnType, final boolean and, final @Nullable ExpressionList<?> source) {
 		assert expressions != null && expressions.length > 1;
 		this.expressions = expressions;
 		this.returnType = returnType;
@@ -81,6 +82,7 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
+	@Nullable
 	public T getSingle(final Event e) {
 		if (!single)
 			throw new UnsupportedOperationException();
@@ -92,6 +94,7 @@ public class ExpressionList<T> implements Expression<T> {
 		return null;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public T[] getArray(final Event e) {
 		if (and)
@@ -101,9 +104,10 @@ public class ExpressionList<T> implements Expression<T> {
 			if (t.length > 0)
 				return t;
 		}
-		return null;
+		return (T[]) Array.newInstance(returnType, 0);
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public T[] getAll(final Event e) {
 		final ArrayList<T> r = new ArrayList<T>();
@@ -113,31 +117,38 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
+	@Nullable
 	public Iterator<? extends T> iterator(final Event e) {
 		if (!and) {
 			for (final int i : CollectionUtils.permutation(expressions.length)) {
 				final Iterator<? extends T> t = expressions[i].iterator(e);
-				if (t.hasNext())
+				if (t != null && t.hasNext())
 					return t;
 			}
 			return null;
 		}
 		return new Iterator<T>() {
 			private int i = 0;
-			private Iterator<? extends T> current = expressions[0].iterator(e);
+			@Nullable
+			private Iterator<? extends T> current = null;
 			
 			@Override
 			public boolean hasNext() {
-				while (i + 1 < expressions.length && !current.hasNext())
-					current = expressions[++i].iterator(e);
-				return current.hasNext();
+				Iterator<? extends T> c = current;
+				while (i < expressions.length && (c == null || !c.hasNext()))
+					current = c = expressions[i++].iterator(e);
+				return c != null && c.hasNext();
 			}
 			
+			@SuppressWarnings("null")
 			@Override
 			public T next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
-				return current.next();
+				final Iterator<? extends T> c = current;
+				if (c == null)
+					throw new NoSuchElementException();
+				return c.next();
 			}
 			
 			@Override
@@ -177,6 +188,7 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
+	@Nullable
 	public <R> Expression<? extends R> getConvertedExpression(final Class<R>... to) {
 		@SuppressWarnings("unchecked")
 		final Expression<? extends R>[] exprs = new Expression[expressions.length];
@@ -197,10 +209,17 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		final ArrayList<Class<?>> r = new ArrayList<Class<?>>(Arrays.asList(expressions[0].acceptChange(mode)));
+		Class<?>[] l = expressions[0].acceptChange(mode);
+		if (l == null)
+			return null;
+		final ArrayList<Class<?>> r = new ArrayList<Class<?>>(Arrays.asList(l));
 		for (int i = 1; i < expressions.length; i++) {
-			r.retainAll(Arrays.asList(expressions[i].acceptChange(mode)));
+			l = expressions[i].acceptChange(mode);
+			if (l == null)
+				return null;
+			r.retainAll(Arrays.asList(l));
 			if (r.isEmpty())
 				return null;
 		}
@@ -208,7 +227,7 @@ public class ExpressionList<T> implements Expression<T> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		for (final Expression<?> expr : expressions) {
 			expr.change(e, delta, mode);
 		}
@@ -247,11 +266,12 @@ public class ExpressionList<T> implements Expression<T> {
 	
 	@Override
 	public Expression<?> getSource() {
-		return source == null ? this : source;
+		final ExpressionList<?> s = source;
+		return s == null ? this : s;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		final StringBuilder b = new StringBuilder("(");
 		for (int i = 0; i < expressions.length; i++) {
 			if (i != 0) {
@@ -262,7 +282,7 @@ public class ExpressionList<T> implements Expression<T> {
 			}
 			b.append(expressions[i].toString(e, debug));
 		}
-		return b.append(")").toString();
+		return "" + b.append(")").toString();
 	}
 	
 	@Override
@@ -292,8 +312,11 @@ public class ExpressionList<T> implements Expression<T> {
 				values[i] = ((Literal<? extends T>) expressions[i]).getSingle();
 			return new SimpleLiteral<T>(values, returnType, and);
 		}
-		if (isLiteralList)
-			return new LiteralList<T>(Arrays.copyOf(expressions, expressions.length, Literal[].class), returnType, and);
+		if (isLiteralList) {
+			final Literal<? extends T>[] ls = Arrays.copyOf(expressions, expressions.length, Literal[].class);
+			assert ls != null;
+			return new LiteralList<T>(ls, returnType, and);
+		}
 		return this;
 	}
 	

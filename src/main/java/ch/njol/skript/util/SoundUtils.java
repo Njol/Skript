@@ -22,6 +22,7 @@
 package ch.njol.skript.util;
 
 import org.bukkit.Sound;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * @author Peter Güttinger
@@ -29,8 +30,13 @@ import org.bukkit.Sound;
 public abstract class SoundUtils {
 	private SoundUtils() {}
 	
-	private final static EnumUtils<Sound> util = null;//new EnumUtils<Sound>(Sound.class, "sounds");
+	static {
+		assert false;
+	}
 	
+	private final static EnumUtils<Sound> util = new EnumUtils<Sound>(Sound.class, "sounds");
+	
+	@Nullable
 	public final static Sound parse(final String s) {
 		return util.parse(s);
 	}

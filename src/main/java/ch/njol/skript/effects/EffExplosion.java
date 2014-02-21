@@ -23,6 +23,7 @@ package ch.njol.skript.effects;
 
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Explosion")
 @Description({"Creates an explosion of a given force. The Minecraft Wiki has an <a href='http://www.minecraftwiki.net/wiki/Explosion'>article on explosions</a> " +
 		"which lists the explosion forces of TNT, creepers, etc.",
@@ -57,12 +57,14 @@ public class EffExplosion extends Effect {
 				"[(create|make)] [an] explosion[ ]effect [%directions% %locations%]");
 	}
 	
+	@Nullable
 	private Expression<Number> force;
+	@SuppressWarnings("null")
 	private Expression<Location> locations;
 	
 	private boolean blockDamage;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		force = matchedPattern <= 1 ? (Expression<Number>) exprs[0] : null;
@@ -77,7 +79,7 @@ public class EffExplosion extends Effect {
 	
 	@Override
 	public void execute(final Event e) {
-		final Number power = force == null ? 0 : force.getSingle(e);
+		final Number power = force != null ? force.getSingle(e) : 0;
 		if (power == null)
 			return;
 		for (final Location l : locations.getArray(e)) {
@@ -89,8 +91,11 @@ public class EffExplosion extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "create explosion of force " + force.toString(e, debug) + " " + locations.toString(e, debug);
+	public String toString(final @Nullable Event e, final boolean debug) {
+		if (force != null)
+			return "create explosion of force " + force.toString(e, debug) + " " + locations.toString(e, debug);
+		else
+			return "create explosion effect " + locations.toString(e, debug);
 	}
 	
 }

@@ -23,6 +23,7 @@ package ch.njol.skript.effects;
 
 import org.bukkit.World;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -37,7 +38,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("PvP")
 @Description("Set the PvP status for a given world.")
 @Examples({"enable PvP #(current world only)",
@@ -49,10 +49,11 @@ public class EffPvP extends Effect {
 		Skript.registerEffect(EffPvP.class, "enable PvP [in %worlds%]", "disable PVP [in %worlds%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<World> worlds;
 	private boolean enable;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		worlds = (Expression<World>) exprs[0];
@@ -61,15 +62,15 @@ public class EffPvP extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return (enable ? "enable" : "disable") + " PvP in " + worlds.toString(e, debug);
-	}
-	
-	@Override
 	protected void execute(final Event e) {
 		for (final World w : worlds.getArray(e)) {
 			w.setPVP(enable);
 		}
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return (enable ? "enable" : "disable") + " PvP in " + worlds.toString(e, debug);
 	}
 	
 }

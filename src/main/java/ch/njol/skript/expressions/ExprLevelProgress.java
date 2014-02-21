@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
@@ -35,7 +36,6 @@ import ch.njol.util.Math2;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Level Progress")
 @Description({"The progress a player has made until the next level. Remember that this value is between 0 and 1, not 0 and 100!",
 		"Changing this value can cause a player's level to change if the resulting level progess is negative or larger than 1, e.g." +
@@ -59,12 +59,14 @@ public class ExprLevelProgress extends SimplePropertyExpression<Player, Float> {
 		register(ExprLevelProgress.class, Float.class, "level progress", "players");
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Float convert(final Player p) {
 		return p.getExp();
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.REMOVE_ALL)
 			return null;
@@ -72,7 +74,7 @@ public class ExprLevelProgress extends SimplePropertyExpression<Player, Float> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		assert mode != ChangeMode.REMOVE_ALL;
 		
 		final float d = delta == null ? 0 : ((Number) delta[0]).floatValue();

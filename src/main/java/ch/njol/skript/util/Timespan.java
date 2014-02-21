@@ -21,22 +21,22 @@
 
 package ch.njol.skript.util;
 
-import java.io.Serializable;
 import java.util.HashMap;
+
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.localization.GeneralWords;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.skript.localization.Noun;
-import ch.njol.util.Pair;
+import ch.njol.util.NonNullPair;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public class Timespan implements Serializable, YggdrasilSerializable, Comparable<Timespan> { // REMIND unit
+public class Timespan implements YggdrasilSerializable, Comparable<Timespan> { // REMIND unit
 
 	private final static Noun m_tick = new Noun("time.tick");
 	private final static Noun m_second = new Noun("time.second");
@@ -58,6 +58,7 @@ public class Timespan implements Serializable, YggdrasilSerializable, Comparable
 		});
 	}
 	
+	@Nullable
 	public final static Timespan parse(final String s) {
 		if (s.isEmpty())
 			return null;
@@ -69,7 +70,7 @@ public class Timespan implements Serializable, YggdrasilSerializable, Comparable
 			final int[] times = {1000 * 60 * 60, 1000 * 60, 1000, 1}; // h, m, s, ms
 			final int offset = ss.length == 3 && !s.contains(".") || ss.length == 4 ? 0 : 1;
 			for (int i = 0; i < ss.length; i++) {
-				t += times[offset + i] * Utils.parseInt(ss[i]);
+				t += times[offset + i] * Utils.parseInt("" + ss[i]);
 			}
 		} else {
 			final String[] subs = s.toLowerCase().split("\\s+");
@@ -138,7 +139,7 @@ public class Timespan implements Serializable, YggdrasilSerializable, Comparable
 	}
 	
 	public static Timespan fromTicks(final int ticks) {
-		return new Timespan(ticks * 50);
+		return new Timespan((long) ticks * 50);
 	}
 	
 	public long getMilliSeconds() {
@@ -159,17 +160,18 @@ public class Timespan implements Serializable, YggdrasilSerializable, Comparable
 	}
 	
 	@SuppressWarnings("unchecked")
-	final static Pair<Noun, Integer>[] simpleValues = new Pair[] {
-			new Pair<Noun, Integer>(m_day, 1000 * 60 * 60 * 24),
-			new Pair<Noun, Integer>(m_hour, 1000 * 60 * 60),
-			new Pair<Noun, Integer>(m_minute, 1000 * 60),
-			new Pair<Noun, Integer>(m_second, 1000)
+	final static NonNullPair<Noun, Integer>[] simpleValues = new NonNullPair[] {
+			new NonNullPair<Noun, Integer>(m_day, 1000 * 60 * 60 * 24),
+			new NonNullPair<Noun, Integer>(m_hour, 1000 * 60 * 60),
+			new NonNullPair<Noun, Integer>(m_minute, 1000 * 60),
+			new NonNullPair<Noun, Integer>(m_second, 1000)
 	};
 	
 	public static String toString(final long millis) {
 		return toString(millis, 0);
 	}
 	
+	@SuppressWarnings("null")
 	public static String toString(final long millis, final int flags) {
 		for (int i = 0; i < simpleValues.length - 1; i++) {
 			if (millis >= simpleValues[i].second) {
@@ -183,7 +185,7 @@ public class Timespan implements Serializable, YggdrasilSerializable, Comparable
 		return toString(1. * millis / simpleValues[simpleValues.length - 1].second, simpleValues[simpleValues.length - 1], flags);
 	}
 	
-	private static String toString(final double amount, final Pair<Noun, Integer> p, final int flags) {
+	private static String toString(final double amount, final NonNullPair<Noun, Integer> p, final int flags) {
 		return p.first.withAmount(amount, flags);
 	}
 	
@@ -202,7 +204,7 @@ public class Timespan implements Serializable, YggdrasilSerializable, Comparable
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

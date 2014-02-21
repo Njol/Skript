@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.localization.Adjective;
 import ch.njol.skript.localization.Language;
@@ -35,7 +36,7 @@ import ch.njol.yggdrasil.YggdrasilSerializable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "null"})
 public enum Color implements YggdrasilSerializable {
 	
 	BLACK(DyeColor.BLACK, ChatColor.BLACK, org.bukkit.Color.fromRGB(0x191919)),
@@ -65,6 +66,8 @@ public enum Color implements YggdrasilSerializable {
 	private final DyeColor wool;
 	private final ChatColor chat;
 	private final org.bukkit.Color bukkit;
+	
+	@Nullable
 	Adjective adjective;
 	
 	private Color(final DyeColor wool, final ChatColor chat, final org.bukkit.Color bukkit) {
@@ -114,7 +117,11 @@ public enum Color implements YggdrasilSerializable {
 	}
 	
 	public String getChat() {
-		return chat.toString();
+		return "" + chat.toString();
+	}
+	
+	public ChatColor asChatColor() {
+		return chat;
 	}
 	
 	// currently only used by SheepData
@@ -124,23 +131,28 @@ public enum Color implements YggdrasilSerializable {
 	
 	@Override
 	public String toString() {
-		return adjective.toString(-1, 0);
+		final Adjective a = adjective;
+		return a == null ? name() : a.toString(-1, 0);
 	}
 	
+	@Nullable
 	public final static Color byName(final String name) {
 		return byName.get(name.toLowerCase());
 	}
 	
+	@Nullable
 	public final static Color byEnglishName(final String name) {
 		return byEnglishName.get(name.toLowerCase());
 	}
 	
+	@Nullable
 	public final static Color byWool(final short data) {
 		if (data < 0 || data >= 16)
 			return null;
 		return byWool[data];
 	}
 	
+	@Nullable
 	public final static Color byDye(final short data) {
 		if (data < 0 || data >= 16)
 			return null;

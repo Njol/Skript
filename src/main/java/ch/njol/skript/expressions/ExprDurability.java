@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -38,7 +39,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Data Value")
 @Description({"The data value of an item.",
 		"You usually don't need this expression as you can check and set items with aliases easily, " +
@@ -52,6 +52,7 @@ public class ExprDurability extends SimplePropertyExpression<Object, Short> {
 	}
 	
 	@Override
+	@Nullable
 	public Short convert(final Object o) {
 		if (o instanceof Slot) {
 			final ItemStack i = ((Slot) o).getItem();
@@ -73,6 +74,7 @@ public class ExprDurability extends SimplePropertyExpression<Object, Short> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.REMOVE_ALL)
 			return null;
@@ -82,10 +84,8 @@ public class ExprDurability extends SimplePropertyExpression<Object, Short> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
-		int a = 0;
-		if (mode != ChangeMode.DELETE)
-			a = ((Number) delta[0]).intValue();
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
+		int a = delta == null ? 0 : ((Number) delta[0]).intValue();
 		final Object[] os = getExpr().getArray(e);
 		for (final Object o : os) {
 			final ItemStack i = o instanceof Slot ? ((Slot) o).getItem() : (ItemStack) o;

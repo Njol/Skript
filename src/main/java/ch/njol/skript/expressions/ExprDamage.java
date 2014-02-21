@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -43,7 +44,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Damage")
 @Description("How much damage is done in a damage event, possibly ignoring armour, criticals and/or enchantments. Can be changed (remember that in Skript '1' is one full heart, not half a heart).")
 @Examples({"increase the damage by 2"})
@@ -54,6 +54,7 @@ public class ExprDamage extends SimpleExpression<Double> {
 		Skript.registerExpression(ExprDamage.class, Double.class, ExpressionType.SIMPLE, "[the] damage");
 	}
 	
+	@SuppressWarnings("null")
 	private Kleenean delay;
 	
 	@Override
@@ -67,6 +68,7 @@ public class ExprDamage extends SimpleExpression<Double> {
 	}
 	
 	@Override
+	@Nullable
 	protected Double[] get(final Event e) {
 		if (!(e instanceof EntityDamageEvent))
 			return null;
@@ -75,6 +77,7 @@ public class ExprDamage extends SimpleExpression<Double> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (delay != Kleenean.FALSE) {
 			Skript.error("Can't change the damage anymore after the event has already passed");
@@ -86,7 +89,7 @@ public class ExprDamage extends SimpleExpression<Double> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		if (!(e instanceof EntityDamageEvent))
 			return;
 		double d = delta == null ? 0 : ((Number) delta[0]).doubleValue();
@@ -118,7 +121,7 @@ public class ExprDamage extends SimpleExpression<Double> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the damage";
 	}
 	

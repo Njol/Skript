@@ -40,6 +40,7 @@ import ch.njol.skript.lang.Trigger;
  */
 public class SkriptTest {
 	
+	@SuppressWarnings("null")
 	private static Player njol = createMock(Player.class);
 	static {
 		
@@ -70,15 +71,17 @@ public class SkriptTest {
 	final static void test() {
 		
 		final Trigger t = ScriptLoader.loadTrigger(nodeFromString("on rightclick on air:\n kill player"));
+		assert t != null;
 		t.execute(new PlayerInteractEvent(njol, Action.LEFT_CLICK_AIR, null, null, null));
 		
 	}
 	
+	@SuppressWarnings("null")
 	private final static SectionNode nodeFromString(final String s) {
 		try {
 			return new Config(s, "test.sk", true, false, ":").getMainNode();//.getNode(0);
 		} catch (final IOException e) {
-			e.printStackTrace();
+			assert false : e;
 			return null;
 		}
 	}

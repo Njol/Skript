@@ -21,14 +21,12 @@
 
 package ch.njol.skript.classes;
 
-import java.io.Serializable;
-
 /**
  * @param <A> the type of the absolute value
  * @param <R> the type of the relative value
  * @author Peter Güttinger
  */
-public interface Arithmetic<A, R> extends Serializable {
+public interface Arithmetic<A, R> {
 	
 	public R difference(A first, A second);
 	

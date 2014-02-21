@@ -25,6 +25,7 @@ import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -44,7 +45,6 @@ import ch.njol.util.Math2;
 /**
  * @author joeuguce99
  */
-@SuppressWarnings("serial")
 @Name("Colour Armour")
 @Description("Colours leather armour in a given <a href='../classes/#color'>colour</a>. " +
 		"You can also use RGB codes if you feel limited with the 16 default colours. " +
@@ -59,13 +59,14 @@ public class EffColorArmor extends Effect {
 				"(dye|colo[u]r|paint) %slots/itemstack% \\(%number%, %number%, %number%\\)");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<?> items;
+	@Nullable
 	private Expression<Color> color;
-	private Expression<Number> red;
-	private Expression<Number> green;
-	private Expression<Number> blue;
+	@Nullable
+	private Expression<Number>[] rgb;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		items = exprs[0];
@@ -76,16 +77,21 @@ public class EffColorArmor extends Effect {
 		if (matchedPattern == 0) {
 			color = (Expression<Color>) exprs[1];
 		} else {
-			red = (Expression<Number>) exprs[1];
-			green = (Expression<Number>) exprs[2];
-			blue = (Expression<Number>) exprs[3];
+			rgb = new Expression[] {(Expression<Number>) exprs[1], (Expression<Number>) exprs[2], (Expression<Number>) exprs[3]};
 		}
 		return true;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "dye " + items.toString(e, debug) + " " + (color != null ? color.toString(e, debug) : "(" + red.toString(e, debug) + "," + green.toString(e, debug) + "," + blue.toString(e, debug) + ")");
+	public String toString(final @Nullable Event e, final boolean debug) {
+		final Expression<Color> color = this.color;
+		if (color != null) {
+			return "dye " + items.toString(e, debug) + " " + color.toString(e, debug);
+		} else {
+			final Expression<Number>[] rgb = this.rgb;
+			assert rgb != null;
+			return "dye " + items.toString(e, debug) + " (" + rgb[0].toString(e, debug) + "," + rgb[1].toString(e, debug) + "," + rgb[2].toString(e, debug) + ")";
+		}
 	}
 	
 	@Override
@@ -97,7 +103,9 @@ public class EffColorArmor extends Effect {
 				return;
 			c = cl.getBukkitColor();
 		} else {
-			final Number r = red.getSingle(e), g = green.getSingle(e), b = blue.getSingle(e);
+			final Expression<Number>[] rgb = this.rgb;
+			assert rgb != null;
+			final Number r = rgb[0].getSingle(e), g = rgb[1].getSingle(e), b = rgb[2].getSingle(e);
 			if (r == null || g == null || b == null)
 				return;
 			c = org.bukkit.Color.fromRGB(Math2.fit(0, r.intValue(), 255), Math2.fit(0, g.intValue(), 255), Math2.fit(0, b.intValue(), 255));

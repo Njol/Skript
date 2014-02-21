@@ -21,11 +21,10 @@
 
 package ch.njol.skript.classes;
 
-import java.io.Serializable;
-
 import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  */
-public interface SerializableChecker<T> extends Checker<T>, Serializable {}
+@Deprecated
+public interface SerializableChecker<T> extends Checker<T> {}

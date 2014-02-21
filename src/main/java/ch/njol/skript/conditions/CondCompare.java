@@ -22,6 +22,7 @@
 package ch.njol.skript.conditions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Comparator;
@@ -46,7 +47,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Comparison")
 @Description({"A very general condition, it simply compares two values. Usually you can only compare for equality (e.g. block is/isn't of &lt;type&gt;), " +
 		"but some values can also be compared using greater than/less than. In that case you can also test for whether an object is between two others.",
@@ -92,13 +92,19 @@ public class CondCompare extends Condition {
 		Skript.registerCondition(CondCompare.class, patterns.getPatterns());
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<?> first;
+	@SuppressWarnings("null")
 	Expression<?> second;
+	@Nullable
 	Expression<?> third;
+	@SuppressWarnings("null")
 	Relation relation;
 	@SuppressWarnings("rawtypes")
+	@Nullable
 	Comparator comp;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		first = vars[0];
@@ -107,6 +113,7 @@ public class CondCompare extends Condition {
 			third = vars[2];
 		relation = patterns.getInfo(matchedPattern);
 		final boolean b = init();
+		final Expression<?> third = this.third;
 		if (!b) {
 			if (third == null && first.getReturnType() == Object.class && second.getReturnType() == Object.class) {
 				return false;
@@ -115,6 +122,8 @@ public class CondCompare extends Condition {
 				return false;
 			}
 		}
+		@SuppressWarnings("rawtypes")
+		final Comparator comp = this.comp;
 		if (comp != null) {
 			if (third == null) {
 				if (!relation.isEqualOrInverse() && !comp.supportsOrdering()) {
@@ -140,6 +149,7 @@ public class CondCompare extends Condition {
 	@SuppressWarnings("unchecked")
 	private boolean init() {
 		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
+		Expression<?> third = this.third;
 		try {
 			if (first.getReturnType() == Object.class) {
 				final Expression<?> e = first.getConvertedExpression(Object.class);
@@ -163,7 +173,7 @@ public class CondCompare extends Condition {
 					log.printErrors();
 					return false;
 				}
-				third = e;
+				this.third = third = e;
 			}
 			log.printLog();
 		} finally {
@@ -202,6 +212,7 @@ public class CondCompare extends Condition {
 	 */
 	@Override
 	public boolean check(final Event e) {
+		final Expression<?> third = this.third;
 		return first.check(e, new Checker<Object>() {
 			@Override
 			public boolean check(final Object o1) {
@@ -225,15 +236,15 @@ public class CondCompare extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		String s;
+		final Expression<?> third = this.third;
 		if (third == null)
 			s = first.toString(e, debug) + " is " + relation + " " + second.toString(e, debug);
 		else
 			s = first.toString(e, debug) + " is" + (relation == Relation.EQUAL ? "" : " not") + " between " + second.toString(e, debug) + " and " + third.toString(e, debug);
-		if (debug) {
+		if (debug)
 			s += " (comparator: " + comp + ")";
-		}
 		return s;
 	}
 	

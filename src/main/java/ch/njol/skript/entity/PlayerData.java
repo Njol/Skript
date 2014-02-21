@@ -23,6 +23,7 @@ package ch.njol.skript.entity;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -30,7 +31,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class PlayerData extends EntityData<Player> {
 	static {
 		EntityData.register(PlayerData.class, "player", Player.class, 1, "non-op", "player", "op");
@@ -46,7 +46,7 @@ public class PlayerData extends EntityData<Player> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Player> c, final Player e) {
+	protected boolean init(final @Nullable Class<? extends Player> c, final @Nullable Player e) {
 		op = e == null ? 0 : e.isOp() ? 1 : -1;
 		return true;
 	}
@@ -68,6 +68,7 @@ public class PlayerData extends EntityData<Player> {
 	}
 	
 	@Override
+	@Nullable
 	public Player spawn(final Location loc) {
 		return null;
 	}

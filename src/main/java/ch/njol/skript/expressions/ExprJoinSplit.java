@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import java.util.regex.Pattern;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Join & Split")
 @Description("Joins several texts with a common delimiter (e.g. \", \"), or splits a text into multiple texts at a given delimiter.")
 @Examples({"message \"Online players: %join all players with \" | \"%\" # %all players% would use the default \"x, y, and z\"",
@@ -54,9 +54,12 @@ public class ExprJoinSplit extends SimpleExpression<String> {
 	}
 	
 	private boolean join;
-	private Expression<String> strings, delimiter;
+	@SuppressWarnings("null")
+	private Expression<String> strings;
+	@Nullable
+	private Expression<String> delimiter;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		join = matchedPattern == 0;
@@ -66,9 +69,10 @@ public class ExprJoinSplit extends SimpleExpression<String> {
 	}
 	
 	@Override
+	@Nullable
 	protected String[] get(final Event e) {
 		final String[] s = strings.getArray(e);
-		final String d = delimiter == null ? "" : delimiter.getSingle(e);
+		final String d = delimiter != null ? delimiter.getSingle(e) : "";
 		if (s.length == 0 || d == null)
 			return null;
 		if (join) {
@@ -89,8 +93,8 @@ public class ExprJoinSplit extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return join ? "join " + strings.toString(e, debug) + " with " + delimiter.toString(e, debug) : "split " + strings.toString(e, debug) + " at " + delimiter.toString(e, debug);
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return join ? "join " + strings.toString(e, debug) + (delimiter != null ? " with " + delimiter.toString(e, debug) : "") : "split " + strings.toString(e, debug) + (delimiter != null ? " at " + delimiter.toString(e, debug) : "");
 	}
 	
 }

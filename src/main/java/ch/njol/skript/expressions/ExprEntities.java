@@ -33,6 +33,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -48,8 +49,8 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.BlockingLogHandler;
 import ch.njol.skript.log.LogHandler;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
+import ch.njol.util.NullableChecker;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.iterator.CheckedIterator;
 import ch.njol.util.coll.iterator.NonNullIterator;
@@ -57,7 +58,6 @@ import ch.njol.util.coll.iterator.NonNullIterator;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Entities")
 @Description("all entities in all world, in a specific world or in a radius around a certain location, e.g. 'all players', 'all creepers in the player's world', or 'players in radius 100 of the player'.")
 @Examples({"kill all creepers in the player's world",
@@ -74,25 +74,30 @@ public class ExprEntities extends SimpleExpression<Entity> {
 				"[all] entities of type[s] %entitydatas% in radius %number% (of|around) %location%");
 	}
 	
+	@SuppressWarnings("null")
 	Expression<? extends EntityData<?>> types;
 	
+	@Nullable
 	Expression<World> worlds;
 	
+	@Nullable
 	private Expression<Number> radius;
+	@Nullable
 	private Expression<Location> center;
+	@Nullable
 	private Expression<? extends Entity> centerEntity;
 	
 	Class<? extends Entity> returnType = Entity.class;
 	
 	private int matchedPattern;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		this.matchedPattern = matchedPattern;
 		types = (Expression<? extends EntityData<?>>) exprs[0];
 		if (matchedPattern % 2 == 0) {
-			for (final EntityData<?> d : types.getAll(null)) {
+			for (final EntityData<?> d : ((Literal<EntityData<?>>) types).getAll()) {
 				if (d.isPlural().isFalse() || d.isPlural().isUnknown() && !StringUtils.startsWithIgnoreCase(parseResult.expr, "all"))
 					return false;
 			}
@@ -126,6 +131,7 @@ public class ExprEntities extends SimpleExpression<Entity> {
 	}
 	
 	@Override
+	@Nullable
 	protected Entity[] get(final Event e) {
 		if (matchedPattern >= 2) {
 			final Iterator<? extends Entity> iter = iterator(e);
@@ -136,10 +142,11 @@ public class ExprEntities extends SimpleExpression<Entity> {
 				l.add(iter.next());
 			return l.toArray((Entity[]) Array.newInstance(returnType, l.size()));
 		} else {
-			return EntityData.getAll(types.getAll(e), returnType, worlds == null ? null : worlds.getArray(e));
+			return EntityData.getAll(types.getAll(e), returnType, worlds != null ? worlds.getArray(e) : null);
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean isLoopOf(final String s) {
 		if (!(types instanceof Literal<?>))
@@ -148,7 +155,8 @@ public class ExprEntities extends SimpleExpression<Entity> {
 		try {
 			final EntityData<?> d = EntityData.parseWithoutIndefiniteArticle(s);
 			if (d != null) {
-				for (final EntityData<?> t : types.getAll(null)) {
+				for (final EntityData<?> t : ((Literal<EntityData<?>>) types).getAll()) {
+					assert t != null;
 					if (!d.isSupertypeOf(t))
 						return false;
 				}
@@ -160,7 +168,9 @@ public class ExprEntities extends SimpleExpression<Entity> {
 		return false;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
+	@Nullable
 	public Iterator<? extends Entity> iterator(final Event e) {
 		if (matchedPattern >= 2) {
 			final Entity en;
@@ -171,11 +181,13 @@ public class ExprEntities extends SimpleExpression<Entity> {
 					return null;
 				l = en.getLocation();
 			} else {
+				assert center != null;
 				l = center.getSingle(e);
 				if (l == null)
 					return null;
 				en = l.getWorld().spawn(l, ExperienceOrb.class);
 			}
+			assert radius != null;
 			final Number n = radius.getSingle(e);
 			if (n == null)
 				return null;
@@ -185,10 +197,10 @@ public class ExprEntities extends SimpleExpression<Entity> {
 				en.remove();
 			final double radiusSquared = d * d * Skript.EPSILON_MULT;
 			final EntityData<?>[] ts = types.getAll(e);
-			return new CheckedIterator<Entity>(es.iterator(), new Checker<Entity>() {
+			return new CheckedIterator<Entity>(es.iterator(), new NullableChecker<Entity>() {
 				@Override
-				public boolean check(final Entity e) {
-					if (e.getLocation().distanceSquared(l) > radiusSquared)
+				public boolean check(final @Nullable Entity e) {
+					if (e == null || e.getLocation().distanceSquared(l) > radiusSquared)
 						return false;
 					for (final EntityData<?> t : ts) {
 						if (t.isInstance(e))
@@ -207,9 +219,11 @@ public class ExprEntities extends SimpleExpression<Entity> {
 				
 				private final EntityData<?>[] ts = types.getAll(e);
 				
+				@Nullable
 				private Iterator<? extends Entity> curIter = null;
 				
 				@Override
+				@Nullable
 				protected Entity getNext() {
 					while (true) {
 						while (curIter == null || !curIter.hasNext()) {
@@ -231,9 +245,12 @@ public class ExprEntities extends SimpleExpression<Entity> {
 		}
 	}
 	
+	@SuppressWarnings("null")
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "all entities of types " + types.toString(e, debug) + (worlds != null ? " in " + worlds.toString(e, debug) : radius != null ? " in radius " + radius.toString(e, debug) + " around " + center.toString(e, debug) : "");
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "all entities of types " + types.toString(e, debug) +
+				(worlds != null ? " in " + worlds.toString(e, debug) :
+						radius != null && center != null ? " in radius " + radius.toString(e, debug) + " around " + center.toString(e, debug) : "");
 	}
 	
 }

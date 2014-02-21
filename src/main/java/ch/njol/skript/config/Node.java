@@ -25,7 +25,10 @@ import java.io.PrintWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.log.SkriptLogger;
+import ch.njol.util.NonNullPair;
 import ch.njol.util.StringUtils;
 
 /**
@@ -33,6 +36,7 @@ import ch.njol.util.StringUtils;
  */
 public abstract class Node {
 	
+	@Nullable
 	protected String key;
 	
 	protected String comment = "";
@@ -41,17 +45,16 @@ public abstract class Node {
 	
 	private final boolean debug;
 	
+	@Nullable
 	protected SectionNode parent;
 	protected Config config;
 	
-	private final static Pattern commentPattern = Pattern.compile("\\s*(?<!#)#(?!#).*$");
-	
-	protected Node() {
-		key = null;
-		debug = false;
-		lineNum = -1;
-		SkriptLogger.setNode(this);
-	}
+//	protected Node() {
+//		key = null;
+//		debug = false;
+//		lineNum = -1;
+//		SkriptLogger.setNode(this);
+//	}
 	
 	protected Node(final Config c) {
 		key = null;
@@ -70,34 +73,26 @@ public abstract class Node {
 		SkriptLogger.setNode(this);
 	}
 	
-	protected Node(final String key, final SectionNode parent, final String line, final int lineNum) {
-		this.key = key;
-		comment = getComment(line);
-		debug = comment == null ? false : comment.endsWith("#DEBUG#");
-		this.lineNum = lineNum;
-		this.parent = parent;
-		config = parent.getConfig();
-		SkriptLogger.setNode(this);
-	}
-	
 	protected Node(final String key, final String comment, final SectionNode parent, final int lineNum) {
 		this.key = key;
+		assert comment.isEmpty() || comment.startsWith("#") : comment;
 		this.comment = comment;
-		debug = comment == null ? false : comment.endsWith("#DEBUG#");
+		debug = comment.equals("#DEBUG#");
 		this.lineNum = lineNum;
 		this.parent = parent;
 		config = parent.getConfig();
 		SkriptLogger.setNode(this);
 	}
 	
-	protected Node(final String key, final SectionNode parent, final ConfigReader r) {
-		this(key, parent, r.getLine(), r.getLineNum());
-	}
-	
+//	protected Node(final String key, final SectionNode parent, final ConfigReader r) {
+//		this(key, parent, r.getLine(), r.getLineNum());
+//	}
+//	
 	/**
-	 * Key of this node. <tt>null</tt> for empty or invalid nodes.
+	 * Key of this node. <tt>null</tt> for empty or invalid nodes, and the config's main node.
 	 */
-	public final String getKey() {
+	@Nullable
+	public String getKey() {
 		return key;
 	}
 	
@@ -115,21 +110,33 @@ public abstract class Node {
 	}
 	
 	public void move(final SectionNode newParent) {
-		if (parent == null)
+		final SectionNode p = parent;
+		if (p == null)
 			throw new IllegalStateException("can't move the main node");
-		parent.remove(this);
+		p.remove(this);
 		newParent.add(this);
 	}
 	
-	final static String getComment(final String line) {
-		if (line == null)
-			return "";
-		final Matcher m = commentPattern.matcher(line);
+	@SuppressWarnings("null")
+	private final static Pattern linePattern = Pattern.compile("^((?:[^#]|##)*)(#(?!#).*)$");
+	
+	/**
+	 * Splits a line into value and comment.
+	 * <p>
+	 * Whitespace is preserved (whitespace in front of the comment is added to the value), and any ## in the value are replaced by a single #. The comment is returned with a
+	 * leading #, except if there is no comment in which case it will be the empty string.
+	 * 
+	 * @param line
+	 * @return A pair (value, comment).
+	 */
+	public final static NonNullPair<String, String> splitLine(final String line) {
+		final Matcher m = linePattern.matcher(line);
 		if (m.find())
-			return m.group();
-		return "";
+			return new NonNullPair<String, String>("" + m.group(1).replace("##", "#"), "" + m.group(2));
+		return new NonNullPair<String, String>(line, "");
 	}
 	
+	@Nullable
 	protected String getComment() {
 		return comment;
 	}
@@ -148,18 +155,19 @@ public abstract class Node {
 	}
 	
 	/**
-	 * @return String to save this node as. The correct indentation and the comment will be added automatically.
+	 * @return String to save this node as. The correct indentation and the comment will be added automatically, as well as all '#'s will be escaped.
 	 */
 	abstract String save_i();
 	
-	public String save() {
-		return getIndentation() + save_i() + comment;
+	public final String save() {
+		return getIndentation() + save_i().replace("#", "##") + comment;
 	}
 	
 	public void save(final PrintWriter w) {
 		w.println(save());
 	}
 	
+	@Nullable
 	public SectionNode getParent() {
 		return parent;
 	}
@@ -168,9 +176,10 @@ public abstract class Node {
 	 * Removes this node from its parent. Does nothing if this node does not have a parent node.
 	 */
 	public void remove() {
-		if (parent == null)
+		final SectionNode p = parent;
+		if (p == null)
 			return;
-		parent.remove(this);
+		p.remove(this);
 	}
 	
 	/**
@@ -246,10 +255,6 @@ public abstract class Node {
 	 */
 	@Override
 	public String toString() {
-		if (config == null) {
-			assert false;
-			return "<invalid>";
-		}
 		if (parent == null)
 			return config.getFileName();
 		return save_i() + comment + " (" + config.getFileName() + ", " + (lineNum == -1 ? "unknown line" : "line " + lineNum) + ")";

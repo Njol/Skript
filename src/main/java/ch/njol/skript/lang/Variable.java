@@ -33,6 +33,7 @@ import java.util.NoSuchElementException;
 import java.util.TreeMap;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
@@ -60,7 +61,6 @@ import ch.njol.util.coll.iterator.EmptyIterator;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class Variable<T> implements Expression<T> {
 	
 	public final static String SEPARATOR = "::";
@@ -77,9 +77,10 @@ public class Variable<T> implements Expression<T> {
 	final boolean local;
 	private final boolean list;
 	
+	@Nullable
 	private final Variable<?> source;
 	
-	private Variable(final VariableString name, final Class<? extends T>[] types, final boolean local, final boolean list, final Variable<?> source) {
+	private Variable(final VariableString name, final Class<? extends T>[] types, final boolean local, final boolean list, final @Nullable Variable<?> source) {
 		assert name != null;
 		assert types != null && types.length > 0;
 		
@@ -99,6 +100,8 @@ public class Variable<T> implements Expression<T> {
 	/**
 	 * Prints errors
 	 */
+	@SuppressWarnings("null")
+	@Nullable
 	public static <T> Variable<T> newInstance(String name, final Class<? extends T>[] types) {
 //		if (name.startsWith(LOCAL_VARIABLE_TOKEN) && name.contains(SEPARATOR)) {
 //			Skript.error("Local variables cannot be lists, i.e. must not contain the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
@@ -143,7 +146,7 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (e != null)
 			return Classes.toString(get(e));
 		return "{" + (local ? "_" : "") + StringUtils.substring(name.toString(e, debug), 1, -1) + "}" + (debug ? "(as " + superType.getName() + ")" : "");
@@ -162,6 +165,7 @@ public class Variable<T> implements Expression<T> {
 	/**
 	 * Gets the value of this variable as stored in the variables map.
 	 */
+	@Nullable
 	private Object getRaw(final Event e) {
 		final String n = name.toString(e).toLowerCase(Locale.ENGLISH);
 		if (n.endsWith(Variable.SEPARATOR + "*") != list) // prevents e.g. {%expr%} where "%expr%" ends with "::*" from returning a Map
@@ -173,6 +177,7 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@SuppressWarnings("unchecked")
+	@Nullable
 	private Object get(final Event e) {
 		final Object val = getRaw(e);
 		if (!list)
@@ -203,7 +208,9 @@ public class Variable<T> implements Expression<T> {
 		@SuppressWarnings("unchecked")
 		final Iterator<String> keys = new ArrayList<String>(((Map<String, Object>) val).keySet()).iterator();
 		return new Iterator<Pair<String, Object>>() {
+			@Nullable
 			private String key;
+			@Nullable
 			private Object next = null;
 			
 			@Override
@@ -251,7 +258,9 @@ public class Variable<T> implements Expression<T> {
 		@SuppressWarnings("unchecked")
 		final Iterator<String> keys = new ArrayList<String>(((Map<String, Object>) val).keySet()).iterator();
 		return new Iterator<T>() {
+			@Nullable
 			private String key;
+			@Nullable
 			private T next = null;
 			
 			@Override
@@ -270,6 +279,7 @@ public class Variable<T> implements Expression<T> {
 				return false;
 			}
 			
+			@SuppressWarnings("null")
 			@Override
 			public T next() {
 				if (!hasNext())
@@ -286,6 +296,7 @@ public class Variable<T> implements Expression<T> {
 		};
 	}
 	
+	@Nullable
 	private T getConverted(final Event e) {
 		assert !list;
 		return Converters.convert(get(e), types);
@@ -296,11 +307,11 @@ public class Variable<T> implements Expression<T> {
 		return Converters.convertArray((Object[]) get(e), types, superType);
 	}
 	
-	private final void set(final Event e, final Object value) {
-		Variables.setVariable(name.toString(e).toLowerCase(Locale.ENGLISH), value, e, local);
+	private final void set(final Event e, final @Nullable Object value) {
+		Variables.setVariable("" + name.toString(e).toLowerCase(Locale.ENGLISH), value, e, local);
 	}
 	
-	private final void setIndex(final Event e, final String index, final Object value) {
+	private final void setIndex(final Event e, final String index, final @Nullable Object value) {
 		assert list;
 		final String s = name.toString(e).toLowerCase(Locale.ENGLISH);
 		Variables.setVariable(s.substring(0, s.length() - 1) + index.toLowerCase(Locale.ENGLISH), value, e, local);
@@ -314,14 +325,15 @@ public class Variable<T> implements Expression<T> {
 		return CollectionUtils.array(Object[].class);
 	}
 	
-	@SuppressWarnings({"unchecked", "rawtypes"})
+	@SuppressWarnings({"unchecked", "rawtypes", "null"})
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		switch (mode) {
 			case DELETE:
 				set(e, null);
 				break;
 			case SET:
+				assert delta != null;
 				if (list) {
 					set(e, null);
 					int i = 1;
@@ -345,18 +357,22 @@ public class Variable<T> implements Expression<T> {
 				break;
 			case RESET:
 				final Object x = getRaw(e);
+				if (x == null)
+					return;
 				for (final Object o : x instanceof Map ? ((Map<?, ?>) x).values() : Arrays.asList(x)) {
 					final ClassInfo<?> ci = Classes.getSuperClassInfo(o.getClass());
-					if (ci.getChanger() != null && ci.getChanger().acceptChange(ChangeMode.RESET) != null) {
+					final Changer<?> changer = ci.getChanger();
+					if (changer != null && changer.acceptChange(ChangeMode.RESET) != null) {
 						final Object[] one = (Object[]) Array.newInstance(o.getClass(), 1);
 						one[0] = o;
-						((Changer) ci.getChanger()).change(one, null, ChangeMode.RESET);
+						((Changer) changer).change(one, null, ChangeMode.RESET);
 					}
 				}
 				break;
 			case ADD:
 			case REMOVE:
 			case REMOVE_ALL:
+				assert delta != null;
 				if (list) {
 					final Map<String, Object> o = (Map<String, Object>) getRaw(e);
 					if (mode == ChangeMode.REMOVE) {
@@ -371,8 +387,10 @@ public class Variable<T> implements Expression<T> {
 								}
 							}
 						}
-						for (final String r : rem)
+						for (final String r : rem) {
+							assert r != null;
 							setIndex(e, r, null);
+						}
 					} else if (mode == ChangeMode.REMOVE_ALL) {
 						if (o == null)
 							return;
@@ -383,8 +401,10 @@ public class Variable<T> implements Expression<T> {
 									rem.add(i.getKey());
 							}
 						}
-						for (final String r : rem)
+						for (final String r : rem) {
+							assert r != null;
 							setIndex(e, r, null);
+						}
 					} else { // ADD
 						int i = 1;
 						for (final Object d : delta) {
@@ -398,29 +418,33 @@ public class Variable<T> implements Expression<T> {
 				} else {
 					Object o = get(e);
 					ClassInfo<?> ci = o == null ? null : Classes.getSuperClassInfo(o.getClass());
-					if (o == null || ci.getMath() != null) {
+					Arithmetic a = null;
+					final Changer<?> changer;
+					final Class<?>[] cs;
+					if (o == null || ci == null || (a = ci.getMath()) != null) {
 						boolean changed = false;
 						for (final Object d : delta) {
-							if (o == null) {
+							if (o == null || ci == null) {
 								ci = Classes.getSuperClassInfo(d.getClass());
 								if (ci.getMath() != null)
 									o = d;
 								changed = true;
 								continue;
 							}
-							final Object diff = Converters.convert(d, ci.getMathRelativeType());
+							final Class<?> r = ci.getMathRelativeType();
+							assert a != null && r != null : ci;
+							final Object diff = Converters.convert(d, r);
 							if (diff != null) {
 								if (mode == ChangeMode.ADD)
-									o = ((Arithmetic) ci.getMath()).add(o, diff);
+									o = a.add(o, diff);
 								else
-									o = ((Arithmetic) ci.getMath()).subtract(o, diff);
+									o = a.subtract(o, diff);
 								changed = true;
 							}
 						}
 						if (changed)
 							set(e, o);
-					} else if (ci.getChanger() != null && ci.getChanger().acceptChange(mode) != null) {
-						final Class<?>[] cs = ci.getChanger().acceptChange(mode);
+					} else if ((changer = ci.getChanger()) != null && (cs = changer.acceptChange(mode)) != null) {
 						final Object[] one = (Object[]) Array.newInstance(o.getClass(), 1);
 						one[0] = o;
 						
@@ -435,7 +459,7 @@ public class Variable<T> implements Expression<T> {
 								l.add(d2);
 						}
 						
-						ChangerUtils.change(ci.getChanger(), one, l.toArray(), mode);
+						ChangerUtils.change(changer, one, l.toArray(), mode);
 						
 					}
 				}
@@ -444,6 +468,7 @@ public class Variable<T> implements Expression<T> {
 	}
 	
 	@Override
+	@Nullable
 	public T getSingle(final Event e) {
 		if (list)
 			throw new SkriptAPIException("Invalid call to getSingle");
@@ -455,6 +480,7 @@ public class Variable<T> implements Expression<T> {
 		return getAll(e);
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public T[] getAll(final Event e) {
 		if (list)
@@ -508,7 +534,8 @@ public class Variable<T> implements Expression<T> {
 	
 	@Override
 	public Expression<?> getSource() {
-		return source == null ? this : source;
+		final Variable<?> s = source;
+		return s == null ? this : s;
 	}
 	
 	@Override

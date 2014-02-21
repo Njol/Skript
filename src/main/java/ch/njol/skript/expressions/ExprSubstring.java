@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -32,12 +33,12 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.util.Kleenean;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Subtext")
 @Description("Extracts part of a text. You can either get the first &lt;x&gt; characters, the last &lt;x&gt; characters, or the characters between indices &lt;x&gt; and &lt;y&gt;."
 		+ " The indices &lt;x&gt; and &lt;y&gt; should be between 1 and the <a href='#ExprLength'>length</a> of the text (other values will be fit into this range).")
@@ -51,25 +52,29 @@ public class ExprSubstring extends SimpleExpression<String> {
 				"[the] (1¦first|2¦last) [%-number%] character[s] of %strings%", "[the] %number% (1¦first|2¦last) characters of %strings%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<String> string;
+	@Nullable
 	private Expression<Number> start, end;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		string = (Expression<String>) exprs[parseResult.mark == 0 ? 0 : 1];
-		start = parseResult.mark == 1 ? null : (Expression<Number>) exprs[parseResult.mark == 0 ? 1 : 0];
-		end = parseResult.mark == 2 ? null : (Expression<Number>) exprs[parseResult.mark == 0 ? 2 : 0];
+		start = parseResult.mark == 1 ? null : exprs[parseResult.mark == 0 ? 1 : 0] == null ? new SimpleLiteral<Number>(1, false) : (Expression<Number>) exprs[parseResult.mark == 0 ? 1 : 0];
+		end = parseResult.mark == 2 ? null : exprs[parseResult.mark == 0 ? 2 : 0] == null ? new SimpleLiteral<Number>(1, false) : (Expression<Number>) exprs[parseResult.mark == 0 ? 2 : 0];
+		assert end != null || start != null;
 		return true;
 	}
 	
 	@Override
+	@Nullable
 	protected String[] get(final Event e) {
 		final String s = string.getSingle(e);
 		if (s == null)
 			return null;
-		Number d1 = start == null ? 1 : start.getSingle(e);
-		final Number d2 = end == null ? s.length() : end.getSingle(e);
+		Number d1 = start != null ? start.getSingle(e) : 1;
+		final Number d2 = end != null ? end.getSingle(e) : s.length();
 		if (d1 == null || d2 == null)
 			return null;
 		if (end == null)
@@ -90,9 +95,18 @@ public class ExprSubstring extends SimpleExpression<String> {
 		return String.class;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return null;
+	public String toString(final @Nullable Event e, final boolean debug) {
+		if (start == null) {
+			assert end != null;
+			return "the first " + end.toString(e, debug) + " characters of " + string.toString(e, debug);
+		} else if (end == null) {
+			assert start != null;
+			return "the last " + start.toString(e, debug) + " characters of " + string.toString(e, debug);
+		} else {
+			return "the substring of " + string.toString(e, debug) + " from index " + start.toString(e, debug) + " to " + end.toString(e, debug);
+		}
 	}
 	
 }

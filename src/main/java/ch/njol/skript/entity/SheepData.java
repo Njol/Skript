@@ -24,6 +24,7 @@ package ch.njol.skript.entity;
 import java.util.Arrays;
 
 import org.bukkit.entity.Sheep;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -38,12 +39,12 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class SheepData extends EntityData<Sheep> {
 	static {
 		EntityData.register(SheepData.class, "sheep", Sheep.class, 1, "unsheared sheep", "sheep", "sheared sheep");
 	}
 	
+	@Nullable
 	private Color[] colors = null;
 	private int sheared = 0;
 	
@@ -56,8 +57,9 @@ public class SheepData extends EntityData<Sheep> {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
-	protected boolean init(final Class<? extends Sheep> c, final Sheep e) {
+	protected boolean init(final @Nullable Class<? extends Sheep> c, final @Nullable Sheep e) {
 		sheared = e == null ? 0 : e.isSheared() ? 1 : -1;
 		colors = e == null ? null : new Color[] {Color.byWoolColor(e.getColor())};
 		return true;
@@ -65,8 +67,11 @@ public class SheepData extends EntityData<Sheep> {
 	
 	@Override
 	public void set(final Sheep entity) {
-		if (colors != null)
-			entity.setColor(CollectionUtils.getRandom(colors).getWoolColor());
+		if (colors != null) {
+			final Color c = CollectionUtils.getRandom(colors);
+			assert c != null;
+			entity.setColor(c.getWoolColor());
+		}
 	}
 	
 	@Override
@@ -74,8 +79,8 @@ public class SheepData extends EntityData<Sheep> {
 		return (sheared == 0 || entity.isSheared() == (sheared == 1))
 				&& (colors == null || SimpleExpression.check(colors, new Checker<Color>() {
 					@Override
-					public boolean check(final Color c) {
-						return entity.getColor() == c.getWoolColor();
+					public boolean check(final @Nullable Color c) {
+						return c != null && entity.getColor() == c.getWoolColor();
 					}
 				}, false, false));
 	}
@@ -85,14 +90,17 @@ public class SheepData extends EntityData<Sheep> {
 		return Sheep.class;
 	}
 	
+	@Nullable
 	private Adjective[] adjectives = null;
 	
 	@Override
 	public String toString(final int flags) {
+		final Color[] colors = this.colors;
 		if (colors == null)
 			return super.toString(flags);
+		Adjective[] adjectives = this.adjectives;
 		if (adjectives == null) {
-			adjectives = new Adjective[colors.length];
+			this.adjectives = adjectives = new Adjective[colors.length];
 			for (int i = 0; i < colors.length; i++)
 				adjectives[i] = colors[i].getAdjective();
 		}
@@ -148,7 +156,9 @@ public class SheepData extends EntityData<Sheep> {
 			colors = new Color[cs.length];
 			for (int i = 0; i < cs.length; i++) {
 				try {
-					colors[i] = Color.valueOf(cs[i]);
+					final String c = cs[i];
+					assert c != null;
+					colors[i] = Color.valueOf(c);
 				} catch (final IllegalArgumentException e) {
 					return false;
 				}

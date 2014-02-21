@@ -23,6 +23,7 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,7 +40,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Riding")
 @Description("Tests whether an entity is riding another or is in a vehicle.")
 @Examples({"player is riding a saddled pig"})
@@ -51,10 +51,12 @@ public class CondIsRiding extends Condition {
 				"%entities% (isn't|is not|aren't|are not) riding [%entitydatas%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Entity> entities;
+	@SuppressWarnings("null")
 	Expression<EntityData<?>> types;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		entities = (Expression<Entity>) exprs[0];
@@ -79,7 +81,7 @@ public class CondIsRiding extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return entities.toString(e, debug) + (isNegated() ? " is" : " isn't") + " riding" + types.toString(e, debug);
 	}
 	

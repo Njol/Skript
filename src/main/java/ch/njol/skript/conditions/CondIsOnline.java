@@ -23,6 +23,7 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Online")
 @Description("Checks whether a player is online.")
 @Examples({"player is online",
@@ -50,9 +50,10 @@ public class CondIsOnline extends Condition {
 		Skript.registerCondition(CondIsOnline.class, "%offlineplayers% ((is|are) online|(is not|isn't|are not|aren't) offline)", "%offlineplayers% ((is|are) offline|(is not|isn't|are not|aren't) online)");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<OfflinePlayer> players;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		players = (Expression<OfflinePlayer>) exprs[0];
@@ -71,7 +72,7 @@ public class CondIsOnline extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return players.toString(e, debug) + " " + (players.isSingle() ? "is" : "are") + " " + (isNegated() ? "offline" : "online");
 	}
 	

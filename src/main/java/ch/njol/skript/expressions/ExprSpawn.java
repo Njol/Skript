@@ -25,6 +25,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.bukkit.event.world.SpawnChangeEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -44,7 +45,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Spawn")
 @Description("The spawnpoint of a world.")
 @Examples({"teleport all players to spawn",
@@ -55,7 +55,7 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 		Skript.registerExpression(ExprSpawn.class, Location.class, ExpressionType.PROPERTY, "[the] spawn[s] [(point|location)[s]] [of %worlds%]", "%worlds%'[s] spawn[s] [(point|location)[s]]");
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends World>) exprs[0]);
@@ -69,6 +69,7 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 		}
 		return get(source, new Converter<World, Location>() {
 			@Override
+			@Nullable
 			public Location convert(final World w) {
 				return w.getSpawnLocation();
 			}
@@ -81,12 +82,13 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "spawn of " + getExpr().toString(e, debug);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
 			return CollectionUtils.array(Location.class);
@@ -94,8 +96,9 @@ public class ExprSpawn extends PropertyExpression<World, Location> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		assert mode == ChangeMode.SET;
+		assert delta != null;
 		
 		final Location l = (Location) delta[0];
 		final int x = l.getBlockX(), y = l.getBlockY(), z = l.getBlockZ();

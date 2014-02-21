@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -42,7 +43,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Chunk")
 @Description("The <a href='../classes/#chunk'>chunk</a> a block, location or entity is in")
 @Examples("add the chunk at the player to {protected chunks::*}")
@@ -53,9 +53,10 @@ public class ExprChunk extends PropertyExpression<Location, Chunk> {
 		Skript.registerExpression(ExprChunk.class, Chunk.class, ExpressionType.PROPERTY, "[the] chunk[s] (of|%-directions%) %locations%", "%locations%'[s] chunk[s]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Location> locations;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		if (matchedPattern == 0) {
@@ -72,6 +73,7 @@ public class ExprChunk extends PropertyExpression<Location, Chunk> {
 	@Override
 	protected Chunk[] get(final Event e, final Location[] source) {
 		return get(source, new Converter<Location, Chunk>() {
+			@SuppressWarnings("null")
 			@Override
 			public Chunk convert(final Location l) {
 				return l.getChunk();
@@ -85,11 +87,12 @@ public class ExprChunk extends PropertyExpression<Location, Chunk> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the chunk at " + locations.toString(e, debug);
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.RESET)
 			return new Class[0];
@@ -97,7 +100,7 @@ public class ExprChunk extends PropertyExpression<Location, Chunk> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		assert mode == ChangeMode.RESET;
 		
 		final Chunk[] cs = getArray(e);

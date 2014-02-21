@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Experience")
 @Description("How much experience was spawned in an <a href='../events/#experience_spawn'>experience spawn</a> event. Can be changed.")
 @Examples({"on experience spawn:",
@@ -62,6 +62,7 @@ public class ExprExperience extends SimpleExpression<Experience> {
 	}
 	
 	@Override
+	@Nullable
 	protected Experience[] get(final Event e) {
 		if (!(e instanceof ExperienceSpawnEvent))
 			return null;
@@ -69,6 +70,7 @@ public class ExprExperience extends SimpleExpression<Experience> {
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		switch (mode) {
 			case ADD:
@@ -85,7 +87,7 @@ public class ExprExperience extends SimpleExpression<Experience> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		if (!(e instanceof ExperienceSpawnEvent))
 			return;
 		if (delta == null) {
@@ -124,7 +126,7 @@ public class ExprExperience extends SimpleExpression<Experience> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the experience";
 	}
 	

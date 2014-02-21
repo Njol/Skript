@@ -31,6 +31,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.plugin.EventExecutor;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
@@ -45,7 +46,7 @@ import ch.njol.skript.util.Task;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"deprecation", "serial"})
+@SuppressWarnings("deprecation")
 public class EvtChat extends SelfRegisteringSkriptEvent {
 	static {
 		Skript.registerEvent("Chat", EvtChat.class, Skript.isRunningMinecraft(1, 3) ? AsyncPlayerChatEvent.class : PlayerChatEvent.class, "chat")
@@ -62,6 +63,7 @@ public class EvtChat extends SelfRegisteringSkriptEvent {
 		final void execute(final Event e) {
 			SkriptEventHandler.logEventStart(e);
 			for (final Trigger t : triggers) {
+				assert t != null : triggers;
 				SkriptEventHandler.logTriggerStart(t);
 				t.execute(e);
 				SkriptEventHandler.logTriggerEnd(t);
@@ -70,7 +72,9 @@ public class EvtChat extends SelfRegisteringSkriptEvent {
 		}
 		
 		@Override
-		public void execute(final Listener l, final Event e) throws EventException {
+		public void execute(final @Nullable Listener l, final @Nullable Event e) throws EventException {
+			if (e == null)
+				return;
 			if (!triggers.isEmpty()) {
 				if (!Skript.isRunningMinecraft(1, 3) || !e.isAsynchronous()) {
 					execute(e);
@@ -78,6 +82,7 @@ public class EvtChat extends SelfRegisteringSkriptEvent {
 				}
 				Task.callSync(new Callable<Void>() {
 					@Override
+					@Nullable
 					public Void call() throws Exception {
 						execute(e);
 						return null;
@@ -93,7 +98,7 @@ public class EvtChat extends SelfRegisteringSkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "chat";
 	}
 	

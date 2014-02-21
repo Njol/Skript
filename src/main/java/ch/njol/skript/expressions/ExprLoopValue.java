@@ -27,10 +27,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.SerializableConverter;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -53,7 +54,6 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Loop value")
 @Description("The currently looped value.")
 @Examples({"# countdown:",
@@ -70,8 +70,10 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 		Skript.registerExpression(ExprLoopValue.class, Object.class, ExpressionType.SIMPLE, "[the] loop-<.+>");
 	}
 	
+	@SuppressWarnings("null")
 	private String name;
 	
+	@SuppressWarnings("null")
 	private Loop loop;
 	
 	// whether this loops a variable
@@ -82,15 +84,16 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		name = parser.expr;
-		String s = parser.regexes.get(0).group();
+		String s = "" + parser.regexes.get(0).group();
 		int i = -1;
 		final Matcher m = Pattern.compile("^(.+)-(\\d+)$").matcher(s);
 		if (m.matches()) {
-			s = m.group(1);
-			i = Utils.parseInt(m.group(2));
+			s = "" + m.group(1);
+			i = Utils.parseInt("" + m.group(2));
 		}
 		final Class<?> c = Classes.getClassFromUserInput(s);
 		int j = 1;
+		Loop loop = null;
 		for (final Loop l : ScriptLoader.currentLoops) {
 			if ((c != null && c.isAssignableFrom(l.getLoopedExpression().getReturnType())) || l.getLoopedExpression().isLoopOf(s)) {
 				if (j < i) {
@@ -115,6 +118,7 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 			if (((Variable<?>) loop.getLoopedExpression()).isIndexLoop(s))
 				isIndex = true;
 		}
+		this.loop = loop;
 		return true;
 	}
 	
@@ -124,12 +128,12 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	}
 	
 	@Override
+	@Nullable
 	protected <R> ConvertedExpression<Object, ? extends R> getConvertedExpr(final Class<R>... to) {
 		if (isVariableLoop && !isIndex) {
-			return new ConvertedExpression<Object, R>(this, (Class<R>) Utils.getSuperType(to), new SerializableConverter<Object, R>() {
-				private final static long serialVersionUID = 7703898357092613043L;
-				
+			return new ConvertedExpression<Object, R>(this, (Class<R>) Utils.getSuperType(to), new Converter<Object, R>() {
 				@Override
+				@Nullable
 				public R convert(final Object o) {
 					return Converters.convert(o, to);
 				}
@@ -147,9 +151,12 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	}
 	
 	@Override
+	@Nullable
 	protected Object[] get(final Event e) {
 		if (isVariableLoop) {
 			final Entry<String, Object> current = (Entry<String, Object>) loop.getCurrent(e);
+			if (current == null)
+				return null;
 			if (isIndex)
 				return new String[] {current.getKey()};
 			final Object[] one = (Object[]) Array.newInstance(getReturnType(), 1);
@@ -162,11 +169,13 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (e == null)
 			return name;
 		if (isVariableLoop) {
 			final Entry<String, Object> current = (Entry<String, Object>) loop.getCurrent(e);
+			if (current == null)
+				return Classes.getDebugMessage(null);
 			return isIndex ? "\"" + current.getKey() + "\"" : Classes.getDebugMessage(current.getValue());
 		}
 		return Classes.getDebugMessage(loop.getCurrent(e));

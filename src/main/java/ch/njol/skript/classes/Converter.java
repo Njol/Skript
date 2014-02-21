@@ -21,6 +21,9 @@
 
 package ch.njol.skript.classes;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.registrations.Converters;
 
 /**
@@ -29,7 +32,7 @@ import ch.njol.skript.registrations.Converters;
  * @param <F> the accepted type of objects to convert <u>f</u>rom
  * @param <T> the type to convert <u>t</u>o
  * @author Peter Güttinger
- * @see Converters#registerConverter(Class, Class, SerializableConverter)
+ * @see Converters#registerConverter(Class, Class, Converter)
  */
 public interface Converter<F, T> {
 	
@@ -45,14 +48,16 @@ public interface Converter<F, T> {
 	 * @param <F> same as in {@link Converter}
 	 * @param <T> dito
 	 */
+	@SuppressWarnings("null")
+	@NonNullByDefault
 	public final static class ConverterInfo<F, T> {
 		
 		public final Class<F> from;
 		public final Class<T> to;
-		public final SerializableConverter<F, T> converter;
+		public final Converter<F, T> converter;
 		public final int options;
 		
-		public ConverterInfo(final Class<F> from, final Class<T> to, final SerializableConverter<F, T> converter, final int options) {
+		public ConverterInfo(final Class<F> from, final Class<T> to, final Converter<F, T> converter, final int options) {
 			this.from = from;
 			this.to = to;
 			this.converter = converter;
@@ -63,26 +68,24 @@ public interface Converter<F, T> {
 	
 	/**
 	 * Converts an object from the given to the desired type.
-	 * <p>
-	 * Please note that the given object may be null, thus make sure that you test for null first.
 	 * 
-	 * @param f The object to convert which can be null.
+	 * @param f The object to convert.
 	 * @return the converted object
 	 */
+	@Nullable
 	public T convert(F f);
 	
 	public final static class ConverterUtils {
 		
-		public final static <F, T> SerializableConverter<?, T> createInstanceofConverter(final ConverterInfo<F, T> conv) {
+		public final static <F, T> Converter<?, T> createInstanceofConverter(final ConverterInfo<F, T> conv) {
 			return createInstanceofConverter(conv.from, conv.converter);
 		}
 		
-		public final static <F, T> SerializableConverter<?, T> createInstanceofConverter(final Class<F> from, final Converter<F, T> conv) {
-			return new SerializableConverter<Object, T>() {
-				private final static long serialVersionUID = -9026052502252522895L;
-				
+		public final static <F, T> Converter<?, T> createInstanceofConverter(final Class<F> from, final Converter<F, T> conv) {
+			return new Converter<Object, T>() {
 				@SuppressWarnings("unchecked")
 				@Override
+				@Nullable
 				public T convert(final Object o) {
 					if (!from.isInstance(o))
 						return null;
@@ -91,12 +94,11 @@ public interface Converter<F, T> {
 			};
 		}
 		
-		public final static <F, T> SerializableConverter<F, T> createInstanceofConverter(final Converter<F, ?> conv, final Class<T> to) {
-			return new SerializableConverter<F, T>() {
-				private final static long serialVersionUID = 2408973867196975702L;
-				
+		public final static <F, T> Converter<F, T> createInstanceofConverter(final Converter<F, ?> conv, final Class<T> to) {
+			return new Converter<F, T>() {
 				@SuppressWarnings("unchecked")
 				@Override
+				@Nullable
 				public T convert(final F f) {
 					final Object o = conv.convert(f);
 					if (to.isInstance(o))
@@ -106,16 +108,15 @@ public interface Converter<F, T> {
 			};
 		}
 		
-		public final static <F, T> SerializableConverter<?, T> createDoubleInstanceofConverter(final ConverterInfo<F, ?> conv, final Class<T> to) {
+		public final static <F, T> Converter<?, T> createDoubleInstanceofConverter(final ConverterInfo<F, ?> conv, final Class<T> to) {
 			return createDoubleInstanceofConverter(conv.from, conv.converter, to);
 		}
 		
-		public final static <F, T> SerializableConverter<?, T> createDoubleInstanceofConverter(final Class<F> from, final Converter<F, ?> conv, final Class<T> to) {
-			return new SerializableConverter<Object, T>() {
-				private final static long serialVersionUID = 6009912617490506586L;
-				
+		public final static <F, T> Converter<?, T> createDoubleInstanceofConverter(final Class<F> from, final Converter<F, ?> conv, final Class<T> to) {
+			return new Converter<Object, T>() {
 				@SuppressWarnings("unchecked")
 				@Override
+				@Nullable
 				public T convert(final Object o) {
 					if (!from.isInstance(o))
 						return null;

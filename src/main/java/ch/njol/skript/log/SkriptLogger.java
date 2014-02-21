@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.Node;
@@ -35,16 +36,23 @@ import ch.njol.skript.config.Node;
  */
 public abstract class SkriptLogger {
 	
+	@SuppressWarnings("null")
+	public final static Level SEVERE = Level.SEVERE;
+	
+	@Nullable
 	private static Node node = null;
 	
 	private static Verbosity verbosity = Verbosity.NORMAL;
 	
 	static boolean debug;
 	
-	public final static Level DEBUG = new Level("DEBUG", Level.INFO.intValue()) {
-		private final static long serialVersionUID = 8959282461654206205L;
-	};
+	@SuppressWarnings("null")
+	public final static Level DEBUG = Level.INFO; // CraftBukkit 1.7+ uses the worst logging library I've ever encountered
+//			new Level("DEBUG", Level.INFO.intValue()) {
+//				private final static long serialVersionUID = 8959282461654206205L;
+//			};
 	
+	@SuppressWarnings("null")
 	public final static Logger LOGGER = Bukkit.getServer() != null ? Bukkit.getLogger() : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME); // cannot use Bukkit in tests
 	
 	private final static HandlerList handlers = new HandlerList();
@@ -111,6 +119,7 @@ public abstract class SkriptLogger {
 		return !handlers.contains(h);
 	}
 	
+	@Nullable
 	final static StackTraceElement getCaller() {
 		for (final StackTraceElement e : new Exception().getStackTrace()) {
 			if (!e.getClassName().startsWith(SkriptLogger.class.getPackage().getName()))
@@ -125,10 +134,11 @@ public abstract class SkriptLogger {
 			debug = true;
 	}
 	
-	public static void setNode(final Node node) {
+	public static void setNode(final @Nullable Node node) {
 		SkriptLogger.node = node == null || node.getParent() == null ? null : node;
 	}
 	
+	@Nullable
 	public static Node getNode() {
 		return node;
 	}
@@ -155,7 +165,7 @@ public abstract class SkriptLogger {
 		log(new LogEntry(level, message, node));
 	}
 	
-	public static void log(final LogEntry entry) {
+	public static void log(final @Nullable LogEntry entry) {
 		if (entry == null)
 			return;
 		if (Skript.testing() && node != null && node.debug())
@@ -169,7 +179,8 @@ public abstract class SkriptLogger {
 	
 	public static void logAll(final Collection<LogEntry> entries) {
 		outer: for (final LogEntry entry : entries) {
-			assert entry != null;
+			if (entry == null)
+				continue;
 			for (final LogHandler h : handlers) {
 				if (!h.log(entry))
 					continue outer;

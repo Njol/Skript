@@ -26,6 +26,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerLoginEvent.Result;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Kick")
 @Description("Kicks a player from the server.")
 @Examples({"on place of TNT, lava, or obsidian:",
@@ -52,10 +52,12 @@ public class EffKick extends Effect {
 		Skript.registerEffect(EffKick.class, "kick %players% [(by reason of|because [of]|on account of|due to) %-string%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Player> players;
+	@Nullable
 	private Expression<String> reason;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		players = (Expression<Player>) exprs[0];
@@ -64,13 +66,13 @@ public class EffKick extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "kick " + players.toString(e, debug) + (reason == null ? "" : " on account of " + reason.toString(e, debug));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "kick " + players.toString(e, debug) + (reason != null ? " on account of " + reason.toString(e, debug) : "");
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		final String r = reason == null ? "" : reason.getSingle(e);
+		final String r = reason != null ? reason.getSingle(e) : "";
 		if (r == null)
 			return;
 		for (final Player p : players.getArray(e)) {

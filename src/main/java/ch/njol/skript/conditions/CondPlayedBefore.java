@@ -23,6 +23,7 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Has Played Before")
 @Description("Checks whether a player has played on this server before. You can also use <a href='../events/#first_join'>on first join</a> if you want to make triggers for new players.")
 @Examples({"player has played on this server before",
@@ -52,9 +52,10 @@ public class CondPlayedBefore extends Condition {
 				"%offlineplayer% (has not|hasn't|did not|didn't) [(already|yet)] play[ed] [on (this|the) server] (before|already|yet)");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<OfflinePlayer> player;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		player = (Expression<OfflinePlayer>) exprs[0];
@@ -73,7 +74,7 @@ public class CondPlayedBefore extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return player.toString(e, debug) + " " + (isNegated() ? "hasn't" : "has") + " played on this server before";
 	}
 	

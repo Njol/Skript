@@ -21,9 +21,10 @@
 
 package ch.njol.skript.lang;
 
-import java.io.Serializable;
+import java.io.File;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.util.StringUtils;
@@ -36,10 +37,11 @@ import ch.njol.util.StringUtils;
  * @see Trigger
  * @see Statement
  */
-@SuppressWarnings("serial")
-public abstract class TriggerItem implements Debuggable, Serializable {
+public abstract class TriggerItem implements Debuggable {
 	
+	@Nullable
 	protected TriggerSection parent = null;
+	@Nullable
 	private TriggerItem next = null;
 	
 	protected TriggerItem() {}
@@ -56,12 +58,14 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 	 * @param e
 	 * @return The next item to run or null to stop execution
 	 */
+	@Nullable
 	protected TriggerItem walk(final Event e) {
 		if (run(e)) {
 			debug(e, true);
 			return next;
 		} else {
 			debug(e, false);
+			final TriggerSection parent = this.parent;
 			return parent == null ? null : parent.getNext();
 		}
 	}
@@ -87,7 +91,8 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 				i = i.walk(e);
 			return true;
 		} catch (final StackOverflowError err) {
-			Skript.adminBroadcast("<red>The script '<gold>" + start.getTrigger().getScript().getName() + "<red>' infinitely repeated itself!");
+			final File sc = start.getTrigger().getScript();
+			Skript.adminBroadcast("<red>The script '<gold>" + (sc == null ? "<unknown>" : sc.getName()) + "<red>' infinitely repeated itself!");
 			if (Skript.debug())
 				err.printStackTrace();
 		} catch (final Exception ex) {
@@ -102,17 +107,19 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 	 */
 	private final static String indent = "  ";
 	
+	@Nullable
 	private String indentation = null;
 	
 	public String getIndentation() {
-		if (indentation == null) {
+		String ind = indentation;
+		if (ind == null) {
 			int level = 0;
 			TriggerItem i = this;
 			while ((i = i.parent) != null)
 				level++;
-			indentation = StringUtils.multiply(indent, level);
+			indentation = ind = StringUtils.multiply(indent, level);
 		}
-		return indentation;
+		return ind;
 	}
 	
 	protected final void debug(final Event e, final boolean run) {
@@ -126,10 +133,12 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 		return toString(null, false);
 	}
 	
-	public void setParent(final TriggerSection parent) {
+	public TriggerItem setParent(final @Nullable TriggerSection parent) {
 		this.parent = parent;
+		return this;
 	}
 	
+	@Nullable
 	public final TriggerSection getParent() {
 		return parent;
 	}
@@ -143,10 +152,12 @@ public abstract class TriggerItem implements Debuggable, Serializable {
 		return (Trigger) i;
 	}
 	
-	public void setNext(final TriggerItem next) {
+	public TriggerItem setNext(final @Nullable TriggerItem next) {
 		this.next = next;
+		return this;
 	}
 	
+	@Nullable
 	public TriggerItem getNext() {
 		return next;
 	}

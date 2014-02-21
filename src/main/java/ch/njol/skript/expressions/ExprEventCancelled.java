@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -39,20 +40,13 @@ import ch.njol.util.coll.CollectionUtils;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @NoDoc
 public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	static {
 		Skript.registerExpression(ExprEventCancelled.class, Boolean.class, ExpressionType.SIMPLE, "[is] event cancelled");
 	}
 	
-	@Override
-	protected Boolean[] get(final Event e) {
-		if (!(e instanceof Cancellable))
-			return null;
-		return new Boolean[] {((Cancellable) e).isCancelled()};
-	}
-	
+	@SuppressWarnings("null")
 	private Kleenean delay;
 	
 	@Override
@@ -62,17 +56,31 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	}
 	
 	@Override
+	public boolean isSingle() {
+		return true;
+	}
+	
+	@Override
+	@Nullable
+	protected Boolean[] get(final Event e) {
+		if (!(e instanceof Cancellable))
+			return null;
+		return new Boolean[] {((Cancellable) e).isCancelled()};
+	}
+	
+	@Override
 	public Class<? extends Boolean> getReturnType() {
 		return Boolean.class;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "is event cancelled";
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (delay != Kleenean.FALSE) {
 			Skript.error("Can't cancel the event anymore after it has already passed");
@@ -85,7 +93,7 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	
 	@SuppressWarnings("incomplete-switch")
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		if (!(e instanceof Cancellable))
 			return;
 		switch (mode) {
@@ -93,13 +101,9 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 				((Cancellable) e).setCancelled(false);
 				break;
 			case SET:
+				assert delta != null;
 				((Cancellable) e).setCancelled((Boolean) delta[0]);
 		}
-	}
-	
-	@Override
-	public boolean isSingle() {
-		return true;
 	}
 	
 }

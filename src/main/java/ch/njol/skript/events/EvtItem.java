@@ -29,6 +29,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -40,9 +41,8 @@ import ch.njol.util.Checker;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EvtItem extends SkriptEvent {
-	private final static boolean hasConsumeEvent = Skript.isRunningMinecraft(1, 5, 1);
+	private final static boolean hasConsumeEvent = Skript.supports("org.bukkit.event.player.PlayerItemConsumeEvent");
 	static {
 		Skript.registerEvent("Dispense", EvtItem.class, BlockDispenseEvent.class, "dispens(e|ing) [[of] %itemtypes%]")
 				.description("Called when a dispenser dispenses an item.")
@@ -77,6 +77,7 @@ public class EvtItem extends SkriptEvent {
 		}
 	}
 	
+	@Nullable
 	private Literal<ItemType> types;
 	
 	@SuppressWarnings("unchecked")
@@ -86,6 +87,7 @@ public class EvtItem extends SkriptEvent {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean check(final Event e) {
 		if (types == null)
@@ -118,8 +120,8 @@ public class EvtItem extends SkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "dispense/spawn/drop/craft/pickup/consume" + (types == null ? "" : " of " + types);
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "dispense/spawn/drop/craft/pickup/consume/break" + (types == null ? "" : " of " + types);
 	}
 	
 }

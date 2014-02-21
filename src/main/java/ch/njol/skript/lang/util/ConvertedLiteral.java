@@ -21,60 +21,39 @@
 
 package ch.njol.skript.lang.util;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.Array;
+import java.util.Iterator;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.SkriptAPIException;
-import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.registrations.Converters;
 import ch.njol.util.Checker;
-import ch.njol.util.Pair;
 import ch.njol.util.coll.CollectionUtils;
+import ch.njol.util.coll.iterator.ArrayIterator;
 
 /**
  * @author Peter Güttinger
  * @see SimpleLiteral
  */
-@SuppressWarnings("serial")
 public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements Literal<T> {
 	
 	protected transient T[] data;
 	
-	private void writeObject(final ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-		final String codeName = Classes.getExactClassName(data.getClass().getComponentType());
-		if (codeName == null)
-			throw new SkriptAPIException(data.getClass().getComponentType().getName() + " is not registered");
-		out.writeUTF(codeName);
-		@SuppressWarnings("unchecked")
-		final Pair<String, byte[]>[] d = new Pair[data.length];
-		for (int i = 0; i < data.length; i++) {
-			if ((d[i] = Classes.serialize(data[i])) == null) {
-				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
-			}
-		}
-		out.writeObject(d);
-	}
-	
-	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
-		in.defaultReadObject();
-		final String codeName = in.readUTF();
-		final Pair<String, byte[]>[] d = (Pair<String, byte[]>[]) in.readObject();
-		final ClassInfo<?> ci = Classes.getClassInfo(codeName);
-		data = (T[]) Array.newInstance(ci.getC(), d.length);
-		for (int i = 0; i < data.length; i++) {
-			data[i] = (T) Classes.deserialize(d[i].first, d[i].second);
-		}
-	}
-	
 	public ConvertedLiteral(final Literal<F> source, final T[] data, final Class<T> to) {
-		super(source, to, null);
+		super(source, to, new Converter<F, T>() {
+			@Override
+			@Nullable
+			public T convert(final F f) {
+				assert false;
+				return Converters.convert(f, to);
+			}
+		});
 		this.data = data;
+		assert data.length > 0;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -86,7 +65,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return Classes.toString(data, getAnd());
 	}
 	
@@ -105,6 +84,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 		return getArray();
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public T getSingle() {
 		if (getAnd() && data.length > 1)
@@ -115,6 +95,12 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	@Override
 	public T getSingle(final Event e) {
 		return getSingle();
+	}
+	
+	@Override
+	@Nullable
+	public Iterator<T> iterator(final Event e) {
+		return new ArrayIterator<T>(data);
 	}
 	
 	@Override

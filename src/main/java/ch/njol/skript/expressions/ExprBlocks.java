@@ -27,6 +27,7 @@ import java.util.Iterator;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
@@ -47,7 +48,6 @@ import ch.njol.util.coll.iterator.IteratorIterable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Blocks")
 @Description("Blocks relative to other blocks or between other blocks. Can be used to get blocks relative to other blocks or for looping.")
 @Examples({"loop blocks above the player:",
@@ -55,20 +55,22 @@ import ch.njol.util.coll.iterator.IteratorIterable;
 		"set the blocks below the player, the victim and the targeted block to air"})
 @Since("1.0")
 public class ExprBlocks extends SimpleExpression<Block> {
-	
 	static {
-		Skript.registerExpression(ExprBlocks.class, Block.class, ExpressionType.NORMAL,
-				"[the] blocks %direction% [%locations%]",
+		Skript.registerExpression(ExprBlocks.class, Block.class, ExpressionType.COMBINED,
+				"[the] blocks %direction% [%locations%]", // TODO doesn't loop all blocks?
 				"[the] blocks from %location% [on] %direction%",
 				"[the] blocks from %block% to %block%",
 				"[the] blocks between %block% and %block%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<?> from;
+	@Nullable
 	private Expression<Block> end;
+	@Nullable
 	private Expression<Direction> direction;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		switch (matchedPattern) {
@@ -84,20 +86,19 @@ public class ExprBlocks extends SimpleExpression<Block> {
 			case 3:
 				from = exprs[0];
 				end = (Expression<Block>) exprs[1];
+				break;
+			default:
+				assert false : matchedPattern;
+				return false;
 		}
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		if (end == null)
-			return "block" + (isSingle() ? "" : "s") + " " + direction.toString(e, debug) + " " + from.toString(e, debug);
-		else
-			return "blocks from " + from.toString(e, debug) + " to " + end.toString(e, debug);
-	}
-	
-	@Override
+	@Nullable
 	protected Block[] get(final Event e) {
+		final Expression<Direction> direction = this.direction;
 		if (direction != null && !from.isSingle()) {
 			final Location[] ls = (Location[]) from.getArray(e);
 			final Direction d = direction.getSingle(e);
@@ -110,14 +111,19 @@ public class ExprBlocks extends SimpleExpression<Block> {
 			return bs;
 		}
 		final ArrayList<Block> r = new ArrayList<Block>();
-		for (final Block b : new IteratorIterable<Block>(iterator(e)))
+		final Iterator<Block> iter = iterator(e);
+		if (iter == null)
+			return null;
+		for (final Block b : new IteratorIterable<Block>(iter))
 			r.add(b);
 		return r.toArray(new Block[r.size()]);
 	}
 	
 	@Override
+	@Nullable
 	public Iterator<Block> iterator(final Event e) {
 		try {
+			final Expression<Direction> direction = this.direction;
 			if (direction != null) {
 				if (!from.isSingle()) {
 					return new ArrayIterator<Block>(get(e));
@@ -136,6 +142,7 @@ public class ExprBlocks extends SimpleExpression<Block> {
 				final Block b = (Block) from.getSingle(e);
 				if (b == null)
 					return null;
+				assert end != null;
 				final Block b2 = end.getSingle(e);
 				if (b2 == null || b2.getWorld() != b.getWorld())
 					return null;
@@ -156,6 +163,18 @@ public class ExprBlocks extends SimpleExpression<Block> {
 	@Override
 	public boolean isSingle() {
 		return false;
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		final Expression<Block> end = this.end;
+		if (end != null) {
+			return "blocks from " + from.toString(e, debug) + " to " + end.toString(e, debug);
+		} else {
+			final Expression<Direction> direction = this.direction;
+			assert direction != null;
+			return "block" + (isSingle() ? "" : "s") + " " + direction.toString(e, debug) + " " + from.toString(e, debug);
+		}
 	}
 	
 }

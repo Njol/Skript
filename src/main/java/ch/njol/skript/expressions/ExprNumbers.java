@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Numbers")
 @Description({"All numbers between two given numbers, useful for looping.",
 		"Use 'numbers' if your start is not an integer and you want to keep the fractional part of the start number constant, or use 'integers' if you only want to loop integers.",
@@ -52,15 +52,16 @@ import ch.njol.util.Kleenean;
 @Since("1.4.6")
 public class ExprNumbers extends SimpleExpression<Number> {
 	static {
-		Skript.registerExpression(ExprNumbers.class, Number.class, ExpressionType.NORMAL,
+		Skript.registerExpression(ExprNumbers.class, Number.class, ExpressionType.COMBINED,
 				"[(all|the)] (numbers|1¦integers) (between|from) %number% (and|to) %number%",
 				"%number% times");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Number> start, end;
 	boolean integer;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		start = matchedPattern == 0 ? (Expression<Number>) exprs[0] : new SimpleLiteral<Number>(1, false);
@@ -70,6 +71,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	}
 	
 	@Override
+	@Nullable
 	protected Number[] get(final Event e) {
 		final Number s = start.getSingle(e), f = end.getSingle(e);
 		if (s == null || f == null || s.doubleValue() > f.doubleValue())
@@ -86,6 +88,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	}
 	
 	@Override
+	@Nullable
 	public Iterator<Number> iterator(final Event e) {
 		final Number s = start.getSingle(e), f = end.getSingle(e);
 		if (s == null || f == null || s.doubleValue() > f.doubleValue())
@@ -98,6 +101,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 				return i <= max;
 			}
 			
+			@SuppressWarnings("null")
 			@Override
 			public Number next() {
 				if (!hasNext())
@@ -116,7 +120,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return (integer ? "integers" : "numbers") + " from " + start.toString(e, debug) + " to " + end.toString(e, debug);
 	}
 	

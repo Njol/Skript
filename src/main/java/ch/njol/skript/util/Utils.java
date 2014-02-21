@@ -34,14 +34,16 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
+import org.eclipse.jdt.annotation.Nullable;
 
-import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.effects.EffTeleport;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.util.Callback;
+import ch.njol.util.NonNullPair;
 import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 
@@ -64,7 +66,7 @@ public abstract class Utils {
 				b.append(", ");
 			b.append(Classes.toString(objects[i]));
 		}
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 	public static String join(final Iterable<?> objects) {
@@ -78,7 +80,7 @@ public abstract class Utils {
 				first = false;
 			b.append(Classes.toString(o));
 		}
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 	/**
@@ -88,11 +90,11 @@ public abstract class Utils {
 	 * @param is2
 	 * @return Whether the item stacks are of the same type
 	 */
-	public static boolean itemStacksEqual(final ItemStack is1, final ItemStack is2) {
+	public static boolean itemStacksEqual(final @Nullable ItemStack is1, final @Nullable ItemStack is2) {
 		if (is1 == null || is2 == null)
 			return is1 == is2;
 		return is1.getType() == is2.getType() && is1.getDurability() == is2.getDurability()
-				&& (Skript.isRunningMinecraft(1, 4, 5) ? is1.getItemMeta().equals(is2.getItemMeta()) : is1.getEnchantments().equals(is2.getEnchantments()));
+				&& (ItemType.itemMetaSupported ? is1.getItemMeta().equals(is2.getItemMeta()) : is1.getEnchantments().equals(is2.getEnchantments()));
 	}
 	
 	/**
@@ -102,8 +104,8 @@ public abstract class Utils {
 	 * @param type Can be null for any entity
 	 * @return The entity's target
 	 */
-	public static <T extends Entity> T getTarget(final LivingEntity entity, final EntityData<T> type) {
-		assert entity != null;
+	@Nullable
+	public static <T extends Entity> T getTarget(final LivingEntity entity, @Nullable final EntityData<T> type) {
 		if (entity instanceof Creature) {
 			return ((Creature) entity).getTarget() == null || type != null && !type.isInstance(((Creature) entity).getTarget()) ? null : (T) ((Creature) entity).getTarget();
 		}
@@ -113,7 +115,7 @@ public abstract class Utils {
 		final Vector l = entity.getEyeLocation().toVector(), n = entity.getLocation().getDirection().normalize();
 		final double cos45 = Math.cos(Math.PI / 4);
 		for (final T other : type == null ? (List<T>) entity.getWorld().getEntities() : entity.getWorld().getEntitiesByClass(type.getType())) {
-			if (other == entity || type != null && !type.isInstance(other))
+			if (other == null || other == entity || type != null && !type.isInstance(other))
 				continue;
 			if (target == null || targetDistanceSquared > other.getLocation().distanceSquared(entity.getLocation())) {
 				final Vector t = other.getLocation().add(0, 1, 0).toVector().subtract(l);
@@ -126,6 +128,7 @@ public abstract class Utils {
 		return target;
 	}
 	
+	@SuppressWarnings("null")
 	public final static Pair<String, Integer> getAmount(final String s) {
 		if (s.matches("\\d+ of .+")) {
 			return new Pair<String, Integer>(s.split(" ", 3)[2], Utils.parseInt(s.split(" ", 2)[0]));
@@ -167,6 +170,7 @@ public abstract class Utils {
 		}
 	}
 	
+	@SuppressWarnings("null")
 	public final static AmountResponse getAmountWithEvery(final String s) {
 		if (s.matches("\\d+ of (all|every) .+")) {
 			return new AmountResponse(s.split(" ", 4)[3], Utils.parseInt(s.split(" ", 2)[0]), true);
@@ -223,17 +227,18 @@ public abstract class Utils {
 	 * @param s trimmed string
 	 * @return Pair of singular string + boolean whether it was plural
 	 */
-	public final static Pair<String, Boolean> getEnglishPlural(final String s) {
+	@SuppressWarnings("null")
+	public final static NonNullPair<String, Boolean> getEnglishPlural(final String s) {
 		assert s != null;
 		if (s.isEmpty())
-			return new Pair<String, Boolean>("", Boolean.FALSE);
+			return new NonNullPair<String, Boolean>("", Boolean.FALSE);
 		for (final String[] p : plurals) {
 			if (s.endsWith(p[1]))
-				return new Pair<String, Boolean>(s.substring(0, s.length() - p[1].length()) + p[0], Boolean.TRUE);
+				return new NonNullPair<String, Boolean>(s.substring(0, s.length() - p[1].length()) + p[0], Boolean.TRUE);
 			if (s.endsWith(p[1].toUpperCase()))
-				return new Pair<String, Boolean>(s.substring(0, s.length() - p[1].length()) + p[0].toUpperCase(), Boolean.TRUE);
+				return new NonNullPair<String, Boolean>(s.substring(0, s.length() - p[1].length()) + p[0].toUpperCase(), Boolean.TRUE);
 		}
-		return new Pair<String, Boolean>(s, Boolean.FALSE);
+		return new NonNullPair<String, Boolean>(s, Boolean.FALSE);
 	}
 	
 	/**
@@ -324,7 +329,7 @@ public abstract class Utils {
 				return 9. / 16;
 			case 44: // slabs
 			case 126:
-				return 0.5;
+				return (data & 0x8) == 0 ? 0.5 : 1;
 			case 78: // snow layer
 				return data == 0 ? 1 : (data % 8) * 2. / 16;
 			case 85: // fences & gates
@@ -342,7 +347,7 @@ public abstract class Utils {
 			case 150:
 				return 2. / 16;
 			case 96: // trapdoor
-				return 3. / 16;
+				return (data & 0x4) == 0 ? ((data & 0x8) == 0 ? 3. / 16 : 1) : 0;
 			case 116: // enchantment table
 				return 12. / 16;
 			case 117: // brewing stand
@@ -351,14 +356,16 @@ public abstract class Utils {
 				return 5. / 16;
 			case 120: // end portal frame
 				return (data & 0x4) == 0 ? 13. / 16 : 1;
-			case 154: // hopper
-				return 10. / 16;
+			case 127: // cocoa plant
+				return 12. / 16;
+			case 140: // flower pot
+				return 6. / 16;
 			case 144: // mob head
 				return 0.5;
 			case 151: // daylight sensor
 				return 6. / 16;
-			case 140: // flower pot
-				return 6. / 16;
+			case 154: // hopper
+				return 10. / 16;
 			default:
 				return 1;
 		}
@@ -384,6 +391,7 @@ public abstract class Utils {
 		});
 	}
 	
+	@Nullable
 	public final static String getChatStyle(final String s) {
 		final Color c = Color.byName(s);
 		if (c != null)
@@ -391,6 +399,7 @@ public abstract class Utils {
 		return chat.get(s);
 	}
 	
+	@SuppressWarnings("null")
 	private final static Pattern stylePattern = Pattern.compile("<([^<>]+)>");
 	
 	/**
@@ -399,23 +408,24 @@ public abstract class Utils {
 	 * @param message
 	 * @return message with localised chat styles converted to Minecraft's format
 	 */
-	public final static String replaceChatStyles(String message) {
-		if (message == null || message.isEmpty())
+	public final static String replaceChatStyles(final String message) {
+		if (message.isEmpty())
 			return message;
-		message = StringUtils.replaceAll(message.replace("<<none>>", ""), stylePattern, new Callback<String, Matcher>() {
+		String m = StringUtils.replaceAll("" + message.replace("<<none>>", ""), stylePattern, new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
-				final Color c = Color.byName(m.group(1));
+				final Color c = Color.byName("" + m.group(1));
 				if (c != null)
 					return c.getChat();
 				final String f = chat.get(m.group(1).toLowerCase());
 				if (f != null)
 					return f;
-				return m.group();
+				return "" + m.group();
 			}
 		});
-		message = ChatColor.translateAlternateColorCodes('&', message);
-		return message;
+		assert m != null;
+		m = ChatColor.translateAlternateColorCodes('&', "" + m);
+		return "" + m;
 	}
 	
 	/**
@@ -425,23 +435,24 @@ public abstract class Utils {
 	 * @param message
 	 * @return message with english chat styles converted to Minecraft's format
 	 */
-	public final static String replaceEnglishChatStyles(String message) {
-		if (message == null || message.isEmpty())
+	public final static String replaceEnglishChatStyles(final String message) {
+		if (message.isEmpty())
 			return message;
-		message = StringUtils.replaceAll(message, stylePattern, new Callback<String, Matcher>() {
+		String m = StringUtils.replaceAll(message, stylePattern, new Callback<String, Matcher>() {
 			@Override
 			public String run(final Matcher m) {
-				final Color c = Color.byEnglishName(m.group(1));
+				final Color c = Color.byEnglishName("" + m.group(1));
 				if (c != null)
 					return c.getChat();
 				final String f = englishChat.get(m.group(1).toLowerCase());
 				if (f != null)
 					return f;
-				return m.group();
+				return "" + m.group();
 			}
 		});
-		message = ChatColor.translateAlternateColorCodes('&', message);
-		return message;
+		assert m != null;
+		m = ChatColor.translateAlternateColorCodes('&', "" + m);
+		return "" + m;
 	}
 	
 	/**
@@ -461,8 +472,9 @@ public abstract class Utils {
 	public final static Class<?> getSuperType(final Class<?>... cs) {
 		assert cs.length > 0;
 		Class<?> r = cs[0];
+		assert r != null;
 		outer: for (final Class<?> c : cs) {
-			assert !c.isArray() && !c.isPrimitive();
+			assert c != null && !c.isArray() && !c.isPrimitive() : c;
 			if (c.isAssignableFrom(r)) {
 				r = c;
 				continue;

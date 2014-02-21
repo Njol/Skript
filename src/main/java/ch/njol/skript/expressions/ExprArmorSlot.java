@@ -24,6 +24,8 @@ package ch.njol.skript.expressions;
 import java.util.Locale;
 
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.EntityEquipment;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -40,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Armour Slot")
 @Description("A part of a player's armour, i.e. the boots, leggings, chestplate or helmet.")
 @Examples({"set chestplate of the player to a diamond chestplate",
@@ -51,10 +52,12 @@ public class ExprArmorSlot extends SimplePropertyExpression<LivingEntity, Slot> 
 		register(ExprArmorSlot.class, Slot.class, "(0¦boot[s]|0¦shoe[s]|1¦leg[ging][s]|2¦chestplate[s]|3¦helm[et][s]) [slot]", "livingentities");
 	}
 	
+	@SuppressWarnings("null")
 	private EquipSlot slot;
 	
 	private final static EquipSlot[] slots = {EquipSlot.BOOTS, EquipSlot.LEGGINGS, EquipSlot.CHESTPLATE, EquipSlot.HELMET};
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		super.init(exprs, matchedPattern, isDelayed, parseResult);
@@ -63,13 +66,17 @@ public class ExprArmorSlot extends SimplePropertyExpression<LivingEntity, Slot> 
 	}
 	
 	@Override
-	public Slot convert(final LivingEntity en) {
-		return new EquipmentSlot(en.getEquipment(), slot);
+	@Nullable
+	public Slot convert(final LivingEntity e) {
+		final EntityEquipment eq = e.getEquipment();
+		if (eq == null)
+			return null;
+		return new EquipmentSlot(eq, slot);
 	}
 	
 	@Override
 	protected String getPropertyName() {
-		return slot.name().toLowerCase(Locale.ENGLISH);
+		return "" + slot.name().toLowerCase(Locale.ENGLISH);
 	}
 	
 	@Override

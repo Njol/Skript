@@ -23,6 +23,8 @@ package ch.njol.skript.lang;
 
 import java.lang.reflect.Array;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Utils;
 
@@ -31,7 +33,6 @@ import ch.njol.skript.util.Utils;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 	
 	public LiteralList(final Literal<? extends T>[] literals, final Class<T> returnType, final boolean and) {
@@ -42,22 +43,26 @@ public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 		super(literals, returnType, and, source);
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public T[] getArray() {
 		return getArray(null);
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public T getSingle() {
 		return getSingle(null);
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public T[] getAll() {
 		return getAll(null);
 	}
 	
 	@Override
+	@Nullable
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
 		@SuppressWarnings("unchecked")
 		final Literal<? extends R>[] exprs = new Literal[expressions.length];

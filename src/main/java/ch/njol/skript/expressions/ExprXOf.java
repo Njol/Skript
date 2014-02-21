@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Converter;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("X of Item")
 @Description("An expression to be able to use a certain amount of items where the amount can be any expression. Please note that is expression is not stable and might be replaced in the future.")
 @Examples("give level of player of pickaxes to the player")
@@ -51,9 +51,10 @@ public class ExprXOf extends PropertyExpression<Object, Object> {
 		Skript.registerExpression(ExprXOf.class, Object.class, ExpressionType.PATTERN_MATCHES_EVERYTHING, "%number% of %itemstacks/entitytype%");
 	}
 	
+	@SuppressWarnings("null")
 	Expression<Number> amount;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr(exprs[1]);
@@ -72,6 +73,7 @@ public class ExprXOf extends PropertyExpression<Object, Object> {
 	protected Object[] get(final Event e, final Object[] source) {
 		return get(source, new Converter<Object, Object>() {
 			@Override
+			@Nullable
 			public Object convert(final Object o) {
 				final Number a = amount.getSingle(e);
 				if (a == null)
@@ -90,7 +92,7 @@ public class ExprXOf extends PropertyExpression<Object, Object> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return amount.toString(e, debug) + " of " + getExpr().toString(e, debug);
 	}
 	

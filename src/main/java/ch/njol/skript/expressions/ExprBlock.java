@@ -24,9 +24,10 @@ package ch.njol.skript.expressions;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.SerializableConverter;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -43,7 +44,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Block")
 @Description({"The block involved in the event, e.g. the clicked block or the placed block.",
 		"Can optionally include a direction as well, e.g. 'block above' or 'block in front of the player'."})
@@ -59,14 +59,15 @@ import ch.njol.util.Kleenean;
 public class ExprBlock extends WrapperExpression<Block> {
 	static {
 		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.SIMPLE, "[the] [event-]block");
-		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.NORMAL, "[the] block %direction% [%location%]");
+		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.COMBINED, "[the] block %direction% [%location%]");
 	}
 	
-	@SuppressWarnings("unchecked")
+	//FIXME Unexpected error while executing effect command 'set line 4 of the block at {eventupdatesign.a3} to "%{dungeon.string.15}%"'
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		if (exprs.length > 0) {
-			setExpr(new ConvertedExpression<Location, Block>(Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]), Block.class, new SerializableConverter<Location, Block>() {
+			setExpr(new ConvertedExpression<Location, Block>(Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]), Block.class, new Converter<Location, Block>() {
 				@Override
 				public Block convert(final Location l) {
 					return l.getBlock();
@@ -80,7 +81,7 @@ public class ExprBlock extends WrapperExpression<Block> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return getExpr() instanceof EventValueExpression ? "the block" : "the block " + getExpr().toString(e, debug);
 	}
 	

@@ -30,19 +30,20 @@ public class EntryNode extends Node implements Entry<String, String> {
 	
 	private String value;
 	
-	public EntryNode(final String key, final String value, final SectionNode parent, final ConfigReader r) {
-		super(key, parent, r);
-		this.value = value;
-	}
-	
-	public EntryNode(final String key, final String value, final String orig, final SectionNode parent, final int lineNum) {
-		super(key, parent, orig, lineNum);
+	public EntryNode(final String key, final String value, final String comment, final SectionNode parent, final int lineNum) {
+		super(key, comment, parent, lineNum);
 		this.value = value;
 	}
 	
 	public EntryNode(final String key, final String value, final SectionNode parent) {
 		super(key, parent);
 		this.value = value;
+	}
+	
+	@SuppressWarnings("null")
+	@Override
+	public String getKey() {
+		return key;
 	}
 	
 	@Override

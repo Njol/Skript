@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.events.bukkit.SkriptStartEvent;
@@ -38,9 +39,8 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"serial", "unchecked"})
+@SuppressWarnings("unchecked")
 public class EvtSkript extends SelfRegisteringSkriptEvent {
-	
 	static {
 		Skript.registerEvent("Server Start/Stop", EvtSkript.class, CollectionUtils.array(SkriptStartEvent.class, SkriptStopEvent.class), "(0¦server|1¦skript) (start|load|enable)", "(0¦server|1¦skript) (stop|unload|disable)")
 				.description("Called when the server starts or stops (actually, when Skript starts or stops, so a /reload will trigger these events as well).")
@@ -96,7 +96,7 @@ public class EvtSkript extends SelfRegisteringSkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "on server " + (isStart ? "start" : "stop");
 	}
 	

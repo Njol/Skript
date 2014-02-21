@@ -29,6 +29,7 @@ import static org.junit.Assert.*;
 public class UtilsTest {
 	
 //	@Test
+	@SuppressWarnings("null")
 	public void testPlural() {
 		
 		final String[][] strings = {

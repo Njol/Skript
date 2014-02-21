@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
@@ -47,18 +48,19 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.Converter.ConverterInfo;
 import ch.njol.skript.classes.Parser;
+import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.variables.DatabaseStorage;
+import ch.njol.skript.variables.SerializedVariable;
 import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
-import ch.njol.util.Pair;
 import ch.njol.util.StringUtils;
 import ch.njol.yggdrasil.Tag;
-import ch.njol.yggdrasil.YggdrasilConstants;
+import ch.njol.yggdrasil.Yggdrasil;
 import ch.njol.yggdrasil.YggdrasilInputStream;
 import ch.njol.yggdrasil.YggdrasilOutputStream;
 
@@ -69,6 +71,7 @@ public abstract class Classes {
 	
 	private Classes() {}
 	
+	@Nullable
 	private static ClassInfo<?>[] classInfos = null;
 	private final static List<ClassInfo<?>> tempClassInfos = new ArrayList<ClassInfo<?>>();
 	private final static HashMap<Class<?>, ClassInfo<?>> exactClassInfos = new HashMap<Class<?>, ClassInfo<?>>();
@@ -96,7 +99,7 @@ public abstract class Classes {
 		sortClassInfos();
 		
 		// validate serializeAs
-		for (final ClassInfo<?> ci : classInfos) {
+		for (final ClassInfo<?> ci : getClassInfos()) {
 			if (ci.getSerializeAs() != null) {
 				final ClassInfo<?> sa = getExactClassInfo(ci.getSerializeAs());
 				if (sa == null) {
@@ -108,9 +111,10 @@ public abstract class Classes {
 		}
 		
 		// register to Yggdrasil
-		for (final ClassInfo<?> ci : classInfos) {
-			if (ci.getSerializer() != null)
-				Variables.yggdrasil.registerClassResolver(ci.getSerializer());
+		for (final ClassInfo<?> ci : getClassInfos()) {
+			final Serializer<?> s = ci.getSerializer();
+			if (s != null)
+				Variables.yggdrasil.registerClassResolver(s);
 		}
 	}
 	
@@ -122,12 +126,13 @@ public abstract class Classes {
 		
 		// merge before, after & sub/supertypes in after
 		for (final ClassInfo<?> ci : tempClassInfos) {
-			if (ci.before() != null && !ci.before().isEmpty()) {
+			final Set<String> before = ci.before();
+			if (before != null && !before.isEmpty()) {
 				for (final ClassInfo<?> ci2 : tempClassInfos) {
-					if (ci.before().contains(ci2.getCodeName())) {
+					if (before.contains(ci2.getCodeName())) {
 						ci2.after().add(ci.getCodeName());
-						ci.before().remove(ci2.getCodeName());
-						if (ci.before().isEmpty())
+						before.remove(ci2.getCodeName());
+						if (before.isEmpty())
 							break;
 					}
 				}
@@ -145,13 +150,14 @@ public abstract class Classes {
 		// remove unresolvable dependencies (and print a warning if testing)
 		for (final ClassInfo<?> ci : tempClassInfos) {
 			final Set<String> s = new HashSet<String>();
-			if (ci.before() != null) {
-				for (final String b : ci.before()) {
+			final Set<String> before = ci.before();
+			if (before != null) {
+				for (final String b : before) {
 					if (getClassInfoNoError(b) == null) {
 						s.add(b);
 					}
 				}
-				ci.before().removeAll(s);
+				before.removeAll(s);
 			}
 			for (final String a : ci.after()) {
 				if (getClassInfoNoError(a) == null) {
@@ -197,7 +203,7 @@ public abstract class Classes {
 		// debug message
 		if (Skript.debug()) {
 			final StringBuilder b = new StringBuilder();
-			for (final ClassInfo<?> ci : Classes.classInfos) {
+			for (final ClassInfo<?> ci : classInfos) {
 				if (b.length() != 0)
 					b.append(", ");
 				b.append(ci.getCodeName());
@@ -212,9 +218,13 @@ public abstract class Classes {
 			throw new IllegalStateException("Cannot use classinfos until registration is over");
 	}
 	
+	@SuppressWarnings("null")
 	public static List<ClassInfo<?>> getClassInfos() {
 		checkAllowClassInfoInteraction();
-		return Collections.unmodifiableList(Arrays.asList(classInfos));
+		final ClassInfo<?>[] ci = classInfos;
+		if (ci == null)
+			return Collections.emptyList();
+		return Collections.unmodifiableList(Arrays.asList(ci));
 	}
 	
 	/**
@@ -237,7 +247,8 @@ public abstract class Classes {
 	 * @param codeName
 	 * @return The class info registered with the given code name or null if the code name is invalid or not yet registered
 	 */
-	public static ClassInfo<?> getClassInfoNoError(final String codeName) {
+	@Nullable
+	public static ClassInfo<?> getClassInfoNoError(final @Nullable String codeName) {
 		return classInfosByCodeName.get(codeName);
 	}
 	
@@ -249,7 +260,8 @@ public abstract class Classes {
 	 * @param c The exact class to get the class info for
 	 * @return The class info for the given class of null if no info was found.
 	 */
-	public static <T> ClassInfo<T> getExactClassInfo(final Class<T> c) {
+	@Nullable
+	public static <T> ClassInfo<T> getExactClassInfo(final @Nullable Class<T> c) {
 		return (ClassInfo<T>) exactClassInfos.get(c);
 	}
 	
@@ -259,14 +271,14 @@ public abstract class Classes {
 	 * @param c
 	 * @return The closest superclass's info
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	public static <T> ClassInfo<? super T> getSuperClassInfo(final Class<T> c) {
 		assert c != null;
 		checkAllowClassInfoInteraction();
 		final ClassInfo<?> i = superClassInfos.get(c);
 		if (i != null)
 			return (ClassInfo<? super T>) i;
-		for (final ClassInfo<?> ci : classInfos) {
+		for (final ClassInfo<?> ci : getClassInfos()) {
 			if (ci.getC().isAssignableFrom(c)) {
 				if (!Skript.isAcceptRegistrations())
 					superClassInfos.put(c, ci);
@@ -295,13 +307,15 @@ public abstract class Classes {
 	 * @param name
 	 * @return the class info or null if the name was not recognized
 	 */
+	@Nullable
 	public static ClassInfo<?> getClassInfoFromUserInput(String name) {
 		checkAllowClassInfoInteraction();
-		name = name.toLowerCase();
-		for (final ClassInfo<?> ci : classInfos) {
-			if (ci.getUserInputPatterns() == null)
+		name = "" + name.toLowerCase();
+		for (final ClassInfo<?> ci : getClassInfos()) {
+			final Pattern[] uip = ci.getUserInputPatterns();
+			if (uip == null)
 				continue;
-			for (final Pattern pattern : ci.getUserInputPatterns()) {
+			for (final Pattern pattern : uip) {
 				if (pattern.matcher(name).matches())
 					return ci;
 			}
@@ -315,6 +329,7 @@ public abstract class Classes {
 	 * @param name
 	 * @return the class or null if the name was not recognized
 	 */
+	@Nullable
 	public static Class<?> getClassFromUserInput(final String name) {
 		checkAllowClassInfoInteraction();
 		final ClassInfo<?> ci = getClassInfoFromUserInput(name);
@@ -328,6 +343,7 @@ public abstract class Classes {
 	 * @return the expression holding the default value or null if this class doesn't have one
 	 * @throws SkriptAPIException If the given class was not registered
 	 */
+	@Nullable
 	public static DefaultExpression<?> getDefaultExpression(final String codeName) {
 		checkAllowClassInfoInteraction();
 		return getClassInfo(codeName).getDefaultExpression();
@@ -339,6 +355,7 @@ public abstract class Classes {
 	 * @param c The class
 	 * @return The expression holding the default value or null if this class doesn't have one
 	 */
+	@Nullable
 	public static <T> DefaultExpression<T> getDefaultExpression(final Class<T> c) {
 		checkAllowClassInfoInteraction();
 		final ClassInfo<T> ci = (ClassInfo<T>) exactClassInfos.get(c);
@@ -351,6 +368,7 @@ public abstract class Classes {
 	 * @param c The exact class
 	 * @return The name of the class or null if the given class wasn't registered.
 	 */
+	@Nullable
 	public final static String getExactClassName(final Class<?> c) {
 		checkAllowClassInfoInteraction();
 		final ClassInfo<?> ci = exactClassInfos.get(c);
@@ -366,14 +384,16 @@ public abstract class Classes {
 	 * @param c
 	 * @return The parsed object
 	 */
+	@Nullable
 	public static <T> T parseSimple(final String s, final Class<T> c, final ParseContext context) {
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
-			for (final ClassInfo<?> info : classInfos) {
-				if (info.getParser() == null || !info.getParser().canParse(context) || !c.isAssignableFrom(info.getC()))
+			for (final ClassInfo<?> info : getClassInfos()) {
+				final Parser<?> parser = info.getParser();
+				if (parser == null || !parser.canParse(context) || !c.isAssignableFrom(info.getC()))
 					continue;
 				log.clear();
-				final T t = (T) info.getParser().parse(s, context);
+				final T t = (T) parser.parse(s, context);
 				if (t != null) {
 					log.printLog();
 					return t;
@@ -398,6 +418,7 @@ public abstract class Classes {
 	 * @return The parsed object
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
+	@Nullable
 	public static <T> T parse(final String s, final Class<T> c, final ParseContext context) {
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
@@ -435,8 +456,12 @@ public abstract class Classes {
 	 * @return A parser to parse object of the desired type
 	 */
 	@SuppressWarnings("unchecked")
+	@Nullable
 	public final static <T> Parser<? extends T> getParser(final Class<T> to) {
 		checkAllowClassInfoInteraction();
+		final ClassInfo<?>[] classInfos = Classes.classInfos;
+		if (classInfos == null)
+			return null;
 		for (int i = classInfos.length - 1; i >= 0; i--) {
 			final ClassInfo<?> ci = classInfos[i];
 			if (to.isAssignableFrom(ci.getC()) && ci.getParser() != null)
@@ -446,8 +471,9 @@ public abstract class Classes {
 			if (to.isAssignableFrom(conv.to)) {
 				for (int i = classInfos.length - 1; i >= 0; i--) {
 					final ClassInfo<?> ci = classInfos[i];
-					if (conv.from.isAssignableFrom(ci.getC()) && ci.getParser() != null)
-						return Classes.createConvertedParser(ci.getParser(), (Converter<?, ? extends T>) conv.converter);
+					final Parser<?> parser = ci.getParser();
+					if (conv.from.isAssignableFrom(ci.getC()) && parser != null)
+						return Classes.createConvertedParser(parser, (Converter<?, ? extends T>) conv.converter);
 				}
 			}
 		}
@@ -462,6 +488,7 @@ public abstract class Classes {
 	 * @param c
 	 * @return A parser to parse object of the desired type
 	 */
+	@Nullable
 	public final static <T> Parser<? extends T> getExactParser(final Class<T> c) {
 		if (Skript.isAcceptRegistrations()) {
 			for (final ClassInfo<?> ci : tempClassInfos) {
@@ -479,6 +506,7 @@ public abstract class Classes {
 		return new Parser<T>() {
 			@SuppressWarnings("unchecked")
 			@Override
+			@Nullable
 			public T parse(final String s, final ParseContext context) {
 				final Object f = parser.parse(s, context);
 				if (f == null)
@@ -511,19 +539,19 @@ public abstract class Classes {
 	 * @see #toString(Object[], boolean, StringMode)
 	 * @see Parser
 	 */
-	public static String toString(final Object o) {
+	public static String toString(final @Nullable Object o) {
 		return toString(o, StringMode.MESSAGE, 0);
 	}
 	
-	public static String getDebugMessage(final Object o) {
+	public static String getDebugMessage(final @Nullable Object o) {
 		return toString(o, StringMode.DEBUG, 0);
 	}
 	
-	public final static <T> String toString(final T o, final StringMode mode) {
+	public final static <T> String toString(final @Nullable T o, final StringMode mode) {
 		return toString(o, mode, 0);
 	}
 	
-	private final static <T> String toString(final T o, final StringMode mode, final int flags) {
+	private final static <T> String toString(final @Nullable T o, final StringMode mode, final int flags) {
 		assert flags == 0 || mode == StringMode.MESSAGE;
 		if (o == null)
 			return "<none>";
@@ -540,13 +568,14 @@ public abstract class Classes {
 			}
 			return "[" + b.toString() + "]";
 		}
-		for (final ClassInfo<?> ci : classInfos) {
-			if (ci.getParser() != null && ci.getC().isInstance(o)) {
-				final String s = mode == StringMode.MESSAGE ? ((Parser<T>) ci.getParser()).toString(o, flags)
-						: mode == StringMode.DEBUG ? "[" + ci.getCodeName() + ":" + ((Parser<T>) ci.getParser()).toString(o, mode) + "]"
-								: ((Parser<T>) ci.getParser()).toString(o, mode);
-				if (s != null)
-					return s;
+		for (final ClassInfo<?> ci : getClassInfos()) {
+			final Parser<?> parser = ci.getParser();
+			if (parser != null && ci.getC().isInstance(o)) {
+				@SuppressWarnings("unchecked")
+				final String s = mode == StringMode.MESSAGE ? ((Parser<T>) parser).toString(o, flags)
+						: mode == StringMode.DEBUG ? "[" + ci.getCodeName() + ":" + ((Parser<T>) parser).toString(o, mode) + "]"
+								: ((Parser<T>) parser).toString(o, mode);
+				return s;
 			}
 		}
 		return mode == StringMode.VARIABLE_NAME ? "object:" + o : "" + o;
@@ -556,7 +585,7 @@ public abstract class Classes {
 		return toString(os, and, null, StringMode.MESSAGE, flags);
 	}
 	
-	public final static String toString(final Object[] os, final int flags, final ChatColor c) {
+	public final static String toString(final Object[] os, final int flags, final @Nullable ChatColor c) {
 		return toString(os, true, c, StringMode.MESSAGE, flags);
 	}
 	
@@ -568,7 +597,7 @@ public abstract class Classes {
 		return toString(os, and, null, mode, 0);
 	}
 	
-	private final static String toString(final Object[] os, final boolean and, final ChatColor c, final StringMode mode, final int flags) {
+	private final static String toString(final Object[] os, final boolean and, final @Nullable ChatColor c, final StringMode mode, final int flags) {
 		if (os.length == 0)
 			return toString(null);
 		if (os.length == 1)
@@ -585,16 +614,16 @@ public abstract class Classes {
 			}
 			b.append(toString(os[i], mode, flags));
 		}
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 	/**
-	 * consists of {@link YggdrasilConstants#I_YGGDRASIL} and {@link YggdrasilConstants#VERSION}
+	 * consists of {@link Yggdrasil#MAGIC_NUMBER} and {@link Variables#YGGDRASIL_VERSION}
 	 */
-	private final static byte[] YGGDRASIL_START = {(byte) 'Y', (byte) 'g', (byte) 'g', 0, (YggdrasilConstants.VERSION >>> 8) & 0xFF, YggdrasilConstants.VERSION & 0xFF};
+	private final static byte[] YGGDRASIL_START = {(byte) 'Y', (byte) 'g', (byte) 'g', 0, (Variables.YGGDRASIL_VERSION >>> 8) & 0xFF, Variables.YGGDRASIL_VERSION & 0xFF};
 	
 	private final static byte[] getYggdrasilStart(final ClassInfo<?> c) throws NotSerializableException {
-		assert Enum.class.isAssignableFrom(Kleenean.class) && Tag.getType(Kleenean.class) == Tag.T_ENUM : Tag.getType(Kleenean.class);
+		assert Enum.class.isAssignableFrom(Kleenean.class) && Tag.getType(Kleenean.class) == Tag.T_ENUM : Tag.getType(Kleenean.class); // TODO why is this check here?
 		final Tag t = Tag.getType(c.getC());
 		assert t.isWrapper() || t == Tag.T_STRING || t == Tag.T_OBJECT || t == Tag.T_ENUM;
 		final byte[] cn = t == Tag.T_OBJECT || t == Tag.T_ENUM ? Variables.yggdrasil.getID(c.getC()).getBytes(StandardCharsets.UTF_8) : null;
@@ -612,14 +641,18 @@ public abstract class Classes {
 		return r;
 	}
 	
-	public final static Pair<String, byte[]> serialize(Object o) {
+	@Nullable
+	public final static SerializedVariable.Value serialize(@Nullable Object o) {
 		if (o == null)
 			return null;
+		@SuppressWarnings("null")
 		ClassInfo<?> ci = getSuperClassInfo(o.getClass());
-		if (ci == null)
-			return null;
 		if (ci.getSerializeAs() != null) {
 			ci = getExactClassInfo(ci.getSerializeAs());
+			if (ci == null) {
+				assert false : o.getClass();
+				return null;
+			}
 			o = Converters.convert(o, ci.getC());
 			if (o == null) {
 				assert false : ci.getCodeName();
@@ -642,34 +675,37 @@ public abstract class Classes {
 			Object d;
 			assert equals(o, d = deserialize(ci, new ByteArrayInputStream(r2))) : o + " (" + o.getClass() + ") != " + d + " (" + (d == null ? null : d.getClass()) + "): " + Arrays.toString(r);
 			
-			return new Pair<String, byte[]>(ci.getCodeName(), r2);
+			return new SerializedVariable.Value(ci.getCodeName(), r2);
 		} catch (final IOException e) { // shouldn't happen
 			Skript.exception(e);
 			return null;
 		}
 	}
 	
-	private final static boolean equals(final Object o, final Object d) {
+	private final static boolean equals(final @Nullable Object o, final @Nullable Object d) {
 		if (o instanceof Chunk) { // CraftChunk does neither override equals nor is it a "coordinate-specific singleton" like Block
 			if (!(d instanceof Chunk))
 				return false;
 			final Chunk c1 = (Chunk) o, c2 = (Chunk) d;
 			return c1.getWorld().equals(c2.getWorld()) && c1.getX() == c2.getX() && c1.getZ() == c2.getZ();
 		}
-		return o.equals(d);
+		return o == null ? d == null : o.equals(d);
 	}
 	
+	@Nullable
 	public final static Object deserialize(final ClassInfo<?> type, final byte[] value) {
 		return deserialize(type, new ByteArrayInputStream(value));
 	}
 	
+	@Nullable
 	public final static Object deserialize(final String type, final byte[] value) {
-		final ClassInfo<?> ci = getClassInfo(type);
+		final ClassInfo<?> ci = getClassInfoNoError(type);
 		if (ci == null)
 			return null;
 		return deserialize(ci, new ByteArrayInputStream(value));
 	}
 	
+	@Nullable
 	public final static Object deserialize(final ClassInfo<?> type, InputStream value) {
 		assert Bukkit.isPrimaryThread();
 		YggdrasilInputStream in = null;
@@ -682,9 +718,12 @@ public abstract class Classes {
 				e.printStackTrace();
 			return null;
 		} finally {
-			try {
-				if (in != null)
+			if (in != null) {
+				try {
 					in.close();
+				} catch (final IOException e) {}
+			}
+			try {
 				value.close();
 			} catch (final IOException e) {}
 		}
@@ -700,12 +739,16 @@ public abstract class Classes {
 	 * @return Deserialised value or null if the input is invalid
 	 */
 	@Deprecated
+	@Nullable
 	public final static Object deserialize(final String type, final String value) {
 		assert Bukkit.isPrimaryThread();
-		final ClassInfo<?> ci = getClassInfo(type);
-		if (ci == null || ci.getSerializer() == null)
+		final ClassInfo<?> ci = getClassInfoNoError(type);
+		if (ci == null)
 			return null;
-		return ci.getSerializer().deserialize(value);
+		final Serializer<?> s = ci.getSerializer();
+		if (s == null)
+			return null;
+		return s.deserialize(value);
 	}
 	
 }

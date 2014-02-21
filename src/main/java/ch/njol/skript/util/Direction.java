@@ -21,7 +21,8 @@
 
 package ch.njol.skript.util;
 
-import java.io.Serializable;
+import java.io.StreamCorruptedException;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -33,6 +34,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.material.Directional;
 import org.bukkit.util.Vector;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.Literal;
@@ -43,13 +46,13 @@ import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.localization.Noun;
 import ch.njol.util.Kleenean;
-import ch.njol.yggdrasil.YggdrasilSerializable;
+import ch.njol.yggdrasil.Fields.FieldContext;
+import ch.njol.yggdrasil.YggdrasilSerializable.YggdrasilRobustSerializable;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public class Direction implements Serializable, YggdrasilSerializable {
+public class Direction implements YggdrasilRobustSerializable {
 	
 	/**
 	 * A direction that doesn't point anywhere, i.e. equal to 'at'.
@@ -62,31 +65,31 @@ public class Direction implements Serializable, YggdrasilSerializable {
 	
 	public final static BlockFace BF_X = findFace(1, 0, 0), BF_Y = findFace(0, 1, 0), BF_Z = findFace(0, 0, 1);
 	
+	@SuppressWarnings("null")
 	private final static BlockFace findFace(final int x, final int y, final int z) {
 		for (final BlockFace f : BlockFace.values()) {
 			if (f.getModX() == x && f.getModY() == y && f.getModZ() == z)
 				return f;
 		}
 		assert false;
-		return null;
+		return BlockFace.SELF;
 	}
 	
 	public final static Noun m_meter = new Noun("directions.meter");
 	
-	// These two would be in a union if this were written in C
-	// relative offset
-	private final double[] mod;
-	// relative rotation
-	private final double pitch, yaw, length;
+	// rotation or offset - These would be in a union if this were written in C
+	private final double pitchOrX, yawOrY, lengthOrZ;
+	
 	// whether this direction is rotational (i.e. depends on some object) or translational/directional (i.e. depends on the coordinate system but nothing else)
 	private final boolean relative;
 	
 	public Direction(final double[] mod) {
-		if (mod == null || mod.length != 3)
+		if (mod.length != 3)
 			throw new IllegalArgumentException();
-		this.mod = mod;
 		relative = false;
-		pitch = yaw = length = 0;
+		pitchOrX = mod[0];
+		yawOrY = mod[1];
+		lengthOrZ = mod[2];
 	}
 	
 	/**
@@ -99,41 +102,46 @@ public class Direction implements Serializable, YggdrasilSerializable {
 	}
 	
 	public Direction(final double pitch, final double yaw, final double length) {
-		this.pitch = pitch;
-		this.yaw = yaw;
-		this.length = length;
 		relative = true;
-		mod = null;
+		pitchOrX = pitch;
+		yawOrY = yaw;
+		lengthOrZ = length;
 	}
 	
+	@SuppressWarnings("null")
 	public Direction(final BlockFace f, final double length) {
 		this(new Vector(f.getModX(), f.getModY(), f.getModZ()).normalize().multiply(length));
 	}
 	
 	public Direction(final Vector v) {
-		mod = new double[] {v.getX(), v.getY(), v.getZ()};
 		relative = false;
-		pitch = yaw = length = 0;
+		pitchOrX = v.getX();
+		yawOrY = v.getY();
+		lengthOrZ = v.getZ();
 	}
 	
+	@SuppressWarnings("null")
 	public Location getRelative(final Location l) {
 		return l.clone().add(getDirection(l));
 	}
 	
+	@SuppressWarnings("null")
 	public Location getRelative(final Entity e) {
 		return e.getLocation().add(getDirection(e.getLocation()));
 	}
 	
+	@SuppressWarnings("null")
 	public Location getRelative(final Block b) {
 		return b.getLocation().add(getDirection(b));
 	}
 	
 	public Vector getDirection(final Location l) {
 		if (!relative)
-			return new Vector(mod[0], mod[1], mod[2]);
-		return getDirection(pitch == IGNORE_PITCH ? 0 : pitchToRadians(l.getPitch()), yawToRadians(l.getYaw()));
+			return new Vector(pitchOrX, yawOrY, lengthOrZ);
+		return getDirection(pitchOrX == IGNORE_PITCH ? 0 : pitchToRadians(l.getPitch()), yawToRadians(l.getYaw()));
 	}
 	
+	@SuppressWarnings("null")
 	public Vector getDirection(final Entity e) {
 		return getDirection(e.getLocation());
 	}
@@ -141,28 +149,28 @@ public class Direction implements Serializable, YggdrasilSerializable {
 	@SuppressWarnings("deprecation")
 	public Vector getDirection(final Block b) {
 		if (!relative)
-			return new Vector(mod[0], mod[1], mod[2]);
+			return new Vector(pitchOrX, yawOrY, lengthOrZ);
 		final Material m = b.getType();
 		if (!Directional.class.isAssignableFrom(m.getData()))
 			return new Vector();
 		final BlockFace f = ((Directional) m.getNewData(b.getData())).getFacing();
-		return getDirection(pitch == IGNORE_PITCH ? 0 : f.getModZ() * Math.PI / 2 /* only up and down have a z mod */, Math.atan2(f.getModZ(), f.getModX()));
+		return getDirection(pitchOrX == IGNORE_PITCH ? 0 : f.getModZ() * Math.PI / 2 /* only up and down have a z mod */, Math.atan2(f.getModZ(), f.getModX()));
 	}
 	
 	private Vector getDirection(final double p, final double y) {
-		if (pitch == IGNORE_PITCH)
-			return new Vector(Math.cos(y + yaw) * length, 0, Math.sin(y + yaw) * length);
-		final double lxz = Math.cos(p + pitch) * length;
-		return new Vector(Math.cos(y + yaw) * lxz, Math.sin(p + pitch) * Math.cos(yaw) * length, Math.sin(y + yaw) * lxz);
+		if (pitchOrX == IGNORE_PITCH)
+			return new Vector(Math.cos(y + yawOrY) * lengthOrZ, 0, Math.sin(y + yawOrY) * lengthOrZ);
+		final double lxz = Math.cos(p + pitchOrX) * lengthOrZ;
+		return new Vector(Math.cos(y + yawOrY) * lxz, Math.sin(p + pitchOrX) * Math.cos(yawOrY) * lengthOrZ, Math.sin(y + yawOrY) * lxz);
 	}
 	
 	@Override
 	public int hashCode() {
-		return relative ? Arrays.hashCode(new double[] {pitch, yaw, length}) : ~Arrays.hashCode(mod);
+		return (relative ? 1 : -1) * Arrays.hashCode(new double[] {pitchOrX, yawOrY, lengthOrZ});
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -170,7 +178,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 		if (!(obj instanceof Direction))
 			return false;
 		final Direction other = (Direction) obj;
-		return relative == other.relative && (relative ? pitch == other.pitch && yaw == other.yaw && other.length == length : Arrays.equals(mod, other.mod));
+		return relative == other.relative && pitchOrX == other.pitchOrX && yawOrY == other.yawOrY && other.lengthOrZ == lengthOrZ;
 	}
 	
 	/**
@@ -216,7 +224,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 	 * @param b
 	 * @return The facing of the block or {@link BlockFace#SELF} if the block doesn't have a facing.
 	 */
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({"deprecation", "null"})
 	public final static BlockFace getFacing(final Block b) {
 		final Material m = b.getType();
 		if (!Directional.class.isAssignableFrom(m.getData()))
@@ -224,6 +232,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 		return ((Directional) m.getNewData(b.getData())).getFacing();
 	}
 	
+	@SuppressWarnings("null")
 	public final static BlockFace getFacing(final double yaw, final double pitch) {
 		if (-Math.PI / 4 < pitch && pitch < Math.PI / 4) {
 			if (yaw < Math.PI / 4 || yaw >= Math.PI * 7 / 4)
@@ -252,6 +261,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 		return getFacing(yaw, pitch);
 	}
 	
+	@SuppressWarnings("null")
 	public final static Location[] getRelatives(final Block[] blocks, final Direction[] directions) {
 		final Location[] r = new Location[blocks.length * directions.length];
 		if (r.length == 0)
@@ -265,6 +275,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 		return r;
 	}
 	
+	@SuppressWarnings("null")
 	public final static Location[] getRelatives(final Location[] locations, final Direction[] directions) {
 		final Location[] r = new Location[locations.length * directions.length];
 		if (r.length == 0)
@@ -280,7 +291,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 	
 	@Override
 	public String toString() {
-		return relative ? toString(pitch == IGNORE_PITCH ? 0 : pitch, yaw, length) : toString(mod);
+		return relative ? toString(pitchOrX == IGNORE_PITCH ? 0 : pitchOrX, yawOrY, lengthOrZ) : toString(new double[] {pitchOrX, yawOrY, lengthOrZ});
 	}
 	
 	public final static String toString(final double pitch, final double yaw, final double length) {
@@ -319,6 +330,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 		return toString(new double[] {dir.getX(), dir.getY(), dir.getZ()}, absoluteDirections);
 	}
 	
+	@SuppressWarnings("null")
 	private final static String toString(final double[] mod, final Message[] names) {
 		assert mod.length == 3 && names.length == 6;
 		final StringBuilder b = new StringBuilder();
@@ -342,6 +354,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 	
 //		return "" + relative + ":" + (relative ? pitch + "," + yaw + "," + length : mod[0] + "," + mod[1] + "," + mod[2]);
 	@Deprecated
+	@Nullable
 	public static Direction deserialize(final String s) {
 		final String[] split = s.split(":");
 		if (split.length != 2)
@@ -370,8 +383,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 	
 	public final static Expression<Location> combine(final Expression<? extends Direction> dirs, final Expression<? extends Location> locs) {
 		return new SimpleExpression<Location>() {
-			private final static long serialVersionUID = 1316369726663020906L;
-			
+			@SuppressWarnings("null")
 			@Override
 			protected Location[] get(final Event e) {
 				final Direction[] ds = dirs.getArray(e);
@@ -385,6 +397,7 @@ public class Direction implements Serializable, YggdrasilSerializable {
 				return r;
 			}
 			
+			@SuppressWarnings("null")
 			@Override
 			public Location[] getAll(final Event e) {
 				final Direction[] ds = dirs.getAll(e);
@@ -419,18 +432,72 @@ public class Direction implements Serializable, YggdrasilSerializable {
 			}
 			
 			@Override
-			public String toString(final Event e, final boolean debug) {
+			public String toString(final @Nullable Event e, final boolean debug) {
 				return dirs.toString(e, debug) + " " + locs.toString(e, debug);
 			}
 			
 			@Override
 			public Expression<? extends Location> simplify() {
-				if (dirs instanceof Literal && dirs.isSingle() && dirs.getSingle(null).equals(Direction.ZERO)) {
+				if (dirs instanceof Literal && dirs.isSingle() && Direction.ZERO.equals(((Literal<?>) dirs).getSingle())) {
 					return locs;
 				}
 				return this;
 			}
 		};
+	}
+	
+	@Override
+	public boolean incompatibleField(@NonNull final Field f, @NonNull final FieldContext value) throws StreamCorruptedException {
+		return false;
+	}
+	
+	private void set(final String field, final @Nullable Double value) throws StreamCorruptedException {
+		if (value == null)
+			throw new StreamCorruptedException();
+		try {
+			final Field f = Direction.class.getDeclaredField(field);
+			f.setAccessible(true); // required for final fields
+			f.set(this, value);
+		} catch (final IllegalArgumentException e) {
+			assert false : e;
+		} catch (final IllegalAccessException e) {
+			assert false : e;
+		} catch (final NoSuchFieldException e) {
+			assert false : e;
+		}
+	}
+	
+	@Override
+	public boolean excessiveField(@NonNull final FieldContext field) throws StreamCorruptedException {
+		if (field.getID().equals("mod")) {
+			final double[] mod = field.getObject(double[].class);
+			if (mod == null)
+				return true;
+			if (mod.length != 3)
+				throw new StreamCorruptedException();
+			set("pitchOrX", mod[0]);
+			set("yawOrY", mod[1]);
+			set("lengthOrZ", mod[1]);
+			return true;
+		} else if (field.getID().equals("pitch")) {
+			set("pitchOrX", field.getPrimitive(double.class));
+			return true;
+		} else if (field.getID().equals("yaw")) {
+			set("yawOrY", field.getPrimitive(double.class));
+			return true;
+		} else if (field.getID().equals("length")) {
+			set("lengthOrZ", field.getPrimitive(double.class));
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	@Override
+	public boolean missingField(@NonNull final Field field) throws StreamCorruptedException {
+		if (!field.getName().equals("relative"))
+			return true;
+		return false;
 	}
 	
 }

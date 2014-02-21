@@ -33,6 +33,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.ExpBottleEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.plugin.EventExecutor;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
@@ -46,7 +47,6 @@ import ch.njol.skript.lang.Trigger;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 	static {
 		Skript.registerEvent("Experience Spawn", EvtExperienceSpawn.class, ExperienceSpawnEvent.class, "[e]xp[erience] [orb] spawn", "spawn of [a[n]] [e]xp[erience] [orb]")
@@ -66,11 +66,6 @@ public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 			return false;
 		}
 		return true;
-	}
-	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "experience spawn";
 	}
 	
 	static Collection<Trigger> triggers = new ArrayList<Trigger>();
@@ -102,8 +97,12 @@ public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 	}
 	
 	private final static EventExecutor executor = new EventExecutor() {
+		@SuppressWarnings("null")
 		@Override
-		public void execute(final Listener listener, final Event e) throws EventException {
+		public void execute(final @Nullable Listener listener, final @Nullable Event e) throws EventException {
+			if (e == null)
+				return;
+			
 			final ExperienceSpawnEvent es;
 			if (e instanceof BlockExpEvent) {
 				es = new ExperienceSpawnEvent(((BlockExpEvent) e).getExpToDrop(), ((BlockExpEvent) e).getBlock().getLocation().add(0.5, 0.5, 0.5));
@@ -139,5 +138,10 @@ public class EvtExperienceSpawn extends SelfRegisteringSkriptEvent {
 			}
 		}
 	};
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "experience spawn";
+	}
 	
 }

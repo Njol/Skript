@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions.base;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.Expression;
@@ -35,10 +36,9 @@ import ch.njol.util.Kleenean;
  * @see PropertyExpression
  * @see PropertyExpression#register(Class, Class, String, String)
  */
-@SuppressWarnings("serial")
 public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<F, T> implements Converter<F, T> {
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends F>) exprs[0]);
@@ -48,6 +48,7 @@ public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<
 	protected abstract String getPropertyName();
 	
 	@Override
+	@Nullable
 	public abstract T convert(F f);
 	
 	@Override
@@ -56,7 +57,7 @@ public abstract class SimplePropertyExpression<F, T> extends PropertyExpression<
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the " + getPropertyName() + " of " + getExpr().toString(e, debug);
 	}
 }

@@ -21,6 +21,8 @@
 
 package ch.njol.skript.config.validate;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.EntryNode;
 import ch.njol.skript.config.Node;
@@ -32,9 +34,12 @@ import ch.njol.util.Setter;
  */
 public class EntryValidator implements NodeValidator {
 	
-	private Setter<String> setter;
+	@Nullable
+	private final Setter<String> setter;
 	
-	public EntryValidator() {}
+	public EntryValidator() {
+		setter = null;
+	}
 	
 	public EntryValidator(final Setter<String> setter) {
 		this.setter = setter;

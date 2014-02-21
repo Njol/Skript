@@ -21,6 +21,8 @@
 
 package ch.njol.skript.classes;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.registrations.Converters;
 
 /**
@@ -30,16 +32,15 @@ import ch.njol.skript.registrations.Converters;
  * @param <F> same as Converter's <F> (from)
  * @param <M> the middle type, i.e. the type the first converter converts to and the second converter comverts from.
  * @param <T> same as Converter's <T> (to)
- * @see Converters#registerConverter(Class, Class, SerializableConverter)
+ * @see Converters#registerConverter(Class, Class, Converter)
  * @see Converter
  */
-@SuppressWarnings("serial")
-public final class ChainedConverter<F, M, T> implements SerializableConverter<F, T> {
+public final class ChainedConverter<F, M, T> implements Converter<F, T> {
 	
 	private final Converter<? super F, ? extends M> first;
 	private final Converter<? super M, ? extends T> second;
 	
-	public ChainedConverter(final SerializableConverter<? super F, ? extends M> first, final SerializableConverter<? super M, ? extends T> second) {
+	public ChainedConverter(final Converter<? super F, ? extends M> first, final Converter<? super M, ? extends T> second) {
 		assert first != null;
 		assert second != null;
 		this.first = first;
@@ -47,11 +48,12 @@ public final class ChainedConverter<F, M, T> implements SerializableConverter<F,
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final static <F, M, T> ChainedConverter<F, M, T> newInstance(final SerializableConverter<? super F, ?> first, final SerializableConverter<?, ? extends T> second) {
-		return new ChainedConverter<F, M, T>((SerializableConverter<? super F, ? extends M>) first, (SerializableConverter<? super M, ? extends T>) second);
+	public final static <F, M, T> ChainedConverter<F, M, T> newInstance(final Converter<? super F, ?> first, final Converter<?, ? extends T> second) {
+		return new ChainedConverter<F, M, T>((Converter<? super F, ? extends M>) first, (Converter<? super M, ? extends T>) second);
 	}
 	
 	@Override
+	@Nullable
 	public T convert(final F f) {
 		final M m = first.convert(f);
 		if (m == null)

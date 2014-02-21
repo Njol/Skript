@@ -30,6 +30,7 @@ import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.inventory.FurnaceInventory;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -49,7 +50,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Furnace Slot")
 @Description({"A slot of a furnace, i.e. either the ore, fuel or result slot.",
 		"Remember to use '<a href='#ExprBlock'>block</a>' and not 'furnace', as 'furnace' is not an existing expression."})
@@ -68,7 +68,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	
 	int slot;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		setExpr((Expression<Block>) exprs[0]);
@@ -86,6 +86,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 		}
 		
 		@Override
+		@Nullable
 		public ItemStack getItem() {
 			if (e instanceof FurnaceSmeltEvent) {
 				if (slot == RESULT) {
@@ -98,6 +99,8 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 						return super.getItem();
 					} else {
 						final ItemStack i = super.getItem();
+						if (i == null)
+							return null;
 						i.setAmount(i.getAmount() - 1);
 						return i.getAmount() == 0 ? new ItemStack(Material.AIR, 1) : i;
 					}
@@ -110,6 +113,8 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 						return super.getItem();
 					} else {
 						final ItemStack i = super.getItem();
+						if (i == null)
+							return null;
 						i.setAmount(i.getAmount() - 1);
 						return i.getAmount() == 0 ? new ItemStack(Material.AIR, 1) : i;
 					}
@@ -121,7 +126,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 		
 		@SuppressWarnings("synthetic-access")
 		@Override
-		public void setItem(final ItemStack item) {
+		public void setItem(final @Nullable ItemStack item) {
 			if (e instanceof FurnaceSmeltEvent) {
 				if (slot == RESULT && getTime() >= 0) {
 					if (item == null || item.getType() == Material.AIR) { // null/air crashes the server on account of a NPE if using event.setResult(...)
@@ -161,9 +166,12 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	}
 	
 	@Override
+	@Nullable
 	protected Slot[] get(final Event e, final Block[] source) {
 		return get(source, new Getter<Slot, Block>() {
+			@SuppressWarnings("null")
 			@Override
+			@Nullable
 			public Slot get(final Block b) {
 				if (b.getType() != Material.FURNACE && b.getType() != Material.BURNING_FURNACE)
 					return null;
@@ -182,7 +190,7 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (e == null)
 			return "the " + (getTime() == -1 ? "past " : getTime() == 1 ? "future " : "") + slotNames[slot] + " slot of " + getExpr().toString(e, debug);
 		return Classes.getDebugMessage(getSingle(e));

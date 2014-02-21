@@ -21,9 +21,8 @@
 
 package ch.njol.skript.entity;
 
-import java.io.Serializable;
-
 import org.bukkit.entity.Entity;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
@@ -38,8 +37,7 @@ import ch.njol.yggdrasil.YggdrasilSerializable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public class EntityType implements Serializable, Cloneable, YggdrasilSerializable {
+public class EntityType implements Cloneable, YggdrasilSerializable {
 	
 	static {
 		Classes.registerClass(new ClassInfo<EntityType>(EntityType.class, "entitytype")
@@ -51,6 +49,7 @@ public class EntityType implements Serializable, Cloneable, YggdrasilSerializabl
 				.defaultExpression(new SimpleLiteral<EntityType>(new EntityType(Entity.class, 1), true))
 				.parser(new Parser<EntityType>() {
 					@Override
+					@Nullable
 					public EntityType parse(final String s, final ParseContext context) {
 						return EntityType.parse(s);
 					}
@@ -74,10 +73,12 @@ public class EntityType implements Serializable, Cloneable, YggdrasilSerializabl
 //						return t.amount + "*" + EntityData.serializer.serialize(t.data);
 					@Override
 					@Deprecated
+					@Nullable
 					public EntityType deserialize(final String s) {
 						final String[] split = s.split("\\*", 2);
 						if (split.length != 2)
 							return null;
+						@SuppressWarnings("null")
 						final EntityData<?> d = EntityData.serializer.deserialize(split[1]);
 						if (d == null)
 							return null;
@@ -102,7 +103,8 @@ public class EntityType implements Serializable, Cloneable, YggdrasilSerializabl
 	/**
 	 * Only used for deserialisation
 	 */
-	public EntityType() {
+	@SuppressWarnings({"unused", "null"})
+	private EntityType() {
 		data = null;
 	}
 	
@@ -120,6 +122,11 @@ public class EntityType implements Serializable, Cloneable, YggdrasilSerializabl
 	
 	public EntityType(final Entity e) {
 		data = EntityData.fromEntity(e);
+	}
+	
+	public EntityType(final EntityType other) {
+		amount = other.amount;
+		data = other.data;
 	}
 	
 	public boolean isInstance(final Entity entity) {
@@ -140,11 +147,11 @@ public class EntityType implements Serializable, Cloneable, YggdrasilSerializabl
 	}
 	
 	public boolean sameType(final EntityType other) {
-		if (other == null)
-			return false;
 		return data.equals(other.data);
 	}
 	
+	@SuppressWarnings("null")
+	@Nullable
 	public static EntityType parse(String s) {
 		assert s != null && s.length() != 0;
 		int amount = -1;
@@ -164,13 +171,7 @@ public class EntityType implements Serializable, Cloneable, YggdrasilSerializabl
 	
 	@Override
 	public EntityType clone() {
-		try {
-			final EntityType t = (EntityType) super.clone();
-			return t;
-		} catch (final CloneNotSupportedException e) {
-			assert false : e;
-			return null;
-		}
+		return new EntityType(this);
 	}
 	
 	@Override
@@ -183,7 +184,7 @@ public class EntityType implements Serializable, Cloneable, YggdrasilSerializabl
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

@@ -25,6 +25,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,7 +40,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Broadcast")
 @Description("Broadcasts a message to the server.")
 @Examples({"broadcast \"Welcome %player% to the server!\"",
@@ -50,10 +50,12 @@ public class EffBroadcast extends Effect {
 		Skript.registerEffect(EffBroadcast.class, "broadcast %strings% [(to|in) %-worlds%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<String> messages;
+	@Nullable
 	private Expression<World> worlds;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		messages = (Expression<String>) vars[0];
@@ -64,6 +66,7 @@ public class EffBroadcast extends Effect {
 	@Override
 	public void execute(final Event e) {
 		for (final String m : messages.getArray(e)) {
+			final Expression<World> worlds = this.worlds;
 			if (worlds == null) {
 				// not Bukkit.broadcastMessage to ignore permissions
 				for (final Player p : Bukkit.getOnlinePlayers()) {
@@ -81,7 +84,8 @@ public class EffBroadcast extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
+		final Expression<World> worlds = this.worlds;
 		return "broadcast " + messages.toString(e, debug) + (worlds == null ? "" : " to " + worlds.toString(e, debug));
 	}
 	

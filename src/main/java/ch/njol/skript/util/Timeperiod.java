@@ -21,15 +21,14 @@
 
 package ch.njol.skript.util;
 
-import java.io.Serializable;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.yggdrasil.YggdrasilSerializable;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public class Timeperiod implements Serializable, YggdrasilSerializable {
+public class Timeperiod implements YggdrasilSerializable {
 	
 	public final int start, end;
 	
@@ -68,7 +67,7 @@ public class Timeperiod implements Serializable, YggdrasilSerializable {
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (obj == this)
 			return true;
 		if (!(obj instanceof Timeperiod))

@@ -27,6 +27,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -46,7 +47,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Name / Display Name")
 @Description({"Represents a player's minecraft account name, chat display name, or playerlist name, or the custom name of an item or <a href='../classes/#livingentity'>a living entity</a>.",
 		"The differences between the different names are:",
@@ -69,7 +69,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	private static enum NameType {
 		NAME("name", "name[s]", PLAYER | ITEMSTACK | ENTITY, ITEMSTACK | ENTITY) {
 			@Override
-			void set(final Object o, final String s) {
+			void set(final @Nullable Object o, final @Nullable String s) {
 				if (o == null)
 					return;
 				if (o instanceof LivingEntity) {
@@ -87,7 +87,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			}
 			
 			@Override
-			String get(final Object o) {
+			@Nullable
+			String get(final @Nullable Object o) {
 				if (o == null)
 					return null;
 				if (o instanceof Player) {
@@ -107,7 +108,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 		},
 		DISPLAY_NAME("display name", "(display|nick|chat)[ ]name[s]", PLAYER | ITEMSTACK | ENTITY, PLAYER | ITEMSTACK | ENTITY) {
 			@Override
-			void set(final Object o, final String s) {
+			void set(final @Nullable Object o, final @Nullable String s) {
 				if (o == null)
 					return;
 				if (o instanceof Player) {
@@ -128,7 +129,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			}
 			
 			@Override
-			String get(final Object o) {
+			@Nullable
+			String get(final @Nullable Object o) {
 				if (o == null)
 					return null;
 				if (o instanceof Player) {
@@ -148,12 +150,12 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 		},
 		TABLIST_NAME("player list name", "(player|tab)[ ]list name[s]", PLAYER, PLAYER) {
 			@Override
-			void set(final Object o, final String s) {
+			void set(final @Nullable Object o, final @Nullable String s) {
 				if (o == null)
 					return;
 				if (o instanceof Player) {
 					try {
-						((Player) o).setPlayerListName(s.length() > 16 ? s.substring(0, 16) : s);
+						((Player) o).setPlayerListName(s == null ? "" : s.length() > 16 ? s.substring(0, 16) : s);
 					} catch (final IllegalArgumentException e) {}
 				} else {
 					assert false;
@@ -161,7 +163,8 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			}
 			
 			@Override
-			String get(final Object o) {
+			@Nullable
+			String get(final @Nullable Object o) {
 				if (o == null)
 					return null;
 				if (o instanceof Player) {
@@ -185,12 +188,13 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			acceptChange = change;
 		}
 		
-		abstract void set(Object o, String s);
+		abstract void set(@Nullable Object o, @Nullable String s);
 		
-		abstract String get(Object o);
+		@Nullable
+		abstract String get(@Nullable Object o);
 		
 		String getFrom() {
-			String r = "";
+			final StringBuilder b = new StringBuilder();
 			for (int i = 0; i < types.length; i++) {
 				if ((from & (1 << i)) == 0)
 					continue;
@@ -198,11 +202,11 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 					continue;
 				if ((1 << i) == ENTITY && !Skript.isRunningMinecraft(1, 5))
 					continue;
-				if (!r.isEmpty())
-					r += "/";
-				r += types[i];
+				if (b.length() != 0)
+					b.append("/");
+				b.append(types[i]);
 			}
-			return r;
+			return "" + b;
 		}
 	}
 	
@@ -211,8 +215,10 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 			register(ExprName.class, String.class, n.pattern, n.getFrom());
 	}
 	
+	@SuppressWarnings("null")
 	private NameType type;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		type = NameType.values()[parseResult.mark];
@@ -230,6 +236,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	}
 	
 	@Override
+	@Nullable
 	public String convert(final Object o) {
 		return type.get(o instanceof Slot ? ((Slot) o).getItem() : o);
 	}
@@ -240,6 +247,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	// e.g. a Changer that takes an object and returns another which should then be saved if applicable (the Changer includes the ChangeMode)
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.DELETE && (type.acceptChange & ~PLAYER) != 0 || mode == ChangeMode.RESET)
 			return new Class[0];
@@ -260,7 +268,7 @@ public class ExprName extends SimplePropertyExpression<Object, String> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		final String name = delta == null ? null : (String) delta[0];
 		if (changeType == ITEMSTACK) {
 			if (Slot.class.isAssignableFrom(getExpr().getReturnType())) {

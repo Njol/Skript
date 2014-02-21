@@ -25,6 +25,7 @@ import java.util.ArrayList;
 
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -43,7 +44,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Regions At")
 @Description({"All <a href='../classes/#region'>regions</a> at a particular <a href='../classes/#location'>location</a>.",
 		"This expression requires a supported regions plugin to be installed."})
@@ -58,19 +58,24 @@ import ch.njol.util.Kleenean;
 public class ExprRegionsAt extends SimpleExpression<Region> {
 	static {
 		Skript.registerExpression(ExprRegionsAt.class, Region.class, ExpressionType.PROPERTY,
-				"[the] region[s] %direction% %locations%");
+				"[the] region(1¦s|) %direction% %locations%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Location> locs;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		if (matchedPattern == 1)
+			Skript.warning("Most regions plugins can have multiple intersecting regions at a the same location, thus it is recommended to use \"regions at ...\" instead of \"region at...\" for clarity.");
 		locs = Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]);
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
+	@Nullable
 	protected Region[] get(final Event e) {
 		final Location[] ls = locs.getArray(e);
 		if (ls.length == 0)
@@ -92,7 +97,7 @@ public class ExprRegionsAt extends SimpleExpression<Region> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the regions at " + locs.toString(e, debug);
 	}
 	

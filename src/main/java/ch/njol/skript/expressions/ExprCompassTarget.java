@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
@@ -35,7 +36,6 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Compass Target")
 @Description("The location a player's compass is pointing at.")
 @Examples({"# make all player's compasses target a player stored in {compass target.%player%}",
@@ -50,6 +50,7 @@ public class ExprCompassTarget extends SimplePropertyExpression<Player, Location
 	}
 	
 	@Override
+	@Nullable
 	public Location convert(final Player p) {
 		return p.getCompassTarget();
 	}
@@ -65,6 +66,7 @@ public class ExprCompassTarget extends SimplePropertyExpression<Player, Location
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET || mode == ChangeMode.RESET)
 			return new Class[] {Location.class};
@@ -72,7 +74,7 @@ public class ExprCompassTarget extends SimplePropertyExpression<Player, Location
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		for (final Player p : getExpr().getArray(e))
 			p.setCompassTarget(delta == null ? p.getWorld().getSpawnLocation() : (Location) delta[0]);
 	}

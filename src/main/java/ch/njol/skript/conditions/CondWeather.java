@@ -24,6 +24,7 @@ package ch.njol.skript.conditions;
 import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.bukkit.event.weather.WeatherEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Weather")
 @Description({"Checks whether the weather in a world is of a specific type.",
 		"<i>I welcome any ideas how to write this condition differently.</i>"})
@@ -53,10 +53,12 @@ public class CondWeather extends Condition {
 		Skript.registerCondition(CondWeather.class, "is %weathertypes% [in %worlds%]");
 	}
 	
+	@SuppressWarnings("null")
 	Expression<WeatherType> weathers;
+	@SuppressWarnings("null")
 	private Expression<World> worlds;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		weathers = (Expression<WeatherType>) vars[0];
@@ -86,7 +88,7 @@ public class CondWeather extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "is " + weathers.toString(e, debug) + " in " + worlds.toString(e, debug);
 	}
 	

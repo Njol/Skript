@@ -25,6 +25,7 @@ import java.lang.reflect.Array;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -36,6 +37,7 @@ import ch.njol.skript.effects.EffSpawn;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
@@ -43,7 +45,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Last Spawned Entity")
 @Description("Holds the entity that was spawned most recently with the <a href='../effects/#EffSpawn'>spawn effect</a>, or shot with the <a href='../effects/#EffShoot'>shoot effect</a>. " +
 		"Please note that even though you can spawn multiple mobs simultaneously (e.g. with 'spawn 5 creepers'), only the last spawned mob is saved and can be used. " +
@@ -59,16 +60,19 @@ public class ExprLastSpawnedEntity extends SimpleExpression<Entity> {
 	}
 	
 	boolean spawned;
+	@SuppressWarnings("null")
 	private EntityData<?> type;
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		type = (EntityData<?>) exprs[0].getSingle(null);
+		type = ((Literal<EntityData<?>>) exprs[0]).getSingle();
 		spawned = parseResult.mark == 0;
 		return true;
 	}
 	
 	@Override
+	@Nullable
 	protected Entity[] get(final Event e) {
 		final Entity en = spawned ? EffSpawn.lastSpawned : EffShoot.lastSpawned;
 		if (en == null)
@@ -91,7 +95,7 @@ public class ExprLastSpawnedEntity extends SimpleExpression<Entity> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the last " + (spawned ? "spawned" : "shot") + " " + type;
 	}
 	

@@ -21,7 +21,6 @@
 
 package ch.njol.skript;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -56,6 +55,7 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Metrics.Graph;
 import ch.njol.skript.Metrics.Plotter;
@@ -63,8 +63,7 @@ import ch.njol.skript.Updater.UpdateState;
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
-import ch.njol.skript.classes.SerializableConverter;
-import ch.njol.skript.classes.SerializableGetter;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.data.BukkitClasses;
 import ch.njol.skript.classes.data.BukkitEventValues;
 import ch.njol.skript.classes.data.DefaultComparators;
@@ -103,12 +102,14 @@ import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.FileUtils;
+import ch.njol.skript.util.Getter;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
 import ch.njol.skript.variables.Variables;
-import ch.njol.util.Checker;
+import ch.njol.util.Closeable;
 import ch.njol.util.Kleenean;
+import ch.njol.util.NullableChecker;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.CheckedIterator;
@@ -134,21 +135,25 @@ import ch.njol.util.coll.iterator.EnumerationIterable;
  * @see #registerEffect(Class, String...)
  * @see #registerExpression(Class, Class, ExpressionType, String...)
  * @see #registerEvent(String, Class, Class, String...)
- * @see EventValues#registerEventValue(Class, Class, SerializableGetter, int)
+ * @see EventValues#registerEventValue(Class, Class, Getter, int)
  * @see Classes#registerClass(ClassInfo)
  * @see Comparators#registerComparator(Class, Class, Comparator)
- * @see Converters#registerConverter(Class, Class, SerializableConverter)
+ * @see Converters#registerConverter(Class, Class, Converter)
  */
 public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ PLUGIN ================
 	
+	@Nullable
 	private static Skript instance = null;
 	
 	private static boolean disabled = false;
 	
 	public static Skript getInstance() {
-		return instance;
+		final Skript i = instance;
+		if (i == null)
+			throw new IllegalStateException();
+		return i;
 	}
 	
 	public Skript() throws IllegalStateException {
@@ -157,15 +162,20 @@ public final class Skript extends JavaPlugin implements Listener {
 		instance = this;
 	}
 	
+	@Nullable
 	private static Version version = null;
 	
 	public static Version getVersion() {
-		return version;
+		final Version v = version;
+		if (v == null)
+			throw new IllegalStateException();
+		return v;
 	}
 	
 	public final static Message m_invalid_reload = new Message("skript.invalid reload"),
 			m_finished_loading = new Message("skript.finished loading");
 	
+	@SuppressWarnings("null")
 	@Override
 	public void onEnable() {
 		if (disabled) {
@@ -175,6 +185,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		}
 		
 		Language.loadDefault(getAddonInstance());
+		
+		Workarounds.init();
 		
 		version = new Version(getDescription().getVersion());
 		runningCraftBukkit = Bukkit.getServer().getClass().getName().equals("org.bukkit.craftbukkit.CraftServer");
@@ -274,8 +286,7 @@ public final class Skript extends JavaPlugin implements Listener {
 									final Class<?> hook = Class.forName(c, true, getClassLoader());
 									if (hook != null && Hook.class.isAssignableFrom(hook) && !hook.isInterface() && Hook.class != hook) {
 										hook.getDeclaredConstructor().setAccessible(true);
-										final Hook<?> h = (Hook<?>) hook.getDeclaredConstructor().newInstance();
-										h.load();
+										hook.getDeclaredConstructor().newInstance();
 									}
 								} catch (final ClassNotFoundException ex) {
 									Skript.exception(ex, "Cannot load class " + c);
@@ -283,10 +294,10 @@ public final class Skript extends JavaPlugin implements Listener {
 									Skript.exception(err.getCause(), "Class " + c + " generated an exception while loading");
 								}
 								continue;
-							} else if (Documentation.generate) {
-								try {
-									Class.forName(e.getName().replace('/', '.').substring(0, e.getName().length() - ".class".length()), true, getClassLoader());
-								} catch (final Exception ex) {}
+//							} else if (Documentation.generate) {
+//								try {
+//									Class.forName(e.getName().replace('/', '.').substring(0, e.getName().length() - ".class".length()), true, getClassLoader());
+//								} catch (final Exception ex) {}
 							}
 						}
 					} finally {
@@ -357,7 +368,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				
 				EvtSkript.onSkriptStart();
 				
-				metrics = new Metrics(Skript.this);
+				final Metrics metrics = new Metrics(Skript.this);
 				final Graph scriptData = metrics.createGraph("data");
 				scriptData.addPlotter(new Plotter("scripts") {
 					@Override
@@ -405,11 +416,14 @@ public final class Skript extends JavaPlugin implements Listener {
 					});
 				}
 				metrics.start();
+				Skript.metrics = metrics;
 				
 				// suppresses the "can't keep up" warning after loading all scripts
 				final Filter f = new Filter() {
 					@Override
-					public boolean isLoggable(final LogRecord record) {
+					public boolean isLoggable(final @Nullable LogRecord record) {
+						if (record == null)
+							return false;
 						if (record.getMessage() != null && record.getMessage().toLowerCase().startsWith("can't keep up!"))
 							return false;
 						return true;
@@ -476,8 +490,25 @@ public final class Skript extends JavaPlugin implements Listener {
 		return minecraftVersion.compareTo(v) >= 0;
 	}
 	
+	/**
+	 * Used to test whether certain Bukkit features are supported.
+	 * 
+	 * @param className
+	 * @return Whether the given class exists.
+	 */
+	public final static boolean supports(final String className) {
+		try {
+			Class.forName(className);
+			return true;
+		} catch (final ClassNotFoundException e) {
+			return false;
+		}
+	}
+	
+	@Nullable
 	static Metrics metrics;
 	
+	@Nullable
 	public static Metrics getMetrics() {
 		return metrics;
 	}
@@ -524,6 +555,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		Aliases.load();
 	}
 	
+	@SuppressWarnings("null")
 	private final static Collection<Closeable> closeOnDisable = Collections.synchronizedCollection(new ArrayList<Closeable>());
 	
 	/**
@@ -549,10 +581,10 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		Bukkit.getScheduler().cancelTasks(this);
 		
-		for (final AutoCloseable c : closeOnDisable) {
+		for (final Closeable c : closeOnDisable) {
 			try {
 				c.close();
-			} catch (final IOException e) {} catch (final Exception e) {
+			} catch (final Exception e) {
 				Skript.exception(e, "An error occurred while shutting down.", "This might or might not cause any issues.");
 			}
 		}
@@ -606,7 +638,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	public final static String SCRIPTSFOLDER = "scripts";
 	
 	public static void outdatedError() {
-		error("Skript v" + instance.getDescription().getVersion() + " is not fully compatible with Bukkit " + Bukkit.getVersion() + ". Some feature(s) will be broken until you update Skript.");
+		error("Skript v" + getInstance().getDescription().getVersion() + " is not fully compatible with Bukkit " + Bukkit.getVersion() + ". Some feature(s) will be broken until you update Skript.");
 	}
 	
 	public static void outdatedError(final Exception e) {
@@ -655,8 +687,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public final static UncaughtExceptionHandler UEH = new UncaughtExceptionHandler() {
 		@Override
-		public void uncaughtException(final Thread t, final Throwable e) {
-			Skript.exception(e, "Exception in thread " + t.getName());
+		public void uncaughtException(final @Nullable Thread t, final @Nullable Throwable e) {
+			Skript.exception(e, "Exception in thread " + (t == null ? null : t.getName()));
 		}
 	};
 	
@@ -708,30 +740,34 @@ public final class Skript extends JavaPlugin implements Listener {
 		return addon;
 	}
 	
+	@Nullable
 	public static SkriptAddon getAddon(final JavaPlugin p) {
 		return addons.get(p.getName());
 	}
 	
+	@Nullable
 	public static SkriptAddon getAddon(final String name) {
 		return addons.get(name);
 	}
 	
+	@SuppressWarnings("null")
 	public static Collection<SkriptAddon> getAddons() {
 		return Collections.unmodifiableCollection(addons.values());
 	}
 	
+	@Nullable
 	private static SkriptAddon addon;
 	
 	/**
 	 * @return A {@link SkriptAddon} representing Skript.
 	 */
 	public static SkriptAddon getAddonInstance() {
-		if (addon == null) {
-			final SkriptAddon a = new SkriptAddon(Skript.getInstance())
+		final SkriptAddon a = addon;
+		if (a == null)
+			return addon = new SkriptAddon(Skript.getInstance())
 					.setLanguageFileDirectory("lang");
-			addon = a; // Not set directly to make FindBugs shut up =P
-		}
-		return addon;
+		else
+			return a;
 	}
 	
 	// ================ CONDITIONS & EFFECTS ================
@@ -804,17 +840,19 @@ public final class Skript extends JavaPlugin implements Listener {
 		expressions.add(expressionTypesStartIndices[type.ordinal()], info);
 	}
 	
+	@SuppressWarnings("null")
 	public static Iterator<ExpressionInfo<?, ?>> getExpressions() {
 		return expressions.iterator();
 	}
 	
 	public static Iterator<ExpressionInfo<?, ?>> getExpressions(final Class<?>... returnTypes) {
-		return new CheckedIterator<ExpressionInfo<?, ?>>(expressions.iterator(), new Checker<ExpressionInfo<?, ?>>() {
+		return new CheckedIterator<ExpressionInfo<?, ?>>(getExpressions(), new NullableChecker<ExpressionInfo<?, ?>>() {
 			@Override
-			public boolean check(final ExpressionInfo<?, ?> i) {
-				if (i.returnType == Object.class)
+			public boolean check(final @Nullable ExpressionInfo<?, ?> i) {
+				if (i == null || i.returnType == Object.class)
 					return true;
 				for (final Class<?> returnType : returnTypes) {
+					assert returnType != null;
 					if (Converters.converterExists(i.returnType, returnType))
 						return true;
 				}
@@ -927,6 +965,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	/**
 	 * @see SkriptLogger#log(Level, String)
 	 */
+	@SuppressWarnings("null")
 	public static void info(final String info) {
 		SkriptLogger.log(Level.INFO, info);
 	}
@@ -934,6 +973,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	/**
 	 * @see SkriptLogger#log(Level, String)
 	 */
+	@SuppressWarnings("null")
 	public static void warning(final String warning) {
 		SkriptLogger.log(Level.WARNING, warning);
 	}
@@ -941,8 +981,10 @@ public final class Skript extends JavaPlugin implements Listener {
 	/**
 	 * @see SkriptLogger#log(Level, String)
 	 */
-	public static void error(final String error) {
-		SkriptLogger.log(Level.SEVERE, error);
+	@SuppressWarnings("null")
+	public static void error(final @Nullable String error) {
+		if (error != null)
+			SkriptLogger.log(Level.SEVERE, error);
 	}
 	
 	/**
@@ -953,7 +995,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param quality
 	 */
 	public static void error(final String error, final ErrorQuality quality) {
-		SkriptLogger.log(new LogEntry(Level.SEVERE, quality, error));
+		SkriptLogger.log(new LogEntry(SkriptLogger.SEVERE, quality, error));
 	}
 	
 	private final static String EXCEPTION_PREFIX = "#!#! ";
@@ -968,15 +1010,15 @@ public final class Skript extends JavaPlugin implements Listener {
 		return exception(null, info);
 	}
 	
-	public final static EmptyStackException exception(final Throwable cause, final String... info) {
+	public final static EmptyStackException exception(final @Nullable Throwable cause, final String... info) {
 		return exception(cause, null, null, info);
 	}
 	
-	public final static EmptyStackException exception(final Throwable cause, final Thread thread, final String... info) {
+	public final static EmptyStackException exception(final @Nullable Throwable cause, final @Nullable Thread thread, final String... info) {
 		return exception(cause, thread, null, info);
 	}
 	
-	public final static EmptyStackException exception(final Throwable cause, final TriggerItem item, final String... info) {
+	public final static EmptyStackException exception(final @Nullable Throwable cause, final @Nullable TriggerItem item, final String... info) {
 		return exception(cause, null, item, info);
 	}
 	
@@ -987,7 +1029,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * @param info Description of the error and additional information
 	 * @return an EmptyStackException to throw if code execution should terminate.
 	 */
-	public final static EmptyStackException exception(Throwable cause, final Thread thread, final TriggerItem item, final String... info) {
+	public final static EmptyStackException exception(@Nullable Throwable cause, final @Nullable Thread thread, final @Nullable TriggerItem item, final String... info) {
 		
 		logEx();
 		logEx("[Skript] Severe Error:");
@@ -1007,9 +1049,14 @@ public final class Skript extends JavaPlugin implements Listener {
 			logEx("  warning: no/empty exception given, dumping current stack trace instead");
 			cause = new Exception(cause);
 		}
-		logEx(cause.toString());
-		for (final StackTraceElement e : cause.getStackTrace())
-			logEx("    at " + e.toString());
+		boolean first = true;
+		while (cause != null) {
+			logEx((first ? "" : "Caused by: ") + cause.toString());
+			for (final StackTraceElement e : cause.getStackTrace())
+				logEx("    at " + e.toString());
+			cause = cause.getCause();
+			first = false;
+		}
 		
 		logEx();
 		logEx("Version Information:");

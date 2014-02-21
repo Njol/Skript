@@ -22,6 +22,7 @@
 package ch.njol.skript.conditions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -36,7 +37,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Chance")
 @Description({"A condition that randomly succeeds or fails.",
 		"Valid values are between 0% and 100%, or if the percent sign is omitted between 0 and 1."})
@@ -50,10 +50,11 @@ public class CondChance extends Condition {
 		Skript.registerCondition(CondChance.class, "chance of %number%(1¦\\%|)");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Double> chance;
 	boolean percent;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		chance = (Expression<Double>) exprs[0];
@@ -70,7 +71,7 @@ public class CondChance extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "chance of " + chance.toString(e, debug) + (percent ? "%" : "");
 	}
 	

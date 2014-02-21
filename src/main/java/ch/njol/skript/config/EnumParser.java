@@ -23,6 +23,8 @@ package ch.njol.skript.config;
 
 import java.util.Locale;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Converter;
 
@@ -32,6 +34,7 @@ import ch.njol.skript.classes.Converter;
 public class EnumParser<E extends Enum<E>> implements Converter<String, E> {
 	
 	private final Class<E> enumType;
+	@Nullable
 	private final String allowedValues;
 	private final String type;
 	
@@ -53,6 +56,7 @@ public class EnumParser<E extends Enum<E>> implements Converter<String, E> {
 	}
 	
 	@Override
+	@Nullable
 	public E convert(final String s) {
 		try {
 			return Enum.valueOf(enumType, s.toUpperCase(Locale.ENGLISH).replace(' ', '_'));

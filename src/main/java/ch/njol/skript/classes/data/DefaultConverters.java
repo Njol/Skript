@@ -35,10 +35,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.entity.EntityType;
 import ch.njol.skript.entity.XpOrbData;
@@ -51,7 +51,7 @@ import ch.njol.skript.util.Slot;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"rawtypes", "serial"})
+@SuppressWarnings("rawtypes")
 public class DefaultConverters {
 	
 	public DefaultConverters() {}
@@ -59,8 +59,9 @@ public class DefaultConverters {
 	static {
 		
 		// OfflinePlayer - PlayerInventory
-		Converters.registerConverter(OfflinePlayer.class, PlayerInventory.class, new SerializableConverter<OfflinePlayer, PlayerInventory>() {
+		Converters.registerConverter(OfflinePlayer.class, PlayerInventory.class, new Converter<OfflinePlayer, PlayerInventory>() {
 			@Override
+			@Nullable
 			public PlayerInventory convert(final OfflinePlayer p) {
 				if (!p.isOnline())
 					return null;
@@ -68,8 +69,9 @@ public class DefaultConverters {
 			}
 		}, Converter.NO_COMMAND_ARGUMENTS);
 		// OfflinePlayer - Player
-		Converters.registerConverter(OfflinePlayer.class, Player.class, new SerializableConverter<OfflinePlayer, Player>() {
+		Converters.registerConverter(OfflinePlayer.class, Player.class, new Converter<OfflinePlayer, Player>() {
 			@Override
+			@Nullable
 			public Player convert(final OfflinePlayer p) {
 				return p.getPlayer();
 			}
@@ -77,8 +79,9 @@ public class DefaultConverters {
 		
 		// TODO improve handling of interfaces
 		// CommandSender - Player
-		Converters.registerConverter(CommandSender.class, Player.class, new SerializableConverter<CommandSender, Player>() {
+		Converters.registerConverter(CommandSender.class, Player.class, new Converter<CommandSender, Player>() {
 			@Override
+			@Nullable
 			public Player convert(final CommandSender s) {
 				if (s instanceof Player)
 					return (Player) s;
@@ -86,8 +89,9 @@ public class DefaultConverters {
 			}
 		});
 		// Entity - Player
-		Converters.registerConverter(Entity.class, Player.class, new SerializableConverter<Entity, Player>() {
+		Converters.registerConverter(Entity.class, Player.class, new Converter<Entity, Player>() {
 			@Override
+			@Nullable
 			public Player convert(final Entity e) {
 				if (e instanceof Player)
 					return (Player) e;
@@ -95,8 +99,9 @@ public class DefaultConverters {
 			}
 		});
 		// Entity - LivingEntity // Entity->Player is used if this doesn't exist
-		Converters.registerConverter(Entity.class, LivingEntity.class, new SerializableConverter<Entity, LivingEntity>() {
+		Converters.registerConverter(Entity.class, LivingEntity.class, new Converter<Entity, LivingEntity>() {
 			@Override
+			@Nullable
 			public LivingEntity convert(final Entity e) {
 				if (e instanceof LivingEntity)
 					return (LivingEntity) e;
@@ -105,8 +110,9 @@ public class DefaultConverters {
 		});
 		
 		// Block - Inventory
-		Converters.registerConverter(Block.class, Inventory.class, new SerializableConverter<Block, Inventory>() {
+		Converters.registerConverter(Block.class, Inventory.class, new Converter<Block, Inventory>() {
 			@Override
+			@Nullable
 			public Inventory convert(final Block b) {
 				if (b.getState() instanceof InventoryHolder)
 					return ((InventoryHolder) b.getState()).getInventory();
@@ -115,8 +121,9 @@ public class DefaultConverters {
 		}, Converter.NO_COMMAND_ARGUMENTS);
 		
 		// Entity - Inventory
-		Converters.registerConverter(Entity.class, Inventory.class, new SerializableConverter<Entity, Inventory>() {
+		Converters.registerConverter(Entity.class, Inventory.class, new Converter<Entity, Inventory>() {
 			@Override
+			@Nullable
 			public Inventory convert(final Entity e) {
 				if (e instanceof InventoryHolder)
 					return ((InventoryHolder) e).getInventory();
@@ -125,7 +132,7 @@ public class DefaultConverters {
 		}, Converter.NO_COMMAND_ARGUMENTS);
 		
 		// Block - ItemStack
-		Converters.registerConverter(Block.class, ItemStack.class, new SerializableConverter<Block, ItemStack>() {
+		Converters.registerConverter(Block.class, ItemStack.class, new Converter<Block, ItemStack>() {
 			@SuppressWarnings("deprecation")
 			@Override
 			public ItemStack convert(final Block b) {
@@ -134,35 +141,37 @@ public class DefaultConverters {
 		}, Converter.NO_LEFT_CHAINING | Converter.NO_COMMAND_ARGUMENTS);
 		
 		// Location - Block
-//		Converters.registerConverter(Location.class, Block.class, new SerializableConverter<Location, Block>() {
+//		Converters.registerConverter(Location.class, Block.class, new Converter<Location, Block>() {
 //			@Override
 //			public Block convert(final Location l) {
 //				return l.getBlock();
 //			}
 //		});
-		Converters.registerConverter(Block.class, Location.class, new SerializableConverter<Block, Location>() {
+		Converters.registerConverter(Block.class, Location.class, new Converter<Block, Location>() {
 			@Override
+			@Nullable
 			public Location convert(final Block b) {
 				return BlockUtils.getLocation(b);
 			}
 		}, Converter.NO_COMMAND_ARGUMENTS);
 		
 		// Entity - Location
-		Converters.registerConverter(Entity.class, Location.class, new SerializableConverter<Entity, Location>() {
+		Converters.registerConverter(Entity.class, Location.class, new Converter<Entity, Location>() {
 			@Override
+			@Nullable
 			public Location convert(final Entity e) {
 				return e.getLocation();
 			}
 		}, Converter.NO_COMMAND_ARGUMENTS);
 		// Entity - EntityData
-		Converters.registerConverter(Entity.class, EntityData.class, new SerializableConverter<Entity, EntityData>() {
+		Converters.registerConverter(Entity.class, EntityData.class, new Converter<Entity, EntityData>() {
 			@Override
 			public EntityData convert(final Entity e) {
 				return EntityData.fromEntity(e);
 			}
 		}, Converter.NO_COMMAND_ARGUMENTS);
 		// EntityData - EntityType
-		Converters.registerConverter(EntityData.class, EntityType.class, new SerializableConverter<EntityData, EntityType>() {
+		Converters.registerConverter(EntityData.class, EntityType.class, new Converter<EntityData, EntityType>() {
 			@Override
 			public EntityType convert(final EntityData data) {
 				return new EntityType(data, -1);
@@ -170,7 +179,7 @@ public class DefaultConverters {
 		});
 		
 		// Location - World
-//		Skript.registerConverter(Location.class, World.class, new SerializableConverter<Location, World>() {
+//		Skript.registerConverter(Location.class, World.class, new Converter<Location, World>() {
 //			private final static long serialVersionUID = 3270661123492313649L;
 //			
 //			@Override
@@ -182,13 +191,14 @@ public class DefaultConverters {
 //		});
 		
 		// ItemType - ItemStack
-		Converters.registerConverter(ItemType.class, ItemStack.class, new SerializableConverter<ItemType, ItemStack>() {
+		Converters.registerConverter(ItemType.class, ItemStack.class, new Converter<ItemType, ItemStack>() {
 			@Override
+			@Nullable
 			public ItemStack convert(final ItemType i) {
 				return i.getRandom();
 			}
 		});
-		Converters.registerConverter(ItemStack.class, ItemType.class, new SerializableConverter<ItemStack, ItemType>() {
+		Converters.registerConverter(ItemStack.class, ItemType.class, new Converter<ItemStack, ItemType>() {
 			@Override
 			public ItemType convert(final ItemStack i) {
 				return new ItemType(i);
@@ -196,13 +206,13 @@ public class DefaultConverters {
 		});
 		
 		// Experience - XpOrbData
-		Converters.registerConverter(Experience.class, XpOrbData.class, new SerializableConverter<Experience, XpOrbData>() {
+		Converters.registerConverter(Experience.class, XpOrbData.class, new Converter<Experience, XpOrbData>() {
 			@Override
 			public XpOrbData convert(final Experience e) {
 				return new XpOrbData(e.getXP());
 			}
 		});
-		Converters.registerConverter(XpOrbData.class, Experience.class, new SerializableConverter<XpOrbData, Experience>() {
+		Converters.registerConverter(XpOrbData.class, Experience.class, new Converter<XpOrbData, Experience>() {
 			@Override
 			public Experience convert(final XpOrbData e) {
 				return new Experience(e.getExperience());
@@ -210,7 +220,7 @@ public class DefaultConverters {
 		});
 		
 //		// Item - ItemStack
-//		Converters.registerConverter(Item.class, ItemStack.class, new SerializableConverter<Item, ItemStack>() {
+//		Converters.registerConverter(Item.class, ItemStack.class, new Converter<Item, ItemStack>() {
 //			@Override
 //			public ItemStack convert(final Item i) {
 //				return i.getItemStack();
@@ -218,7 +228,7 @@ public class DefaultConverters {
 //		});
 		
 		// Slot - ItemStack
-		Converters.registerConverter(Slot.class, ItemStack.class, new SerializableConverter<Slot, ItemStack>() {
+		Converters.registerConverter(Slot.class, ItemStack.class, new Converter<Slot, ItemStack>() {
 			@Override
 			public ItemStack convert(final Slot s) {
 				final ItemStack i = s.getItem();
@@ -228,7 +238,7 @@ public class DefaultConverters {
 			}
 		});
 //		// Slot - Inventory
-//		Skript.addSerializableConverter(Slot.class, Inventory.class, new SerializableConverter<Slot, Inventory>() {
+//		Skript.addConverter(Slot.class, Inventory.class, new Converter<Slot, Inventory>() {
 //			@Override
 //			public Inventory convert(final Slot s) {
 //				if (s == null)
@@ -238,8 +248,9 @@ public class DefaultConverters {
 //		});
 		
 		// Block - InventoryHolder
-		Converters.registerConverter(Block.class, InventoryHolder.class, new SerializableConverter<Block, InventoryHolder>() {
+		Converters.registerConverter(Block.class, InventoryHolder.class, new Converter<Block, InventoryHolder>() {
 			@Override
+			@Nullable
 			public InventoryHolder convert(final Block b) {
 				if (b.getState() == null)
 					return null;
@@ -249,7 +260,7 @@ public class DefaultConverters {
 				return null;
 			}
 		}, Converter.NO_COMMAND_ARGUMENTS);
-//		Skript.registerConverter(InventoryHolder.class, Block.class, new SerializableConverter<InventoryHolder, Block>() {
+//		Skript.registerConverter(InventoryHolder.class, Block.class, new Converter<InventoryHolder, Block>() {
 //			@Override
 //			public Block convert(final InventoryHolder h) {
 //				if (h == null)
@@ -261,7 +272,7 @@ public class DefaultConverters {
 //		});
 		
 //		// World - Time
-//		Skript.registerConverter(World.class, Time.class, new SerializableConverter<World, Time>() {
+//		Skript.registerConverter(World.class, Time.class, new Converter<World, Time>() {
 //			@Override
 //			public Time convert(final World w) {
 //				if (w == null)
@@ -271,7 +282,7 @@ public class DefaultConverters {
 //		});
 		
 		// Enchantment - EnchantmentType
-		Converters.registerConverter(Enchantment.class, EnchantmentType.class, new SerializableConverter<Enchantment, EnchantmentType>() {
+		Converters.registerConverter(Enchantment.class, EnchantmentType.class, new Converter<Enchantment, EnchantmentType>() {
 			@Override
 			public EnchantmentType convert(final Enchantment e) {
 				return new EnchantmentType(e, -1);

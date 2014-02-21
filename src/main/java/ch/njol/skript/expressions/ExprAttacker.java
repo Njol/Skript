@@ -28,6 +28,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -46,7 +47,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Attacker")
 @Description({"The attacker of a damage event, e.g. when a player attacks a zombie this expression represents the player.",
 		"Please note that the attacker can also be a block, e.g. a cactus or lava, but this expression will not be set in these cases."})
@@ -75,7 +75,10 @@ public class ExprAttacker extends SimpleExpression<Entity> {
 		return new Entity[] {getAttacker(e)};
 	}
 	
-	private static Entity getAttacker(final Event e) {
+	@Nullable
+	private static Entity getAttacker(final @Nullable Event e) {
+		if (e == null)
+			return null;
 		if (e instanceof EntityDamageByEntityEvent) {
 			if (((EntityDamageByEntityEvent) e).getDamager() instanceof Projectile) {
 				return ((Projectile) ((EntityDamageByEntityEvent) e).getDamager()).getShooter();
@@ -99,7 +102,7 @@ public class ExprAttacker extends SimpleExpression<Entity> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (e == null)
 			return "the attacker";
 		return Classes.getDebugMessage(getSingle(e));

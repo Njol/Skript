@@ -24,6 +24,7 @@ package ch.njol.skript.events;
 import org.bukkit.GameMode;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -34,9 +35,7 @@ import ch.njol.util.Checker;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public final class EvtGameMode extends SkriptEvent {
-	
 	static {
 		Skript.registerEvent("Gamemode Change", EvtGameMode.class, PlayerGameModeChangeEvent.class, "game[ ]mode change [to %gamemode%]")
 				.description("Called when a player's <a href='../classes/#gamemode'>gamemode</a> changes.")
@@ -44,6 +43,7 @@ public final class EvtGameMode extends SkriptEvent {
 				.since("1.0");
 	}
 	
+	@Nullable
 	private Literal<GameMode> mode;
 	
 	@SuppressWarnings("unchecked")
@@ -55,19 +55,20 @@ public final class EvtGameMode extends SkriptEvent {
 	
 	@Override
 	public boolean check(final Event e) {
-		if (mode == null)
-			return true;
-		return mode.check(e, new Checker<GameMode>() {
-			@Override
-			public boolean check(final GameMode m) {
-				return ((PlayerGameModeChangeEvent) e).getNewGameMode().equals(m);
-			}
-		});
+		if (mode != null) {
+			return mode.check(e, new Checker<GameMode>() {
+				@Override
+				public boolean check(final GameMode m) {
+					return ((PlayerGameModeChangeEvent) e).getNewGameMode().equals(m);
+				}
+			});
+		}
+		return true;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "gamemode change" + (mode == null ? "" : " to " + mode.toString().toLowerCase());
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "gamemode change" + (mode != null ? " to " + mode.toString().toLowerCase() : "");
 	}
 	
 }

@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Location")
 @Description("The location where an event happened (e.g. at an entity or block), or a location <a href='#ExprDirection'>relative</a> to another (e.g. 1 meter above another location).")
 @Examples({"drop 5 apples at the event-location # exactly the same as writing 'drop 5 apples'",
@@ -49,10 +49,10 @@ import ch.njol.util.Kleenean;
 public class ExprLocation extends WrapperExpression<Location> {
 	static {
 		Skript.registerExpression(ExprLocation.class, Location.class, ExpressionType.SIMPLE, "[the] [event-](location|position)");
-		Skript.registerExpression(ExprLocation.class, Location.class, ExpressionType.NORMAL, "[the] (location|position) %direction% [%location%]");
+		Skript.registerExpression(ExprLocation.class, Location.class, ExpressionType.COMBINED, "[the] (location|position) %direction% [%location%]");
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		if (exprs.length > 0) {
@@ -65,7 +65,7 @@ public class ExprLocation extends WrapperExpression<Location> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return getExpr() instanceof EventValueExpression ? "the location" : "the location " + getExpr().toString(e, debug);
 	}
 	

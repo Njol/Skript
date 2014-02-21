@@ -25,6 +25,7 @@ import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -34,9 +35,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EvtPressurePlate extends SkriptEvent {
-	
 	static {
 		Skript.registerEvent("Pressure Plate / Trip", EvtPressurePlate.class, PlayerInteractEvent.class,
 				"[step[ping] on] [a] [pressure] plate",
@@ -61,7 +60,7 @@ public class EvtPressurePlate extends SkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return tripwire ? "trip" : "stepping on a pressure plate";
 	}
 	

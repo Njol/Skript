@@ -27,6 +27,7 @@ import java.io.ObjectInputStream;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
@@ -42,7 +43,6 @@ import ch.njol.skript.util.Timespan;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 	static {
 		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledEvent.class, "every %timespan%")
@@ -56,16 +56,20 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 				.since("1.0");
 	}
 	
+	@SuppressWarnings("null")
 	private Timespan period;
 	
+	@Nullable
 	private Trigger t;
-	
+	@Nullable
 	private int[] taskIDs;
 	
+	@Nullable
 	private transient World[] worlds;
+	@Nullable
 	private String[] worldNames;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		period = ((Literal<Timespan>) args[0]).getSingle();
@@ -78,7 +82,12 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 		return true;
 	}
 	
-	void execute(final World w) {
+	void execute(final @Nullable World w) {
+		final Trigger t = this.t;
+		if (t == null) {
+			assert false;
+			return;
+		}
 		final ScheduledEvent e = w == null ? new ScheduledEvent() : new ScheduledWorldEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerStart(t);
@@ -87,6 +96,7 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 		SkriptEventHandler.logEventEnd();
 	}
 	
+	@SuppressWarnings("null")
 	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
 		in.defaultReadObject();
 		if (worldNames != null) {
@@ -98,9 +108,11 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 		}
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public void register(final Trigger t) {
 		this.t = t;
+		int[] taskIDs;
 		if (worlds == null) {
 			taskIDs = new int[] {Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
 				@Override
@@ -118,24 +130,31 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 						execute(w);
 					}
 				}, period.getTicks() - (w.getFullTime() % period.getTicks()), period.getTicks());
+				assert worlds != null; // FindBugs
 			}
 		}
+		this.taskIDs = taskIDs;
 	}
 	
 	@Override
 	public void unregister(final Trigger t) {
+		assert t == this.t;
+		this.t = null;
+		assert taskIDs != null;
 		for (final int taskID : taskIDs)
 			Bukkit.getScheduler().cancelTask(taskID);
 	}
 	
 	@Override
 	public void unregisterAll() {
+		t = null;
+		assert taskIDs != null;
 		for (final int taskID : taskIDs)
 			Bukkit.getScheduler().cancelTask(taskID);
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "every " + period;
 	}
 	

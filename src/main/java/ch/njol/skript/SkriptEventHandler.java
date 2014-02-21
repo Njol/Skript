@@ -40,6 +40,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.EventExecutor;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader.ScriptInfo;
 import ch.njol.skript.command.Commands;
@@ -58,24 +59,30 @@ public abstract class SkriptEventHandler {
 	
 	private final static Iterator<Trigger> getTriggers(final Class<? extends Event> event) {
 		return new Iterator<Trigger>() {
+			@Nullable
 			private Class<?> e = event;
+			@Nullable
 			private Iterator<Trigger> current = null;
 			
 			@Override
 			public boolean hasNext() {
+				Iterator<Trigger> current = this.current;
+				Class<?> e = this.e;
 				while (current == null || !current.hasNext()) {
 					if (e == null || !Event.class.isAssignableFrom(e))
 						return false;
 					final List<Trigger> l = triggers.get(e);
-					current = l == null ? null : l.iterator();
-					e = e.getSuperclass();
+					this.current = current = l == null ? null : l.iterator();
+					this.e = e = e.getSuperclass();
 				}
 				return true;
 			}
 			
+			@SuppressWarnings("null")
 			@Override
 			public Trigger next() {
-				if (!hasNext())
+				final Iterator<Trigger> current = this.current;
+				if (current == null || !hasNext())
 					throw new NoSuchElementException();
 				return current.next();
 			}
@@ -87,11 +94,14 @@ public abstract class SkriptEventHandler {
 		};
 	}
 	
+	@Nullable
 	static Event last = null;
 	
 	final static EventExecutor ee = new EventExecutor() {
 		@Override
-		public void execute(final Listener l, final Event e) {
+		public void execute(final @Nullable Listener l, final @Nullable Event e) {
+			if (e == null)
+				return;
 			if (last == e) // an event is received multiple times if multiple superclasses of it are registered
 				return;
 			last = e;
@@ -99,6 +109,7 @@ public abstract class SkriptEventHandler {
 		}
 	};
 	
+	@SuppressWarnings("null")
 	static void check(final Event e) {
 		Iterator<Trigger> ts = getTriggers(e.getClass());
 		if (!ts.hasNext())
@@ -197,7 +208,7 @@ public abstract class SkriptEventHandler {
 		while (triggersIter.hasNext()) {
 			final List<Trigger> ts = triggersIter.next();
 			for (int i = 0; i < ts.size(); i++) {
-				if (ts.get(i).getScript().equals(script)) {
+				if (script.equals(ts.get(i).getScript())) {
 					info.triggers++;
 					ts.remove(i);
 					i--;
@@ -209,7 +220,7 @@ public abstract class SkriptEventHandler {
 		
 		for (int i = 0; i < selfRegisteredTriggers.size(); i++) {
 			final Trigger t = selfRegisteredTriggers.get(i);
-			if (t.getScript().equals(script)) {
+			if (script.equals(t.getScript())) {
 				info.triggers++;
 				((SelfRegisteringSkriptEvent) t.getEvent()).unregister(t);
 				selfRegisteredTriggers.remove(i);
@@ -236,7 +247,7 @@ public abstract class SkriptEventHandler {
 	private final static Set<Class<? extends Event>> registeredEvents = new HashSet<Class<? extends Event>>();
 	private final static Listener listener = new Listener() {};
 	
-	@SuppressWarnings({"unchecked", "rawtypes"})
+	@SuppressWarnings({"unchecked", "rawtypes", "null"})
 	final static void registerBukkitEvents() {
 		for (final Class<? extends Event> e : triggers.keySet()) {
 			if (!containsSuperclass((Set) registeredEvents, e)) { // I just love Java's generics

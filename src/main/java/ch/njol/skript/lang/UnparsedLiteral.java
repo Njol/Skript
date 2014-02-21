@@ -24,6 +24,7 @@ package ch.njol.skript.lang;
 import java.util.logging.Level;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -44,10 +45,10 @@ import ch.njol.util.coll.iterator.NonNullIterator;
  * @author Peter Güttinger
  * @see SimpleLiteral
  */
-@SuppressWarnings("serial")
 public class UnparsedLiteral implements Literal<Object> {
 	
 	private final String data;
+	@Nullable
 	private final LogEntry error;
 	
 	/**
@@ -63,7 +64,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	 * @param data non-null, non-empty & trimmed string
 	 * @param error Error to log if this literal cannot be parsed
 	 */
-	public UnparsedLiteral(final String data, final LogEntry error) {
+	public UnparsedLiteral(final String data, final @Nullable LogEntry error) {
 		assert data != null && data.length() > 0;
 		assert error == null || error.getLevel() == Level.SEVERE;
 		this.data = data;
@@ -80,16 +81,19 @@ public class UnparsedLiteral implements Literal<Object> {
 	}
 	
 	@Override
+	@Nullable
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
 		return getConvertedExpression(ParseContext.DEFAULT, to);
 	}
 	
+	@Nullable
 	public <R> Literal<? extends R> getConvertedExpression(final ParseContext context, final Class<? extends R>... to) {
 		assert to != null && to.length > 0;
 		assert to.length == 1 || !CollectionUtils.contains(to, Object.class);
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			for (final Class<? extends R> t : to) {
+				@SuppressWarnings("null")
 				final R r = Classes.parse(data, t, context);
 				if (r != null) {
 					log.printLog();
@@ -238,7 +242,7 @@ public class UnparsedLiteral implements Literal<Object> {
 //	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "'" + data + "'";
 	}
 	
@@ -307,7 +311,7 @@ public class UnparsedLiteral implements Literal<Object> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		throw invalidAccessException();
 	}
 	

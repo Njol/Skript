@@ -27,6 +27,7 @@ import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -44,7 +45,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Drop")
 @Description("Drops one or more items.")
 @Examples({"on death of creeper:",
@@ -55,10 +55,12 @@ public class EffDrop extends Effect {
 		Skript.registerEffect(EffDrop.class, "drop %itemtypes/experience% [%directions% %locations%]");
 	}
 	
-	private Expression<?> drops = null;
+	@SuppressWarnings("null")
+	private Expression<?> drops;
+	@SuppressWarnings("null")
 	private Expression<Location> locations;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		drops = exprs[0];
@@ -66,6 +68,7 @@ public class EffDrop extends Effect {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public void execute(final Event e) {
 		final Object[] os = drops.getArray(e);
@@ -96,7 +99,7 @@ public class EffDrop extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "drop " + drops.toString(e, debug) + " " + locations.toString(e, debug);
 	}
 	

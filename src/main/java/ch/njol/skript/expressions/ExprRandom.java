@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import java.lang.reflect.Array;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
@@ -33,6 +34,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
@@ -41,7 +43,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Random")
 @Description("Gets a random item out of a set, e.g. a random player out of all players online.")
 @Examples({"give a diamond to a random player out of all players",
@@ -52,14 +53,16 @@ public class ExprRandom extends SimpleExpression<Object> {
 		Skript.registerExpression(ExprRandom.class, Object.class, ExpressionType.COMBINED, "[a] random %*classinfo% [out] of %objects%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<?> expr;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		expr = exprs[1].getConvertedExpression(((ClassInfo<?>) exprs[0].getSingle(null)).getC());
+		final Expression<?> expr = exprs[1].getConvertedExpression((((Literal<ClassInfo<?>>) exprs[0]).getSingle()).getC());
 		if (expr == null)
 			return false;
+		this.expr = expr;
 		return true;
 	}
 	
@@ -79,7 +82,7 @@ public class ExprRandom extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "a random element out of " + expr.toString(e, debug);
 	}
 	

@@ -26,6 +26,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.registrations.Classes;
 
@@ -51,16 +52,16 @@ public class InventorySlot extends Slot {
 	}
 	
 	@Override
+	@Nullable
 	public ItemStack getItem() {
 		return invi.getItem(index) == null ? new ItemStack(Material.AIR, 1) : invi.getItem(index).clone();
 	}
 	
 	@Override
-	public void setItem(final ItemStack item) {
+	public void setItem(final @Nullable ItemStack item) {
 		invi.setItem(index, item != null && item.getType() != Material.AIR ? item : null);
-		if (invi instanceof PlayerInventory) {
+		if (invi instanceof PlayerInventory)
 			PlayerUtils.updateInventory((Player) invi.getHolder());
-		}
 	}
 	
 	@Override

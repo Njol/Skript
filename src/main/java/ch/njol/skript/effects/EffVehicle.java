@@ -23,6 +23,7 @@ package ch.njol.skript.effects;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,7 +40,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Vehicle")
 @Description({"Makes an entity ride another entity, e.g. a minecart, a saddled pig, an arrow, etc."})
 @Examples({"make the player ride a saddled pig",
@@ -53,10 +53,12 @@ public class EffVehicle extends Effect {
 				"(eject|dismount) (any|the|) passenger[s] (of|from) %entities%");
 	}
 	
+	@Nullable
 	private Expression<Entity> passengers;
+	@Nullable
 	private Expression<?> vehicles;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		passengers = matchedPattern == 2 ? null : (Expression<Entity>) exprs[0];
@@ -68,12 +70,16 @@ public class EffVehicle extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
+		final Expression<?> vehicles = this.vehicles;
+		final Expression<Entity> passengers = this.passengers;
 		if (vehicles == null) {
+			assert passengers != null;
 			for (final Entity p : passengers.getArray(e))
 				p.leaveVehicle();
 			return;
 		}
 		if (passengers == null) {
+			assert vehicles != null;
 			for (final Object v : vehicles.getArray(e))
 				((Entity) v).eject();
 			return;
@@ -88,10 +94,13 @@ public class EffVehicle extends Effect {
 			if (v instanceof Entity) {
 				((Entity) v).eject();
 				final Entity p = CollectionUtils.getRandom(ps);
+				assert p != null;
 				p.leaveVehicle();
 				((Entity) v).setPassenger(p);
 			} else {
 				for (final Entity p : ps) {
+					assert p != null : passengers;
+					@SuppressWarnings("null")
 					final Entity en = ((EntityData<?>) v).spawn(p.getLocation());
 					if (en == null)
 						return;
@@ -102,11 +111,17 @@ public class EffVehicle extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		if (vehicles == null)
+	public String toString(final @Nullable Event e, final boolean debug) {
+		final Expression<?> vehicles = this.vehicles;
+		final Expression<Entity> passengers = this.passengers;
+		if (vehicles == null) {
+			assert passengers != null;
 			return "make " + passengers.toString(e, debug) + " dismount";
-		if (passengers == null)
+		}
+		if (passengers == null) {
+			assert vehicles != null;
 			return "eject passenger" + (vehicles.isSingle() ? "" : "s") + " of " + vehicles.toString(e, debug);
+		}
 		return "make " + passengers.toString(e, debug) + " ride " + vehicles.toString(e, debug);
 	}
 	

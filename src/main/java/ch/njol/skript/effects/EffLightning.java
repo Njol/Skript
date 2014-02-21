@@ -23,6 +23,7 @@ package ch.njol.skript.effects;
 
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Lightning")
 @Description("Strike lightning at a given location. Can use 'ligning effect' to create a lightning that does not harm entities or start fires.")
 @Examples({"strike lightning at the player",
@@ -50,11 +50,12 @@ public class EffLightning extends Effect {
 		Skript.registerEffect(EffLightning.class, "(create|strike) lightning(1¦[ ]effect|) %directions% %locations%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Location> locations;
 	
 	private boolean effectOnly;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		locations = Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]);
@@ -73,7 +74,7 @@ public class EffLightning extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "strike lightning " + (effectOnly ? "effect " : "") + locations.toString(e, debug);
 	}
 	

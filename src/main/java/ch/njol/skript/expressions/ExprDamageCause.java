@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -35,7 +36,6 @@ import ch.njol.skript.lang.ExpressionType;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Damage Cause")
 @Description("The <a href='../classes/#damagecause'>damage cause</a> of a damage event. Please click on the link for more information.")
 @Examples("damage cause is lava, fire or burning")
@@ -50,7 +50,7 @@ public class ExprDamageCause extends EventValueExpression<DamageCause> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the damage cause";
 	}
 	

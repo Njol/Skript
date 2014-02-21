@@ -25,6 +25,7 @@ import java.util.Locale;
 
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.registrations.Classes;
 
@@ -40,63 +41,69 @@ public class EquipmentSlot extends Slot {
 	public static enum EquipSlot {
 		TOOL {
 			@Override
+			@Nullable
 			public ItemStack get(final EntityEquipment e) {
 				return e.getItemInHand();
-			};
+			}
 			
 			@Override
-			public void set(final EntityEquipment e, final ItemStack item) {
+			public void set(final EntityEquipment e, final @Nullable ItemStack item) {
 				e.setItemInHand(item);
-			};
+			}
 		},
 		HELMET {
 			@Override
+			@Nullable
 			public ItemStack get(final EntityEquipment e) {
 				return e.getHelmet();
 			}
 			
 			@Override
-			public void set(final EntityEquipment e, final ItemStack item) {
+			public void set(final EntityEquipment e, final @Nullable ItemStack item) {
 				e.setHelmet(item);
 			}
 		},
 		CHESTPLATE {
 			@Override
+			@Nullable
 			public ItemStack get(final EntityEquipment e) {
 				return e.getChestplate();
 			}
 			
 			@Override
-			public void set(final EntityEquipment e, final ItemStack item) {
+			public void set(final EntityEquipment e, final @Nullable ItemStack item) {
 				e.setChestplate(item);
 			}
 		},
 		LEGGINGS {
 			@Override
+			@Nullable
 			public ItemStack get(final EntityEquipment e) {
 				return e.getLeggings();
 			}
 			
 			@Override
-			public void set(final EntityEquipment e, final ItemStack item) {
+			public void set(final EntityEquipment e, final @Nullable ItemStack item) {
 				e.setLeggings(item);
 			}
 		},
 		BOOTS {
 			@Override
+			@Nullable
 			public ItemStack get(final EntityEquipment e) {
 				return e.getBoots();
 			}
 			
 			@Override
-			public void set(final EntityEquipment e, final ItemStack item) {
+			public void set(final EntityEquipment e, final @Nullable ItemStack item) {
 				e.setBoots(item);
 			}
 		};
 		
+		@Nullable
 		public abstract ItemStack get(EntityEquipment e);
 		
-		public abstract void set(EntityEquipment e, ItemStack item);
+		public abstract void set(EntityEquipment e, @Nullable ItemStack item);
 		
 	}
 	
@@ -109,18 +116,19 @@ public class EquipmentSlot extends Slot {
 	}
 	
 	@Override
+	@Nullable
 	public ItemStack getItem() {
 		return slot.get(e);
 	}
 	
 	@Override
-	public void setItem(final ItemStack item) {
+	public void setItem(final @Nullable ItemStack item) {
 		slot.set(e, item);
 	}
 	
 	@Override
 	public String toString_i() {
-		return "the " + slot.name().toLowerCase(Locale.ENGLISH) + " of " + Classes.toString(e.getHolder());
+		return "the " + slot.name().toLowerCase(Locale.ENGLISH) + " of " + Classes.toString(e.getHolder()); // TODO localise?
 	}
 	
 }

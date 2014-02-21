@@ -32,7 +32,6 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 /**
  * @author joeuguce99
  */
-@SuppressWarnings("serial")
 @Name("Maximum Stack Size")
 @Description("The maximum stack size of the specified material, e.g. 64 for torches, 16 for buckets, and 1 for swords.")
 @Examples("send \"You can only pick up %max stack size of player's tool% of %type of (player's tool)%\" to player")
@@ -52,8 +51,9 @@ public class ExprMaxStack extends SimplePropertyExpression<ItemStack, Integer> {
 		return "maximum stack size";
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Integer convert(final ItemStack i) {
-		return i.getMaxStackSize();
+		return Integer.valueOf(i.getMaxStackSize());
 	}
 }

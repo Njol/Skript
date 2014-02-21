@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import ch.njol.util.Pair;
+import ch.njol.util.NonNullPair;
 
 /**
  * @author Peter Güttinger
@@ -44,12 +44,14 @@ public class NounTest {
 				{"a¦b¦c¦d¦e¦f¦g", "abdeg", "acdfg"},
 		};
 		for (final String[] test : tests) {
-			final Pair<String, String> p = Noun.getPlural(test[0]);
+			@SuppressWarnings("null")
+			final NonNullPair<String, String> p = Noun.getPlural(test[0]);
 			assertEquals(test[1], p.first);
 			assertEquals(test[2], p.second);
 		}
 	}
 	
+	@SuppressWarnings("null")
 	@Test
 	public void testNormalizePluralMarkers() {
 		final String[][] tests = {

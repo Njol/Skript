@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.bukkit.entity.Player;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 
@@ -38,8 +39,9 @@ public abstract class PlayerUtils {
 	
 	final static Set<Player> inviUpdate = new HashSet<Player>();
 	
-	public final static void updateInventory(final Player p) {
-		inviUpdate.add(p);
+	public final static void updateInventory(final @Nullable Player p) {
+		if (p != null)
+			inviUpdate.add(p);
 	}
 	
 	// created when first used

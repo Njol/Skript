@@ -26,23 +26,22 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.Experience;
+import ch.njol.skript.util.Getter;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class ExperienceSpawnEvent extends Event implements Cancellable {
 	static {
-		EventValues.registerEventValue(ExperienceSpawnEvent.class, Location.class, new SerializableGetter<Location, ExperienceSpawnEvent>() {
+		EventValues.registerEventValue(ExperienceSpawnEvent.class, Location.class, new Getter<Location, ExperienceSpawnEvent>() {
 			@Override
 			public Location get(final ExperienceSpawnEvent e) {
 				return e.getLocation();
 			}
 		}, 0);
-		EventValues.registerEventValue(ExperienceSpawnEvent.class, Experience.class, new SerializableGetter<Experience, ExperienceSpawnEvent>() {
+		EventValues.registerEventValue(ExperienceSpawnEvent.class, Experience.class, new Getter<Experience, ExperienceSpawnEvent>() {
 			@Override
 			public Experience get(final ExperienceSpawnEvent e) {
 				return new Experience(e.getSpawnedXP());

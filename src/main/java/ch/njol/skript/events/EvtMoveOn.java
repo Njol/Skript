@@ -36,6 +36,7 @@ import org.bukkit.event.EventException;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.EventExecutor;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
@@ -51,7 +52,7 @@ import ch.njol.skript.registrations.Classes;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"serial", "deprecation"})
+@SuppressWarnings("deprecation")
 public class EvtMoveOn extends SelfRegisteringSkriptEvent { // TODO on jump
 
 //	private final static class BlockLocation {
@@ -91,14 +92,18 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent { // TODO on jump
 	
 //	private final static HashMap<BlockLocation, List<Trigger>> blockTriggers = new HashMap<BlockLocation, List<Trigger>>();
 	final static HashMap<Integer, List<Trigger>> itemTypeTriggers = new HashMap<Integer, List<Trigger>>();
+	@SuppressWarnings("null")
 	ItemType[] types = null;
 //	private World world;
 //	private int x, y, z;
 	
 	private static boolean registeredExecutor = false;
 	private final static EventExecutor executor = new EventExecutor() {
+		@SuppressWarnings("null")
 		@Override
-		public void execute(final Listener l, final Event event) throws EventException {
+		public void execute(final @Nullable Listener l, final @Nullable Event event) throws EventException {
+			if (event == null)
+				return;
 			final PlayerMoveEvent e = (PlayerMoveEvent) event;
 			final Location from = e.getFrom(), to = e.getTo();
 //			if (!blockTriggers.isEmpty()) {
@@ -155,6 +160,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent { // TODO on jump
 		return (int) Math.ceil(y) - 1;
 	}
 	
+	@SuppressWarnings("null")
 	public final static Block getBlock(final PlayerMoveEvent e) {
 		return e.getTo().subtract(0, 0.5, 0).getBlock();
 	}
@@ -198,7 +204,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent { // TODO on jump
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "walk on " + Classes.toString(types, false);
 //		return "walk on " + (types != null ? Skript.toString(types, false) : "<block:" + world.getName() + ":" + x + "," + y + "," + z + ">");
 	}

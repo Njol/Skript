@@ -47,6 +47,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.Aliases;
@@ -95,6 +97,7 @@ public class BukkitClasses {
 				.defaultExpression(new EventValueExpression<Entity>(Entity.class))
 				.parser(new Parser<Entity>() {
 					@Override
+					@Nullable
 					public Entity parse(final String s, final ParseContext context) {
 						return null;
 					}
@@ -154,6 +157,7 @@ public class BukkitClasses {
 				.defaultExpression(new EventValueExpression<Block>(Block.class))
 				.parser(new Parser<Block>() {
 					@Override
+					@Nullable
 					public Block parse(final String s, final ParseContext context) {
 						return null;
 					}
@@ -176,7 +180,7 @@ public class BukkitClasses {
 					
 					@Override
 					public String getVariableNamePattern() {
-						return "\\S:-?\\d+,-?\\d+,-?\\d+";
+						return ".+:-?\\d+,-?\\d+,-?\\d+";
 					}
 					
 					@Override
@@ -186,7 +190,9 @@ public class BukkitClasses {
 				})
 				.changer(DefaultChangers.blockChanger)
 				.serializer(new Serializer<Block>() {
+					@SuppressWarnings("null")
 					@Override
+					@Nullable
 					public Fields serialize(final Block b) {
 						final Fields f = new Fields();
 						f.putObject("world", b.getWorld());
@@ -205,7 +211,10 @@ public class BukkitClasses {
 					protected Block deserialize(final Fields fields) throws StreamCorruptedException {
 						final World w = fields.getObject("world", World.class);
 						final int x = fields.getPrimitive("x", int.class), y = fields.getPrimitive("y", int.class), z = fields.getPrimitive("z", int.class);
-						return w.getBlockAt(x, y, z);
+						Block b;
+						if (w == null || (b = w.getBlockAt(x, y, z)) == null)
+							throw new StreamCorruptedException();
+						return b;
 					}
 					
 					@Override
@@ -215,6 +224,7 @@ public class BukkitClasses {
 					
 //					return b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ();
 					@Override
+					@Nullable
 					public Block deserialize(final String s) {
 						final String[] split = s.split("[:,]");
 						if (split.length != 4)
@@ -245,6 +255,7 @@ public class BukkitClasses {
 				.defaultExpression(new EventValueExpression<Location>(Location.class))
 				.parser(new Parser<Location>() {
 					@Override
+					@Nullable
 					public Location parse(final String s, final ParseContext context) {
 						return null;
 					}
@@ -303,6 +314,7 @@ public class BukkitClasses {
 					
 //					return l.getWorld().getName() + ":" + l.getX() + "," + l.getY() + "," + l.getZ() + "|" + l.getYaw() + "/" + l.getPitch();
 					@Override
+					@Nullable
 					public Location deserialize(final String s) {
 						final String[] split = s.split("[:,|/]");
 						if (split.length != 6)
@@ -333,6 +345,7 @@ public class BukkitClasses {
 				.defaultExpression(new EventValueExpression<World>(World.class))
 				.parser(new Parser<World>() {
 					@Override
+					@Nullable
 					public World parse(final String s, final ParseContext context) {
 						// REMIND allow shortcuts '[over]world', 'nether' and '[the_]end' (server.properties: 'level-name=world') // inconsistent with 'world is "..."'
 						if (context == ParseContext.COMMAND || context == ParseContext.CONFIG)
@@ -344,12 +357,12 @@ public class BukkitClasses {
 					
 					@Override
 					public String toString(final World w, final int flags) {
-						return w.getName();
+						return "" + w.getName();
 					}
 					
 					@Override
 					public String toVariableNameString(final World w) {
-						return w.getName();
+						return "" + w.getName();
 					}
 					
 					@Override
@@ -380,6 +393,7 @@ public class BukkitClasses {
 					
 //					return w.getName();
 					@Override
+					@Nullable
 					public World deserialize(final String s) {
 						return Bukkit.getWorld(s);
 					}
@@ -402,6 +416,7 @@ public class BukkitClasses {
 				.defaultExpression(new EventValueExpression<Inventory>(Inventory.class))
 				.parser(new Parser<Inventory>() {
 					@Override
+					@Nullable
 					public Inventory parse(final String s, final ParseContext context) {
 						return null;
 					}
@@ -447,6 +462,7 @@ public class BukkitClasses {
 				.after("string", "world")
 				.parser(new Parser<Player>() {
 					@Override
+					@Nullable
 					public Player parse(final String s, final ParseContext context) {
 						if (context == ParseContext.COMMAND) {
 							final List<Player> ps = Bukkit.matchPlayer(s);
@@ -471,12 +487,12 @@ public class BukkitClasses {
 					
 					@Override
 					public String toString(final Player p, final int flags) {
-						return p.getName();
+						return "" + p.getName();
 					}
 					
 					@Override
 					public String toVariableNameString(final Player p) {
-						return p.getName();
+						return "" + p.getName();
 					}
 					
 					@Override
@@ -504,6 +520,7 @@ public class BukkitClasses {
 				.after("string", "world")
 				.parser(new Parser<OfflinePlayer>() {
 					@Override
+					@Nullable
 					public OfflinePlayer parse(final String s, final ParseContext context) {
 						if (context == ParseContext.COMMAND) {
 							if (!s.matches("\\S+") || s.length() > 16)
@@ -523,12 +540,12 @@ public class BukkitClasses {
 					
 					@Override
 					public String toString(final OfflinePlayer p, final int flags) {
-						return p.getName();
+						return "" + p.getName();
 					}
 					
 					@Override
 					public String toVariableNameString(final OfflinePlayer p) {
-						return p.getName();
+						return "" + p.getName();
 					}
 					
 					@Override
@@ -540,7 +557,7 @@ public class BukkitClasses {
 					public String getDebugMessage(final OfflinePlayer p) {
 						if (p.isOnline())
 							return Classes.getDebugMessage(p.getPlayer());
-						return p.getName();
+						return "" + p.getName();
 					}
 				}).serializer(new Serializer<OfflinePlayer>() {
 					@Override
@@ -558,11 +575,15 @@ public class BukkitClasses {
 					@Override
 					protected OfflinePlayer deserialize(final Fields fields) throws StreamCorruptedException {
 						final String name = fields.getObject("name", String.class);
-						return Bukkit.getOfflinePlayer(name);
+						OfflinePlayer p;
+						if (name == null || (p = Bukkit.getOfflinePlayer(name)) == null)
+							throw new StreamCorruptedException();
+						return p;
 					}
 					
 //					return p.getName();
 					@Override
+					@Nullable
 					public OfflinePlayer deserialize(final String s) {
 						return Bukkit.getOfflinePlayer(s);
 					}
@@ -588,6 +609,7 @@ public class BukkitClasses {
 				.defaultExpression(new EventValueExpression<CommandSender>(CommandSender.class))
 				.parser(new Parser<CommandSender>() {
 					@Override
+					@Nullable
 					public CommandSender parse(final String s, final ParseContext context) {
 						return null;
 					}
@@ -599,12 +621,12 @@ public class BukkitClasses {
 					
 					@Override
 					public String toString(final CommandSender s, final int flags) {
-						return s.getName();
+						return "" + s.getName();
 					}
 					
 					@Override
-					public String toVariableNameString(final CommandSender o) {
-						return o.getName();
+					public String toVariableNameString(final CommandSender s) {
+						return "" + s.getName();
 					}
 					
 					@Override
@@ -617,6 +639,9 @@ public class BukkitClasses {
 				.name(ClassInfo.NO_DOC)
 				.defaultExpression(new EventValueExpression<InventoryHolder>(InventoryHolder.class)));
 		
+		@SuppressWarnings("null")
+		@NonNull
+		final GameMode GameModeSURVIVAL = GameMode.SURVIVAL;
 		Classes.registerClass(new ClassInfo<GameMode>(GameMode.class, "gamemode")
 				.user("game ?modes?")
 				.name("Game Mode")
@@ -625,7 +650,7 @@ public class BukkitClasses {
 				.examples("player's gamemode is survival",
 						"set the player argument's game mode to creative")
 				.since("1.0")
-				.defaultExpression(new SimpleLiteral<GameMode>(GameMode.SURVIVAL, true))
+				.defaultExpression(new SimpleLiteral<GameMode>(GameModeSURVIVAL, true))
 				.parser(new Parser<GameMode>() {
 					private final Message[] names = new Message[GameMode.values().length];
 					{
@@ -636,6 +661,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
+					@Nullable
 					public GameMode parse(final String s, final ParseContext context) {
 						for (int i = 0; i < names.length; i++) {
 							if (s.equalsIgnoreCase(names[i].toString()))
@@ -651,7 +677,7 @@ public class BukkitClasses {
 					
 					@Override
 					public String toVariableNameString(final GameMode o) {
-						return o.toString().toLowerCase(Locale.ENGLISH);
+						return "" + o.toString().toLowerCase(Locale.ENGLISH);
 					}
 					
 					@Override
@@ -676,6 +702,7 @@ public class BukkitClasses {
 				.after("number")
 				.parser(new Parser<ItemStack>() {
 					@Override
+					@Nullable
 					public ItemStack parse(final String s, final ParseContext context) {
 						ItemType t = Aliases.parseItemType(s);
 						if (t == null)
@@ -692,6 +719,7 @@ public class BukkitClasses {
 							return null;
 						}
 						final ItemStack i = t.getRandom();
+						assert i != null;
 						i.setDurability((short) 0);
 						return i;
 					}
@@ -712,7 +740,7 @@ public class BukkitClasses {
 							b.append("#" + e.getKey().getId());
 							b.append(":" + e.getValue());
 						}
-						return b.toString();
+						return "" + b.toString();
 					}
 					
 					@Override
@@ -735,6 +763,7 @@ public class BukkitClasses {
 				.since("1.4.4")
 				.parser(new Parser<Biome>() {
 					@Override
+					@Nullable
 					public Biome parse(final String s, final ParseContext context) {
 						return BiomeUtils.parse(s);
 					}
@@ -745,8 +774,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toVariableNameString(final Biome o) {
-						return o.name();
+					public String toVariableNameString(final Biome b) {
+						return "" + b.name();
 					}
 					
 					@Override
@@ -768,18 +797,19 @@ public class BukkitClasses {
 				.since("")
 				.parser(new Parser<PotionEffectType>() {
 					@Override
+					@Nullable
 					public PotionEffectType parse(final String s, final ParseContext context) {
 						return PotionEffectUtils.parseType(s);
 					}
 					
 					@Override
-					public String toString(final PotionEffectType o, final int flags) {
-						return PotionEffectUtils.toString(o, flags);
+					public String toString(final PotionEffectType p, final int flags) {
+						return PotionEffectUtils.toString(p, flags);
 					}
 					
 					@Override
-					public String toVariableNameString(final PotionEffectType o) {
-						return o.getName();
+					public String toVariableNameString(final PotionEffectType p) {
+						return "" + p.getName();
 					}
 					
 					@Override
@@ -816,6 +846,7 @@ public class BukkitClasses {
 					
 //					return o.getName();
 					@Override
+					@Nullable
 					public PotionEffectType deserialize(final String s) {
 						return PotionEffectType.getByName(s);
 					}
@@ -838,6 +869,7 @@ public class BukkitClasses {
 				.after("itemtype", "itemstack", "entitydata", "entitytype")
 				.parser(new Parser<DamageCause>() {
 					@Override
+					@Nullable
 					public DamageCause parse(final String s, final ParseContext context) {
 						return DamageCauseUtils.parse(s);
 					}
@@ -848,8 +880,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public String toVariableNameString(final DamageCause o) {
-						return o.name();
+					public String toVariableNameString(final DamageCause d) {
+						return "" + d.name();
 					}
 					
 					@Override
@@ -868,6 +900,7 @@ public class BukkitClasses {
 				.since("2.0")
 				.parser(new Parser<Chunk>() {
 					@Override
+					@Nullable
 					public Chunk parse(final String s, final ParseContext context) {
 						return null;
 					}
@@ -893,7 +926,9 @@ public class BukkitClasses {
 					}
 				})
 				.serializer(new Serializer<Chunk>() {
+					@SuppressWarnings("null")
 					@Override
+					@Nullable
 					public Fields serialize(final Chunk c) {
 						final Fields f = new Fields();
 						f.putObject("world", c.getWorld());
@@ -911,11 +946,15 @@ public class BukkitClasses {
 					protected Chunk deserialize(final Fields fields) throws StreamCorruptedException {
 						final World w = fields.getObject("world", World.class);
 						final int x = fields.getPrimitive("x", int.class), z = fields.getPrimitive("z", int.class);
-						return w.getChunkAt(x, z);
+						Chunk c;
+						if (w == null || (c = w.getChunkAt(x, z)) == null)
+							throw new StreamCorruptedException();
+						return c;
 					}
 					
 //					return c.getWorld().getName() + ":" + c.getX() + "," + c.getZ();
 					@Override
+					@Nullable
 					public Chunk deserialize(final String s) {
 						final String[] split = s.split("[:,]");
 						if (split.length != 3)
@@ -948,6 +987,7 @@ public class BukkitClasses {
 				.before("enchantmenttype")
 				.parser(new Parser<Enchantment>() {
 					@Override
+					@Nullable
 					public Enchantment parse(final String s, final ParseContext context) {
 						return EnchantmentType.parseEnchantment(s);
 					}
@@ -959,7 +999,7 @@ public class BukkitClasses {
 					
 					@Override
 					public String toVariableNameString(final Enchantment e) {
-						return e.getName();
+						return "" + e.getName();
 					}
 					
 					@Override
@@ -997,6 +1037,7 @@ public class BukkitClasses {
 //					return "" + e.getId();
 					@SuppressWarnings("deprecation")
 					@Override
+					@Nullable
 					public Enchantment deserialize(final String s) {
 						try {
 							return Enchantment.getById(Integer.parseInt(s));

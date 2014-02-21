@@ -22,6 +22,7 @@
 package ch.njol.skript.lang;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.config.SectionNode;
 
@@ -32,11 +33,11 @@ import ch.njol.skript.config.SectionNode;
  * @see TriggerSection
  * @see Condition
  */
-@SuppressWarnings("serial")
 public class Conditional extends TriggerSection {
 	
 	private final Condition cond;
 	
+	@Nullable
 	private TriggerSection elseClause = null;
 	
 	public Conditional(final Condition cond, final SectionNode node) {
@@ -45,6 +46,7 @@ public class Conditional extends TriggerSection {
 	}
 	
 	@Override
+	@Nullable
 	protected TriggerItem walk(final Event e) {
 		if (cond.run(e)) {
 			return walk(e, true);
@@ -57,7 +59,7 @@ public class Conditional extends TriggerSection {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return cond.toString(e, debug);
 	}
 	
@@ -69,17 +71,18 @@ public class Conditional extends TriggerSection {
 		}
 		elseClause = new TriggerSection(node) {
 			@Override
+			@Nullable
 			public TriggerItem walk(final Event e) {
 				return walk(e, true);
 			}
 			
 			@Override
-			public String toString(final Event e, final boolean debug) {
+			public String toString(final @Nullable Event e, final boolean debug) {
 				return "else";
 			}
-		};
-		elseClause.setParent(getParent());
-		elseClause.setNext(getNext());
+		}
+				.setParent(getParent())
+				.setNext(getNext());
 	}
 	
 	public void loadElseIf(final Condition cond, final SectionNode n) {
@@ -88,9 +91,9 @@ public class Conditional extends TriggerSection {
 			((Conditional) elseClause).loadElseIf(cond, n);
 			return;
 		}
-		elseClause = new Conditional(cond, n);
-		elseClause.setParent(getParent());
-		elseClause.setNext(getNext());
+		elseClause = new Conditional(cond, n)
+				.setParent(getParent())
+				.setNext(getNext());
 	}
 	
 	public boolean hasElseClause() {
@@ -98,17 +101,19 @@ public class Conditional extends TriggerSection {
 	}
 	
 	@Override
-	public void setNext(final TriggerItem next) {
+	public Conditional setNext(final @Nullable TriggerItem next) {
 		super.setNext(next);
 		if (elseClause != null)
 			elseClause.setNext(next);
+		return this;
 	}
 	
 	@Override
-	public void setParent(final TriggerSection parent) {
+	public Conditional setParent(final @Nullable TriggerSection parent) {
 		super.setParent(parent);
 		if (elseClause != null)
 			elseClause.setParent(parent);
+		return this;
 	}
 	
 }

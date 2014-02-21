@@ -25,6 +25,7 @@ import org.bukkit.entity.Horse;
 import org.bukkit.entity.Horse.Color;
 import org.bukkit.entity.Horse.Style;
 import org.bukkit.entity.Horse.Variant;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -34,7 +35,6 @@ import ch.njol.skript.variables.Variables;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class HorseData extends EntityData<Horse> {
 	static {
 		if (Skript.isRunningMinecraft(1, 6)) {
@@ -46,13 +46,16 @@ public class HorseData extends EntityData<Horse> {
 		}
 	}
 	
+	@Nullable
 	private Variant variant;
+	@Nullable
 	private Color color;
+	@Nullable
 	private Style style;
 	
 	public HorseData() {}
 	
-	public HorseData(final Variant variant) {
+	public HorseData(final @Nullable Variant variant) {
 		this.variant = variant;
 	}
 	
@@ -66,7 +69,7 @@ public class HorseData extends EntityData<Horse> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Horse> c, final Horse e) {
+	protected boolean init(final @Nullable Class<? extends Horse> c, final @Nullable Horse e) {
 		if (e != null) {
 			variant = e.getVariant();
 			color = e.getColor();
@@ -132,9 +135,9 @@ public class HorseData extends EntityData<Horse> {
 	protected int hashCode_i() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((color == null) ? 0 : color.hashCode());
-		result = prime * result + ((style == null) ? 0 : style.hashCode());
-		result = prime * result + ((variant == null) ? 0 : variant.hashCode());
+		result = prime * result + (color != null ? color.hashCode() : 0);
+		result = prime * result + (style != null ? style.hashCode() : 0);
+		result = prime * result + (variant != null ? variant.hashCode() : 0);
 		return result;
 	}
 	

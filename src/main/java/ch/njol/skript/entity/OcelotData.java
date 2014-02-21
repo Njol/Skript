@@ -22,6 +22,7 @@
 package ch.njol.skript.entity;
 
 import org.bukkit.entity.Ocelot;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -29,7 +30,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class OcelotData extends EntityData<Ocelot> {
 	static {
 		EntityData.register(OcelotData.class, "ocelot", Ocelot.class, 1, "wild ocelot", "ocelot", "cat");
@@ -44,7 +44,7 @@ public class OcelotData extends EntityData<Ocelot> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Ocelot> c, final Ocelot e) {
+	protected boolean init(final @Nullable Class<? extends Ocelot> c, final @Nullable Ocelot e) {
 		tamed = e == null ? 0 : e.isTamed() ? 1 : -1;
 		return true;
 	}

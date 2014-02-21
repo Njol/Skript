@@ -26,5 +26,5 @@ import ch.njol.skript.util.Getter;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public abstract class SerializableGetter<R, A> extends Getter<R, A> implements SerializableConverter<A, R> {}
+@Deprecated
+public abstract class SerializableGetter<R, A> extends Getter<R, A> {}

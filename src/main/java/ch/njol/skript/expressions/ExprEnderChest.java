@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -33,7 +34,6 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Ender Chest")
 @Description("The ender chest of a player")
 @Examples("open the player's ender chest to the player")
@@ -44,6 +44,7 @@ public class ExprEnderChest extends SimplePropertyExpression<Player, Inventory> 
 	}
 	
 	@Override
+	@Nullable
 	public Inventory convert(final Player p) {
 		return p.getEnderChest();
 	}

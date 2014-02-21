@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
@@ -33,7 +34,6 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Inventory")
 @Description("The inventory of a block or player. You can usually omit this expression and can directly add or remove items to/from blocks or players.")
 @Examples({"add a plank to the player's inventory",
@@ -46,6 +46,7 @@ public class ExprInventory extends SimplePropertyExpression<InventoryHolder, Inv
 	}
 	
 	@Override
+	@Nullable
 	public Inventory convert(final InventoryHolder h) {
 		return h.getInventory();
 	}

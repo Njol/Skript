@@ -21,53 +21,54 @@
 
 package ch.njol.skript.config;
 
-import ch.njol.util.StringUtils;
-
 /**
  * An empty line or a comment.
  * <p>
- * The subclass {@link InvalidNode} is used for invalid non-empty nodes, i.e. where a parsing error ocurred.
+ * The subclass {@link InvalidNode} is used for invalid non-empty nodes, i.e. where a parsing error occurred.
  * 
  * @author Peter Güttinger
  */
 public class VoidNode extends Node {
 	
-	private final int initialLevel;
-	private final String initialIndentation;
+//	private final int initialLevel;
+//	private final String initialIndentation;
 	
-	VoidNode(final SectionNode parent, final String line, final int lineNum) {
-		super(line.trim(), "", parent, lineNum);
-		initialLevel = getLevel();
-		initialIndentation = line.replaceFirst("\\S.*$", "");
+	VoidNode(final String line, final String comment, final SectionNode parent, final int lineNum) {
+		super("" + line.trim(), comment, parent, lineNum);
+//		initialLevel = getLevel();
+//		initialIndentation = "" + line.replaceFirst("\\S.*$", "");
 	}
 	
-	VoidNode(final SectionNode parent, final ConfigReader r) {
-		this(parent, r.getLine(), r.getLineNum());
+	@SuppressWarnings("null")
+	@Override
+	public String getKey() {
+		return key;
 	}
 	
 	public void set(final String s) {
 		key = s;
 	}
 	
-	@Override
-	protected String getIndentation() {
-		int levelDiff = getLevel() - initialLevel;
-		if (levelDiff >= 0) {
-			return StringUtils.multiply(config.getIndentation(), levelDiff) + initialIndentation;
-		} else {
-			final String ci = config.getIndentation();
-			String ind = initialIndentation;
-			while (levelDiff < 0 && ind.startsWith(ci)) {
-				levelDiff++;
-				ind = ind.substring(ci.length());
-			}
-			return ind;
-		}
-	}
+	// doesn't work reliably
+//	@Override
+//	protected String getIndentation() {
+//		int levelDiff = getLevel() - initialLevel;
+//		if (levelDiff >= 0) {
+//			return StringUtils.multiply(config.getIndentation(), levelDiff) + initialIndentation;
+//		} else {
+//			final String ci = config.getIndentation();
+//			String ind = initialIndentation;
+//			while (levelDiff < 0 && ind.startsWith(ci)) {
+//				levelDiff++;
+//				ind = "" + ind.substring(ci.length());
+//			}
+//			return ind;
+//		}
+//	}
 	
 	@Override
 	String save_i() {
-		return key;
+		return "" + key;
 	}
 	
 }

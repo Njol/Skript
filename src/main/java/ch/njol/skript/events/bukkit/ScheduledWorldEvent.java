@@ -24,16 +24,15 @@ package ch.njol.skript.events.bukkit;
 import org.bukkit.World;
 import org.bukkit.event.HandlerList;
 
-import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.registrations.EventValues;
+import ch.njol.skript.util.Getter;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class ScheduledWorldEvent extends ScheduledEvent {
 	static {
-		EventValues.registerEventValue(ScheduledWorldEvent.class, World.class, new SerializableGetter<World, ScheduledWorldEvent>() {
+		EventValues.registerEventValue(ScheduledWorldEvent.class, World.class, new Getter<World, ScheduledWorldEvent>() {
 			@Override
 			public World get(final ScheduledWorldEvent e) {
 				return e.getWorld();

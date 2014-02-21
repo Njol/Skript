@@ -24,6 +24,7 @@ package ch.njol.skript.events;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -35,7 +36,7 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"unchecked", "serial"})
+@SuppressWarnings("unchecked")
 public class EvtCommand extends SkriptEvent { // TODO condition to check whether a given command exists, & a conditon to check whether it's a custom skript command
 	static {
 		Skript.registerEvent("Command", EvtCommand.class, CollectionUtils.array(PlayerCommandPreprocessEvent.class, ServerCommandEvent.class), "command [%-string%]")
@@ -44,8 +45,10 @@ public class EvtCommand extends SkriptEvent { // TODO condition to check whether
 				.since("2.0");
 	}
 	
+	@Nullable
 	private String command = null;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		if (args[0] != null) {
@@ -56,6 +59,7 @@ public class EvtCommand extends SkriptEvent { // TODO condition to check whether
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean check(final Event e) {
 		if (command == null)
@@ -72,8 +76,8 @@ public class EvtCommand extends SkriptEvent { // TODO condition to check whether
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "command" + (command == null ? "" : " /" + command);
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "command" + (command != null ? " /" + command : "");
 	}
 	
 }

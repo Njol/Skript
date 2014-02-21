@@ -21,8 +21,6 @@
 
 package ch.njol.skript.lang;
 
-import java.io.Serializable;
-
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
@@ -34,7 +32,7 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
-public interface SyntaxElement extends Serializable {
+public interface SyntaxElement {
 	
 	/**
 	 * Called just after the constructor.

@@ -52,11 +52,15 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.util.Task;
 
 // Copied to have this source available as mcstats' Maven repo does neither provide the source nor any Javadocs
 // I also made a few changes to support older versions of Bukkit
+@NonNullByDefault(false)
 public class Metrics {
 	
 	/**
@@ -82,6 +86,7 @@ public class Metrics {
 	/**
 	 * The plugin this metrics submits for
 	 */
+	@NonNull
 	private final Plugin plugin;
 	
 	/**
@@ -117,6 +122,7 @@ public class Metrics {
 	/**
 	 * The scheduled task
 	 */
+	@Nullable
 	Task task = null;
 	
 	public Metrics(final Plugin plugin) {

@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.entity.Player;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -34,7 +35,6 @@ import ch.njol.skript.lang.ExpressionType;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("IP")
 @Description("The IP address of a player.")
 @Examples({"IP-ban the player # is equal to the next line",
@@ -47,6 +47,7 @@ public class ExprIP extends SimplePropertyExpression<Player, String> {
 	}
 	
 	@Override
+	@Nullable
 	public String convert(final Player p) {
 		return p.getAddress().getAddress().getHostAddress();
 	}

@@ -29,6 +29,7 @@ import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -48,7 +49,7 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"deprecation", "serial"})
+@SuppressWarnings("deprecation")
 @Name("Message")
 @Description("The (chat) message of a chat event, the join message of a join event, the quit message of a quit event, or the death message on a death event. This expression is mostly useful for being changed.")
 @Examples({"on chat:",
@@ -73,6 +74,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	private static enum MessageType {
 		CHAT("chat", "[chat( |-)]message", Skript.isRunningMinecraft(1, 3) ? AsyncPlayerChatEvent.class : PlayerChatEvent.class) {
 			@Override
+			@Nullable
 			String get(final Event e) {
 				if (Skript.isRunningMinecraft(1, 3))
 					return ((AsyncPlayerChatEvent) e).getMessage();
@@ -90,6 +92,7 @@ public class ExprMessage extends SimpleExpression<String> {
 		},
 		JOIN("join", "(join|log[ ]in)( |-)message", PlayerJoinEvent.class) {
 			@Override
+			@Nullable
 			String get(final Event e) {
 				return ((PlayerJoinEvent) e).getJoinMessage();
 			}
@@ -101,6 +104,7 @@ public class ExprMessage extends SimpleExpression<String> {
 		},
 		QUIT("quit", "(quit|leave|log[ ]out|kick)( |-)message", PlayerQuitEvent.class, PlayerKickEvent.class) {
 			@Override
+			@Nullable
 			String get(final Event e) {
 				if (e instanceof PlayerKickEvent)
 					return ((PlayerKickEvent) e).getLeaveMessage();
@@ -118,6 +122,7 @@ public class ExprMessage extends SimpleExpression<String> {
 		},
 		DEATH("death", "death( |-)message", EntityDeathEvent.class) {
 			@Override
+			@Nullable
 			String get(final Event e) {
 				if (e instanceof PlayerDeathEvent)
 					return ((PlayerDeathEvent) e).getDeathMessage();
@@ -148,6 +153,7 @@ public class ExprMessage extends SimpleExpression<String> {
 				patterns[i] = values()[i].pattern;
 		}
 		
+		@Nullable
 		abstract String get(Event e);
 		
 		abstract void set(Event e, String message);
@@ -158,8 +164,10 @@ public class ExprMessage extends SimpleExpression<String> {
 		Skript.registerExpression(ExprMessage.class, String.class, ExpressionType.SIMPLE, MessageType.patterns);
 	}
 	
+	@SuppressWarnings("null")
 	private MessageType type;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		type = MessageType.values()[matchedPattern];
@@ -181,6 +189,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
 			return CollectionUtils.array(String.class);
@@ -188,11 +197,12 @@ public class ExprMessage extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		assert mode == ChangeMode.SET;
+		assert delta != null;
 		for (final Class<? extends Event> c : type.events) {
 			if (c.isInstance(e))
-				type.set(e, (String) delta[0]);
+				type.set(e, "" + delta[0]);
 		}
 	}
 	
@@ -207,7 +217,7 @@ public class ExprMessage extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the " + type.name + " message";
 	}
 	

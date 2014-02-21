@@ -24,6 +24,7 @@ package ch.njol.skript.hooks.regions.conditions;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Can Build")
 @Description({"Tests whether a player is allowed to build at a certain location.",
 		"This condition requires a supported <a href='../classes/#region'>regions</a> plugin to be installed."})
@@ -60,10 +60,12 @@ public class CondCanBuild extends Condition {
 				"%players% (can('t|not)|(is|are)(n't| not) allowed to) build %directions% %locations%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Player> players;
+	@SuppressWarnings("null")
 	Expression<Location> locations;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		players = (Expression<Player>) exprs[0];
@@ -88,7 +90,7 @@ public class CondCanBuild extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return players.toString(e, debug) + " can build " + locations.toString(e, debug);
 	}
 	

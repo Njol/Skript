@@ -28,6 +28,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemData;
@@ -46,7 +47,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class FallingBlockData extends EntityData<FallingBlock> {
 	static {
 		register(FallingBlockData.class, "falling block", FallingBlock.class, "falling block");
@@ -55,14 +55,16 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 	private final static Message m_not_a_block_error = new Message("entities.falling block.not a block error");
 	private final static Adjective m_adjective = new Adjective("entities.falling block.adjective");
 	
+	@Nullable
 	private ItemType[] types = null;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (exprs.length > 0 && exprs[0] != null) {
-			types = Converters.convert(((Literal<ItemType>) exprs[0]).getAll(), ItemType.class, new Converter<ItemType, ItemType>() {
+			if ((types = Converters.convert(((Literal<ItemType>) exprs[0]).getAll(), ItemType.class, new Converter<ItemType, ItemType>() {
 				@Override
+				@Nullable
 				public ItemType convert(ItemType t) {
 					t = t.getBlock().clone();
 					final Iterator<ItemData> iter = t.iterator();
@@ -78,8 +80,7 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 					t.clearEnchantments();
 					return t;
 				}
-			});
-			if (types.length == 0) {
+			})).length == 0) {
 				Skript.error(m_not_a_block_error.toString());
 				return false;
 			}
@@ -89,7 +90,7 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 	
 	@SuppressWarnings("deprecation")
 	@Override
-	protected boolean init(final Class<? extends FallingBlock> c, final FallingBlock e) {
+	protected boolean init(final @Nullable Class<? extends FallingBlock> c, final @Nullable FallingBlock e) {
 		if (e != null)
 			types = new ItemType[] {new ItemType(e.getBlockId(), e.getBlockData())};
 		return true;
@@ -98,23 +99,27 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 	@SuppressWarnings("deprecation")
 	@Override
 	protected boolean match(final FallingBlock entity) {
-		if (types == null)
-			return true;
-		for (final ItemType t : types) {
-			if (t.isOfType(entity.getBlockId(), entity.getBlockData()))
-				return true;
+		if (types != null) {
+			for (final ItemType t : types) {
+				if (t.isOfType(entity.getBlockId(), entity.getBlockData()))
+					return true;
+			}
+			return false;
 		}
-		return false;
+		return true;
 	}
 	
 	@Override
+	@Nullable
 	public FallingBlock spawn(final Location loc) {
-		final ItemStack t = CollectionUtils.getRandom(types).getRandom();
-		if (t.getType() == Material.AIR || !t.getType().isBlock()) {
-			assert false : t;
+		final ItemType t = CollectionUtils.getRandom(types);
+		assert t != null;
+		final ItemStack i = t.getRandom();
+		if (i == null || i.getType() == Material.AIR || !i.getType().isBlock()) {
+			assert false : i;
 			return null;
 		}
-		return loc.getWorld().spawnFallingBlock(loc, t.getType(), (byte) t.getDurability());
+		return loc.getWorld().spawnFallingBlock(loc, i.getType(), (byte) i.getDurability());
 	}
 	
 	@Override
@@ -131,12 +136,13 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (!(e instanceof FallingBlockData))
 			return false;
-		if (types == null)
-			return true;
 		final FallingBlockData d = (FallingBlockData) e;
-		if (d.types == null)
+		if (types != null) {
+			if (d.types != null)
+				return ItemType.isSubset(types, d.types);
 			return false;
-		return ItemType.isSubset(types, d.types);
+		}
+		return true;
 	}
 	
 	@Override
@@ -145,7 +151,8 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 	}
 	
 	@Override
-	public String toString(final int flags) {// FIXME test
+	public String toString(final int flags) {
+		final ItemType[] types = this.types;
 		if (types == null)
 			return super.toString(flags);
 		final StringBuilder b = new StringBuilder();
@@ -153,7 +160,7 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 		b.append(m_adjective.toString(types[0].getTypes().get(0).getGender(), flags));
 		b.append(" ");
 		b.append(Classes.toString(types, flags & Language.NO_ARTICLE_MASK, false));
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 //		return ItemType.serialize(types);

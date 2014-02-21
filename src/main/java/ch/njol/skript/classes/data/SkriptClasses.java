@@ -23,23 +23,25 @@ package ch.njol.skript.classes.data;
 
 import java.io.StreamCorruptedException;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.eclipse.jdt.annotation.Nullable;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemData;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Arithmetic;
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.ConfigurationSerializer;
 import ch.njol.skript.classes.EnumSerializer;
 import ch.njol.skript.classes.Parser;
-import ch.njol.skript.classes.SerializableChanger;
 import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.classes.YggdrasilSerializer;
 import ch.njol.skript.expressions.base.EventValueExpression;
@@ -66,7 +68,7 @@ import ch.njol.yggdrasil.Fields;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"serial", "rawtypes"})
+@SuppressWarnings("rawtypes")
 public class SkriptClasses {
 	public SkriptClasses() {}
 	
@@ -86,6 +88,7 @@ public class SkriptClasses {
 				.after("entitydata", "entitytype", "itemtype")
 				.parser(new Parser<ClassInfo>() {
 					@Override
+					@Nullable
 					public ClassInfo parse(final String s, final ParseContext context) {
 						return Classes.getClassInfoFromUserInput(Noun.stripIndefiniteArticle(s));
 					}
@@ -131,7 +134,9 @@ public class SkriptClasses {
 					@Override
 					protected ClassInfo deserialize(final Fields fields) throws StreamCorruptedException {
 						final String codeName = fields.getObject("codeName", String.class);
-						final ClassInfo<?> ci = Classes.getClassInfo(codeName);
+						if (codeName == null)
+							throw new StreamCorruptedException();
+						final ClassInfo<?> ci = Classes.getClassInfoNoError(codeName);
 						if (ci == null)
 							throw new StreamCorruptedException("Invalid ClassInfo " + codeName);
 						return ci;
@@ -139,6 +144,7 @@ public class SkriptClasses {
 					
 //					return c.getCodeName();
 					@Override
+					@Nullable
 					public ClassInfo deserialize(final String s) {
 						return Classes.getClassInfoNoError(s);
 					}
@@ -160,8 +166,8 @@ public class SkriptClasses {
 				.since("1.0")
 				.defaultExpression(new SimpleLiteral<WeatherType>(WeatherType.CLEAR, true))
 				.parser(new Parser<WeatherType>() {
-					
 					@Override
+					@Nullable
 					public WeatherType parse(final String s, final ParseContext context) {
 						return WeatherType.parse(s);
 					}
@@ -173,14 +179,13 @@ public class SkriptClasses {
 					
 					@Override
 					public String toVariableNameString(final WeatherType o) {
-						return o.name().toLowerCase();
+						return "" + o.name().toLowerCase();
 					}
 					
 					@Override
 					public String getVariableNamePattern() {
 						return "[a-z]+";
 					}
-					
 				})
 				.serializer(new EnumSerializer<WeatherType>(WeatherType.class)));
 		
@@ -203,6 +208,7 @@ public class SkriptClasses {
 				.after("number", "integer", "long", "time")
 				.parser(new Parser<ItemType>() {
 					@Override
+					@Nullable
 					public ItemType parse(final String s, final ParseContext context) {
 						return Aliases.parseItemType(s);
 					}
@@ -228,14 +234,15 @@ public class SkriptClasses {
 							b.append(":" + d.dataMin);
 							b.append("/" + d.dataMax);
 						}
-						if (!t.getEnchantments().isEmpty()) {
+						final Map<Enchantment, Integer> enchs = t.getEnchantments();
+						if (enchs != null && !enchs.isEmpty()) {
 							b.append("|");
-							for (final Entry<Enchantment, Integer> e : t.getEnchantments().entrySet()) {
+							for (final Entry<Enchantment, Integer> e : enchs.entrySet()) {
 								b.append("#" + e.getKey().getId());
 								b.append(":" + e.getValue());
 							}
 						}
-						return b.toString();
+						return "" + b.toString();
 					}
 					
 					@Override
@@ -266,6 +273,7 @@ public class SkriptClasses {
 //						return b.toString();
 					@Override
 					@Deprecated
+					@Nullable
 					public ItemType deserialize(final String s) {
 						final String[] ss = s.split("\\|");
 						if (ss.length > 2)
@@ -309,9 +317,9 @@ public class SkriptClasses {
 								}
 							}
 							if (sss.length == 2) {
-								if (!Skript.isRunningMinecraft(1, 4, 5))
+								if (!ItemType.itemMetaSupported)
 									return null;
-								final ItemMeta m = ConfigurationSerializer.deserializeCSOld(sss[1].replace("¦¦", "¦"), ItemMeta.class);
+								final ItemMeta m = ConfigurationSerializer.deserializeCSOld("" + sss[1].replace("¦¦", "¦"), ItemMeta.class);
 								if (m == null)
 									return null;
 								t.setItemMeta(m);
@@ -335,6 +343,7 @@ public class SkriptClasses {
 				.defaultExpression(new EventValueExpression<Time>(Time.class))
 				.parser(new Parser<Time>() {
 					@Override
+					@Nullable
 					public Time parse(final String s, final ParseContext context) {
 						return Time.parse(s);
 					}
@@ -356,6 +365,7 @@ public class SkriptClasses {
 				}).serializer(new YggdrasilSerializer<Time>() {
 //						return "" + t.getTicks();
 					@Override
+					@Nullable
 					public Time deserialize(final String s) {
 						try {
 							return new Time(Integer.parseInt(s));
@@ -384,6 +394,7 @@ public class SkriptClasses {
 				.since("1.0")
 				.parser(new Parser<Timespan>() {
 					@Override
+					@Nullable
 					public Timespan parse(final String s, final ParseContext context) {
 						return Timespan.parse(s);
 					}
@@ -405,6 +416,7 @@ public class SkriptClasses {
 				}).serializer(new YggdrasilSerializer<Timespan>() {
 //						return "" + t.getMilliSeconds();
 					@Override
+					@Nullable
 					public Timespan deserialize(final String s) {
 						try {
 							return new Timespan(Integer.parseInt(s));
@@ -448,6 +460,7 @@ public class SkriptClasses {
 				.defaultExpression(new SimpleLiteral<Timeperiod>(new Timeperiod(0, 23999), true))
 				.parser(new Parser<Timeperiod>() {
 					@Override
+					@Nullable
 					public Timeperiod parse(final String s, final ParseContext context) {
 						if (s.equalsIgnoreCase("day")) {
 							return new Timeperiod(0, 11999);
@@ -465,8 +478,8 @@ public class SkriptClasses {
 								return null;
 							return new Timeperiod(t.getTicks());
 						}
-						final Time t1 = Time.parse(s.substring(0, c).trim());
-						final Time t2 = Time.parse(s.substring(c + 1).trim());
+						final Time t1 = Time.parse("" + s.substring(0, c).trim());
+						final Time t2 = Time.parse("" + s.substring(c + 1).trim());
 						if (t1 == null || t2 == null)
 							return null;
 						return new Timeperiod(t1.getTicks(), t2.getTicks());
@@ -489,6 +502,7 @@ public class SkriptClasses {
 				}).serializer(new YggdrasilSerializer<Timeperiod>() {
 //						return t.start + "-" + t.end;
 					@Override
+					@Nullable
 					public Timeperiod deserialize(final String s) {
 						final String[] split = s.split("-");
 						if (split.length != 2)
@@ -514,6 +528,7 @@ public class SkriptClasses {
 				.serializer(new YggdrasilSerializer<Date>() {
 //						return "" + d.getTimestamp();
 					@Override
+					@Nullable
 					public Date deserialize(final String s) {
 						try {
 							return new Date(Long.parseLong(s));
@@ -552,6 +567,7 @@ public class SkriptClasses {
 				.defaultExpression(new SimpleLiteral<Direction>(new Direction(new double[] {0, 0, 0}), true))
 				.parser(new Parser<Direction>() {
 					@Override
+					@Nullable
 					public Direction parse(final String s, final ParseContext context) {
 						return null;
 					}
@@ -580,6 +596,7 @@ public class SkriptClasses {
 //						return o.serialize();
 					@Override
 					@Deprecated
+					@Nullable
 					public Direction deserialize(final String s) {
 						return Direction.deserialize(s);
 					}
@@ -601,9 +618,10 @@ public class SkriptClasses {
 						"enchant the player's chestplate with projectile protection 5")
 				.since("")
 				.defaultExpression(new EventValueExpression<Slot>(Slot.class))
-				.changer(new SerializableChanger<Slot>() {
+				.changer(new Changer<Slot>() {
 					@SuppressWarnings("unchecked")
 					@Override
+					@Nullable
 					public Class<Object>[] acceptChange(final ChangeMode mode) {
 						if (mode == ChangeMode.RESET)
 							return null;
@@ -611,19 +629,25 @@ public class SkriptClasses {
 					}
 					
 					@Override
-					public void change(final Slot[] slots, final Object[] deltas, final ChangeMode mode) {
+					public void change(final Slot[] slots, final @Nullable Object[] deltas, final ChangeMode mode) {
 						final Object delta = deltas == null ? null : deltas[0];
 						for (final Slot slot : slots) {
 							switch (mode) {
 								case SET:
+									assert delta != null;
 									slot.setItem(delta instanceof ItemStack ? (ItemStack) delta : ((ItemType) delta).getItem().getRandom());
 									break;
 								case ADD:
+									assert delta != null;
 									if (delta instanceof ItemStack) {
 										final ItemStack i = slot.getItem();
-										if (Utils.itemStacksEqual(i, (ItemStack) delta)) {
-											i.setAmount(Math.min(i.getAmount() + ((ItemStack) delta).getAmount(), i.getMaxStackSize()));
-											slot.setItem(i);
+										if (i == null || i.getType() == Material.AIR || Utils.itemStacksEqual(i, (ItemStack) delta)) {
+											if (i != null && i.getType() != Material.AIR) {
+												i.setAmount(Math.min(i.getAmount() + ((ItemStack) delta).getAmount(), i.getMaxStackSize()));
+												slot.setItem(i);
+											} else {
+												slot.setItem((ItemStack) delta);
+											}
 										}
 									} else {
 										slot.setItem(((ItemType) delta).getItem().addTo(slot.getItem()));
@@ -631,9 +655,10 @@ public class SkriptClasses {
 									break;
 								case REMOVE:
 								case REMOVE_ALL:
+									assert delta != null;
 									if (delta instanceof ItemStack) {
 										final ItemStack i = slot.getItem();
-										if (Utils.itemStacksEqual(i, (ItemStack) delta)) {
+										if (i != null && Utils.itemStacksEqual(i, (ItemStack) delta)) {
 											final int a = mode == ChangeMode.REMOVE_ALL ? 0 : i.getAmount() - ((ItemStack) delta).getAmount();
 											if (a <= 0) {
 												slot.setItem(null);
@@ -671,6 +696,7 @@ public class SkriptClasses {
 				.since("")
 				.parser(new Parser<Color>() {
 					@Override
+					@Nullable
 					public Color parse(final String s, final ParseContext context) {
 						return Color.byName(s);
 					}
@@ -682,7 +708,7 @@ public class SkriptClasses {
 					
 					@Override
 					public String toVariableNameString(final Color o) {
-						return o.name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
+						return "" + o.name().toLowerCase(Locale.ENGLISH).replace('_', ' ');
 					}
 					
 					@Override
@@ -702,6 +728,7 @@ public class SkriptClasses {
 				.defaultExpression(new SimpleLiteral<StructureType>(StructureType.TREE, true))
 				.parser(new Parser<StructureType>() {
 					@Override
+					@Nullable
 					public StructureType parse(final String s, final ParseContext context) {
 						return StructureType.fromName(s);
 					}
@@ -713,7 +740,7 @@ public class SkriptClasses {
 					
 					@Override
 					public String toVariableNameString(final StructureType o) {
-						return o.name().toLowerCase();
+						return "" + o.name().toLowerCase();
 					}
 					
 					@Override
@@ -732,6 +759,7 @@ public class SkriptClasses {
 				.since("1.4.6")
 				.parser(new Parser<EnchantmentType>() {
 					@Override
+					@Nullable
 					public EnchantmentType parse(final String s, final ParseContext context) {
 						return EnchantmentType.parse(s);
 					}
@@ -755,6 +783,7 @@ public class SkriptClasses {
 //						return o.getType().getId() + ":" + o.getLevel();
 					@SuppressWarnings("deprecation")
 					@Override
+					@Nullable
 					public EnchantmentType deserialize(final String s) {
 						final String[] split = s.split(":");
 						if (split.length != 2)
@@ -781,13 +810,14 @@ public class SkriptClasses {
 					private final RegexMessage pattern = new RegexMessage("types.experience.pattern", Pattern.CASE_INSENSITIVE);
 					
 					@Override
+					@Nullable
 					public Experience parse(String s, final ParseContext context) {
 						int xp = -1;
 						if (s.matches("\\d+ .+")) {
-							xp = Utils.parseInt(s.substring(0, s.indexOf(' ')));
-							s = s.substring(s.indexOf(' ') + 1);
+							xp = Utils.parseInt("" + s.substring(0, s.indexOf(' ')));
+							s = "" + s.substring(s.indexOf(' ') + 1);
 						}
-						if (pattern.getPattern().matcher(s).matches())
+						if (pattern.matcher(s).matches())
 							return new Experience(xp);
 						return null;
 					}
@@ -810,6 +840,7 @@ public class SkriptClasses {
 				.serializer(new YggdrasilSerializer<Experience>() {
 //						return "" + xp;
 					@Override
+					@Nullable
 					public Experience deserialize(final String s) {
 						try {
 							return new Experience(Integer.parseInt(s));
@@ -829,6 +860,7 @@ public class SkriptClasses {
 				.user("(visual|particle) effects?")
 				.parser(new Parser<VisualEffect>() {
 					@Override
+					@Nullable
 					public VisualEffect parse(final String s, final ParseContext context) {
 						return VisualEffect.parse(s);
 					}

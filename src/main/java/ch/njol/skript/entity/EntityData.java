@@ -34,6 +34,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
@@ -63,7 +64,7 @@ import ch.njol.yggdrasil.YggdrasilSerializable.YggdrasilExtendedSerializable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"rawtypes", "serial"})
+@SuppressWarnings("rawtypes")
 public abstract class EntityData<E extends Entity> implements SyntaxElement, YggdrasilExtendedSerializable {// TODO extended horse support, zombie villagers // REMIND unit
 
 	public final static String LANGUAGE_NODE = "entities";
@@ -96,6 +97,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		@Override
 		protected EntityData deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
 			final String codeName = fields.getAndRemoveObject("codeName", String.class);
+			if (codeName == null)
+				throw new StreamCorruptedException();
 			final EntityDataInfo<?> info = getInfo(codeName);
 			if (info == null)
 				throw new StreamCorruptedException("Invalid EntityData code name " + codeName);
@@ -108,12 +111,14 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 			} catch (final IllegalAccessException e) {
 				Skript.exception(e);
 			}
-			return null;
-		};
+			throw new StreamCorruptedException();
+		}
 		
 //		return getInfo((Class<? extends EntityData<?>>) d.getClass()).codeName + ":" + d.serialize();
+		@SuppressWarnings("null")
 		@Override
 		@Deprecated
+		@Nullable
 		public EntityData deserialize(final String s) {
 			final String[] split = s.split(":", 2);
 			if (split.length != 2)
@@ -157,6 +162,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 					}
 					
 					@Override
+					@Nullable
 					public EntityData parse(final String s, final ParseContext context) {
 						return EntityData.parse(s);
 					}
@@ -211,7 +217,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		}
 		
 		@Override
-		public boolean equals(final Object obj) {
+		public boolean equals(final @Nullable Object obj) {
 			if (this == obj)
 				return true;
 			if (obj == null)
@@ -257,10 +263,10 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 				return;
 			}
 		}
-		info = null;
-		assert false;
+		throw new IllegalStateException();
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public final boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		this.matchedPattern = matchedPattern;
@@ -276,11 +282,11 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 	protected abstract boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult);
 	
 	/**
-	 * @param c An entity's class, e.g. Player or CraftPlayer. Must not be null.
+	 * @param c An entity's class, e.g. Player
 	 * @param e An actual entity, or null to get an entity data for an entity class
 	 * @return Whether initialisation was successful
 	 */
-	protected abstract boolean init(Class<? extends E> c, E e);
+	protected abstract boolean init(@Nullable Class<? extends E> c, @Nullable E e);
 	
 	public abstract void set(E entity);
 	
@@ -300,14 +306,17 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		return toString(0);
 	}
 	
+	@SuppressWarnings("null")
 	protected Noun getName() {
 		return info.names[matchedPattern];
 	}
 	
+	@Nullable
 	protected Adjective getAgeAdjective() {
 		return baby.isTrue() ? m_baby : baby.isFalse() ? m_adult : null;
 	}
 	
+	@SuppressWarnings("null")
 	public String toString(final int flags) {
 		final Noun name = info.names[matchedPattern];
 		return baby.isTrue() ? m_baby.toString(name, flags) : baby.isFalse() ? m_adult.toString(name, flags) : name.toString(flags);
@@ -321,6 +330,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		return baby;
 	}
 	
+	protected abstract int hashCode_i();
+	
 	@Override
 	public final int hashCode() {
 		final int prime = 31;
@@ -333,8 +344,10 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		return result;
 	}
 	
+	protected abstract boolean equals_i(EntityData<?> obj);
+	
 	@Override
-	public final boolean equals(final Object obj) {
+	public final boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -353,10 +366,6 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		return equals_i(other);
 	}
 	
-	protected abstract boolean equals_i(EntityData<?> obj);
-	
-	protected abstract int hashCode_i();
-	
 	public final static EntityDataInfo<?> getInfo(final Class<? extends EntityData<?>> c) {
 		for (final EntityDataInfo<?> i : infos) {
 			if (i.c == c)
@@ -365,6 +374,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		throw new SkriptAPIException("Unregistered EntityData class " + c.getName());
 	}
 	
+	@Nullable
 	public final static EntityDataInfo<?> getInfo(final String codeName) {
 		for (final EntityDataInfo<?> i : infos) {
 			if (i.codeName.equals(codeName))
@@ -379,6 +389,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 	 * @param s String with optional indefinite article at the beginning
 	 * @return The parsed entity data
 	 */
+	@SuppressWarnings("null")
+	@Nullable
 	public final static EntityData<?> parse(final String s) {
 		return SkriptParser.parseStatic(Noun.stripIndefiniteArticle(s), infos.iterator(), null);
 	}
@@ -389,14 +401,19 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 	 * @param s
 	 * @return The parsed entity data
 	 */
+	@SuppressWarnings("null")
+	@Nullable
 	public final static EntityData<?> parseWithoutIndefiniteArticle(final String s) {
 		return SkriptParser.parseStatic(s, infos.iterator(), null);
 	}
 	
+	@Nullable
 	public E spawn(final Location loc) {
 		assert loc != null;
 		try {
 			final E e = loc.getWorld().spawn(loc, getType());
+			if (e == null)
+				throw new IllegalArgumentException();
 			if (baby.isTrue() && e instanceof Ageable)
 				((Ageable) e).setBaby();
 			set(e);
@@ -408,6 +425,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		}
 	}
 	
+	@SuppressWarnings("null")
 	public E[] getAll(final World... worlds) {
 		assert worlds != null && worlds.length > 0 : Arrays.toString(worlds);
 		final List<E> list = new ArrayList<E>();
@@ -425,7 +443,8 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 	 * @param worlds worlds or null for all
 	 * @return All entities of this type in the given worlds
 	 */
-	public final static <E extends Entity> E[] getAll(final EntityData<?>[] types, final Class<E> type, World[] worlds) {
+	@SuppressWarnings("null")
+	public final static <E extends Entity> E[] getAll(final EntityData<?>[] types, final Class<E> type, @Nullable World[] worlds) {
 		assert types.length > 0;
 		if (type == Player.class) {
 			if (worlds == null && types.length == 1 && types[0] instanceof PlayerData && ((PlayerData) types[0]).op == 0)
@@ -459,7 +478,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		return list.toArray((E[]) Array.newInstance(type, list.size()));
 	}
 	
-	private static <E extends Entity> EntityData<? super E> getData(final Class<E> c, final E e) {
+	private static <E extends Entity> EntityData<? super E> getData(final @Nullable Class<E> c, final @Nullable E e) {
 		assert c == null ^ e == null;
 		assert c == null || c.isInterface();
 		for (final EntityDataInfo<?> info : infos) {
@@ -469,12 +488,16 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 					if (d.init(c, e))
 						return d;
 				} catch (final Exception ex) {
-					Skript.exception(ex);
-					return null;
+					throw Skript.exception(ex);
 				}
 			}
 		}
-		return e == null ? new SimpleEntityData(c) : new SimpleEntityData(e);
+		if (e != null) {
+			return new SimpleEntityData(e);
+		} else {
+			assert c != null;
+			return new SimpleEntityData(c);
+		}
 	}
 	
 	public static <E extends Entity> EntityData<? super E> fromClass(final Class<E> c) {
@@ -502,7 +525,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final boolean isInstance(final Entity e) {
+	public final boolean isInstance(final @Nullable Entity e) {
 		if (e == null)
 			return false;
 		if (!baby.isUnknown() && e instanceof Ageable && ((Ageable) e).isAdult() != baby.isFalse())

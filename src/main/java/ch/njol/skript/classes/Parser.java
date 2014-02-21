@@ -21,6 +21,8 @@
 
 package ch.njol.skript.classes;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.StringMode;
@@ -45,6 +47,7 @@ public abstract class Parser<T> {
 	 * @param context Context of parsing, may not be null
 	 * @return The parsed input or null if the input is invalid for this parser.
 	 */
+	@Nullable
 	public abstract T parse(String s, ParseContext context);
 	
 	/**
@@ -82,7 +85,7 @@ public abstract class Parser<T> {
 				return toCommandString(o);
 		}
 		assert false;
-		return null;
+		return "";
 	}
 	
 	// not used anymore

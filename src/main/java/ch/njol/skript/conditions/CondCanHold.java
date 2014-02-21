@@ -24,6 +24,7 @@ package ch.njol.skript.conditions;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -42,7 +43,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Can Hold")
 @Description("Tests whether a player or a chest can hold the given item.")
 @Examples({"block can hold 200 cobblestone",
@@ -55,10 +55,12 @@ public class CondCanHold extends Condition {
 				"%inventories% (can(no|')t hold|(ha(s|ve) not|ha(s|ve)n't|do[es]n't have) [enough] space (for|to hold)) %itemtypes%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Inventory> invis;
+	@SuppressWarnings("null")
 	Expression<ItemType> items;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		invis = (Expression<Inventory>) vars[0];
@@ -101,7 +103,7 @@ public class CondCanHold extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return invis.toString(e, debug) + " can" + (isNegated() ? "'t" : "") + " hold " + items.toString(e, debug);
 	}
 	

@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Location At")
 @Description("Allows to create a <a href='../classes/#location'>location</a> from three coordinates and a world.")
 @Examples({"set {_loc} to the location at arg-1, arg-2, arg-3 of the world arg-4",
@@ -53,10 +53,12 @@ public class ExprLocationAt extends SimpleExpression<Location> {
 				"[the] (location|position) [at] [\\(][x[ ][=[ ]]]%number%, [y[ ][=[ ]]]%number%, [and] [z[ ][=[ ]]]%number%[\\)] [[(in|of) [[the] world]] %world%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<World> world;
+	@SuppressWarnings("null")
 	private Expression<Number> x, y, z;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		x = (Expression<Number>) exprs[0];
@@ -67,6 +69,7 @@ public class ExprLocationAt extends SimpleExpression<Location> {
 	}
 	
 	@Override
+	@Nullable
 	protected Location[] get(final Event e) {
 		final World w = world.getSingle(e);
 		final Number x = this.x.getSingle(e), y = this.y.getSingle(e), z = this.z.getSingle(e);
@@ -86,7 +89,7 @@ public class ExprLocationAt extends SimpleExpression<Location> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the location at (" + x.toString(e, debug) + ", " + y.toString(e, debug) + ", " + z.toString(e, debug) + ") in " + world.toString(e, debug);
 	}
 	

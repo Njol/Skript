@@ -26,6 +26,7 @@ import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -36,9 +37,7 @@ import ch.njol.util.Checker;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EvtEntityBlockChange extends SkriptEvent {
-	
 	static {
 		Skript.registerEvent("Enderman/Sheep", EvtEntityBlockChange.class, EntityChangeBlockEvent.class, ChangeEvent.patterns)
 				.description("Called when an enderman places or picks up a block, or a sheep eats grass respectively.")
@@ -84,8 +83,10 @@ public class EvtEntityBlockChange extends SkriptEvent {
 		}
 	}
 	
+	@SuppressWarnings("null")
 	private ChangeEvent event;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		event = ChangeEvent.values()[matchedPattern];
@@ -100,8 +101,8 @@ public class EvtEntityBlockChange extends SkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return event.name().toLowerCase();
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "" + event.name().replace('_', ' ').toLowerCase();
 	}
 	
 }

@@ -27,6 +27,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -44,7 +45,6 @@ import ch.njol.util.Math2;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Direction")
 @Description("A helper expression for the <a href='../classes/#direction'>direction type</a>.")
 @Examples({"thrust the player upwards",
@@ -89,11 +89,15 @@ public class ExprDirection extends SimpleExpression<Direction> {
 				"[%-number% [(block|meter)[s]]] horizontal[ly] (0¦in[ ]front [of]|0¦forward[s]|2¦behind|2¦backwards|to the (1¦right|-1¦left) [of])");
 	}
 	
+	@Nullable
 	private Expression<Number> amount;
 	
+	@Nullable
 	private Vector direction;
+	@Nullable
 	private ExprDirection next;
 	
+	@Nullable
 	private Expression<?> relativeTo;
 	boolean horizontal;
 	boolean facing;
@@ -128,8 +132,9 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	}
 	
 	@Override
+	@Nullable
 	protected Direction[] get(final Event e) {
-		final Number n = amount == null ? 1 : amount.getSingle(e);
+		final Number n = amount != null ? amount.getSingle(e) : 1;
 		if (n == null)
 			return null;
 		final double ln = n.doubleValue();
@@ -137,12 +142,14 @@ public class ExprDirection extends SimpleExpression<Direction> {
 			final Vector v = direction.clone().multiply(ln);
 			ExprDirection d = next;
 			while (d != null) {
-				final Number n2 = d.amount == null ? 1 : d.amount.getSingle(e);
+				final Number n2 = d.amount != null ? d.amount.getSingle(e) : 1;
 				if (n2 == null)
 					return null;
+				assert d.direction != null; // checked in init()
 				v.add(d.direction.clone().multiply(n2.doubleValue()));
 				d = d.next;
 			}
+			assert v != null;
 			return new Direction[] {new Direction(v)};
 		} else if (relativeTo != null) {
 			final Object o = relativeTo.getSingle(e);
@@ -156,8 +163,11 @@ public class ExprDirection extends SimpleExpression<Direction> {
 			} else {
 				final Location l = ((Entity) o).getLocation();
 				if (!horizontal) {
-					if (!facing)
-						return new Direction[] {new Direction(l.getDirection().normalize().multiply(ln))};
+					if (!facing) {
+						final Vector v = l.getDirection().normalize().multiply(ln);
+						assert v != null;
+						return new Direction[] {new Direction(v)};
+					}
 					final double pitch = Direction.pitchToRadians(l.getPitch());
 					assert pitch >= -Math.PI / 2 && pitch <= Math.PI / 2;
 					if (pitch > Math.PI / 4)
@@ -195,8 +205,9 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return (amount == null ? "" : amount.toString(e, debug) + " meter(s) ") + (direction != null ? Direction.toString(direction) :
+	public String toString(final @Nullable Event e, final boolean debug) {
+		final Expression<?> relativeTo = this.relativeTo;
+		return (amount != null ? amount.toString(e, debug) + " meter(s) " : "") + (direction != null ? Direction.toString(direction) :
 				relativeTo != null ? " in " + (horizontal ? "horizontal " : "") + (facing ? "facing" : "direction") + " of " + relativeTo.toString(e, debug) :
 						(horizontal ? "horizontally " : "") + Direction.toString(0, yaw, 1));
 	}

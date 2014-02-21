@@ -27,6 +27,7 @@ import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -41,12 +42,10 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.InventorySlot;
 import ch.njol.skript.util.Slot;
 import ch.njol.util.Kleenean;
-import ch.njol.util.coll.iterator.EmptyIterator;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Items In")
 @Description({"All items in an inventory. Useful for looping or storing in a list variable.",
 		"Please note that the positions of the items in the inventory are not saved, only their order is preserved."})
@@ -61,9 +60,10 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 				"[all] items (in|of|contained in|out of) (|1¦inventor(y|ies)) %inventories%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Inventory> invis;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		invis = (Expression<Inventory>) exprs[0];
@@ -72,6 +72,7 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	protected Slot[] get(final Event e) {
 		final ArrayList<Slot> r = new ArrayList<Slot>();
@@ -85,15 +86,18 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 	}
 	
 	@Override
+	@Nullable
 	public Iterator<Slot> iterator(final Event e) {
 		final Iterator<? extends Inventory> is = invis.iterator(e);
-		if (!is.hasNext())
-			return EmptyIterator.get();
+		if (is == null || !is.hasNext())
+			return null;
 		return new Iterator<Slot>() {
+			@SuppressWarnings("null")
 			Inventory current = is.next();
 			
 			int next = 0;
 			
+			@SuppressWarnings("null")
 			@Override
 			public boolean hasNext() {
 				while (next < current.getSize() && current.getItem(next) == null)
@@ -127,7 +131,7 @@ public class ExprItemsIn extends SimpleExpression<Slot> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "items in " + invis.toString(e, debug);
 	}
 	

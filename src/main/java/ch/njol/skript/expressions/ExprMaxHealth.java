@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -36,7 +37,6 @@ import ch.njol.skript.util.HealthUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Max Health")
 @Description("The maximum health of an entity, e.g. 10 for a player")
 @Examples({"on join:",
@@ -49,6 +49,7 @@ public class ExprMaxHealth extends SimplePropertyExpression<LivingEntity, Double
 		register(ExprMaxHealth.class, Double.class, "max[imum] health", "livingentities");
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Double convert(final LivingEntity e) {
 		return HealthUtils.getMaxHealth(e);
@@ -65,6 +66,7 @@ public class ExprMaxHealth extends SimplePropertyExpression<LivingEntity, Double
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (!Skript.isRunningMinecraft(1, 6)) {
 			Skript.error("The max health of an entity can only be changed in Minecraft 1.6 and later");
@@ -76,9 +78,10 @@ public class ExprMaxHealth extends SimplePropertyExpression<LivingEntity, Double
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		double d = delta == null ? 0 : ((Number) delta[0]).doubleValue();
 		for (final LivingEntity en : getExpr().getArray(e)) {
+			assert en != null : getExpr();
 			switch (mode) {
 				case SET:
 					HealthUtils.setMaxHealth(en, d);

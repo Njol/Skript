@@ -43,7 +43,7 @@ public class Patterns<T> {
 		patterns = new String[info.length];
 		ts = new Object[info.length];
 		for (int i = 0; i < info.length; i++) {
-			if (info[i].length != 2 || !(info[i][0] instanceof String))
+			if (info[i].length != 2 || !(info[i][0] instanceof String) || info[i][1] == null)
 				throw new IllegalArgumentException("given array is not like {{String, T}, {String, T}, ...}");
 			patterns[i] = (String) info[i][0];
 			ts[i] = info[i][1];
@@ -59,7 +59,7 @@ public class Patterns<T> {
 	 * @return The info associated with the matched pattern
 	 * @throws ClassCastException If the item in the source array is not of the requested type
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	public T getInfo(final int matchedPattern) {
 		return (T) ts[matchedPattern];
 	}

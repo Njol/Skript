@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Amount")
 @Description({"The amount of something.",
 		"Please note that <code>amount of &lt;items&gt;</code> will not return the number of items, but the number of stacks, e.g. 1 for a stack of 64 torches."})
@@ -51,8 +51,10 @@ public class ExprAmount extends SimpleExpression<Integer> {
 		Skript.registerExpression(ExprAmount.class, Integer.class, ExpressionType.PROPERTY, "(amount|number|size) of %objects%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<?> expr;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		expr = exprs[0];
@@ -76,7 +78,7 @@ public class ExprAmount extends SimpleExpression<Integer> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "amount of " + expr.toString(e, debug);
 	}
 	

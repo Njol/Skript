@@ -23,6 +23,7 @@ package ch.njol.skript.entity;
 
 import org.bukkit.Location;
 import org.bukkit.entity.ExperienceOrb;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -31,7 +32,6 @@ import ch.njol.skript.localization.ArgsMessage;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class XpOrbData extends EntityData<ExperienceOrb> {
 	static {
 		register(XpOrbData.class, "xporb", ExperienceOrb.class, "xp-orb");
@@ -51,7 +51,7 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends ExperienceOrb> c, final ExperienceOrb e) {
+	protected boolean init(final @Nullable Class<? extends ExperienceOrb> c, final @Nullable ExperienceOrb e) {
 		xp = e == null ? -1 : e.getExperience();
 		return true;
 	}
@@ -73,8 +73,11 @@ public class XpOrbData extends EntityData<ExperienceOrb> {
 	}
 	
 	@Override
+	@Nullable
 	public ExperienceOrb spawn(final Location loc) {
 		final ExperienceOrb orb = super.spawn(loc);
+		if (orb == null)
+			return null;
 		if (xp == -1)
 			orb.setExperience(1);
 		return orb;

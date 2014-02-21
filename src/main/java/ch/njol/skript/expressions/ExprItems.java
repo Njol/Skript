@@ -23,10 +23,12 @@ package ch.njol.skript.expressions;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -39,8 +41,8 @@ import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
-import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
+import ch.njol.util.NullableChecker;
 import ch.njol.util.coll.iterator.ArrayIterator;
 import ch.njol.util.coll.iterator.CheckedIterator;
 import ch.njol.util.coll.iterator.IteratorIterable;
@@ -48,7 +50,6 @@ import ch.njol.util.coll.iterator.IteratorIterable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Items")
 @Description("Items or blocks of a specific type, useful for looping.")
 @Examples({"loop items of type ore and log:",
@@ -59,11 +60,12 @@ import ch.njol.util.coll.iterator.IteratorIterable;
 public class ExprItems extends SimpleExpression<ItemStack> {
 	
 	static {
-		Skript.registerExpression(ExprItems.class, ItemStack.class, ExpressionType.NORMAL,
+		Skript.registerExpression(ExprItems.class, ItemStack.class, ExpressionType.COMBINED,
 				"[(all|every)] item(s|[ ]types)", "items of type[s] %itemtypes%",
 				"[(all|every)] block(s|[ ]types)", "blocks of type[s] %itemtypes%");
 	}
 	
+	@Nullable
 	Expression<ItemType> types = null;
 	private boolean blocks = false;
 	
@@ -80,8 +82,10 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 		return true;
 	}
 	
+	@Nullable
 	private ItemStack[] buffer = null;
 	
+	@SuppressWarnings("null")
 	@Override
 	protected ItemStack[] get(final Event e) {
 		if (buffer != null)
@@ -95,6 +99,7 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 	}
 	
 	@Override
+	@Nullable
 	public Iterator<ItemStack> iterator(final Event e) {
 		Iterator<ItemStack> iter;
 		if (types == null) {
@@ -117,21 +122,29 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 				
 			};
 		} else {
+			@SuppressWarnings("null")
+			final Iterator<ItemType> it = new ArrayIterator<ItemType>(types.getArray(e));
+			if (!it.hasNext())
+				return null;
 			iter = new Iterator<ItemStack>() {
 				
-				private final Iterator<ItemType> iter = new ArrayIterator<ItemType>(types.getArray(e));
-				Iterator<ItemStack> current;
+				@SuppressWarnings("null")
+				Iterator<ItemStack> current = it.next().getAll().iterator();
 				
+				@SuppressWarnings("null")
 				@Override
 				public boolean hasNext() {
-					return iter.hasNext() || current.hasNext();
+					while (!current.hasNext() && it.hasNext()) {
+						current = it.next().getAll().iterator();
+					}
+					return current.hasNext();
 				}
 				
+				@SuppressWarnings("null")
 				@Override
 				public ItemStack next() {
-					if (current == null || !current.hasNext()) {
-						current = iter.next().getAll().iterator();
-					}
+					if (!hasNext())
+						throw new NoSuchElementException();
 					return current.next();
 				}
 				
@@ -144,11 +157,11 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 		if (!blocks)
 			return iter;
 		
-		return new CheckedIterator<ItemStack>(iter, new Checker<ItemStack>() {
+		return new CheckedIterator<ItemStack>(iter, new NullableChecker<ItemStack>() {
 			@SuppressWarnings("deprecation")
 			@Override
-			public boolean check(final ItemStack is) {
-				return is.getTypeId() <= Skript.MAXBLOCKID;
+			public boolean check(final @Nullable ItemStack is) {
+				return is != null && is.getTypeId() <= Skript.MAXBLOCKID;
 			}
 		});
 	}
@@ -159,8 +172,9 @@ public class ExprItems extends SimpleExpression<ItemStack> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return (blocks ? "blocks" : "items") + (types == null ? "" : " of type" + (types.isSingle() ? "" : "s") + " " + types.toString(e, debug));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		final Expression<ItemType> types = this.types;
+		return (blocks ? "blocks" : "items") + (types != null ? " of type" + (types.isSingle() ? "" : "s") + " " + types.toString(e, debug) : "");
 	}
 	
 	@Override

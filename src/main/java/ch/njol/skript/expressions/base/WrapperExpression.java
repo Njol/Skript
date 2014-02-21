@@ -24,9 +24,10 @@ package ch.njol.skript.expressions.base;
 import java.util.Iterator;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
-import ch.njol.skript.classes.SerializableConverter;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.SyntaxElement;
@@ -42,19 +43,17 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	private Expression<? extends T> expr;
 	
+	@SuppressWarnings("null")
 	protected WrapperExpression() {}
 	
 	public WrapperExpression(final SimpleExpression<? extends T> expr) {
-		assert expr != null;
-		setExpr(expr);
+		this.expr = expr;
 	}
 	
 	protected void setExpr(final Expression<? extends T> expr) {
-		assert expr != null;
 		this.expr = expr;
 	}
 	
@@ -63,14 +62,16 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	}
 	
 	@Override
+	@Nullable
 	protected <R> ConvertedExpression<T, ? extends R> getConvertedExpr(final Class<R>... to) {
 		for (final Class<R> c : to) {
-			final SerializableConverter<? super T, ? extends R> conv = (SerializableConverter<? super T, ? extends R>) Converters.getConverter(getReturnType(), c);
+			assert c != null;
+			final Converter<? super T, ? extends R> conv = (Converter<? super T, ? extends R>) Converters.getConverter(getReturnType(), c);
 			if (conv == null)
 				continue;
 			return new ConvertedExpression<T, R>(expr, c, conv) {
 				@Override
-				public String toString(final Event e, final boolean debug) {
+				public String toString(final @Nullable Event e, final boolean debug) {
 					if (debug && e == null)
 						return "(" + WrapperExpression.this.toString(e, debug) + ")->" + to.getName();
 					return WrapperExpression.this.toString(e, debug);
@@ -86,6 +87,7 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	}
 	
 	@Override
+	@Nullable
 	public Iterator<? extends T> iterator(final Event e) {
 		return expr.iterator(e);
 	}
@@ -106,12 +108,13 @@ public abstract class WrapperExpression<T> extends SimpleExpression<T> {
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		return expr.acceptChange(mode);
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		expr.change(e, delta, mode);
 	}
 	

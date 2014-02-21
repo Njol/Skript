@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 /**
  * @author Peter Güttinger
  */
@@ -36,6 +38,7 @@ public class Version implements Serializable, Comparable<Version> {
 	/**
 	 * Everything after the version, e.g. "alpha", "b", "rc 1", "build 2314" etc. or null if nothing.
 	 */
+	@Nullable
 	private final String postfix;
 	
 	public Version(final int... version) {
@@ -46,14 +49,16 @@ public class Version implements Serializable, Comparable<Version> {
 		postfix = null;
 	}
 	
-	public Version(final int major, final int minor, final String postfix) {
+	public Version(final int major, final int minor, final @Nullable String postfix) {
 		version[0] = major;
 		version[1] = minor;
 		this.postfix = postfix == null || postfix.isEmpty() ? null : postfix;
 	}
 	
+	@SuppressWarnings("null")
 	public final static Pattern versionPattern = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?\\s*(.*)");
 	
+	@SuppressWarnings("null")
 	public Version(final String version) {
 		final Matcher m = versionPattern.matcher(version.trim());
 		if (!m.matches())
@@ -66,7 +71,7 @@ public class Version implements Serializable, Comparable<Version> {
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (!(obj instanceof Version))
@@ -76,7 +81,8 @@ public class Version implements Serializable, Comparable<Version> {
 	
 	@Override
 	public int hashCode() {
-		return Arrays.hashCode(version) * 31 + (postfix == null ? 0 : postfix.hashCode());
+		final String pf = postfix;
+		return Arrays.hashCode(version) * 31 + (pf == null ? 0 : pf.hashCode());
 	}
 	
 	@Override
@@ -87,10 +93,11 @@ public class Version implements Serializable, Comparable<Version> {
 			if (version[i] < other.version[i])
 				return -1;
 		}
-		if (postfix == null)
+		final String pf = postfix;
+		if (pf == null)
 			return other.postfix == null ? 0 : 1;
 		else
-			return other.postfix == null ? -1 : postfix.compareTo(other.postfix);
+			return other.postfix == null ? -1 : pf.compareTo(other.postfix);
 	}
 	
 	public int compareTo(final int... other) {
@@ -119,9 +126,22 @@ public class Version implements Serializable, Comparable<Version> {
 		return postfix == null;
 	}
 	
+	public int getMajor() {
+		return version[0];
+	}
+	
+	public int getMinor() {
+		return version[1];
+	}
+	
+	public int getRevisin() {
+		return version.length == 2 ? 0 : version[2];
+	}
+	
 	@Override
 	public String toString() {
-		return version[0] + "." + version[1] + (version[2] == 0 ? "" : "." + version[2]) + (postfix == null ? "" : postfix.startsWith("-") ? postfix : " " + postfix);
+		final String pf = postfix;
+		return version[0] + "." + version[1] + (version[2] == 0 ? "" : "." + version[2]) + (pf == null ? "" : pf.startsWith("-") ? pf : " " + pf);
 	}
 	
 	public final static int compare(final String v1, final String v2) {

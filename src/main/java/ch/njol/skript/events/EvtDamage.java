@@ -27,6 +27,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.entity.EntityData;
@@ -38,9 +39,8 @@ import ch.njol.skript.util.HealthUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"unchecked", "serial"})
+@SuppressWarnings("unchecked")
 public class EvtDamage extends SkriptEvent {
-	
 	static {
 		Skript.registerEvent("Damage", EvtDamage.class, EntityDamageEvent.class, "damag(e|ing) [of %entitydata%]")
 				.description("Called when an entity receives damage, e.g. by an attack from another entity, lava, fire, drowning, fall, suffocation, etc.")
@@ -48,6 +48,7 @@ public class EvtDamage extends SkriptEvent {
 				.since("1.0");
 	}
 	
+	@Nullable
 	private Literal<EntityData<?>> types;
 	
 	@Override
@@ -56,6 +57,7 @@ public class EvtDamage extends SkriptEvent {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean check(final Event evt) {
 		final EntityDamageEvent e = (EntityDamageEvent) evt;
@@ -67,22 +69,24 @@ public class EvtDamage extends SkriptEvent {
 	}
 	
 	private boolean checkType(final Entity e) {
-		if (types == null)
-			return true;
-		for (final EntityData<?> d : types.getAll()) {
-			if (d.isInstance(e))
-				return true;
+		if (types != null) {
+			for (final EntityData<?> d : types.getAll()) {
+				if (d.isInstance(e))
+					return true;
+			}
+			return false;
 		}
-		return false;
+		return true;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "damage" + (types == null ? "" : " of " + types.toString(e, debug));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "damage" + (types != null ? " of " + types.toString(e, debug) : "");
 	}
 	
 //	private final static WeakHashMap<LivingEntity, Integer> lastDamages = new WeakHashMap<LivingEntity, Integer>();
 	
+	@SuppressWarnings("null")
 	private static boolean checkDamage(final EntityDamageEvent e) {
 		if (!(e.getEntity() instanceof LivingEntity))
 			return true;

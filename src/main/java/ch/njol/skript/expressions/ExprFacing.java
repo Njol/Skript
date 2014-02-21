@@ -28,6 +28,7 @@ import org.bukkit.event.Event;
 import org.bukkit.material.Directional;
 import org.bukkit.material.MaterialData;
 import org.bukkit.util.Vector;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
@@ -44,7 +45,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Facing")
 @Description("The facing of an entity or block, i.e. exactly north, south, east, west, up or down (unlike <a href='#ExprDirection'>direction</a> which is the exact direction, e.g. '0.5 south and 0.7 east')")
 @Examples({"# makes a bridge",
@@ -64,8 +64,9 @@ public class ExprFacing extends SimplePropertyExpression<Object, Direction> {
 		return super.init(exprs, matchedPattern, isDelayed, parseResult);
 	}
 	
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({"deprecation", "null"})
 	@Override
+	@Nullable
 	public Direction convert(final Object o) {
 		if (o instanceof Block) {
 			final MaterialData d = ((Block) o).getType().getNewData(((Block) o).getData());
@@ -91,6 +92,7 @@ public class ExprFacing extends SimplePropertyExpression<Object, Direction> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (!Block.class.isAssignableFrom(getExpr().getReturnType()))
 			return null;
@@ -101,8 +103,9 @@ public class ExprFacing extends SimplePropertyExpression<Object, Direction> {
 	
 	@SuppressWarnings("deprecation")
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		assert mode == ChangeMode.SET;
+		assert delta != null;
 		
 		final Block b = (Block) getExpr().getSingle(e);
 		if (b == null)

@@ -24,6 +24,9 @@ package ch.njol.skript.entity;
 import java.util.Arrays;
 
 import org.bukkit.entity.Enderman;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.lang.Literal;
@@ -37,12 +40,12 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EndermanData extends EntityData<Enderman> {
 	static {
 		EntityData.register(EndermanData.class, "enderman", Enderman.class, "enderman");
 	}
 	
+	@Nullable
 	private ItemType[] hand = null;
 	
 	@SuppressWarnings("unchecked")
@@ -54,15 +57,29 @@ public class EndermanData extends EntityData<Enderman> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Enderman> c, final Enderman e) {
-		hand = e == null || e.getCarriedMaterial() == null ? null : new ItemType[] {new ItemType(e.getCarriedMaterial().toItemStack(1))};
+	protected boolean init(final @Nullable Class<? extends Enderman> c, final @Nullable Enderman e) {
+		if (e != null) {
+			final MaterialData m = e.getCarriedMaterial();
+			if (m != null) {
+				final ItemStack i = m.toItemStack(1);
+				if (i == null)
+					return false;
+				hand = new ItemType[] {new ItemType(i)};
+			}
+		}
 		return true;
 	}
 	
 	@Override
 	public void set(final Enderman entity) {
-		if (hand != null)
-			entity.setCarriedMaterial(CollectionUtils.getRandom(hand).getBlock().getRandom().getData());
+		if (hand != null) {
+			final ItemType t = CollectionUtils.getRandom(hand);
+			assert t != null;
+			final ItemStack i = t.getBlock().getRandom();
+			if (i != null)
+				entity.setCarriedMaterial(i.getData());
+		}
+		
 	}
 	
 	@Override
@@ -70,8 +87,8 @@ public class EndermanData extends EntityData<Enderman> {
 		return hand == null || SimpleExpression.check(hand, new Checker<ItemType>() {
 			@SuppressWarnings("deprecation")
 			@Override
-			public boolean check(final ItemType t) {
-				return t.isOfType(entity.getCarriedMaterial().getItemTypeId(), entity.getCarriedMaterial().getData());
+			public boolean check(final @Nullable ItemType t) {
+				return t != null && t.isOfType(entity.getCarriedMaterial().getItemTypeId(), entity.getCarriedMaterial().getData());
 			}
 		}, false, false);
 	}
@@ -85,6 +102,7 @@ public class EndermanData extends EntityData<Enderman> {
 	
 	@Override
 	public String toString(final int flags) {
+		final ItemType[] hand = this.hand;
 		if (hand == null)
 			return super.toString(flags);
 		return format.toString(super.toString(flags), Classes.toString(hand, false));
@@ -117,6 +135,7 @@ public class EndermanData extends EntityData<Enderman> {
 //			b.append(s.second.replace(",", ",,").replace(":", "::"));
 //		}
 //		return b.toString();
+	@SuppressWarnings("null")
 	@Override
 	@Deprecated
 	protected boolean deserialize(final String s) {
@@ -136,12 +155,10 @@ public class EndermanData extends EntityData<Enderman> {
 		return false;
 	}
 	
-	private boolean isSubhand(final ItemType[] sub) {
-		if (hand == null)
-			return true;
-		if (sub == null)
-			return false;
-		return ItemType.isSubset(hand, sub);
+	private boolean isSubhand(final @Nullable ItemType[] sub) {
+		if (hand != null)
+			return sub != null && ItemType.isSubset(hand, sub);
+		return true;
 	}
 	
 	@Override

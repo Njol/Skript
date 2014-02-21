@@ -22,6 +22,7 @@
 package ch.njol.skript.lang.util;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.lang.Literal;
@@ -33,7 +34,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class SimpleEvent extends SkriptEvent {
 	
 	public SimpleEvent() {}
@@ -51,7 +51,7 @@ public class SimpleEvent extends SkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "simple event";
 	}
 	

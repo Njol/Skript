@@ -66,6 +66,7 @@ import org.bukkit.entity.Witch;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.WitherSkull;
 import org.bukkit.entity.Zombie;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -75,7 +76,6 @@ import ch.njol.yggdrasil.Fields;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class SimpleEntityData extends EntityData<Entity> {
 	
 	private final static class SimpleEntityDataInfo {
@@ -99,7 +99,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		}
 		
 		@Override
-		public boolean equals(final Object obj) {
+		public boolean equals(final @Nullable Object obj) {
 			if (this == obj)
 				return true;
 			if (obj == null)
@@ -187,6 +187,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 	private SimpleEntityData(final SimpleEntityDataInfo info) {
 		assert info != null;
 		this.info = info;
+		matchedPattern = types.indexOf(info);
 	}
 	
 	public SimpleEntityData(final Class<? extends Entity> c) {
@@ -200,7 +201,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 			}
 			i++;
 		}
-		assert false;
+		throw new IllegalStateException();
 	}
 	
 	public SimpleEntityData(final Entity e) {
@@ -213,12 +214,14 @@ public class SimpleEntityData extends EntityData<Entity> {
 			}
 			i++;
 		}
-		assert false;
+		throw new IllegalStateException();
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		info = types.get(matchedPattern);
+		assert info != null : matchedPattern;
 		return true;
 	}
 	

@@ -23,6 +23,8 @@ package ch.njol.skript.localization;
 
 import java.util.HashMap;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 
 /**
@@ -35,6 +37,7 @@ public class Adjective extends Message {
 	private final static String DEFINITE_ARTICLE_TOKEN = "+";
 	
 	private final HashMap<Integer, String> genders = new HashMap<Integer, String>();
+	@Nullable
 	String def;
 	
 	public Adjective(final String key) {
@@ -46,6 +49,8 @@ public class Adjective extends Message {
 		genders.clear();
 		final String v = getValue();
 		def = v;
+		if (v == null)
+			return;
 		final int s = v.indexOf('@'), e = v.lastIndexOf('@');
 		if (s == -1)
 			return;
@@ -75,7 +80,7 @@ public class Adjective extends Message {
 		validate();
 		if (Skript.testing())
 			Skript.warning("Invalid use of Adjective.toString()");
-		return def;
+		return "" + def;
 	}
 	
 	public String toString(int gender, final int flags) {
@@ -87,7 +92,7 @@ public class Adjective extends Message {
 		final String a = genders.get(gender);
 		if (a != null)
 			return a;
-		return def;
+		return "" + def;
 	}
 	
 	public final static String toString(final Adjective[] adjectives, final int gender, final int flags, final boolean and) {
@@ -101,7 +106,7 @@ public class Adjective extends Message {
 			}
 			b.append(adjectives[i].toString(gender, flags));
 		}
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 	public String toString(final Noun n, final int flags) {

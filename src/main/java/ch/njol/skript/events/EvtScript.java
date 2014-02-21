@@ -22,6 +22,7 @@
 package ch.njol.skript.events;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.events.bukkit.ScriptEvent;
@@ -33,7 +34,6 @@ import ch.njol.skript.lang.Trigger;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EvtScript extends SelfRegisteringSkriptEvent {
 	static {
 		Skript.registerEvent("Script Load/Unload", EvtScript.class, ScriptEvent.class, "[script] (load|init|enable)", "[script] (unload|stop|disable)")
@@ -53,11 +53,7 @@ public class EvtScript extends SelfRegisteringSkriptEvent {
 		return true;
 	}
 	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "script " + (load ? "" : "un") + "load";
-	}
-	
+	@Nullable
 	private Trigger t;
 	
 	@Override
@@ -69,14 +65,22 @@ public class EvtScript extends SelfRegisteringSkriptEvent {
 	
 	@Override
 	public void unregister(final Trigger t) {
+		assert t == this.t;
 		if (!load)
 			t.execute(new ScriptEvent());
+		this.t = null;
 	}
 	
 	@Override
 	public void unregisterAll() {
-		if (!load)
+		if (!load && t != null)
 			t.execute(new ScriptEvent());
+		t = null;
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "script " + (load ? "" : "un") + "load";
 	}
 	
 }

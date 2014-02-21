@@ -27,6 +27,7 @@ import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer;
@@ -41,9 +42,10 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.variables.SerializedVariable;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
-import ch.njol.util.Pair;
+import ch.njol.util.NonNullPair;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.NonNullIterator;
 
@@ -53,7 +55,6 @@ import ch.njol.util.coll.iterator.NonNullIterator;
  * @author Peter Güttinger
  * @see UnparsedLiteral
  */
-@SuppressWarnings("serial")
 public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	protected final Class<T> c;
@@ -61,32 +62,10 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	private final boolean isDefault;
 	private final boolean and;
 	
+	@Nullable
 	private UnparsedLiteral source = null;
 	
 	protected transient T[] data;
-	
-	private void writeObject(final ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-		out.writeObject(data.getClass().getComponentType());
-		@SuppressWarnings("unchecked")
-		final Pair<String, byte[]>[] d = new Pair[data.length];
-		for (int i = 0; i < data.length; i++) {
-			if ((d[i] = Classes.serialize(data[i])) == null) {
-				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
-			}
-		}
-		out.writeObject(d);
-	}
-	
-	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
-		in.defaultReadObject();
-		final Class<?> c = (Class<?>) in.readObject();
-		final Pair<String, byte[]>[] d = (Pair<String, byte[]>[]) in.readObject();
-		data = (T[]) Array.newInstance(c, d.length);
-		for (int i = 0; i < data.length; i++) {
-			data[i] = (T) Classes.deserialize(d[i].first, d[i].second);
-		}
-	}
 	
 	public SimpleLiteral(final T[] data, final Class<T> c, final boolean and) {
 		assert data != null && data.length != 0;
@@ -97,6 +76,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		this.isDefault = false;
 	}
 	
+	@SuppressWarnings("null")
 	public SimpleLiteral(final T data, final boolean isDefault) {
 		assert data != null;
 		this.data = (T[]) Array.newInstance(data.getClass(), 1);
@@ -106,7 +86,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		this.isDefault = isDefault;
 	}
 	
-	public SimpleLiteral(final T[] data, final Class<T> to, final boolean and, final UnparsedLiteral source) {
+	public SimpleLiteral(final T[] data, final Class<T> to, final boolean and, final @Nullable UnparsedLiteral source) {
 		this(data, to, and);
 		this.source = source;
 	}
@@ -141,6 +121,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		return data;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public T getSingle() {
 		return CollectionUtils.getRandom(data);
@@ -158,6 +139,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
 		if (CollectionUtils.containsSuperclass(to, c))
 			return (Literal<? extends R>) this;
@@ -168,7 +150,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (debug)
 			return "[" + Classes.toString(data, getAnd(), StringMode.DEBUG) + "]";
 		return Classes.toString(data, getAnd());
@@ -199,18 +181,28 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		return SimpleExpression.check(data, c, false, getAnd());
 	}
 	
+	@Nullable
 	private ClassInfo<? super T> returnTypeInfo;
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (returnTypeInfo == null)
-			returnTypeInfo = Classes.getSuperClassInfo(getReturnType());
-		return returnTypeInfo.getChanger() == null ? null : returnTypeInfo.getChanger().acceptChange(mode);
+		ClassInfo<? super T> rti = returnTypeInfo;
+		if (rti == null)
+			returnTypeInfo = rti = Classes.getSuperClassInfo(getReturnType());
+		final Changer<? super T> c = rti.getChanger();
+		return c == null ? null : c.acceptChange(mode);
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
-		((Changer<T>) returnTypeInfo.getChanger()).change(getArray(), delta, mode);
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+		final ClassInfo<? super T> rti = returnTypeInfo;
+		if (rti == null)
+			throw new UnsupportedOperationException();
+		final Changer<? super T> c = rti.getChanger();
+		if (c == null)
+			throw new UnsupportedOperationException();
+		c.change(getArray(), delta, mode);
 	}
 	
 	@Override
@@ -234,6 +226,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 			private int i = 0;
 			
 			@Override
+			@Nullable
 			protected T getNext() {
 				if (i == data.length)
 					return null;
@@ -249,12 +242,36 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	
 	@Override
 	public Expression<?> getSource() {
-		return source == null ? this : source;
+		final UnparsedLiteral s = source;
+		return s == null ? this : s;
 	}
 	
 	@Override
 	public Expression<T> simplify() {
 		return this;
+	}
+	
+	private void writeObject(final ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+		out.writeObject(data.getClass().getComponentType());
+		final SerializedVariable.Value[] d = new SerializedVariable.Value[data.length];
+		for (int i = 0; i < data.length; i++) {
+			if ((d[i] = Classes.serialize(data[i])) == null) {
+				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
+			}
+		}
+		out.writeObject(d);
+	}
+	
+	@SuppressWarnings("null")
+	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+		in.defaultReadObject();
+		final Class<?> c = (Class<?>) in.readObject();
+		final NonNullPair<String, byte[]>[] d = (NonNullPair<String, byte[]>[]) in.readObject();
+		data = (T[]) Array.newInstance(c, d.length);
+		for (int i = 0; i < data.length; i++) {
+			data[i] = (T) Classes.deserialize(d[i].first, d[i].second);
+		}
 	}
 	
 }

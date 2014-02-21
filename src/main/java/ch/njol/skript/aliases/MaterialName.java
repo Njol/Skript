@@ -24,14 +24,14 @@ package ch.njol.skript.aliases;
 import java.util.HashMap;
 
 import ch.njol.skript.Skript;
-import ch.njol.util.Pair;
+import ch.njol.util.NonNullPair;
 
 final class MaterialName {
 	String singular;
 	String plural;
 	int gender = 0;
 	private final int id;
-	final HashMap<Pair<Short, Short>, Pair<String, String>> names = new HashMap<Pair<Short, Short>, Pair<String, String>>();
+	final HashMap<NonNullPair<Short, Short>, NonNullPair<String, String>> names = new HashMap<NonNullPair<Short, Short>, NonNullPair<String, String>>();
 	
 	public MaterialName(final int id, final String singular, final String plural, final int gender) {
 		this.id = id;
@@ -41,23 +41,25 @@ final class MaterialName {
 	}
 	
 	public String toString(final short dataMin, final short dataMax, final boolean p) {
-		if (names == null)
-			return p ? plural : singular;
-		Pair<String, String> s = names.get(new Pair<Short, Short>(dataMin, dataMax));
+//		if (names == null)
+//			return p ? plural : singular;
+		@SuppressWarnings("null")
+		NonNullPair<String, String> s = names.get(new NonNullPair<Short, Short>(Short.valueOf(dataMin), Short.valueOf(dataMax)));
 		if (s != null)
 			return p ? s.second : s.first;
 		if (dataMin == -1 && dataMax == -1 || dataMin == 0 && dataMax == 0)
 			return p ? plural : singular;
-		s = names.get(new Pair<Short, Short>((short) -1, (short) -1));
+		s = names.get(new NonNullPair<Short, Short>((short) -1, (short) -1));
 		if (s != null)
 			return p ? s.second : s.first;
 		return p ? plural : singular;
 	}
 	
 	public String getDebugName(final short dataMin, final short dataMax, final boolean p) {
-		if (names == null)
-			return p ? plural : singular;
-		final Pair<String, String> s = names.get(new Pair<Short, Short>(dataMin, dataMax));
+//		if (names == null)
+//			return p ? plural : singular;
+		@SuppressWarnings("null")
+		final NonNullPair<String, String> s = names.get(new NonNullPair<Short, Short>(Short.valueOf(dataMin), Short.valueOf(dataMax)));
 		if (s != null)
 			return p ? s.second : s.first;
 		if (dataMin == -1 && dataMax == -1 || dataMin == 0 && dataMax == 0)

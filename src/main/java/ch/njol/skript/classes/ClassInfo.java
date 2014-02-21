@@ -28,6 +28,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.Debuggable;
@@ -45,24 +47,37 @@ public class ClassInfo<T> implements Debuggable {
 	private final String codeName;
 	private final Noun name;
 	
+	@Nullable
 	private DefaultExpression<T> defaultExpression = null;
 	
+	@Nullable
 	private Parser<? extends T> parser = null;
 	
+	@Nullable
 	private Pattern[] userInputPatterns = null;
 	
-	private SerializableChanger<? super T> changer = null;
+	@Nullable
+	private Changer<? super T> changer = null;
 	
+	@Nullable
 	private Serializer<? super T> serializer = null;
+	@Nullable
 	private Class<?> serializeAs = null;
 	
+	@Nullable
 	private Arithmetic<? super T, ?> math = null;
+	@Nullable
 	private Class<?> mathRelativeType = null;
 	
+	@Nullable
 	private String docName = null;
+	@Nullable
 	private String[] description = null;
+	@Nullable
 	private String[] usage = null;
+	@Nullable
 	private String[] examples = null;
+	@Nullable
 	private String since = null;
 	
 	/**
@@ -132,7 +147,7 @@ public class ClassInfo<T> implements Debuggable {
 		return this;
 	}
 	
-	public ClassInfo<T> changer(final SerializableChanger<? super T> changer) {
+	public ClassInfo<T> changer(final Changer<? super T> changer) {
 		assert this.changer == null;
 		this.changer = changer;
 		return this;
@@ -224,60 +239,74 @@ public class ClassInfo<T> implements Debuggable {
 		return codeName;
 	}
 	
+	@Nullable
 	public DefaultExpression<T> getDefaultExpression() {
 		return defaultExpression;
 	}
 	
+	@Nullable
 	public Parser<? extends T> getParser() {
 		return parser;
 	}
 	
+	@Nullable
 	public Pattern[] getUserInputPatterns() {
 		return userInputPatterns;
 	}
 	
-	public SerializableChanger<? super T> getChanger() {
+	@Nullable
+	public Changer<? super T> getChanger() {
 		return changer;
 	}
 	
+	@Nullable
 	public Serializer<? super T> getSerializer() {
 		return serializer;
 	}
 	
+	@Nullable
 	public Class<?> getSerializeAs() {
 		return serializeAs;
 	}
 	
+	@Nullable
 	public Arithmetic<? super T, ?> getMath() {
 		return math;
 	}
 	
+	@Nullable
 	public Class<?> getMathRelativeType() {
 		return mathRelativeType;
 	}
 	
+	@Nullable
 	public String[] getDescription() {
 		return description;
 	}
 	
+	@Nullable
 	public String[] getUsage() {
 		return usage;
 	}
 	
+	@Nullable
 	public String[] getExamples() {
 		return examples;
 	}
 	
+	@Nullable
 	public String getSince() {
 		return since;
 	}
 	
+	@Nullable
 	public String getDocName() {
 		return docName;
 	}
 	
 	// === ORDERING ===
 	
+	@Nullable
 	private Set<String> before;
 	private final Set<String> after = new HashSet<String>();
 	
@@ -317,6 +346,7 @@ public class ClassInfo<T> implements Debuggable {
 	/**
 	 * @return Set of classes that should be after this one. May return null.
 	 */
+	@Nullable
 	public Set<String> before() {
 		return before;
 	}
@@ -331,6 +361,7 @@ public class ClassInfo<T> implements Debuggable {
 	// === GENERAL ===
 	
 	@Override
+	@NonNull
 	public String toString() {
 		return getName().getSingular();
 	}
@@ -340,7 +371,8 @@ public class ClassInfo<T> implements Debuggable {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	@NonNull
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (debug)
 			return codeName + " (" + c.getCanonicalName() + ")";
 		return getName().getSingular();

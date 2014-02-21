@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.conditions.CondCompare;
@@ -40,7 +42,7 @@ import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Callback;
-import ch.njol.util.Pair;
+import ch.njol.util.NonNullPair;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.IteratorIterable;
@@ -48,7 +50,7 @@ import ch.njol.util.coll.iterator.IteratorIterable;
 /**
  * @author Peter Güttinger
  */
-public class Documentation { // TODO list special expressions for events
+public class Documentation { // TODO list special expressions for events and event values
 
 	public final static void generate() {
 		if (!generate)
@@ -85,21 +87,25 @@ public class Documentation { // TODO list special expressions for events
 		pw.println();
 		pw.println("-- expressions");
 		for (final ExpressionInfo<?, ?> e : new IteratorIterable<ExpressionInfo<?, ?>>(Skript.getExpressions())) {
+			assert e != null;
 			insertSyntaxElement(pw, e, "expression");
 		}
 		pw.println();
 		pw.println("-- effects");
 		for (final SyntaxElementInfo<?> info : Skript.getEffects()) {
+			assert info != null;
 			insertSyntaxElement(pw, info, "effect");
 		}
 		pw.println();
 		pw.println("-- conditions");
 		for (final SyntaxElementInfo<?> info : Skript.getConditions()) {
+			assert info != null;
 			insertSyntaxElement(pw, info, "condition");
 		}
 		pw.println();
 		pw.println("-- events");
 		for (final SkriptEventInfo<?> info : Skript.getEvents()) {
+			assert info != null;
 			insertEvent(pw, info);
 		}
 		
@@ -149,53 +155,56 @@ public class Documentation { // TODO list special expressions for events
 	private final static String convertRegex(final String regex) {
 		if (StringUtils.containsAny(regex, ".[]\\*+"))
 			Skript.error("Regex '" + regex + "' contains unconverted Regex syntax");
-		return escapeHTML(regex
+		return escapeHTML("" + regex
 				.replaceAll("\\((.+?)\\)\\?", "[$1]")
 				.replaceAll("(.)\\?", "[$1]"));
 	}
 	
 	private final static String cleanPatterns(final String patterns) {
-		return StringUtils.replaceAll(
+		final String s = StringUtils.replaceAll("" +
 				escapeHTML(patterns) // escape HTML
 				.replaceAll("(?<=[\\(\\|]).+?¦", "") // remove marks
 				.replace("()", "") // remove empty mark setting groups (mark¦)
 				.replaceAll("\\(([^|]+?)\\|\\)", "[$1]") // replace (mark¦x|) groups with [x]
 				.replaceAll("\\(\\|([^|]+?)\\)", "[$1]") // dito
-				.replaceAll("\\((.+?)\\|\\)", "[($1)]")
-						.replaceAll("\\(\\|(.+?)\\)", "[($1)]")
-				, "(?<!\\\\)%(.+?)(?<!\\\\)%", new Callback<String, Matcher>() { // link & fancy types
-					@Override
-					public String run(final Matcher m) {
-						String s = m.group(1);
-						if (s.startsWith("-"))
-							s = s.substring(1);
-						String flag = "";
-						if (s.startsWith("*") || s.startsWith("~")) {
-							flag = s.substring(0, 1);
-							s = s.substring(1);
-						}
-						final int a = s.indexOf("@");
-						if (a != -1)
-							s = s.substring(0, a);
-						final StringBuilder b = new StringBuilder("%");
-						b.append(flag);
-						boolean first = true;
-						for (final String c : s.split("/")) {
-							if (!first)
-								b.append("/");
-							first = false;
-							final Pair<String, Boolean> p = Utils.getEnglishPlural(c);
-							final ClassInfo<?> ci = Classes.getClassInfo(p.first);
-							if (ci.getDocName() != null && ci.getDocName() != ClassInfo.NO_DOC) {
-								b.append("<a href='../classes/#").append(p.first).append("'>").append(ci.getName().toString(p.second)).append("</a>");
-							} else {
-								b.append(c);
-								Skript.warning("Used class " + p.first + " has no docName/name defined");
-							}
-						}
-						return b.append("%").toString();
+				.replaceAll("\\((.+?)\\|\\)", "[($1)]") // replace (a|b|) with [(a|b)]
+				.replaceAll("\\(\\|(.+?)\\)", "[($1)]") // dito
+		, "(?<!\\\\)%(.+?)(?<!\\\\)%", new Callback<String, Matcher>() { // link & fancy types
+			@Override
+			public String run(final Matcher m) {
+				String s = m.group(1);
+				if (s.startsWith("-"))
+					s = s.substring(1);
+				String flag = "";
+				if (s.startsWith("*") || s.startsWith("~")) {
+					flag = s.substring(0, 1);
+					s = s.substring(1);
+				}
+				final int a = s.indexOf("@");
+				if (a != -1)
+					s = s.substring(0, a);
+				final StringBuilder b = new StringBuilder("%");
+				b.append(flag);
+				boolean first = true;
+				for (final String c : s.split("/")) {
+					assert c != null;
+					if (!first)
+						b.append("/");
+					first = false;
+					final NonNullPair<String, Boolean> p = Utils.getEnglishPlural(c);
+					final ClassInfo<?> ci = Classes.getClassInfoNoError(p.first);
+					if (ci != null && ci.getDocName() != null && ci.getDocName() != ClassInfo.NO_DOC) {
+						b.append("<a href='../classes/#").append(p.first).append("'>").append(ci.getName().toString(p.second)).append("</a>");
+					} else {
+						b.append(c);
+						Skript.warning("Used class " + p.first + " has no docName/name defined");
 					}
-				});
+				}
+				return "" + b.append("%").toString();
+			}
+		});
+		assert s != null : patterns;
+		return s;
 	}
 	
 	private final static void insertSyntaxElement(final PrintWriter pw, final SyntaxElementInfo<?> info, final String type) {
@@ -215,7 +224,7 @@ public class Documentation { // TODO list special expressions for events
 		insertOnDuplicateKeyUpdate(pw, "syntax_elements",
 				"id, name, type, patterns, description, examples, since",
 				"patterns = TRIM(LEADING '\n' FROM CONCAT(patterns, '\n', '" + escapeSQL(patterns) + "'))",
-				escapeHTML(info.c.getSimpleName()),
+				escapeHTML("" + info.c.getSimpleName()),
 				escapeHTML(info.c.getAnnotation(Name.class).value()),
 				type,
 				patterns,
@@ -256,6 +265,7 @@ public class Documentation { // TODO list special expressions for events
 				since);
 	}
 	
+	@SuppressWarnings("null")
 	private final static void insertOnDuplicateKeyUpdate(final PrintWriter pw, final String table, final String fields, final String update, final String... values) {
 		for (int i = 0; i < values.length; i++) {
 			values[i] = escapeSQL(values[i]);
@@ -271,12 +281,17 @@ public class Documentation { // TODO list special expressions for events
 	
 	private final static String[] urls = {"expressions", "effects", "conditions"};
 	
-	private final static String validateHTML(String html, final String baseURL) {
+	@Nullable
+	private final static String validateHTML(@Nullable String html, final String baseURL) {
+		if (html == null) {
+			assert false;
+			return null;
+		}
 		for (final Pattern p : validation) {
 			if (p.matcher(html).find())
 				return null;
 		}
-		html = html.replaceAll("&(?!(amp|lt|gt|quot);)", "&amp;");
+		html = "" + html.replaceAll("&(?!(amp|lt|gt|quot);)", "&amp;");
 		final Matcher m = Pattern.compile("<a href='(.*?)'>").matcher(html);
 		linkLoop: while (m.find()) {
 			final String url = m.group(1);
@@ -310,11 +325,15 @@ public class Documentation { // TODO list special expressions for events
 	}
 	
 	private final static String escapeSQL(final String s) {
-		return s.replace("'", "\\'").replace("\"", "\\\"");
+		return "" + s.replace("'", "\\'").replace("\"", "\\\"");
 	}
 	
-	public final static String escapeHTML(final String s) {
-		return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+	public final static String escapeHTML(final @Nullable String s) {
+		if (s == null) {
+			assert false;
+			return "";
+		}
+		return "" + s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
 	}
 	
 }

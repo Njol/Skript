@@ -28,6 +28,7 @@ import org.bukkit.World;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.weather.WeatherEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
@@ -40,6 +41,8 @@ public enum WeatherType {
 	CLEAR, RAIN, THUNDER;
 	
 	String[] names;
+	
+	@Nullable
 	String adjective;
 	
 	final static Map<String, WeatherType> byName = new HashMap<String, WeatherType>();
@@ -64,6 +67,7 @@ public enum WeatherType {
 		});
 	}
 	
+	@Nullable
 	public final static WeatherType parse(final String s) {
 		return byName.get(s);
 	}
@@ -83,7 +87,7 @@ public enum WeatherType {
 		if (e instanceof ThunderChangeEvent)
 			return fromEvent((ThunderChangeEvent) e);
 		assert false;
-		return null;
+		return CLEAR;
 	}
 	
 	public static WeatherType fromEvent(final WeatherChangeEvent e) {
@@ -104,16 +108,19 @@ public enum WeatherType {
 		return CLEAR;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public String toString() {
 		return names[0];
 	}
 	
 	// REMIND flags?
+	@SuppressWarnings("null")
 	public String toString(final int flags) {
 		return names[0];
 	}
 	
+	@Nullable
 	public String adjective() {
 		return adjective;
 	}

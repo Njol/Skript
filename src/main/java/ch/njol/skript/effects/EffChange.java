@@ -25,8 +25,10 @@ import java.util.Arrays;
 import java.util.logging.Level;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.doc.Description;
@@ -50,7 +52,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Change: Set/Add/Remove/Delete/Reset")
 @Description("A very general effect that can change many <a href='../expressions'>expressions</a>. Many expressions can only be set and/or deleted, while some can have things added to or removed from them.")
 @Examples({"# set:",
@@ -97,16 +98,19 @@ public class EffChange extends Effect {
 		Skript.registerEffect(EffChange.class, patterns.getPatterns());
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<?> changed;
+	@Nullable
 	private Expression<?> changer = null;
 	
+	@SuppressWarnings("null")
 	private ChangeMode mode;
 	
 	private boolean single;
 	
 //	private Changer<?, ?> c = null;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		
@@ -152,7 +156,8 @@ public class EffChange extends Effect {
 		try {
 			rs = changed.acceptChange(mode);
 			final ClassInfo<?> c = Classes.getSuperClassInfo(changed.getReturnType());
-			what = c.getChanger() == null || !Arrays.equals(c.getChanger().acceptChange(mode), rs) ? changed.toString(null, false) : c.getName().withIndefiniteArticle();
+			final Changer<?> changer = c.getChanger();
+			what = changer == null || !Arrays.equals(changer.acceptChange(mode), rs) ? changed.toString(null, false) : c.getName().withIndefiniteArticle();
 		} finally {
 			h.stop();
 		}
@@ -193,19 +198,20 @@ public class EffChange extends Effect {
 			rs2[i] = rs[i].isArray() ? rs[i].getComponentType() : rs[i];
 		final boolean allSingle = Arrays.equals(rs, rs2);
 		
-		if (changer != null) {
+		Expression<?> ch = changer;
+		if (ch != null) {
 			Expression<?> v = null;
 			final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 			try {
 				for (final Class<?> r : rs) {
 					log.clear();
-					if ((r.isArray() ? r.getComponentType() : r).isAssignableFrom(changer.getReturnType())) {
-						v = changer.getConvertedExpression(Object.class);
+					if ((r.isArray() ? r.getComponentType() : r).isAssignableFrom(ch.getReturnType())) {
+						v = ch.getConvertedExpression(Object.class);
 						break; // break even if v == null as it won't convert to Object apparently
 					}
 				}
 				if (v == null)
-					v = changer.getConvertedExpression((Class<Object>[]) rs2);
+					v = ch.getConvertedExpression((Class<Object>[]) rs2);
 				if (v == null) {
 					if (log.hasError()) {
 						log.printError();
@@ -238,9 +244,10 @@ public class EffChange extends Effect {
 					break;
 				}
 			}
-			changer = v;
+			assert x != null;
+			changer = ch = v;
 			
-			if (!changer.isSingle() && single) {
+			if (!ch.isSingle() && single) {
 				if (mode == ChangeMode.SET)
 					Skript.error(changed + " can only be set to one " + Classes.getSuperClassInfo(x).getName() + ", not more", ErrorQuality.SEMANTIC_ERROR);
 				else
@@ -249,7 +256,7 @@ public class EffChange extends Effect {
 			}
 			
 			if (changed instanceof Variable && mode == ChangeMode.SET) {
-				final ClassInfo<?> ci = Classes.getSuperClassInfo(changer.getReturnType());
+				final ClassInfo<?> ci = Classes.getSuperClassInfo(ch.getReturnType());
 				if (ci.getC() != Object.class && ci.getSerializer() == null && ci.getSerializeAs() == null)
 					Skript.warning(ci.getName().withIndefiniteArticle() + " cannot be saved, i.e. the contents of the variable " + changed + " will be lost when the server stops.");
 			}
@@ -259,6 +266,7 @@ public class EffChange extends Effect {
 	
 	@Override
 	protected void execute(final Event e) {
+		final Expression<?> changer = this.changer;
 		final Object[] delta = changer == null ? null : changer.getArray(e);
 		if (delta != null && delta.length == 0)
 			return;
@@ -272,15 +280,20 @@ public class EffChange extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
+		final Expression<?> changer = this.changer;
 		switch (mode) {
 			case ADD:
+				assert changer != null;
 				return "add " + changer.toString(e, debug) + " to " + changed.toString(e, debug);
 			case SET:
+				assert changer != null;
 				return "set " + changed.toString(e, debug) + " to " + changer.toString(e, debug);
 			case REMOVE:
+				assert changer != null;
 				return "remove " + changer.toString(e, debug) + " from " + changed.toString(e, debug);
 			case REMOVE_ALL:
+				assert changer != null;
 				return "remove all " + changer.toString(e, debug) + " from " + changed.toString(e, debug);
 			case DELETE:
 				return "delete/clear " + changed.toString(e, debug);

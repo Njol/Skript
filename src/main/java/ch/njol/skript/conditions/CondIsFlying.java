@@ -32,7 +32,6 @@ import ch.njol.skript.doc.Since;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Flying")
 @Description("Checks whether a player is flying")
 @Examples("player is not flying")

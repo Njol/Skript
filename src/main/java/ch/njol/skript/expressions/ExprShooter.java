@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Shooter")
 @Description("The shooter of a projectile.")
 @Examples({"shooter is a skeleton"})
@@ -51,7 +51,7 @@ public class ExprShooter extends PropertyExpression<Projectile, LivingEntity> {
 		Skript.registerExpression(ExprShooter.class, LivingEntity.class, ExpressionType.SIMPLE, "[the] shooter [of %projectile%]");
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends Projectile>) exprs[0]);
@@ -62,6 +62,7 @@ public class ExprShooter extends PropertyExpression<Projectile, LivingEntity> {
 	protected LivingEntity[] get(final Event e, final Projectile[] source) {
 		return get(source, new Converter<Projectile, LivingEntity>() {
 			@Override
+			@Nullable
 			public LivingEntity convert(final Projectile o) {
 				return o.getShooter();
 			}
@@ -69,6 +70,7 @@ public class ExprShooter extends PropertyExpression<Projectile, LivingEntity> {
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
 			return new Class[] {LivingEntity.class};
@@ -76,8 +78,9 @@ public class ExprShooter extends PropertyExpression<Projectile, LivingEntity> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		if (mode == ChangeMode.SET) {
+			assert delta != null;
 			for (final Projectile p : getExpr().getArray(e))
 				p.setShooter((LivingEntity) delta[0]);
 		} else {
@@ -91,7 +94,7 @@ public class ExprShooter extends PropertyExpression<Projectile, LivingEntity> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the shooter" + (getExpr().isDefault() ? "" : " of " + getExpr().toString(e, debug));
 	}
 	

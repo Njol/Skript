@@ -24,6 +24,7 @@ package ch.njol.skript.lang;
 import java.util.Iterator;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.util.SimpleExpression;
@@ -35,7 +36,6 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  * @see Skript#registerCondition(Class, String...)
  */
-@SuppressWarnings("serial")
 public abstract class Condition extends Statement {
 	
 	private boolean negated = false;
@@ -74,7 +74,8 @@ public abstract class Condition extends Statement {
 		return negated;
 	}
 	
-	@SuppressWarnings({"rawtypes", "unchecked"})
+	@SuppressWarnings({"rawtypes", "unchecked", "null"})
+	@Nullable
 	public static Condition parse(final String s, final String defaultError) {
 		return (Condition) SkriptParser.parse(s, (Iterator) Skript.getConditions().iterator(), defaultError);
 	}

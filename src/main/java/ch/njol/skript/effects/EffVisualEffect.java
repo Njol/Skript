@@ -25,6 +25,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -42,7 +43,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Play Effect")
 @Description({"Plays a <a href='../classes/#visualeffect'>visual effect</a> at a given location or on a given entity.",
 		"Please note that some effects can only be played on entities, e..g wolf hearts or the hurt effect, and that these are always visible to all players."})
@@ -54,12 +54,16 @@ public class EffVisualEffect extends Effect {
 		Skript.registerEffect(EffVisualEffect.class, "(play|show) %visualeffects% (on|%directions%) %entities/locations% [to %-players%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<VisualEffect> effects;
+	@SuppressWarnings("null")
 	private Expression<Direction> direction;
+	@SuppressWarnings("null")
 	private Expression<?> where;
+	@Nullable
 	private Expression<Player> players;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		effects = (Expression<VisualEffect>) exprs[0];
@@ -90,7 +94,7 @@ public class EffVisualEffect extends Effect {
 		final VisualEffect[] effs = effects.getArray(e);
 		final Direction[] dirs = direction.getArray(e);
 		final Object[] os = where.getArray(e);
-		final Player[] ps = players == null ? null : players.getArray(e);
+		final Player[] ps = players != null ? players.getArray(e) : null;
 		for (final Direction d : dirs) {
 			for (final Object o : os) {
 				if (o instanceof Entity) {
@@ -111,8 +115,8 @@ public class EffVisualEffect extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "play " + effects.toString(e, debug) + " " + direction.toString(e, debug) + " " + where.toString(e, debug) + (players == null ? "" : " to " + players.toString(e, debug));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "play " + effects.toString(e, debug) + " " + direction.toString(e, debug) + " " + where.toString(e, debug) + (players != null ? " to " + players.toString(e, debug) : "");
 	}
 	
 }

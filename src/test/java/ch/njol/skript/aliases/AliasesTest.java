@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.logging.Filter;
 import java.util.logging.LogRecord;
 
+import org.eclipse.jdt.annotation.Nullable;
 import org.junit.Test;
 
 import ch.njol.skript.log.BukkitLoggerFilter;
@@ -39,7 +40,9 @@ public class AliasesTest {
 	static {
 		BukkitLoggerFilter.addFilter(new Filter() {
 			@Override
-			public boolean isLoggable(final LogRecord record) {
+			public boolean isLoggable(final @Nullable LogRecord record) {
+				if (record == null)
+					return false;
 				return record.getMessage() == null || !record.getMessage().startsWith("[Skript] Missing entry");
 			}
 		});
@@ -86,6 +89,7 @@ public class AliasesTest {
 		};
 		
 		for (final String[] test : tests) {
+			@SuppressWarnings("null")
 			final Set<String> names = Aliases.getAliases(test[0], t, v).keySet();
 			assertEquals(test[0], test.length - 1, names.size());
 			int i = 1;

@@ -25,6 +25,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,7 +40,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Ban")
 @Description("Bans/unbans a player or IP.")
 @Examples({"unban player",
@@ -53,11 +53,13 @@ public class EffBan extends Effect {
 				"ban %players% by IP", "unban %players% by IP");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<?> players;
 	
 	private boolean ban;
 	private boolean ipBan;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		players = exprs[0];
@@ -93,7 +95,7 @@ public class EffBan extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return (ban ? "" : "un") + "ban " + players.toString(e, debug);
 	}
 	

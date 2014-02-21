@@ -25,6 +25,7 @@ import java.util.ArrayList;
 
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -42,7 +43,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Region Members & Owners")
 @Description({"A list of members or owners of a <a href='../classes/#region'>region</a>.",
 		"This expression requires a supported regions plugin to be installed."})
@@ -56,9 +56,10 @@ public class ExprMembersOfRegion extends SimpleExpression<OfflinePlayer> {
 	}
 	
 	private boolean owners;
+	@SuppressWarnings("null")
 	private Expression<Region> regions;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		regions = (Expression<Region>) exprs[0];
@@ -66,6 +67,7 @@ public class ExprMembersOfRegion extends SimpleExpression<OfflinePlayer> {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	protected OfflinePlayer[] get(final Event e) {
 		final ArrayList<OfflinePlayer> r = new ArrayList<OfflinePlayer>();
@@ -86,7 +88,7 @@ public class ExprMembersOfRegion extends SimpleExpression<OfflinePlayer> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the " + (owners ? "owner" + (isSingle() ? "" : "s") : "members") + " of " + regions.toString(e, debug);
 	}
 	

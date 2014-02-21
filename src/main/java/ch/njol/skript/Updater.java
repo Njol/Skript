@@ -26,14 +26,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,6 +44,7 @@ import javax.xml.stream.events.XMLEvent;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.eclipse.jdt.annotation.Nullable;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -64,28 +63,41 @@ import ch.njol.skript.util.Version;
  */
 public final class Updater {
 	
-	public final static class VersionInfo {
-		Version version;
-		String name; // exact name
+	public final static class VersionInfo implements Comparable<VersionInfo> {
+		final String name; // exact name, e.g. "2.0 (jar only)"
+		final Version version;
+		final String downloadURL;
+		@Nullable
 		String changelog;
+		@Nullable
 		Date date;
+		
+		VersionInfo(final String name, final Version version, final String downloadURL) {
+			this.name = name;
+			this.version = version;
+			this.downloadURL = downloadURL;
+		}
 		
 		@Override
 		public String toString() {
 			return version.toString();
 		}
+		
+		@Override
+		public int compareTo(final VersionInfo o) {
+			return version.compareTo(o.version);
+		}
 	}
 	
 	/**
-	 * Used to get the file download link as required by the Bukkit guidelines
+	 * Used to check for updates & get the file download links as required by the Bukkit guidelines
 	 */
 	private final static String filesURL = "https://api.curseforge.com/servermods/files?projectIds=32084";
-	/**
-	 * Used to get the changelog + release date
-	 */
-	private final static String rssURL = "http://dev.bukkit.org/server-mods/skript/files.rss";
 	
-	private final static String manualDownloadURL = "http://dev.bukkit.org/bukkit-plugins/skript/files/";
+	/**
+	 * Used to get the changelogs and release dates of the newest files
+	 */
+	private final static String RSSURL = "http://dev.bukkit.org/server-mods/skript/files.rss";
 	
 	private final static DateFormat RFC2822 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
 	
@@ -117,10 +129,12 @@ public final class Updater {
 	public final static FormattedMessage m_downloaded = new FormattedMessage("updater.downloaded", latest);
 	public final static Message m_internal_error = new Message("updater.internal error");
 	
+	@Nullable
 	static Task checkerTask = null;
 	
 	static void start() {
 		checkerTask = new Task(Skript.getInstance(), 0, true) {
+			@SuppressWarnings("null")
 			@Override
 			public void run() {
 				if (!SkriptConfig.checkForNewVersion.value())
@@ -139,7 +153,6 @@ public final class Updater {
 	 * @param isAutomatic
 	 */
 	static void check(final CommandSender sender, final boolean download, final boolean isAutomatic) {
-		assert sender != null;
 		stateLock.writeLock().lock();
 		try {
 			if (state == UpdateState.CHECK_IN_PROGRESS || state == UpdateState.DOWNLOAD_IN_PROGRESS)
@@ -151,67 +164,46 @@ public final class Updater {
 		if (!isAutomatic || Skript.logNormal())
 			Skript.info(sender, "" + m_checking);
 		Skript.newThread(new Runnable() {
-			@SuppressWarnings("synthetic-access")
 			@Override
 			public void run() {
+				infos.clear();
+				
 				InputStream in = null;
-				InputStreamReader r = null;
 				try {
-					final URLConnection conn = new URL(rssURL).openConnection();
+					final URLConnection conn = new URL(filesURL).openConnection();
+					conn.setRequestProperty("User-Agent", "Skript/v" + Skript.getVersion() + " (by Njol)");
 					in = conn.getInputStream();
-					r = new InputStreamReader(in, conn.getContentEncoding() == null ? "UTF-8" : conn.getContentEncoding());
-					final XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(r);
-					
-					infos.clear();
-					VersionInfo current = null;
-					
-					while (reader.hasNext()) {
-						XMLEvent e = reader.nextEvent();
-						if (e.isStartElement()) {
-							final String element = e.asStartElement().getName().getLocalPart();
-							if (current == null) {
-								if (element.equalsIgnoreCase("item")) {
-									current = new VersionInfo();
+					final BufferedReader reader = new BufferedReader(new InputStreamReader(in, conn.getContentEncoding() == null ? "UTF-8" : conn.getContentEncoding()));
+					try {
+						final String line = reader.readLine();
+						if (line != null) {
+							final JSONArray a = (JSONArray) JSONValue.parse(line);
+							for (final Object o : a) {
+								final Object name = ((JSONObject) o).get("name");
+								if (!(name instanceof String) || !((String) name).matches("\\d+\\.\\d+(\\.\\d+)?( \\(jar( only)?\\))?"))// not the default version pattern to not match beta/etc. versions
+									continue;
+								final Object url = ((JSONObject) o).get("downloadUrl");
+								if (!(url instanceof String))
+									continue;
+								
+								final Version version = new Version(((String) name).contains(" ") ? "" + ((String) name).substring(0, ((String) name).indexOf(' ')) : ((String) name));
+								if (version.compareTo(Skript.getVersion()) > 0) {
+									infos.add(new VersionInfo((String) name, version, (String) url));
 								}
-							} else {
-								if (element.equalsIgnoreCase("title")) {
-									current.name = reader.nextEvent().asCharacters().getData().trim();
-									if (!current.name.matches("\\d+\\.\\d+(\\.\\d+)?( \\(jar( only)?\\))?")) {// not the default version pattern to not match beta/etc. versions
-										current = null;
-										continue;
-									}
-									current.version = new Version(current.name.contains(" ") ? current.name.substring(0, current.name.indexOf(' ')) : current.name);
-									if (current.version.compareTo(Skript.getVersion()) <= 0)
-										break;
-								} else if (element.equalsIgnoreCase("description")) {
-									String cl = "";
-									while ((e = reader.nextEvent()).isCharacters())
-										cl += e.asCharacters().getData();
-									current.changelog = "- " + StringEscapeUtils.unescapeHtml(cl).replace("<br>", "").replace("<p>", "").replace("</p>", "").replaceAll("\n(?!\n)", "\n- ");
-								} else if (element.equalsIgnoreCase("pubDate")) {
-									current.date = new Date(RFC2822.parse(reader.nextEvent().asCharacters().getData()).getTime());
-								}
-							}
-						} else if (e.isEndElement()) {
-							if (e.asEndElement().getName().getLocalPart().equalsIgnoreCase("item")) {
-								if (current != null)
-									infos.add(current);
-								current = null;
 							}
 						}
+					} finally {
+						reader.close();
 					}
 					
 					if (!infos.isEmpty()) {
-						Collections.sort(infos, new Comparator<VersionInfo>() {
-							@Override
-							public int compare(final VersionInfo v1, final VersionInfo v2) {
-								return v2.version.compareTo(v1.version);
-							}
-						});
+						Collections.sort(infos);
 						latest.set(infos.get(0));
 					} else {
 						latest.set(null);
 					}
+					
+					getChangelogs(sender);
 					
 					final String message = infos.isEmpty() ? (Skript.getVersion().isStable() ? "" + m_running_latest_version : "" + m_running_latest_version_beta) : "" + m_update_available;
 					if (isAutomatic && !infos.isEmpty()) {
@@ -241,12 +233,14 @@ public final class Updater {
 					try {
 						state = UpdateState.CHECK_ERROR;
 						error.set(ExceptionUtils.toString(e));
-						Skript.error(sender, m_check_error.toString());
+						if (sender != null)
+							Skript.error(sender, m_check_error.toString());
 					} finally {
 						stateLock.writeLock().unlock();
 					}
 				} catch (final Exception e) {
-					Skript.error(sender, m_internal_error.toString());
+					if (sender != null)
+						Skript.error(sender, m_internal_error.toString());
 					Skript.exception(e, "Unexpected error while checking for a new version of Skript");
 					stateLock.writeLock().lock();
 					try {
@@ -261,38 +255,76 @@ public final class Updater {
 							in.close();
 						} catch (final IOException e) {}
 					}
-					if (r != null) {
-						try {
-							r.close();
-						} catch (final IOException e) {}
-					}
 				}
 			}
 		}, "Skript update thread").start();
 	}
 	
-	private final static String getFileURL(final String name) throws MalformedURLException, IOException {
+	/**
+	 * Gets the changelogs and release dates of the newest versions
+	 * 
+	 * @param sender
+	 */
+	final static void getChangelogs(final CommandSender sender) {
 		InputStream in = null;
+		InputStreamReader r = null;
 		try {
-			final URLConnection conn = new URL(filesURL).openConnection();
-			conn.setRequestProperty("User-Agent", "Skript/v" + Skript.getVersion() + " (by Njol)");
+			final URLConnection conn = new URL(RSSURL).openConnection();
+			conn.setRequestProperty("User-Agent", "Skript/v" + Skript.getVersion() + " (by Njol)"); // Bukkit returns a 403 (forbidden) if no user agent is set
 			in = conn.getInputStream();
-			final BufferedReader reader = new BufferedReader(new InputStreamReader(in, conn.getContentEncoding() == null ? "UTF-8" : conn.getContentEncoding()));
-			try {
-				final String line = reader.readLine();
-				if (line != null) {
-					final JSONArray a = (JSONArray) JSONValue.parse(line);
-					for (final Object o : a) {
-						final Object n = ((JSONObject) o).get("name");
-						if (!(n instanceof String) || !n.equals(name))
+			r = new InputStreamReader(in, conn.getContentEncoding() == null ? "UTF-8" : conn.getContentEncoding());
+			final XMLEventReader reader = XMLInputFactory.newInstance().createXMLEventReader(r);
+			
+			infos.clear();
+			VersionInfo current = null;
+			
+			outer: while (reader.hasNext()) {
+				XMLEvent e = reader.nextEvent();
+				if (e.isStartElement()) {
+					final String element = e.asStartElement().getName().getLocalPart();
+					if (element.equalsIgnoreCase("title")) {
+						final String name = reader.nextEvent().asCharacters().getData().trim();
+						for (final VersionInfo i : infos) {
+							if (name.equals(i.name)) {
+								current = i;
+								continue outer;
+							}
+						}
+						current = null;
+					} else if (element.equalsIgnoreCase("description")) {
+						if (current == null)
 							continue;
-						final Object url = ((JSONObject) o).get("downloadUrl");
-						if (url instanceof String)
-							return (String) url;
+						final StringBuilder cl = new StringBuilder();
+						while ((e = reader.nextEvent()).isCharacters())
+							cl.append(e.asCharacters().getData());
+						current.changelog = "- " + StringEscapeUtils.unescapeHtml("" + cl).replace("<br>", "").replace("<p>", "").replace("</p>", "").replaceAll("\n(?!\n)", "\n- ");
+					} else if (element.equalsIgnoreCase("pubDate")) {
+						if (current == null)
+							continue;
+						synchronized (RFC2822) { // to make FindBugs shut up
+							current.date = new Date(RFC2822.parse(reader.nextEvent().asCharacters().getData()).getTime());
+						}
 					}
 				}
+			}
+		} catch (final IOException e) {
+			stateLock.writeLock().lock();
+			try {
+				state = UpdateState.CHECK_ERROR;
+				error.set(ExceptionUtils.toString(e));
+				Skript.error(sender, m_check_error.toString());
 			} finally {
-				reader.close();
+				stateLock.writeLock().unlock();
+			}
+		} catch (final Exception e) {
+			Skript.error(sender, m_internal_error.toString());
+			Skript.exception(e, "Unexpected error while checking for a new version of Skript");
+			stateLock.writeLock().lock();
+			try {
+				state = UpdateState.CHECK_ERROR;
+				error.set(e.getClass().getSimpleName() + ": " + e.getLocalizedMessage());
+			} finally {
+				stateLock.writeLock().unlock();
 			}
 		} finally {
 			if (in != null) {
@@ -300,8 +332,12 @@ public final class Updater {
 					in.close();
 				} catch (final IOException e) {}
 			}
+			if (r != null) {
+				try {
+					r.close();
+				} catch (final IOException e) {}
+			}
 		}
-		throw new IOException("Could not get the file's URL. You can however download Skript manually from " + manualDownloadURL);
 	}
 	
 	/**
@@ -310,6 +346,7 @@ public final class Updater {
 	 * @param sender
 	 * @param isAutomatic
 	 */
+	@SuppressWarnings("null")
 	static void download_i(final CommandSender sender, final boolean isAutomatic) {
 		assert sender != null;
 		stateLock.readLock().lock();
@@ -324,7 +361,7 @@ public final class Updater {
 //		ZipInputStream zip = null;
 		InputStream in = null;
 		try {
-			final URLConnection conn = new URL(getFileURL(latest.get().name)).openConnection();
+			final URLConnection conn = new URL(latest.get().downloadURL).openConnection();
 			FileUtils.save(in = conn.getInputStream(), new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
 //			zip = new ZipInputStream(conn.getInputStream());
 //			ZipEntry entry;

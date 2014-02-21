@@ -21,7 +21,7 @@
 
 package ch.njol.skript.util;
 
-import java.io.Serializable;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.SkriptConfig;
 import ch.njol.yggdrasil.YggdrasilSerializable;
@@ -29,8 +29,7 @@ import ch.njol.yggdrasil.YggdrasilSerializable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public class Date implements Serializable, Comparable<Date>, YggdrasilSerializable {
+public class Date implements Comparable<Date>, YggdrasilSerializable {
 	
 	private long timestamp;
 	
@@ -80,7 +79,7 @@ public class Date implements Serializable, Comparable<Date>, YggdrasilSerializab
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

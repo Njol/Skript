@@ -21,6 +21,8 @@
 
 package ch.njol.skript.classes;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.yggdrasil.ClassResolver;
 import ch.njol.yggdrasil.Fields;
 
@@ -39,6 +41,7 @@ public class EnumSerializer<T extends Enum<T>> extends Serializer<T> {
 	
 	@Override
 	@Deprecated
+	@Nullable
 	public T deserialize(final String s) {
 		try {
 			return Enum.valueOf(c, s);
@@ -53,6 +56,7 @@ public class EnumSerializer<T extends Enum<T>> extends Serializer<T> {
 	}
 	
 	@Override
+	@Nullable
 	public Fields serialize(final T t) {
 		assert false;
 		return null;

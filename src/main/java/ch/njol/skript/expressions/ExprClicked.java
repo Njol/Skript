@@ -28,6 +28,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -39,6 +40,7 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.entity.EntityData;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
@@ -47,7 +49,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Clicked Block/Entity")
 @Description("The clicked block or entity - only useful in click events")
 @Examples({"message \"You clicked on a %type of clicked entity%!\"",
@@ -59,15 +60,17 @@ public class ExprClicked extends SimpleExpression<Object> {
 		Skript.registerExpression(ExprClicked.class, Object.class, ExpressionType.SIMPLE, "[the] clicked (block|%-*itemtype/entitydata%)");
 	}
 	
+	@Nullable
 	private EntityData<?> entityType = null;
 	/**
 	 * null for any block
 	 */
+	@Nullable
 	private ItemType itemType = null;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		final Object type = exprs[0] == null ? null : exprs[0].getSingle(null);
+		final Object type = exprs[0] == null ? null : ((Literal<?>) exprs[0]).getSingle();
 		if (type instanceof EntityData) {
 			entityType = (EntityData<?>) type;
 			if (!ScriptLoader.isCurrentEvent(PlayerInteractEntityEvent.class)) {
@@ -94,7 +97,9 @@ public class ExprClicked extends SimpleExpression<Object> {
 		return entityType != null ? entityType.getType() : Block.class;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
+	@Nullable
 	protected Object[] get(final Event e) {
 		if (e instanceof PlayerInteractEvent) {
 			if (entityType != null)
@@ -125,7 +130,7 @@ public class ExprClicked extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the clicked " + (entityType != null ? entityType : itemType != null ? itemType : "block");
 	}
 	

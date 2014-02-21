@@ -23,6 +23,7 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,7 +40,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Damage Cause")
 @Description("Tests what kind of damage caused a <a href='../events/#damage'>damage event</a>. Refer to the <a href='../classes/#damagecause'>Damage Cause</a> type for a list of all possible causes.")
 @Examples({"# make players use their potions of fire resistance whenever they take any kind of fire damage",
@@ -61,9 +61,10 @@ public class CondDamageCause extends Condition {
 		Skript.registerCondition(CondDamageCause.class, "[the] damage (was|is|has)(0¦|1¦n('|o)t) [been] (caused|done|made) by %damagecause%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<DamageCause> cause, expected;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		cause = new EventValueExpression<DamageCause>(DamageCause.class);
@@ -86,7 +87,7 @@ public class CondDamageCause extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "damage was" + (isNegated() ? " not" : "") + " caused by " + expected.toString(e, debug);
 	}
 	

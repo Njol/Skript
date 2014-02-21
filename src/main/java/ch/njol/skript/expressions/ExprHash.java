@@ -21,11 +21,12 @@
 
 package ch.njol.skript.expressions;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Hash")
 @Description({"Hashes the given text using the MD5 algorithm. This is useful for storing passwords or IP addresses without having to store them literally.",
 		"Please note that an MD5 hash is irreversible, i.e. you won't be able to get the original text back (which is the point of storing passwords like this). Brute-force attacks can still be performed on hashes though which can easily crack short or insecure passwords."})
@@ -61,15 +61,17 @@ public class ExprHash extends PropertyExpression<String, String> {
 		Skript.registerExpression(ExprHash.class, String.class, ExpressionType.PROPERTY, "[md5]( |-)hash(ed|[( |-|)code] of) %strings%");
 	}
 	
-	static Charset utf8 = Charset.forName("UTF-8");
+	@Nullable
 	static MessageDigest md5 = null;
 	static {
 		try {
 			md5 = MessageDigest.getInstance("MD5");
-		} catch (final NoSuchAlgorithmException e) {}
+		} catch (final NoSuchAlgorithmException e) {
+			throw new InternalError("JVM does not adhere to Java specifications");
+		}
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		if (md5 == null) {
@@ -80,11 +82,13 @@ public class ExprHash extends PropertyExpression<String, String> {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	protected String[] get(final Event e, final String[] source) {
+		assert md5 != null;
 		final String[] r = new String[source.length];
 		for (int i = 0; i < r.length; i++)
-			r[i] = toHex(md5.digest(source[i].getBytes(utf8)));
+			r[i] = toHex(md5.digest(source[i].getBytes(StandardCharsets.UTF_8)));
 		return r;
 	}
 	
@@ -98,7 +102,7 @@ public class ExprHash extends PropertyExpression<String, String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "hash of " + getExpr();
 	}
 	

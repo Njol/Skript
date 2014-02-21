@@ -24,6 +24,7 @@ package ch.njol.skript.conditions;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Wearing")
 @Description("Checks whether a player is wearing some armour.")
 @Examples({"player is wearing an iron chestplate and iron leggings",
@@ -52,21 +52,18 @@ public class CondIsWearing extends Condition {
 		Skript.registerCondition(CondIsWearing.class, "%livingentities% (is|are) wearing %itemtypes%", "%livingentities% (isn't|is not|aren't|are not) wearing %itemtypes%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<LivingEntity> entities;
+	@SuppressWarnings("null")
 	Expression<ItemType> types;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		entities = (Expression<LivingEntity>) vars[0];
 		types = (Expression<ItemType>) vars[1];
 		setNegated(matchedPattern == 1);
 		return true;
-	}
-	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return entities.toString(e, debug) + (entities.isSingle() ? " is" : " are") + (isNegated() ? "not " : "") + " wearing " + types;
 	}
 	
 	@Override
@@ -86,6 +83,11 @@ public class CondIsWearing extends Condition {
 				}, isNegated());
 			}
 		});
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return entities.toString(e, debug) + (entities.isSingle() ? " is" : " are") + (isNegated() ? "not " : "") + " wearing " + types;
 	}
 	
 }

@@ -21,6 +21,8 @@
 
 package ch.njol.skript.util;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.classes.Converter;
 
 /**
@@ -38,12 +40,14 @@ public abstract class Getter<R, A> implements Converter<A, R> {
 	 * @param arg the object to get the value from
 	 * @return the value
 	 */
+	@Nullable
 	public abstract R get(A arg);
 	
 	/**
 	 * Convenience method to make getter implement converter
 	 */
 	@Override
+	@Nullable
 	public final R convert(final A a) {
 		return get(a);
 	}

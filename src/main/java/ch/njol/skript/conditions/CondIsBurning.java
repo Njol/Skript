@@ -32,7 +32,6 @@ import ch.njol.skript.doc.Since;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Burning")
 @Description("Checks whether an entity is on fire, e.g. a zombie due to being in sunlight, or any entity after falling into lava.")
 @Examples({"# increased attack against buring targets",

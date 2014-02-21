@@ -23,6 +23,7 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -39,7 +40,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Holding")
 @Description("Checks whether a player is holdign a specific item. Cannot be used with endermen, use 'entity is [not] an enderman holding &lt;item type&gt;' instead.")
 @Examples({"player is holding a stick",
@@ -55,10 +55,12 @@ public class CondItemInHand extends Condition {
 				"[%livingentities%] (is not|isn't) holding %itemtypes%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<LivingEntity> entities;
+	@SuppressWarnings("null")
 	Expression<ItemType> types;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		entities = (Expression<LivingEntity>) vars[0];
@@ -83,7 +85,7 @@ public class CondItemInHand extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return entities.toString(e, debug) + " " + (entities.isSingle() ? "is" : "are") + " holding " + types.toString(e, debug);
 	}
 	

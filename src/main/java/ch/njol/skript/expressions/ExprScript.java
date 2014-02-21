@@ -22,9 +22,11 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.config.Config;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -38,7 +40,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Script Name")
 @Description("Holds the current script's name (the file name without '.sk').")
 @Examples({"on script load:",
@@ -51,14 +52,21 @@ public class ExprScript extends SimpleExpression<String> {
 		Skript.registerExpression(ExprScript.class, String.class, ExpressionType.SIMPLE, "[the] script[['s] name]");
 	}
 	
+	@SuppressWarnings("null")
 	private String name;
 	
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		name = ScriptLoader.currentScript.getFileName();
+		final Config script = ScriptLoader.currentScript;
+		if (script == null) {
+			assert false;
+			return false;
+		}
+		String name = script.getFileName();
 		if (name.contains("."))
-			name = name.substring(0, name.lastIndexOf('.'));
-		return name != null;
+			name = "" + name.substring(0, name.lastIndexOf('.'));
+		this.name = name;
+		return true;
 	}
 	
 	@Override
@@ -77,7 +85,7 @@ public class ExprScript extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the script's name";
 	}
 	

@@ -25,6 +25,8 @@ import java.util.Arrays;
 
 import org.bukkit.Material;
 import org.bukkit.entity.ThrownPotion;
+import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.ItemData;
 import ch.njol.skript.aliases.ItemType;
@@ -41,7 +43,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class ThrownPotionData extends EntityData<ThrownPotion> {
 	static {
 		register(ThrownPotionData.class, "thrown potion", ThrownPotion.class, "thrown potion");
@@ -49,14 +50,16 @@ public class ThrownPotionData extends EntityData<ThrownPotion> {
 	
 	private final static Adjective m_adjective = new Adjective("entities.thrown potion.adjective");
 	
+	@Nullable
 	private ItemType[] types;
 	
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		if (exprs.length > 0 && exprs[0] != null) {
-			types = Converters.convert((ItemType[]) exprs[0].getAll(), ItemType.class, new Converter<ItemType, ItemType>() {
+			if ((Converters.convert((ItemType[]) exprs[0].getAll(), ItemType.class, new Converter<ItemType, ItemType>() {
 				@SuppressWarnings("deprecation")
 				@Override
+				@Nullable
 				public ItemType convert(final ItemType t) {
 					ItemType r = null;
 					for (final ItemData d : t.getTypes()) {
@@ -69,35 +72,43 @@ public class ThrownPotionData extends EntityData<ThrownPotion> {
 					}
 					return r;
 				}
-			});
-			if (types.length == 0)
+			})).length == 0) {
 				return false; // no error message - other things can be thrown as well
+			}
 		}
 		return false;
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends ThrownPotion> c, final ThrownPotion e) {
-		if (e != null)
-			types = new ItemType[] {new ItemType(e.getItem())};
+	protected boolean init(final @Nullable Class<? extends ThrownPotion> c, final @Nullable ThrownPotion e) {
+		if (e != null) {
+			final ItemStack i = e.getItem();
+			if (i == null)
+				return false;
+			types = new ItemType[] {new ItemType(i)};
+		}
 		return true;
 	}
 	
 	@Override
 	protected boolean match(final ThrownPotion entity) {
-		if (types == null)
-			return true;
-		for (final ItemType t : types) {
-			if (t.isOfType(entity.getItem()))
-				return true;
+		if (types != null) {
+			for (final ItemType t : types) {
+				if (t.isOfType(entity.getItem()))
+					return true;
+			}
+			return false;
 		}
-		return false;
+		return true;
 	}
 	
 	@Override
 	public void set(final ThrownPotion entity) {
-		if (types != null)
-			entity.setItem(CollectionUtils.getRandom(types).getRandom());
+		if (types != null) {
+			final ItemType t = CollectionUtils.getRandom(types);
+			assert t != null;
+			entity.setItem(t.getRandom());
+		}
 	}
 	
 	@Override
@@ -114,14 +125,16 @@ public class ThrownPotionData extends EntityData<ThrownPotion> {
 	public boolean isSupertypeOf(final EntityData<?> e) {
 		if (!(e instanceof ThrownPotionData))
 			return false;
-		if (types == null)
-			return true;
 		final ThrownPotionData d = (ThrownPotionData) e;
-		return d.types != null && ItemType.isSubset(types, d.types);
+		if (types != null) {
+			return d.types != null && ItemType.isSubset(types, d.types);
+		}
+		return true;
 	}
 	
 	@Override
 	public String toString(final int flags) {
+		final ItemType[] types = this.types;
 		if (types == null)
 			return super.toString(flags);
 		final StringBuilder b = new StringBuilder();
@@ -129,7 +142,7 @@ public class ThrownPotionData extends EntityData<ThrownPotion> {
 		b.append(m_adjective.toString(types[0].getTypes().get(0).getGender(), flags));
 		b.append(" ");
 		b.append(Classes.toString(types, flags & Language.NO_ARTICLE_MASK, false));
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 //		return ItemType.serialize(types);

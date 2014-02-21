@@ -23,11 +23,12 @@ package ch.njol.skript.command;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.WeakHashMap;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
@@ -35,7 +36,6 @@ import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
-import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 
 /**
@@ -45,11 +45,11 @@ import ch.njol.skript.util.Utils;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public class Argument<T> implements Serializable {
+public class Argument<T> {
 	
+	@Nullable
 	private final Expression<? extends T> def;
-	private final Class<T> type;
+	private final ClassInfo<T> type;
 	private final boolean single;
 	private final int index;
 	
@@ -62,7 +62,7 @@ public class Argument<T> implements Serializable {
 		current = new WeakHashMap<Event, T[]>();
 	}
 	
-	public Argument(final Expression<? extends T> def, final Class<T> type, final boolean single, final int index, final boolean optional) {
+	public Argument(final @Nullable Expression<? extends T> def, final ClassInfo<T> type, final boolean single, final int index, final boolean optional) {
 		this.def = def;
 		this.type = type;
 		this.single = single;
@@ -71,13 +71,14 @@ public class Argument<T> implements Serializable {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <T> Argument<T> newInstance(final Class<T> type, final String def, final int index, final boolean single, final boolean forceOptional) {
+	@Nullable
+	public static <T> Argument<T> newInstance(final ClassInfo<T> type, final @Nullable String def, final int index, final boolean single, final boolean forceOptional) {
 		Expression<? extends T> d = null;
 		if (def != null) {
 			if (def.startsWith("%") && def.endsWith("%")) {
 				final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 				try {
-					d = new SkriptParser(def.substring(1, def.length() - 1), SkriptParser.PARSE_EXPRESSIONS, ParseContext.COMMAND).parseExpression(type);
+					d = new SkriptParser("" + def.substring(1, def.length() - 1), SkriptParser.PARSE_EXPRESSIONS, ParseContext.COMMAND).parseExpression(type.getC());
 					if (d == null) {
 						log.printErrors("Can't understand this expression: " + def + "");
 						return null;
@@ -89,16 +90,16 @@ public class Argument<T> implements Serializable {
 			} else {
 				final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 				try {
-					if (type == String.class) {
+					if (type.getC() == String.class) {
 						if (def.startsWith("\"") && def.endsWith("\""))
-							d = (Expression<? extends T>) VariableString.newInstance(def.substring(1, def.length() - 1));
+							d = (Expression<? extends T>) VariableString.newInstance("" + def.substring(1, def.length() - 1));
 						else
 							d = (Expression<? extends T>) new SimpleLiteral<String>(def, false);
 					} else {
-						d = SkriptParser.parseLiteral(def, type, ParseContext.DEFAULT);
+						d = SkriptParser.parseLiteral(def, type.getC(), ParseContext.DEFAULT);
 					}
 					if (d == null) {
-						log.printErrors("'" + def + "' is not " + Classes.getSuperClassInfo(type).getName().withIndefiniteArticle());
+						log.printErrors("'" + def + "' is not " + type.getName().withIndefiniteArticle());
 						return null;
 					}
 					log.printLog();
@@ -112,7 +113,8 @@ public class Argument<T> implements Serializable {
 	
 	@Override
 	public String toString() {
-		return "<" + Utils.toEnglishPlural(Classes.getExactClassName(type), !single) + (def == null ? "" : " = " + def.toString()) + ">";
+		final Expression<? extends T> def = this.def;
+		return "<" + Utils.toEnglishPlural(type.getCodeName(), !single) + (def == null ? "" : " = " + def.toString()) + ">";
 	}
 	
 	public boolean isOptional() {
@@ -126,17 +128,18 @@ public class Argument<T> implements Serializable {
 	
 	@SuppressWarnings("unchecked")
 	public void set(final ScriptCommandEvent e, final Object[] o) {
-		if (o == null || !(type.isAssignableFrom(o.getClass().getComponentType())))
+		if (!(type.getC().isAssignableFrom(o.getClass().getComponentType())))
 			throw new IllegalArgumentException();
 		current.put(e, (T[]) o);
 	}
 	
+	@Nullable
 	public T[] getCurrent(final Event e) {
 		return current.get(e);
 	}
 	
 	public Class<T> getType() {
-		return type;
+		return type.getC();
 	}
 	
 	public int getIndex() {

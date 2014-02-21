@@ -25,6 +25,7 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * Redirects the log to a {@link CommandSender}.
@@ -33,12 +34,14 @@ import org.bukkit.command.CommandSender;
  */
 public class RedirectingLogHandler extends LogHandler {
 	
+	@Nullable
 	private final CommandSender recipient;
+	
 	private final String prefix;
 	
 	private int numErrors = 0;
 	
-	public RedirectingLogHandler(final CommandSender recipient, final String prefix) {
+	public RedirectingLogHandler(final CommandSender recipient, final @Nullable String prefix) {
 		this.recipient = recipient == Bukkit.getConsoleSender() ? null : recipient;
 		this.prefix = prefix == null ? "" : prefix;
 	}

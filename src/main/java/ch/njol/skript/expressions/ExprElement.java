@@ -25,6 +25,7 @@ import java.lang.reflect.Array;
 import java.util.Iterator;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -41,7 +42,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Element of")
 @Description({"The first, last or a random element of a set, e.g. a list variable.",
 		"See also: <a href='#ExprRandom'>random</a>"})
@@ -55,8 +55,10 @@ public class ExprElement extends SimpleExpression<Object> {
 	
 	private int element;
 	
+	@SuppressWarnings("null")
 	private Expression<?> expr;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		expr = exprs[0];
@@ -65,6 +67,7 @@ public class ExprElement extends SimpleExpression<Object> {
 	}
 	
 	@Override
+	@Nullable
 	protected Object[] get(final Event e) {
 		final Object o;
 		if (element == -1) {
@@ -99,7 +102,7 @@ public class ExprElement extends SimpleExpression<Object> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return (element == 0 ? "a " : "the ") + (element == -1 ? "first" : element == 1 ? "last" : "random") + " element of " + expr.toString(e, debug);
 	}
 	

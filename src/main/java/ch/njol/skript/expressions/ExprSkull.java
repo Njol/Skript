@@ -30,6 +30,7 @@ import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Skeleton.SkeletonType;
 import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -49,7 +50,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Skull")
 @Description("Gets a skull item representing a player or an entity.")
 @Examples({"give the victim's skull to the attacker",
@@ -70,6 +70,7 @@ public class ExprSkull extends SimplePropertyExpression<Object, ItemType> {
 	}
 	
 	@Override
+	@Nullable
 	public ItemType convert(final Object o) {
 		final SkullType type;
 		if (o instanceof Skeleton || o instanceof SkeletonData) {

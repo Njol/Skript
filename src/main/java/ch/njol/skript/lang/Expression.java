@@ -24,6 +24,7 @@ package ch.njol.skript.lang;
 import java.util.Iterator;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -58,6 +59,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * @return The value or null if this expression doesn't have any value for the event
 	 * @throws UnsupportedOperationException (optional) if this was called on a non-single expression
 	 */
+	@Nullable
 	public T getSingle(final Event e);
 	
 	/**
@@ -120,6 +122,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 *         desired type.
 	 * @see Converter
 	 */
+	@Nullable
 	public <R> Expression<? extends R> getConvertedExpression(final Class<R>... to);
 	
 	/**
@@ -180,6 +183,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * @param e The event
 	 * @return An iterator to iterate over all values of this expression which may be empty and/or null, but must not return null elements.
 	 */
+	@Nullable
 	public Iterator<? extends T> iterator(Event e);
 	
 	/**
@@ -230,6 +234,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 *         that type are accepted), or null if the given mode is not supported. For {@link ChangeMode#DELETE} and {@link ChangeMode#RESET} this can return any non-null array to
 	 *         mark them as supported.
 	 */
+	@Nullable
 	public Class<?>[] acceptChange(ChangeMode mode);
 	
 	/**
@@ -242,6 +247,6 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * @param mode
 	 * @throws UnsupportedOperationException (optional) - If this method was called on an unsupported ChangeMode.
 	 */
-	public void change(Event e, final Object[] delta, final ChangeMode mode);
+	public void change(Event e, final @Nullable Object[] delta, final ChangeMode mode);
 	
 }

@@ -39,7 +39,6 @@ import ch.njol.util.Kleenean;
  * @see Skript#registerEvent(String, Class, Class, String...)
  * @see Skript#registerEvent(String, Class, Class[], String...)
  */
-@SuppressWarnings("serial")
 public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 	
 	@Override
@@ -62,5 +61,10 @@ public abstract class SkriptEvent implements SyntaxElement, Debuggable {
 	 * @return true if this is SkriptEvent is represented by the Bukkit Event or false if not
 	 */
 	public abstract boolean check(Event e);
+	
+	@Override
+	public String toString() {
+		return toString(null, false);
+	}
 	
 }

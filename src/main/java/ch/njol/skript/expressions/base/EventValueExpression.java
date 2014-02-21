@@ -27,14 +27,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.ClassInfo;
-import ch.njol.skript.classes.SerializableChanger;
-import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.lang.DefaultExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -61,24 +61,25 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  * @see Classes#registerClass(ClassInfo)
  */
-@SuppressWarnings("serial")
 public class EventValueExpression<T> extends SimpleExpression<T> implements DefaultExpression<T> {
 	
 	private final Class<? extends T> c;
-	private SerializableChanger<? super T> changer;
-	private final Map<Class<? extends Event>, SerializableGetter<? extends T, ?>> getters = new HashMap<Class<? extends Event>, SerializableGetter<? extends T, ?>>();
+	@Nullable
+	private Changer<? super T> changer;
+	private final Map<Class<? extends Event>, Getter<? extends T, ?>> getters = new HashMap<Class<? extends Event>, Getter<? extends T, ?>>();
 	
 	public EventValueExpression(final Class<? extends T> c) {
 		this(c, null);
 	}
 	
-	public EventValueExpression(final Class<? extends T> c, final SerializableChanger<? super T> changer) {
+	public EventValueExpression(final Class<? extends T> c, final @Nullable Changer<? super T> changer) {
 		assert c != null;
 		this.c = c;
 		this.changer = changer;
 	}
 	
 	@Override
+	@Nullable
 	protected T[] get(final Event e) {
 		final T o = getValue(e);
 		if (o == null)
@@ -88,13 +89,14 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 		return one;
 	}
 	
+	@Nullable
 	private <E extends Event> T getValue(final E e) {
 		if (getters.containsKey(e.getClass())) {
 			final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getters.get(e.getClass());
 			return g == null ? null : g.get(e);
 		}
 		
-		for (final Entry<Class<? extends Event>, SerializableGetter<? extends T, ?>> p : getters.entrySet()) {
+		for (final Entry<Class<? extends Event>, Getter<? extends T, ?>> p : getters.entrySet()) {
 			if (p.getKey().isAssignableFrom(e.getClass())) {
 				getters.put(e.getClass(), p.getValue());
 				return p.getValue() == null ? null : ((Getter<? extends T, ? super E>) p.getValue()).get(e);
@@ -113,17 +115,23 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 		return init();
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init() {
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			boolean hasValue = false;
-			for (final Class<? extends Event> e : ScriptLoader.getCurrentEvents()) {
+			final Class<? extends Event>[] es = ScriptLoader.getCurrentEvents();
+			if (es == null) {
+				assert false;
+				return false;
+			}
+			for (final Class<? extends Event> e : es) {
 				if (getters.containsKey(e)) {
 					hasValue = true;
 					continue;
 				}
-				final SerializableGetter<? extends T, ?> getter = EventValues.getEventValueGetter(e, c, getTime());
+				final Getter<? extends T, ?> getter = EventValues.getEventValueGetter(e, c, getTime());
 				if (getter != null) {
 					getters.put(e, getter);
 					hasValue = true;
@@ -151,29 +159,38 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (!debug || e == null)
 			return "event-" + Classes.getSuperClassInfo(c).getName();
 		return Classes.getDebugMessage(getValue(e));
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
-		if (changer == null)
-			changer = (SerializableChanger<? super T>) Classes.getSuperClassInfo(c).getChanger();
-		return changer == null ? null : changer.acceptChange(mode);
+		Changer<? super T> ch = changer;
+		if (ch == null)
+			changer = ch = (Changer<? super T>) Classes.getSuperClassInfo(c).getChanger();
+		return ch == null ? null : ch.acceptChange(mode);
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
-		if (changer == null)
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
+		final Changer<? super T> ch = changer;
+		if (ch == null)
 			throw new UnsupportedOperationException();
-		ChangerUtils.change(changer, getArray(e), delta, mode);
+		ChangerUtils.change(ch, getArray(e), delta, mode);
 	}
 	
 	@Override
 	public boolean setTime(final int time) {
-		for (final Class<? extends Event> e : ScriptLoader.getCurrentEvents()) {
+		final Class<? extends Event>[] es = ScriptLoader.getCurrentEvents();
+		if (es == null) {
+			assert false;
+			return false;
+		}
+		for (final Class<? extends Event> e : es) {
+			assert e != null;
 			if (EventValues.doesEventValueHaveTimeStates(e, c)) {
 				super.setTime(time);
 				return true;

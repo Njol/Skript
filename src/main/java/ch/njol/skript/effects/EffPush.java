@@ -24,6 +24,7 @@ package ch.njol.skript.effects;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,7 +40,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Push")
 @Description("Push entities around.")
 @Examples({"push the player upwards",
@@ -50,11 +50,14 @@ public class EffPush extends Effect {
 		Skript.registerEffect(EffPush.class, "(push|thrust) %entities% %direction% [(at|with) (speed|velocity|force) %-number%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Entity> entities;
+	@SuppressWarnings("null")
 	private Expression<Direction> direction;
+	@Nullable
 	private Expression<Number> speed = null;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		entities = (Expression<Entity>) exprs[0];
@@ -68,11 +71,12 @@ public class EffPush extends Effect {
 		final Direction d = direction.getSingle(e);
 		if (d == null)
 			return;
-		final Number v = speed == null ? null : speed.getSingle(e);
+		final Number v = speed != null ? speed.getSingle(e) : null;
 		if (speed != null && v == null)
 			return;
 		final Entity[] ents = entities.getArray(e);
 		for (final Entity en : ents) {
+			assert en != null;
 			final Vector mod = d.getDirection(en);
 			if (v != null)
 				mod.normalize().multiply(v.doubleValue());
@@ -81,8 +85,8 @@ public class EffPush extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "push " + entities.toString(e, debug) + " " + direction.toString(e, debug) + (speed == null ? "" : " at speed " + speed.toString(e, debug));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "push " + entities.toString(e, debug) + " " + direction.toString(e, debug) + (speed != null ? " at speed " + speed.toString(e, debug) : "");
 	}
 	
 }

@@ -23,6 +23,7 @@ package ch.njol.skript.events;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.world.StructureGrowEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -34,9 +35,7 @@ import ch.njol.util.Checker;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EvtGrow extends SkriptEvent {
-	
 	static {
 		Skript.registerEvent("Grow", EvtGrow.class, StructureGrowEvent.class, "grow [of %-structuretype%]")
 				.description("Called when a tree or giant mushroom grows to full size.")
@@ -44,6 +43,7 @@ public class EvtGrow extends SkriptEvent {
 				.since("1.0");
 	}
 	
+	@Nullable
 	private Literal<StructureType> types;
 	
 	@SuppressWarnings("unchecked")
@@ -54,20 +54,22 @@ public class EvtGrow extends SkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "grow of " + types.toString(e, debug);
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "grow" + (types != null ? " of " + types.toString(e, debug) : "");
 	}
 	
 	@Override
 	public boolean check(final Event e) {
-		if (types == null)
-			return true;
-		return types.check(e, new Checker<StructureType>() {
-			@Override
-			public boolean check(final StructureType t) {
-				return t.is(((StructureGrowEvent) e).getSpecies());
-			}
-		});
+		if (types != null) {
+			return types.check(e, new Checker<StructureType>() {
+				@SuppressWarnings("null")
+				@Override
+				public boolean check(final StructureType t) {
+					return t.is(((StructureGrowEvent) e).getSpecies());
+				}
+			});
+		}
+		return true;
 	}
 	
 }

@@ -22,6 +22,7 @@
 package ch.njol.skript.util;
 
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * @author Peter Güttinger
@@ -31,6 +32,7 @@ public abstract class DamageCauseUtils {
 	
 	private final static EnumUtils<DamageCause> util = new EnumUtils<DamageCause>(DamageCause.class, "damage causes");
 	
+	@Nullable
 	public final static DamageCause parse(final String s) {
 		return util.parse(s);
 	}

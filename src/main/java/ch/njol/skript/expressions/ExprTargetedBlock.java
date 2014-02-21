@@ -28,6 +28,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
@@ -46,7 +47,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Targeted Block")
 @Description("The block at the crosshair. This regards all blocks that are not air as fully opaque, e.g. torches will be like a solid stone block for this expression.")
 @Examples({"# A command to set the block a player looks at to a specific type:",
@@ -56,18 +56,19 @@ import ch.njol.util.Kleenean;
 @Since("1.0")
 public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 	static {
-		Skript.registerExpression(ExprTargetedBlock.class, Block.class, ExpressionType.NORMAL,
+		Skript.registerExpression(ExprTargetedBlock.class, Block.class, ExpressionType.COMBINED,
 				"[the] target[ed] block[s] [of %players%]", "%players%'[s] target[ed] block[s]",
 				"[the] actual[ly] target[ed] block[s] [of %players%]", "%players%'[s] actual[ly] target[ed] block[s]");
 	}
 	
 	private boolean actualTargetedBlock;
 	
+	@Nullable
 	private static Event last = null;
 	private final static WeakHashMap<Player, Block> targetedBlocks = new WeakHashMap<Player, Block>();
 	private static long blocksValidForTick = 0;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		setExpr((Expression<Player>) exprs[0]);
@@ -76,13 +77,14 @@ public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (e == null)
 			return "the targeted block" + (getExpr().isSingle() ? "" : "s") + " of " + getExpr().toString(e, debug);
 		return Classes.getDebugMessage(getAll(e));
 	}
 	
-	Block getTargetedBlock(final Player p, final Event e) {
+	@Nullable
+	Block getTargetedBlock(final @Nullable Player p, final Event e) {
 		if (p == null)
 			return null;
 		final long time = Bukkit.getWorlds().get(0).getFullTime();
@@ -97,18 +99,23 @@ public class ExprTargetedBlock extends PropertyExpression<Player, Block> {
 //			targetedBlocks.put(((PlayerInteractEvent) e).getPlayer(), ((PlayerInteractEvent) e).getClickedBlock());
 //			return ((PlayerInteractEvent) e).getClickedBlock();
 //		}
-		@SuppressWarnings("deprecation")
-		Block b = p.getTargetBlock(null, SkriptConfig.maxTargetBlockDistance.value());
-		if (b.getType() == Material.AIR)
-			b = null;
-		targetedBlocks.put(p, b);
-		return b;
+		try {
+			@SuppressWarnings("deprecation")
+			Block b = p.getTargetBlock(null, SkriptConfig.maxTargetBlockDistance.value());
+			if (b.getType() == Material.AIR)
+				b = null;
+			targetedBlocks.put(p, b);
+			return b;
+		} catch (final IllegalStateException ex) {// Bukkit my throw this (for no reason?)
+			return null;
+		}
 	}
 	
 	@Override
 	protected Block[] get(final Event e, final Player[] source) {
 		return get(source, new Converter<Player, Block>() {
 			@Override
+			@Nullable
 			public Block convert(final Player p) {
 				return getTargetedBlock(p, e);
 			}

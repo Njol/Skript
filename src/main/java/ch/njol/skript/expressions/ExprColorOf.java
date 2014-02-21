@@ -27,6 +27,7 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Colorable;
 import org.bukkit.material.MaterialData;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -42,7 +43,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Colour of")
 @Description("The <a href='../classes/#color'>colour</a> of an item, can also be used to colour chat messages with \"&lt;%colour of ...%&gt;this text is coloured!\".")
 @Examples({"on click on wool:",
@@ -54,7 +54,9 @@ public class ExprColorOf extends SimplePropertyExpression<Object, Color> {
 		register(ExprColorOf.class, Color.class, "colo[u]r[s]", "itemstacks/entities");
 	}
 	
+	@SuppressWarnings("null")
 	@Override
+	@Nullable
 	public Color convert(final Object o) {
 		if (o instanceof ItemStack || o instanceof Item) {
 			final ItemStack is = o instanceof ItemStack ? (ItemStack) o : ((Item) o).getItemStack();
@@ -81,6 +83,7 @@ public class ExprColorOf extends SimplePropertyExpression<Object, Color> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode != ChangeMode.SET)
 			return null;
@@ -96,10 +99,11 @@ public class ExprColorOf extends SimplePropertyExpression<Object, Color> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		assert mode == ChangeMode.SET;
+		assert delta != null;
 		
-		final Color c = delta == null ? null : (Color) delta[0];
+		final Color c = (Color) delta[0];
 		final Object[] os = getExpr().getArray(e);
 		if (os.length == 0)
 			return;
@@ -122,7 +126,7 @@ public class ExprColorOf extends SimplePropertyExpression<Object, Color> {
 					((Item) o).setItemStack(is);
 				}
 			} else if (o instanceof Colorable) {
-				((Colorable) o).setColor((c).getWoolColor());
+				((Colorable) o).setColor(c.getWoolColor());
 			}
 		}
 	}

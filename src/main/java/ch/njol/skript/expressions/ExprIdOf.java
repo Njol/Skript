@@ -28,6 +28,7 @@ import java.util.NoSuchElementException;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemData;
@@ -49,7 +50,6 @@ import ch.njol.util.coll.iterator.SingleItemIterator;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Id")
 @Description("The id of a specific item. You usually don't need this expression as you can likely do everything with aliases.")
 @Examples({"message \"the ID of %type of the clicked block% is %id of the clicked block%.\""})
@@ -61,7 +61,7 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 	
 	private boolean single = false;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		setExpr((Expression<ItemType>) vars[0]);
@@ -76,11 +76,7 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the id" + (single ? "" : "s") + " of " + getExpr().toString(e, debug);
-	}
-	
-	@Override
+	@Nullable
 	protected Integer[] get(final Event e, final ItemType[] source) {
 		if (single) {
 			final ItemType t = getExpr().getSingle(e);
@@ -97,9 +93,15 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 		return r.toArray(new Integer[0]);
 	}
 	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "the id" + (single ? "" : "s") + " of " + getExpr().toString(e, debug);
+	}
+	
 	boolean changeItemStack;
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (!getExpr().isSingle())
 			return null;
@@ -121,9 +123,15 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 	
 	@SuppressWarnings("deprecation")
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
+		assert delta != null;
 		final int i = ((Number) delta[0]).intValue();
-		final ItemStack is = getExpr().getSingle(e).getRandom();
+		final ItemType it = getExpr().getSingle(e);
+		if (it == null)
+			return;
+		final ItemStack is = it.getRandom();
+		if (is == null)
+			return;
 		int type = is.getTypeId();
 		switch (mode) {
 			case ADD:
@@ -152,11 +160,15 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 		}
 	}
 	
+	@SuppressWarnings("null")
 	@Override
+	@Nullable
 	public Iterator<Integer> iterator(final Event e) {
 		if (single) {
 			final ItemType t = getExpr().getSingle(e);
 			if (t == null)
+				return null;
+			if (t.numTypes() == 0)
 				return null;
 			return new SingleItemIterator<Integer>(t.getTypes().get(0).getId());
 		}

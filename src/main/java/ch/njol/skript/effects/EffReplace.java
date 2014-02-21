@@ -22,6 +22,7 @@
 package ch.njol.skript.effects;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
@@ -40,7 +41,6 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Replace")
 @Description("Replaces all occurrences of a given text with another text. Please note that you can only change variables and a few expressions, e.g. a <a href='../expressions/#ExprMessage'>message</a> or a line of a sign.")
 @Examples({"replace \"<item>\" in {textvar} with \"%item%\"",
@@ -57,9 +57,10 @@ public class EffReplace extends Effect {
 				"replace (all|every|) %strings% with %string% in %string%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<String> haystack, needles, replacement;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		haystack = (Expression<String>) exprs[1 + matchedPattern];
@@ -79,13 +80,15 @@ public class EffReplace extends Effect {
 		final String r = replacement.getSingle(e);
 		if (h == null || ns.length == 0 || r == null)
 			return;
-		for (final String n : ns)
+		for (final String n : ns) {
+			assert n != null;
 			h = StringUtils.replace(h, n, r, SkriptConfig.caseSensitive.value());
+		}
 		haystack.change(e, new String[] {h}, ChangeMode.SET);
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "replace " + needles.toString(e, debug) + " in " + haystack.toString(e, debug) + " with " + replacement.toString(e, debug);
 	}
 	

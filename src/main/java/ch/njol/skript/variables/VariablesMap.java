@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
@@ -35,7 +37,7 @@ final class VariablesMap {
 	
 	final static Comparator<String> variableNameComparator = new Comparator<String>() {
 		@Override
-		public int compare(final String s1, final String s2) {
+		public int compare(final @Nullable String s1, final @Nullable String s2) {
 			if (s1 == null)
 				return s2 == null ? 0 : -1;
 			if (s2 == null)
@@ -45,7 +47,7 @@ final class VariablesMap {
 				final char c1 = s1.charAt(i), c2 = s2.charAt(j);
 				if ('0' <= c1 && c1 <= '9' && '0' <= c2 && c2 <= '9') {
 					final int i2 = StringUtils.findLastDigit(s1, i), j2 = StringUtils.findLastDigit(s2, j);
-					final int n1 = Utils.parseInt(s1.substring(i, i2)), n2 = Utils.parseInt(s2.substring(j, j2));
+					final int n1 = Utils.parseInt("" + s1.substring(i, i2)), n2 = Utils.parseInt("" + s2.substring(j, j2));
 					if (n1 > n2)
 						return 1;
 					if (n1 < n2)
@@ -82,6 +84,7 @@ final class VariablesMap {
 	 * @return an Object for a normal Variable or a Map<String, Object> for a list variable, or null if the variable is not set.
 	 */
 	@SuppressWarnings("unchecked")
+	@Nullable
 	final Object getVariable(final String name) {
 		if (!name.endsWith("*")) {
 			return hashMap.get(name);
@@ -116,7 +119,7 @@ final class VariablesMap {
 	 * @param value The variable's value. Use <tt>null</tt> to delete the variable.
 	 */
 	@SuppressWarnings("unchecked")
-	final void setVariable(final String name, final Object value) {
+	final void setVariable(final String name, final @Nullable Object value) {
 		if (!name.endsWith("*")) {
 			if (value == null)
 				hashMap.remove(name);
@@ -180,13 +183,15 @@ final class VariablesMap {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	void deleteFromHashMap(final String parent, final TreeMap<String, Object> current) {
 		for (final Entry<String, Object> e : current.entrySet()) {
 			if (e.getKey() == null)
 				continue;
 			hashMap.remove(parent + Variable.SEPARATOR + e.getKey());
-			if (e.getValue() instanceof TreeMap) {
-				deleteFromHashMap(parent + Variable.SEPARATOR + e.getKey(), (TreeMap<String, Object>) e.getValue());
+			final Object val = e.getValue();
+			if (val instanceof TreeMap) {
+				deleteFromHashMap(parent + Variable.SEPARATOR + e.getKey(), (TreeMap<String, Object>) val);
 			}
 		}
 	}

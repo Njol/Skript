@@ -22,6 +22,7 @@
 package ch.njol.skript.util;
 
 import org.bukkit.block.Biome;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * @author Peter Güttinger
@@ -31,6 +32,7 @@ public abstract class BiomeUtils {
 	
 	private final static EnumUtils<Biome> util = new EnumUtils<Biome>(Biome.class, "biomes");
 	
+	@Nullable
 	public final static Biome parse(final String s) {
 		return util.parse(s);
 	}

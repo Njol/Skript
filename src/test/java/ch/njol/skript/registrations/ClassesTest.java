@@ -40,6 +40,7 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.easymock.EasyMock;
+import org.eclipse.jdt.annotation.Nullable;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -105,7 +106,9 @@ public class ClassesTest {
 			}
 			
 			@Override
-			public InputStream getResource(final String filename) {
+			@Nullable
+			public InputStream getResource(final @Nullable String filename) {
+				assert filename != null;
 				try {
 					return new FileInputStream(new File(f, filename));
 				} catch (final FileNotFoundException e) {

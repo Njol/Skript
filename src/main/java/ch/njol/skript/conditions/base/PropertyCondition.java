@@ -22,6 +22,7 @@
 package ch.njol.skript.conditions.base;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Condition;
@@ -33,9 +34,9 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public abstract class PropertyCondition<T> extends Condition implements Checker<T> {
 	
+	@SuppressWarnings("null")
 	private Expression<? extends T> expr;
 	
 	/**
@@ -47,7 +48,7 @@ public abstract class PropertyCondition<T> extends Condition implements Checker<
 		Skript.registerCondition(c, "%" + type + "% (is|are) " + property, "%" + type + "% (isn't|is not|aren't|are not) " + property);
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		expr = (Expression<? extends T>) exprs[0];
@@ -66,7 +67,7 @@ public abstract class PropertyCondition<T> extends Condition implements Checker<
 	protected abstract String getPropertyName();
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return expr.toString(e, debug) + (expr.isSingle() ? " is " : " are ") + (isNegated() ? "not " : "") + getPropertyName();
 	}
 	

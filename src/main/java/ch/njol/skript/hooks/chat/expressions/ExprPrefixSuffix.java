@@ -23,6 +23,7 @@ package ch.njol.skript.hooks.chat.expressions;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Prefix/Suffix")
 @Description("The prefix or suffix as defined in the server's chat plugin.")
 @Examples({"on chat:",
@@ -61,7 +61,7 @@ public class ExprPrefixSuffix extends SimplePropertyExpression<Player, String> {
 	
 	@Override
 	public String convert(final Player p) {
-		return prefix ? VaultHook.chat.getPlayerPrefix(p) : VaultHook.chat.getPlayerSuffix(p);
+		return prefix ? "" + VaultHook.chat.getPlayerPrefix(p) : "" + VaultHook.chat.getPlayerSuffix(p);
 	}
 	
 	@Override
@@ -75,6 +75,7 @@ public class ExprPrefixSuffix extends SimplePropertyExpression<Player, String> {
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
 			return new Class[] {String.class};
@@ -82,9 +83,9 @@ public class ExprPrefixSuffix extends SimplePropertyExpression<Player, String> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		assert mode == ChangeMode.SET;
-		
+		assert delta != null;
 		for (final Player p : getExpr().getArray(e)) {
 			if (prefix)
 				VaultHook.chat.setPlayerPrefix(p, (String) delta[0]);

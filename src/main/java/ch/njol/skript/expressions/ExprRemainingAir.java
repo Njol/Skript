@@ -33,7 +33,6 @@ import ch.njol.skript.util.Timespan;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Remaining Air")
 @Description("How much time a player has left underwater before starting to drown.")
 @Examples({"player's remaining air is less than 3 seconds:",

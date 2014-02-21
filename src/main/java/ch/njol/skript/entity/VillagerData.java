@@ -24,6 +24,7 @@ package ch.njol.skript.entity;
 import org.bukkit.Location;
 import org.bukkit.entity.Villager;
 import org.bukkit.entity.Villager.Profession;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -33,7 +34,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class VillagerData extends EntityData<Villager> {
 	static {
 		// professions in order!
@@ -44,6 +44,7 @@ public class VillagerData extends EntityData<Villager> {
 		Variables.yggdrasil.registerSingleClass(Profession.class, "Villager.Profession");
 	}
 	
+	@Nullable
 	private Profession profession = null;
 	
 	@Override
@@ -54,7 +55,7 @@ public class VillagerData extends EntityData<Villager> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Villager> c, final Villager e) {
+	protected boolean init(final @Nullable Class<? extends Villager> c, final @Nullable Villager e) {
 		profession = e == null ? null : e.getProfession();
 		return true;
 	}
@@ -66,8 +67,11 @@ public class VillagerData extends EntityData<Villager> {
 	}
 	
 	@Override
+	@Nullable
 	public Villager spawn(final Location loc) {
 		final Villager v = super.spawn(loc);
+		if (v == null)
+			return null;
 		if (profession == null)
 			v.setProfession(CollectionUtils.getRandom(Profession.values()));
 		return v;
@@ -85,7 +89,7 @@ public class VillagerData extends EntityData<Villager> {
 	
 	@Override
 	protected int hashCode_i() {
-		return profession == null ? 0 : profession.hashCode();
+		return profession != null ? profession.hashCode() : 0;
 	}
 	
 	@Override

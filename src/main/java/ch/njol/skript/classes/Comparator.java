@@ -21,8 +21,6 @@
 
 package ch.njol.skript.classes;
 
-import java.io.Serializable;
-
 import ch.njol.skript.classes.data.DefaultComparators;
 import ch.njol.skript.registrations.Comparators;
 
@@ -35,7 +33,7 @@ import ch.njol.skript.registrations.Comparators;
  * @see Comparators#registerComparator(Class, Class, Comparator)
  * @see DefaultComparators
  */
-public interface Comparator<T1, T2> extends Serializable {
+public interface Comparator<T1, T2> {
 	
 	/**
 	 * represents a relation between two objects.
@@ -82,8 +80,6 @@ public interface Comparator<T1, T2> extends Serializable {
 		public boolean is(final Relation other) {
 			if (other == this)
 				return true;
-			if (other == null)
-				return false;
 			switch (this) {
 				case EQUAL:
 					return false;
@@ -122,7 +118,7 @@ public interface Comparator<T1, T2> extends Serializable {
 					return "smaller than or equal to";
 			}
 			assert false;
-			return null;
+			return "";
 		}
 		
 		/**
@@ -146,7 +142,7 @@ public interface Comparator<T1, T2> extends Serializable {
 					return GREATER;
 			}
 			assert false;
-			return null;
+			return NOT_EQUAL;
 		}
 		
 		/**
@@ -170,7 +166,7 @@ public interface Comparator<T1, T2> extends Serializable {
 					return GREATER_OR_EQUAL;
 			}
 			assert false;
-			return null;
+			return NOT_EQUAL;
 		}
 		
 		public boolean isEqualOrInverse() {
@@ -219,12 +215,8 @@ public interface Comparator<T1, T2> extends Serializable {
 	}
 	
 	Comparator<?, ?> equalsComparator = new Comparator<Object, Object>() {
-		private final static long serialVersionUID = -7978700549410981219L;
-		
 		@Override
 		public Relation compare(final Object o1, final Object o2) {
-			if (o1 == null || o2 == null)
-				return Relation.NOT_EQUAL;
 			return Relation.get(o1.equals(o2));
 		}
 		

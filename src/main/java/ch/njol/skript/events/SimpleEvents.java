@@ -52,6 +52,7 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerEggThrowEvent;
 import org.bukkit.event.player.PlayerFishEvent;
+import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
@@ -228,6 +229,13 @@ public class SimpleEvents {
 				.description("Called when a player fishes something. This is not of much use yet.")
 				.examples("")
 				.since("1.0");
+		if (Skript.supports("org.bukkit.event.player.PlayerItemBreakEvent")) {
+			Skript.registerEvent("Item Break", EvtItem.class, PlayerItemBreakEvent.class, "[player] tool break[ing]", "[player] break[ing] (a|the|) tool")
+					.description("Called when a player breaks his tool because its damage reached the maximum value.",
+							"This event cannot be cancelled.")
+					.examples("")
+					.since("2.1.1");
+		}
 		Skript.registerEvent("Tool Change", SimpleEvent.class, PlayerItemHeldEvent.class, "[player['s]] (tool|item held|held item) chang(e|ing)")
 				.description("Called whenever a player changes his held item by selecting a different slot (e.g. the keys 1-9 or the mouse wheel), <i>not</i> by dropping or replacing the item in the current slot.")
 				.examples("")

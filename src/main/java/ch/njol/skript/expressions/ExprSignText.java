@@ -26,6 +26,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.SignChangeEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -44,7 +45,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Sign Text")
 @Description("A line of text on a sign. Can be changed, but remember that there is a 16 character limit per line (including colour codes that use 2 characters each).")
 @Examples({"on rightclick on sign:",
@@ -58,10 +58,12 @@ public class ExprSignText extends SimpleExpression<String> {
 				"[the] line %number% [of %block%]", "[the] (1¦1st|1¦first|2¦2nd|2¦second|3¦3rd|3¦third|4¦4th|4¦fourth) line [of %block%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Number> line;
+	@SuppressWarnings("null")
 	private Expression<Block> block;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		if (matchedPattern == 0)
@@ -83,11 +85,7 @@ public class ExprSignText extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "line " + line.toString(e, debug) + " of " + block.toString(e, debug);
-	}
-	
-	@Override
+	@Nullable
 	protected String[] get(final Event e) {
 		final Number l = line.getSingle(e);
 		if (l == null)
@@ -106,8 +104,14 @@ public class ExprSignText extends SimpleExpression<String> {
 		return new String[] {((Sign) b.getState()).getLine(line)};
 	}
 	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "line " + line.toString(e, debug) + " of " + block.toString(e, debug);
+	}
+	
 	// TODO allow add, remove, and remove all
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.DELETE || mode == ChangeMode.SET)
 			return new Class[] {String.class};
@@ -118,7 +122,7 @@ public class ExprSignText extends SimpleExpression<String> {
 	
 	@SuppressWarnings("incomplete-switch")
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		final Number l = line.getSingle(e);
 		if (l == null)
 			return;
@@ -134,6 +138,7 @@ public class ExprSignText extends SimpleExpression<String> {
 					((SignChangeEvent) e).setLine(line, "");
 					break;
 				case SET:
+					assert delta != null;
 					((SignChangeEvent) e).setLine(line, (String) delta[0]);
 					break;
 			}
@@ -146,6 +151,7 @@ public class ExprSignText extends SimpleExpression<String> {
 					s.setLine(line, "");
 					break;
 				case SET:
+					assert delta != null;
 					s.setLine(line, (String) delta[0]);
 					break;
 			}

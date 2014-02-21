@@ -32,7 +32,6 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Altitude")
 @Description("Effectively an alias of 'y-<a href='#ExprCoordinate'>coordinate</a> of …', it represents the height of some object above bedrock.")
 @Examples({"on damage:",
@@ -44,6 +43,7 @@ public class ExprAltitude extends SimplePropertyExpression<Location, Double> {
 		register(ExprAltitude.class, Double.class, "altitude[s]", "locations");
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Double convert(final Location l) {
 		return l.getY();

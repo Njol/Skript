@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Converter;
@@ -34,11 +35,11 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Math2;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Rounding")
 @Description("Rounds numbers normally, up (ceiling) or down (floor) respectively")
 @Examples({"set {var} to rounded health of player",
@@ -56,7 +57,7 @@ public class ExprRound extends PropertyExpression<Number, Long> {
 	
 	int action;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends Number>) exprs[0]);
@@ -67,13 +68,14 @@ public class ExprRound extends PropertyExpression<Number, Long> {
 	@Override
 	protected Long[] get(final Event e, final Number[] source) {
 		return get(source, new Converter<Number, Long>() {
+			@SuppressWarnings("null")
 			@Override
 			public Long convert(final Number n) {
 				if (n instanceof Integer)
-					return n.longValue();
+					return Long.valueOf(n.longValue());
 				else if (n instanceof Long)
 					return (Long) n;
-				return (long) (action == -1 ? Math.floor(n.doubleValue()) : action == 0 ? Math.round(n.doubleValue()) : Math.ceil(n.doubleValue()));
+				return Long.valueOf(action == -1 ? Math2.floor(n.doubleValue()) : action == 0 ? Math2.round(n.doubleValue()) : Math2.ceil(n.doubleValue()));
 			}
 		});
 	}
@@ -84,7 +86,7 @@ public class ExprRound extends PropertyExpression<Number, Long> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return (action == -1 ? "floor" : action == 0 ? "round" : "ceil") + "(" + getExpr().toString(e, debug) + ")";
 	}
 	

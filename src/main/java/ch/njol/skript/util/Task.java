@@ -7,19 +7,21 @@ import java.util.concurrent.Future;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.util.Closeable;
 
 /**
  * @author Peter Güttinger
  */
-public abstract class Task implements Runnable {
+public abstract class Task implements Runnable, Closeable {
 	
 	private final Plugin plugin;
 	private final boolean async;
 	private long period = -1;
 	
-	private int taskID;
+	private int taskID = -1;
 	
 	public Task(final Plugin plugin, final long delay, final long period) {
 		this(plugin, delay, period, false);
@@ -42,8 +44,14 @@ public abstract class Task implements Runnable {
 		schedule(delay);
 	}
 	
+	/**
+	 * Only call this if the task is not alive.
+	 * 
+	 * @param delay
+	 */
 	@SuppressWarnings("deprecation")
 	private void schedule(final long delay) {
+		assert !isAlive();
 		if (period == -1) {
 			if (async) {
 				taskID = Skript.isRunningMinecraft(1, 4, 6) ?
@@ -61,12 +69,15 @@ public abstract class Task implements Runnable {
 				taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this, delay, period);
 			}
 		}
+		assert taskID != -1;
 	}
 	
 	/**
 	 * @return Whether this task is still running, i.e. whether it will run later or is currently running.
 	 */
 	public final boolean isAlive() {
+		if (taskID == -1)
+			return false;
 		return Bukkit.getScheduler().isQueued(taskID) || Bukkit.getScheduler().isCurrentlyRunning(taskID);
 	}
 	
@@ -74,17 +85,25 @@ public abstract class Task implements Runnable {
 	 * Cancels this task.
 	 */
 	public final void cancel() {
-		Bukkit.getScheduler().cancelTask(taskID);
+		if (taskID != -1) {
+			Bukkit.getScheduler().cancelTask(taskID);
+			taskID = -1;
+		}
+	}
+	
+	@Override
+	public void close() {
+		cancel();
 	}
 	
 	/**
-	 * Re-schedules the task to run next after the given delay.
+	 * Re-schedules the task to run next after the given delay. If this task was repeating it will continue so using the same period as before.
 	 * 
 	 * @param delay
 	 */
 	public void setNextExecution(final long delay) {
 		assert delay >= 0;
-		Bukkit.getScheduler().cancelTask(taskID);
+		cancel();
 		schedule(delay);
 	}
 	
@@ -99,7 +118,7 @@ public abstract class Task implements Runnable {
 			return;
 		this.period = period;
 		if (isAlive()) {
-			Bukkit.getScheduler().cancelTask(taskID);
+			cancel();
 			if (period != -1)
 				schedule(period);
 		}
@@ -113,6 +132,7 @@ public abstract class Task implements Runnable {
 	 * @param c The method
 	 * @return What the method returned or null if it threw an error or was stopped (usually due to the server shutting down)
 	 */
+	@Nullable
 	public final static <T> T callSync(final Callable<T> c) {
 		if (Bukkit.isPrimaryThread()) {
 			try {

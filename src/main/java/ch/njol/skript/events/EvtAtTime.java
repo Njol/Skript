@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
@@ -47,11 +48,10 @@ import ch.njol.skript.util.Time;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<EvtAtTime> {
 	static {
 		Skript.registerEvent("*At Time", EvtAtTime.class, ScheduledWorldEvent.class, "at %time% [in %worlds%]")
-				.description("An event that occurrs at a given <a href='../classes/#time'>minecraft time</a> in every world or only in specific worlds.")
+				.description("An event that occurs at a given <a href='../classes/#time'>minecraft time</a> in every world or only in specific worlds.")
 				.examples("at 18:00", "at 7am in \"world\"")
 				.since("1.3.4");
 	}
@@ -68,15 +68,19 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 	
 	final static HashMap<World, EvtAtInfo> triggers = new HashMap<World, EvtAtInfo>();
 	
+	@Nullable
 	private Trigger t;
 	int tick;
+	
+	@SuppressWarnings("null")
 	private transient World[] worlds;
 	/**
 	 * null if all worlds
 	 */
+	@Nullable
 	private String[] worldNames = null;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		tick = ((Literal<Time>) args[0]).getSingle().getTicks();
@@ -95,6 +99,7 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 		if (taskID != -1)
 			return;
 		taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skript.getInstance(), new Runnable() {
+			@SuppressWarnings("null")
 			@Override
 			public void run() {
 				for (final Entry<World, EvtAtInfo> e : triggers.entrySet()) {
@@ -132,6 +137,11 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 	}
 	
 	void execute(final World w) {
+		final Trigger t = this.t;
+		if (t == null) {
+			assert false;
+			return;
+		}
 		final ScheduledEvent e = new ScheduledWorldEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerEnd(t);
@@ -140,16 +150,17 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 		SkriptEventHandler.logEventEnd();
 	}
 	
+	@SuppressWarnings("null")
 	private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
-		if (worldNames == null) {
-			worlds = Bukkit.getWorlds().toArray(new World[0]);
-		} else {
+		if (worldNames != null) {
 			worlds = new World[worldNames.length];
 			for (int i = 0; i < worlds.length; i++) {
 				if ((worlds[i] = Bukkit.getWorld(worldNames[i])) == null)
 					throw new IOException();
 			}
+		} else {
+			worlds = Bukkit.getWorlds().toArray(new World[0]);
 		}
 	}
 	
@@ -170,6 +181,8 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 	
 	@Override
 	public void unregister(final Trigger t) {
+		assert t == this.t;
+		this.t = null;
 		final Iterator<EvtAtInfo> iter = triggers.values().iterator();
 		while (iter.hasNext()) {
 			final EvtAtInfo i = iter.next();
@@ -185,12 +198,13 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 	public void unregisterAll() {
 		if (taskID != -1)
 			Bukkit.getScheduler().cancelTask(taskID);
+		t = null;
 		taskID = -1;
 		triggers.clear();
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "at " + Time.toString(tick) + " in worlds " + Classes.toString(worlds, true);
 	}
 	

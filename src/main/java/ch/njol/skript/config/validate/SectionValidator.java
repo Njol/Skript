@@ -101,7 +101,9 @@ public class SectionValidator implements NodeValidator {
 		if (allowUndefinedSections && allowUndefinedEntries)
 			return ok;
 		for (final Node n : (SectionNode) node) {
-			if (!nodes.containsKey(n.getKey().toLowerCase(Locale.ENGLISH))) {
+			final String key = n.getKey();
+			assert key != null;
+			if (!nodes.containsKey(key.toLowerCase(Locale.ENGLISH))) {
 				if (n instanceof SectionNode && allowUndefinedSections || n instanceof EntryNode && allowUndefinedEntries)
 					continue;
 				SkriptLogger.setNode(n);

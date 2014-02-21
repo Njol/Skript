@@ -27,6 +27,7 @@ import java.util.Iterator;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -45,22 +46,23 @@ import ch.njol.util.coll.iterator.IteratorIterable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Block Sphere")
 @Description("All blocks in a sphere around a center, mostly useful for looping.")
 @Examples("loop blocks in radius 5 around the player:")
 @Since("1.0")
 public class ExprBlockSphere extends SimpleExpression<Block> {
 	static {
-		Skript.registerExpression(ExprBlockSphere.class, Block.class, ExpressionType.NORMAL,
+		Skript.registerExpression(ExprBlockSphere.class, Block.class, ExpressionType.COMBINED,
 				"(all|the|) blocks in radius %number% [(of|around) %location%]",
 				"(all|the|) blocks around %location% in radius %number%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Number> radius;
+	@SuppressWarnings("null")
 	private Expression<Location> center;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		radius = (Expression<Number>) exprs[matchedPattern];
@@ -78,6 +80,7 @@ public class ExprBlockSphere extends SimpleExpression<Block> {
 	}
 	
 	@Override
+	@Nullable
 	protected Block[] get(final Event e) {
 		final Number r = radius.getSingle(e);
 		if (r == null)
@@ -94,7 +97,7 @@ public class ExprBlockSphere extends SimpleExpression<Block> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the blocks in radius " + radius + " around " + center.toString(e, debug);
 	}
 	

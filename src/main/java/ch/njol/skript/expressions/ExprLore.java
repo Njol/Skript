@@ -31,6 +31,7 @@ import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
@@ -53,7 +54,6 @@ import ch.njol.util.StringUtils;
  * 
  * @author joeuguce99
  */
-@SuppressWarnings("serial")
 @Name("Lore")
 @Description("An item's lore. ")
 @Examples("set the 1st line of the item's lore to \"<orange>Excalibur 2.0\"")
@@ -70,11 +70,13 @@ public class ExprLore extends SimpleExpression<String> {
 		} catch (final NoClassDefFoundError e) {}
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Number> line;
 	
+	@SuppressWarnings("null")
 	private Expression<?> item;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		line = (Expression<Number>) exprs[0];
@@ -88,22 +90,24 @@ public class ExprLore extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the line " + line.toString(e, debug) + " of the lore of " + item.toString(e, debug);
-	}
-	
-	@Override
+	@Nullable
 	protected String[] get(final Event e) {
 		final Object i = item.getSingle(e);
 		if (i == null || i instanceof ItemStack && ((ItemStack) i).getType() == Material.AIR)
 			return null;
 		final ItemMeta meta = i instanceof ItemStack ? ((ItemStack) i).getItemMeta() : (ItemMeta) ((ItemType) i).getItemMeta();
-		if (!meta.hasLore())
+		if (meta == null || !meta.hasLore())
 			return null;
 		return new String[] {StringUtils.join(meta.getLore(), "\n")};
 	}
 	
 	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "the line " + line.toString(e, debug) + " of the lore of " + item.toString(e, debug);
+	}
+	
+	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		switch (mode) {
 			case SET:
@@ -119,7 +123,7 @@ public class ExprLore extends SimpleExpression<String> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		final Object i = item.getSingle(e);
 		if (i == null || i instanceof ItemStack && ((ItemStack) i).getType() == Material.AIR)
 			return;
@@ -135,6 +139,7 @@ public class ExprLore extends SimpleExpression<String> {
 			lore.add("");
 		switch (mode) {
 			case SET:
+				assert delta != null;
 				lore.set(l, (String) delta[0]);
 				break;
 			case DELETE:
@@ -144,10 +149,12 @@ public class ExprLore extends SimpleExpression<String> {
 					lore.set(l, "");
 				break;
 			case ADD:
+				assert delta != null;
 				lore.set(l, lore.get(l) + (String) delta[0]);
 				break;
 			case REMOVE:
 			case REMOVE_ALL:
+				assert delta != null;
 				if (SkriptConfig.caseSensitive.value()) {
 					lore.set(l, mode == ChangeMode.REMOVE ? lore.get(l).replaceFirst(Pattern.quote((String) delta[0]), "") : lore.get(l).replace((CharSequence) delta[0], ""));
 				} else {

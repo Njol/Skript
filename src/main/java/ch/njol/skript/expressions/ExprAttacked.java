@@ -28,6 +28,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -47,7 +48,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Attacked")
 @Description("The victim of a damage event, e.g. when a player attacks a zombie this expression represents the zombie.")
 @Examples({"on damage:",
@@ -59,6 +59,7 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 		Skript.registerExpression(ExprAttacked.class, Entity.class, ExpressionType.SIMPLE, "[the] (attacked|damaged|victim) [<(.+)>]");
 	}
 	
+	@SuppressWarnings("null")
 	private EntityData<?> type;
 	
 	@SuppressWarnings("unchecked")
@@ -72,16 +73,18 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 		if (type == null) {
 			this.type = EntityData.fromClass(Entity.class);
 		} else {
-			this.type = EntityData.parse(type);
-			if (this.type == null) {
+			final EntityData<?> t = EntityData.parse(type);
+			if (t == null) {
 				Skript.error("'" + type + "' is not an entity type", ErrorQuality.NOT_AN_EXPRESSION);
 				return false;
 			}
+			this.type = t;
 		}
 		return true;
 	}
 	
 	@Override
+	@Nullable
 	protected Entity[] get(final Event e) {
 		final Entity[] one = (Entity[]) Array.newInstance(type.getType(), 1);
 		final Entity entity = ((EntityEvent) e).getEntity();
@@ -98,7 +101,7 @@ public class ExprAttacked extends SimpleExpression<Entity> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (e == null)
 			return "the attacked " + type;
 		return Classes.getDebugMessage(getSingle(e));

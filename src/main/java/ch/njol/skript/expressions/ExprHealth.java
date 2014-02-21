@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Health")
 @Description("The health of a creature, e.g. a player, mob, villager, etc. from 0 to the creature's max health, e.g. 10 for players.")
 @Examples({"message \"You have %health% HP left.\""})
@@ -50,16 +50,11 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Double> {
 		register(ExprHealth.class, Double.class, "health", "livingentities");
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		setExpr((Expression<LivingEntity>) vars[0]);
 		return true;
-	}
-	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the health of " + getExpr().toString(e, debug);
 	}
 	
 	@Override
@@ -73,11 +68,17 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Double> {
 //			});
 //		}
 		return get(source, new Getter<Double, LivingEntity>() {
+			@SuppressWarnings("null")
 			@Override
 			public Double get(final LivingEntity entity) {
 				return Double.valueOf(HealthUtils.getHealth(entity));
 			}
 		});
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "the health of " + getExpr().toString(e, debug);
 	}
 	
 //	@Override
@@ -98,6 +99,7 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Double> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.REMOVE_ALL)
 			return null;
@@ -105,12 +107,13 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Double> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		double d = delta == null ? 0 : ((Number) delta[0]).doubleValue();
 		switch (mode) {
 			case DELETE:
 			case SET:
 				for (final LivingEntity entity : getExpr().getArray(e)) {
+					assert entity != null : getExpr();
 					HealthUtils.setHealth(entity, d);
 				}
 				break;
@@ -119,11 +122,13 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Double> {
 				//$FALL-THROUGH$
 			case ADD:
 				for (final LivingEntity entity : getExpr().getArray(e)) {
+					assert entity != null : getExpr();
 					HealthUtils.heal(entity, d);
 				}
 				break;
 			case RESET:
 				for (final LivingEntity entity : getExpr().getArray(e)) {
+					assert entity != null : getExpr();
 					HealthUtils.setHealth(entity, HealthUtils.getMaxHealth(entity));
 				}
 				break;

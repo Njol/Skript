@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -44,7 +45,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Food Level")
 @Description("The food level of a player from 0 to 10. Has several aliases: food/hunger level/meter/bar. ")
 @Examples({"set the player's food level to 10"})
@@ -54,16 +54,11 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 		Skript.registerExpression(ExprFoodLevel.class, Float.class, ExpressionType.PROPERTY, "[the] (food|hunger)[[ ](level|meter|bar)] [of %player%]", "%player%'[s] (food|hunger)[[ ](level|meter|bar)]");
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		setExpr((Expression<Player>) vars[0]);
 		return true;
-	}
-	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the food level of " + getExpr().toString(e, debug);
 	}
 	
 	@Override
@@ -85,8 +80,14 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 		return Float.class;
 	}
 	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "the food level of " + getExpr().toString(e, debug);
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.REMOVE_ALL)
 			return null;
@@ -94,7 +95,7 @@ public class ExprFoodLevel extends PropertyExpression<Player, Float> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		assert mode != ChangeMode.REMOVE_ALL;
 		
 		final int s = delta == null ? 0 : Math.round(((Number) delta[0]).floatValue() * 2);

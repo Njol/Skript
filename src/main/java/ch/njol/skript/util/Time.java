@@ -21,9 +21,10 @@
 
 package ch.njol.skript.util;
 
-import java.io.Serializable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.localization.Message;
@@ -33,8 +34,7 @@ import ch.njol.yggdrasil.YggdrasilSerializable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public class Time implements Serializable, YggdrasilSerializable {
+public class Time implements YggdrasilSerializable {
 	
 	private final static int TICKS_PER_HOUR = 1000, TICKS_PER_DAY = 24 * TICKS_PER_HOUR;
 	private final static double TICKS_PER_MINUTE = 1000. / 60;
@@ -92,6 +92,8 @@ public class Time implements Serializable, YggdrasilSerializable {
 	 * @param s The trim()med string to parse
 	 * @return The parsed time of null if the input was invalid
 	 */
+	@SuppressWarnings("null")
+	@Nullable
 	public final static Time parse(final String s) {
 //		if (s.matches("\\d+")) {
 //			return new Time(Integer.parseInt(s));
@@ -141,7 +143,7 @@ public class Time implements Serializable, YggdrasilSerializable {
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)

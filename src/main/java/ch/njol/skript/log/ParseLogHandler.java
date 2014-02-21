@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 
 /**
@@ -32,13 +34,16 @@ import ch.njol.skript.Skript;
  */
 public class ParseLogHandler extends LogHandler {
 	
+	@Nullable
 	private LogEntry error = null;
+	
 	private final List<LogEntry> log = new ArrayList<LogEntry>();
 	
 	@Override
 	public boolean log(final LogEntry entry) {
 		if (entry.getLevel() == Level.SEVERE) {
-			if (error == null || entry.getQuality() > error.getQuality()) {
+			final LogEntry e = error;
+			if (e == null || entry.getQuality() > e.getQuality()) {
 				error = entry;
 			}
 		} else {
@@ -56,7 +61,7 @@ public class ParseLogHandler extends LogHandler {
 	}
 	
 	public void error(final String error, final ErrorQuality quality) {
-		log(new LogEntry(Level.SEVERE, quality, error));
+		log(new LogEntry(SkriptLogger.SEVERE, quality, error));
 	}
 	
 	/**
@@ -84,13 +89,13 @@ public class ParseLogHandler extends LogHandler {
 	 * 
 	 * @param def Error to log if no error has been logged so far, can be null
 	 */
-	public void printError(final String def) {
+	public void printError(final @Nullable String def) {
 		printedErrorOrLog = true;
 		stop();
 		if (error != null)
 			SkriptLogger.log(error);
 		else if (def != null)
-			SkriptLogger.log(new LogEntry(Level.SEVERE, def));
+			SkriptLogger.log(new LogEntry(SkriptLogger.SEVERE, def));
 	}
 	
 	public int getNumErrors() {
@@ -101,6 +106,7 @@ public class ParseLogHandler extends LogHandler {
 		return error != null;
 	}
 	
+	@Nullable
 	public LogEntry getError() {
 		return error;
 	}

@@ -23,6 +23,7 @@ package ch.njol.skript.conditions;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Has Permission")
 @Description("Test whether a player has a certain permission.")
 @Examples({"player has permission \"skript.tree\"",
@@ -52,10 +52,12 @@ public class CondPermission extends Condition {
 				"[%commandsenders%] ha(s|ve) [the] permission[s] %strings%");
 	}
 	
+	@SuppressWarnings("null")
 	Expression<String> permissions;
+	@SuppressWarnings("null")
 	private Expression<CommandSender> senders;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		senders = (Expression<CommandSender>) vars[0];
@@ -89,7 +91,7 @@ public class CondPermission extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return senders.toString(e, debug) + " " + (isNegated() ? "doesn't have" : "has") + " the permission " + permissions.toString(e, debug);
 	}
 	

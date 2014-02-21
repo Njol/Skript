@@ -24,6 +24,7 @@ package ch.njol.skript.effects;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -36,9 +37,10 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
 
 /**
+ * TODO update doc
+ * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Open Inventory")
 @Description({"Opens an inventory to a player. The player can then access and modify the inventory as if it was a chest that he just opened.",
 		"Please note that currently 'show' and 'open' have the same effect, but 'show' will eventually show an unmodifiable view of the inventory in the future."})
@@ -47,36 +49,53 @@ import ch.njol.util.Kleenean;
 @Since("2.0")
 public class EffOpenInventory extends Effect {
 	static {
-		Skript.registerEffect(EffOpenInventory.class, "(0¦open|1¦show) %inventory% (to|for) %players%"); // TODO allow to open crafting table
+		Skript.registerEffect(EffOpenInventory.class,
+				"(0¦open|1¦show) ((crafting [table]|workbench) (view|window|inventory|)|%-inventory%) (to|for) %players%",
+				"close [the] inventory [view] (to|of|for) %players%", "close %players%'[s] inventory [view]");
 	}
 	
+	@Nullable
 	private Expression<Inventory> invi;
+	
+	boolean open;
+	
+	@SuppressWarnings("null")
 	private Expression<Player> players;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
-		if (parseResult.mark == 1) {
+		open = matchedPattern == 0;
+		invi = open ? (Expression<Inventory>) exprs[0] : null;
+		players = (Expression<Player>) exprs[exprs.length - 1];
+		if (parseResult.mark == 1 && invi != null) {
 			Skript.warning("Using 'show' inventory instead of 'open' is not recommended as it will eventually show an unmodifiable view of the inventory in the future.");
 		}
-		invi = (Expression<Inventory>) exprs[0];
-		players = (Expression<Player>) exprs[1];
 		return true;
 	}
 	
 	@Override
 	protected void execute(final Event e) {
-		final Inventory i = invi.getSingle(e);
-		if (i == null)
-			return;
-		for (final Player p : players.getArray(e)) {
-			p.openInventory(i);
+		if (invi != null) {
+			final Inventory i = invi.getSingle(e);
+			if (i == null)
+				return;
+			for (final Player p : players.getArray(e)) {
+				p.openInventory(i);
+			}
+		} else {
+			for (final Player p : players.getArray(e)) {
+				if (open)
+					p.openWorkbench(null, true);
+				else
+					p.closeInventory();
+			}
 		}
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "open " + invi.toString(e, debug) + " to " + players.toString(e, debug);
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return (open ? "open " + (invi != null ? invi.toString(e, debug) : "crafting table") + " to " : "close inventory view of ") + players.toString(e, debug);
 	}
 	
 }

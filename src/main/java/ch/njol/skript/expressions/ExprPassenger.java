@@ -25,6 +25,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Converter;
@@ -40,7 +41,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Passenger")
 @Description({"The passenger of a vehicle, or the rider of a mob.",
 		"See also: <a href='#ExprVehicle'>vehicle</a>"})
@@ -56,6 +56,7 @@ public class ExprPassenger extends SimplePropertyExpression<Entity, Entity> { //
 	protected Entity[] get(final Event e, final Entity[] source) {
 		return get(source, new Converter<Entity, Entity>() {
 			@Override
+			@Nullable
 			public Entity convert(final Entity v) {
 				if (getTime() >= 0 && e instanceof VehicleEnterEvent && v.equals(((VehicleEnterEvent) e).getVehicle()) && !Delay.isDelayed(e)) {
 					return ((VehicleEnterEvent) e).getEntered();
@@ -69,6 +70,7 @@ public class ExprPassenger extends SimplePropertyExpression<Entity, Entity> { //
 	}
 	
 	@Override
+	@Nullable
 	public Entity convert(final Entity e) {
 		assert false;
 		return e.getPassenger();
@@ -80,6 +82,7 @@ public class ExprPassenger extends SimplePropertyExpression<Entity, Entity> { //
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET) {
 			return new Class[] {Entity.class, EntityData.class};
@@ -88,8 +91,9 @@ public class ExprPassenger extends SimplePropertyExpression<Entity, Entity> { //
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		if (mode == ChangeMode.SET) {
+			assert delta != null;
 			final Entity[] vs = getExpr().getArray(e);
 			if (vs.length == 0)
 				return;
@@ -97,10 +101,12 @@ public class ExprPassenger extends SimplePropertyExpression<Entity, Entity> { //
 			if (o instanceof Entity) {
 				((Entity) o).leaveVehicle();
 				final Entity v = CollectionUtils.getRandom(vs);
+				assert v != null;
 				v.eject();
 				v.setPassenger((Entity) o);
 			} else if (o instanceof EntityData) {
 				for (final Entity v : vs) {
+					@SuppressWarnings("null")
 					final Entity p = ((EntityData<?>) o).spawn(v.getLocation());
 					if (p == null)
 						continue;

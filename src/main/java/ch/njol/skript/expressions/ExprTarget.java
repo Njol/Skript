@@ -26,6 +26,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityTargetEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -48,7 +49,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Target")
 @Description("For players this is the entity at the crosshair, while for mobs and experience orbs it represents the entity they are attacking/following (if any).")
 @Examples({"on entity target:",
@@ -62,9 +62,10 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 				"%livingentities%'[s] target[[ed] %-*entitydata%]");
 	}
 	
+	@Nullable
 	EntityData<?> type;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		type = exprs[matchedPattern] == null ? null : (EntityData<?>) exprs[matchedPattern].getSingle(null);
@@ -76,6 +77,7 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	protected Entity[] get(final Event e, final LivingEntity[] source) {
 		return get(source, new Converter<LivingEntity, Entity>() {
 			@Override
+			@Nullable
 			public Entity convert(final LivingEntity en) {
 				if (getTime() >= 0 && e instanceof EntityTargetEvent && en.equals(((EntityTargetEvent) e).getEntity()) && !Delay.isDelayed(e)) {
 					final Entity t = ((EntityTargetEvent) e).getTarget();
@@ -90,11 +92,11 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	
 	@Override
 	public Class<? extends Entity> getReturnType() {
-		return type == null ? Entity.class : type.getType();
+		return type != null ? type.getType() : Entity.class;
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (e == null)
 			return "the target" + (type == null ? "" : "ed " + type) + (getExpr().isDefault() ? "" : " of " + getExpr().toString(e, debug));
 		return Classes.getDebugMessage(getAll(e));
@@ -107,6 +109,7 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE)
 			return CollectionUtils.array(LivingEntity.class);
@@ -114,7 +117,7 @@ public class ExprTarget extends PropertyExpression<LivingEntity, Entity> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		if (mode == ChangeMode.SET || mode == ChangeMode.DELETE) {
 			final LivingEntity target = delta == null ? null : (LivingEntity) delta[0];
 			for (final LivingEntity entity : getExpr().getArray(e)) {

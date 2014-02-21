@@ -25,6 +25,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Poison/Cure")
 @Description("Poison or cure a creature.")
 @Examples({"poison the player",
@@ -56,12 +56,14 @@ public class EffPoison extends Effect {
 	
 	private final static int DEFAULT_DURATION = 15 * 20; // 15 seconds on hard difficulty, same as EffPotion
 	
+	@SuppressWarnings("null")
 	private Expression<LivingEntity> entites;
+	@Nullable
 	private Expression<Timespan> duration;
 	
 	private boolean cure;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		entites = (Expression<LivingEntity>) exprs[0];
@@ -72,7 +74,7 @@ public class EffPoison extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "poison " + entites.toString(e, debug);
 	}
 	
@@ -80,7 +82,8 @@ public class EffPoison extends Effect {
 	protected void execute(final Event e) {
 		for (final LivingEntity le : entites.getArray(e)) {
 			if (!cure) {
-				int d = duration == null || duration.getSingle(e) == null ? DEFAULT_DURATION : duration.getSingle(e).getTicks();
+				Timespan dur;
+				int d = duration != null && (dur = duration.getSingle(e)) != null ? dur.getTicks() : DEFAULT_DURATION;
 				if (le.hasPotionEffect(PotionEffectType.POISON)) {
 					for (final PotionEffect pe : le.getActivePotionEffects()) {
 						if (pe.getType() != PotionEffectType.POISON)

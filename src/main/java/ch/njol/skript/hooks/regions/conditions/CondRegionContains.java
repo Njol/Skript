@@ -23,6 +23,7 @@ package ch.njol.skript.hooks.regions.conditions;
 
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Region Contains")
 @Description({"Checks whether a location is contained in a particular <a href='../classes/#region'>region</a>.",
 		"This condition requires a supported regions plugin to be installed."})
@@ -56,10 +56,12 @@ public class CondRegionContains extends Condition {
 				"[[the] region] %regions% (do|does)(n't| not) contain %directions% %locations%", "%locations% (is|are)(n't| not) (contained in|part of) [[the] region] %regions%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Region> regions;
+	@SuppressWarnings("null")
 	Expression<Location> locs;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		if (exprs.length == 3) {
@@ -89,7 +91,7 @@ public class CondRegionContains extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return regions.toString(e, debug) + " contain" + (regions.isSingle() ? "s" : "") + " " + locs.toString(e, debug);
 	}
 	

@@ -21,7 +21,11 @@
 
 package ch.njol.skript.conditions;
 
+import java.util.Map;
+
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -39,7 +43,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Enchanted")
 @Description("Checks whether an item is enchanted.")
 @Examples({"tool of the player is enchanted with efficiency 2",
@@ -53,10 +56,12 @@ public class CondIsEnchanted extends Condition {
 				"%itemtypes% (isn't|is not|aren't|are not) enchanted [with %-enchantmenttype%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<ItemType> items;
+	@Nullable
 	Expression<EnchantmentType> enchs;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		items = (Expression<ItemType>) exprs[0];
@@ -70,9 +75,12 @@ public class CondIsEnchanted extends Condition {
 		return items.check(e, new Checker<ItemType>() {
 			@Override
 			public boolean check(final ItemType item) {
-				if (enchs == null)
-					return isNegated() ^ (item.getEnchantments() != null && !item.getEnchantments().isEmpty());
-				return enchs.check(e, new Checker<EnchantmentType>() {
+				final Expression<EnchantmentType> es = enchs;
+				if (es == null) {
+					final Map<Enchantment, Integer> enchs = item.getEnchantments();
+					return isNegated() ^ (enchs != null && !enchs.isEmpty());
+				}
+				return es.check(e, new Checker<EnchantmentType>() {
 					@Override
 					public boolean check(final EnchantmentType ench) {
 						return ench.has(item);
@@ -83,8 +91,9 @@ public class CondIsEnchanted extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return items.toString(e, debug) + " " + (items.isSingle() ? "is" : "are") + (isNegated() ? " not" : "") + " enchanted" + (enchs == null ? "" : " with " + enchs.toString(e, debug));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		final Expression<EnchantmentType> es = enchs;
+		return items.toString(e, debug) + " " + (items.isSingle() ? "is" : "are") + (isNegated() ? " not" : "") + " enchanted" + (es == null ? "" : " with " + es.toString(e, debug));
 	}
 	
 }

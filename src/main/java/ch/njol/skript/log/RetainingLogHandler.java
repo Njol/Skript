@@ -30,6 +30,7 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 
@@ -70,7 +71,8 @@ public class RetainingLogHandler extends LogHandler {
 	 * @param def Error to print if no errors were logged, can be null to not print any error if there are none
 	 * @return Whether there were any errors
 	 */
-	public final boolean printErrors(final String def) {
+	@SuppressWarnings("null")
+	public final boolean printErrors(final @Nullable String def) {
 		printedErrorOrLog = true;
 		stop();
 		boolean hasError = false;
@@ -94,7 +96,7 @@ public class RetainingLogHandler extends LogHandler {
 	 * @param def Error to send if no errors were logged, can be null to not print any error if there are none
 	 * @return Whether there were any errors to send
 	 */
-	public final boolean printErrors(final CommandSender recipient, final String def) {
+	public final boolean printErrors(final CommandSender recipient, final @Nullable String def) {
 		printedErrorOrLog = true;
 		if (recipient == Bukkit.getConsoleSender())
 			return printErrors(def); // log as SEVERE instead of INFO
@@ -126,6 +128,7 @@ public class RetainingLogHandler extends LogHandler {
 		return numErrors != 0;
 	}
 	
+	@Nullable
 	public LogEntry getFirstError() {
 		for (final LogEntry e : log) {
 			if (e.getLevel() == Level.SEVERE)
@@ -139,7 +142,7 @@ public class RetainingLogHandler extends LogHandler {
 			if (e.getLevel() == Level.SEVERE)
 				return e;
 		}
-		return new LogEntry(Level.SEVERE, def);
+		return new LogEntry(SkriptLogger.SEVERE, def);
 	}
 	
 	/**
@@ -154,6 +157,7 @@ public class RetainingLogHandler extends LogHandler {
 		return log.size();
 	}
 	
+	@SuppressWarnings("null")
 	public Collection<LogEntry> getLog() {
 		return Collections.unmodifiableCollection(log);
 	}

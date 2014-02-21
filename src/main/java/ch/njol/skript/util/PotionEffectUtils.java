@@ -29,6 +29,7 @@ import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
@@ -73,15 +74,18 @@ public abstract class PotionEffectUtils {
 		});
 	}
 	
+	@Nullable
 	public static PotionEffectType parseType(final String s) {
 		return types.get(s.toLowerCase());
 	}
 	
+	@SuppressWarnings("null")
 	public static String toString(final PotionEffectType t) {
 		return names[t.getId()];
 	}
 	
 	// REMIND flags?
+	@SuppressWarnings("null")
 	public static String toString(final PotionEffectType t, final int flags) {
 		return names[t.getId()];
 	}

@@ -38,9 +38,10 @@ public class SyntaxElementInfo<E extends SyntaxElement> {
 //			if (!c.getDeclaredConstructor().isAccessible())
 //				throw new IllegalArgumentException("The nullary constructor of class "+c.getName()+" is not public");
 		} catch (final NoSuchMethodException e) {
-			throw new IllegalArgumentException("Class " + c.getName() + " does not have a public nullary constructor");
+			// throwing an Exception throws an (empty) ExceptionInInitializerError instead, thus an Error is used
+			throw new Error(c + " does not have a public nullary constructor", e);
 		} catch (final SecurityException e) {
-			throw new IllegalArgumentException("Skript cannot run properly because a security manager is blocking it!");
+			throw new IllegalStateException("Skript cannot run properly because a security manager is blocking it!");
 		}
 	}
 	

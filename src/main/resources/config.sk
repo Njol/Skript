@@ -21,8 +21,8 @@
 # === !!! PLEASE NOTE !!! ===
 # This file, all scripts and other files ending in .sk are NOT .yml/YAML files, but very similar!
 # Please remember the following when editing files:
-# - To indent sections you can use spaces like in YAML, but tabs are also allowed. Just remember to stick to the one or the other for the whole file.
-# - '#' starts a comment like in YAML. If you don't want it to start a comment simply double it: '##'.
+# - To indent sections you can use spaces like in YAML, but tabs are also allowed. Just remember to stick to the one or the other for a section/trigger.
+# - '#' starts a comment like in YAML. If you don't want it to start a comment simply double it: '##' (You also have to double these in "quoted text")
 # - If you use special characters (§, äöü, éèàôç, ñ, etc.) you have to encode the file in UTF-8.
 #
 
@@ -40,7 +40,7 @@ language: english
 check for new version: true
 # Whether Skript should check for whether a new version of Skript is available when the server starts.
 # If this is set to true Skript will announce a new version to all players with the "skript.admin" permission.
-# If set to false you can still check for a new version with '/skript update check'
+# If set to false you can still check for a new version with '/skript update check'.
 # Please note that Skript will not detect beta releases even if you are running one as they are not necessarily stable.
 
 update check interval: 12 hours
@@ -61,8 +61,9 @@ automatically download new version: false
 enable effect commands: false
 effect command token: !
 # If 'enable effect commands' is set to true, chat messages starting with the 'effect command token' will be interpreted as effects and executed.
+# The token can be longer than a single character, but it should not start with '/' as that starts a command.
 # A player needs the permission "skript.effectcommands" to use such commands,
-# which does not default to OPs by default since these commands can do severe damage to the world or crash the server (see below).
+# which does not default to OPs since these commands can do severe damage to the world or crash the server (see below).
 # Some example commands which can be used if this setting is enabled:
 #	!heal player - heals the player (doesn't do anything if used from the console)
 #	!repair tool - repairs the currently held item
@@ -235,10 +236,9 @@ databases:
 		backup interval: 2 hours
 	
 	# PS: If you don't want some variables to be saved in any database (e.g. variables that contain an %entity% which usually despawn when the server is shut down)
-	# you can modify the last database's pattern to not match all variables, e.g. use '[^x][^_].*' to match all variables that don't start with 'x_'.
+	# you can modify the last database's pattern to not match all variables, e.g. use '(?!x_).*' to match all variables that don't start with 'x_'.
 	# Be very cautious when doing this however as unsaved variables cannot be recovered after the server has been stopped.
-	# PPS: '[^x][^_].* will actually not match variables with a name of length 1, which can cause issues when using longer prefixes than 'x_'.
-	# I recommend to use a single character to denote unsaved variables (similar to local variables' '_'), e.g. '-', in which case the last database's pattern should be '[^-].*'.
+	# I recommend to use a single character to denote unsaved variables (similar to local variables' '_'), e.g. '-', in which case the last database's pattern should be '(?!-).*'.
 
 
 

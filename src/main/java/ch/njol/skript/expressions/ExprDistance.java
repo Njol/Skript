@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Distance")
 @Description("The distance between two points.")
 @Examples({"distance between the player and {%player%.home} is smaller than 20:",
@@ -49,9 +49,10 @@ public class ExprDistance extends SimpleExpression<Double> {
 		Skript.registerExpression(ExprDistance.class, Double.class, ExpressionType.COMBINED, "[the] distance between %location% and %location%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Location> loc1, loc2;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		loc1 = (Expression<Location>) vars[0];
@@ -60,6 +61,7 @@ public class ExprDistance extends SimpleExpression<Double> {
 	}
 	
 	@Override
+	@Nullable
 	protected Double[] get(final Event e) {
 		final Location l1 = loc1.getSingle(e), l2 = loc2.getSingle(e);
 		if (l1 == null || l2 == null || l1.getWorld() != l2.getWorld())
@@ -68,7 +70,7 @@ public class ExprDistance extends SimpleExpression<Double> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "distance between " + loc1.toString(e, debug) + " and " + loc2.toString(e, debug);
 	}
 	

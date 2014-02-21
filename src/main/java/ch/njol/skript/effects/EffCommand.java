@@ -24,6 +24,7 @@ package ch.njol.skript.effects;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Command")
 @Description("Executes a command. This can be useful to use other plugins in triggers.")
 @Examples({"make player execute command \"/suicide\"",
@@ -54,10 +54,12 @@ public class EffCommand extends Effect {
 				"(let|make) %commandsenders% execute [[the] command] %strings%");
 	}
 	
+	@Nullable
 	private Expression<CommandSender> senders;
+	@SuppressWarnings("null")
 	private Expression<String> commands;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		if (matchedPattern == 0) {
@@ -71,24 +73,27 @@ public class EffCommand extends Effect {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public void execute(final Event e) {
 		for (String command : commands.getArray(e)) {
+			assert command != null;
 			if (command.startsWith("/"))
-				command = command.substring(1);
-			if (senders == null) {
-				Skript.dispatchCommand(Bukkit.getConsoleSender(), command);
-			} else {
+				command = "" + command.substring(1);
+			if (senders != null) {
 				for (final CommandSender sender : senders.getArray(e)) {
+					assert sender != null;
 					Skript.dispatchCommand(sender, command);
 				}
+			} else {
+				Skript.dispatchCommand(Bukkit.getConsoleSender(), command);
 			}
 		}
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "make " + (senders == null ? "the console" : senders.toString(e, debug)) + " execute the command " + commands.toString(e, debug);
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "make " + (senders != null ? senders.toString(e, debug) : "the console") + " execute the command " + commands.toString(e, debug);
 	}
 	
 }

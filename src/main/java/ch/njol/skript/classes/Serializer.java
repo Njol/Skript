@@ -23,11 +23,15 @@ package ch.njol.skript.classes;
 
 import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.util.Task;
 import ch.njol.yggdrasil.Fields;
@@ -38,6 +42,7 @@ import ch.njol.yggdrasil.YggdrasilSerializer;
  */
 public abstract class Serializer<T> extends YggdrasilSerializer<T> {
 	
+	@Nullable
 	protected ClassInfo<? extends T> info = null;
 	
 	void register(final ClassInfo<? extends T> info) {
@@ -46,24 +51,45 @@ public abstract class Serializer<T> extends YggdrasilSerializer<T> {
 	}
 	
 	@Override
+	@Nullable
 	public Class<? extends T> getClass(final String id) {
+		final ClassInfo<? extends T> info = this.info;
+		assert info != null;
 		return id.equals(info.getCodeName()) ? info.getC() : null;
 	}
 	
 	@Override
+	@Nullable
 	public String getID(final Class<?> c) {
+		final ClassInfo<? extends T> info = this.info;
+		assert info != null;
 		return info.getC().isAssignableFrom(c) ? info.getCodeName() : null;
 	}
 	
 	@Override
+	@Nullable
 	public <E extends T> E newInstance(final Class<E> c) {
+		final ClassInfo<? extends T> info = this.info;
+		assert info != null;
 		assert info.getC().isAssignableFrom(c);
 		try {
-			return c.newInstance();
+			final Constructor<E> constr = c.getDeclaredConstructor();
+			constr.setAccessible(true);
+			return constr.newInstance();
 		} catch (final InstantiationException e) {
-			throw new SkriptAPIException("Serializer of " + info.getCodeName() + " must override newInstance(), canBeInstantiated() or mustSyncDeserialization() if its class does not have a public nullary constructor");
+			throw new SkriptAPIException("Serializer of " + info.getCodeName() + " must override newInstance(), canBeInstantiated() or mustSyncDeserialization() if its class does not have a nullary constructor");
+		} catch (final NoSuchMethodException e) {
+			throw new SkriptAPIException("Serializer of " + info.getCodeName() + " must override newInstance(), canBeInstantiated() or mustSyncDeserialization() if its class does not have a nullary constructor");
+		} catch (final SecurityException e) {
+			throw Skript.exception("Security manager present");
+		} catch (final IllegalArgumentException e) {
+			assert false;
+			return null;
 		} catch (final IllegalAccessException e) {
-			throw new SkriptAPIException("Serializer of " + info.getCodeName() + " must override newInstance(), canBeInstantiated() or mustSyncDeserialization() if its class does not have a public nullary constructor");
+			assert false;
+			return null;
+		} catch (final InvocationTargetException e) {
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -85,6 +111,8 @@ public abstract class Serializer<T> extends YggdrasilSerializer<T> {
 	
 	@Override
 	public boolean canBeInstantiated(final Class<? extends T> c) {
+		final ClassInfo<? extends T> info = this.info;
+		assert info != null;
 		assert info.getC().isAssignableFrom(c);
 		return !mustSyncDeserialization();
 	}
@@ -92,6 +120,8 @@ public abstract class Serializer<T> extends YggdrasilSerializer<T> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <E extends T> E deserialize(final Class<E> c, final Fields fields) throws StreamCorruptedException, NotSerializableException {
+		final ClassInfo<? extends T> info = this.info;
+		assert info != null;
 		assert info.getC().isAssignableFrom(c);
 		return (E) deserialize(fields);
 	}
@@ -107,9 +137,7 @@ public abstract class Serializer<T> extends YggdrasilSerializer<T> {
 	 */
 	@SuppressWarnings("unused")
 	protected T deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
-		if (false)
-			throw new StreamCorruptedException();
-		throw new SkriptAPIException("deserialize(Fields) has not been overridden in " + getClass());
+		throw new SkriptAPIException("deserialize(Fields) has not been overridden in " + getClass() + " (serializer of " + info + ")");
 	}
 	
 	/**
@@ -123,6 +151,7 @@ public abstract class Serializer<T> extends YggdrasilSerializer<T> {
 	 * @return The deserialised object or null if the input is invalid. An error message may be logged to specify the cause.
 	 */
 	@Deprecated
+	@Nullable
 	public T deserialize(final String s) {
 		return null; // if this method is not overridden then no objects of this class will ever have been saved using the old format, so any input is invalid.
 	}

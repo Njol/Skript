@@ -28,6 +28,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -44,7 +45,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Shoot")
 @Description("Shoots a projectile (or any other entity) from a given entity.")
 @Examples({"shoot an arrow",
@@ -60,14 +60,19 @@ public class EffShoot extends Effect {
 	
 	private final static Double DEFAULT_SPEED = 5.;
 	
+	@SuppressWarnings("null")
 	private Expression<EntityData<?>> types;
+	@SuppressWarnings("null")
 	private Expression<?> shooters;
+	@Nullable
 	private Expression<Number> velocity;
+	@Nullable
 	private Expression<Direction> direction;
 	
+	@Nullable
 	public static Entity lastSpawned = null;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		types = (Expression<EntityData<?>>) exprs[matchedPattern];
@@ -77,13 +82,14 @@ public class EffShoot extends Effect {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	protected void execute(final Event e) {
 		lastSpawned = null;
-		final Number v = velocity == null ? DEFAULT_SPEED : velocity.getSingle(e);
+		final Number v = velocity != null ? velocity.getSingle(e) : DEFAULT_SPEED;
 		if (v == null)
 			return;
-		final Direction dir = direction == null ? Direction.IDENTITY : direction.getSingle(e);
+		final Direction dir = direction != null ? direction.getSingle(e) : Direction.IDENTITY;
 		if (dir == null)
 			return;
 		for (final Object shooter : shooters.getArray(e)) {
@@ -125,8 +131,8 @@ public class EffShoot extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "shoot " + types.toString(e, debug) + " from " + shooters.toString(e, debug) + (velocity == null ? "" : " at speed " + velocity.toString(e, debug)) + (direction == null ? "" : " " + direction.toString(e, debug));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "shoot " + types.toString(e, debug) + " from " + shooters.toString(e, debug) + (velocity != null ? " at speed " + velocity.toString(e, debug) : "") + (direction != null ? " " + direction.toString(e, debug) : "");
 	}
 	
 }

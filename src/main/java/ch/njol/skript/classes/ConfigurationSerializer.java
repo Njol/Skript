@@ -27,6 +27,7 @@ import java.io.StreamCorruptedException;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.yggdrasil.Fields;
 
@@ -57,7 +58,12 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> extend
 	
 	@Override
 	protected T deserialize(final Fields fields) throws StreamCorruptedException {
-		final T t = deserializeCS(fields.getObject("value", String.class), info.getC());
+		final String val = fields.getObject("value", String.class);
+		if (val == null)
+			throw new StreamCorruptedException();
+		final ClassInfo<? extends T> info = this.info;
+		assert info != null;
+		final T t = deserializeCS(val, info.getC());
 		if (t == null)
 			throw new StreamCorruptedException();
 		return t;
@@ -66,10 +72,11 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> extend
 	public final static String serializeCS(final ConfigurationSerializable o) {
 		final YamlConfiguration y = new YamlConfiguration();
 		y.set("value", o);
-		return y.saveToString();
+		return "" + y.saveToString();
 	}
 	
 	@SuppressWarnings("unchecked")
+	@Nullable
 	public final static <T extends ConfigurationSerializable> T deserializeCS(final String s, final Class<T> c) {
 		final YamlConfiguration y = new YamlConfiguration();
 		try {
@@ -84,6 +91,7 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> extend
 	}
 	
 	@Override
+	@Nullable
 	public <E extends T> E newInstance(final Class<E> c) {
 		assert false;
 		return null;
@@ -96,12 +104,16 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> extend
 	
 	@Override
 	@Deprecated
+	@Nullable
 	public T deserialize(final String s) {
+		final ClassInfo<? extends T> info = this.info;
+		assert info != null;
 		return deserializeCSOld(s, info.getC());
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Deprecated
+	@Nullable
 	public final static <T extends ConfigurationSerializable> T deserializeCSOld(final String s, final Class<T> c) {
 		final YamlConfiguration y = new YamlConfiguration();
 		try {

@@ -23,6 +23,8 @@ package ch.njol.skript.classes.data;
 
 import java.io.StreamCorruptedException;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.NumberArithmetic;
@@ -67,12 +69,13 @@ public class JavaClasses {
 				.defaultExpression(new SimpleLiteral<Number>(1, true))
 				.parser(new Parser<Number>() {
 					@Override
+					@Nullable
 					public Number parse(final String s, final ParseContext context) {
 						try {
 							return Long.valueOf(s);
 						} catch (final NumberFormatException e) {}
 						try {
-							return s.endsWith("%") ? Double.parseDouble(s.substring(0, s.length() - 1)) / 100 : Double.valueOf(s);
+							return s.endsWith("%") ? Double.parseDouble(s.substring(0, s.length() - 1)) / 100 : Double.parseDouble(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
@@ -94,8 +97,9 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Number>() {
 					@Override
+					@Nullable
 					public Fields serialize(final Number n) {
-						assert false;
+						assert false; // serialised natively by Yggdrasil
 						return null;
 					}
 					
@@ -106,6 +110,7 @@ public class JavaClasses {
 					
 //						return "" + n;
 					@Override
+					@Nullable
 					public Number deserialize(final String s) {
 						try {
 							return Integer.valueOf(s);
@@ -130,6 +135,7 @@ public class JavaClasses {
 				.defaultExpression(new SimpleLiteral<Long>((long) 1, true))
 				.parser(new Parser<Long>() {
 					@Override
+					@Nullable
 					public Long parse(final String s, final ParseContext context) {
 						try {
 							return Long.valueOf(s);
@@ -154,6 +160,7 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Long>() {
 					@Override
+					@Nullable
 					public Fields serialize(final Long n) {
 						assert false;
 						return null;
@@ -166,6 +173,7 @@ public class JavaClasses {
 					
 //						return "" + l;
 					@Override
+					@Nullable
 					public Long deserialize(final String s) {
 						try {
 							return Long.parseLong(s);
@@ -185,6 +193,7 @@ public class JavaClasses {
 				.defaultExpression(new SimpleLiteral<Integer>(1, true))
 				.parser(new Parser<Integer>() {
 					@Override
+					@Nullable
 					public Integer parse(final String s, final ParseContext context) {
 						try {
 							return Integer.valueOf(s);
@@ -209,6 +218,7 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Integer>() {
 					@Override
+					@Nullable
 					public Fields serialize(final Integer n) {
 						assert false;
 						return null;
@@ -221,6 +231,7 @@ public class JavaClasses {
 					
 //						return "" + i;
 					@Override
+					@Nullable
 					public Integer deserialize(final String s) {
 						try {
 							return Integer.parseInt(s);
@@ -242,9 +253,10 @@ public class JavaClasses {
 				.before("float", "integer", "short", "byte")
 				.parser(new Parser<Double>() {
 					@Override
+					@Nullable
 					public Double parse(final String s, final ParseContext context) {
 						try {
-							return s.endsWith("%") ? Double.parseDouble(s.substring(0, s.length() - 1)) / 100 : Double.valueOf(s);
+							return s.endsWith("%") ? Double.parseDouble(s.substring(0, s.length() - 1)) / 100 : Double.parseDouble(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
@@ -266,6 +278,7 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Double>() {
 					@Override
+					@Nullable
 					public Fields serialize(final Double n) {
 						assert false;
 						return null;
@@ -278,6 +291,7 @@ public class JavaClasses {
 					
 //						return "" + d;
 					@Override
+					@Nullable
 					public Double deserialize(final String s) {
 						try {
 							return Double.parseDouble(s);
@@ -297,9 +311,10 @@ public class JavaClasses {
 				.defaultExpression(new SimpleLiteral<Float>(1f, true))
 				.parser(new Parser<Float>() {
 					@Override
+					@Nullable
 					public Float parse(final String s, final ParseContext context) {
 						try {
-							return s.endsWith("%") ? Float.parseFloat(s.substring(0, s.length() - 1)) / 100 : Float.valueOf(s);
+							return s.endsWith("%") ? Float.parseFloat(s.substring(0, s.length() - 1)) / 100 : Float.parseFloat(s);
 						} catch (final NumberFormatException e) {
 							return null;
 						}
@@ -321,6 +336,7 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Float>() {
 					@Override
+					@Nullable
 					public Fields serialize(final Float n) {
 						assert false;
 						return null;
@@ -333,6 +349,7 @@ public class JavaClasses {
 					
 //						return "" + f;
 					@Override
+					@Nullable
 					public Float deserialize(final String s) {
 						try {
 							return Float.parseFloat(s);
@@ -359,10 +376,11 @@ public class JavaClasses {
 					private final RegexMessage falsePattern = new RegexMessage("boolean.false.pattern");
 					
 					@Override
+					@Nullable
 					public Boolean parse(final String s, final ParseContext context) {
-						if (truePattern.getPattern().matcher(s).matches())
+						if (truePattern.matcher(s).matches())
 							return Boolean.TRUE;
-						if (falsePattern.getPattern().matcher(s).matches())
+						if (falsePattern.matcher(s).matches())
 							return Boolean.FALSE;
 						return null;
 					}
@@ -386,6 +404,7 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Boolean>() {
 					@Override
+					@Nullable
 					public Fields serialize(final Boolean n) {
 						assert false;
 						return null;
@@ -398,6 +417,7 @@ public class JavaClasses {
 					
 //						return "" + b;
 					@Override
+					@Nullable
 					public Boolean deserialize(final String s) {
 						if (s.equals("true"))
 							return Boolean.TRUE;
@@ -417,6 +437,7 @@ public class JavaClasses {
 				.defaultExpression(new SimpleLiteral<Short>((short) 1, true))
 				.parser(new Parser<Short>() {
 					@Override
+					@Nullable
 					public Short parse(final String s, final ParseContext context) {
 						try {
 							return Short.valueOf(s);
@@ -441,6 +462,7 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Short>() {
 					@Override
+					@Nullable
 					public Fields serialize(final Short n) {
 						assert false;
 						return null;
@@ -453,6 +475,7 @@ public class JavaClasses {
 					
 //						return "" + s;
 					@Override
+					@Nullable
 					public Short deserialize(final String s) {
 						try {
 							return Short.parseShort(s);
@@ -472,6 +495,7 @@ public class JavaClasses {
 				.defaultExpression(new SimpleLiteral<Byte>((byte) 1, true))
 				.parser(new Parser<Byte>() {
 					@Override
+					@Nullable
 					public Byte parse(final String s, final ParseContext context) {
 						try {
 							return Byte.valueOf(s);
@@ -496,6 +520,7 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Byte>() {
 					@Override
+					@Nullable
 					public Fields serialize(final Byte n) {
 						assert false;
 						return null;
@@ -508,6 +533,7 @@ public class JavaClasses {
 					
 //						return "" + b;
 					@Override
+					@Nullable
 					public Byte deserialize(final String s) {
 						try {
 							return Byte.parseByte(s);
@@ -539,6 +565,7 @@ public class JavaClasses {
 				.since("1.0")
 				.parser(new Parser<String>() {
 					@Override
+					@Nullable
 					public String parse(final String s, final ParseContext context) {
 						switch (context) {
 							case DEFAULT: // in DEFAULT, parsing is handled by VariableString
@@ -549,7 +576,7 @@ public class JavaClasses {
 							case SCRIPT:
 							case EVENT:
 								if (VariableString.isQuotedCorrectly(s, true))
-									return Utils.replaceChatStyles(s.substring(1, s.length() - 1).replace("\"\"", "\""));
+									return Utils.replaceChatStyles("" + s.substring(1, s.length() - 1).replace("\"\"", "\""));
 								return null;
 							case COMMAND:
 								return s;
@@ -586,6 +613,7 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<String>() {
 					@Override
+					@Nullable
 					public Fields serialize(final String n) {
 						assert false; // natively supported by Yggdrasil
 						return null;

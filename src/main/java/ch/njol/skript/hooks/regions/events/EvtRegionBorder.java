@@ -32,11 +32,12 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.EventExecutor;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
-import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.hooks.regions.RegionsPlugin;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.lang.Literal;
@@ -44,12 +45,12 @@ import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.registrations.EventValues;
+import ch.njol.skript.util.Getter;
 import ch.njol.util.Checker;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 	static {
 		Skript.registerEvent("Region Enter/Leave", EvtRegionBorder.class, RegionBorderEvent.class,
@@ -60,13 +61,13 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 				.examples("on region exit:",
 						"	message \"Leaving %region%.\"")
 				.since("2.1");
-		EventValues.registerEventValue(RegionBorderEvent.class, Region.class, new SerializableGetter<Region, RegionBorderEvent>() {
+		EventValues.registerEventValue(RegionBorderEvent.class, Region.class, new Getter<Region, RegionBorderEvent>() {
 			@Override
 			public Region get(final RegionBorderEvent e) {
 				return e.getRegion();
 			}
 		}, 0);
-		EventValues.registerEventValue(RegionBorderEvent.class, Player.class, new SerializableGetter<Player, RegionBorderEvent>() {
+		EventValues.registerEventValue(RegionBorderEvent.class, Player.class, new Getter<Player, RegionBorderEvent>() {
 			@Override
 			public Player get(final RegionBorderEvent e) {
 				return e.getPlayer();
@@ -75,6 +76,8 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 	}
 	
 	private boolean enter;
+	
+	@Nullable
 	private Literal<Region> regions;
 	
 	@SuppressWarnings("unchecked")
@@ -86,8 +89,9 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return (enter ? "enter" : "leave") + " of " + regions.toString(e, debug);
+	public String toString(final @Nullable Event e, final boolean debug) {
+		final Literal<Region> r = regions;
+		return (enter ? "enter" : "leave") + " of " + (r == null ? "a region" : r.toString(e, debug));
 	}
 	
 	private final static Collection<Trigger> triggers = new ArrayList<Trigger>();
@@ -112,10 +116,11 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 		assert e instanceof RegionBorderEvent;
 		if (enter != ((RegionBorderEvent) e).isEntering())
 			return false;
-		if (regions == null)
+		final Literal<Region> r = regions;
+		if (r == null)
 			return true;
 		final Region re = ((RegionBorderEvent) e).getRegion();
-		return regions.check(e, new Checker<Region>() {
+		return r.check(e, new Checker<Region>() {
 			@Override
 			public boolean check(final Region r) {
 				return r.equals(re);
@@ -124,7 +129,9 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 	}
 	
 	final static void callEvent(final Region r, final PlayerMoveEvent me, final boolean enter) {
-		final RegionBorderEvent e = new RegionBorderEvent(r, me.getPlayer(), enter);
+		final Player p = me.getPlayer();
+		assert p != null;
+		final RegionBorderEvent e = new RegionBorderEvent(r, p, enter);
 		e.setCancelled(me.isCancelled());
 		for (final Trigger t : triggers) {
 			if (((EvtRegionBorder) t.getEvent()).applies(e))
@@ -133,10 +140,18 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 		me.setCancelled(e.isCancelled());
 	}
 	
+	// even WorldGuard doesn't have events, and this way all region plugins are supported for sure.
 	private final static EventExecutor ee = new EventExecutor() {
+		@Nullable
+		Event last = null;
+		
+		@SuppressWarnings("null")
 		@Override
-		public void execute(final Listener listener, final Event event) throws EventException {
-			final PlayerMoveEvent e = (PlayerMoveEvent) event; // even WorldGuard doesn't have events, and this way all region plugins are supported for sure.
+		public void execute(final @Nullable Listener listener, final Event event) throws EventException {
+			if (event == last)
+				return;
+			last = event;
+			final PlayerMoveEvent e = (PlayerMoveEvent) event;
 			final Location to = e.getTo(), from = e.getFrom();
 			if (to.equals(from))
 				return;
@@ -158,6 +173,7 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 		if (registered)
 			return;
 		Bukkit.getPluginManager().registerEvent(PlayerMoveEvent.class, new Listener() {}, SkriptConfig.defaultEventPriority.value(), ee, Skript.getInstance(), true);
+		Bukkit.getPluginManager().registerEvent(PlayerTeleportEvent.class, new Listener() {}, SkriptConfig.defaultEventPriority.value(), ee, Skript.getInstance(), true);
 		registered = true;
 	}
 	

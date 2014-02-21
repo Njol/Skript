@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bukkit.plugin.Plugin;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAddon;
@@ -68,6 +69,7 @@ public class Language {
 	/**
 	 * May be null.
 	 */
+	@Nullable
 	static HashMap<String, String> localized = null;
 	static boolean useLocal = false;
 	
@@ -77,6 +79,7 @@ public class Language {
 		return useLocal ? name : "english";
 	}
 	
+	@Nullable
 	private final static String get_i(final String key) {
 		if (useLocal && localized != null) {
 			final String s = localized.get(key);
@@ -97,8 +100,8 @@ public class Language {
 	 * @return The requested message if it exists or the key otherwise
 	 */
 	public static String get(final String key) {
-		final String s = get_i(key.toLowerCase(Locale.ENGLISH));
-		return s == null ? key.toLowerCase(Locale.ENGLISH) : s;
+		final String s = get_i("" + key.toLowerCase(Locale.ENGLISH));
+		return s == null ? "" + key.toLowerCase(Locale.ENGLISH) : s;
 	}
 	
 	/**
@@ -107,8 +110,9 @@ public class Language {
 	 * @param key The message's key (case-insensitive)
 	 * @return The requested message or null if it doesn't exist
 	 */
+	@Nullable
 	public static String get_(final String key) {
-		return get_i(key.toLowerCase(Locale.ENGLISH));
+		return get_i("" + key.toLowerCase(Locale.ENGLISH));
 	}
 	
 	public final static void missingEntryError(final String key) {
@@ -123,12 +127,12 @@ public class Language {
 	 * @return The formatted string
 	 */
 	public static String format(String key, final Object... args) {
-		key = key.toLowerCase(Locale.ENGLISH);
+		key = "" + key.toLowerCase(Locale.ENGLISH);
 		final String value = get_i(key);
 		if (value == null)
 			return key;
 		try {
-			return String.format(value, args);
+			return "" + String.format(value, args);
 		} catch (final Exception e) {
 			Skript.error("Invalid format string at '" + key + "' in the " + getName() + " language file: " + value);
 			return key;
@@ -148,6 +152,7 @@ public class Language {
 		return " " + s + " ";
 	}
 	
+	@SuppressWarnings("null")
 	private final static Pattern listSplitPattern = Pattern.compile("\\s*,\\s*");
 	
 	/**
@@ -156,8 +161,9 @@ public class Language {
 	 * @param key
 	 * @return a non-null String array with at least one element
 	 */
+	@SuppressWarnings("null")
 	public static String[] getList(final String key) {
-		final String s = get_i(key.toLowerCase(Locale.ENGLISH));
+		final String s = get_i("" + key.toLowerCase(Locale.ENGLISH));
 		if (s == null)
 			return new String[] {key.toLowerCase(Locale.ENGLISH)};
 		return listSplitPattern.split(s);
@@ -187,15 +193,19 @@ public class Language {
 				din.close();
 			} catch (final IOException e) {}
 		}
-		langVersion.put(addon.plugin, new Version(en.get("version")));
+		final String v = en.get("version");
+		if (v == null)
+			Skript.warning("Missing version in english.lang");
+		langVersion.put(addon.plugin, v == null ? Skript.getVersion() : new Version(v));
 		en.remove("version");
 		english.putAll(en);
 		for (final LanguageChangeListener l : listeners)
 			l.onLanguageChange();
 	}
 	
+	@SuppressWarnings("null")
 	public static boolean load(String name) {
-		name = name.toLowerCase();
+		name = "" + name.toLowerCase();
 		if (name.equals("english"))
 			return true;
 		localized = new HashMap<String, String>();
@@ -216,6 +226,7 @@ public class Language {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	private static boolean load(final SkriptAddon addon, final String name) {
 		if (addon.getLanguageFileDirectory() == null)
 			return false;
@@ -241,11 +252,15 @@ public class Language {
 			}
 		}
 		l.remove("version");
-		localized.putAll(l);
+		final HashMap<String, String> loc = localized;
+		if (loc != null)
+			loc.putAll(l);
+		else
+			assert false : addon + "; " + name;
 		return true;
 	}
 	
-	private static HashMap<String, String> load(final InputStream in, final String name) {
+	private static HashMap<String, String> load(final @Nullable InputStream in, final String name) {
 		if (in == null)
 			return new HashMap<String, String>();
 		try {
@@ -261,16 +276,21 @@ public class Language {
 	}
 	
 	private static void validateLocalized() {
+		final HashMap<String, String> loc = localized;
+		if (loc == null) {
+			assert false;
+			return;
+		}
 		HashSet<String> s = new HashSet<String>(english.keySet());
-		s.removeAll(localized.keySet());
+		s.removeAll(loc.keySet());
 		removeIgnored(s);
 		if (!s.isEmpty() && Skript.logNormal())
 			Skript.warning("The following messages have not been translated to " + name + ": " + StringUtils.join(s, ", "));
-		s = new HashSet<String>(localized.keySet());
+		s = new HashSet<String>(loc.keySet());
 		s.removeAll(english.keySet());
 		removeIgnored(s);
 		if (!s.isEmpty() && Skript.logHigh())
-			Skript.warning("The localized language file(s) have superfluous entries: " + StringUtils.join(s, ", "));
+			Skript.warning("The localized language file(s) has/ve superfluous entries: " + StringUtils.join(s, ", "));
 	}
 	
 	private final static void removeIgnored(final Set<String> keys) {

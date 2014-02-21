@@ -22,6 +22,7 @@
 package ch.njol.skript.effects;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -43,7 +44,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Exit")
 @Description("Exits a given amount of loops and conditionals, or the entire trigger.")
 @Examples({"if player has any ore:",
@@ -112,6 +112,7 @@ public class EffExit extends Effect { // TODO [code style] warn user about code 
 	}
 	
 	@Override
+	@Nullable
 	protected TriggerItem walk(final Event e) {
 		debug(e, false);
 		TriggerItem n = this;
@@ -130,7 +131,7 @@ public class EffExit extends Effect { // TODO [code style] warn user about code 
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "stop " + breakLevels + " " + names[type];
 	}
 	

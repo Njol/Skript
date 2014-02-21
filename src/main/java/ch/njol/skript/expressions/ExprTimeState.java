@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Former/Future State")
 @Description({"Represents the value of an expression before an event happened or the value it will have directly after the event, e.g. the old or new level respectively in a <a href='../events/#level_change'>level change event</a>.",
 		"Note: The past, future and present states of an expression are sometimes called 'time states' of an expression.",
@@ -76,7 +76,7 @@ public class ExprTimeState extends WrapperExpression<Object> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the " + (getTime() == -1 ? "past" : "future") + " state of " + getExpr().toString(e, debug);
 	}
 	

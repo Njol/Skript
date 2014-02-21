@@ -21,9 +21,8 @@
 
 package ch.njol.skript.classes;
 
-import java.io.Serializable;
-
 /**
  * @author Peter Güttinger
  */
-public interface SerializableChanger<T> extends Changer<T>, Serializable {}
+@Deprecated
+public interface SerializableChanger<T> extends Changer<T> {}

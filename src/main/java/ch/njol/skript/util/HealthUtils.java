@@ -34,6 +34,7 @@ import ch.njol.util.Math2;
 /**
  * @author Peter Güttinger
  */
+@SuppressWarnings("null")
 public abstract class HealthUtils {
 	private HealthUtils() {}
 	

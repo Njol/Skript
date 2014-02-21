@@ -23,6 +23,7 @@ package ch.njol.skript.hooks.regions.conditions;
 
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,9 +40,8 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Member/Owner of Region")
-@Description({"Checks whetehr a player is a member or owner of a particular region.",
+@Description({"Checks whether a player is a member or owner of a particular region.",
 		"This condition requires a supported regions plugin to be installed."})
 @Examples({"on region enter:",
 		"	player is the owner of the region",
@@ -55,13 +55,18 @@ public class CondIsMember extends Condition {
 				"%offlineplayers% (is|are)(n't| not) (0¦[a] member|1¦[(the|an)] owner) of [[the] region] %regions%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<OfflinePlayer> players;
+	@SuppressWarnings("null")
 	Expression<Region> regions;
 	
 	boolean owner;
 	
+	@SuppressWarnings({"null", "unchecked"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
+		players = (Expression<OfflinePlayer>) exprs[0];
+		regions = (Expression<Region>) exprs[1];
 		owner = parseResult.mark == 1;
 		setNegated(matchedPattern == 1);
 		return true;
@@ -83,7 +88,7 @@ public class CondIsMember extends Condition {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return players.toString(e, debug) + " " + (players.isSingle() ? "is" : "are") + (isNegated() ? " not" : "") + " " + (owner ? "owner" : "member") + (players.isSingle() ? "" : "s") + " of " + regions.toString(e, debug);
 	}
 }

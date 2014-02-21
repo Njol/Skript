@@ -22,6 +22,7 @@
 package ch.njol.skript.expressions;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -37,7 +38,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Index Of")
 @Description("The first of last index of a character (or text) in a text, or -1 if it doesn't occur in the text. Indices range from 1 to the <a href='#ExprIndexOf'>length</a> of the text.")
 @Examples({"set {_@} to the first index of \"@\" in the text argument",
@@ -51,9 +51,10 @@ public class ExprIndexOf extends SimpleExpression<Integer> {
 	
 	boolean first;
 	
+	@SuppressWarnings("null")
 	Expression<String> haystack, needle;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		first = parseResult.mark == 0;
@@ -63,6 +64,7 @@ public class ExprIndexOf extends SimpleExpression<Integer> {
 	}
 	
 	@Override
+	@Nullable
 	protected Integer[] get(final Event e) {
 		final String h = haystack.getSingle(e), n = needle.getSingle(e);
 		if (h == null || n == null)
@@ -81,7 +83,7 @@ public class ExprIndexOf extends SimpleExpression<Integer> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the " + (first ? "first" : "last") + " index of " + needle.toString(e, debug) + " in " + haystack.toString(e, debug);
 	}
 	

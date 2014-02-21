@@ -37,6 +37,8 @@ import org.bukkit.block.PistonMoveReaction;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 
@@ -46,9 +48,11 @@ import ch.njol.skript.Skript;
  * @author Peter Güttinger
  */
 @SuppressWarnings("deprecation")
+@NonNullByDefault(false)
 public class DelayedChangeBlock implements Block {
 	
 	final Block b;
+	@Nullable
 	private final BlockState newState;
 	
 	public DelayedChangeBlock(final Block b) {
@@ -202,6 +206,7 @@ public class DelayedChangeBlock implements Block {
 	
 	@Override
 	public boolean setTypeId(final int type) {
+		final BlockState newState = this.newState;
 		if (newState != null) {
 			newState.setTypeId(type);
 			return newState.getTypeId() != getTypeId();
@@ -218,6 +223,7 @@ public class DelayedChangeBlock implements Block {
 	
 	@Override
 	public boolean setTypeId(final int type, final boolean applyPhysics) {
+		final BlockState newState = this.newState;
 		if (newState != null) {
 			newState.setTypeId(type);
 			return newState.getTypeId() != getTypeId();
@@ -234,6 +240,7 @@ public class DelayedChangeBlock implements Block {
 	
 	@Override
 	public boolean setTypeIdAndData(final int type, final byte data, final boolean applyPhysics) {
+		final BlockState newState = this.newState;
 		if (newState != null) {
 			newState.setTypeId(type);
 			newState.setRawData(data);

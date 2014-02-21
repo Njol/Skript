@@ -21,12 +21,14 @@
 
 package ch.njol.skript.hooks.economy.classes;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Arithmetic;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
+import ch.njol.skript.classes.Converter;
 import ch.njol.skript.classes.Parser;
-import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.hooks.VaultHook;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
@@ -37,7 +39,6 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class Money {
 	static {
 		Classes.registerClass(new ClassInfo<Money>(Money.class, "money")
@@ -53,6 +54,7 @@ public class Money {
 				.before("itemtype", "itemstack")
 				.parser(new Parser<Money>() {
 					@Override
+					@Nullable
 					public Money parse(final String s, final ParseContext context) {
 						return Money.parse(s);
 					}
@@ -115,7 +117,8 @@ public class Money {
 			}
 		});
 		
-		Converters.registerConverter(Money.class, Double.class, new SerializableConverter<Money, Double>() {
+		Converters.registerConverter(Money.class, Double.class, new Converter<Money, Double>() {
+			@SuppressWarnings("null")
 			@Override
 			public Double convert(final Money m) {
 				return Double.valueOf(m.getAmount());
@@ -133,6 +136,8 @@ public class Money {
 		return amount;
 	}
 	
+	@SuppressWarnings({"null", "unused"})
+	@Nullable
 	public final static Money parse(final String s) {
 		if (VaultHook.economy == null) {
 //			Skript.error("No economy plugin detected");
@@ -173,7 +178,7 @@ public class Money {
 	
 	@Override
 	public String toString() {
-		return VaultHook.economy.format(amount);
+		return "" + VaultHook.economy.format(amount);
 	}
 	
 }

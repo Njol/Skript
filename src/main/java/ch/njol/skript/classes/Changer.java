@@ -22,6 +22,7 @@
 package ch.njol.skript.classes;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.data.DefaultChangers;
 import ch.njol.skript.lang.Expression;
@@ -52,6 +53,7 @@ public interface Changer<T> {
 	 *         that type are accepted), or null if the given mode is not supported. For {@link ChangeMode#DELETE} and {@link ChangeMode#RESET} this can return any non-null array to
 	 *         mark them as supported.
 	 */
+	@Nullable
 	public abstract Class<?>[] acceptChange(ChangeMode mode);
 	
 	/**
@@ -61,12 +63,12 @@ public interface Changer<T> {
 	 * @param mode
 	 * @throws UnsupportedOperationException (optional) if this method was called on an unsupported ChangeMode.
 	 */
-	public abstract void change(T[] what, Object[] delta, ChangeMode mode);
+	public abstract void change(T[] what, @Nullable Object[] delta, ChangeMode mode);
 	
 	public static abstract class ChangerUtils {
 		
 		@SuppressWarnings("unchecked")
-		public final static <T, V> void change(final Changer<T> changer, final Object[] what, final Object[] delta, final ChangeMode mode) {
+		public final static <T, V> void change(final Changer<T> changer, final Object[] what, final @Nullable Object[] delta, final ChangeMode mode) {
 			changer.change((T[]) what, delta, mode);
 		}
 		

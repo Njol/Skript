@@ -27,6 +27,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -50,7 +51,6 @@ import ch.njol.util.coll.iterator.IteratorIterable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Drops")
 @Description("Only works in death events. Holds the drops of the dying creature. Drops can be prevented by removing them with \"remove ... from drops\", e.g. \"remove all pickaxes from the drops\", or \"clear drops\" if you don't want any drops at all.")
 @Examples({"clear drops",
@@ -61,6 +61,7 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 		Skript.registerExpression(ExprDrops.class, ItemStack.class, ExpressionType.SIMPLE, "[the] drops");
 	}
 	
+	@SuppressWarnings("null")
 	private Kleenean delayed;
 	
 	@Override
@@ -74,6 +75,7 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	}
 	
 	@Override
+	@Nullable
 	protected ItemStack[] get(final Event e) {
 		if (!(e instanceof EntityDeathEvent))
 			return null;
@@ -82,6 +84,7 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.RESET)
 			return null;
@@ -92,9 +95,9 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 		return CollectionUtils.array(ItemType[].class, Inventory[].class, Experience[].class);
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
-	public void change(final Event e, final Object[] deltas, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] deltas, final ChangeMode mode) {
 		assert mode != ChangeMode.RESET;
 		if (!(e instanceof EntityDeathEvent)) {
 			assert false;
@@ -108,6 +111,7 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 		}
 		boolean cleared = false;
 		
+		assert deltas != null;
 		for (final Object delta : deltas) {
 			if (delta instanceof Experience) {
 				if (mode == ChangeMode.REMOVE_ALL || mode == ChangeMode.REMOVE && ((Experience) delta).getInternalXP() == -1) {
@@ -167,7 +171,7 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (e == null)
 			return "the drops";
 		return Classes.getDebugMessage(getAll(e));

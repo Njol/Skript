@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.Bukkit;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,7 +40,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Console")
 @Description("Represents the server's console which can recieve messages and execute commands")
 @Examples({"execute console command \"/stop\"",
@@ -50,8 +50,11 @@ public class LitConsole extends SimpleLiteral<ConsoleCommandSender> {
 		Skript.registerExpression(LitConsole.class, ConsoleCommandSender.class, ExpressionType.SIMPLE, "[the] (console|server)");
 	}
 	
+	@SuppressWarnings("null")
+	private final static ConsoleCommandSender console = Bukkit.getConsoleSender();
+	
 	public LitConsole() {
-		super(Bukkit.getConsoleSender(), false);
+		super(console, false);
 	}
 	
 	@Override
@@ -60,7 +63,7 @@ public class LitConsole extends SimpleLiteral<ConsoleCommandSender> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the console";
 	}
 	

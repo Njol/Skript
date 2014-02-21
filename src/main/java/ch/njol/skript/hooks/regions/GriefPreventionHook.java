@@ -21,9 +21,11 @@
 
 package ch.njol.skript.hooks.regions;
 
+import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 import me.ryanhamshire.GriefPrevention.Claim;
@@ -35,15 +37,19 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
+import ch.njol.util.coll.iterator.EmptyIterator;
 import ch.njol.yggdrasil.Fields;
 
 /**
  * @author Peter Güttinger
  */
 public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
+	
+	public GriefPreventionHook() throws IOException {}
 	
 	@Override
 	public String getName() {
@@ -57,15 +63,15 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 	
 	public final class GriefPreventionRegion extends Region {
 		
-		private transient Claim c;
+		private transient Claim claim;
 		
 		public GriefPreventionRegion(final Claim c) {
-			this.c = c;
+			claim = c;
 		}
 		
 		@Override
 		public boolean contains(final Location l) {
-			return c.contains(l, false, false);
+			return claim.contains(l, false, false);
 		}
 		
 		@Override
@@ -80,41 +86,46 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 		
 		@Override
 		public boolean isOwner(final OfflinePlayer p) {
-			return p.getName().equalsIgnoreCase(c.getOwnerName());
+			return p.getName().equalsIgnoreCase(claim.getOwnerName());
 		}
 		
+		@SuppressWarnings("null")
 		@Override
 		public Collection<OfflinePlayer> getOwners() {
-			return Arrays.asList(Bukkit.getOfflinePlayer(c.getOwnerName()));
+			return Arrays.asList(Bukkit.getOfflinePlayer(claim.getOwnerName()));
 		}
 		
 		@Override
 		public Iterator<Block> getBlocks() {
-			final Location upper = c.getGreaterBoundaryCorner();
+			final Location lower = claim.getLesserBoundaryCorner(), upper = claim.getGreaterBoundaryCorner();
+			if (lower == null || upper == null || lower.getWorld() == null || upper.getWorld() == null || lower.getWorld() != upper.getWorld())
+				return EmptyIterator.get();
 			upper.setY(upper.getWorld().getMaxHeight());
 			upper.setX(upper.getBlockX() + 1);
 			upper.setZ(upper.getBlockZ() + 1);
-			return new AABB(c.getLesserBoundaryCorner(), upper).iterator();
+			return new AABB(lower, upper).iterator();
 		}
 		
 		@Override
 		public String toString() {
-			return "Claim #" + c.getID();
+			return "Claim #" + claim.getID();
 		}
 		
+		@SuppressWarnings("null")
 		@Override
 		public Fields serialize() {
 			final Fields f = new Fields();
-			f.putPrimitive("id", c.getID());
+			f.putPrimitive("id", claim.getID());
 			return f;
 		}
 		
 		@Override
 		public void deserialize(final Fields fields) throws StreamCorruptedException {
 			final long id = fields.getPrimitive("id", long.class);
-			c = plugin.dataStore.getClaim(id);
+			final Claim c = plugin.dataStore.getClaim(id);
 			if (c == null)
 				throw new StreamCorruptedException("Invalid claim " + id);
+			claim = c;
 		}
 		
 		@Override
@@ -123,32 +134,34 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 		}
 		
 		@Override
-		public boolean equals(final Object o) {
+		public boolean equals(final @Nullable Object o) {
 			if (o == this)
 				return true;
 			if (o == null)
 				return false;
 			if (!(o instanceof GriefPreventionRegion))
 				return false;
-			return c.equals(((GriefPreventionRegion) o).c);
+			return claim.equals(((GriefPreventionRegion) o).claim);
 		}
 		
 		@Override
 		public int hashCode() {
-			return c.hashCode();
+			return claim.hashCode();
 		}
 		
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Collection<? extends Region> getRegionsAt_i(final Location l) {
 		final Claim c = plugin.dataStore.getClaimAt(l, false, null);
 		if (c != null)
 			return Arrays.asList(new GriefPreventionRegion(c));
-		return null;
+		return Collections.emptySet();
 	}
 	
 	@Override
+	@Nullable
 	public Region getRegion_i(final World world, final String name) {
 		try {
 			final Claim c = plugin.dataStore.getClaim(Long.parseLong(name));

@@ -21,6 +21,7 @@
 
 package ch.njol.skript.hooks.regions;
 
+import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,11 +30,13 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
@@ -52,6 +55,8 @@ import com.massivecraft.mcore.ps.PS;
  * @author Peter Güttinger
  */
 public class Factions2Hook extends RegionsPlugin<Factions> {
+	
+	public Factions2Hook() throws IOException {}
 	
 	@Override
 	public String getName() {
@@ -73,20 +78,20 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 	
 	public final class FactionsRegion extends Region {
 		
-		private transient Faction f;
+		private transient Faction faction;
 		
 		public FactionsRegion(final Faction f) {
-			this.f = f;
+			faction = f;
 		}
 		
 		@Override
 		public boolean contains(final Location l) {
-			return BoardColls.get().getFactionAt(PS.valueOf(l)) == f;
+			return BoardColls.get().getFactionAt(PS.valueOf(l)) == faction;
 		}
 		
 		@Override
 		public boolean isMember(final OfflinePlayer p) {
-			for (final UPlayer up : f.getUPlayers()) {
+			for (final UPlayer up : faction.getUPlayers()) {
 				if (up.getName().equalsIgnoreCase(p.getName()))
 					return true;
 			}
@@ -95,7 +100,7 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 		
 		@Override
 		public Collection<OfflinePlayer> getMembers() {
-			final Collection<UPlayer> ps = f.getUPlayers();
+			final Collection<UPlayer> ps = faction.getUPlayers();
 			final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ps.size());
 			for (final UPlayer p : ps)
 				r.add(Bukkit.getOfflinePlayer(p.getName()));
@@ -104,34 +109,43 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 		
 		@Override
 		public boolean isOwner(final OfflinePlayer p) {
-			return f.getLeader().getName().equalsIgnoreCase(p.getName());
+			return faction.getLeader().getName().equalsIgnoreCase(p.getName());
 		}
 		
+		@SuppressWarnings("null")
 		@Override
 		public Collection<OfflinePlayer> getOwners() {
-			return Arrays.asList(Bukkit.getOfflinePlayer(f.getLeader().getName()));
+			return Arrays.asList(Bukkit.getOfflinePlayer(faction.getLeader().getName()));
 		}
 		
 		@Override
 		public Iterator<Block> getBlocks() {
-			final Iterator<PS> cs = BoardColls.get().get(f).getChunks(f).iterator();
+			final Iterator<PS> cs = BoardColls.get().get(faction).getChunks(faction).iterator();
 			if (!cs.hasNext())
 				return EmptyIterator.get();
 			return new Iterator<Block>() {
-				Iterator<Block> current = new AABB(cs.next().asBukkitChunk()).iterator();
+				@Nullable
+				Iterator<Block> current;
 				
 				@Override
 				public boolean hasNext() {
-					if (!current.hasNext() && cs.hasNext()) {
-						current = new AABB(cs.next().asBukkitChunk()).iterator();
+					Iterator<Block> current = this.current;
+					while ((current == null || !current.hasNext()) && cs.hasNext()) {
+						final Chunk c = cs.next().asBukkitChunk();
+						if (c == null)
+							continue;
+						current = new AABB(c).iterator();
 					}
-					return current.hasNext();
+					this.current = current;
+					return current != null && current.hasNext();
 				}
 				
+				@SuppressWarnings("null")
 				@Override
 				public Block next() {
 					if (!hasNext())
 						throw new NoSuchElementException();
+					assert current != null;
 					return current.next();
 				}
 				
@@ -144,14 +158,14 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 		
 		@Override
 		public String toString() {
-			return f.getName();
+			return "" + faction.getName();
 		}
 		
 		@Override
 		public Fields serialize() {
 			final Fields fields = new Fields();
-			fields.putObject("universe", f.getUniverse());
-			fields.putObject("id", f.getId());
+			fields.putObject("universe", faction.getUniverse());
+			fields.putObject("id", faction.getId());
 			return fields;
 		}
 		
@@ -159,9 +173,10 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 		public void deserialize(final Fields fields) throws StreamCorruptedException {
 			final String universe = fields.getObject("universe", String.class);
 			final String id = fields.getObject("id", String.class);
-			f = FactionColls.get().getForUniverse(universe).get(id); // getForUniverse creates a new "Coll" if none exists
+			final Faction f = FactionColls.get().getForUniverse(universe).get(id); // getForUniverse creates a new "Coll" if none exists
 			if (f == null)
 				throw new StreamCorruptedException("Invalid faction " + id + " in universe " + universe);
+			faction = f;
 		}
 		
 		@Override
@@ -170,29 +185,31 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 		}
 		
 		@Override
-		public boolean equals(final Object o) {
+		public boolean equals(final @Nullable Object o) {
 			if (o == this)
 				return true;
 			if (o == null)
 				return false;
 			if (!(o instanceof FactionsRegion))
 				return false;
-			return f.equals(((FactionsRegion) o).f);
+			return faction.equals(((FactionsRegion) o).faction);
 		}
 		
 		@Override
 		public int hashCode() {
-			return f.hashCode();
+			return faction.hashCode();
 		}
 		
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Collection<? extends Region> getRegionsAt_i(final Location l) {
 		return Arrays.asList(new FactionsRegion(BoardColls.get().getFactionAt(PS.valueOf(l))));
 	}
 	
 	@Override
+	@Nullable
 	public Region getRegion_i(final World world, final String name) {
 		final Faction f = FactionColls.get().getForUniverse(world.getName()).getByName(name);
 		if (f != null)

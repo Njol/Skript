@@ -21,12 +21,13 @@
 
 package ch.njol.skript.variables;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
@@ -37,7 +38,8 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
-import ch.njol.util.Pair;
+import ch.njol.skript.variables.SerializedVariable.Value;
+import ch.njol.util.Closeable;
 
 /**
  * @author Peter Güttinger
@@ -46,43 +48,51 @@ public abstract class VariablesStorage implements Closeable {
 	
 	private final static int QUEUE_SIZE = 1000, FIRST_WARNING = 300;
 	
-	final LinkedBlockingQueue<Pair<String, Pair<String, byte[]>>> changesQueue = new LinkedBlockingQueue<Pair<String, Pair<String, byte[]>>>(QUEUE_SIZE);
+	final LinkedBlockingQueue<SerializedVariable> changesQueue = new LinkedBlockingQueue<SerializedVariable>(QUEUE_SIZE);
 	
 	protected volatile boolean closed = false;
 	
 	protected final String name;
 	
+	@Nullable
 	protected File file;
 	
 	/**
 	 * null for '.*' or '.+'
 	 */
+	@Nullable
 	private Pattern variablePattern;
 	
 	private final Thread writeThread;
 	
 	protected VariablesStorage(final SectionNode n) {
-		name = n.getKey();
+		final String name = n.getKey();
+		if (name == null)
+			throw new IllegalArgumentException("" + n);
+		this.name = name;
 		writeThread = Skript.newThread(new Runnable() {
 			@Override
 			public void run() {
 				while (!closed) {
 					try {
-						final Pair<String, Pair<String, byte[]>> var = changesQueue.take();
-						if (var.second != null)
-							save(var.first, var.second.first, var.second.second);
+						final SerializedVariable var = changesQueue.take();
+						final Value d = var.value;
+						if (d != null)
+							save(name, d.type, d.data);
 						else
-							save(var.first, null, null);
+							save(name, null, null);
 					} catch (final InterruptedException e) {}
 				}
 			}
 		}, "Skript variable save thread for database '" + name + "'");
 	}
 	
+	@Nullable
 	protected String getValue(final SectionNode n, final String key) {
 		return getValue(n, key, String.class);
 	}
 	
+	@Nullable
 	protected <T> T getValue(final SectionNode n, final String key, final Class<T> type) {
 		final String v = n.getValue(key);
 		if (v == null) {
@@ -117,7 +127,8 @@ public abstract class VariablesStorage implements Closeable {
 			final String f = getValue(n, "file");
 			if (f == null)
 				return false;
-			file = getFile(f).getAbsoluteFile();
+			final File file = getFile(f).getAbsoluteFile();
+			this.file = file;
 			if (file.exists() && !file.isFile()) {
 				Skript.error("The database file '" + file.getName() + "' must be an actual file, not a directory.");
 				return false;
@@ -175,20 +186,23 @@ public abstract class VariablesStorage implements Closeable {
 	protected final Object connectionLock = new Object();
 	
 	/**
-	 * Called after a backup of the file has been made
+	 * (Re)connects to the database.
+	 * 
+	 * @return Whether the connection could be re-established. An error should be printed by this method prior to returning false.
 	 */
-	protected abstract void connect();
+	protected abstract boolean connect();
 	
 	/**
-	 * Called before a backup of the file is being made
+	 * Disconnects from the database.
 	 */
 	protected abstract void disconnect();
 	
+	@Nullable
 	protected Task backupTask = null;
 	
 	public void startBackupTask(final Timespan t) {
-		assert file != null;
-		if (t.getTicks() == 0)
+		final File file = this.file;
+		if (file == null || t.getTicks() == 0)
 			return;
 		backupTask = new Task(Skript.getInstance(), t.getTicks(), t.getTicks(), true) {
 			@Override
@@ -213,8 +227,11 @@ public abstract class VariablesStorage implements Closeable {
 		};
 	}
 	
-	final boolean accept(final String var) {
-		return variablePattern == null ? true : variablePattern.matcher(var).matches();
+	final boolean accept(final @Nullable String var) {
+		if (var == null)
+			return false;
+		final Pattern vp = variablePattern;
+		return vp == null ? true : vp.matcher(var).matches();
 	}
 	
 	private long lastWarning = Long.MIN_VALUE;
@@ -225,7 +242,7 @@ public abstract class VariablesStorage implements Closeable {
 	/**
 	 * May be called from a different thread than Bukkit's main thread.
 	 */
-	final void save(final Pair<String, Pair<String, byte[]>> var) {
+	final void save(final SerializedVariable var) {
 		if (changesQueue.size() > FIRST_WARNING && lastWarning < System.currentTimeMillis() - WARNING_INTERVAL * 1000) {
 			Skript.warning("Cannot write variables to the database '" + name + "' at sufficient speed; server performance may suffer and many variables will be lost if the server crashes. (this warning will be repeated at most once every " + ERROR_INTERVAL + " seconds)");
 			lastWarning = System.currentTimeMillis();
@@ -269,7 +286,8 @@ public abstract class VariablesStorage implements Closeable {
 	 * @param name
 	 * @param type
 	 * @param value
+	 * @return Whether the variable was saved
 	 */
-	protected abstract void save(String name, String type, byte[] value);
+	protected abstract boolean save(String name, @Nullable String type, @Nullable byte[] value);
 	
 }

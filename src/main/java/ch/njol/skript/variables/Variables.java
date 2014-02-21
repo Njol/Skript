@@ -39,18 +39,21 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.ConfigurationSerializer;
+import ch.njol.skript.config.Config;
 import ch.njol.skript.config.Node;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.lang.Variable;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.variables.DatabaseStorage.Type;
 import ch.njol.util.Kleenean;
-import ch.njol.util.Pair;
 import ch.njol.yggdrasil.Yggdrasil;
 
 /**
@@ -59,7 +62,9 @@ import ch.njol.yggdrasil.Yggdrasil;
 public abstract class Variables implements Closeable {
 	private Variables() {}
 	
-	public final static Yggdrasil yggdrasil = new Yggdrasil();
+	public final static short YGGDRASIL_VERSION = 1;
+	
+	public final static Yggdrasil yggdrasil = new Yggdrasil(YGGDRASIL_VERSION);
 	
 	private final static String ConfigurationSerializablePrefix = "ConfigurationSerializable_";
 	static {
@@ -72,6 +77,7 @@ public abstract class Variables implements Closeable {
 			
 			@SuppressWarnings("unchecked")
 			@Override
+			@Nullable
 			public String getID(final Class<?> c) {
 				if (ConfigurationSerializable.class.isAssignableFrom(c) && Classes.getSuperClassInfo(c) == Classes.getExactClassInfo(Object.class))
 					return ConfigurationSerializablePrefix + ConfigurationSerialization.getAlias((Class<? extends ConfigurationSerializable>) c);
@@ -79,6 +85,7 @@ public abstract class Variables implements Closeable {
 			}
 			
 			@Override
+			@Nullable
 			public Class<? extends ConfigurationSerializable> getClass(final String id) {
 				if (id.startsWith(ConfigurationSerializablePrefix))
 					return ConfigurationSerialization.getClassByAlias(id.substring(ConfigurationSerializablePrefix.length()));
@@ -89,14 +96,16 @@ public abstract class Variables implements Closeable {
 	
 	static List<VariablesStorage> storages = new ArrayList<VariablesStorage>();
 	
-	@SuppressWarnings("resource")
 	public static boolean load() {
 		try {
 			variablesLock.writeLock().lock();
 			assert variables.treeMap.isEmpty();
 			assert variables.hashMap.isEmpty();
 			
-			final Node databases = SkriptConfig.getConfig().getMainNode().get("databases");
+			final Config c = SkriptConfig.getConfig();
+			if (c == null)
+				throw new SkriptAPIException("Cannot load variables before the config");
+			final Node databases = c.getMainNode().get("databases");
 			if (databases == null || !(databases instanceof SectionNode)) {
 				Skript.error("The config is missing the required 'databases' section that defines where the variables are saved");
 				return false;
@@ -142,8 +151,10 @@ public abstract class Variables implements Closeable {
 		}
 	}
 	
+	@SuppressWarnings("null")
 	private final static Pattern variableNameSplitPattern = Pattern.compile(Pattern.quote(Variable.SEPARATOR));
 	
+	@SuppressWarnings("null")
 	public final static String[] splitVariableName(final String name) {
 		return variableNameSplitPattern.split(name);
 	}
@@ -168,10 +179,12 @@ public abstract class Variables implements Closeable {
 	/**
 	 * Remember to lock with {@link #getReadLock()}!
 	 */
+	@SuppressWarnings("null")
 	static Map<String, Object> getVariablesHashMap() {
 		return Collections.unmodifiableMap(variables.hashMap);
 	}
 	
+	@SuppressWarnings("null")
 	static Lock getReadLock() {
 		return variablesLock.readLock();
 	}
@@ -184,7 +197,8 @@ public abstract class Variables implements Closeable {
 	 * @param name
 	 * @return an Object for a normal Variable or a Map<String, Object> for a list variable, or null if the variable is not set.
 	 */
-	public final static Object getVariable(final String name, final Event e, final boolean local) {
+	@Nullable
+	public final static Object getVariable(final String name, final @Nullable Event e, final boolean local) {
 		if (local) {
 			final VariablesMap map = localVariables.get(e);
 			if (map == null)
@@ -206,8 +220,18 @@ public abstract class Variables implements Closeable {
 	 * @param name The variable's name. Can be a "list variable::*" (<tt>value</tt> must be <tt>null</tt> in this case)
 	 * @param value The variable's value. Use <tt>null</tt> to delete the variable.
 	 */
-	public final static void setVariable(final String name, final Object value, final Event e, final boolean local) {
+	public final static void setVariable(final String name, @Nullable Object value, final @Nullable Event e, final boolean local) {
+		if (value != null) {
+			@SuppressWarnings("null")
+			final ClassInfo<?> ci = Classes.getSuperClassInfo(value.getClass());
+			final Class<?> sas = ci.getSerializeAs();
+			if (sas != null) {
+				value = Converters.convert(value, sas);
+				assert value != null : ci + ", " + sas;
+			}
+		}
 		if (local) {
+			assert e != null : name;
 			VariablesMap map = localVariables.get(e);
 			if (map == null)
 				localVariables.put(e, map = new VariablesMap());
@@ -217,7 +241,7 @@ public abstract class Variables implements Closeable {
 		}
 	}
 	
-	final static void setVariable(final String name, final Object value) {
+	final static void setVariable(final String name, @Nullable final Object value) {
 		try {
 			variablesLock.writeLock().lock();
 			variables.setVariable(name, value);
@@ -234,7 +258,7 @@ public abstract class Variables implements Closeable {
 	 * @param value
 	 * @param source
 	 */
-	final static void variableLoaded(final String name, final Object value, final VariablesStorage source) {
+	final static void variableLoaded(final String name, final @Nullable Object value, final VariablesStorage source) {
 		variables.setVariable(name, value);
 		
 		for (final VariablesStorage s : storages) {
@@ -251,22 +275,23 @@ public abstract class Variables implements Closeable {
 		}
 	}
 	
-	public final static Pair<String, Pair<String, byte[]>> serialize(final String name, final Object value) {
+	public final static SerializedVariable serialize(final String name, final @Nullable Object value) {
 		assert Bukkit.isPrimaryThread();
-		final Pair<String, byte[]> var = serialize(value);
-		return new Pair<String, Pair<String, byte[]>>(name, var);
+		final SerializedVariable.Value var = serialize(value);
+		return new SerializedVariable(name, var);
 	}
 	
-	public final static Pair<String, byte[]> serialize(final Object value) {
+	@Nullable
+	public final static SerializedVariable.Value serialize(final @Nullable Object value) {
 		assert Bukkit.isPrimaryThread();
 		return Classes.serialize(value);
 	}
 	
-	private final static void saveVariableChange(final String name, final Object value) {
+	private final static void saveVariableChange(final String name, final @Nullable Object value) {
 		queue.add(serialize(name, value));
 	}
 	
-	final static BlockingQueue<Pair<String, Pair<String, byte[]>>> queue = new LinkedBlockingQueue<Pair<String, Pair<String, byte[]>>>();
+	final static BlockingQueue<SerializedVariable> queue = new LinkedBlockingQueue<SerializedVariable>();
 	
 	static volatile boolean closed = false;
 	
@@ -275,9 +300,9 @@ public abstract class Variables implements Closeable {
 		public void run() {
 			while (!closed) {
 				try {
-					final Pair<String, Pair<String, byte[]>> v = queue.take();
+					final SerializedVariable v = queue.take();
 					for (final VariablesStorage s : storages) {
-						if (s.accept(v.first)) {
+						if (s.accept(v.name)) {
 							s.save(v);
 							break;
 						}

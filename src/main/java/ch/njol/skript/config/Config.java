@@ -31,6 +31,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.validate.SectionValidator;
 
@@ -66,6 +68,7 @@ public class Config {
 	final boolean allowEmptySections;
 	
 	String fileName;
+	@Nullable
 	File file = null;
 	
 	public Config(final InputStream source, final String fileName, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
@@ -98,7 +101,7 @@ public class Config {
 	
 	@SuppressWarnings("resource")
 	public Config(final File file, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
-		this(new FileInputStream(file), file.getName(), simple, allowEmptySections, defaultSeparator);
+		this(new FileInputStream(file), "" + file.getName(), simple, allowEmptySections, defaultSeparator);
 		this.file = file;
 	}
 	
@@ -117,13 +120,12 @@ public class Config {
 	}
 	
 	void setIndentation(final String indent) {
-		assert indentation.length() > 0;
+		assert indent != null && indent.length() > 0 : indent;
 		indentation = indent;
 		indentationName = (indent.charAt(0) == ' ' ? "space" : "tab");
 	}
 	
 	String getIndentation() {
-		assert indentation.length() > 0;
 		return indentation;
 	}
 	
@@ -168,6 +170,11 @@ public class Config {
 		return getMainNode().setValues(other.getMainNode());
 	}
 	
+	public boolean setValues(final Config other, final String... excluded) {
+		return getMainNode().setValues(other.getMainNode(), excluded);
+	}
+	
+	@Nullable
 	public File getFile() {
 		return file;
 	}
@@ -196,6 +203,8 @@ public class Config {
 	 * @param path
 	 * @return <tt>get(path.split("\\."))</tt>
 	 */
+	@SuppressWarnings("null")
+	@Nullable
 	public String getByPath(final String path) {
 		return get(path.split("\\."));
 	}
@@ -206,6 +215,7 @@ public class Config {
 	 * @param path
 	 * @return The entry node's value at the location defined by path or null if it either doesn't exist or is not an entry.
 	 */
+	@Nullable
 	public String get(final String... path) {
 		SectionNode section = main;
 		for (int i = 0; i < path.length; i++) {
@@ -238,13 +248,14 @@ public class Config {
 		return validator.validate(getMainNode());
 	}
 	
-	private void load(final Class<?> c, final Object o, final String path) {
+	@SuppressWarnings("null")
+	private void load(final Class<?> c, final @Nullable Object o, final String path) {
 		for (final Field f : c.getDeclaredFields()) {
 			f.setAccessible(true);
 			if (o != null || Modifier.isStatic(f.getModifiers())) {
 				try {
 					if (OptionSection.class.isAssignableFrom(f.getType())) {
-						load(f.get(o).getClass(), f.get(o), path + ((OptionSection) f.get(o)).name + ".");
+						load(f.get(o).getClass(), f.get(o), path + ((OptionSection) f.get(o)).key + ".");
 					} else if (Option.class.isAssignableFrom(f.getType())) {
 						((Option<?>) f.get(o)).set(this, path);
 					}
@@ -257,10 +268,17 @@ public class Config {
 		}
 	}
 	
+	/**
+	 * Sets all {@link Option} fields of the given object to the values from this config
+	 */
+	@SuppressWarnings("null")
 	public void load(final Object o) {
 		load(o.getClass(), o, "");
 	}
 	
+	/**
+	 * Sets all static {@link Option} fields of the given class to the values from this config
+	 */
 	public void load(final Class<?> c) {
 		load(c, null, "");
 	}

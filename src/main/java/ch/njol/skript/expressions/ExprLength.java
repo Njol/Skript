@@ -30,7 +30,6 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Length")
 @Description("The length of a text, in number of characters.")
 @Examples("set {_l} to length of the string argument")
@@ -40,6 +39,7 @@ public class ExprLength extends SimplePropertyExpression<String, Integer> {
 		register(ExprLength.class, Integer.class, "length", "strings");
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Integer convert(final String s) {
 		return Integer.valueOf(s.length());

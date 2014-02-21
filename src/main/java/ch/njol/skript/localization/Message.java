@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Locale;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 
 /**
@@ -56,11 +58,12 @@ public class Message {
 	}
 	
 	public final String key;
+	@Nullable
 	private String value;
 	boolean revalidate = true;
 	
 	public Message(final String key) {
-		this.key = key.toLowerCase(Locale.ENGLISH);
+		this.key = "" + key.toLowerCase(Locale.ENGLISH);
 		messages.add(this);
 		if (Skript.testing() && !Language.english.isEmpty()) {
 			if (!Language.english.containsKey(this.key))
@@ -74,7 +77,7 @@ public class Message {
 	@Override
 	public String toString() {
 		validate();
-		return value == null ? key : value;
+		return value == null ? key : "" + value;
 	}
 	
 	/**
@@ -82,6 +85,7 @@ public class Message {
 	 * 
 	 * @return This message's value or null if it doesn't exist.
 	 */
+	@Nullable
 	protected final String getValue() {
 		validate();
 		return value;

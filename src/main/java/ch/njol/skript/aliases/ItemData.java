@@ -28,6 +28,7 @@ import java.util.NoSuchElementException;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.variables.Variables;
@@ -101,7 +102,7 @@ public class ItemData implements Serializable, Cloneable, YggdrasilSerializable 
 	 * @param item
 	 * @return Whether the given item is of this type. If <tt>item</tt> is <tt>null</tt> this returns <tt>getId() == 0</tt>.
 	 */
-	public boolean isOfType(final ItemStack item) {
+	public boolean isOfType(final @Nullable ItemStack item) {
 		if (item == null)
 			return typeid == 0;
 		return isOfType(item.getTypeId(), item.getDurability());
@@ -135,7 +136,7 @@ public class ItemData implements Serializable, Cloneable, YggdrasilSerializable 
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (obj == this)
 			return true;
 		if (!(obj instanceof ItemData))
@@ -157,6 +158,7 @@ public class ItemData implements Serializable, Cloneable, YggdrasilSerializable 
 	 * @return A new ItemData which is the intersection of the given types, or null if the intersection of the data ranges is empty or both datas have an id != -1 which are not the
 	 *         same.
 	 */
+	@Nullable
 	public ItemData intersection(final ItemData other) {
 		if (other.dataMin != -1 && dataMin != -1 && (other.dataMax < dataMin || dataMax < other.dataMin) || other.typeid != -1 && typeid != -1 && other.typeid != typeid)
 			return null;
@@ -167,12 +169,16 @@ public class ItemData implements Serializable, Cloneable, YggdrasilSerializable 
 	}
 	
 	public ItemStack getRandom() {
+		int type = typeid;
+		if (type == -1) {
+			final Material m = CollectionUtils.getRandom(Material.values(), 1);
+			assert m != null;
+			type = m.getId();
+		}
 		if (dataMin == -1 && dataMax == -1) {
-			return new ItemStack(typeid == -1 ? CollectionUtils.getRandom(Material.values(), 1).getId() : typeid, 1);
+			return new ItemStack(type, 1);
 		} else {
-			return new ItemStack(typeid == -1 ? CollectionUtils.getRandom(Material.values(), 1).getId() : typeid,
-					1,
-					(short) (Utils.random(dataMin, dataMax + 1)));
+			return new ItemStack(type, 1, (short) (Utils.random(dataMin, dataMax + 1)));
 		}
 	}
 	
@@ -180,6 +186,7 @@ public class ItemData implements Serializable, Cloneable, YggdrasilSerializable 
 		if (typeid == -1) {
 			return new Iterator<ItemStack>() {
 				
+				@SuppressWarnings("null")
 				private final Iterator<Material> iter = Arrays.asList(Material.values()).listIterator(1); // ignore air
 				
 				@Override

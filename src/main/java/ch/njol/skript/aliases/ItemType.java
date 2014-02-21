@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +46,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ConfigurationSerializer;
@@ -63,15 +63,19 @@ import ch.njol.skript.util.Container.ContainerType;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.variables.Variables;
-import ch.njol.util.coll.iterator.SingleItemIterator;
+import ch.njol.util.coll.iterator.EmptyIterable;
+import ch.njol.util.coll.iterator.SingleItemIterable;
 import ch.njol.yggdrasil.Fields;
 import ch.njol.yggdrasil.YggdrasilSerializable.YggdrasilExtendedSerializable;
 
 @ContainerType(ItemStack.class)
-@SuppressWarnings({"serial", "deprecation"})
-public class ItemType implements Unit, Serializable, Iterable<ItemData>, Container<ItemStack>, YggdrasilExtendedSerializable {
+@SuppressWarnings("deprecation")
+public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>, YggdrasilExtendedSerializable {
 	
 	private final static Message m_named = new Message("aliases.named");
+	
+	// 1.4.5
+	public final static boolean itemMetaSupported = Skript.supports("org.bukkit.inventory.meta.ItemMeta");
 	
 	/**
 	 * Note to self: use {@link #add_(ItemData)} to add item datas, don't add them directly to this list.
@@ -87,19 +91,23 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 */
 	private int numItems = 0;
 	
+	// TODO empty == unenchanted, add expression "unenchanted <item>"
+	@Nullable
 	transient Map<Enchantment, Integer> enchantments = null;
 	
 	/**
 	 * Guaranteed to be of type ItemMeta.
 	 */
+	@Nullable
 	transient Object meta = null;
 	
 	/**
 	 * ItemTypes to use instead of this one if adding to an inventory or setting a block.
 	 */
+	@Nullable
 	private ItemType item = null, block = null;
 	
-	void setItem(final ItemType item) {
+	void setItem(final @Nullable ItemType item) {
 		if (equals(item)) { // can happen if someone defines a 'x' and 'x item/block' alias that have the same value, e.g. 'dirt' and 'dirt block'
 			this.item = null;
 		} else {
@@ -115,7 +123,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		}
 	}
 	
-	void setBlock(final ItemType block) {
+	void setBlock(final @Nullable ItemType block) {
 		if (equals(block)) {
 			this.block = null;
 		} else {
@@ -150,7 +158,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		add_(new ItemData(i));
 		if (!i.getEnchantments().isEmpty())
 			enchantments = new HashMap<Enchantment, Integer>(i.getEnchantments());
-		if (Skript.isRunningMinecraft(1, 4, 5)) {
+		if (itemMetaSupported) {
 			meta = i.getItemMeta();
 			unsetItemMetaEnchs((ItemMeta) meta);
 		}
@@ -166,9 +174,11 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		all = i.all;
 		amount = i.amount;
 		numItems = i.numItems;
-		block = i.block == null ? null : i.block.clone();
-		item = i.item == null ? null : i.item.clone();
-		meta = i.meta == null ? null : ((ItemMeta) i.meta).clone();
+		final ItemType bl = i.block, it = i.item;
+		block = bl == null ? null : bl.clone();
+		item = it == null ? null : it.clone();
+		final Object m = i.meta;
+		meta = m == null ? null : ((ItemMeta) m).clone();
 		for (final ItemData d : i) {
 			types.add(d.clone());
 		}
@@ -221,12 +231,13 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		this.all = all;
 	}
 	
+	@Nullable
 	public Object getItemMeta() {
 		return meta;
 	}
 	
 	public void setItemMeta(final Object meta) {
-		if (!Skript.isRunningMinecraft(1, 4, 5) || !(meta instanceof ItemMeta))
+		if (!itemMetaSupported || !(meta instanceof ItemMeta))
 			throw new IllegalStateException("" + meta);
 		unsetItemMetaEnchs((ItemMeta) meta);
 		this.meta = meta;
@@ -240,7 +251,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		}
 	}
 	
-	private final static void unsetItemMetaEnchs(final ItemMeta meta) {
+	private final static void unsetItemMetaEnchs(final @Nullable ItemMeta meta) {
 		if (meta == null)
 			return;
 		for (final Enchantment e : meta.getEnchants().keySet())
@@ -251,14 +262,20 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 * @param item
 	 * @return Whether the given item has correct enchantments & ItemMeta, but doesn't check its type
 	 */
-	private boolean hasMeta(final ItemStack item) {
-		if (enchantments != null) {
-			for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
+	private boolean hasMeta(final @Nullable ItemStack item) {
+		final Map<Enchantment, Integer> enchs = enchantments;
+		if (enchs != null) {
+			if (item == null)
+				return false;
+			for (final Entry<Enchantment, Integer> e : enchs.entrySet()) {
 				if (e.getValue() == -1 ? item.getEnchantmentLevel(e.getKey()) == 0 : item.getEnchantmentLevel(e.getKey()) != e.getValue())
 					return false;
 			}
 		}
+		final Object meta = this.meta;
 		if (meta != null) {
+			if (item == null)
+				return false;
 			final ItemMeta m = item.getItemMeta();
 			unsetItemMetaEnchs(m);
 			if (!meta.equals(m))
@@ -267,7 +284,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		return true;
 	}
 	
-	public boolean isOfType(final ItemStack item) {
+	public boolean isOfType(final @Nullable ItemStack item) {
 		if (item == null)
 			return isOfType(0, (short) 0);
 		if (!hasMeta(item))
@@ -275,7 +292,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		return isOfType(item.getTypeId(), item.getDurability());
 	}
 	
-	public boolean isOfType(final Block block) {
+	public boolean isOfType(final @Nullable Block block) {
 		if (enchantments != null)
 			return false;
 		if (block == null)
@@ -292,16 +309,19 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		return false;
 	}
 	
+	@SuppressWarnings("null")
 	public boolean isSupertypeOf(final ItemType other) {
 //		if (all != other.all)
 //			return false;
 		if (amount != -1 && other.amount != amount)
 			return false;
-		if (enchantments != null) {
-			if (other.enchantments == null)
+		final Map<Enchantment, Integer> enchs = enchantments;
+		if (enchs != null) {
+			final Map<Enchantment, Integer> oenchs = other.enchantments;
+			if (oenchs == null)
 				return false;
-			for (final Entry<Enchantment, Integer> o : other.enchantments.entrySet()) {
-				final Integer t = enchantments.get(o.getKey());
+			for (final Entry<Enchantment, Integer> o : oenchs.entrySet()) {
+				final Integer t = enchs.get(o.getKey());
 				if (t == null || !t.equals(o.getValue()))
 					return false;
 			}
@@ -319,6 +339,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	}
 	
 	public ItemType getItem() {
+		final ItemType item = this.item;
 		return item == null ? this : item;
 	}
 	
@@ -336,6 +357,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 //				return this;
 //			return block = i;
 //		}
+		final ItemType block = this.block;
 		return block == null ? this : block;
 	}
 	
@@ -386,6 +408,8 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 * @param other
 	 * @return A new item type which is the intersection of the two item types or null if the intersection is empty.
 	 */
+	@SuppressWarnings("null")
+	@Nullable
 	public ItemType intersection(final ItemType other) {
 		if (amount != -1 || other.amount != -1 || enchantments != null || other.enchantments != null)
 			throw new IllegalStateException("ItemType.intersection(ItemType) must only be used to instersect aliases");
@@ -403,7 +427,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	/**
 	 * @param type Some ItemData. Only a copy of it will be stored.
 	 */
-	public void add(final ItemData type) {
+	public void add(final @Nullable ItemData type) {
 		if (type != null)
 			add_(type.clone());
 	}
@@ -411,7 +435,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	/**
 	 * @param type A cloned or newly created ItemData
 	 */
-	private void add_(final ItemData type) {
+	private void add_(final @Nullable ItemData type) {
 		if (type != null) {
 			types.add(type);
 			numItems += type.numItems();
@@ -443,9 +467,10 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	}
 	
 	public void addEnchantment(final Enchantment e, final int level) {
-		if (enchantments == null)
-			enchantments = new HashMap<Enchantment, Integer>();
-		enchantments.put(e, level);
+		Map<Enchantment, Integer> enchs = enchantments;
+		if (enchs == null)
+			enchantments = enchs = new HashMap<Enchantment, Integer>();
+		enchs.put(e, level);
 	}
 	
 	public void addEnchantments(final Map<Enchantment, Integer> enchantments) {
@@ -460,6 +485,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 			enchantments.clear();
 	}
 	
+	@Nullable
 	public Map<Enchantment, Integer> getEnchantments() {
 		return enchantments;
 	}
@@ -467,22 +493,28 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	@Override
 	public Iterator<ItemStack> containerIterator() {
 		return new Iterator<ItemStack>() {
+			@SuppressWarnings("null")
 			Iterator<ItemData> iter = types.iterator();
+			@Nullable
 			Iterator<ItemStack> currentDataIter;
 			
 			@Override
 			public boolean hasNext() {
-				while (iter.hasNext() && (currentDataIter == null || !currentDataIter.hasNext())) {
-					currentDataIter = iter.next().getAll();
+				Iterator<ItemStack> cdi = currentDataIter;
+				while (iter.hasNext() && (cdi == null || !cdi.hasNext())) {
+					currentDataIter = cdi = iter.next().getAll();
 				}
-				return currentDataIter != null && currentDataIter.hasNext();
+				return cdi != null && cdi.hasNext();
 			}
 			
 			@Override
 			public ItemStack next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
-				final ItemStack is = currentDataIter.next();
+				final Iterator<ItemStack> cdi = currentDataIter;
+				if (cdi == null)
+					throw new NoSuchElementException();
+				final ItemStack is = cdi.next();
 				is.setAmount(getAmount());
 				if (meta != null)
 					is.setItemMeta(Bukkit.getItemFactory().asMetaFor((ItemMeta) meta, is.getType()));
@@ -506,12 +538,9 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	public Iterable<ItemStack> getAll() {
 		if (!isAll()) {
 			final ItemStack i = getRandom();
-			return new Iterable<ItemStack>() {
-				@Override
-				public Iterator<ItemStack> iterator() {
-					return new SingleItemIterator<ItemStack>(i);
-				}
-			};
+			if (i == null)
+				return EmptyIterable.get();
+			return new SingleItemIterable<ItemStack>(i);
 		}
 		return new Iterable<ItemStack>() {
 			@Override
@@ -521,7 +550,8 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		};
 	}
 	
-	public ItemStack removeAll(final ItemStack item) {
+	@Nullable
+	public ItemStack removeAll(final @Nullable ItemStack item) {
 		final boolean wasAll = all;
 		final int oldAmount = amount;
 		all = true;
@@ -540,7 +570,8 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 * @param item
 	 * @return The passed ItemStack or null if the resulting amount is <= 0
 	 */
-	public ItemStack removeFrom(final ItemStack item) {
+	@Nullable
+	public ItemStack removeFrom(final @Nullable ItemStack item) {
 		if (item == null)
 			return null;
 		if (!isOfType(item))
@@ -555,12 +586,13 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	}
 	
 	/**
-	 * Adds this Itemtype to the given item stack
+	 * Adds this ItemType to the given item stack
 	 * 
 	 * @param item
 	 * @return The passed ItemStack or a new one if the passed is null or air
 	 */
-	public ItemStack addTo(final ItemStack item) {
+	@Nullable
+	public ItemStack addTo(final @Nullable ItemStack item) {
 		if (item == null || item.getTypeId() == 0)
 			return getRandom();
 		if (isOfType(item))
@@ -585,6 +617,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 * @see #removeFrom(ItemStack)
 	 * @see #removeFrom(List...)
 	 */
+	@Nullable
 	public ItemStack getRandom() {
 		if (numItems == 0)
 			return null;
@@ -630,6 +663,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 * @return List of ItemDatas. The returned list is not modifiable, use {@link #add(ItemData)} and {@link #remove(ItemData)} if you need to change the list, or use the
 	 *         {@link #iterator()}.
 	 */
+	@SuppressWarnings("null")
 	public List<ItemData> getTypes() {
 		return Collections.unmodifiableList(types);
 	}
@@ -655,6 +689,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 				return next < types.size();
 			}
 			
+			@SuppressWarnings("null")
 			@Override
 			public ItemData next() {
 				if (!hasNext())
@@ -828,12 +863,13 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	public boolean addTo(final Inventory invi) {
 		// important: don't use inventory.add() - it ignores max stack sizes
 		final ItemStack[] buf = invi.getContents();
+		@SuppressWarnings("null")
 		final boolean b = addTo(buf);
 		invi.setContents(buf);
 		return b;
 	}
 	
-	private static boolean addTo(final ItemStack is, final ItemStack[] buf) {
+	private static boolean addTo(final @Nullable ItemStack is, final ItemStack[] buf) {
 		if (is == null || is.getTypeId() == 0)
 			return true;
 		int added = 0;
@@ -879,6 +915,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 * @param sub
 	 * @return Whether all item types in <tt>sub</tt> have at least one {@link #isSupertypeOf(ItemType) super type} in <tt>set</tt>
 	 */
+	@SuppressWarnings("null")
 	public final static boolean isSubset(final ItemType[] set, final ItemType[] sub) {
 		outer: for (final ItemType i : sub) {
 			for (final ItemType t : set) {
@@ -911,13 +948,14 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	 * Loads an array of ItemTypes separated by '|'
 	 */
 	@Deprecated
+	@Nullable
 	public static ItemType[] deserialize(final String s) {
 		if (s.isEmpty())
 			return null;
 		final String[] split = s.split("(?!<\\|)\\|(?!\\|)");
 		final ItemType[] types = new ItemType[split.length];
 		for (int i = 0; i < types.length; i++) {
-			final ItemType t = (ItemType) Classes.deserialize("itemtype", split[i].replace("||", "|"));
+			final ItemType t = (ItemType) Classes.deserialize("itemtype", "" + split[i].replace("||", "|"));
 			if (t == null)
 				return null;
 			types[i] = t;
@@ -931,14 +969,16 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		int result = 1;
 		result = prime * result + (all ? 1231 : 1237);
 		result = prime * result + amount;
-		result = prime * result + ((enchantments == null) ? 0 : enchantments.hashCode());
-		result = prime * result + ((meta == null) ? 0 : meta.hashCode());
-		result = prime * result + ((types == null) ? 0 : types.hashCode());
+		final Map<Enchantment, Integer> enchs = enchantments;
+		result = prime * result + ((enchs == null) ? 0 : enchs.hashCode());
+		final Object m = meta;
+		result = prime * result + ((m == null) ? 0 : m.hashCode());
+		result = prime * result + types.hashCode();
 		return result;
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -950,20 +990,19 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 			return false;
 		if (amount != other.amount)
 			return false;
-		if (enchantments == null) {
+		final Map<Enchantment, Integer> enchs = enchantments;
+		if (enchs == null) {
 			if (other.enchantments != null)
 				return false;
-		} else if (!enchantments.equals(other.enchantments))
+		} else if (!enchs.equals(other.enchantments))
 			return false;
-		if (meta == null) {
+		final Object m = meta;
+		if (m == null) {
 			if (other.meta != null)
 				return false;
-		} else if (!meta.equals(other.meta))
+		} else if (!m.equals(other.meta))
 			return false;
-		if (types == null) {
-			if (other.types != null)
-				return false;
-		} else if (!types.equals(other.types))
+		if (!types.equals(other.types))
 			return false;
 		return true;
 	}
@@ -978,11 +1017,12 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 		return toString(false, flags, null);
 	}
 	
-	public String toString(final int flags, final Adjective a) {
+	public String toString(final int flags, final @Nullable Adjective a) {
 		return toString(false, flags, a);
 	}
 	
-	private String toString(final boolean debug, final int flags, final Adjective a) {
+	@SuppressWarnings("null")
+	private String toString(final boolean debug, final int flags, final @Nullable Adjective a) {
 		final StringBuilder b = new StringBuilder();
 //		if (types.size() == 1 && !types.get(0).hasDataRange()) {
 //			if (getAmount() != 1)
@@ -1011,13 +1051,14 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 			}
 			b.append(types.get(i).toString(debug, plural));
 		}
-		if (enchantments == null)
-			return b.toString();
+		final Map<Enchantment, Integer> enchs = enchantments;
+		if (enchs == null)
+			return "" + b.toString();
 		b.append(Language.getSpaced("enchantments.of"));
 		int i = 0;
-		for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
+		for (final Entry<Enchantment, Integer> e : enchs.entrySet()) {
 			if (i != 0) {
-				if (i != enchantments.size() - 1)
+				if (i != enchs.size() - 1)
 					b.append(", ");
 				else
 					b.append(" " + GeneralWords.and + " ");
@@ -1036,7 +1077,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 			if (debug)
 				b.append(" meta=[").append(meta).append("]");
 		}
-		return b.toString();
+		return "" + b.toString();
 	}
 	
 	public static String toString(final ItemStack i) {
@@ -1053,6 +1094,7 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 	
 	private void writeObject(final ObjectOutputStream out) throws IOException {
 		out.defaultWriteObject();
+		final Map<Enchantment, Integer> enchantments = this.enchantments;
 		if (enchantments == null) {
 			out.writeObject(null);
 		} else {
@@ -1065,7 +1107,8 @@ public class ItemType implements Unit, Serializable, Iterable<ItemData>, Contain
 			}
 			out.writeObject(enchs);
 		}
-		out.writeObject(meta == null ? null : ConfigurationSerializer.serializeCS((ItemMeta) meta));
+		final Object m = meta;
+		out.writeObject(m == null ? null : ConfigurationSerializer.serializeCS((ItemMeta) m));
 	}
 	
 	private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {

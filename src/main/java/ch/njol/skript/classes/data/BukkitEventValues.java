@@ -71,6 +71,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
@@ -83,20 +84,21 @@ import org.bukkit.event.world.ChunkEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.event.world.WorldEvent;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.command.CommandEvent;
 import ch.njol.skript.events.EvtMoveOn;
 import ch.njol.skript.registrations.EventValues;
 import ch.njol.skript.util.BlockStateBlock;
 import ch.njol.skript.util.BlockUtils;
 import ch.njol.skript.util.DelayedChangeBlock;
+import ch.njol.skript.util.Getter;
 
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"unchecked", "deprecation", "serial"})
+@SuppressWarnings({"unchecked", "deprecation"})
 public final class BukkitEventValues {
 	
 	public BukkitEventValues() {}
@@ -104,21 +106,24 @@ public final class BukkitEventValues {
 	static {
 		
 		// === WorldEvents ===
-		EventValues.registerEventValue(WorldEvent.class, World.class, new SerializableGetter<World, WorldEvent>() {
+		EventValues.registerEventValue(WorldEvent.class, World.class, new Getter<World, WorldEvent>() {
 			@Override
+			@Nullable
 			public World get(final WorldEvent e) {
 				return e.getWorld();
 			}
 		}, 0);
 		// StructureGrowEvent - a WorldEvent
-		EventValues.registerEventValue(StructureGrowEvent.class, Block.class, new SerializableGetter<Block, StructureGrowEvent>() {
+		EventValues.registerEventValue(StructureGrowEvent.class, Block.class, new Getter<Block, StructureGrowEvent>() {
 			@Override
+			@Nullable
 			public Block get(final StructureGrowEvent e) {
 				return e.getLocation().getBlock();
 			}
 		}, 0);
-		EventValues.registerEventValue(StructureGrowEvent.class, Block.class, new SerializableGetter<Block, StructureGrowEvent>() {
+		EventValues.registerEventValue(StructureGrowEvent.class, Block.class, new Getter<Block, StructureGrowEvent>() {
 			@Override
+			@Nullable
 			public Block get(final StructureGrowEvent e) {
 				for (final BlockState bs : e.getBlocks()) {
 					if (bs.getLocation().equals(e.getLocation()))
@@ -128,114 +133,126 @@ public final class BukkitEventValues {
 			}
 		}, 1);
 		// WeatherEvent - not a WorldEvent (wtf ô_Ô)
-		EventValues.registerEventValue(WeatherEvent.class, World.class, new SerializableGetter<World, WeatherEvent>() {
+		EventValues.registerEventValue(WeatherEvent.class, World.class, new Getter<World, WeatherEvent>() {
 			@Override
+			@Nullable
 			public World get(final WeatherEvent e) {
 				return e.getWorld();
 			}
 		}, 0);
 		// ChunkEvents
-		EventValues.registerEventValue(ChunkEvent.class, Chunk.class, new SerializableGetter<Chunk, ChunkEvent>() {
+		EventValues.registerEventValue(ChunkEvent.class, Chunk.class, new Getter<Chunk, ChunkEvent>() {
 			@Override
+			@Nullable
 			public Chunk get(final ChunkEvent e) {
 				return e.getChunk();
 			}
 		}, 0);
 		
 		// === BlockEvents ===
-		EventValues.registerEventValue(BlockEvent.class, Block.class, new SerializableGetter<Block, BlockEvent>() {
+		EventValues.registerEventValue(BlockEvent.class, Block.class, new Getter<Block, BlockEvent>() {
 			@Override
+			@Nullable
 			public Block get(final BlockEvent e) {
 				return e.getBlock();
 			}
 		}, 0);
-		EventValues.registerEventValue(BlockEvent.class, World.class, new SerializableGetter<World, BlockEvent>() {
+		EventValues.registerEventValue(BlockEvent.class, World.class, new Getter<World, BlockEvent>() {
 			@Override
+			@Nullable
 			public World get(final BlockEvent e) {
 				return e.getBlock().getWorld();
 			}
 		}, 0);
 		// REMIND workaround of the event's location being at the entity in block events that have an entity event value
-		EventValues.registerEventValue(BlockEvent.class, Location.class, new SerializableGetter<Location, BlockEvent>() {
+		EventValues.registerEventValue(BlockEvent.class, Location.class, new Getter<Location, BlockEvent>() {
 			@Override
+			@Nullable
 			public Location get(final BlockEvent e) {
 				return BlockUtils.getLocation(e.getBlock());
 			}
 		}, 0);
 		// BlockPlaceEvent
-		EventValues.registerEventValue(BlockPlaceEvent.class, Player.class, new SerializableGetter<Player, BlockPlaceEvent>() {
+		EventValues.registerEventValue(BlockPlaceEvent.class, Player.class, new Getter<Player, BlockPlaceEvent>() {
 			@Override
+			@Nullable
 			public Player get(final BlockPlaceEvent e) {
 				return e.getPlayer();
 			}
 		}, 0);
-		EventValues.registerEventValue(BlockPlaceEvent.class, Block.class, new SerializableGetter<Block, BlockPlaceEvent>() {
+		EventValues.registerEventValue(BlockPlaceEvent.class, Block.class, new Getter<Block, BlockPlaceEvent>() {
 			@Override
 			public Block get(final BlockPlaceEvent e) {
 				return new BlockStateBlock(e.getBlockReplacedState());
 			}
 		}, -1);
 		// BlockFadeEvent
-		EventValues.registerEventValue(BlockFadeEvent.class, Block.class, new SerializableGetter<Block, BlockFadeEvent>() {
+		EventValues.registerEventValue(BlockFadeEvent.class, Block.class, new Getter<Block, BlockFadeEvent>() {
 			@Override
+			@Nullable
 			public Block get(final BlockFadeEvent e) {
 				return e.getBlock();
 			}
 		}, -1);
-		EventValues.registerEventValue(BlockFadeEvent.class, Block.class, new SerializableGetter<Block, BlockFadeEvent>() {
+		EventValues.registerEventValue(BlockFadeEvent.class, Block.class, new Getter<Block, BlockFadeEvent>() {
 			@Override
 			public Block get(final BlockFadeEvent e) {
 				return new DelayedChangeBlock(e.getBlock(), e.getNewState());
 			}
 		}, 0);
-		EventValues.registerEventValue(BlockFadeEvent.class, Block.class, new SerializableGetter<Block, BlockFadeEvent>() {
+		EventValues.registerEventValue(BlockFadeEvent.class, Block.class, new Getter<Block, BlockFadeEvent>() {
 			@Override
 			public Block get(final BlockFadeEvent e) {
 				return new BlockStateBlock(e.getNewState());
 			}
 		}, 1);
 		// BlockFormEvent
-		EventValues.registerEventValue(BlockFormEvent.class, Block.class, new SerializableGetter<Block, BlockFormEvent>() {
+		EventValues.registerEventValue(BlockFormEvent.class, Block.class, new Getter<Block, BlockFormEvent>() {
 			@Override
+			@Nullable
 			public Block get(final BlockFormEvent e) {
 				if (e instanceof BlockSpreadEvent)
 					return e.getBlock();
 				return new BlockStateBlock(e.getNewState());
 			}
 		}, 0);
-		EventValues.registerEventValue(BlockFormEvent.class, Block.class, new SerializableGetter<Block, BlockFormEvent>() {
+		EventValues.registerEventValue(BlockFormEvent.class, Block.class, new Getter<Block, BlockFormEvent>() {
 			@Override
+			@Nullable
 			public Block get(final BlockFormEvent e) {
 				return e.getBlock();
 			}
 		}, -1);
 		// BlockDamageEvent
-		EventValues.registerEventValue(BlockDamageEvent.class, Player.class, new SerializableGetter<Player, BlockDamageEvent>() {
+		EventValues.registerEventValue(BlockDamageEvent.class, Player.class, new Getter<Player, BlockDamageEvent>() {
 			@Override
+			@Nullable
 			public Player get(final BlockDamageEvent e) {
 				return e.getPlayer();
 			}
 		}, 0);
 		// BlockBreakEvent
-		EventValues.registerEventValue(BlockBreakEvent.class, Player.class, new SerializableGetter<Player, BlockBreakEvent>() {
+		EventValues.registerEventValue(BlockBreakEvent.class, Player.class, new Getter<Player, BlockBreakEvent>() {
 			@Override
+			@Nullable
 			public Player get(final BlockBreakEvent e) {
 				return e.getPlayer();
 			}
 		}, 0);
-		EventValues.registerEventValue(BlockBreakEvent.class, Block.class, new SerializableGetter<Block, BlockBreakEvent>() {
+		EventValues.registerEventValue(BlockBreakEvent.class, Block.class, new Getter<Block, BlockBreakEvent>() {
 			@Override
+			@Nullable
 			public Block get(final BlockBreakEvent e) {
 				return e.getBlock();
 			}
 		}, -1);
-		EventValues.registerEventValue(BlockBreakEvent.class, Block.class, new SerializableGetter<Block, BlockBreakEvent>() {
+		EventValues.registerEventValue(BlockBreakEvent.class, Block.class, new Getter<Block, BlockBreakEvent>() {
 			@Override
 			public Block get(final BlockBreakEvent e) {
 				return new DelayedChangeBlock(e.getBlock());
 			}
 		}, 0);
-		EventValues.registerEventValue(BlockBreakEvent.class, Block.class, new SerializableGetter<Block, BlockBreakEvent>() {
+		EventValues.registerEventValue(BlockBreakEvent.class, Block.class, new Getter<Block, BlockBreakEvent>() {
 			@Override
 			public Block get(final BlockBreakEvent e) {
 				final BlockState s = e.getBlock().getState();
@@ -245,34 +262,38 @@ public final class BukkitEventValues {
 			}
 		}, 1);
 		// BlockFromToEvent
-		EventValues.registerEventValue(BlockFromToEvent.class, Block.class, new SerializableGetter<Block, BlockFromToEvent>() {
+		EventValues.registerEventValue(BlockFromToEvent.class, Block.class, new Getter<Block, BlockFromToEvent>() {
 			@Override
+			@Nullable
 			public Block get(final BlockFromToEvent e) {
 				return e.getToBlock();
 			}
 		}, 1);
 		// BlockIgniteEvent
-		EventValues.registerEventValue(BlockIgniteEvent.class, Player.class, new SerializableGetter<Player, BlockIgniteEvent>() {
+		EventValues.registerEventValue(BlockIgniteEvent.class, Player.class, new Getter<Player, BlockIgniteEvent>() {
 			@Override
+			@Nullable
 			public Player get(final BlockIgniteEvent e) {
 				return e.getPlayer();
 			}
 		}, 0);
 		// BlockDispenseEvent
-		EventValues.registerEventValue(BlockDispenseEvent.class, ItemStack.class, new SerializableGetter<ItemStack, BlockDispenseEvent>() {
+		EventValues.registerEventValue(BlockDispenseEvent.class, ItemStack.class, new Getter<ItemStack, BlockDispenseEvent>() {
 			@Override
+			@Nullable
 			public ItemStack get(final BlockDispenseEvent e) {
 				return e.getItem();
 			}
 		}, 0);
 		// BlockCanBuildEvent
-		EventValues.registerEventValue(BlockCanBuildEvent.class, Block.class, new SerializableGetter<Block, BlockCanBuildEvent>() {
+		EventValues.registerEventValue(BlockCanBuildEvent.class, Block.class, new Getter<Block, BlockCanBuildEvent>() {
 			@Override
+			@Nullable
 			public Block get(final BlockCanBuildEvent e) {
 				return e.getBlock();
 			}
 		}, -1);
-		EventValues.registerEventValue(BlockCanBuildEvent.class, Block.class, new SerializableGetter<Block, BlockCanBuildEvent>() {
+		EventValues.registerEventValue(BlockCanBuildEvent.class, Block.class, new Getter<Block, BlockCanBuildEvent>() {
 			@Override
 			public Block get(final BlockCanBuildEvent e) {
 				final BlockState s = e.getBlock().getState();
@@ -282,35 +303,40 @@ public final class BukkitEventValues {
 			}
 		}, 0);
 		// SignChangeEvent
-		EventValues.registerEventValue(SignChangeEvent.class, Player.class, new SerializableGetter<Player, SignChangeEvent>() {
+		EventValues.registerEventValue(SignChangeEvent.class, Player.class, new Getter<Player, SignChangeEvent>() {
 			@Override
+			@Nullable
 			public Player get(final SignChangeEvent e) {
 				return e.getPlayer();
 			}
 		}, 0);
 		
 		// === EntityEvents ===
-		EventValues.registerEventValue(EntityEvent.class, Entity.class, new SerializableGetter<Entity, EntityEvent>() {
+		EventValues.registerEventValue(EntityEvent.class, Entity.class, new Getter<Entity, EntityEvent>() {
 			@Override
+			@Nullable
 			public Entity get(final EntityEvent e) {
 				return e.getEntity();
 			}
 		}, 0, "Use 'attacker' and/or 'victim' in damage events", EntityDamageEvent.class);
-		EventValues.registerEventValue(EntityEvent.class, World.class, new SerializableGetter<World, EntityEvent>() {
+		EventValues.registerEventValue(EntityEvent.class, World.class, new Getter<World, EntityEvent>() {
 			@Override
+			@Nullable
 			public World get(final EntityEvent e) {
 				return e.getEntity() == null ? null : e.getEntity().getWorld(); // no idea why it could be null, but it can happen
 			}
 		}, 0);
 		// EntityDamageEvent
-		EventValues.registerEventValue(EntityDamageEvent.class, DamageCause.class, new SerializableGetter<DamageCause, EntityDamageEvent>() {
+		EventValues.registerEventValue(EntityDamageEvent.class, DamageCause.class, new Getter<DamageCause, EntityDamageEvent>() {
 			@Override
+			@Nullable
 			public DamageCause get(final EntityDamageEvent e) {
 				return e.getCause();
 			}
 		}, 0);
-		EventValues.registerEventValue(EntityDamageByEntityEvent.class, Projectile.class, new SerializableGetter<Projectile, EntityDamageByEntityEvent>() {
+		EventValues.registerEventValue(EntityDamageByEntityEvent.class, Projectile.class, new Getter<Projectile, EntityDamageByEntityEvent>() {
 			@Override
+			@Nullable
 			public Projectile get(final EntityDamageByEntityEvent e) {
 				if (e.getDamager() instanceof Projectile)
 					return (Projectile) e.getDamager();
@@ -318,8 +344,9 @@ public final class BukkitEventValues {
 			}
 		}, 0);
 		// EntityDeathEvent
-		EventValues.registerEventValue(EntityDeathEvent.class, Projectile.class, new SerializableGetter<Projectile, EntityDeathEvent>() {
+		EventValues.registerEventValue(EntityDeathEvent.class, Projectile.class, new Getter<Projectile, EntityDeathEvent>() {
 			@Override
+			@Nullable
 			public Projectile get(final EntityDeathEvent e) {
 				final EntityDamageEvent ldc = e.getEntity().getLastDamageCause();
 				if (ldc instanceof EntityDamageByEntityEvent && ((EntityDamageByEntityEvent) ldc).getDamager() instanceof Projectile)
@@ -327,92 +354,105 @@ public final class BukkitEventValues {
 				return null;
 			}
 		}, 0);
-		EventValues.registerEventValue(EntityDeathEvent.class, DamageCause.class, new SerializableGetter<DamageCause, EntityDeathEvent>() {
+		EventValues.registerEventValue(EntityDeathEvent.class, DamageCause.class, new Getter<DamageCause, EntityDeathEvent>() {
 			@Override
+			@Nullable
 			public DamageCause get(final EntityDeathEvent e) {
 				final EntityDamageEvent ldc = e.getEntity().getLastDamageCause();
 				return ldc == null ? null : ldc.getCause();
 			}
 		}, 0);
 		// ProjectileHitEvent
-		EventValues.registerEventValue(ProjectileHitEvent.class, Entity.class, new SerializableGetter<Entity, ProjectileHitEvent>() {
+		EventValues.registerEventValue(ProjectileHitEvent.class, Entity.class, new Getter<Entity, ProjectileHitEvent>() {
 			@Override
+			@Nullable
 			public Entity get(final ProjectileHitEvent e) {
 				assert false;
 				return e.getEntity().getShooter();
 			}
 		}, 0, "Use 'projectile' and/or 'shooter' in projectile hit events", ProjectileHitEvent.class);
-		EventValues.registerEventValue(ProjectileHitEvent.class, Projectile.class, new SerializableGetter<Projectile, ProjectileHitEvent>() {
+		EventValues.registerEventValue(ProjectileHitEvent.class, Projectile.class, new Getter<Projectile, ProjectileHitEvent>() {
 			@Override
+			@Nullable
 			public Projectile get(final ProjectileHitEvent e) {
 				return e.getEntity();
 			}
 		}, 0);
 		// ProjectileLaunchEvent
-		EventValues.registerEventValue(ProjectileLaunchEvent.class, Entity.class, new SerializableGetter<Entity, ProjectileLaunchEvent>() {
+		EventValues.registerEventValue(ProjectileLaunchEvent.class, Entity.class, new Getter<Entity, ProjectileLaunchEvent>() {
 			@Override
+			@Nullable
 			public Entity get(final ProjectileLaunchEvent e) {
 				assert false;
 				return e.getEntity().getShooter();
 			}
 		}, 0, "Use 'projectile' and/or 'shooter' in shoot events", ProjectileLaunchEvent.class);
-		EventValues.registerEventValue(ProjectileLaunchEvent.class, Projectile.class, new SerializableGetter<Projectile, ProjectileLaunchEvent>() {
+		EventValues.registerEventValue(ProjectileLaunchEvent.class, Projectile.class, new Getter<Projectile, ProjectileLaunchEvent>() {
 			@Override
+			@Nullable
 			public Projectile get(final ProjectileLaunchEvent e) {
 				return e.getEntity();
 			}
 		}, 0);
 		// EntityTameEvent
-		EventValues.registerEventValue(EntityTameEvent.class, Player.class, new SerializableGetter<Player, EntityTameEvent>() {
+		EventValues.registerEventValue(EntityTameEvent.class, Player.class, new Getter<Player, EntityTameEvent>() {
 			@Override
+			@Nullable
 			public Player get(final EntityTameEvent e) {
 				return e.getOwner() instanceof Player ? (Player) e.getOwner() : null;
 			}
 		}, 0);
 		// EntityChangeBlockEvent
-		EventValues.registerEventValue(EntityChangeBlockEvent.class, Block.class, new SerializableGetter<Block, EntityChangeBlockEvent>() {
+		EventValues.registerEventValue(EntityChangeBlockEvent.class, Block.class, new Getter<Block, EntityChangeBlockEvent>() {
 			@Override
+			@Nullable
 			public Block get(final EntityChangeBlockEvent e) {
 				return e.getBlock();
 			}
 		}, 0);
 		
 		// --- PlayerEvents ---
-		EventValues.registerEventValue(PlayerEvent.class, Player.class, new SerializableGetter<Player, PlayerEvent>() {
+		EventValues.registerEventValue(PlayerEvent.class, Player.class, new Getter<Player, PlayerEvent>() {
 			@Override
+			@Nullable
 			public Player get(final PlayerEvent e) {
 				return e.getPlayer();
 			}
 		}, 0);
-		EventValues.registerEventValue(PlayerEvent.class, World.class, new SerializableGetter<World, PlayerEvent>() {
+		EventValues.registerEventValue(PlayerEvent.class, World.class, new Getter<World, PlayerEvent>() {
 			@Override
+			@Nullable
 			public World get(final PlayerEvent e) {
 				return e.getPlayer().getWorld();
 			}
 		}, 0);
 		// PlayerBedEnterEvent
-		EventValues.registerEventValue(PlayerBedEnterEvent.class, Block.class, new SerializableGetter<Block, PlayerBedEnterEvent>() {
+		EventValues.registerEventValue(PlayerBedEnterEvent.class, Block.class, new Getter<Block, PlayerBedEnterEvent>() {
 			@Override
+			@Nullable
 			public Block get(final PlayerBedEnterEvent e) {
 				return e.getBed();
 			}
 		}, 0);
 		// PlayerBedLeaveEvent
-		EventValues.registerEventValue(PlayerBedLeaveEvent.class, Block.class, new SerializableGetter<Block, PlayerBedLeaveEvent>() {
+		EventValues.registerEventValue(PlayerBedLeaveEvent.class, Block.class, new Getter<Block, PlayerBedLeaveEvent>() {
 			@Override
+			@Nullable
 			public Block get(final PlayerBedLeaveEvent e) {
 				return e.getBed();
 			}
 		}, 0);
 		// PlayerBucketEvents
-		EventValues.registerEventValue(PlayerBucketFillEvent.class, Block.class, new SerializableGetter<Block, PlayerBucketFillEvent>() {
+		EventValues.registerEventValue(PlayerBucketFillEvent.class, Block.class, new Getter<Block, PlayerBucketFillEvent>() {
 			@Override
+			@Nullable
 			public Block get(final PlayerBucketFillEvent e) {
 				return e.getBlockClicked().getRelative(e.getBlockFace());
 			}
 		}, 0);
-		EventValues.registerEventValue(PlayerBucketFillEvent.class, Block.class, new SerializableGetter<Block, PlayerBucketFillEvent>() {
+		EventValues.registerEventValue(PlayerBucketFillEvent.class, Block.class, new Getter<Block, PlayerBucketFillEvent>() {
 			@Override
+			@Nullable
 			public Block get(final PlayerBucketFillEvent e) {
 				final BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
 				s.setTypeId(0);
@@ -420,13 +460,14 @@ public final class BukkitEventValues {
 				return new BlockStateBlock(s, true);
 			}
 		}, 1);
-		EventValues.registerEventValue(PlayerBucketEmptyEvent.class, Block.class, new SerializableGetter<Block, PlayerBucketEmptyEvent>() {
+		EventValues.registerEventValue(PlayerBucketEmptyEvent.class, Block.class, new Getter<Block, PlayerBucketEmptyEvent>() {
 			@Override
+			@Nullable
 			public Block get(final PlayerBucketEmptyEvent e) {
 				return e.getBlockClicked().getRelative(e.getBlockFace());
 			}
 		}, -1);
-		EventValues.registerEventValue(PlayerBucketEmptyEvent.class, Block.class, new SerializableGetter<Block, PlayerBucketEmptyEvent>() {
+		EventValues.registerEventValue(PlayerBucketEmptyEvent.class, Block.class, new Getter<Block, PlayerBucketEmptyEvent>() {
 			@Override
 			public Block get(final PlayerBucketEmptyEvent e) {
 				final BlockState s = e.getBlockClicked().getRelative(e.getBlockFace()).getState();
@@ -436,104 +477,132 @@ public final class BukkitEventValues {
 			}
 		}, 0);
 		// PlayerDropItemEvent
-		EventValues.registerEventValue(PlayerDropItemEvent.class, Item.class, new SerializableGetter<Item, PlayerDropItemEvent>() {
+		EventValues.registerEventValue(PlayerDropItemEvent.class, Item.class, new Getter<Item, PlayerDropItemEvent>() {
 			@Override
+			@Nullable
 			public Item get(final PlayerDropItemEvent e) {
 				return e.getItemDrop();
 			}
 		}, 0);
-		EventValues.registerEventValue(PlayerDropItemEvent.class, ItemStack.class, new SerializableGetter<ItemStack, PlayerDropItemEvent>() {
+		EventValues.registerEventValue(PlayerDropItemEvent.class, ItemStack.class, new Getter<ItemStack, PlayerDropItemEvent>() {
 			@Override
+			@Nullable
 			public ItemStack get(final PlayerDropItemEvent e) {
 				return e.getItemDrop().getItemStack();
 			}
 		}, 0);
 		// PlayerPickupItemEvent
-		EventValues.registerEventValue(PlayerPickupItemEvent.class, Item.class, new SerializableGetter<Item, PlayerPickupItemEvent>() {
+		EventValues.registerEventValue(PlayerPickupItemEvent.class, Item.class, new Getter<Item, PlayerPickupItemEvent>() {
 			@Override
+			@Nullable
 			public Item get(final PlayerPickupItemEvent e) {
 				return e.getItem();
 			}
 		}, 0);
-		EventValues.registerEventValue(PlayerPickupItemEvent.class, ItemStack.class, new SerializableGetter<ItemStack, PlayerPickupItemEvent>() {
+		EventValues.registerEventValue(PlayerPickupItemEvent.class, ItemStack.class, new Getter<ItemStack, PlayerPickupItemEvent>() {
 			@Override
+			@Nullable
 			public ItemStack get(final PlayerPickupItemEvent e) {
 				return e.getItem().getItemStack();
 			}
 		}, 0);
 		// PlayerItemConsumeEvent
-		EventValues.registerEventValue(PlayerItemConsumeEvent.class, ItemStack.class, new SerializableGetter<ItemStack, PlayerItemConsumeEvent>() {
-			@Override
-			public ItemStack get(final PlayerItemConsumeEvent e) {
-				return e.getItem();
-			}
-		}, 0);
+		if (Skript.supports("org.bukkit.event.player.PlayerItemConsumeEvent")) {
+			EventValues.registerEventValue(PlayerItemConsumeEvent.class, ItemStack.class, new Getter<ItemStack, PlayerItemConsumeEvent>() {
+				@Override
+				@Nullable
+				public ItemStack get(final PlayerItemConsumeEvent e) {
+					return e.getItem();
+				}
+			}, 0);
+		}
+		// PlayerItemBreakEvent
+		if (Skript.supports("org.bukkit.event.player.PlayerItemBreakEvent")) {
+			EventValues.registerEventValue(PlayerItemBreakEvent.class, ItemStack.class, new Getter<ItemStack, PlayerItemBreakEvent>() {
+				@Override
+				@Nullable
+				public ItemStack get(final PlayerItemBreakEvent e) {
+					return e.getBrokenItem();
+				}
+			}, 0);
+		}
 		// PlayerInteractEntityEvent
-		EventValues.registerEventValue(PlayerInteractEntityEvent.class, Entity.class, new SerializableGetter<Entity, PlayerInteractEntityEvent>() {
+		EventValues.registerEventValue(PlayerInteractEntityEvent.class, Entity.class, new Getter<Entity, PlayerInteractEntityEvent>() {
 			@Override
+			@Nullable
 			public Entity get(final PlayerInteractEntityEvent e) {
 				return e.getRightClicked();
 			}
 		}, 0);
 		// PlayerInteractEvent
-		EventValues.registerEventValue(PlayerInteractEvent.class, Block.class, new SerializableGetter<Block, PlayerInteractEvent>() {
+		EventValues.registerEventValue(PlayerInteractEvent.class, Block.class, new Getter<Block, PlayerInteractEvent>() {
 			@Override
+			@Nullable
 			public Block get(final PlayerInteractEvent e) {
 				return e.getClickedBlock();
 			}
 		}, 0);
 		// PlayerShearEntityEvent
-		EventValues.registerEventValue(PlayerShearEntityEvent.class, Entity.class, new SerializableGetter<Entity, PlayerShearEntityEvent>() {
+		EventValues.registerEventValue(PlayerShearEntityEvent.class, Entity.class, new Getter<Entity, PlayerShearEntityEvent>() {
 			@Override
+			@Nullable
 			public Entity get(final PlayerShearEntityEvent e) {
 				return e.getEntity();
 			}
 		}, 0);
 		// PlayerMoveEvent
-		EventValues.registerEventValue(PlayerMoveEvent.class, Block.class, new SerializableGetter<Block, PlayerMoveEvent>() {
+		EventValues.registerEventValue(PlayerMoveEvent.class, Block.class, new Getter<Block, PlayerMoveEvent>() {
 			@Override
+			@Nullable
 			public Block get(final PlayerMoveEvent e) {
 				return EvtMoveOn.getBlock(e);
 			}
 		}, 0);
 		
 		// --- HangingEvents ---
-		if (Skript.isRunningMinecraft(1, 4, 3)) {
-			EventValues.registerEventValue(HangingEvent.class, Hanging.class, new SerializableGetter<Hanging, HangingEvent>() {
+		// 1.4.3
+		if (Skript.supports("org.bukkit.event.hanging.HangingEvent")) {
+			EventValues.registerEventValue(HangingEvent.class, Hanging.class, new Getter<Hanging, HangingEvent>() {
 				@Override
+				@Nullable
 				public Hanging get(final HangingEvent e) {
 					return e.getEntity();
 				}
 			}, 0);
-			EventValues.registerEventValue(HangingEvent.class, World.class, new SerializableGetter<World, HangingEvent>() {
+			EventValues.registerEventValue(HangingEvent.class, World.class, new Getter<World, HangingEvent>() {
 				@Override
+				@Nullable
 				public World get(final HangingEvent e) {
 					return e.getEntity().getWorld();
 				}
 			}, 0);
 			// HangingPlaceEvent
-			EventValues.registerEventValue(HangingPlaceEvent.class, Player.class, new SerializableGetter<Player, HangingPlaceEvent>() {
+			EventValues.registerEventValue(HangingPlaceEvent.class, Player.class, new Getter<Player, HangingPlaceEvent>() {
 				@Override
+				@Nullable
 				public Player get(final HangingPlaceEvent e) {
 					return e.getPlayer();
 				}
 			}, 0);
 		} else {
-			EventValues.registerEventValue(PaintingEvent.class, Painting.class, new SerializableGetter<Painting, PaintingEvent>() {
+			EventValues.registerEventValue(PaintingEvent.class, Painting.class, new Getter<Painting, PaintingEvent>() {
 				@Override
+				@Nullable
 				public Painting get(final PaintingEvent e) {
 					return e.getPainting();
 				}
 			}, 0);
-			EventValues.registerEventValue(PaintingEvent.class, World.class, new SerializableGetter<World, PaintingEvent>() {
+			EventValues.registerEventValue(PaintingEvent.class, World.class, new Getter<World, PaintingEvent>() {
 				@Override
+				@Nullable
 				public World get(final PaintingEvent e) {
 					return e.getPainting().getWorld();
 				}
 			}, 0);
 			// PaintingPlaceEvent
-			EventValues.registerEventValue(PaintingPlaceEvent.class, Player.class, new SerializableGetter<Player, PaintingPlaceEvent>() {
+			EventValues.registerEventValue(PaintingPlaceEvent.class, Player.class, new Getter<Player, PaintingPlaceEvent>() {
 				@Override
+				@Nullable
 				public Player get(final PaintingPlaceEvent e) {
 					return e.getPlayer();
 				}
@@ -541,26 +610,30 @@ public final class BukkitEventValues {
 		}
 		
 		// --- VehicleEvents ---
-		EventValues.registerEventValue(VehicleEvent.class, Vehicle.class, new SerializableGetter<Vehicle, VehicleEvent>() {
+		EventValues.registerEventValue(VehicleEvent.class, Vehicle.class, new Getter<Vehicle, VehicleEvent>() {
 			@Override
+			@Nullable
 			public Vehicle get(final VehicleEvent e) {
 				return e.getVehicle();
 			}
 		}, 0);
-		EventValues.registerEventValue(VehicleEvent.class, World.class, new SerializableGetter<World, VehicleEvent>() {
+		EventValues.registerEventValue(VehicleEvent.class, World.class, new Getter<World, VehicleEvent>() {
 			@Override
+			@Nullable
 			public World get(final VehicleEvent e) {
 				return e.getVehicle().getWorld();
 			}
 		}, 0);
-		EventValues.registerEventValue(VehicleExitEvent.class, LivingEntity.class, new SerializableGetter<LivingEntity, VehicleExitEvent>() {
+		EventValues.registerEventValue(VehicleExitEvent.class, LivingEntity.class, new Getter<LivingEntity, VehicleExitEvent>() {
 			@Override
+			@Nullable
 			public LivingEntity get(final VehicleExitEvent e) {
 				return e.getExited();
 			}
 		}, 0);
-		EventValues.registerEventValue(VehicleEvent.class, Entity.class, new SerializableGetter<Entity, VehicleEvent>() {
+		EventValues.registerEventValue(VehicleEvent.class, Entity.class, new Getter<Entity, VehicleEvent>() {
 			@Override
+			@Nullable
 			public Entity get(final VehicleEvent e) {
 				return e.getVehicle().getPassenger();
 			}
@@ -568,40 +641,45 @@ public final class BukkitEventValues {
 		
 		// === CommandEvents ===
 		// PlayerCommandPreprocessEvent is a PlayerEvent
-		EventValues.registerEventValue(ServerCommandEvent.class, CommandSender.class, new SerializableGetter<CommandSender, ServerCommandEvent>() {
+		EventValues.registerEventValue(ServerCommandEvent.class, CommandSender.class, new Getter<CommandSender, ServerCommandEvent>() {
 			@Override
+			@Nullable
 			public CommandSender get(final ServerCommandEvent e) {
 				return e.getSender();
 			}
 		}, 0);
-		EventValues.registerEventValue(CommandEvent.class, CommandSender.class, new SerializableGetter<CommandSender, CommandEvent>() {
+		EventValues.registerEventValue(CommandEvent.class, CommandSender.class, new Getter<CommandSender, CommandEvent>() {
 			@Override
 			public CommandSender get(final CommandEvent e) {
 				return e.getSender();
 			}
 		}, 0);
-		EventValues.registerEventValue(CommandEvent.class, World.class, new SerializableGetter<World, CommandEvent>() {
+		EventValues.registerEventValue(CommandEvent.class, World.class, new Getter<World, CommandEvent>() {
 			@Override
+			@Nullable
 			public World get(final CommandEvent e) {
 				return e.getSender() instanceof Player ? ((Player) e.getSender()).getWorld() : null;
 			}
 		}, 0);
 		
 		// === InventoryEvents ===
-		EventValues.registerEventValue(InventoryClickEvent.class, Player.class, new SerializableGetter<Player, InventoryClickEvent>() {
+		EventValues.registerEventValue(InventoryClickEvent.class, Player.class, new Getter<Player, InventoryClickEvent>() {
 			@Override
+			@Nullable
 			public Player get(final InventoryClickEvent e) {
 				return e.getWhoClicked() instanceof Player ? (Player) e.getWhoClicked() : null;
 			}
 		}, 0);
-		EventValues.registerEventValue(InventoryClickEvent.class, World.class, new SerializableGetter<World, InventoryClickEvent>() {
+		EventValues.registerEventValue(InventoryClickEvent.class, World.class, new Getter<World, InventoryClickEvent>() {
 			@Override
+			@Nullable
 			public World get(final InventoryClickEvent e) {
 				return e.getWhoClicked().getWorld();
 			}
 		}, 0);
-		EventValues.registerEventValue(CraftItemEvent.class, ItemStack.class, new SerializableGetter<ItemStack, CraftItemEvent>() {
+		EventValues.registerEventValue(CraftItemEvent.class, ItemStack.class, new Getter<ItemStack, CraftItemEvent>() {
 			@Override
+			@Nullable
 			public ItemStack get(final CraftItemEvent e) {
 				return e.getRecipe().getResult();
 			}

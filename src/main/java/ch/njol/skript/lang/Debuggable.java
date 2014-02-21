@@ -22,6 +22,7 @@
 package ch.njol.skript.lang;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * @author Peter Güttinger
@@ -33,7 +34,7 @@ public interface Debuggable {
 	 * @param debug If true this should print more information, if false this should print what is shown to the end user
 	 * @return String representation of this object
 	 */
-	public String toString(Event e, boolean debug);
+	public String toString(@Nullable Event e, boolean debug);
 	
 	/**
 	 * Should return <tt>{@link #toString(Event, boolean) toString}(null, false)</tt>

@@ -24,6 +24,7 @@ package ch.njol.skript.events;
 import org.bukkit.event.Event;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -36,7 +37,7 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"unchecked", "serial"})
+@SuppressWarnings("unchecked")
 public class EvtWeatherChange extends SkriptEvent {
 	static {
 		Skript.registerEvent("Weather Change", EvtWeatherChange.class, CollectionUtils.array(WeatherChangeEvent.class, ThunderChangeEvent.class), "weather change [to %weathertypes%]")
@@ -45,6 +46,7 @@ public class EvtWeatherChange extends SkriptEvent {
 				.since("1.0");
 	}
 	
+	@Nullable
 	private Literal<WeatherType> types;
 	
 	@Override
@@ -53,6 +55,7 @@ public class EvtWeatherChange extends SkriptEvent {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean check(final Event e) {
 		if (types == null)
@@ -68,7 +71,7 @@ public class EvtWeatherChange extends SkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "weather change" + (types == null ? "" : " to " + types);
 	}
 	

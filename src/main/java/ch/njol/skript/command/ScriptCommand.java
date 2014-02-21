@@ -24,12 +24,12 @@ package ch.njol.skript.command;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -52,6 +52,7 @@ import org.bukkit.help.HelpTopic;
 import org.bukkit.help.HelpTopicComparator;
 import org.bukkit.help.IndexHelpTopic;
 import org.bukkit.plugin.Plugin;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.command.Commands.CommandAliasHelpTopic;
@@ -61,6 +62,7 @@ import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SimpleEvent;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
+import ch.njol.skript.log.LogEntry;
 import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
@@ -74,8 +76,7 @@ import ch.njol.util.Validate;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
-public class ScriptCommand implements CommandExecutor, Serializable {
+public class ScriptCommand implements CommandExecutor {
 	public final static Message m_executable_by_players = new Message("commands.executable by players");
 	public final static Message m_executable_by_console = new Message("commands.executable by console");
 	
@@ -98,8 +99,7 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 	private transient PluginCommand bukkitCommand;
 	
 	/**
-	 * Creates a new SkriptCommand.<br/>
-	 * No parameters may be null except for permission & permissionMessage.
+	 * Creates a new SkriptCommand.
 	 * 
 	 * @param name /name
 	 * @param pattern
@@ -114,9 +114,9 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 	public ScriptCommand(final File script, final String name, final String pattern, final List<Argument<?>> arguments, final String description, final String usage, final List<String> aliases, final String permission, final String permissionMessage, final int executableBy, final List<TriggerItem> items) {
 		Validate.notNull(name, pattern, arguments, description, usage, aliases, items);
 		this.name = name;
-		label = name.toLowerCase();
+		label = "" + name.toLowerCase();
 		this.permission = permission;
-		this.permissionMessage = permissionMessage == null ? Language.get("commands.no permission message") : permissionMessage;
+		this.permissionMessage = permissionMessage.isEmpty() ? Language.get("commands.no permission message") : Utils.replaceEnglishChatStyles(permissionMessage);
 		
 		this.aliases = aliases;
 		activeAliases = new ArrayList<String>(aliases);
@@ -131,14 +131,14 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		
 		trigger = new Trigger(script, "command /" + name, new SimpleEvent(), items);
 		
-		setupBukkitCommand();
+		bukkitCommand = setupBukkitCommand();
 	}
 	
-	private void setupBukkitCommand() {
+	private PluginCommand setupBukkitCommand() {
 		try {
 			final Constructor<PluginCommand> c = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
 			c.setAccessible(true);
-			bukkitCommand = c.newInstance(name, Skript.getInstance());
+			final PluginCommand bukkitCommand = c.newInstance(name, Skript.getInstance());
 			bukkitCommand.setAliases(aliases);
 			bukkitCommand.setDescription(description);
 			bukkitCommand.setLabel(label);
@@ -146,8 +146,10 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 			bukkitCommand.setPermissionMessage(permissionMessage);
 			bukkitCommand.setUsage(usage);
 			bukkitCommand.setExecutor(this);
+			return bukkitCommand;
 		} catch (final Exception e) {
 			Skript.outdatedError(e);
+			throw new EmptyStackException();
 		}
 	}
 	
@@ -157,7 +159,9 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 	}
 	
 	@Override
-	public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
+	public boolean onCommand(final @Nullable CommandSender sender, final @Nullable Command command, final @Nullable String label, final @Nullable String[] args) {
+		if (sender == null || label == null || args == null)
+			return false;
 		execute(sender, label, StringUtils.join(args, " "));
 		return true;
 	}
@@ -175,13 +179,13 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 			}
 		}
 		
-		if (permission != null && !sender.hasPermission(permission)) {
+		if (!permission.isEmpty() && !sender.hasPermission(permission)) {
 			sender.sendMessage(permissionMessage);
 			return false;
 		}
 		
 		// just to be sure...
-		return Task.callSync(new Callable<Boolean>() {
+		final Boolean b = Task.callSync(new Callable<Boolean>() {
 			@Override
 			public Boolean call() throws Exception {
 				final ScriptCommandEvent event = new ScriptCommandEvent(ScriptCommand.this, sender);
@@ -190,8 +194,9 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 				try {
 					final boolean ok = SkriptParser.parseArguments(rest, ScriptCommand.this, event);
 					if (!ok) {
-						if (log.hasError())
-							sender.sendMessage(ChatColor.DARK_RED + log.getError().getMessage());
+						final LogEntry e = log.getError();
+						if (e != null)
+							sender.sendMessage(ChatColor.DARK_RED + e.getMessage());
 						sender.sendMessage(Commands.m_correct_usage + " " + usage);
 						log.clear();
 						log.printLog();
@@ -215,6 +220,7 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 				return true;
 			}
 		});
+		return b != null ? b : false;
 	}
 	
 	public void sendHelp(final CommandSender sender) {
@@ -236,12 +242,13 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		return pattern;
 	}
 	
+	@Nullable
 	private transient Command overridden = null;
-	private transient Map<String, Command> overriddenAliases;
+	private transient Map<String, Command> overriddenAliases = new HashMap<String, Command>();
 	
 	public void register(final SimpleCommandMap commandMap, final Map<String, Command> knownCommands, final Set<String> aliases) {
 		synchronized (commandMap) {
-			overriddenAliases = new HashMap<String, Command>();
+			overriddenAliases.clear();
 			overridden = knownCommands.put(label, bukkitCommand);
 			aliases.remove(label);
 			final Iterator<String> as = activeAliases.iterator();
@@ -282,10 +289,10 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		}
 	}
 	
-	private transient Collection<HelpTopic> helps;
+	private transient Collection<HelpTopic> helps = new ArrayList<HelpTopic>();
 	
 	public void registerHelp() {
-		helps = new ArrayList<HelpTopic>();
+		helps.clear();
 		final HelpMap help = Bukkit.getHelpMap();
 		final HelpTopic t = new GenericCommandHelpTopic(bukkitCommand);
 		help.addTopic(t);
@@ -347,6 +354,7 @@ public class ScriptCommand implements CommandExecutor, Serializable {
 		return bukkitCommand;
 	}
 	
+	@Nullable
 	public File getScript() {
 		return trigger.getScript();
 	}

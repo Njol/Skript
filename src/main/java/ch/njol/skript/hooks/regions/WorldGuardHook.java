@@ -21,6 +21,7 @@
 
 package ch.njol.skript.hooks.regions;
 
+import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.variables.Variables;
@@ -48,6 +50,8 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
  * @author Peter Güttinger
  */
 public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
+	
+	public WorldGuardHook() throws IOException {}
 	
 	@Override
 	public String getName() {
@@ -108,10 +112,12 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 			if (!iter.hasNext())
 				return EmptyIterator.get();
 			return new Iterator<Block>() {
+				@SuppressWarnings("null")
 				BlockVector2D current = iter.next();
 				int height = 0;
 				final int maxHeight = world.getMaxHeight();
 				
+				@SuppressWarnings("null")
 				@Override
 				public boolean hasNext() {
 					if (height >= maxHeight && iter.hasNext()) {
@@ -121,6 +127,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 					return height < maxHeight;
 				}
 				
+				@SuppressWarnings("null")
 				@Override
 				public Block next() {
 					if (!hasNext())
@@ -146,9 +153,10 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		public void deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
 			final String r = fields.getAndRemoveObject("region", String.class);
 			fields.setFields(this, Variables.yggdrasil);
-			region = plugin.getRegionManager(world).getRegion(r);
+			final ProtectedRegion region = plugin.getRegionManager(world).getRegion(r);
 			if (region == null)
 				throw new StreamCorruptedException("Invalid region " + r + " in world " + world);
+			this.region = region;
 		}
 		
 		@Override
@@ -162,7 +170,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		}
 		
 		@Override
-		public boolean equals(final Object o) {
+		public boolean equals(final @Nullable Object o) {
 			if (o == this)
 				return true;
 			if (o == null)
@@ -179,6 +187,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Collection<? extends Region> getRegionsAt_i(final Location l) {
 		final Iterator<ProtectedRegion> i = plugin.getRegionManager(l.getWorld()).getApplicableRegions(l).iterator();
@@ -189,6 +198,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 	}
 	
 	@Override
+	@Nullable
 	public Region getRegion_i(final World world, final String name) {
 		final ProtectedRegion r = plugin.getRegionManager(world).getRegion(name);
 		if (r != null)

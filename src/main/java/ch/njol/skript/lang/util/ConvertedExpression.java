@@ -22,14 +22,15 @@
 package ch.njol.skript.lang.util;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.SerializableConverter;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.registrations.Classes;
@@ -48,14 +49,13 @@ import ch.njol.util.coll.CollectionUtils;
  * 
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class ConvertedExpression<F, T> implements Expression<T> {
 	
 	protected Expression<? extends F> source;
 	protected Class<T> to;
 	final Converter<? super F, ? extends T> conv;
 	
-	public ConvertedExpression(final Expression<? extends F> source, final Class<T> to, final SerializableConverter<? super F, ? extends T> conv) {
+	public ConvertedExpression(final Expression<? extends F> source, final Class<T> to, final Converter<? super F, ? extends T> conv) {
 		assert source != null;
 		assert to != null;
 		assert conv != null;
@@ -65,6 +65,8 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 		this.conv = conv;
 	}
 	
+	@SuppressWarnings("null")
+	@Nullable
 	public static <F, T> ConvertedExpression<F, T> newInstance(final Expression<F> v, final Class<T>... to) {
 		assert v != null;
 		assert to != null;
@@ -72,7 +74,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 		for (final Class<T> c : to) { // REMIND try more converters? -> also change WrapperExpression (and maybe ExprLoopValue)
 			// casting <? super ? extends F> to <? super F> is wrong, but since the converter is only used for values returned by the expression
 			// (which are instances of "<? extends F>") this won't result in any ClassCastExceptions.
-			final SerializableConverter<? super F, ? extends T> conv = (SerializableConverter<? super F, ? extends T>) Converters.getConverter(v.getReturnType(), c);
+			final Converter<? super F, ? extends T> conv = (Converter<? super F, ? extends T>) Converters.getConverter(v.getReturnType(), c);
 			if (conv == null)
 				continue;
 			return new ConvertedExpression<F, T>(v, c, conv);
@@ -86,7 +88,7 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		if (debug && e == null)
 			return "(" + source.toString(e, debug) + " >> " + conv + ": " + source.getReturnType().getName() + "->" + to.getName() + ")";
 		return source.toString(e, debug);
@@ -109,34 +111,43 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public <R> Expression<? extends R> getConvertedExpression(final Class<R>... to) {
 		if (CollectionUtils.containsSuperclass(to, this.to))
 			return (Expression<? extends R>) this;
 		return source.getConvertedExpression(to);
 	}
 	
+	@Nullable
 	private ClassInfo<? super T> returnTypeInfo;
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		final Class<?>[] r = source.acceptChange(mode);
 		if (r == null) {
-			returnTypeInfo = Classes.getSuperClassInfo(getReturnType());
-			return returnTypeInfo.getChanger() == null ? null : returnTypeInfo.getChanger().acceptChange(mode);
+			ClassInfo<? super T> rti = returnTypeInfo;
+			returnTypeInfo = rti = Classes.getSuperClassInfo(getReturnType());
+			final Changer<?> c = rti.getChanger();
+			return c == null ? null : c.acceptChange(mode);
 		}
 		return r;
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
-		if (returnTypeInfo != null) {
-			((Changer<T>) returnTypeInfo.getChanger()).change(getArray(e), delta, mode);
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
+		final ClassInfo<? super T> rti = returnTypeInfo;
+		if (rti != null) {
+			final Changer<? super T> c = rti.getChanger();
+			if (c != null)
+				c.change(getArray(e), delta, mode);
 		} else {
 			source.change(e, delta, mode);
 		}
 	}
 	
 	@Override
+	@Nullable
 	public T getSingle(final Event e) {
 		final F f = source.getSingle(e);
 		if (f == null)
@@ -206,17 +217,34 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	}
 	
 	@Override
+	@Nullable
 	public Iterator<T> iterator(final Event e) {
 		final Iterator<? extends F> iter = source.iterator(e);
+		if (iter == null)
+			return null;
 		return new Iterator<T>() {
+			@Nullable
+			T next = null;
+			
 			@Override
 			public boolean hasNext() {
-				return iter.hasNext();
+				if (next != null)
+					return true;
+				while (next == null && iter.hasNext()) {
+					final F f = iter.next();
+					next = f == null ? null : conv.convert(f);
+				}
+				return next != null;
 			}
 			
 			@Override
 			public T next() {
-				return conv.convert(iter.next());
+				if (!hasNext())
+					throw new NoSuchElementException();
+				final T n = next;
+				next = null;
+				assert n != null;
+				return n;
 			}
 			
 			@Override
@@ -234,7 +262,10 @@ public class ConvertedExpression<F, T> implements Expression<T> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Expression<? extends T> simplify() {
-		return source.simplify().getConvertedExpression(to);
+		final Expression<? extends T> c = source.simplify().getConvertedExpression(to);
+		if (c != null)
+			return c;
+		return this;
 	}
 	
 }

@@ -60,7 +60,7 @@ public abstract class FileUtils {
 	 */
 	public final static String getBackupSuffix() {
 		synchronized (backupFormat) {
-			return backupFormat.format(System.currentTimeMillis());
+			return "" + backupFormat.format(System.currentTimeMillis());
 		}
 	}
 	
@@ -151,7 +151,10 @@ public abstract class FileUtils {
 			if (f.isDirectory()) {
 				changed.addAll(renameAll(f, renamer));
 			} else {
-				final String newName = renamer.convert(f.getName());
+				final String name = f.getName();
+				if (name == null)
+					continue;
+				final String newName = renamer.convert(name);
 				if (newName == null)
 					continue;
 				final File newFile = new File(f.getParent(), newName);

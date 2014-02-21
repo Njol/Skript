@@ -38,6 +38,7 @@ import org.bukkit.event.painting.PaintingPlaceEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -53,11 +54,12 @@ import ch.njol.util.Checker;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"deprecation", "unchecked", "serial"})
+@SuppressWarnings({"deprecation", "unchecked"})
 public class EvtBlock extends SkriptEvent {
 	
 	static {
 		// TODO 'block destroy' event for any kind of block destruction (player, water, trampling, fall (sand, toches, ...), etc) -> BlockPhysicsEvent?
+		// REMIND attacking an item frame first removes its item; include this in on block damage?
 		Skript.registerEvent("Break / Mine", EvtBlock.class, new Class[] {BlockBreakEvent.class, PlayerBucketFillEvent.class, Skript.isRunningMinecraft(1, 4, 3) ? HangingBreakEvent.class : PaintingBreakEvent.class}, "[block] (break[ing]|1¦min(e|ing)) [[of] %itemtypes%]")
 				.description("Called when a block is broken by a player. If you use 'on mine', only events where the broken block dropped something will call the trigger.")
 				.examples("on mine", "on break of stone", "on mine of any ore")
@@ -80,6 +82,7 @@ public class EvtBlock extends SkriptEvent {
 				.since("1.0");
 	}
 	
+	@Nullable
 	private Literal<ItemType> types;
 	
 	private boolean mine = false;
@@ -91,6 +94,7 @@ public class EvtBlock extends SkriptEvent {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean check(final Event e) {
 		if (mine && e instanceof BlockBreakEvent) {
@@ -120,8 +124,8 @@ public class EvtBlock extends SkriptEvent {
 			final EntityData<?> d = EntityData.fromEntity(((HangingEvent) e).getEntity());
 			return types.check(e, new Checker<ItemType>() {
 				@Override
-				public boolean check(final ItemType t) {
-					return Relation.EQUAL.is(DefaultComparators.entityItemComparator.compare(d, t));
+				public boolean check(final @Nullable ItemType t) {
+					return t != null && Relation.EQUAL.is(DefaultComparators.entityItemComparator.compare(d, t));
 				}
 			});
 		} else {
@@ -130,14 +134,14 @@ public class EvtBlock extends SkriptEvent {
 		}
 		return types.check(e, new Checker<ItemType>() {
 			@Override
-			public boolean check(final ItemType t) {
-				return t.isOfType(id, durability);
+			public boolean check(final @Nullable ItemType t) {
+				return t != null && t.isOfType(id, durability);
 			}
 		});
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "break/place/burn/fade/form of " + Classes.toString(types);
 	}
 	

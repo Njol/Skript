@@ -35,7 +35,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Yaw / Pitch")
 @Description("The yaw or pitch of a location. You likely won't need this expression ever if you don't know what this means.")
 @Examples("log \"%player%: %location of player%, %player's yaw%, %player's pitch%\" to \"playerlocs.log\"")
@@ -53,6 +52,7 @@ public class ExprYawPitch extends SimplePropertyExpression<Location, Float> {
 		return super.init(exprs, matchedPattern, isDelayed, parseResult);
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Float convert(final Location l) {
 		return yaw ? l.getYaw() : l.getPitch();

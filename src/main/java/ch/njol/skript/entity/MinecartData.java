@@ -28,6 +28,7 @@ import org.bukkit.entity.minecart.ExplosiveMinecart;
 import org.bukkit.entity.minecart.HopperMinecart;
 import org.bukkit.entity.minecart.RideableMinecart;
 import org.bukkit.entity.minecart.SpawnerMinecart;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -37,7 +38,7 @@ import ch.njol.skript.variables.Variables;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"serial", "deprecation"})
+@SuppressWarnings("deprecation")
 public class MinecartData extends EntityData<Minecart> {
 	private static enum MinecartType {
 		ANY(Minecart.class, "minecart"),
@@ -49,10 +50,11 @@ public class MinecartData extends EntityData<Minecart> {
 		EXPLOSIVE(Skript.isRunningMinecraft(1, 5) ? ExplosiveMinecart.class : null, "explosive minecart"),
 		SPAWNER(Skript.isRunningMinecraft(1, 5) ? SpawnerMinecart.class : null, "spawner minecart");
 		
+		@Nullable
 		final Class<? extends Minecart> c;
 		private final String codeName;
 		
-		MinecartType(final Class<? extends Minecart> c, final String codeName) {
+		MinecartType(final @Nullable Class<? extends Minecart> c, final String codeName) {
 			this.c = c;
 			this.codeName = codeName;
 		}
@@ -85,17 +87,22 @@ public class MinecartData extends EntityData<Minecart> {
 		this.type = type;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	protected boolean init(final Literal<?>[] exprs, final int matchedPattern, final ParseResult parseResult) {
 		type = MinecartType.values()[matchedPattern];
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
-	protected boolean init(final Class<? extends Minecart> c, final Minecart e) {
+	protected boolean init(final @Nullable Class<? extends Minecart> c, final @Nullable Minecart e) {
 		final MinecartType[] ts = MinecartType.values();
 		for (int i = ts.length - 1; i >= 0; i--) {
-			if (e == null ? ts[i].c.isAssignableFrom(c) : ts[i].c.isInstance(e)) {
+			final Class<?> mc = ts[i].c;
+			if (mc == null)
+				continue;
+			if (e == null ? mc.isAssignableFrom(c) : mc.isInstance(e)) {
 				type = ts[i];
 				return true;
 			}
@@ -111,12 +118,12 @@ public class MinecartData extends EntityData<Minecart> {
 	public boolean match(final Minecart entity) {
 		if (type == MinecartType.NORMAL && type.c == Minecart.class) // pre-1.5
 			return !(entity instanceof PoweredMinecart || entity instanceof StorageMinecart);
-		return type.c.isInstance(entity);
+		return type.c != null && type.c.isInstance(entity);
 	}
 	
 	@Override
 	public Class<? extends Minecart> getType() {
-		return type.c;
+		return type.c != null ? type.c : Minecart.class;
 	}
 	
 	@Override

@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Converter;
@@ -41,7 +42,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Light Level")
 @Description({"Gets the light level at a certain location which ranges from 0 to 15.",
 		"It can be separated into sunlight (15 = direct sunlight, 1-14 = indirect) and block light (torches, glowstone, etc.). The total light level of a block is the maximum of the two different light types."})
@@ -60,7 +60,7 @@ public class ExprLightLevel extends PropertyExpression<Location, Byte> {
 	private final int SKY = 1, BLOCK = 2, ANY = SKY | BLOCK;
 	int whatLight = ANY;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr(Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]));
@@ -74,19 +74,20 @@ public class ExprLightLevel extends PropertyExpression<Location, Byte> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return (whatLight == BLOCK ? "block " : whatLight == SKY ? "sky " : "") + "light level " + getExpr().toString(e, debug);
-	}
-	
-	@Override
 	protected Byte[] get(final Event e, final Location[] source) {
 		return get(source, new Converter<Location, Byte>() {
+			@SuppressWarnings("null")
 			@Override
 			public Byte convert(final Location l) {
 				final Block b = l.getBlock();
 				return whatLight == ANY ? b.getLightLevel() : whatLight == BLOCK ? b.getLightFromBlocks() : b.getLightFromSky();
 			}
 		});
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return (whatLight == BLOCK ? "block " : whatLight == SKY ? "sky " : "") + "light level " + getExpr().toString(e, debug);
 	}
 	
 }

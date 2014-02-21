@@ -25,6 +25,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -39,7 +40,7 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"serial", "deprecation"})
+@SuppressWarnings("deprecation")
 @Name("Toggle")
 @Description("Toggle the state of a block.")
 @Examples({"# use arrows to toggle switches, doors, etc.",
@@ -52,10 +53,11 @@ public class EffToggle extends Effect {
 		Skript.registerEffect(EffToggle.class, "(close|turn off|de[-]activate) %blocks%", "(toggle|switch) [[the] state of] %blocks%", "(open|turn on|activate) %blocks%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Block> blocks;
 	private int toggle;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		blocks = (Expression<Block>) vars[0];
@@ -63,11 +65,7 @@ public class EffToggle extends Effect {
 		return true;
 	}
 	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "toggle " + blocks.toString(e, debug);
-	}
-	
+	// TODO !Update with every version [blocks]
 	private final static byte[] bitFlags = new byte[Skript.MAXBLOCKID + 1];
 	static {
 		bitFlags[Material.DETECTOR_RAIL.getId()] = 0x8;
@@ -100,6 +98,11 @@ public class EffToggle extends Effect {
 			else
 				b.setData((byte) (data | bitFlags[type]));
 		}
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "toggle " + blocks.toString(e, debug);
 	}
 	
 }

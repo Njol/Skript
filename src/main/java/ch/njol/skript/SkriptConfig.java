@@ -23,12 +23,14 @@ package ch.njol.skript;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 
 import org.bukkit.event.EventPriority;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.config.Config;
@@ -40,6 +42,7 @@ import ch.njol.skript.localization.Language;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.log.Verbosity;
 import ch.njol.skript.util.FileUtils;
+import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
 import ch.njol.util.Setter;
 
@@ -52,14 +55,14 @@ import ch.njol.util.Setter;
 public abstract class SkriptConfig {
 	private SkriptConfig() {}
 	
+	@Nullable
 	static Config mainConfig;
 	static Collection<Config> configs = new ArrayList<Config>();
 	
-	final static Option<String> version = new Option<String>("version", String.class)
-			.optional(true)
-			.defaultValue(null);
+	final static Option<String> version = new Option<String>("version", Skript.getVersion().toString())
+			.optional(true);
 	
-	public final static Option<String> language = new Option<String>("language", String.class)
+	public final static Option<String> language = new Option<String>("language", "english")
 			.optional(true)
 			.setter(new Setter<String>() {
 				@Override
@@ -70,32 +73,30 @@ public abstract class SkriptConfig {
 				}
 			});
 	
-	final static Option<Boolean> checkForNewVersion = new Option<Boolean>("check for new version", Boolean.class)
-			.defaultValue(false);
-	final static Option<Timespan> updateCheckInterval = new Option<Timespan>("update check interval", Timespan.class)
-			.defaultValue(new Timespan(12 * 60 * 60 * 1000))
+	final static Option<Boolean> checkForNewVersion = new Option<Boolean>("check for new version", false);
+	final static Option<Timespan> updateCheckInterval = new Option<Timespan>("update check interval", new Timespan(12 * 60 * 60 * 1000))
 			.setter(new Setter<Timespan>() {
 				@Override
 				public void set(final Timespan t) {
-					if (t.getTicks() != 0 && Updater.checkerTask != null && !Updater.checkerTask.isAlive())
-						Updater.checkerTask.setNextExecution(t.getTicks());
+					final Task ct = Updater.checkerTask;
+					if (t.getTicks() != 0 && ct != null && !ct.isAlive())
+						ct.setNextExecution(t.getTicks());
 				}
 			});
-	final static Option<Boolean> automaticallyDownloadNewVersion = new Option<Boolean>("automatically download new version", Boolean.class)
-			.defaultValue(false);
+	final static Option<Boolean> automaticallyDownloadNewVersion = new Option<Boolean>("automatically download new version", false);
 	
-	public final static Option<Boolean> enableEffectCommands = new Option<Boolean>("enable effect commands", Boolean.class)
-			.defaultValue(false);
-	public final static Option<String> effectCommandToken = new Option<String>("effect command token", String.class)
-			.defaultValue("!");
-	public final static Option<Boolean> allowOpsToUseEffectCommands = new Option<Boolean>("allow ops to use effect commands", Boolean.class)
-			.defaultValue(false);
+	public final static Option<Boolean> enableEffectCommands = new Option<Boolean>("enable effect commands", false);
+	public final static Option<String> effectCommandToken = new Option<String>("effect command token", "!");
+	public final static Option<Boolean> allowOpsToUseEffectCommands = new Option<Boolean>("allow ops to use effect commands", false);
 	
 	// everything handled by Variables
 	public final static OptionSection databases = new OptionSection("databases");
 	
-	private final static Option<DateFormat> dateFormat = new Option<DateFormat>("date format", new Converter<String, DateFormat>() {
+	@SuppressWarnings("null")
+	private final static DateFormat shortDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+	private final static Option<DateFormat> dateFormat = new Option<DateFormat>("date format", shortDateFormat, new Converter<String, DateFormat>() {
 		@Override
+		@Nullable
 		public DateFormat convert(final String s) {
 			try {
 				if (s.equalsIgnoreCase("default"))
@@ -106,17 +107,16 @@ public abstract class SkriptConfig {
 			}
 			return null;
 		}
-	}).defaultValue(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT));
+	});
 	
 	public final static String formatDate(final long timestamp) {
 		final DateFormat f = dateFormat.value();
 		synchronized (f) {
-			return f.format(timestamp);
+			return "" + f.format(timestamp);
 		}
 	}
 	
-	private final static Option<Verbosity> verbosity = new Option<Verbosity>("verbosity", new EnumParser<Verbosity>(Verbosity.class, "verbosity"))
-			.defaultValue(Verbosity.NORMAL)
+	private final static Option<Verbosity> verbosity = new Option<Verbosity>("verbosity", Verbosity.NORMAL, new EnumParser<Verbosity>(Verbosity.class, "verbosity"))
 			.setter(new Setter<Verbosity>() {
 				@Override
 				public void set(final Verbosity v) {
@@ -124,8 +124,11 @@ public abstract class SkriptConfig {
 				}
 			});
 	
-	public final static Option<EventPriority> defaultEventPriority = new Option<EventPriority>("plugin priority", new Converter<String, EventPriority>() {
+	@SuppressWarnings("null")
+	private final static EventPriority EventPriorityNORMAL = EventPriority.NORMAL;
+	public final static Option<EventPriority> defaultEventPriority = new Option<EventPriority>("plugin priority", EventPriorityNORMAL, new Converter<String, EventPriority>() {
 		@Override
+		@Nullable
 		public EventPriority convert(final String s) {
 			try {
 				return EventPriority.valueOf(s.toUpperCase());
@@ -134,118 +137,129 @@ public abstract class SkriptConfig {
 				return null;
 			}
 		}
-	}).defaultValue(EventPriority.NORMAL);
+	});
 	
-	public final static Option<Boolean> logPlayerCommands = new Option<Boolean>("log player commands", Boolean.class)
-			.defaultValue(false);
+	public final static Option<Boolean> logPlayerCommands = new Option<Boolean>("log player commands", false);
 	
 	/**
 	 * Maximum number of digits to display after the period for floats and doubles
 	 */
-	public final static Option<Integer> numberAccuracy = new Option<Integer>("number accuracy", Integer.class)
-			.defaultValue(2);
+	public final static Option<Integer> numberAccuracy = new Option<Integer>("number accuracy", 2);
 	
-	public final static Option<Integer> maxTargetBlockDistance = new Option<Integer>("maximum target block distance", Integer.class)
-			.defaultValue(100);
+	public final static Option<Integer> maxTargetBlockDistance = new Option<Integer>("maximum target block distance", 100);
 	
-	public final static Option<Boolean> caseSensitive = new Option<Boolean>("case sensitive", Boolean.class)
-			.defaultValue(false);
+	public final static Option<Boolean> caseSensitive = new Option<Boolean>("case sensitive", false);
 	
-	public final static Option<Boolean> disableVariableConflictWarnings = new Option<Boolean>("disable variable conflict warnings", Boolean.class)
-			.defaultValue(false);
+	public final static Option<Boolean> disableVariableConflictWarnings = new Option<Boolean>("disable variable conflict warnings", false);
 	
-	public final static Option<Boolean> enableScriptCaching = new Option<Boolean>("enable script caching", Boolean.class)
-			.optional(true)
-			.defaultValue(false);
+	public final static Option<Boolean> enableScriptCaching = new Option<Boolean>("enable script caching", false)
+			.optional(true);
 	
-	public final static Option<Boolean> keepConfigsLoaded = new Option<Boolean>("keep configs loaded", Boolean.class)
-			.optional(true)
-			.defaultValue(false);
+	public final static Option<Boolean> keepConfigsLoaded = new Option<Boolean>("keep configs loaded", false)
+			.optional(true);
 	
 	/**
 	 * This should only be used in special cases
 	 */
+	@Nullable
 	public final static Config getConfig() {
 		return mainConfig;
 	}
 	
 	static boolean load() {
 		try {
-			final File oldConfig = new File(Skript.getInstance().getDataFolder(), "config.cfg");
-			final File config = new File(Skript.getInstance().getDataFolder(), "config.sk");
-			if (oldConfig.exists()) {
-				if (!config.exists()) {
-					oldConfig.renameTo(config);
+			final File oldConfigFile = new File(Skript.getInstance().getDataFolder(), "config.cfg");
+			final File configFile = new File(Skript.getInstance().getDataFolder(), "config.sk");
+			if (oldConfigFile.exists()) {
+				if (!configFile.exists()) {
+					oldConfigFile.renameTo(configFile);
 					Skript.info("[1.3] Renamed your 'config.cfg' to 'config.sk' to match the new format");
 				} else {
-					Skript.error("Found both a new and an old config, ingoring the old one");
+					Skript.error("Found both a new and an old config, ignoring the old one");
 				}
 			}
-			if (!config.exists()) {
+			if (!configFile.exists()) {
 				Skript.error("Config file 'config.sk' does not exist!");
 				return false;
 			}
-			if (!config.canRead()) {
+			if (!configFile.canRead()) {
 				Skript.error("Config file 'config.sk' cannot be read!");
 				return false;
 			}
 			
+			Config mc;
 			try {
-				mainConfig = new Config(config, false, false, ":");
+				mc = new Config(configFile, false, false, ":");
 			} catch (final IOException e) {
 				Skript.error("Could not load the main config: " + e.getLocalizedMessage());
 				return false;
 			}
+			mainConfig = mc;
 			
-			if (!Skript.getVersion().toString().equals(mainConfig.get(version.key))) {
+			if (!Skript.getVersion().toString().equals(mc.get(version.key))) {
 				try {
-					final Config newConfig = new Config(Skript.getInstance().getResource("config.sk"), "Skript.jar/config.sk", false, false, ":");
+					final InputStream in = Skript.getInstance().getResource("config.sk");
+					if (in == null) {
+						Skript.error("Your config is outdated, but Skript couldn't find the newest config in its jar. Please download Skript again from dev.bukkit.org.");
+						return false;
+					}
+					final Config newConfig = new Config(in, "Skript.jar/config.sk", false, false, ":");
+					in.close();
 					
-					boolean manualUpdate = false;
+					boolean forceUpdate = false;
 					
-					if (mainConfig.getMainNode().get("database") != null) { // old database layout
-						manualUpdate = true;
+					if (mc.getMainNode().get("database") != null) { // old database layout
+						forceUpdate = true;
 						try {
-							final SectionNode oldDB = (SectionNode) mainConfig.getMainNode().get("database");
-							final SectionNode dbs = (SectionNode) newConfig.getMainNode().get("databases");
-							final SectionNode newDB = (SectionNode) dbs.get("database 1");
+							final SectionNode oldDB = (SectionNode) mc.getMainNode().get("database");
+							assert oldDB != null;
+							final SectionNode newDBs = (SectionNode) newConfig.getMainNode().get(databases.key);
+							assert newDBs != null;
+							final SectionNode newDB = (SectionNode) newDBs.get("database 1");
+							assert newDB != null;
+							
 							newDB.setValues(oldDB);
 							
-							// was dynamically added before
+							// '.db' was dynamically added before
 							final String file = newDB.getValue("file");
+							assert file != null;
 							if (!file.endsWith(".db"))
 								newDB.set("file", file + ".db");
 							
-							final SectionNode def = (SectionNode) dbs.get("default");
-							def.set("backup interval", mainConfig.get("variables backup interval"));
+							final SectionNode def = (SectionNode) newDBs.get("default");
+							assert def != null;
+							def.set("backup interval", "" + mc.get("variables backup interval"));
 						} catch (final Exception e) {
-							Skript.exception("An error occurred while trying to update the config's database section.",
-									"You'll have to update the config yourself:",
-									"Open the new config.sk as well as the created backup, and move the 'database' section from the backup to the start of the 'databases' section",
-									"of the new config (i.e. the line 'databases:' should be directly above 'database:'), and add a tab in front of every line that you just copied.");
+							Skript.error("An error occurred while trying to update the config's database section.");
+							Skript.error("You'll have to update the config yourself:");
+							Skript.error("Open the new config.sk as well as the created backup, and move the 'database' section from the backup to the start of the 'databases' section");
+							Skript.error("of the new config (i.e. the line 'databases:' should be directly above 'database:'), and add a tab in front of every line that you just copied.");
+							return false;
 						}
 					}
 					
-					if (manualUpdate | newConfig.setValues(mainConfig)) {
-						final File bu = FileUtils.backup(config);
-						mainConfig = newConfig;
-						mainConfig.getMainNode().set("version", Skript.getVersion().toString());
-						mainConfig.save(config);
+					if (newConfig.setValues(mc, version.key, databases.key) || forceUpdate) { // new config is different
+						final File bu = FileUtils.backup(configFile);
+						newConfig.getMainNode().set(version.key, Skript.getVersion().toString());
+						if (mc.getMainNode().get(databases.key) != null)
+							newConfig.getMainNode().set(databases.key, mc.getMainNode().get(databases.key));
+						mc = mainConfig = newConfig;
+						mc.save(configFile);
 						Skript.info("Your configuration has been updated to the latest version. A backup of your old config file has been created as " + bu.getName());
-					} else {
-						mainConfig.getMainNode().set("version", Skript.getVersion().toString());
-						mainConfig.save(config);
+					} else { // only the version changed
+						mc.getMainNode().set(version.key, Skript.getVersion().toString());
+						mc.save(configFile);
 					}
 				} catch (final IOException e) {
 					Skript.error("Could not load the new config from the jar file: " + e.getLocalizedMessage());
 				}
 			}
 			
-			mainConfig.load(SkriptConfig.class);
+			mc.load(SkriptConfig.class);
 			
 //			if (!keepConfigsLoaded.value())
 //				mainConfig = null;
-		} catch (final Exception e) {
+		} catch (final RuntimeException e) {
 			Skript.exception(e, "An error occurred while loading the config");
 			return false;
 		}

@@ -29,6 +29,7 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
@@ -57,6 +58,7 @@ public abstract class Region implements YggdrasilExtendedSerializable {
 				.user("regions?")
 				.parser(new Parser<Region>() {
 					@Override
+					@Nullable
 					public Region parse(String s, final ParseContext context) {
 						final boolean quoted;
 						switch (context) {
@@ -78,6 +80,7 @@ public abstract class Region implements YggdrasilExtendedSerializable {
 						s = VariableString.unquote(s, quoted);
 						Region r = null;
 						for (final World w : Bukkit.getWorlds()) {
+							@SuppressWarnings("null")
 							final Region r2 = RegionsPlugin.getRegion(w, s);
 							if (r2 == null)
 								continue;
@@ -131,7 +134,7 @@ public abstract class Region implements YggdrasilExtendedSerializable {
 	public abstract RegionsPlugin<?> getPlugin();
 	
 	@Override
-	public abstract boolean equals(Object o);
+	public abstract boolean equals(@Nullable Object o);
 	
 	@Override
 	public abstract int hashCode();

@@ -23,6 +23,7 @@ package ch.njol.skript.entity;
 
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Skeleton.SkeletonType;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Literal;
@@ -31,7 +32,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class SkeletonData extends EntityData<Skeleton> {
 	private final static boolean hasWither = Skript.isRunningMinecraft(1, 4);
 	static {
@@ -60,7 +60,7 @@ public class SkeletonData extends EntityData<Skeleton> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Skeleton> c, final Skeleton e) {
+	protected boolean init(final @Nullable Class<? extends Skeleton> c, final @Nullable Skeleton e) {
 		wither = e == null || !hasWither ? false : e.getSkeletonType() == SkeletonType.WITHER;
 		return true;
 	}

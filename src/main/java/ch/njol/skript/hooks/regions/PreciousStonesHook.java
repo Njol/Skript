@@ -21,6 +21,7 @@
 
 package ch.njol.skript.hooks.regions;
 
+import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,20 +39,24 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.hooks.regions.Factions2Hook.FactionsRegion;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.AABB;
-import ch.njol.util.Checker;
+import ch.njol.util.NullableChecker;
 import ch.njol.util.coll.iterator.CheckedIterator;
+import ch.njol.util.coll.iterator.EmptyIterator;
 import ch.njol.yggdrasil.Fields;
 
 /**
  * @author Peter Güttinger
  */
-public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {// TODO source
-
+public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {
+	
+	public PreciousStonesHook() throws IOException {}
+	
 	@Override
 	public String getName() {
 		return "PreciousStones";
@@ -64,25 +69,25 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {// TODO s
 	
 	public final class PreciousStonesRegion extends Region {
 		
-		transient Field f;
+		transient Field field;
 		
 		public PreciousStonesRegion(final Field f) {
-			this.f = f;
+			field = f;
 		}
 		
 		@Override
 		public boolean contains(final Location l) {
-			return f.envelops(l);
+			return field.envelops(l);
 		}
 		
 		@Override
 		public boolean isMember(final OfflinePlayer p) {
-			return f.isAllowed(p.getName());
+			return field.isAllowed(p.getName());
 		}
 		
 		@Override
 		public Collection<OfflinePlayer> getMembers() {
-			final Collection<String> allowed = f.getAllAllowed();
+			final Collection<String> allowed = field.getAllAllowed();
 			final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(allowed.size());
 			for (final String a : allowed)
 				r.add(Bukkit.getOfflinePlayer(a));
@@ -91,21 +96,25 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {// TODO s
 		
 		@Override
 		public boolean isOwner(final OfflinePlayer p) {
-			return f.isOwner(p.getName());
+			return field.isOwner(p.getName());
 		}
 		
+		@SuppressWarnings("null")
 		@Override
 		public Collection<OfflinePlayer> getOwners() {
-			return Arrays.asList(Bukkit.getOfflinePlayer(f.getOwner()));
+			return Arrays.asList(Bukkit.getOfflinePlayer(field.getOwner()));
 		}
 		
 		@Override
 		public Iterator<Block> getBlocks() {
-			return new CheckedIterator<Block>(new AABB(Bukkit.getWorld(f.getWorld()), new Vector(f.getMinx(), f.getMiny(), f.getMinz()), new Vector(f.getMaxx() + 1, f.getMaxy() + 1, f.getMaxz() + 1)).iterator(),
-					new Checker<Block>() {
+			final World w = Bukkit.getWorld(field.getWorld());
+			if (w == null)
+				return EmptyIterator.get();
+			return new CheckedIterator<Block>(new AABB(w, new Vector(field.getMinx(), field.getMiny(), field.getMinz()), new Vector(field.getMaxx() + 1, field.getMaxy() + 1, field.getMaxz() + 1)).iterator(),
+					new NullableChecker<Block>() {
 						@Override
-						public boolean check(final Block b) {
-							return f.envelops(b);
+						public boolean check(final @Nullable Block b) {
+							return b != null && field.envelops(b);
 						}
 					});
 		}
@@ -113,21 +122,22 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {// TODO s
 		@Override
 		public Fields serialize() {
 			final Fields f = new Fields();
-			f.putObject("block", this.f.getBlock());
+			f.putObject("block", field.getBlock());
 			return f;
 		}
 		
 		@Override
 		public void deserialize(final Fields fields) throws StreamCorruptedException {
 			final Block b = fields.getObject("block", Block.class);
-			f = plugin.getForceFieldManager().getField(b);
+			final Field f = plugin.getForceFieldManager().getField(b);
 			if (f == null)
 				throw new StreamCorruptedException("No field at block " + b);
+			field = f;
 		}
 		
 		@Override
 		public String toString() {
-			return "field at " + Classes.toString(f.getBlock().getLocation());
+			return "field at " + Classes.toString(field.getBlock().getLocation());
 		}
 		
 		@Override
@@ -136,23 +146,24 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {// TODO s
 		}
 		
 		@Override
-		public boolean equals(final Object o) {
+		public boolean equals(final @Nullable Object o) {
 			if (o == this)
 				return true;
 			if (o == null)
 				return false;
 			if (!(o instanceof PreciousStonesRegion))
 				return false;
-			return f.equals(((PreciousStonesRegion) o).f);
+			return field.equals(((PreciousStonesRegion) o).field);
 		}
 		
 		@Override
 		public int hashCode() {
-			return f.hashCode();
+			return field.hashCode();
 		}
 		
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Collection<? extends Region> getRegionsAt_i(final Location l) {
 		final Collection<Field> fields = plugin.getForceFieldManager().getSourceFields(l, FieldFlag.ALL); // includes disabled fields
@@ -163,6 +174,7 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {// TODO s
 	}
 	
 	@Override
+	@Nullable
 	public Region getRegion_i(final World world, final String name) {
 		return null;
 	}

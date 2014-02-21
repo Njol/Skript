@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Amount of Items")
 @Description("Counts how many of a particular <a href='../classes/#itemtype'>item type</a> are in a given inventory.")
 @Examples("message \"You have %number of ores in the player's inventory% ores in your inventory.\"")
@@ -50,10 +50,12 @@ public class ExprAmountOfItems extends SimpleExpression<Integer> {
 		Skript.registerExpression(ExprAmountOfItems.class, Integer.class, ExpressionType.PROPERTY, "[the] (amount|number) of %itemtypes% (in|of) %inventories%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<ItemType> items;
+	@SuppressWarnings("null")
 	private Expression<Inventory> invis;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		items = (Expression<ItemType>) exprs[0];
@@ -106,7 +108,7 @@ public class ExprAmountOfItems extends SimpleExpression<Integer> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "number of " + items + " in " + invis;
 	}
 }

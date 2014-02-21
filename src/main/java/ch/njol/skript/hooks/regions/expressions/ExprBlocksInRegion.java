@@ -27,6 +27,8 @@ import java.util.NoSuchElementException;
 
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -45,7 +47,6 @@ import ch.njol.util.coll.iterator.EmptyIterator;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Blocks in Region")
 @Description({"All blocks in a <a href='../classes/#region'>region</a>.",
 		"This expression requires a supported regions plugin to be installed."})
@@ -58,15 +59,17 @@ public class ExprBlocksInRegion extends SimpleExpression<Block> {
 				"[(all|the)] blocks (in|of) [[the] region[s]] %regions%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<Region> regions;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		regions = (Expression<Region>) exprs[0];
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	protected Block[] get(final Event e) {
 		final Iterator<Block> iter = iterator(e);
@@ -77,22 +80,26 @@ public class ExprBlocksInRegion extends SimpleExpression<Block> {
 	}
 	
 	@Override
+	@NonNull
 	public Iterator<Block> iterator(final Event e) {
 		final Region[] rs = regions.getArray(e);
 		if (rs.length == 0)
 			return EmptyIterator.get();
 		return new Iterator<Block>() {
-			private final Iterator<Region> iter = new ArrayIterator<Region>(rs);
-			private Iterator<Block> current = iter.next().getBlocks();
+			private Iterator<Block> current = rs[0].getBlocks();
+			private final Iterator<Region> iter = new ArrayIterator<Region>(rs, 1);
 			
 			@Override
 			public boolean hasNext() {
 				while (!current.hasNext() && iter.hasNext()) {
-					current = iter.next().getBlocks();
+					final Region r = iter.next();
+					if (r != null)
+						current = r.getBlocks();
 				}
 				return current.hasNext();
 			}
 			
+			@SuppressWarnings("null")
 			@Override
 			public Block next() {
 				if (!hasNext())
@@ -118,7 +125,7 @@ public class ExprBlocksInRegion extends SimpleExpression<Block> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "all blocks in " + regions.toString(e, debug);
 	}
 	

@@ -22,6 +22,7 @@
 package ch.njol.skript.entity;
 
 import org.bukkit.entity.Wolf;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -29,7 +30,6 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public class WolfData extends EntityData<Wolf> {
 	static {
 		EntityData.register(WolfData.class, "wolf", Wolf.class, 1,
@@ -51,7 +51,7 @@ public class WolfData extends EntityData<Wolf> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Wolf> c, final Wolf e) {
+	protected boolean init(final @Nullable Class<? extends Wolf> c, final @Nullable Wolf e) {
 		angry = e == null ? 0 : e.isAngry() ? 1 : -1;
 		tamed = e == null ? 0 : e.isTamed() ? 1 : -1;
 		return true;

@@ -26,6 +26,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerLevelChangeEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
@@ -41,7 +42,6 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Level")
 @Description("The level of a player.")
 @Examples({"reduce the victim's level by 1",
@@ -55,6 +55,7 @@ public class ExprLevel extends SimplePropertyExpression<Player, Integer> {
 	@Override
 	protected Integer[] get(final Event e, final Player[] source) {
 		return super.get(source, new Converter<Player, Integer>() {
+			@SuppressWarnings("null")
 			@Override
 			public Integer convert(final Player p) {
 				if (e instanceof PlayerLevelChangeEvent && ((PlayerLevelChangeEvent) e).getPlayer() == p && !Delay.isDelayed(e)) {
@@ -66,6 +67,7 @@ public class ExprLevel extends SimplePropertyExpression<Player, Integer> {
 	}
 	
 	@Override
+	@Nullable
 	public Integer convert(final Player p) {
 		assert false;
 		return null;
@@ -77,6 +79,7 @@ public class ExprLevel extends SimplePropertyExpression<Player, Integer> {
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.REMOVE_ALL)
 			return null;
@@ -94,7 +97,7 @@ public class ExprLevel extends SimplePropertyExpression<Player, Integer> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		assert mode != ChangeMode.REMOVE_ALL;
 		
 		final int l = delta == null ? 0 : ((Number) delta[0]).intValue();

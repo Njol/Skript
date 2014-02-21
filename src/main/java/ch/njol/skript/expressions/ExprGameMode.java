@@ -26,6 +26,7 @@ import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -45,7 +46,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Game Mode")
 @Description("The gamemode of a player.")
 @Examples({"player's gamemode is survival",
@@ -57,7 +57,7 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 		Skript.registerExpression(ExprGameMode.class, GameMode.class, ExpressionType.PROPERTY, "[the] game[ ]mode of %players%", "%players%'[s] game[ ]mode");
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		setExpr((Expression<Player>) vars[0]);
@@ -65,14 +65,10 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the gamemode of " + getExpr().toString(e, debug);
-	}
-	
-	@Override
 	protected GameMode[] get(final Event e, final Player[] source) {
 		return get(source, new Converter<Player, GameMode>() {
 			@Override
+			@Nullable
 			public GameMode convert(final Player p) {
 				if (getTime() >= 0 && e instanceof PlayerGameModeChangeEvent && ((PlayerGameModeChangeEvent) e).getPlayer() == p && !Delay.isDelayed(e))
 					return ((PlayerGameModeChangeEvent) e).getNewGameMode();
@@ -86,8 +82,14 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 		return GameMode.class;
 	}
 	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "the gamemode of " + getExpr().toString(e, debug);
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET || mode == ChangeMode.RESET)
 			return CollectionUtils.array(GameMode.class);
@@ -95,7 +97,7 @@ public class ExprGameMode extends PropertyExpression<Player, GameMode> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		final GameMode m = delta == null ? Bukkit.getDefaultGameMode() : (GameMode) delta[0];
 		for (final Player p : getExpr().getArray(e)) {
 			if (getTime() >= 0 && e instanceof PlayerGameModeChangeEvent && ((PlayerGameModeChangeEvent) e).getPlayer() == p && !Delay.isDelayed(e)) {

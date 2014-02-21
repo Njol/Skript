@@ -24,6 +24,7 @@ package ch.njol.skript.expressions;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -42,7 +43,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Biome")
 @Description("The biome at a certain location. Please note that biomes are only defined for x/z-columns, i.e. the <a href='#ExprAltitude'>altitude</a> (y-coordinate) doesn't matter. ")
 @Examples({"# damage player in deserts constantly",
@@ -52,12 +52,11 @@ import ch.njol.util.Kleenean;
 		"		damage the loop-player by 1"})
 @Since("1.4.4")
 public class ExprBiome extends PropertyExpression<Location, Biome> {
-	
 	static {
 		Skript.registerExpression(ExprBiome.class, Biome.class, ExpressionType.PROPERTY, "[the] biome (of|%direction%) %location%", "%location%'[s] biome");
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr(matchedPattern == 1 ? (Expression<? extends Location>) exprs[0] : Direction.combine((Expression<? extends Direction>) exprs[0], (Expression<? extends Location>) exprs[1]));
@@ -67,6 +66,7 @@ public class ExprBiome extends PropertyExpression<Location, Biome> {
 	@Override
 	protected Biome[] get(final Event e, final Location[] source) {
 		return get(source, new Converter<Location, Biome>() {
+			@SuppressWarnings("null")
 			@Override
 			public Biome convert(final Location l) {
 				return l.getWorld().getBiome(l.getBlockX(), l.getBlockZ());
@@ -75,6 +75,7 @@ public class ExprBiome extends PropertyExpression<Location, Biome> {
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.SET)
 			return new Class[] {Biome.class};
@@ -82,8 +83,9 @@ public class ExprBiome extends PropertyExpression<Location, Biome> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		if (mode == ChangeMode.SET) {
+			assert delta != null;
 			for (final Location l : getExpr().getArray(e))
 				l.getWorld().setBiome(l.getBlockX(), l.getBlockZ(), (Biome) delta[0]);
 		} else {
@@ -97,7 +99,7 @@ public class ExprBiome extends PropertyExpression<Location, Biome> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return "the biome at " + getExpr().toString(e, debug);
 	}
 	

@@ -27,6 +27,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.entity.EntityData;
@@ -40,9 +41,8 @@ import ch.njol.util.StringUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"unchecked", "serial"})
+@SuppressWarnings("unchecked")
 public final class EvtEntity extends SkriptEvent {
-	
 	static {
 		Skript.registerEvent("Death", EvtEntity.class, EntityDeathEvent.class, "death [of %entitydatas%]")
 				.description("Called when a living entity (including players) dies.")
@@ -59,8 +59,10 @@ public final class EvtEntity extends SkriptEvent {
 				.since("1.0");
 	}
 	
+	@Nullable
 	private EntityData<?>[] types;
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		types = args[0] == null ? null : ((Literal<EntityData<?>>) args[0]).getAll();
@@ -84,6 +86,7 @@ public final class EvtEntity extends SkriptEvent {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public boolean check(final Event e) {
 		if (types == null)
@@ -97,8 +100,8 @@ public final class EvtEntity extends SkriptEvent {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "death/spawn" + (types == null ? "" : " of " + Classes.toString(types, false));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "death/spawn" + (types != null ? " of " + Classes.toString(types, false) : "");
 	}
 	
 }

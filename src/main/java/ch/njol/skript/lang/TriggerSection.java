@@ -24,6 +24,7 @@ package ch.njol.skript.lang;
 import java.util.List;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.config.SectionNode;
@@ -35,10 +36,11 @@ import ch.njol.skript.config.SectionNode;
  * @see Conditional
  * @see Loop
  */
-@SuppressWarnings("serial")
 public abstract class TriggerSection extends TriggerItem {
 	
+	@Nullable
 	private TriggerItem first = null;
+	@Nullable
 	protected TriggerItem last = null;
 	
 	/**
@@ -73,8 +75,8 @@ public abstract class TriggerSection extends TriggerItem {
 	protected void setTriggerItems(final List<TriggerItem> items) {
 		if (!items.isEmpty()) {
 			first = items.get(0);
-			last = items.get(items.size() - 1);
-			last.setNext(getNext());
+			(last = items.get(items.size() - 1))
+					.setNext(getNext());
 		}
 		for (final TriggerItem item : items) {
 			item.setParent(this);
@@ -82,10 +84,17 @@ public abstract class TriggerSection extends TriggerItem {
 	}
 	
 	@Override
-	public void setNext(final TriggerItem next) {
+	public TriggerSection setNext(final @Nullable TriggerItem next) {
 		super.setNext(next);
 		if (last != null)
 			last.setNext(next);
+		return this;
+	}
+	
+	@Override
+	public TriggerSection setParent(@Nullable final TriggerSection parent) {
+		super.setParent(parent);
+		return this;
 	}
 	
 	@Override
@@ -94,8 +103,10 @@ public abstract class TriggerSection extends TriggerItem {
 	}
 	
 	@Override
+	@Nullable
 	protected abstract TriggerItem walk(Event e);
 	
+	@Nullable
 	protected final TriggerItem walk(final Event e, final boolean run) {
 		debug(e, run);
 		if (run && first != null) {

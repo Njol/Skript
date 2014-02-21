@@ -33,7 +33,6 @@ import ch.njol.skript.doc.Since;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Poisoned")
 @Description("Checks whether an entity is poisoned.")
 @Examples({"player is poisoned:",

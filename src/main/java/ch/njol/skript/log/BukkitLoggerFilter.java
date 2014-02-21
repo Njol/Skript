@@ -23,6 +23,8 @@ package ch.njol.skript.log;
 
 import java.util.logging.Filter;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 import ch.njol.skript.Skript;
 import ch.njol.util.LoggerFilter;
 
@@ -41,8 +43,7 @@ public class BukkitLoggerFilter {
 	 * 
 	 * @param f A filter to filter log messages
 	 */
-	public final static void addFilter(final Filter f) {
-		assert f != null;
+	public final static void addFilter(final @Nullable Filter f) {
 		if (f != null)
 			filter.addFilter(f);
 	}

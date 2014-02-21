@@ -24,6 +24,7 @@ package ch.njol.skript.effects;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -42,7 +43,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Damage/Heal/Repair")
 @Description("Damage/Heal/Repair an entity, or item stack.")
 @Examples({"damage player by 5 hearts",
@@ -58,11 +58,13 @@ public class EffHealth extends Effect {
 				"repair %slots/itemstack% [by %-number%]");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<?> damageables;
+	@Nullable
 	private Expression<Number> damage;
 	private boolean heal = false;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] vars, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		damageables = vars[0];
@@ -124,8 +126,8 @@ public class EffHealth extends Effect {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
-		return (heal ? "heal " : "damage ") + damageables.toString(e, debug) + (damage == null ? "" : " by " + damage.toString(e, debug));
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return (heal ? "heal " : "damage ") + damageables.toString(e, debug) + (damage != null ? " by " + damage.toString(e, debug) : "");
 	}
 	
 }

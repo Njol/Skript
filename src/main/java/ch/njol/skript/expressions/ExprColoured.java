@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.ChatColor;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Converter;
@@ -40,7 +41,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Coloured / Uncoloured")
 @Description("Parses &lt;colour&gt;s (including chat styles) in a message or removes any colours & chat styles from the message.")
 @Examples({"on chat:",
@@ -51,13 +51,13 @@ import ch.njol.util.Kleenean;
 @Since("2.0")
 public class ExprColoured extends PropertyExpression<String, String> {
 	static {
-		Skript.registerExpression(ExprColoured.class, String.class, ExpressionType.NORMAL,
+		Skript.registerExpression(ExprColoured.class, String.class, ExpressionType.COMBINED,
 				"(colo[u]r-|colo[u]red )%strings%", "(un|non)[-](colo[u]r-|colo[u]red )%strings%");
 	}
 	
 	boolean color;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends String>) exprs[0]);
@@ -70,7 +70,7 @@ public class ExprColoured extends PropertyExpression<String, String> {
 		return get(source, new Converter<String, String>() {
 			@Override
 			public String convert(final String s) {
-				return color ? Utils.replaceChatStyles(s) : ChatColor.stripColor(s);
+				return color ? Utils.replaceChatStyles(s) : "" + ChatColor.stripColor(s);
 			}
 		});
 	}
@@ -81,7 +81,7 @@ public class ExprColoured extends PropertyExpression<String, String> {
 	}
 	
 	@Override
-	public String toString(final Event e, final boolean debug) {
+	public String toString(final @Nullable Event e, final boolean debug) {
 		return (color ? "" : "un") + "coloured " + getExpr().toString(e, debug);
 	}
 	

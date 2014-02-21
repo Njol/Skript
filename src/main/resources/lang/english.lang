@@ -10,7 +10,7 @@ a: a, an
 is: is
 are: are
 not: not
-not a: not a(n) # @a:not a @an:not an @x:not
+# not a: not a(n) # @a:not a @an:not an @x:not
 neither: neither
 nor: nor
 
@@ -45,7 +45,7 @@ skript:
 	no scripts: No scripts were found, maybe you should write some ;)
 	no errors: All scripts loaded without errors.
 	scripts loaded: Loaded %s script¦¦s¦ with a total of %s trigger¦¦s¦ and %s command¦¦s¦ in %s
-	finished loading: Skript finished loading.
+	finished loading: Finished loading.
 
 # -- Skript command --
 skript command:
@@ -158,6 +158,7 @@ commands:
 # -- Hooks --
 hooks:
 	hooked: Successfully hooked into %s
+	error: Could not hook into %1$s. This can happen if Skript doesn't support the installed version of %1$s
 
 # -- Aliases --
 aliases:
@@ -217,9 +218,10 @@ enchantments:
 		arrow_fire: Flame
 		arrow_infinite: Infinity
 		thorns: Thorns
-		# will likely be properly added to Bukkit later
 		unknown_enchant_61: Luck of the Sea
+		luck: Luck of the Sea
 		unknown_enchant_62: Lure
+		lure: Lure
 
 # -- Potion Effects --
 potions:

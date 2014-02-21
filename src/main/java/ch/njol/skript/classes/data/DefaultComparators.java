@@ -77,7 +77,7 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"rawtypes", "serial", "deprecation"})
+@SuppressWarnings({"rawtypes", "deprecation"})
 public class DefaultComparators {
 	
 	public DefaultComparators() {}

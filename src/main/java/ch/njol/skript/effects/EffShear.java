@@ -24,6 +24,7 @@ package ch.njol.skript.effects;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Shear")
 @Description("Shears or 'un-shears' a sheep. Please note that no wool is dropped, this only sets the 'sheared' state of the sheep.")
 @Examples({"on rightclick on a sheep holding a sword:",
@@ -51,20 +51,16 @@ public class EffShear extends Effect {
 				"un[-]shear %livingentities%");
 	}
 	
+	@SuppressWarnings("null")
 	private Expression<LivingEntity> sheep;
 	private boolean shear;
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		sheep = (Expression<LivingEntity>) exprs[0];
 		shear = matchedPattern == 0;
 		return true;
-	}
-	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return (shear ? "" : "un") + "shear " + sheep.toString(e, debug);
 	}
 	
 	@Override
@@ -74,6 +70,11 @@ public class EffShear extends Effect {
 				((Sheep) en).setSheared(shear);
 			}
 		}
+	}
+	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return (shear ? "" : "un") + "shear " + sheep.toString(e, debug);
 	}
 	
 }

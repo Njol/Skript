@@ -23,6 +23,7 @@ package ch.njol.skript.expressions;
 
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
@@ -38,7 +39,6 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Coordinate")
 @Description("Represents a given coordinate of a location. ")
 @Examples({"player's y-coordinate is smaller than 40:",
@@ -60,6 +60,7 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Double> {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Double convert(final Location l) {
 		return axis == 0 ? l.getX() : axis == 1 ? l.getY() : l.getZ();
@@ -76,6 +77,7 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Double> {
 	}
 	
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if ((mode == ChangeMode.SET || mode == ChangeMode.ADD || mode == ChangeMode.REMOVE) && getExpr().isSingle() && ChangerUtils.acceptsChange(getExpr(), ChangeMode.SET, Location.class))
 			return new Class[] {Number.class};
@@ -83,7 +85,8 @@ public class ExprCoordinate extends SimplePropertyExpression<Location, Double> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
+		assert delta != null;
 		final Location l = getExpr().getSingle(e);
 		if (l == null)
 			return;

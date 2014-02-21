@@ -26,7 +26,6 @@ import org.bukkit.event.Event;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 public abstract class SelfRegisteringSkriptEvent extends SkriptEvent {
 	
 	/**

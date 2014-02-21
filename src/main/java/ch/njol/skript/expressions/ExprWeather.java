@@ -26,6 +26,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.weather.WeatherEvent;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
@@ -46,7 +47,6 @@ import ch.njol.util.coll.CollectionUtils;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Weather")
 @Description("The weather in the given or the current world.")
 @Examples({"set weather to clear",
@@ -57,16 +57,11 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 		Skript.registerExpression(ExprWeather.class, WeatherType.class, ExpressionType.PROPERTY, "[the] weather [(in|of) %worlds%]", "%worlds%'[s] weather");
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {
 		setExpr((Expression<World>) exprs[0]);
 		return true;
-	}
-	
-	@Override
-	public String toString(final Event e, final boolean debug) {
-		return "the weather in " + getExpr().toString(e, debug);
 	}
 	
 	@Override
@@ -82,8 +77,14 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 		});
 	}
 	
+	@Override
+	public String toString(final @Nullable Event e, final boolean debug) {
+		return "the weather in " + getExpr().toString(e, debug);
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {
 		if (mode == ChangeMode.DELETE || mode == ChangeMode.SET)
 			return CollectionUtils.array(WeatherType.class);
@@ -91,9 +92,10 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	}
 	
 	@Override
-	public void change(final Event e, final Object[] delta, final ChangeMode mode) {
+	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) {
 		final WeatherType t = delta == null ? WeatherType.CLEAR : (WeatherType) delta[0];
 		for (final World w : getExpr().getArray(e)) {
+			assert w != null : getExpr();
 			if (getTime() >= 0 && e instanceof WeatherEvent && w.equals(((WeatherEvent) e).getWorld()) && !Delay.isDelayed(e)) {
 				if (e instanceof WeatherChangeEvent) {
 					if (((WeatherChangeEvent) e).toWeatherState() && t == WeatherType.CLEAR)

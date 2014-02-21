@@ -21,15 +21,14 @@
 
 package ch.njol.skript.registrations;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.event.Event;
+import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Converter;
-import ch.njol.skript.classes.SerializableGetter;
 import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.util.Getter;
 
@@ -40,16 +39,17 @@ public class EventValues {
 	
 	private EventValues() {}
 	
-	@SuppressWarnings("serial")
-	private final static class EventValueInfo<E extends Event, T> implements Serializable {
+	private final static class EventValueInfo<E extends Event, T> {
 		
 		public final Class<E> event;
 		public final Class<T> c;
-		public final SerializableGetter<T, E> getter;
+		public final Getter<T, E> getter;
+		@Nullable
 		public final Class<? extends E>[] exculdes;
+		@Nullable
 		public final String excludeErrorMessage;
 		
-		public EventValueInfo(final Class<E> event, final Class<T> c, final SerializableGetter<T, E> getter, final String excludeErrorMessage, final Class<? extends E>[] exculdes) {
+		public EventValueInfo(final Class<E> event, final Class<T> c, final Getter<T, E> getter, final @Nullable String excludeErrorMessage, final @Nullable Class<? extends E>[] exculdes) {
 			assert event != null;
 			assert c != null;
 			assert getter != null;
@@ -85,12 +85,12 @@ public class EventValues {
 	 *            <b>Always register a default state!</b> You can leave out one of the other states instead, e.g. only register a default and a past state. The future state will
 	 *            default to the default state in this case.
 	 */
-	public static <T, E extends Event> void registerEventValue(final Class<E> e, final Class<T> c, final SerializableGetter<T, E> g, final int time) {
+	public static <T, E extends Event> void registerEventValue(final Class<E> e, final Class<T> c, final Getter<T, E> g, final int time) {
 		registerEventValue(e, c, g, time, null, (Class<? extends E>[]) null);
 	}
 	
 	/**
-	 * Same as {@link #registerEventValue(Class, Class, SerializableGetter, int)}
+	 * Same as {@link #registerEventValue(Class, Class, Getter, int)}
 	 * 
 	 * @param e
 	 * @param c
@@ -98,7 +98,7 @@ public class EventValues {
 	 * @param time
 	 * @param excludes Subclasses of the event for which this event value should not be registered for
 	 */
-	public static <T, E extends Event> void registerEventValue(final Class<E> e, final Class<T> c, final SerializableGetter<T, E> g, final int time, final String excludeErrorMessage, final Class<? extends E>... excludes) {
+	public static <T, E extends Event> void registerEventValue(final Class<E> e, final Class<T> c, final Getter<T, E> g, final int time, final @Nullable String excludeErrorMessage, final @Nullable Class<? extends E>... excludes) {
 		Skript.checkAcceptRegistrations();
 		final List<EventValueInfo<?, ?>> eventValues = getEventValuesList(time);
 		for (int i = 0; i < eventValues.size(); i++) {
@@ -121,9 +121,11 @@ public class EventValues {
 	 * @param c
 	 * @param time
 	 * @return The event's value
-	 * @see #registerEventValue(Class, Class, SerializableGetter, int)
+	 * @see #registerEventValue(Class, Class, Getter, int)
 	 */
+	@Nullable
 	public static <T, E extends Event> T getEventValue(final E e, final Class<T> c, final int time) {
+		@SuppressWarnings("null")
 		final Getter<? extends T, ? super E> g = EventValues.getEventValueGetter((Class<E>) e.getClass(), c, time);
 		if (g == null)
 			return null;
@@ -139,15 +141,17 @@ public class EventValues {
 	 * @param c
 	 * @param time
 	 * @return A getter to get values for a given type of events
-	 * @see #registerEventValue(Class, Class, SerializableGetter, int)
+	 * @see #registerEventValue(Class, Class, Getter, int)
 	 * @see EventValueExpression#EventValueExpression(Class)
 	 */
-	public final static <T, E extends Event> SerializableGetter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time) {
+	@Nullable
+	public final static <T, E extends Event> Getter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time) {
 		return EventValues.getEventValueGetter(e, c, time, true);
 	}
 	
-	@SuppressWarnings({"unchecked", "serial"})
-	private final static <T, E extends Event> SerializableGetter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time, final boolean allowDefault) {
+	@SuppressWarnings("unchecked")
+	@Nullable
+	private final static <T, E extends Event> Getter<? extends T, ? super E> getEventValueGetter(final Class<E> e, final Class<T> c, final int time, final boolean allowDefault) {
 		final List<EventValueInfo<?, ?>> eventValues = getEventValuesList(time);
 		boolean b;
 		for (final EventValueInfo<?, ?> ev : eventValues) {
@@ -155,13 +159,14 @@ public class EventValues {
 				if (!EventValues.checkExcludes(ev, e))
 					return null;
 				if (b)
-					return (SerializableGetter<? extends T, ? super E>) ev.getter;
-				return new SerializableGetter<T, E>() {
+					return (Getter<? extends T, ? super E>) ev.getter;
+				return new Getter<T, E>() {
 					@Override
+					@Nullable
 					public T get(final E event) {
 						if (!ev.event.isInstance(event))
 							return null;
-						return ((SerializableGetter<? extends T, E>) ev.getter).get(event);
+						return ((Getter<? extends T, E>) ev.getter).get(event);
 					}
 				};
 			}
@@ -171,8 +176,9 @@ public class EventValues {
 				if (!EventValues.checkExcludes(ev, e))
 					return null;
 				final boolean checkInstanceOf = !b;
-				return new SerializableGetter<T, E>() {
+				return new Getter<T, E>() {
 					@Override
+					@Nullable
 					public T get(final E event) {
 						if (checkInstanceOf && !e.isInstance(event))
 							return null;
@@ -188,7 +194,7 @@ public class EventValues {
 			if ((b = ev.event.isAssignableFrom(e)) || e.isAssignableFrom(ev.event)) {
 				if (!EventValues.checkExcludes(ev, e))
 					return null;
-				final SerializableGetter<? extends T, ? super E> g = (SerializableGetter<? extends T, ? super E>) getConvertedGetter(ev, c, !b);
+				final Getter<? extends T, ? super E> g = (Getter<? extends T, ? super E>) getConvertedGetter(ev, c, !b);
 				if (g != null)
 					return g;
 			}
@@ -199,10 +205,11 @@ public class EventValues {
 	}
 	
 	private final static boolean checkExcludes(final EventValueInfo<?, ?> ev, final Class<? extends Event> e) {
-		if (ev.exculdes == null)
+		final Class<? extends Event>[] excl = ev.exculdes;
+		if (excl == null)
 			return true;
-		for (final Class<? extends Event> excl : ev.exculdes) {
-			if (excl.isAssignableFrom(e)) {
+		for (final Class<? extends Event> ex : excl) {
+			if (ex.isAssignableFrom(e)) {
 				Skript.error(ev.excludeErrorMessage);
 				return false;
 			}
@@ -210,13 +217,14 @@ public class EventValues {
 		return true;
 	}
 	
-	@SuppressWarnings("serial")
-	private final static <E extends Event, F, T> SerializableGetter<? extends T, ? super E> getConvertedGetter(final EventValueInfo<E, F> i, final Class<T> to, final boolean checkInstanceOf) {
+	@Nullable
+	private final static <E extends Event, F, T> Getter<? extends T, ? super E> getConvertedGetter(final EventValueInfo<E, F> i, final Class<T> to, final boolean checkInstanceOf) {
 		final Converter<? super F, ? extends T> c = Converters.getConverter(i.c, to);
 		if (c == null)
 			return null;
-		return new SerializableGetter<T, E>() {
+		return new Getter<T, E>() {
 			@Override
+			@Nullable
 			public T get(final E e) {
 				if (checkInstanceOf && !i.event.isInstance(e))
 					return null;

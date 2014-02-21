@@ -24,6 +24,7 @@ package ch.njol.skript.command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * @author Peter Güttinger
@@ -32,9 +33,10 @@ public class CommandEvent extends Event {
 	
 	private final CommandSender sender;
 	private final String command;
+	@Nullable
 	private final String[] args;
 	
-	public CommandEvent(final CommandSender sender, final String command, final String[] args) {
+	public CommandEvent(final CommandSender sender, final String command, final @Nullable String[] args) {
 		this.sender = sender;
 		this.command = command;
 		this.args = args;
@@ -48,6 +50,7 @@ public class CommandEvent extends Event {
 		return command;
 	}
 	
+	@Nullable
 	public String[] getArgs() {
 		return args;
 	}

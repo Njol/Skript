@@ -32,7 +32,6 @@ import ch.njol.skript.doc.Since;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Sprinting")
 @Description("Checks whether a player is sprinting")
 @Examples("player is not sprinting")

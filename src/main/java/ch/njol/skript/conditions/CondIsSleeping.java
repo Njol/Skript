@@ -32,7 +32,6 @@ import ch.njol.skript.doc.Since;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings("serial")
 @Name("Is Sleeping")
 @Description("Checks whether a player is sleeping.")
 @Examples({"# cut your enemies' throats in their sleep >=)",
