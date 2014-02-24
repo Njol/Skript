@@ -71,12 +71,14 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	 * <p>
 	 * Unlike {@link #get(Event)} you have to make sure that the this method's returned array is neither null nor contains null elements.
 	 */
-	@SuppressWarnings("null")
 	@Override
 	public T[] getAll(final Event e) {
 		final T[] all = get(e);
-		if (all == null)
-			return (T[]) Array.newInstance(getReturnType(), 0);
+		if (all == null) {
+			final T[] r = (T[]) Array.newInstance(getReturnType(), 0);
+			assert r != null;
+			return r;
+		}
 		if (all.length == 0)
 			return all;
 		int numNonNull = 0;
@@ -86,6 +88,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		if (numNonNull == all.length)
 			return all;
 		final T[] r = (T[]) Array.newInstance(getReturnType(), numNonNull);
+		assert r != null;
 		int i = 0;
 		for (final T t : all)
 			if (t != null)
@@ -93,12 +96,14 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		return r;
 	}
 	
-	@SuppressWarnings("null")
 	@Override
 	public final T[] getArray(final Event e) {
 		final T[] all = get(e);
-		if (all == null)
-			return (T[]) Array.newInstance(getReturnType(), 0);
+		if (all == null) {
+			final T[] r = (T[]) Array.newInstance(getReturnType(), 0);
+			assert r != null;
+			return r;
+		}
 		if (all.length == 0)
 			return all;
 		
@@ -127,6 +132,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		if (numNonNull == all.length)
 			return all;
 		final T[] r = (T[]) Array.newInstance(getReturnType(), numNonNull);
+		assert r != null;
 		int i = 0;
 		for (final T t : all)
 			if (t != null)

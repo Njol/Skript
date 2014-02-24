@@ -309,7 +309,6 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 		return false;
 	}
 	
-	@SuppressWarnings("null")
 	public boolean isSupertypeOf(final ItemType other) {
 //		if (all != other.all)
 //			return false;
@@ -329,6 +328,7 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 		if (meta != null && !meta.equals(other.meta))
 			return false;
 		outer: for (final ItemData o : other.types) {
+			assert o != null;
 			for (final ItemData t : types) {
 				if (t.isSupertypeOf(o))
 					continue outer;
@@ -408,7 +408,6 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	 * @param other
 	 * @return A new item type which is the intersection of the two item types or null if the intersection is empty.
 	 */
-	@SuppressWarnings("null")
 	@Nullable
 	public ItemType intersection(final ItemType other) {
 		if (amount != -1 || other.amount != -1 || enchantments != null || other.enchantments != null)
@@ -416,6 +415,7 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 		final ItemType r = new ItemType();
 		for (final ItemData d1 : types) {
 			for (final ItemData d2 : other.types) {
+				assert d2 != null; // strangely d1 doesn't cause a warning...
 				r.add_(d1.intersection(d2));
 			}
 		}
@@ -863,7 +863,8 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	public boolean addTo(final Inventory invi) {
 		// important: don't use inventory.add() - it ignores max stack sizes
 		final ItemStack[] buf = invi.getContents();
-		@SuppressWarnings("null")
+		if (buf == null)
+			return false;
 		final boolean b = addTo(buf);
 		invi.setContents(buf);
 		return b;
@@ -915,9 +916,9 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	 * @param sub
 	 * @return Whether all item types in <tt>sub</tt> have at least one {@link #isSupertypeOf(ItemType) super type} in <tt>set</tt>
 	 */
-	@SuppressWarnings("null")
 	public final static boolean isSubset(final ItemType[] set, final ItemType[] sub) {
 		outer: for (final ItemType i : sub) {
+			assert i != null;
 			for (final ItemType t : set) {
 				if (t.isSupertypeOf(i))
 					continue outer;
@@ -1021,7 +1022,6 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 		return toString(false, flags, a);
 	}
 	
-	@SuppressWarnings("null")
 	private String toString(final boolean debug, final int flags, final @Nullable Adjective a) {
 		final StringBuilder b = new StringBuilder();
 //		if (types.size() == 1 && !types.get(0).hasDataRange()) {
@@ -1063,7 +1063,10 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 				else
 					b.append(" " + GeneralWords.and + " ");
 			}
-			b.append(EnchantmentType.toString(e.getKey()));
+			final Enchantment ench = e.getKey();
+			if (ench == null)
+				continue;
+			b.append(EnchantmentType.toString(ench));
 			b.append(" ");
 			b.append(e.getValue());
 			i++;

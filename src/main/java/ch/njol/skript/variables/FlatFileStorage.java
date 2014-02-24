@@ -78,7 +78,7 @@ public class FlatFileStorage extends VariablesStorage {
 		super(n);
 	}
 	
-	@SuppressWarnings({"deprecation", "null"})
+	@SuppressWarnings({"deprecation"})
 	@Override
 	protected boolean load_i(final SectionNode n) {
 		IOException ioEx = null;
@@ -106,7 +106,7 @@ public class FlatFileStorage extends VariablesStorage {
 					if (line.isEmpty() || line.startsWith("#")) {
 						if (line.startsWith("# version:")) {
 							try {
-								varVersion = new Version(line.substring("# version:".length()).trim());
+								varVersion = new Version("" + line.substring("# version:".length()).trim());
 								update2_0_beta3 = varVersion.isSmallerThan(v2_0_beta3);
 								update2_1 = varVersion.isSmallerThan(v2_1);
 							} catch (final IllegalArgumentException e) {}
@@ -123,13 +123,13 @@ public class FlatFileStorage extends VariablesStorage {
 						continue;
 					}
 					if (split[1].equals("null")) {
-						Variables.variableLoaded(split[0], null, this);
+						Variables.variableLoaded("" + split[0], null, this);
 					} else {
 						Object d;
 						if (update2_1)
-							d = Classes.deserialize(split[1], split[2]);
+							d = Classes.deserialize("" + split[1], "" + split[2]);
 						else
-							d = Classes.deserialize(split[1], decode(split[2]));
+							d = Classes.deserialize("" + split[1], decode("" + split[2]));
 						if (d == null) {
 							if (invalid.length() != 0)
 								invalid.append(", ");
@@ -140,7 +140,7 @@ public class FlatFileStorage extends VariablesStorage {
 						if (d instanceof String && update2_0_beta3) {
 							d = Utils.replaceChatStyles((String) d);
 						}
-						Variables.variableLoaded(split[0], d, this);
+						Variables.variableLoaded("" + split[0], d, this);
 					}
 				}
 			} catch (final IOException e) {

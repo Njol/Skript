@@ -128,12 +128,11 @@ public abstract class Utils {
 		return target;
 	}
 	
-	@SuppressWarnings("null")
 	public final static Pair<String, Integer> getAmount(final String s) {
 		if (s.matches("\\d+ of .+")) {
-			return new Pair<String, Integer>(s.split(" ", 3)[2], Utils.parseInt(s.split(" ", 2)[0]));
+			return new Pair<String, Integer>(s.split(" ", 3)[2], Utils.parseInt("" + s.split(" ", 2)[0]));
 		} else if (s.matches("\\d+ .+")) {
-			return new Pair<String, Integer>(s.split(" ", 2)[1], Utils.parseInt(s.split(" ", 2)[0]));
+			return new Pair<String, Integer>(s.split(" ", 2)[1], Utils.parseInt("" + s.split(" ", 2)[0]));
 		} else if (s.matches("an? .+")) {
 			return new Pair<String, Integer>(s.split(" ", 2)[1], 1);
 		}
@@ -170,18 +169,17 @@ public abstract class Utils {
 		}
 	}
 	
-	@SuppressWarnings("null")
 	public final static AmountResponse getAmountWithEvery(final String s) {
 		if (s.matches("\\d+ of (all|every) .+")) {
-			return new AmountResponse(s.split(" ", 4)[3], Utils.parseInt(s.split(" ", 2)[0]), true);
+			return new AmountResponse("" + s.split(" ", 4)[3], Utils.parseInt("" + s.split(" ", 2)[0]), true);
 		} else if (s.matches("\\d+ of .+")) {
-			return new AmountResponse(s.split(" ", 3)[2], Utils.parseInt(s.split(" ", 2)[0]));
+			return new AmountResponse("" + s.split(" ", 3)[2], Utils.parseInt("" + s.split(" ", 2)[0]));
 		} else if (s.matches("\\d+ .+")) {
-			return new AmountResponse(s.split(" ", 2)[1], Utils.parseInt(s.split(" ", 2)[0]));
+			return new AmountResponse("" + s.split(" ", 2)[1], Utils.parseInt("" + s.split(" ", 2)[0]));
 		} else if (s.matches("an? .+")) {
-			return new AmountResponse(s.split(" ", 2)[1], 1);
+			return new AmountResponse("" + s.split(" ", 2)[1], 1);
 		} else if (s.matches("(all|every) .+")) {
-			return new AmountResponse(s.split(" ", 2)[1], true);
+			return new AmountResponse("" + s.split(" ", 2)[1], true);
 		}
 		return new AmountResponse(s);
 	}

@@ -94,7 +94,6 @@ public class ExpressionList<T> implements Expression<T> {
 		return null;
 	}
 	
-	@SuppressWarnings("null")
 	@Override
 	public T[] getArray(final Event e) {
 		if (and)
@@ -104,7 +103,9 @@ public class ExpressionList<T> implements Expression<T> {
 			if (t.length > 0)
 				return t;
 		}
-		return (T[]) Array.newInstance(returnType, 0);
+		final T[] r = (T[]) Array.newInstance(returnType, 0);
+		assert r != null;
+		return r;
 	}
 	
 	@SuppressWarnings("null")
@@ -140,7 +141,6 @@ public class ExpressionList<T> implements Expression<T> {
 				return c != null && c.hasNext();
 			}
 			
-			@SuppressWarnings("null")
 			@Override
 			public T next() {
 				if (!hasNext())
@@ -148,7 +148,9 @@ public class ExpressionList<T> implements Expression<T> {
 				final Iterator<? extends T> c = current;
 				if (c == null)
 					throw new NoSuchElementException();
-				return c.next();
+				final T t = c.next();
+				assert t != null : current;
+				return t;
 			}
 			
 			@Override

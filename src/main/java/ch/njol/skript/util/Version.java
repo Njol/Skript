@@ -58,14 +58,13 @@ public class Version implements Serializable, Comparable<Version> {
 	@SuppressWarnings("null")
 	public final static Pattern versionPattern = Pattern.compile("(\\d+)\\.(\\d+)(?:\\.(\\d+))?\\s*(.*)");
 	
-	@SuppressWarnings("null")
 	public Version(final String version) {
 		final Matcher m = versionPattern.matcher(version.trim());
 		if (!m.matches())
 			throw new IllegalArgumentException("'" + version + "' is not a valid version string");
 		for (int i = 0; i < 3; i++) {
 			if (m.group(i + 1) != null)
-				this.version[i] = Utils.parseInt(m.group(i + 1));
+				this.version[i] = Utils.parseInt("" + m.group(i + 1));
 		}
 		postfix = m.group(m.groupCount()).isEmpty() ? null : m.group(m.groupCount());
 	}

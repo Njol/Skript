@@ -122,7 +122,7 @@ public abstract class Classes {
 	 * Sorts the class infos according to sub/superclasses and relations set with {@link ClassInfo#before(String...)} and {@link ClassInfo#after(String...)}.
 	 */
 	private final static void sortClassInfos() {
-//		assert classInfos == null; // FindBugs complains about this
+		assert classInfos == null;
 		
 		// merge before, after & sub/supertypes in after
 		for (final ClassInfo<?> ci : tempClassInfos) {

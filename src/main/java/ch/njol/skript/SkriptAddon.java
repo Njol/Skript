@@ -54,18 +54,17 @@ public final class SkriptAddon {
 	 * 
 	 * @param p
 	 */
-	@SuppressWarnings("null")
 	SkriptAddon(final JavaPlugin p) {
 		plugin = p;
-		name = p.getName();
+		name = "" + p.getName();
 		Version v;
 		try {
-			v = new Version(p.getDescription().getVersion());
+			v = new Version("" + p.getDescription().getVersion());
 		} catch (final IllegalArgumentException e) {
 			final Matcher m = Pattern.compile("(\\d+)(?:\\.(\\d+)(?:\\.(\\d+))?)?").matcher(p.getDescription().getVersion());
 			if (!m.find())
 				throw new IllegalArgumentException("The version of the plugin " + p.getName() + " does not contain any numbers: " + p.getDescription().getVersion());
-			v = new Version(Utils.parseInt(m.group(1)), m.group(2) == null ? 0 : Utils.parseInt(m.group(2)), m.group(3) == null ? 0 : Utils.parseInt(m.group(3)));
+			v = new Version(Utils.parseInt("" + m.group(1)), m.group(2) == null ? 0 : Utils.parseInt("" + m.group(2)), m.group(3) == null ? 0 : Utils.parseInt("" + m.group(3)));
 			Skript.warning("The plugin " + p.getName() + " uses a non-standard version syntax: '" + p.getDescription().getVersion() + "'. Skript will use " + v + " instead.");
 		}
 		version = v;

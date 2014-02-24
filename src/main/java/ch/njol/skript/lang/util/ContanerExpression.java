@@ -69,7 +69,6 @@ public class ContanerExpression extends SimpleExpression<Object> {
 				return c != null && c.hasNext();
 			}
 			
-			@SuppressWarnings("null")
 			@Override
 			public Object next() {
 				if (!hasNext())
@@ -77,7 +76,9 @@ public class ContanerExpression extends SimpleExpression<Object> {
 				final Iterator<?> c = current;
 				if (c == null)
 					throw new NoSuchElementException();
-				return c.next();
+				final Object o = c.next();
+				assert o != null : current + "; " + expr;
+				return o;
 			}
 			
 			@Override

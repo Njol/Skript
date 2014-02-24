@@ -132,7 +132,7 @@ public enum Color implements YggdrasilSerializable {
 	@Override
 	public String toString() {
 		final Adjective a = adjective;
-		return a == null ? name() : a.toString(-1, 0);
+		return a == null ? ""+name() : a.toString(-1, 0);
 	}
 	
 	@Nullable

@@ -188,10 +188,13 @@ public abstract class Converters {
 	 * @param superType The component type of the returned array
 	 * @return The converted array
 	 */
-	@SuppressWarnings({"unchecked", "null"})
+	@SuppressWarnings("unchecked")
 	public static <T> T[] convertArray(final @Nullable Object[] o, final Class<? extends T>[] to, final Class<T> superType) {
-		if (o == null)
-			return (T[]) Array.newInstance(superType, 0);
+		if (o == null) {
+			final T[] r = (T[]) Array.newInstance(superType, 0);
+			assert r != null;
+			return r;
+		}
 		for (final Class<? extends T> t : to)
 			if (t.isAssignableFrom(o.getClass().getComponentType()))
 				return (T[]) o;
@@ -201,7 +204,9 @@ public abstract class Converters {
 			if (c != null)
 				l.add(c);
 		}
-		return l.toArray((T[]) Array.newInstance(superType, l.size()));
+		final T[] r = l.toArray((T[]) Array.newInstance(superType, l.size()));
+		assert r != null;
+		return r;
 	}
 	
 	private final static Map<Pair<Class<?>, Class<?>>, Converter<?, ?>> convertersQuickAccess = new HashMap<Pair<Class<?>, Class<?>>, Converter<?, ?>>();
@@ -279,17 +284,18 @@ public abstract class Converters {
 		return convert(from, (Class<T>) to, conv);
 	}
 	
-	@SuppressWarnings("null")
 	public final static <F, T> T[] convert(final F[] from, final Class<T> to, final Converter<? super F, ? extends T> conv) {
-		final T[] ts = (T[]) Array.newInstance(to, from.length);
+		T[] ts = (T[]) Array.newInstance(to, from.length);
 		int j = 0;
 		for (int i = 0; i < from.length; i++) {
-			final T t = from[i] == null ? null : conv.convert(from[i]);
+			final F f = from[i];
+			final T t = f == null ? null : conv.convert(f);
 			if (t != null)
 				ts[j++] = t;
 		}
 		if (j != ts.length)
-			return Arrays.copyOf(ts, j);
+			ts = Arrays.copyOf(ts, j);
+		assert ts != null;
 		return ts;
 	}
 	

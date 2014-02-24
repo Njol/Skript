@@ -346,7 +346,6 @@ public final class Updater {
 	 * @param sender
 	 * @param isAutomatic
 	 */
-	@SuppressWarnings("null")
 	static void download_i(final CommandSender sender, final boolean isAutomatic) {
 		assert sender != null;
 		stateLock.readLock().lock();
@@ -362,7 +361,9 @@ public final class Updater {
 		InputStream in = null;
 		try {
 			final URLConnection conn = new URL(latest.get().downloadURL).openConnection();
-			FileUtils.save(in = conn.getInputStream(), new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
+			in = conn.getInputStream();
+			assert in != null;
+			FileUtils.save(in, new File(Bukkit.getUpdateFolderFile(), "Skript.jar"));
 //			zip = new ZipInputStream(conn.getInputStream());
 //			ZipEntry entry;
 ////			boolean hasAliases = false;

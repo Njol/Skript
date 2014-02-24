@@ -161,12 +161,13 @@ public class Language {
 	 * @param key
 	 * @return a non-null String array with at least one element
 	 */
-	@SuppressWarnings("null")
 	public static String[] getList(final String key) {
 		final String s = get_i("" + key.toLowerCase(Locale.ENGLISH));
 		if (s == null)
 			return new String[] {key.toLowerCase(Locale.ENGLISH)};
-		return listSplitPattern.split(s);
+		final String[] r = listSplitPattern.split(s);
+		assert r != null;
+		return r;
 	}
 	
 	/**
@@ -203,15 +204,16 @@ public class Language {
 			l.onLanguageChange();
 	}
 	
-	@SuppressWarnings("null")
 	public static boolean load(String name) {
 		name = "" + name.toLowerCase();
 		if (name.equals("english"))
 			return true;
 		localized = new HashMap<String, String>();
 		boolean exists = load(Skript.getAddonInstance(), name);
-		for (final SkriptAddon addon : Skript.getAddons())
+		for (final SkriptAddon addon : Skript.getAddons()) {
+			assert addon != null;
 			exists |= load(addon, name);
+		}
 		if (!exists) {
 			localized = null;
 			Language.name = "english";
@@ -226,7 +228,6 @@ public class Language {
 		return true;
 	}
 	
-	@SuppressWarnings("null")
 	private static boolean load(final SkriptAddon addon, final String name) {
 		if (addon.getLanguageFileDirectory() == null)
 			return false;
@@ -244,8 +245,10 @@ public class Language {
 			Skript.error(addon + "'s language file " + name + ".lang does not provide a version number!");
 		} else {
 			try {
-				final Version v = new Version(l.get("version"));
-				if (v.isSmallerThan(langVersion.get(addon.plugin)))
+				final Version v = new Version("" + l.get("version"));
+				final Version lv = langVersion.get(addon.plugin);
+				assert lv != null; // set in loadDefault()
+				if (v.isSmallerThan(lv))
 					Skript.warning(addon + "'s language file " + name + ".lang is outdated, some messages will be english.");
 			} catch (final IllegalArgumentException e) {
 				Skript.error("Illegal version syntax in " + addon + "'s language file " + name + ".lang: " + e.getLocalizedMessage());

@@ -23,6 +23,7 @@ package ch.njol.skript;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -175,7 +176,6 @@ public final class Skript extends JavaPlugin implements Listener {
 	public final static Message m_invalid_reload = new Message("skript.invalid reload"),
 			m_finished_loading = new Message("skript.finished loading");
 	
-	@SuppressWarnings("null")
 	@Override
 	public void onEnable() {
 		if (disabled) {
@@ -188,7 +188,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		Workarounds.init();
 		
-		version = new Version(getDescription().getVersion());
+		version = new Version("" + getDescription().getVersion());
 		runningCraftBukkit = Bukkit.getServer().getClass().getName().equals("org.bukkit.craftbukkit.CraftServer");
 		final String bukkitV = Bukkit.getBukkitVersion();
 		final Matcher m = Pattern.compile("\\d+\\.\\d+(\\.\\d+)?").matcher(bukkitV);
@@ -197,7 +197,7 @@ public final class Skript extends JavaPlugin implements Listener {
 					"Skript will still work, but you might get random errors if you use features that are not available in your version of Bukkit.");
 			minecraftVersion = new Version(666, 0, 0);
 		} else {
-			minecraftVersion = new Version(m.group());
+			minecraftVersion = new Version("" + m.group());
 		}
 		
 		if (!getDataFolder().isDirectory())
@@ -213,17 +213,27 @@ public final class Skript extends JavaPlugin implements Listener {
 				for (final ZipEntry e : new EnumerationIterable<ZipEntry>(f.entries())) {
 					if (e.isDirectory())
 						continue;
+					File saveTo = null;
 					if (e.getName().startsWith(SCRIPTSFOLDER + "/")) {
 						final String fileName = e.getName().substring(e.getName().lastIndexOf('/') + 1);
-						FileUtils.save(f.getInputStream(e), new File(scripts, (fileName.startsWith("-") ? "" : "-") + fileName));
+						saveTo = new File(scripts, (fileName.startsWith("-") ? "" : "-") + fileName);
 					} else if (e.getName().equals("config.sk")) {
 						final File cf = new File(getDataFolder(), e.getName());
 						if (!cf.exists())
-							FileUtils.save(f.getInputStream(e), cf);
+							saveTo = cf;
 					} else if (e.getName().startsWith("aliases-") && e.getName().endsWith(".sk") && !e.getName().contains("/")) {
 						final File af = new File(getDataFolder(), e.getName());
 						if (!af.exists())
-							FileUtils.save(f.getInputStream(e), af);
+							saveTo = af;
+					}
+					if (saveTo != null) {
+						final InputStream in = f.getInputStream(e);
+						try {
+							assert in != null;
+							FileUtils.save(in, saveTo);
+						} finally {
+							in.close();
+						}
 					}
 				}
 				info("Successfully generated the config, the example scripts and the aliases files.");
@@ -280,7 +290,7 @@ public final class Skript extends JavaPlugin implements Listener {
 					final JarFile jar = new JarFile(getFile());
 					try {
 						for (final JarEntry e : new EnumerationIterable<JarEntry>(jar.entries())) {
-							if (e.getName().startsWith("ch/njol/skript/hooks/") && e.getName().endsWith("Hook.class") && StringUtils.count(e.getName(), '/') <= 5) {
+							if (e.getName().startsWith("ch/njol/skript/hooks/") && e.getName().endsWith("Hook.class") && StringUtils.count("" + e.getName(), '/') <= 5) {
 								final String c = e.getName().replace('/', '.').substring(0, e.getName().length() - ".class".length());
 								try {
 									final Class<?> hook = Class.forName(c, true, getClassLoader());
@@ -352,7 +362,7 @@ public final class Skript extends JavaPlugin implements Listener {
 						SkriptLogger.logAll(log);
 					}
 				});
-				final CountingLogHandler c = SkriptLogger.startLogHandler(new CountingLogHandler(Level.SEVERE));
+				final CountingLogHandler c = SkriptLogger.startLogHandler(new CountingLogHandler(SkriptLogger.SEVERE));
 				try {
 					if (!Variables.load())
 						if (c.getCount() == 0)
@@ -408,6 +418,7 @@ public final class Skript extends JavaPlugin implements Listener {
 				});
 				final Graph similarPlugins = metrics.createGraph("similar plugins");
 				for (final String plugin : new String[] {"VariableTriggers", "CommandHelper", "Denizen", "rTriggers", "kTriggers", "TriggerCmds", "BlockScripts", "ScriptBlock", "buscript", "BukkitScript"}) {
+					assert plugin != null;
 					similarPlugins.addPlotter(new Plotter(plugin) {
 						@Override
 						public int getValue() {
@@ -448,8 +459,10 @@ public final class Skript extends JavaPlugin implements Listener {
 						public void run() {
 							Updater.stateLock.readLock().lock();
 							try {
+								final Player p = e.getPlayer();
+								assert p != null;
 								if ((Updater.state == UpdateState.CHECKED_FOR_UPDATE || Updater.state == UpdateState.DOWNLOAD_ERROR) && Updater.latest.get() != null)
-									info(e.getPlayer(), "" + Updater.m_update_available);
+									info(p, "" + Updater.m_update_available);
 							} finally {
 								Updater.stateLock.readLock().unlock();
 							}

@@ -93,7 +93,7 @@ public class UnparsedLiteral implements Literal<Object> {
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			for (final Class<? extends R> t : to) {
-				@SuppressWarnings("null")
+				assert t != null;
 				final R r = Classes.parse(data, t, context);
 				if (r != null) {
 					log.printLog();

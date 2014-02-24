@@ -21,7 +21,6 @@
 
 package ch.njol.skript.classes;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.registrations.Converters;
@@ -48,8 +47,6 @@ public interface Converter<F, T> {
 	 * @param <F> same as in {@link Converter}
 	 * @param <T> dito
 	 */
-	@SuppressWarnings("null")
-	@NonNullByDefault
 	public final static class ConverterInfo<F, T> {
 		
 		public final Class<F> from;

@@ -31,6 +31,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
@@ -248,14 +249,17 @@ public class Config {
 		return validator.validate(getMainNode());
 	}
 	
-	@SuppressWarnings("null")
 	private void load(final Class<?> c, final @Nullable Object o, final String path) {
 		for (final Field f : c.getDeclaredFields()) {
 			f.setAccessible(true);
 			if (o != null || Modifier.isStatic(f.getModifiers())) {
 				try {
 					if (OptionSection.class.isAssignableFrom(f.getType())) {
-						load(f.get(o).getClass(), f.get(o), path + ((OptionSection) f.get(o)).key + ".");
+						final Object p = f.get(o);
+						@SuppressWarnings("null")
+						@NonNull
+						final Class<?> pc = p.getClass();
+						load(pc, p, path + ((OptionSection) p).key + ".");
 					} else if (Option.class.isAssignableFrom(f.getType())) {
 						((Option<?>) f.get(o)).set(this, path);
 					}

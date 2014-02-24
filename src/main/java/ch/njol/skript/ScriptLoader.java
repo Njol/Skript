@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 
 import org.bukkit.event.Event;
@@ -224,13 +223,13 @@ final public class ScriptLoader {
 	 * @param files
 	 * @return Info on the loaded scripts
 	 */
-	@SuppressWarnings("null")
 	public final static ScriptInfo loadScripts(final File[] files) {
 		Arrays.sort(files);
 		final ScriptInfo i = new ScriptInfo();
 		final boolean wasLocal = Language.setUseLocal(false);
 		try {
 			for (final File f : files) {
+				assert f != null : Arrays.toString(files);
 				i.add(loadScript(f));
 			}
 		} finally {
@@ -247,7 +246,7 @@ final public class ScriptLoader {
 		return i;
 	}
 	
-	@SuppressWarnings({"unchecked", "null"})
+	@SuppressWarnings("unchecked")
 	private final static ScriptInfo loadScript(final File f) {
 //		File cache = null;
 //		if (SkriptConfig.enableScriptCaching.value()) {
@@ -317,7 +316,7 @@ final public class ScriptLoader {
 			
 //			final SerializedScript script = new SerializedScript();
 			
-			final CountingLogHandler numErrors = SkriptLogger.startLogHandler(new CountingLogHandler(Level.SEVERE));
+			final CountingLogHandler numErrors = SkriptLogger.startLogHandler(new CountingLogHandler(SkriptLogger.SEVERE));
 			
 			try {
 				for (final Node cnode : config.getMainNode()) {
@@ -374,7 +373,7 @@ final public class ScriptLoader {
 										Skript.error("'" + var + "' is not a valid name for a default variable");
 										return null;
 									}
-									final ClassInfo<?> ci = Classes.getClassInfoFromUserInput(m.group(1));
+									final ClassInfo<?> ci = Classes.getClassInfoFromUserInput("" + m.group(1));
 									if (ci == null) {
 										Skript.error("Can't understand the type '" + m.group(1) + "'");
 										return null;
@@ -402,6 +401,7 @@ final public class ScriptLoader {
 							} finally {
 								log.stop();
 							}
+							@SuppressWarnings("null")
 							final ClassInfo<?> ci = Classes.getSuperClassInfo(o.getClass());
 							if (ci.getSerializer() == null) {
 								Skript.error("Can't save '" + ((EntryNode) n).getValue() + "' in a variable");
@@ -450,7 +450,7 @@ final public class ScriptLoader {
 						Skript.info("loading trigger '" + event + "'");
 					
 					if (StringUtils.startsWithIgnoreCase(event, "on "))
-						event = event.substring("on ".length());
+						event = "" + event.substring("on ".length());
 					
 					event = replaceOptions(event);
 					
@@ -579,7 +579,7 @@ final public class ScriptLoader {
 		return r;
 	}
 	
-	@SuppressWarnings({"unchecked", "null"})
+	@SuppressWarnings("unchecked")
 	public static ArrayList<TriggerItem> loadItems(final SectionNode node) {
 		
 		if (Skript.debug())
@@ -593,7 +593,7 @@ final public class ScriptLoader {
 			SkriptLogger.setNode(n);
 			if (n instanceof SimpleNode) {
 				final SimpleNode e = (SimpleNode) n;
-				final String s = replaceOptions(e.getKey());
+				final String s = replaceOptions("" + e.getKey());
 				if (!SkriptParser.validateLine(s))
 					continue;
 				final Statement stmt = Statement.parse(s, "Can't understand this condition/effect: " + s);
@@ -605,12 +605,12 @@ final public class ScriptLoader {
 				if (stmt instanceof Delay)
 					hasDelayBefore = Kleenean.TRUE;
 			} else if (n instanceof SectionNode) {
-				String name = replaceOptions(n.getKey());
+				String name = replaceOptions("" + n.getKey());
 				if (!SkriptParser.validateLine(name))
 					continue;
 				
 				if (StringUtils.startsWithIgnoreCase(name, "loop ")) {
-					final String l = name.substring("loop ".length());
+					final String l = "" + name.substring("loop ".length());
 					final RetainingLogHandler h = SkriptLogger.startRetainingLog();
 					Expression<?> loopedExpr;
 					try {
@@ -636,7 +636,7 @@ final public class ScriptLoader {
 					if (hadDelayBefore != Kleenean.TRUE && hasDelayBefore != Kleenean.FALSE)
 						hasDelayBefore = Kleenean.UNKNOWN;
 				} else if (StringUtils.startsWithIgnoreCase(name, "while ")) {
-					final String l = name.substring("while ".length());
+					final String l = "" + name.substring("while ".length());
 					final Condition c = Condition.parse(l, "Can't understand this condition: " + l);
 					if (c == null)
 						continue;
@@ -694,7 +694,7 @@ final public class ScriptLoader {
 		SkriptLogger.setNode(node);
 		
 		if (Skript.debug())
-			indentation = indentation.substring(0, indentation.length() - 4);
+			indentation = "" + indentation.substring(0, indentation.length() - 4);
 		
 		return items;
 	}

@@ -112,7 +112,6 @@ public class SkriptCommand implements CommandExecutor {
 		Skript.error(sender, StringUtils.fixCapitalization(what));
 	}
 	
-	@SuppressWarnings("null")
 	@Override
 	public boolean onCommand(final @Nullable CommandSender sender, final @Nullable Command command, final @Nullable String label, final @Nullable String[] args) {
 		if (sender == null || command == null || label == null || args == null)
@@ -165,8 +164,9 @@ public class SkriptCommand implements CommandExecutor {
 				if (args[1].equals("all")) {
 					try {
 						info(sender, "enable.all.enabling");
-						final Collection<File> files = toggleScripts(new File(Skript.getInstance().getDataFolder(), Skript.SCRIPTSFOLDER), true);
-						ScriptLoader.loadScripts(files.toArray(new File[0]));
+						final File[] files = toggleScripts(new File(Skript.getInstance().getDataFolder(), Skript.SCRIPTSFOLDER), true).toArray(new File[0]);
+						assert files != null;
+						ScriptLoader.loadScripts(files);
 						if (r.numErrors() == 0) {
 							info(sender, "enable.all.enabled");
 						} else {
@@ -213,7 +213,9 @@ public class SkriptCommand implements CommandExecutor {
 							return true;
 						}
 						info(sender, "enable.folder.enabling", f.getName(), scripts.size());
-						final ScriptInfo i = ScriptLoader.loadScripts(scripts.toArray(new File[scripts.size()]));
+						final File[] ss = scripts.toArray(new File[scripts.size()]);
+						assert ss != null;
+						final ScriptInfo i = ScriptLoader.loadScripts(ss);
 						assert i.files == scripts.size();
 						if (r.numErrors() == 0) {
 							info(sender, "enable.folder.enabled", f.getName(), i.files);
@@ -324,8 +326,11 @@ public class SkriptCommand implements CommandExecutor {
 							int pageNum = 1;
 //							if (Updater.infos.size() == 1) {
 //								info = Updater.latest.get();
-							if (args.length >= 3 && args[2].matches("\\d+"))
-								pageNum = Utils.parseInt(args[2]);
+							if (args.length >= 3 && args[2].matches("\\d+")) {
+								final String a2 = args[2];
+								assert a2 != null;
+								pageNum = Utils.parseInt(a2); // Eclipse complains about null here, not where args[2] is dereferenced above...
+							}
 //							} else {
 //								final String version = args[2];
 //								for (final VersionInfo i : Updater.infos) {

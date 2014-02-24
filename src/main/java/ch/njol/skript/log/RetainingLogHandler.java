@@ -71,7 +71,6 @@ public class RetainingLogHandler extends LogHandler {
 	 * @param def Error to print if no errors were logged, can be null to not print any error if there are none
 	 * @return Whether there were any errors
 	 */
-	@SuppressWarnings("null")
 	public final boolean printErrors(final @Nullable String def) {
 		printedErrorOrLog = true;
 		stop();
@@ -83,7 +82,7 @@ public class RetainingLogHandler extends LogHandler {
 			}
 		}
 		if (!hasError && def != null)
-			SkriptLogger.log(Level.SEVERE, def);
+			SkriptLogger.log(SkriptLogger.SEVERE, def);
 		return hasError;
 	}
 	

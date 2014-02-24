@@ -314,7 +314,6 @@ public abstract class Aliases {
 	 * @param variations
 	 * @return amount of added aliases
 	 */
-	@SuppressWarnings("null")
 	static int addAliases(final String name, final String value, final Variations variations) {
 		final ItemType t = parseAlias(value);
 		if (t == null) {
@@ -326,7 +325,7 @@ public abstract class Aliases {
 //		boolean printedSyntaxError = false;
 		for (final Entry<String, ItemType> e : as.entrySet()) {
 			final String s = "" + e.getKey().trim().replaceAll("\\s+", " ");
-			final NonNullPair<String, Integer> g = Noun.stripGender(s, e.getKey());
+			final NonNullPair<String, Integer> g = Noun.stripGender(s, "" + e.getKey());
 			final NonNullPair<String, String> p = Noun.getPlural(g.first);
 			final String lcs = p.first.toLowerCase();
 			final String lcp = p.second.toLowerCase();
@@ -404,7 +403,9 @@ public abstract class Aliases {
 				} else {
 					if (n == null)
 						materialNames.put(Integer.valueOf(d.getId()), n = new MaterialName(d.getId(), "" + d.getId(), "" + d.getId(), g.second));
-					n.names.put(new NonNullPair<Short, Short>(Short.valueOf(d.dataMin), Short.valueOf(d.dataMax)), p);
+					@SuppressWarnings("null")
+					final NonNullPair<Short, Short> data = new NonNullPair<Short, Short>(Short.valueOf(d.dataMin), Short.valueOf(d.dataMax));
+					n.names.put(data, p);
 				}
 			}
 		}
@@ -483,10 +484,9 @@ public abstract class Aliases {
 	 * @param s mixed case string
 	 * @return A new ItemType representing the given value
 	 */
-	@SuppressWarnings("null")
 	@Nullable
 	public static ItemType parseAlias(final String s) {
-		if (s == null || s.isEmpty()) {
+		if (s.isEmpty()) {
 			Skript.error(m_empty_string.toString());
 			return null;
 		}
@@ -497,7 +497,7 @@ public abstract class Aliases {
 		
 		final String[] types = s.split("\\s*,\\s*");
 		for (final String type : types) {
-			if (parseType(type, t, true) == null)
+			if (type == null || parseType(type, t, true) == null)
 				return null;
 		}
 		
@@ -518,26 +518,25 @@ public abstract class Aliases {
 	 * @param s
 	 * @return The parsed ItemType or null if the input is invalid.
 	 */
-	@SuppressWarnings("null")
 	@Nullable
 	public static ItemType parseItemType(String s) {
-		if (s == null || s.isEmpty())
+		if (s.isEmpty())
 			return null;
-		s = s.trim();
+		s = "" + s.trim();
 		
 		final ItemType t = new ItemType();
 		
 		Matcher m;
 		if ((m = p_of_every.matcher(s)).matches()) {
-			t.setAmount(Utils.parseInt(m.group(1)));
+			t.setAmount(Utils.parseInt("" + m.group(1)));
 			t.setAll(true);
-			s = m.group(m.groupCount());
+			s = "" + m.group(m.groupCount());
 		} else if ((m = p_of.matcher(s)).matches()) {
-			t.setAmount(Utils.parseInt(m.group(1)));
-			s = m.group(m.groupCount());
+			t.setAmount(Utils.parseInt("" + m.group(1)));
+			s = "" + m.group(m.groupCount());
 		} else if ((m = p_every.matcher(s)).matches()) {
 			t.setAll(true);
-			s = m.group(m.groupCount());
+			s = "" + m.group(m.groupCount());
 		} else {
 			final int l = s.length();
 			s = Noun.stripIndefiniteArticle(s);
@@ -552,7 +551,7 @@ public abstract class Aliases {
 			final ItemType t2 = t.clone();
 			final BlockingLogHandler log = SkriptLogger.startLogHandler(new BlockingLogHandler());
 			try {
-				if (parseType(s.substring(0, c), t2, false) == null)
+				if (parseType("" + s.substring(0, c), t2, false) == null)
 					continue;
 			} finally {
 				log.stop();
@@ -562,7 +561,7 @@ public abstract class Aliases {
 			final Map<Enchantment, Integer> enchantments = new HashMap<Enchantment, Integer>();
 			final String[] enchs = lc.substring(c + of.length(), lc.length()).split("\\s*(,|" + Language.get("and") + ")\\s*");
 			for (final String ench : enchs) {
-				final EnchantmentType e = EnchantmentType.parse(ench);
+				final EnchantmentType e = EnchantmentType.parse("" + ench);
 				if (e == null)
 					continue outer;
 				enchantments.put(e.getType(), e.getLevel());

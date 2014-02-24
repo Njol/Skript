@@ -100,14 +100,13 @@ public class Variable<T> implements Expression<T> {
 	/**
 	 * Prints errors
 	 */
-	@SuppressWarnings("null")
 	@Nullable
 	public static <T> Variable<T> newInstance(String name, final Class<? extends T>[] types) {
 //		if (name.startsWith(LOCAL_VARIABLE_TOKEN) && name.contains(SEPARATOR)) {
 //			Skript.error("Local variables cannot be lists, i.e. must not contain the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
 //			return null;
 //		} else 
-		name = name.trim();
+		name = "" + name.trim();
 		if (name.startsWith("#")) {
 			Skript.error("Variables must not start with '#'."); // used as comment character in CSV
 			return null;
@@ -124,7 +123,7 @@ public class Variable<T> implements Expression<T> {
 			Skript.error("A variable's name must not contain the separator '" + SEPARATOR + "' multiple times in a row (error in variable {" + name + "})");
 			return null;
 		}
-		final VariableString vs = VariableString.newInstance(name.startsWith(LOCAL_VARIABLE_TOKEN) ? name.substring(LOCAL_VARIABLE_TOKEN.length()).trim() : name, StringMode.VARIABLE_NAME);
+		final VariableString vs = VariableString.newInstance(name.startsWith(LOCAL_VARIABLE_TOKEN) ? "" + name.substring(LOCAL_VARIABLE_TOKEN.length()).trim() : name, StringMode.VARIABLE_NAME);
 		if (vs == null)
 			return null;
 		return new Variable<T>(vs, types, name.startsWith(LOCAL_VARIABLE_TOKEN), name.endsWith(SEPARATOR + "*"), null);
@@ -279,12 +278,12 @@ public class Variable<T> implements Expression<T> {
 				return false;
 			}
 			
-			@SuppressWarnings("null")
 			@Override
 			public T next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
 				final T n = next;
+				assert n != null;
 				next = null;
 				return n;
 			}
@@ -325,7 +324,7 @@ public class Variable<T> implements Expression<T> {
 		return CollectionUtils.array(Object[].class);
 	}
 	
-	@SuppressWarnings({"unchecked", "rawtypes", "null"})
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Override
 	public void change(final Event e, final @Nullable Object[] delta, final ChangeMode mode) throws UnsupportedOperationException {
 		switch (mode) {
@@ -360,7 +359,9 @@ public class Variable<T> implements Expression<T> {
 				if (x == null)
 					return;
 				for (final Object o : x instanceof Map ? ((Map<?, ?>) x).values() : Arrays.asList(x)) {
-					final ClassInfo<?> ci = Classes.getSuperClassInfo(o.getClass());
+					final Class<?> c = o.getClass();
+					assert c != null;
+					final ClassInfo<?> ci = Classes.getSuperClassInfo(c);
 					final Changer<?> changer = ci.getChanger();
 					if (changer != null && changer.acceptChange(ChangeMode.RESET) != null) {
 						final Object[] one = (Object[]) Array.newInstance(o.getClass(), 1);
@@ -417,7 +418,14 @@ public class Variable<T> implements Expression<T> {
 					}
 				} else {
 					Object o = get(e);
-					ClassInfo<?> ci = o == null ? null : Classes.getSuperClassInfo(o.getClass());
+					ClassInfo<?> ci;
+					if (o == null) {
+						ci = null;
+					} else {
+						final Class<?> c = o.getClass();
+						assert c != null;
+						ci = Classes.getSuperClassInfo(c);
+					}
 					Arithmetic a = null;
 					final Changer<?> changer;
 					final Class<?>[] cs;
@@ -425,7 +433,9 @@ public class Variable<T> implements Expression<T> {
 						boolean changed = false;
 						for (final Object d : delta) {
 							if (o == null || ci == null) {
-								ci = Classes.getSuperClassInfo(d.getClass());
+								final Class<?> c = d.getClass();
+								assert c != null;
+								ci = Classes.getSuperClassInfo(c);
 								if (ci.getMath() != null)
 									o = d;
 								changed = true;
@@ -480,14 +490,16 @@ public class Variable<T> implements Expression<T> {
 		return getAll(e);
 	}
 	
-	@SuppressWarnings("null")
 	@Override
 	public T[] getAll(final Event e) {
 		if (list)
 			return getConvertedArray(e);
 		final T o = getConverted(e);
-		if (o == null)
-			return (T[]) Array.newInstance(superType, 0);
+		if (o == null) {
+			final T[] r = (T[]) Array.newInstance(superType, 0);
+			assert r != null;
+			return r;
+		}
 		final T[] one = (T[]) Array.newInstance(superType, 1);
 		one[0] = o;
 		return one;

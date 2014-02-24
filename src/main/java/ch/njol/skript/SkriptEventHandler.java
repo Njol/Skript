@@ -78,13 +78,14 @@ public abstract class SkriptEventHandler {
 				return true;
 			}
 			
-			@SuppressWarnings("null")
 			@Override
 			public Trigger next() {
 				final Iterator<Trigger> current = this.current;
 				if (current == null || !hasNext())
 					throw new NoSuchElementException();
-				return current.next();
+				final Trigger next = current.next();
+				assert next != null;
+				return next;
 			}
 			
 			@Override
@@ -109,8 +110,8 @@ public abstract class SkriptEventHandler {
 		}
 	};
 	
-	@SuppressWarnings("null")
 	static void check(final Event e) {
+		@SuppressWarnings("null")
 		Iterator<Trigger> ts = getTriggers(e.getClass());
 		if (!ts.hasNext())
 			return;
@@ -125,7 +126,9 @@ public abstract class SkriptEventHandler {
 			}
 			if (!hasTrigger)
 				return;
-			ts = getTriggers(e.getClass());
+			final Class<? extends Event> c = e.getClass();
+			assert c != null;
+			ts = getTriggers(c);
 			
 			logEventStart(e);
 		}
@@ -247,9 +250,10 @@ public abstract class SkriptEventHandler {
 	private final static Set<Class<? extends Event>> registeredEvents = new HashSet<Class<? extends Event>>();
 	private final static Listener listener = new Listener() {};
 	
-	@SuppressWarnings({"unchecked", "rawtypes", "null"})
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	final static void registerBukkitEvents() {
 		for (final Class<? extends Event> e : triggers.keySet()) {
+			assert e != null;
 			if (!containsSuperclass((Set) registeredEvents, e)) { // I just love Java's generics
 				Bukkit.getPluginManager().registerEvent(e, listener, SkriptConfig.defaultEventPriority.value(), ee, Skript.getInstance());
 				registeredEvents.add(e);

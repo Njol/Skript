@@ -61,12 +61,14 @@ public class SectionNode extends Node implements Iterable<Node> {
 	@Nullable
 	private NodeMap nodeMap = null;
 	
-	@SuppressWarnings("null")
 	private NodeMap getNodeMap() {
+		NodeMap nodeMap = this.nodeMap;
 		if (nodeMap == null) {
-			nodeMap = new NodeMap();
-			for (final Node node : nodes)
+			nodeMap = this.nodeMap = new NodeMap();
+			for (final Node node : nodes) {
+				assert node != null;
 				nodeMap.put(node);
+			}
 		}
 		return nodeMap;
 	}

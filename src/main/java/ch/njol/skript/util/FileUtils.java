@@ -168,7 +168,7 @@ public abstract class FileUtils {
 	/**
 	 * Saves the contents of an InputStream in a file.
 	 * 
-	 * @param in The InputStream to read from.
+	 * @param in The InputStream to read from. This stream will not be closed when this method returns.
 	 * @param file The file to save to. Will be replaced if it exists, or created if it doesn't.
 	 * @throws IOException
 	 */

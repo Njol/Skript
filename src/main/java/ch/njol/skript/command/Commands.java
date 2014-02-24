@@ -237,7 +237,6 @@ public abstract class Commands {
 	 * @param command full command string without the slash
 	 * @return whether to cancel the event
 	 */
-	@SuppressWarnings("null")
 	final static boolean handleCommand(final CommandSender sender, final String command) {
 		final String[] cmd = command.split("\\s+", 2);
 		cmd[0] = cmd[0].toLowerCase();
@@ -256,7 +255,7 @@ public abstract class Commands {
 //			}
 			if (SkriptConfig.logPlayerCommands.value() && !(sender instanceof ConsoleCommandSender))
 				SkriptLogger.LOGGER.info(sender.getName() + ": /" + command);
-			c.execute(sender, cmd[0], cmd.length == 1 ? "" : cmd[1]);
+			c.execute(sender, "" + cmd[0], cmd.length == 1 ? "" : "" + cmd[1]);
 			return true;
 		}
 		return false;
