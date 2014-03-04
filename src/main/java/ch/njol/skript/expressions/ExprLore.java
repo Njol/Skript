@@ -55,7 +55,7 @@ import ch.njol.util.StringUtils;
  * @author joeuguce99
  */
 @Name("Lore")
-@Description("An item's lore. ")
+@Description("An item's lore.")
 @Examples("set the 1st line of the item's lore to \"<orange>Excalibur 2.0\"")
 @Since("2.1")
 public class ExprLore extends SimpleExpression<String> {

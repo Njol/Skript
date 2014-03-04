@@ -32,7 +32,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,8 +43,6 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.lang.Variable;
-import ch.njol.skript.log.LogEntry;
-import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.ExceptionUtils;
@@ -66,6 +63,8 @@ public class FlatFileStorage extends VariablesStorage {
 	@Nullable
 	private volatile PrintWriter changesWriter;
 	
+	private volatile boolean loaded = false;
+	
 	final AtomicInteger changes = new AtomicInteger(0);
 	private final int REQUIRED_CHANGES_FOR_RESAVE = 1000;
 	
@@ -74,13 +73,18 @@ public class FlatFileStorage extends VariablesStorage {
 	
 	private boolean loadError = false;
 	
-	protected FlatFileStorage(final SectionNode n) {
-		super(n);
+	protected FlatFileStorage(final String name) {
+		super(name);
 	}
 	
+	/**
+	 * Doesn'ts lock the connection as required by {@link Variables#variableLoaded(String, Object, VariablesStorage)}.
+	 */
 	@SuppressWarnings({"deprecation"})
 	@Override
 	protected boolean load_i(final SectionNode n) {
+		SkriptLogger.setNode(null);
+		
 		IOException ioEx = null;
 		int unsuccessful = 0;
 		final StringBuilder invalid = new StringBuilder();
@@ -92,72 +96,63 @@ public class FlatFileStorage extends VariablesStorage {
 		final Version v2_1 = new Version(2, 1);
 		boolean update2_1 = false;
 		
-		final RetainingLogHandler log = SkriptLogger.startRetainingLog();
-		Collection<LogEntry> errors = null;
+		BufferedReader r = null;
 		try {
-			BufferedReader r = null;
-			try {
-				r = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-				String line = null;
-				int lineNum = 0;
-				while ((line = r.readLine()) != null) {
-					lineNum++;
-					line = line.trim();
-					if (line.isEmpty() || line.startsWith("#")) {
-						if (line.startsWith("# version:")) {
-							try {
-								varVersion = new Version("" + line.substring("# version:".length()).trim());
-								update2_0_beta3 = varVersion.isSmallerThan(v2_0_beta3);
-								update2_1 = varVersion.isSmallerThan(v2_1);
-							} catch (final IllegalArgumentException e) {}
-						}
-						continue;
+			r = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+			String line = null;
+			int lineNum = 0;
+			while ((line = r.readLine()) != null) {
+				lineNum++;
+				line = line.trim();
+				if (line.isEmpty() || line.startsWith("#")) {
+					if (line.startsWith("# version:")) {
+						try {
+							varVersion = new Version("" + line.substring("# version:".length()).trim());
+							update2_0_beta3 = varVersion.isSmallerThan(v2_0_beta3);
+							update2_1 = varVersion.isSmallerThan(v2_1);
+						} catch (final IllegalArgumentException e) {}
 					}
-					final String[] split = splitCSV(line);
-					if (split == null || split.length != 3) {
-						Skript.error("invalid amount of commas in line " + lineNum + " ('" + line + "')");
+					continue;
+				}
+				final String[] split = splitCSV(line);
+				if (split == null || split.length != 3) {
+					Skript.error("invalid amount of commas in line " + lineNum + " ('" + line + "')");
+					if (invalid.length() != 0)
+						invalid.append(", ");
+					invalid.append(split == null ? "<unknown>" : split[0]);
+					unsuccessful++;
+					continue;
+				}
+				if (split[1].equals("null")) {
+					Variables.variableLoaded("" + split[0], null, this);
+				} else {
+					Object d;
+					if (update2_1)
+						d = Classes.deserialize("" + split[1], "" + split[2]);
+					else
+						d = Classes.deserialize("" + split[1], decode("" + split[2]));
+					if (d == null) {
 						if (invalid.length() != 0)
 							invalid.append(", ");
-						invalid.append(split == null ? "<unknown>" : split[0]);
+						invalid.append(split[0]);
 						unsuccessful++;
 						continue;
 					}
-					if (split[1].equals("null")) {
-						Variables.variableLoaded("" + split[0], null, this);
-					} else {
-						Object d;
-						if (update2_1)
-							d = Classes.deserialize("" + split[1], "" + split[2]);
-						else
-							d = Classes.deserialize("" + split[1], decode("" + split[2]));
-						if (d == null) {
-							if (invalid.length() != 0)
-								invalid.append(", ");
-							invalid.append(split[0]);
-							unsuccessful++;
-							continue;
-						}
-						if (d instanceof String && update2_0_beta3) {
-							d = Utils.replaceChatStyles((String) d);
-						}
-						Variables.variableLoaded("" + split[0], d, this);
+					if (d instanceof String && update2_0_beta3) {
+						d = Utils.replaceChatStyles((String) d);
 					}
-				}
-			} catch (final IOException e) {
-				loadError = true;
-				ioEx = e;
-			} finally {
-				if (r != null) {
-					try {
-						r.close();
-					} catch (final IOException e) {}
+					Variables.variableLoaded("" + split[0], d, this);
 				}
 			}
+		} catch (final IOException e) {
+			loadError = true;
+			ioEx = e;
 		} finally {
-			errors = log.getErrors();
-			log.clear();
-			log.printLog();
-			log.stop();
+			if (r != null) {
+				try {
+					r.close();
+				} catch (final IOException e) {}
+			}
 		}
 		
 		final File file = this.file;
@@ -170,10 +165,6 @@ public class FlatFileStorage extends VariablesStorage {
 			if (unsuccessful > 0) {
 				Skript.error(unsuccessful + " variable" + (unsuccessful == 1 ? "" : "s") + " could not be loaded!");
 				Skript.error("Affected variables: " + invalid.toString());
-				if (!errors.isEmpty()) {
-					Skript.error("further information:");
-					SkriptLogger.logAll(errors);
-				}
 			}
 			if (ioEx != null) {
 				Skript.error("An I/O error occurred while loading the variables: " + ExceptionUtils.toString(ioEx));
@@ -196,7 +187,7 @@ public class FlatFileStorage extends VariablesStorage {
 			Skript.info(file.getName() + " successfully updated.");
 		}
 		
-		synchronized (connectionLock) { // only synchronised because of the assertion in connect()
+		synchronized (fileLock) { // only synchronised because of the assertion in connect()
 			connect();
 		}
 		
@@ -246,20 +237,21 @@ public class FlatFileStorage extends VariablesStorage {
 	}
 	
 	@SuppressWarnings("null")
-	private final static Pattern csv = Pattern.compile("\\s*([^\",]+|\"([^\"]|\"\")*\")\\s*(,|$)");
+	private final static Pattern csv = Pattern.compile("(?<=^|,)\\s*([^\",]*|\"([^\"]|\"\")*\")\\s*(,|$)");
 	
 	@Nullable
-	private final static String[] splitCSV(final String line) {
+	final static String[] splitCSV(final String line) {
 		final Matcher m = csv.matcher(line);
 		int lastEnd = 0;
 		final ArrayList<String> r = new ArrayList<String>();
 		while (m.find()) {
 			if (lastEnd != m.start())
 				return null;
-			if (m.group(1).startsWith("\""))
-				r.add(m.group(1).substring(1, m.group(1).length() - 1).replace("\"\"", "\""));
+			final String v = m.group(1);
+			if (v.startsWith("\""))
+				r.add(v.substring(1, v.length() - 1).replace("\"\"", "\""));
 			else
-				r.add(m.group(1));
+				r.add(v.trim());
 			lastEnd = m.end();
 		}
 		if (lastEnd != line.length())
@@ -269,11 +261,15 @@ public class FlatFileStorage extends VariablesStorage {
 	
 	@Override
 	protected boolean save(final String name, final @Nullable String type, final @Nullable byte[] value) {
-		synchronized (connectionLock) {
+		synchronized (fileLock) {
+			if (!loaded) {
+				assert type == null;
+				return true; // deleting variables is not really required for this kind of storage, as it will be completely rewritten every once in a while, and at least once when the server stops.
+			}
 			PrintWriter cw;
 			while ((cw = changesWriter) == null) {
 				try {
-					connectionLock.wait();
+					fileLock.wait();
 				} catch (final InterruptedException e) {}
 			}
 			writeCSV(cw, name, type, value == null ? "" : encode(value));
@@ -283,13 +279,19 @@ public class FlatFileStorage extends VariablesStorage {
 		return true;
 	}
 	
+	/**
+	 * Use with find()
+	 */
+	@SuppressWarnings("null")
+	private final static Pattern containsWhitespace = Pattern.compile("\\s");
+	
 	private final static void writeCSV(final PrintWriter pw, final String... values) {
 		assert values.length == 3; // name, type, value
 		for (int i = 0; i < values.length; i++) {
 			if (i != 0)
 				pw.print(", ");
 			String v = values[i];
-			if (v != null && (v.contains(",") || v.contains("\"")))
+			if (v != null && (v.contains(",") || v.contains("\"") || v.contains("#") || containsWhitespace.matcher(v).find()))
 				v = '"' + v.replace("\"", "\"\"") + '"';
 			pw.print(v);
 		}
@@ -298,7 +300,7 @@ public class FlatFileStorage extends VariablesStorage {
 	
 	@Override
 	protected final void disconnect() {
-		synchronized (connectionLock) {
+		synchronized (fileLock) {
 			clearChangesQueue();
 			final PrintWriter cw = changesWriter;
 			if (cw != null) {
@@ -310,11 +312,12 @@ public class FlatFileStorage extends VariablesStorage {
 	
 	@Override
 	protected final boolean connect() {
-		synchronized (connectionLock) {
+		synchronized (fileLock) {
 			if (changesWriter != null)
 				return true;
 			try {
 				changesWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file, true), StandardCharsets.UTF_8));
+				loaded = true;
 				return true;
 			} catch (final FileNotFoundException e) {
 				Skript.exception(e);
@@ -344,7 +347,7 @@ public class FlatFileStorage extends VariablesStorage {
 			if (bt != null)
 				bt.cancel();
 		}
-		synchronized (connectionLock) {
+		synchronized (fileLock) {
 			try {
 				final File f = file;
 				if (f == null) {
@@ -388,7 +391,7 @@ public class FlatFileStorage extends VariablesStorage {
 				Variables.getReadLock().unlock();
 				if (!finalSave) {
 					connect();
-					connectionLock.notifyAll();
+					fileLock.notifyAll();
 				}
 			}
 		}

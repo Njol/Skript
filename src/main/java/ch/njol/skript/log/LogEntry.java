@@ -44,6 +44,7 @@ public class LogEntry {
 	
 	@Nullable
 	private final String from;
+	private boolean tracked = false;
 	
 	public LogEntry(final Level level, final String message) {
 		this(level, ErrorQuality.SEMANTIC_ERROR.quality(), message, SkriptLogger.getNode());
@@ -66,11 +67,16 @@ public class LogEntry {
 	}
 	
 	public LogEntry(final Level level, final int quality, final String message, final @Nullable Node node) {
+		this(level, quality, message, node, false);
+	}
+	
+	public LogEntry(final Level level, final int quality, final String message, final @Nullable Node node, final boolean tracked) {
 		this.level = level;
 		this.quality = quality;
 		this.message = message;
 		this.node = node;
-		from = Skript.debug() ? findCaller() : "";
+		this.tracked = tracked;
+		from = tracked || Skript.debug() ? findCaller() : "";
 	}
 	
 	private final static String skriptLogPackageName = "" + SkriptLogger.class.getPackage().getName();
@@ -83,9 +89,11 @@ public class LogEntry {
 			i++;
 			while (i < es.length - 1 && (es[i].getClassName().startsWith(skriptLogPackageName) || es[i].getClassName().equals(Skript.class.getName())))
 				i++;
+			if (i >= es.length)
+				i = es.length - 1;
 			return " (from " + es[i] + ")";
 		}
-		return es.length == 0 ? " (from an unknown source)" : " (from " + es[es.length - 1] + ")";
+		return " (from an unknown source)";
 	}
 	
 	public Level getLevel() {
@@ -98,6 +106,27 @@ public class LogEntry {
 	
 	public String getMessage() {
 		return toString();
+	}
+	
+	private boolean used = false;
+	
+	void discarded() {
+		assert !used : message + from;
+		used = true;
+		if (tracked)
+			SkriptLogger.LOGGER.warning(" # LogEntry '" + message + "'" + from + " discarded" + findCaller());
+	}
+	
+	void logged() {
+		assert !used : message + from;
+		used = true;
+		if (tracked)
+			SkriptLogger.LOGGER.warning(" # LogEntry '" + message + "'" + from + " logged" + findCaller());
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		assert used : message + from;
 	}
 	
 	@Override

@@ -49,12 +49,12 @@ public class ErrorDescLogHandler extends LogHandler {
 	private boolean hadError = false;
 	
 	@Override
-	public boolean log(final LogEntry entry) {
+	public LogResult log(final LogEntry entry) {
 		if (!hadError && entry.getLevel() == Level.SEVERE) {
 			hadError = true;
 			beforeErrors();
 		}
-		return true;
+		return LogResult.LOG;
 	}
 	
 	protected void beforeErrors() {

@@ -29,8 +29,8 @@ package ch.njol.skript.log;
 public class BlockingLogHandler extends LogHandler {
 	
 	@Override
-	public boolean log(final LogEntry entry) {
-		return false;
+	public LogResult log(final LogEntry entry) {
+		return LogResult.DONT_LOG;
 	}
 	
 }

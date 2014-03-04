@@ -313,6 +313,7 @@ public class Variable<T> implements Expression<T> {
 	private final void setIndex(final Event e, final String index, final @Nullable Object value) {
 		assert list;
 		final String s = name.toString(e).toLowerCase(Locale.ENGLISH);
+		assert s.endsWith("::*") : s + "; " + name;
 		Variables.setVariable(s.substring(0, s.length() - 1) + index.toLowerCase(Locale.ENGLISH), value, e, local);
 	}
 	
@@ -406,7 +407,8 @@ public class Variable<T> implements Expression<T> {
 							assert r != null;
 							setIndex(e, r, null);
 						}
-					} else { // ADD
+					} else {
+						assert mode == ChangeMode.ADD;
 						int i = 1;
 						for (final Object d : delta) {
 							if (o != null)

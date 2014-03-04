@@ -40,16 +40,18 @@ public class ParseLogHandler extends LogHandler {
 	private final List<LogEntry> log = new ArrayList<LogEntry>();
 	
 	@Override
-	public boolean log(final LogEntry entry) {
+	public LogResult log(final LogEntry entry) {
 		if (entry.getLevel() == Level.SEVERE) {
 			final LogEntry e = error;
 			if (e == null || entry.getQuality() > e.getQuality()) {
 				error = entry;
+				if (e != null)
+					e.discarded();
 			}
 		} else {
 			log.add(entry);
 		}
-		return false;
+		return LogResult.CACHED;
 	}
 	
 	boolean printedErrorOrLog = false;

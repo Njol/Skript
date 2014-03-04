@@ -641,10 +641,17 @@ public abstract class Classes {
 		return r;
 	}
 	
+	/**
+	 * Must be called on the appropriate thread for the given value (i.e. the main thread currently)
+	 */
 	@Nullable
 	public final static SerializedVariable.Value serialize(@Nullable Object o) {
 		if (o == null)
 			return null;
+		
+		// temporary
+		assert Bukkit.isPrimaryThread();
+		
 		@SuppressWarnings("null")
 		ClassInfo<?> ci = getSuperClassInfo(o.getClass());
 		if (ci.getSerializeAs() != null) {
@@ -659,6 +666,8 @@ public abstract class Classes {
 				return null;
 			}
 		}
+		Serializer<?> s;
+		assert (s = ci.getSerializer()) != null && (s.mustSyncDeserialization() ? Bukkit.isPrimaryThread() : true);
 		try {
 			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
 			final YggdrasilOutputStream yout = Variables.yggdrasil.newOutputStream(bout);
@@ -707,7 +716,8 @@ public abstract class Classes {
 	
 	@Nullable
 	public final static Object deserialize(final ClassInfo<?> type, InputStream value) {
-		assert Bukkit.isPrimaryThread();
+		Serializer<?> s;
+		assert (s = type.getSerializer()) != null && (s.mustSyncDeserialization() ? Bukkit.isPrimaryThread() : true);
 		YggdrasilInputStream in = null;
 		try {
 			value = new SequenceInputStream(new ByteArrayInputStream(getYggdrasilStart(type)), value);

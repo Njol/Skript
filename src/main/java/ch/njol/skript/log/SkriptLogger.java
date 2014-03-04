@@ -30,6 +30,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.Node;
+import ch.njol.skript.log.LogHandler.LogResult;
 
 /**
  * @author Peter Güttinger
@@ -171,22 +172,31 @@ public abstract class SkriptLogger {
 		if (Skript.testing() && node != null && node.debug())
 			System.out.print("---> " + entry.level + ": " + entry.getMessage() + " ::" + LogEntry.findCaller());
 		for (final LogHandler h : handlers) {
-			if (!h.log(entry))
-				return;
+			final LogResult r = h.log(entry);
+			switch (r) {
+				case CACHED:
+					return;
+				case DONT_LOG:
+					entry.discarded();
+					return;
+				case LOG:
+					continue;
+			}
 		}
+		entry.logged();
 		LOGGER.log(entry.getLevel(), "[Skript] " + entry.getMessage());
 	}
 	
 	public static void logAll(final Collection<LogEntry> entries) {
-		outer: for (final LogEntry entry : entries) {
+		for (final LogEntry entry : entries) {
 			if (entry == null)
 				continue;
-			for (final LogHandler h : handlers) {
-				if (!h.log(entry))
-					continue outer;
-			}
-			LOGGER.log(entry.getLevel(), "[Skript] " + entry.getMessage());
+			log(entry);
 		}
+	}
+	
+	public static void logTracked(final Level level, final String message) {
+		log(new LogEntry(level, 0, message, node, true));
 	}
 	
 	/**

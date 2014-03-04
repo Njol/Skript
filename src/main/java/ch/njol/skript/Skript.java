@@ -331,14 +331,14 @@ public final class Skript extends JavaPlugin implements Listener {
 					private final List<LogEntry> log = new ArrayList<LogEntry>();
 					
 					@Override
-					public boolean log(final LogEntry entry) {
+					public LogResult log(final LogEntry entry) {
 						super.log(entry);
-						if (entry.level == Level.SEVERE) {
+						if (entry.level.intValue() >= Level.SEVERE.intValue()) {
 							logEx(entry.message); // no [Skript] prefix
-							return false;
+							return LogResult.DONT_LOG;
 						} else {
 							log.add(entry);
-							return false;
+							return LogResult.CACHED;
 						}
 					}
 					
@@ -706,7 +706,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	};
 	
 	/**
-	 * Creates a new Thread and sets its UncaughtExceptionHandler. The Thread is not started autmatically.
+	 * Creates a new Thread and sets its UncaughtExceptionHandler. The Thread is not started automatically.
 	 */
 	public final static Thread newThread(final Runnable r, final String name) {
 		final Thread t = new Thread(r, name);

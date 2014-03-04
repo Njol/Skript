@@ -24,8 +24,10 @@ package ch.njol.skript.variables;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.WeakHashMap;
 import java.util.concurrent.BlockingQueue;
@@ -53,7 +55,9 @@ import ch.njol.skript.lang.Variable;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.variables.DatabaseStorage.Type;
+import ch.njol.skript.variables.SerializedVariable.Value;
 import ch.njol.util.Kleenean;
+import ch.njol.util.NonNullPair;
 import ch.njol.yggdrasil.Yggdrasil;
 
 /**
@@ -66,7 +70,7 @@ public abstract class Variables implements Closeable {
 	
 	public final static Yggdrasil yggdrasil = new Yggdrasil(YGGDRASIL_VERSION);
 	
-	private final static String ConfigurationSerializablePrefix = "ConfigurationSerializable_";
+	private final static String configurationSerializablePrefix = "ConfigurationSerializable_";
 	static {
 		yggdrasil.registerSingleClass(Kleenean.class, "Kleenean");
 		yggdrasil.registerClassResolver(new ConfigurationSerializer<ConfigurationSerializable>() {
@@ -80,15 +84,15 @@ public abstract class Variables implements Closeable {
 			@Nullable
 			public String getID(final Class<?> c) {
 				if (ConfigurationSerializable.class.isAssignableFrom(c) && Classes.getSuperClassInfo(c) == Classes.getExactClassInfo(Object.class))
-					return ConfigurationSerializablePrefix + ConfigurationSerialization.getAlias((Class<? extends ConfigurationSerializable>) c);
+					return configurationSerializablePrefix + ConfigurationSerialization.getAlias((Class<? extends ConfigurationSerializable>) c);
 				return null;
 			}
 			
 			@Override
 			@Nullable
 			public Class<? extends ConfigurationSerializable> getClass(final String id) {
-				if (id.startsWith(ConfigurationSerializablePrefix))
-					return ConfigurationSerialization.getClassByAlias(id.substring(ConfigurationSerializablePrefix.length()));
+				if (id.startsWith(configurationSerializablePrefix))
+					return ConfigurationSerialization.getClassByAlias(id.substring(configurationSerializablePrefix.length()));
 				return null;
 			}
 		});
@@ -97,58 +101,74 @@ public abstract class Variables implements Closeable {
 	static List<VariablesStorage> storages = new ArrayList<VariablesStorage>();
 	
 	public static boolean load() {
+		assert variables.treeMap.isEmpty();
+		assert variables.hashMap.isEmpty();
+		assert storages.isEmpty();
+		
+		final Config c = SkriptConfig.getConfig();
+		if (c == null)
+			throw new SkriptAPIException("Cannot load variables before the config");
+		final Node databases = c.getMainNode().get("databases");
+		if (databases == null || !(databases instanceof SectionNode)) {
+			Skript.error("The config is missing the required 'databases' section that defines where the variables are saved");
+			return false;
+		}
+		
 		try {
-			variablesLock.writeLock().lock();
-			assert variables.treeMap.isEmpty();
-			assert variables.hashMap.isEmpty();
-			
-			final Config c = SkriptConfig.getConfig();
-			if (c == null)
-				throw new SkriptAPIException("Cannot load variables before the config");
-			final Node databases = c.getMainNode().get("databases");
-			if (databases == null || !(databases instanceof SectionNode)) {
-				Skript.error("The config is missing the required 'databases' section that defines where the variables are saved");
-				return false;
-			}
+			boolean successful = true;
 			for (final Node node : (SectionNode) databases) {
 				if (node instanceof SectionNode) {
 					final SectionNode n = (SectionNode) node;
 					final String type = n.getValue("type");
 					if (type == null) {
 						Skript.error("Missing entry 'type' in database definition");
-						return false;
+						successful = false;
+						continue;
 					}
 					
+					final String name = n.getKey();
+					assert name != null;
 					final VariablesStorage s;
 					if (type.equalsIgnoreCase("csv") || type.equalsIgnoreCase("file") || type.equalsIgnoreCase("flatfile")) {
-						s = new FlatFileStorage(n);
+						s = new FlatFileStorage(name);
 					} else if (type.equalsIgnoreCase("mysql")) {
-						s = new DatabaseStorage(n, Type.MYSQL);
+						s = new DatabaseStorage(name, Type.MYSQL);
 					} else if (type.equalsIgnoreCase("sqlite")) {
-						s = new DatabaseStorage(n, Type.SQLITE);
+						s = new DatabaseStorage(name, Type.SQLITE);
 					} else {
 						if (!type.equalsIgnoreCase("disabled") && !type.equalsIgnoreCase("none")) {
 							Skript.error("Invalid database type '" + type + "'");
-							return false;
+							successful = false;
 						}
 						continue;
 					}
-					if (!s.load(n))
-						return false;
-					storages.add(s);
+					// TODO print number of loaded variables?
+					if (s.load(n))
+						storages.add(s);
+					else
+						successful = false;
 				} else {
 					Skript.error("Invalid line in databases: databases must be defined as sections");
-					return false;
+					successful = false;
 				}
 			}
+			if (!successful)
+				return false;
+			
 			if (storages.isEmpty()) {
 				Skript.error("No databases to store variables are defined. Please enable at least the default database, even if you don't use variables at all.");
 				return false;
 			}
-			return true;
 		} finally {
-			variablesLock.writeLock().unlock();
+			// make sure to put the loaded variables into the variables map
+			final int n = onStoragesLoaded();
+			if (n != 0) {
+				Skript.warning(n + " variables were possibly discarded due to not belonging to any database (SQL databases keep such variables and will continue to generate this warning, while CSV discards them).");
+			}
 		}
+		
+		saveThread.start();
+		return true;
 	}
 	
 	@SuppressWarnings("null")
@@ -222,6 +242,7 @@ public abstract class Variables implements Closeable {
 	 */
 	public final static void setVariable(final String name, @Nullable Object value, final @Nullable Event e, final boolean local) {
 		if (value != null) {
+			assert !name.endsWith("::*");
 			@SuppressWarnings("null")
 			final ClassInfo<?> ci = Classes.getSuperClassInfo(value.getClass());
 			final Class<?> sas = ci.getSerializeAs();
@@ -245,34 +266,81 @@ public abstract class Variables implements Closeable {
 		try {
 			variablesLock.writeLock().lock();
 			variables.setVariable(name, value);
-			saveVariableChange(name, value);
 		} finally {
 			variablesLock.writeLock().unlock();
 		}
+		saveVariableChange(name, value);
 	}
 	
+	// stores loaded variables while variable storages are loaded.
+	@Nullable
+	private static Map<String, NonNullPair<Object, VariablesStorage>> tempVars = new HashMap<String, NonNullPair<Object, VariablesStorage>>();
+	
 	/**
-	 * Doesn't lock the variables map and moves the loaded variable to the appropriate database if the config was changed.
+	 * Sets a variable and moves it to the appropriate database if the config was changed.
+	 * <p>
+	 * Must be called on Bukkit's main thread.
+	 * <p>
+	 * This method directly invokes {@link VariablesStorage#save(String, String, byte[])}, i.e. you should not be holding any database locks or such when calling this!
 	 * 
 	 * @param name
 	 * @param value
 	 * @param source
+	 * @return Whether the variable was stored somewhere. Not valid while storages are loading.
 	 */
-	final static void variableLoaded(final String name, final @Nullable Object value, final VariablesStorage source) {
-		variables.setVariable(name, value);
+	final static boolean variableLoaded(final String name, final @Nullable Object value, final VariablesStorage source) {
+		assert Bukkit.isPrimaryThread(); // required by serialisation
+		
+		final Map<String, NonNullPair<Object, VariablesStorage>> tvs = tempVars;
+		if (tvs != null) {
+			if (value == null)
+				return false;
+			final NonNullPair<Object, VariablesStorage> v = tvs.get(name);
+			if (v != null) {// variable already loaded from another database
+				Skript.warning("The variable {" + name + "} was loaded twice from different databases (" + v.second.databaseName + " and " + source.databaseName + "), only the one from " + source.databaseName + " will be kept.");
+				v.second.save(name, null, null);
+			}
+			tvs.put(name, new NonNullPair<Object, VariablesStorage>(value, source));
+			return false;
+		}
+		
+		variablesLock.writeLock().lock();
+		try {
+			variables.setVariable(name, value);
+		} finally {
+			variablesLock.writeLock().unlock();
+		}
 		
 		for (final VariablesStorage s : storages) {
-			if (s == source) {
-				if (s.accept(name))
-					break;
-				else
-					continue;
-			}
 			if (s.accept(name)) {
-				s.save(serialize(name, value));
-				break;
+				if (s != source) {
+					final Value v = serialize(value);
+					s.save(name, v != null ? v.type : null, v != null ? v.data : null);
+					if (value != null)
+						source.save(name, null, null);
+				}
+				return true;
 			}
 		}
+		return false;
+	}
+	
+	/**
+	 * Stores loaded variables into the variables map and the appropriate databases.
+	 * 
+	 * @return How many variables were not stored anywhere
+	 */
+	@SuppressWarnings("null")
+	private static int onStoragesLoaded() {
+		final Map<String, NonNullPair<Object, VariablesStorage>> tvs = tempVars;
+		tempVars = null;
+		assert tvs != null;
+		int n = 0;
+		for (final Entry<String, NonNullPair<Object, VariablesStorage>> tv : tvs.entrySet()) {
+			if (!variableLoaded(tv.getKey(), tv.getValue().first, tv.getValue().second))
+				n++;
+		}
+		return n;
 	}
 	
 	public final static SerializedVariable serialize(final String name, final @Nullable Object value) {

@@ -21,6 +21,8 @@
 
 package ch.njol.skript.variables;
 
+import static org.junit.Assert.*;
+
 import java.util.Arrays;
 
 import org.junit.Test;
@@ -34,8 +36,35 @@ public class FlatFileStorageTest {
 	public void testHexCoding() {
 		final byte[] bytes = {-0x80, -0x50, -0x01, 0x00, 0x01, 0x44, 0x7F};
 		final String string = "80B0FF0001447F";
-		assert string.equals(FlatFileStorage.encode(bytes)) : string + " != " + FlatFileStorage.encode(bytes);
+		assertEquals(string, FlatFileStorage.encode(bytes));
 		assert Arrays.equals(bytes, FlatFileStorage.decode(string)) : Arrays.toString(bytes) + " != " + Arrays.toString(FlatFileStorage.decode(string));
+	}
+	
+	@SuppressWarnings("null")
+	@Test
+	public void testCSV() {
+		final String[][] vs = {
+				{"", ""},
+				{",", "", ""},
+				{",,", "", "", ""},
+				{"a", "a"},
+				{"a,", "a", ""},
+				{",a", "", "a"},
+				{",a,", "", "a", ""},
+				{" , a , ", "", "a", ""},
+				{"a,b,c", "a", "b", "c"},
+				{" a , b , c ", "a", "b", "c"},
+				
+				{"\"\"", ""},
+				{"\",\"", ","},
+				{"\"\"\"\"", "\""},
+				{"\" \"", " "},
+				{"a, \"\"\"\", b, \", c\", d", "a", "\"", "b", ", c", "d"},
+				{"a, \"\"\", b, \", c", "a", "\", b, ", "c"},
+		};
+		for (final String[] v : vs) {
+			assert Arrays.equals(Arrays.copyOfRange(v, 1, v.length), FlatFileStorage.splitCSV(v[0])) : v[0] + ": " + Arrays.toString(Arrays.copyOfRange(v, 1, v.length)) + " != " + Arrays.toString(FlatFileStorage.splitCSV(v[0]));
+		}
 	}
 	
 }

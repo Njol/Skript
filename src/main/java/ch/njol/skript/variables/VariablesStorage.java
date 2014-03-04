@@ -52,7 +52,7 @@ public abstract class VariablesStorage implements Closeable {
 	
 	protected volatile boolean closed = false;
 	
-	protected final String name;
+	protected final String databaseName;
 	
 	@Nullable
 	protected File file;
@@ -63,13 +63,11 @@ public abstract class VariablesStorage implements Closeable {
 	@Nullable
 	private Pattern variablePattern;
 	
+	// started in load()
 	private final Thread writeThread;
 	
-	protected VariablesStorage(final SectionNode n) {
-		final String name = n.getKey();
-		if (name == null)
-			throw new IllegalArgumentException("" + n);
-		this.name = name;
+	protected VariablesStorage(final String name) {
+		databaseName = name;
 		writeThread = Skript.newThread(new Runnable() {
 			@Override
 			public void run() {
@@ -78,9 +76,9 @@ public abstract class VariablesStorage implements Closeable {
 						final SerializedVariable var = changesQueue.take();
 						final Value d = var.value;
 						if (d != null)
-							save(name, d.type, d.data);
+							save(var.name, d.type, d.data);
 						else
-							save(name, null, null);
+							save(var.name, null, null);
 					} catch (final InterruptedException e) {}
 				}
 			}
@@ -96,14 +94,14 @@ public abstract class VariablesStorage implements Closeable {
 	protected <T> T getValue(final SectionNode n, final String key, final Class<T> type) {
 		final String v = n.getValue(key);
 		if (v == null) {
-			Skript.error("The config is missing the entry for '" + key + "' in the database '" + name + "'");
+			Skript.error("The config is missing the entry for '" + key + "' in the database '" + databaseName + "'");
 			return null;
 		}
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			final T r = Classes.parse(v, type, ParseContext.CONFIG);
 			if (r == null)
-				log.printError("The entry for '" + key + "' in the database '" + name + "' must be a " + Classes.getSuperClassInfo(type).getName());
+				log.printError("The entry for '" + key + "' in the database '" + databaseName + "' must be a " + Classes.getSuperClassInfo(type).getName());
 			else
 				log.printLog();
 			return r;
@@ -167,15 +165,16 @@ public abstract class VariablesStorage implements Closeable {
 		if (!load_i(n))
 			return false;
 		
-		Skript.closeOnDisable(this);
 		writeThread.start();
+		Skript.closeOnDisable(this);
+		
 		return true;
 	}
 	
 	/**
 	 * Loads variables stored here.
 	 * 
-	 * @return Whether
+	 * @return Whether the database could be loaded successfully, i.e. whether the config is correct and all variables could be loaded
 	 */
 	protected abstract boolean load_i(SectionNode n);
 	
@@ -183,10 +182,10 @@ public abstract class VariablesStorage implements Closeable {
 	
 	protected abstract File getFile(String file);
 	
-	protected final Object connectionLock = new Object();
+	protected final Object fileLock = new Object();
 	
 	/**
-	 * (Re)connects to the database.
+	 * (Re)connects to the database (not called on the first connect - do this in {@link #load_i(SectionNode)}).
 	 * 
 	 * @return Whether the connection could be re-established. An error should be printed by this method prior to returning false.
 	 */
@@ -207,20 +206,15 @@ public abstract class VariablesStorage implements Closeable {
 		backupTask = new Task(Skript.getInstance(), t.getTicks(), t.getTicks(), true) {
 			@Override
 			public void run() {
-				synchronized (connectionLock) {
+				synchronized (fileLock) {
+					disconnect();
 					try {
-						Variables.getReadLock().lock();
-						disconnect();
-						try {
-							FileUtils.backup(file);
-						} catch (final IOException e) {
-							Skript.error("Automatic variables backup failed: " + e.getLocalizedMessage());
-						} finally {
-							connect();
-							connectionLock.notifyAll();
-						}
+						FileUtils.backup(file);
+					} catch (final IOException e) {
+						Skript.error("Automatic variables backup failed: " + e.getLocalizedMessage());
 					} finally {
-						Variables.getReadLock().unlock();
+						connect();
+						fileLock.notifyAll();
 					}
 				}
 			}
@@ -230,8 +224,7 @@ public abstract class VariablesStorage implements Closeable {
 	final boolean accept(final @Nullable String var) {
 		if (var == null)
 			return false;
-		final Pattern vp = variablePattern;
-		return vp == null ? true : vp.matcher(var).matches();
+		return variablePattern != null ? variablePattern.matcher(var).matches() : true;
 	}
 	
 	private long lastWarning = Long.MIN_VALUE;
@@ -244,12 +237,12 @@ public abstract class VariablesStorage implements Closeable {
 	 */
 	final void save(final SerializedVariable var) {
 		if (changesQueue.size() > FIRST_WARNING && lastWarning < System.currentTimeMillis() - WARNING_INTERVAL * 1000) {
-			Skript.warning("Cannot write variables to the database '" + name + "' at sufficient speed; server performance may suffer and many variables will be lost if the server crashes. (this warning will be repeated at most once every " + ERROR_INTERVAL + " seconds)");
+			Skript.warning("Cannot write variables to the database '" + databaseName + "' at sufficient speed; server performance may suffer and many variables will be lost if the server crashes. (this warning will be repeated at most once every " + WARNING_INTERVAL + " seconds)");
 			lastWarning = System.currentTimeMillis();
 		}
 		if (!changesQueue.offer(var)) {
 			if (lastError < System.currentTimeMillis() - ERROR_INTERVAL * 1000) {
-				Skript.error("Skript cannot save any variables to the database '" + name + "'. The server will hang and may crash if no more variables can be saved.");
+				Skript.error("Skript cannot save any variables to the database '" + databaseName + "'. The server will hang and may crash if no more variables can be saved.");
 				lastError = System.currentTimeMillis();
 			}
 			while (true) {

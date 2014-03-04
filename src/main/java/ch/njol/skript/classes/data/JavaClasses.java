@@ -104,6 +104,11 @@ public class JavaClasses {
 					}
 					
 					@Override
+					public boolean canBeInstantiated(final Class<? extends Number> c) {
+						return true;
+					}
+					
+					@Override
 					public void deserialize(final Number o, final Fields f) throws StreamCorruptedException {
 						assert false;
 					}
@@ -167,6 +172,11 @@ public class JavaClasses {
 					}
 					
 					@Override
+					public boolean canBeInstantiated(final Class<? extends Long> c) {
+						return true;
+					}
+					
+					@Override
 					public void deserialize(final Long o, final Fields f) throws StreamCorruptedException {
 						assert false;
 					}
@@ -222,6 +232,11 @@ public class JavaClasses {
 					public Fields serialize(final Integer n) {
 						assert false;
 						return null;
+					}
+					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends Integer> c) {
+						return true;
 					}
 					
 					@Override
@@ -285,6 +300,11 @@ public class JavaClasses {
 					}
 					
 					@Override
+					public boolean canBeInstantiated(final Class<? extends Double> c) {
+						return true;
+					}
+					
+					@Override
 					public void deserialize(final Double o, final Fields f) throws StreamCorruptedException {
 						assert false;
 					}
@@ -340,6 +360,11 @@ public class JavaClasses {
 					public Fields serialize(final Float n) {
 						assert false;
 						return null;
+					}
+					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends Float> c) {
+						return true;
 					}
 					
 					@Override
@@ -411,6 +436,11 @@ public class JavaClasses {
 					}
 					
 					@Override
+					public boolean canBeInstantiated(final Class<? extends Boolean> c) {
+						return true;
+					}
+					
+					@Override
 					public void deserialize(final Boolean o, final Fields f) throws StreamCorruptedException {
 						assert false;
 					}
@@ -469,6 +499,11 @@ public class JavaClasses {
 					}
 					
 					@Override
+					public boolean canBeInstantiated(final Class<? extends Short> c) {
+						return true;
+					}
+					
+					@Override
 					public void deserialize(final Short o, final Fields f) throws StreamCorruptedException {
 						assert false;
 					}
@@ -524,6 +559,11 @@ public class JavaClasses {
 					public Fields serialize(final Byte n) {
 						assert false;
 						return null;
+					}
+					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends Byte> c) {
+						return true;
 					}
 					
 					@Override
@@ -617,6 +657,11 @@ public class JavaClasses {
 					public Fields serialize(final String n) {
 						assert false; // natively supported by Yggdrasil
 						return null;
+					}
+					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends String> c) {
+						return true;
 					}
 					
 					@Override

@@ -105,17 +105,17 @@ public abstract class Serializer<T> extends YggdrasilSerializer<T> {
 	public abstract void deserialize(T o, Fields f) throws StreamCorruptedException, NotSerializableException;
 	
 	/**
-	 * @return Whether deserialisation must be done on Bukkit's main thread. You must override and use {@link #deserialize(Fields)} if this method returns true!
+	 * Not currently used (everything happens on Bukkit's main thread).
+	 * 
+	 * @return Whether deserialisation must be done on Bukkit's main thread.
 	 */
 	public abstract boolean mustSyncDeserialization();
 	
+	/**
+	 * You must override and use {@link #deserialize(Fields)} if this method returns false.
+	 */
 	@Override
-	public boolean canBeInstantiated(final Class<? extends T> c) {
-		final ClassInfo<? extends T> info = this.info;
-		assert info != null;
-		assert info.getC().isAssignableFrom(c);
-		return !mustSyncDeserialization();
-	}
+	public abstract boolean canBeInstantiated(final Class<? extends T> c);
 	
 	@SuppressWarnings("unchecked")
 	@Override

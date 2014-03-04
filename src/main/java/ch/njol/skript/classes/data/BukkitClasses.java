@@ -222,6 +222,11 @@ public class BukkitClasses {
 						return true;
 					}
 					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends Block> c) {
+						return false;
+					}
+					
 //					return b.getWorld().getName() + ":" + b.getX() + "," + b.getY() + "," + b.getZ();
 					@Override
 					@Nullable
@@ -380,6 +385,11 @@ public class BukkitClasses {
 					@Override
 					public void deserialize(final World o, final Fields f) {
 						assert false;
+					}
+					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends World> c) {
+						return false;
 					}
 					
 					@Override
@@ -570,6 +580,11 @@ public class BukkitClasses {
 					@Override
 					public void deserialize(final OfflinePlayer o, final Fields f) {
 						assert false;
+					}
+					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends OfflinePlayer> c) {
+						return false;
 					}
 					
 					@Override
@@ -940,6 +955,11 @@ public class BukkitClasses {
 					@Override
 					public void deserialize(final Chunk o, final Fields f) throws StreamCorruptedException {
 						assert false;
+					}
+					
+					@Override
+					public boolean canBeInstantiated(final Class<? extends Chunk> c) {
+						return false;
 					}
 					
 					@Override

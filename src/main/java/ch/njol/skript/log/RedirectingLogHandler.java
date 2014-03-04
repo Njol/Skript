@@ -47,14 +47,14 @@ public class RedirectingLogHandler extends LogHandler {
 	}
 	
 	@Override
-	public boolean log(final LogEntry entry) {
+	public LogResult log(final LogEntry entry) {
 		if (recipient != null)
 			recipient.sendMessage(prefix + entry.toString());
 		else
 			SkriptLogger.LOGGER.log(entry.getLevel(), prefix + entry.toString());
 		if (entry.level == Level.SEVERE)
 			numErrors++;
-		return false;
+		return LogResult.DONT_LOG;
 	}
 	
 	public int numErrors() {

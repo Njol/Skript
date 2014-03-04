@@ -39,10 +39,10 @@ public class CountingLogHandler extends LogHandler {
 	}
 	
 	@Override
-	public boolean log(final LogEntry entry) {
+	public LogResult log(final LogEntry entry) {
 		if (entry.level.intValue() >= minimum)
 			count++;
-		return true;
+		return LogResult.LOG;
 	}
 	
 	public int getCount() {

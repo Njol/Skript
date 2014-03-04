@@ -26,11 +26,15 @@ package ch.njol.skript.log;
  */
 public abstract class LogHandler {
 	
+	public static enum LogResult {
+		LOG, CACHED, DONT_LOG;
+	}
+	
 	/**
 	 * @param entry
 	 * @return Whether to print the specified entry or not.
 	 */
-	public abstract boolean log(LogEntry entry);
+	public abstract LogResult log(LogEntry entry);
 	
 	/**
 	 * Called just after the handler is removed from the active handlers stack.
