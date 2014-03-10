@@ -368,7 +368,7 @@ public final class BukkitEventValues {
 			@Nullable
 			public Entity get(final ProjectileHitEvent e) {
 				assert false;
-				return e.getEntity().getShooter();
+				return e.getEntity();
 			}
 		}, 0, "Use 'projectile' and/or 'shooter' in projectile hit events", ProjectileHitEvent.class);
 		EventValues.registerEventValue(ProjectileHitEvent.class, Projectile.class, new Getter<Projectile, ProjectileHitEvent>() {
@@ -384,7 +384,7 @@ public final class BukkitEventValues {
 			@Nullable
 			public Entity get(final ProjectileLaunchEvent e) {
 				assert false;
-				return e.getEntity().getShooter();
+				return e.getEntity();
 			}
 		}, 0, "Use 'projectile' and/or 'shooter' in shoot events", ProjectileLaunchEvent.class);
 		EventValues.registerEventValue(ProjectileLaunchEvent.class, Projectile.class, new Getter<Projectile, ProjectileLaunchEvent>() {

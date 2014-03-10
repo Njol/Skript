@@ -41,6 +41,7 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.util.Closeable;
@@ -115,7 +116,8 @@ public class EffLog extends Effect {
 					w.flush();
 				}
 			} else {
-				final File script = getTrigger().getScript();
+				final Trigger t = getTrigger();
+				final File script = t == null ? null : t.getScript();
 				Skript.info("[" + (script != null ? script.getName() : "---") + "] " + message);
 			}
 		}

@@ -111,14 +111,12 @@ public class LogEntry {
 	private boolean used = false;
 	
 	void discarded() {
-		assert !used : message + from;
 		used = true;
 		if (tracked)
 			SkriptLogger.LOGGER.warning(" # LogEntry '" + message + "'" + from + " discarded" + findCaller());
 	}
 	
 	void logged() {
-		assert !used : message + from;
 		used = true;
 		if (tracked)
 			SkriptLogger.LOGGER.warning(" # LogEntry '" + message + "'" + from + " logged" + findCaller());

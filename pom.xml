@@ -43,14 +43,14 @@
 		<dependency>
 			<groupId>org.bukkit</groupId>
 			<artifactId>bukkit</artifactId>
-			<version>1.7.2-R0.2</version>
+			<version>1.7.2-R0.4-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<!-- For the source -->
 		<dependency>
 			<groupId>org.bukkit</groupId>
 			<artifactId>craftbukkit</artifactId>
-			<version>1.7.2-R0.2</version>
+			<version>1.7.2-R0.4-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<!-- <dependency> <groupId>org.bukkit</groupId> <artifactId>minecraft-server</artifactId> <version>1.5.2</version> <scope>provided</scope> </dependency> -->

@@ -62,7 +62,6 @@ public class ExprBlock extends WrapperExpression<Block> {
 		Skript.registerExpression(ExprBlock.class, Block.class, ExpressionType.COMBINED, "[the] block %direction% [%location%]");
 	}
 	
-	//FIXME Unexpected error while executing effect command 'set line 4 of the block at {eventupdatesign.a3} to "%{dungeon.string.15}%"'
 	@SuppressWarnings({"unchecked", "null"})
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parser) {

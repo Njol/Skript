@@ -296,7 +296,7 @@ public abstract class Variables implements Closeable {
 			if (value == null)
 				return false;
 			final NonNullPair<Object, VariablesStorage> v = tvs.get(name);
-			if (v != null) {// variable already loaded from another database
+			if (v != null && v.second != source) {// variable already loaded from another database
 				Skript.warning("The variable {" + name + "} was loaded twice from different databases (" + v.second.databaseName + " and " + source.databaseName + "), only the one from " + source.databaseName + " will be kept.");
 				v.second.save(name, null, null);
 			}

@@ -21,11 +21,13 @@
 
 package ch.njol.skript.registrations;
 
+import static org.easymock.EasyMock.*;
+import static org.junit.Assume.*;
+
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,15 +40,14 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.easymock.EasyMock;
-import org.eclipse.jdt.annotation.Nullable;
-import org.junit.Assume;
+import org.bukkit.plugin.java.JavaPluginLoader;
 import org.junit.Before;
 import org.junit.Test;
+import org.objenesis.ObjenesisHelper;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.SkriptAddon;
 import ch.njol.skript.classes.data.BukkitClasses;
 import ch.njol.skript.classes.data.BukkitEventValues;
 import ch.njol.skript.classes.data.JavaClasses;
@@ -73,53 +74,46 @@ import ch.njol.skript.util.WeatherType;
  */
 public class ClassesTest {
 	
+	@SuppressWarnings({"resource", "deprecation"})
 	@Before
 	public void before() throws Exception {
-		final File f = new File("target/classes/");
+		
+		final File dataDir = new File("target/classes/");
 		final File jar = new File("target/", "skript.jar");
-		Assume.assumeTrue(jar.exists());
+		assumeTrue(jar.exists());
 		
 		final Logger l = Logger.getLogger(getClass().getCanonicalName());
 		l.setParent(SkriptLogger.LOGGER);
 		l.setLevel(Level.WARNING);
 		
-		final Server s = EasyMock.createMock(Server.class);
+		final Server s = createMock(Server.class);
 		s.getLogger();
-		EasyMock.expectLastCall().andReturn(l).anyTimes();
+		expectLastCall().andReturn(l).anyTimes();
 		s.isPrimaryThread();
-		EasyMock.expectLastCall().andReturn(true).anyTimes();
+		expectLastCall().andReturn(true).anyTimes();
 		s.getName();
-		EasyMock.expectLastCall().andReturn("Whatever").anyTimes();
+		expectLastCall().andReturn("Whatever").anyTimes();
 		s.getVersion();
-		EasyMock.expectLastCall().andReturn("2.0").anyTimes();
+		expectLastCall().andReturn("2.0").anyTimes();
 		s.getBukkitVersion();
-		EasyMock.expectLastCall().andReturn("2.0").anyTimes();
-		EasyMock.replay(s);
+		expectLastCall().andReturn("2.0").anyTimes();
+		replay(s);
 		
 		Bukkit.setServer(s);
 		
-		@SuppressWarnings("resource")
-		final JavaPlugin p = new JavaPlugin() {
-			{
-				final PluginDescriptionFile pdf = new PluginDescriptionFile(new FileInputStream(new File(f, "plugin.yml")));
-				initialize(null, s, pdf, f, jar, getClass().getClassLoader());
-			}
-			
-			@Override
-			@Nullable
-			public InputStream getResource(final @Nullable String filename) {
-				assert filename != null;
-				try {
-					return new FileInputStream(new File(f, filename));
-				} catch (final FileNotFoundException e) {
-					return null;
-				}
-			}
-		};
-		final SkriptAddon a = Skript.registerAddon(p);
-		a.setLanguageFileDirectory("lang");
+		final Skript skript = (Skript) ObjenesisHelper.newInstance(Skript.class); // bypass the class loaded check
+		final Field instance = Skript.class.getDeclaredField("instance");
+		instance.setAccessible(true);
+		instance.set(null, skript);
 		
-		a.loadClasses("ch.njol.skript", "entity");
+		final PluginDescriptionFile pdf = new PluginDescriptionFile(new FileInputStream(new File(dataDir, "plugin.yml")));
+		
+//	    final void init(PluginLoader loader, Server server, PluginDescriptionFile description, File dataFolder, File file, ClassLoader classLoader) {
+		final Method init = JavaPlugin.class.getDeclaredMethod("init", PluginLoader.class, Server.class, PluginDescriptionFile.class, File.class, File.class, ClassLoader.class);
+		init.setAccessible(true);
+		init.invoke(skript, new JavaPluginLoader(s), s, pdf, dataDir, jar, getClass().getClassLoader());
+		
+		Skript.getAddonInstance().loadClasses("ch.njol.skript", "entity");
 		new JavaClasses();
 		new BukkitClasses();
 		new BukkitEventValues();

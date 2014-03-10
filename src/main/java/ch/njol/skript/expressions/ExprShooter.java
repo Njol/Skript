@@ -63,8 +63,11 @@ public class ExprShooter extends PropertyExpression<Projectile, LivingEntity> {
 		return get(source, new Converter<Projectile, LivingEntity>() {
 			@Override
 			@Nullable
-			public LivingEntity convert(final Projectile o) {
-				return o.getShooter();
+			public LivingEntity convert(final Projectile p) {
+				final Object o = p.getShooter();
+				if (o instanceof LivingEntity)
+					return (LivingEntity) o;
+				return null;
 			}
 		});
 	}

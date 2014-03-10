@@ -53,10 +53,15 @@ public class EvtPressurePlate extends SkriptEvent {
 		return true;
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean check(final Event e) {
+		// TODO !Update with every version [blocks]
+		// 'type.getData() == PressurePlate.class' doesn't work for gold and iron pressure plates
+		final Material type = ((PlayerInteractEvent) e).getClickedBlock().getType();
 		return ((PlayerInteractEvent) e).getAction() == Action.PHYSICAL &&
-				(tripwire ? ((PlayerInteractEvent) e).getClickedBlock().getType() == Material.TRIPWIRE : (((PlayerInteractEvent) e).getClickedBlock().getType() == Material.WOOD_PLATE || ((PlayerInteractEvent) e).getClickedBlock().getType() == Material.STONE_PLATE));
+				(tripwire ? type == Material.TRIPWIRE
+						: (type == Material.WOOD_PLATE || type == Material.STONE_PLATE || type.getId() == 147 || type.getId() == 148)); // gold and iron pressure plates
 	}
 	
 	@Override

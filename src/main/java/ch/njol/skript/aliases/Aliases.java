@@ -559,7 +559,7 @@ public abstract class Aliases {
 			if (t2.numTypes() == 0)
 				continue;
 			final Map<Enchantment, Integer> enchantments = new HashMap<Enchantment, Integer>();
-			final String[] enchs = lc.substring(c + of.length(), lc.length()).split("\\s*(,|" + Language.get("and") + ")\\s*");
+			final String[] enchs = lc.substring(c + of.length(), lc.length()).split("\\s*(,|" + Pattern.quote(Language.get("and")) + ")\\s*");
 			for (final String ench : enchs) {
 				final EnchantmentType e = EnchantmentType.parse("" + ench);
 				if (e == null)

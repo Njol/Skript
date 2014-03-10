@@ -138,7 +138,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 				}
 			}
 			if (!hasValue) {
-				log.printError("There's no " + Classes.getSuperClassInfo(c).getName() + " in " + Utils.a(ScriptLoader.currentEventName) + " event");
+				log.printError("There's no " + Classes.getSuperClassInfo(c).getName() + " in " + Utils.a(ScriptLoader.getCurrentEventName()) + " event");
 				return false;
 			}
 			log.printLog();

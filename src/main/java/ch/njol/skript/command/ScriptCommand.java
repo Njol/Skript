@@ -118,6 +118,11 @@ public class ScriptCommand implements CommandExecutor {
 		this.permission = permission;
 		this.permissionMessage = permissionMessage.isEmpty() ? Language.get("commands.no permission message") : Utils.replaceEnglishChatStyles(permissionMessage);
 		
+		final Iterator<String> as = aliases.iterator();
+		while (as.hasNext()) { // remove aliases that are the same as the command
+			if (as.next().equalsIgnoreCase(label))
+				as.remove();
+		}
 		this.aliases = aliases;
 		activeAliases = new ArrayList<String>(aliases);
 		
@@ -246,30 +251,33 @@ public class ScriptCommand implements CommandExecutor {
 	private transient Command overridden = null;
 	private transient Map<String, Command> overriddenAliases = new HashMap<String, Command>();
 	
-	public void register(final SimpleCommandMap commandMap, final Map<String, Command> knownCommands, final Set<String> aliases) {
+	public void register(final SimpleCommandMap commandMap, final Map<String, Command> knownCommands, final @Nullable Set<String> aliases) {
 		synchronized (commandMap) {
 			overriddenAliases.clear();
 			overridden = knownCommands.put(label, bukkitCommand);
-			aliases.remove(label);
+			if (aliases != null)
+				aliases.remove(label);
 			final Iterator<String> as = activeAliases.iterator();
 			while (as.hasNext()) {
 				final String lowerAlias = as.next().toLowerCase();
-				if (knownCommands.containsKey(lowerAlias) && !aliases.contains(lowerAlias)) {
+				if (knownCommands.containsKey(lowerAlias) && (aliases == null || !aliases.contains(lowerAlias))) {
 					as.remove();
 					continue;
 				}
 				overriddenAliases.put(lowerAlias, knownCommands.put(lowerAlias, bukkitCommand));
-				aliases.add(lowerAlias);
+				if (aliases != null)
+					aliases.add(lowerAlias);
 			}
 			bukkitCommand.setAliases(activeAliases);
 			bukkitCommand.register(commandMap);
 		}
 	}
 	
-	public void unregister(final SimpleCommandMap commandMap, final Map<String, Command> knownCommands, final Set<String> aliases) {
+	public void unregister(final SimpleCommandMap commandMap, final Map<String, Command> knownCommands, final @Nullable Set<String> aliases) {
 		synchronized (commandMap) {
 			knownCommands.remove(label);
-			aliases.removeAll(activeAliases);
+			if (aliases != null)
+				aliases.removeAll(activeAliases);
 			for (final String alias : activeAliases)
 				knownCommands.remove(alias);
 			activeAliases = new ArrayList<String>(this.aliases);
@@ -283,7 +291,8 @@ public class ScriptCommand implements CommandExecutor {
 				if (e.getValue() == null)
 					continue;
 				knownCommands.put(e.getKey(), e.getValue());
-				aliases.add(e.getKey());
+				if (aliases != null)
+					aliases.add(e.getKey());
 			}
 			overriddenAliases.clear();
 		}
@@ -312,7 +321,7 @@ public class ScriptCommand implements CommandExecutor {
 				Collections.sort(as, HelpTopicComparator.helpTopicComparatorInstance());
 				topics.set(aliases, as);
 			} catch (final Exception e) {
-				Skript.exception(e, "error registering aliases for /" + getName());
+				Skript.outdatedError(e);//, "error registering aliases for /" + getName());
 			}
 		}
 	}
@@ -328,7 +337,7 @@ public class ScriptCommand implements CommandExecutor {
 				as.removeAll(helps);
 				topics.set(aliases, as);
 			} catch (final Exception e) {
-				Skript.exception(e, "error unregistering aliases for /" + getName());
+				Skript.outdatedError(e);//, "error unregistering aliases for /" + getName());
 			}
 		}
 		helps.clear();

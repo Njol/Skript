@@ -93,11 +93,40 @@ final public class ScriptLoader {
 	@Nullable
 	public static Config currentScript = null;
 	
+	/**
+	 * use {@link #setCurrentEvent(String, Class...)}
+	 */
 	@Nullable
-	public static String currentEventName = null;
-//	private static SkriptEvent currentEvent = null;
+	private static String currentEventName = null;
+	
+	@Nullable
+	public static String getCurrentEventName() {
+		return currentEventName;
+	}
+	
+	/**
+	 * use {@link #setCurrentEvent(String, Class...)}
+	 */
 	@Nullable
 	private static Class<? extends Event>[] currentEvents = null;
+	
+	/**
+	 * Call {@link #deleteCurrentEvent()} after parsing
+	 * 
+	 * @param name
+	 * @param events
+	 */
+	public static void setCurrentEvent(final String name, final @Nullable Class<? extends Event>... events) {
+		currentEventName = name;
+		currentEvents = events;
+		hasDelayBefore = Kleenean.FALSE;
+	}
+	
+	public static void deleteCurrentEvent() {
+		currentEventName = null;
+		currentEvents = null;
+		hasDelayBefore = Kleenean.FALSE;
+	}
 	
 	public static List<TriggerSection> currentSections = new ArrayList<TriggerSection>();
 	public static List<Loop> currentLoops = new ArrayList<Loop>();
@@ -427,10 +456,8 @@ final public class ScriptLoader {
 						continue;
 					
 					if (event.toLowerCase().startsWith("command ")) {
-//						currentEvent = null;
-						currentEventName = "command";
-						currentEvents = CollectionUtils.array(CommandEvent.class);
-						hasDelayBefore = Kleenean.FALSE;
+						
+						setCurrentEvent("command", CommandEvent.class);
 						
 						final ScriptCommand c = Commands.loadCommand(node);
 						if (c != null) {
@@ -438,10 +465,7 @@ final public class ScriptLoader {
 //							script.commands.add(c);
 						}
 						
-//						currentEvent = null;
-						currentEventName = null;
-						currentEvents = null;
-						hasDelayBefore = Kleenean.FALSE;
+						deleteCurrentEvent();
 						
 						continue;
 					}
@@ -461,17 +485,9 @@ final public class ScriptLoader {
 					if (Skript.debug() || node.debug())
 						Skript.debug(event + " (" + parsedEvent.second.toString(null, true) + "):");
 					
-//					currentEvent = parsedEvent.second;
-					currentEventName = parsedEvent.first.getName().toLowerCase(Locale.ENGLISH);
-					currentEvents = parsedEvent.first.events;
-					hasDelayBefore = Kleenean.FALSE;
-					
+					setCurrentEvent("" + parsedEvent.first.getName().toLowerCase(Locale.ENGLISH), parsedEvent.first.events);
 					final Trigger trigger = new Trigger(config.getFile(), event, parsedEvent.second, loadItems(node));
-					
-//					currentEvent = null;
-					currentEventName = null;
-					currentEvents = null;
-					hasDelayBefore = Kleenean.FALSE;
+					deleteCurrentEvent();
 					
 					if (parsedEvent.second instanceof SelfRegisteringSkriptEvent) {
 						((SelfRegisteringSkriptEvent) parsedEvent.second).register(trigger);
@@ -721,13 +737,9 @@ final public class ScriptLoader {
 			return null;
 		}
 		
-//		currentEvent = parsedEvent.second;
-		currentEvents = parsedEvent.first.events;
-		
+		setCurrentEvent("unit test", parsedEvent.first.events);
 		final Trigger t = new Trigger(null, event, parsedEvent.second, loadItems(node));
-		
-//		currentEvent = null;
-		currentEvents = null;
+		deleteCurrentEvent();
 		
 		return t;
 	}
@@ -764,10 +776,6 @@ final public class ScriptLoader {
 	@Nullable
 	public static Class<? extends Event>[] getCurrentEvents() {
 		return currentEvents;
-	}
-	
-	public static void setCurrentEvents(final @Nullable Class<? extends Event>... currentEvents) {
-		ScriptLoader.currentEvents = currentEvents;
 	}
 	
 }

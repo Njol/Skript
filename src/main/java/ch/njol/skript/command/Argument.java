@@ -41,7 +41,7 @@ import ch.njol.skript.util.Utils;
 /**
  * Represents an argument of a command
  * <p>
- * TODO allow named arguments
+ * TODO allow named arguments (stored in local variables {_name})
  * 
  * @author Peter Güttinger
  */

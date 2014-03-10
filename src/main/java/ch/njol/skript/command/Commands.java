@@ -108,9 +108,11 @@ public abstract class Commands {
 				knownCommandsField.setAccessible(true);
 				cmKnownCommands = (Map<String, Command>) knownCommandsField.get(commandMap);
 				
-				final Field aliasesField = SimpleCommandMap.class.getDeclaredField("aliases");
-				aliasesField.setAccessible(true);
-				cmAliases = (Set<String>) aliasesField.get(commandMap);
+				try {
+					final Field aliasesField = SimpleCommandMap.class.getDeclaredField("aliases");
+					aliasesField.setAccessible(true);
+					cmAliases = (Set<String>) aliasesField.get(commandMap);
+				} catch (final NoSuchFieldException e) {}
 			}
 		} catch (final SecurityException e) {
 			Skript.error("Please disable the security manager");
@@ -180,7 +182,7 @@ public abstract class Commands {
 			public boolean isLoggable(final @Nullable LogRecord record) {
 				if (record == null)
 					return false;
-				if (suppressUnknownCommandMessage && record.getMessage() != null && record.getMessage().toLowerCase().startsWith("unknown command.")) {
+				if (suppressUnknownCommandMessage && record.getMessage() != null && record.getMessage().toLowerCase().startsWith("unknown command")) {
 					suppressUnknownCommandMessage = false;
 					return false;
 				}
@@ -263,27 +265,33 @@ public abstract class Commands {
 	
 	@SuppressWarnings("unchecked")
 	final static boolean handleEffectCommand(final CommandSender sender, String command) {
-		if (!(sender.hasPermission("skript.effectcommands") || SkriptConfig.allowOpsToUseEffectCommands.value() && sender.isOp()))
+		if (!(sender instanceof ConsoleCommandSender || sender.hasPermission("skript.effectcommands") || SkriptConfig.allowOpsToUseEffectCommands.value() && sender.isOp()))
 			return false;
 		try {
 			command = "" + command.substring(SkriptConfig.effectCommandToken.value().length()).trim();
 			final RetainingLogHandler log = SkriptLogger.startRetainingLog();
-			final Effect e;
 			try {
-				ScriptLoader.setCurrentEvents(EffectCommandEvent.class);
-				e = Effect.parse(command, null);
-				ScriptLoader.setCurrentEvents((Class[]) null);
+				ScriptLoader.setCurrentEvent("effect command", EffectCommandEvent.class);
+				final Effect e = Effect.parse(command, null);
+				ScriptLoader.deleteCurrentEvent();
+				
+				if (e != null) {
+					log.clear(); // ignore warnings and stuff
+					log.printLog();
+					
+					sender.sendMessage(ChatColor.GRAY + "executing '" + ChatColor.stripColor(command) + "'");
+					if (SkriptConfig.logPlayerCommands.value() && !(sender instanceof ConsoleCommandSender))
+						Skript.info(sender.getName() + " issued effect command: " + command);
+					e.run(new EffectCommandEvent(sender, command));
+				} else {
+					if (sender == Bukkit.getConsoleSender()) // log as SEVERE instead of INFO like printErrors below
+						SkriptLogger.LOGGER.severe("Error in: " + ChatColor.stripColor(command));
+					else
+						sender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + ChatColor.stripColor(command));
+					log.printErrors(sender, "(No specific information is available)");
+				}
 			} finally {
 				log.stop();
-			}
-			if (e != null) {
-				sender.sendMessage(ChatColor.GRAY + "executing '" + ChatColor.stripColor(command) + "'");
-				if (SkriptConfig.logPlayerCommands.value() && !(sender instanceof ConsoleCommandSender))
-					Skript.info(sender.getName() + " issued effect command: " + command);
-				e.run(new EffectCommandEvent(sender, command));
-			} else {
-				sender.sendMessage(ChatColor.RED + "Error in: " + ChatColor.GRAY + ChatColor.stripColor(command));
-				log.printErrors(sender, "(No specific information is available)");
 			}
 			return true;
 		} catch (final Exception e) {
@@ -451,7 +459,7 @@ public abstract class Commands {
 	
 	public static void registerCommand(final ScriptCommand command) {
 		if (commandMap != null) {
-			assert cmKnownCommands != null && cmAliases != null;
+			assert cmKnownCommands != null;// && cmAliases != null;
 			command.register(commandMap, cmKnownCommands, cmAliases);
 		}
 		commands.put(command.getLabel(), command);
@@ -470,7 +478,7 @@ public abstract class Commands {
 				numCommands++;
 				c.unregisterHelp();
 				if (commandMap != null) {
-					assert cmKnownCommands != null && cmAliases != null;
+					assert cmKnownCommands != null;// && cmAliases != null;
 					c.unregister(commandMap, cmKnownCommands, cmAliases);
 				}
 				commandsIter.remove();
@@ -494,7 +502,7 @@ public abstract class Commands {
 		if (commandMap != null) {
 			final Map<String, Command> cmKnownCommands = Commands.cmKnownCommands;
 			final Set<String> cmAliases = Commands.cmAliases;
-			assert cmKnownCommands != null && cmAliases != null;
+			assert cmKnownCommands != null;// && cmAliases != null;
 			for (final ScriptCommand c : commands.values())
 				c.unregister(commandMap, cmKnownCommands, cmAliases);
 		}

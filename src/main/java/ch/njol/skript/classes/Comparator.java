@@ -72,10 +72,11 @@ public interface Comparator<T1, T2> {
 		}
 		
 		/**
-		 * Test whether this relation is fulfilled if another is, e.g. GREATER_OR_EQUAL.is(EQUAL) returns true.
+		 * Test whether this relation is fulfilled if another is, i.e. if the parameter relation fulfils <code>X rel Y</code>, then this relation fulfils <code>X rel Y</code> as
+		 * well.
 		 * 
 		 * @param other
-		 * @return Whether this relation is part of the given relation
+		 * @return Whether this relation is part of the given relation, e.g. <code>GREATER_OR_EQUAL.is(EQUAL)</code> returns true.
 		 */
 		public boolean is(final Relation other) {
 			if (other == this)

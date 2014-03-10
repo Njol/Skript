@@ -134,6 +134,14 @@ public class Variable<T> implements Expression<T> {
 		throw new UnsupportedOperationException();
 	}
 	
+	public boolean isLocal() {
+		return local;
+	}
+	
+	public boolean isList() {
+		return list;
+	}
+	
 	@Override
 	public boolean isSingle() {
 		return !list;

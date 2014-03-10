@@ -79,7 +79,7 @@ public class EffCancelEvent extends Effect {
 		if (ScriptLoader.isCurrentEvent(PlayerLoginEvent.class))
 			Skript.error("A connect event cannot be cancelled, but the player may be kicked ('kick player by reason of \"...\"')", ErrorQuality.SEMANTIC_ERROR);
 		else
-			Skript.error(Utils.A(ScriptLoader.currentEventName) + " event cannot be cancelled", ErrorQuality.SEMANTIC_ERROR);
+			Skript.error(Utils.A(ScriptLoader.getCurrentEventName()) + " event cannot be cancelled", ErrorQuality.SEMANTIC_ERROR);
 		return false;
 	}
 	

@@ -60,32 +60,32 @@ import ch.njol.util.Kleenean;
 public class CondCompare extends Condition {
 	
 	private final static Patterns<Relation> patterns = new Patterns<Relation>(new Object[][] {
-			{"%objects% ((is|are) ((greater|more|higher|bigger|larger) than|above)|\\>) %objects%", Relation.GREATER},
-			{"%objects% ((is|are) (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(is not|are not|isn't|aren't) ((less|smaller) than|below)|\\>=) %objects%", Relation.GREATER_OR_EQUAL},
-			{"%objects% ((is|are) ((less|smaller) than|below)|\\<) %objects%", Relation.SMALLER},
-			{"%objects% ((is|are) (less|smaller|below) [than] or (equal to|the same as)|(is not|are not|isn't|aren't) ((greater|more|higher|bigger|larger) than|above)|\\<=) %objects%", Relation.SMALLER_OR_EQUAL},
-			{"%objects% ((is|are) (not|neither)|isn't|aren't|!=) [equal to] %objects%", Relation.NOT_EQUAL},
-			{"%objects% (is|are|=) [(equal to|the same as)] %objects%", Relation.EQUAL},
-			{"%objects% (is|are) between %objects% and %objects%", Relation.EQUAL},
-			{"%objects% (is not|are not|isn't|aren't) between %objects% and %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects% ((is|are) ((greater|more|higher|bigger|larger) than|above)|\\>) %objects%", Relation.GREATER},
+			{"(1¦neither|) %objects% ((is|are) (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(is not|are not|isn't|aren't) ((less|smaller) than|below)|\\>=) %objects%", Relation.GREATER_OR_EQUAL},
+			{"(1¦neither|) %objects% ((is|are) ((less|smaller) than|below)|\\<) %objects%", Relation.SMALLER},
+			{"(1¦neither|) %objects% ((is|are) (less|smaller|below) [than] or (equal to|the same as)|(is not|are not|isn't|aren't) ((greater|more|higher|bigger|larger) than|above)|\\<=) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"(1¦neither|) %objects% ((is|are) (not|neither)|isn't|aren't|!=) [equal to] %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects% (is|are|=) [(equal to|the same as)] %objects%", Relation.EQUAL},
+			{"(1¦neither|) %objects% (is|are) between %objects% and %objects%", Relation.EQUAL},
+			{"(1¦neither|) %objects% (is not|are not|isn't|aren't) between %objects% and %objects%", Relation.NOT_EQUAL},
 			
-			{"%objects@-1% (was|were) ((greater|more|higher|bigger|larger) than|above) %objects%", Relation.GREATER},
-			{"%objects@-1% ((was|were) (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(was not|were not|wasn't|weren't) ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
-			{"%objects@-1% (was|were) ((less|smaller) than|below) %objects%", Relation.SMALLER},
-			{"%objects@-1% ((was|were) (less|smaller|below) [than] or (equal to|the same as)|(was not|were not|wasn't|weren't) ((greater|more|higher|bigger|larger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
-			{"%objects@-1% ((was|were) (not|neither)|wasn't|weren't) [equal to] %objects%", Relation.NOT_EQUAL},
-			{"%objects@-1% (was|were) [(equal to|the same as)] %objects%", Relation.EQUAL},
-			{"%objects@-1% (was|were) between %objects% and %objects%", Relation.EQUAL},
-			{"%objects@-1% (was not|were not|wasn't|weren't) between %objects% and %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects@-1% (was|were) ((greater|more|higher|bigger|larger) than|above) %objects%", Relation.GREATER},
+			{"(1¦neither|) %objects@-1% ((was|were) (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(was not|were not|wasn't|weren't) ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
+			{"(1¦neither|) %objects@-1% (was|were) ((less|smaller) than|below) %objects%", Relation.SMALLER},
+			{"(1¦neither|) %objects@-1% ((was|were) (less|smaller|below) [than] or (equal to|the same as)|(was not|were not|wasn't|weren't) ((greater|more|higher|bigger|larger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"(1¦neither|) %objects@-1% ((was|were) (not|neither)|wasn't|weren't) [equal to] %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects@-1% (was|were) [(equal to|the same as)] %objects%", Relation.EQUAL},
+			{"(1¦neither|) %objects@-1% (was|were) between %objects% and %objects%", Relation.EQUAL},
+			{"(1¦neither|) %objects@-1% (was not|were not|wasn't|weren't) between %objects% and %objects%", Relation.NOT_EQUAL},
 			
-			{"%objects@1% will be ((greater|more|higher|bigger|larger) than|above) %objects%", Relation.GREATER},
-			{"%objects@1% (will be (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(will not|won't) be ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
-			{"%objects@1% will be ((less|smaller) than|below) %objects%", Relation.SMALLER},
-			{"%objects@1% (will be (less|smaller|below) [than] or (equal to|the same as)|(will not|won't) be ((greater|more|higher|bigger|larger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
-			{"%objects@1% ((will (not|neither) be|won't be)|(isn't|aren't|is not|are not) (turning|changing) [in]to) [equal to] %objects%", Relation.NOT_EQUAL},
-			{"%objects@1% (will be [(equal to|the same as)]|(is|are) (turning|changing) [in]to) %objects%", Relation.EQUAL},
-			{"%objects@1% will be between %objects% and %objects%", Relation.EQUAL},
-			{"%objects@1% (will not be|won't be) between %objects% and %objects%", Relation.NOT_EQUAL}
+			{"(1¦neither|) %objects@1% will be ((greater|more|higher|bigger|larger) than|above) %objects%", Relation.GREATER},
+			{"(1¦neither|) %objects@1% (will be (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(will not|won't) be ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
+			{"(1¦neither|) %objects@1% will be ((less|smaller) than|below) %objects%", Relation.SMALLER},
+			{"(1¦neither|) %objects@1% (will be (less|smaller|below) [than] or (equal to|the same as)|(will not|won't) be ((greater|more|higher|bigger|larger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"(1¦neither|) %objects@1% ((will (not|neither) be|won't be)|(isn't|aren't|is not|are not) (turning|changing) [in]to) [equal to] %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects@1% (will be [(equal to|the same as)]|(is|are) (turning|changing) [in]to) %objects%", Relation.EQUAL},
+			{"(1¦neither|) %objects@1% will be between %objects% and %objects%", Relation.EQUAL},
+			{"(1¦neither|) %objects@1% (will not be|won't be) between %objects% and %objects%", Relation.NOT_EQUAL}
 	});
 	
 	static {
@@ -112,6 +112,8 @@ public class CondCompare extends Condition {
 		if (vars.length == 3)
 			third = vars[2];
 		relation = patterns.getInfo(matchedPattern);
+		if (parser.mark == 1) // "neither" on the left side
+			relation = relation.getInverse();
 		final boolean b = init();
 		final Expression<?> third = this.third;
 		if (!b) {
@@ -189,7 +191,7 @@ public class CondCompare extends Condition {
 	}
 	
 	/*
-	 * # := condition (e.g. is, contains, is enchanted with, etc.)
+	 * # := condition (e.g. is, is less than, contains, is enchanted with, has permission, etc.)
 	 * !# := not #
 	 * 
 	 * a and b # x === a # x && b # x
@@ -201,14 +203,25 @@ public class CondCompare extends Condition {
 	 * a or b # x and y === a # x and y || b # x and y
 	 * a or b # x or y === a # x or y || b # x or y
 	 * 
+	 * 
 	 * a and b !# x === a !# x && b !# x
+	 * neither a nor b # x === a !# x && b !# x		// nor = and
 	 * a or b !# x === a !# x || b !# x
+	 * 
 	 * a !# x and y === a !# x && a !# y
+	 * a # neither x nor y === a !# x && a !# y		// nor = and
 	 * a !# x or y === a !# x || a !# y
+	 * 
 	 * a and b !# x and y === a !# x and y && b !# x and y === a !# x && a !# y && b !# x && b !# y
 	 * a and b !# x or y === a !# x or y && b !# x or y
+	 * a and b # neither x nor y === a # neither x nor y && b # neither x nor y
+	 * 
 	 * a or b !# x and y === a !# x and y || b !# x and y
 	 * a or b !# x or y === a !# x or y || b !# x or y
+	 * a or b # neither x nor y === a # neither x nor y || b # neither x nor y
+	 * 
+	 * neither a nor b # x and y === a !# x and y && b !# x and y							// nor = and
+	 * neither a nor b # x or y === a !# x or y && b !# x or y								// nor = and
 	 */
 	@Override
 	public boolean check(final Event e) {

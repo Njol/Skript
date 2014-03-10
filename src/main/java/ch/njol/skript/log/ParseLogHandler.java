@@ -70,6 +70,8 @@ public class ParseLogHandler extends LogHandler {
 	 * Clears all log messages except for the error
 	 */
 	public void clear() {
+		for (final LogEntry e : log)
+			e.discarded();
 		log.clear();
 	}
 	
@@ -80,6 +82,8 @@ public class ParseLogHandler extends LogHandler {
 		printedErrorOrLog = true;
 		stop();
 		SkriptLogger.logAll(log);
+		if (error != null)
+			error.discarded();
 	}
 	
 	public void printError() {
@@ -98,6 +102,8 @@ public class ParseLogHandler extends LogHandler {
 			SkriptLogger.log(error);
 		else if (def != null)
 			SkriptLogger.log(new LogEntry(SkriptLogger.SEVERE, def));
+		for (final LogEntry e : log)
+			e.discarded();
 	}
 	
 	public int getNumErrors() {

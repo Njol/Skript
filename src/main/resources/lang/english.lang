@@ -472,7 +472,7 @@ directions:
 #	the marks (1¦..) are only required in the english file, i.e. you can use (..|..) or [..] for plurals in other languages
 #	the exception to this rule is the 'age pattern' and the corresponding marks (4¦ and 8¦)
 entities:
-	age pattern: (|4¦baby|4¦young|8¦adult)
+	age pattern: (|4¦baby|4¦young|8¦adult|8¦grown(-| )up)
 	age adjectives:
 		baby: baby
 		adult: adult

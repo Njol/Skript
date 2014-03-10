@@ -118,7 +118,10 @@ public class EffExit extends Effect { // TODO [code style] warn user about code 
 		TriggerItem n = this;
 		for (int i = breakLevels; i > 0;) {
 			n = n.getParent();
-			assert n != null;
+			if (n == null) {
+				assert false : this;
+				return null;
+			}
 			if (type == EVERYTHING || type == CONDITIONALS && n instanceof Conditional || type == LOOPS && (n instanceof Loop || n instanceof While))
 				i--;
 		}

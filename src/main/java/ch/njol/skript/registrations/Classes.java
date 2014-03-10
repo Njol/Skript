@@ -266,7 +266,7 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * Gets the class info of the given class or it's closest registered superclass. This method will never return null unless <tt>c</tt> is null.
+	 * Gets the class info of the given class or its closest registered superclass. This method will never return null unless <tt>c</tt> is null.
 	 * 
 	 * @param c
 	 * @return The closest superclass's info
@@ -290,7 +290,7 @@ public abstract class Classes {
 	}
 	
 	/**
-	 * Gets a class by it's code name
+	 * Gets a class by its code name
 	 * 
 	 * @param codeName
 	 * @return the class with the given code name
@@ -666,8 +666,13 @@ public abstract class Classes {
 				return null;
 			}
 		}
-		Serializer<?> s;
-		assert (s = ci.getSerializer()) != null && (s.mustSyncDeserialization() ? Bukkit.isPrimaryThread() : true);
+		
+		final Serializer<?> s = ci.getSerializer();
+		if (s == null) // value cannot be saved
+			return null;
+		
+		assert s.mustSyncDeserialization() ? Bukkit.isPrimaryThread() : true;
+		
 		try {
 			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
 			final YggdrasilOutputStream yout = Variables.yggdrasil.newOutputStream(bout);

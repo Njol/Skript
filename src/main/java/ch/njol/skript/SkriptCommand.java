@@ -54,6 +54,8 @@ import ch.njol.util.StringUtils;
 public class SkriptCommand implements CommandExecutor {
 	private final static String NODE = "skript command";
 	
+	// TODO /skript scripts show/list - lists all enabled and/or disabled scripts in the scripts folder and/or subfolders (maybe add a pattern [using * and **])
+	// TODO document this command on the website
 	private final static CommandHelp skriptCommandHelp = new CommandHelp("<gray>/<gold>skript", Color.LIGHT_CYAN, NODE + ".help")
 			.add(new CommandHelp("reload", Color.DARK_RED)
 					.add("all")

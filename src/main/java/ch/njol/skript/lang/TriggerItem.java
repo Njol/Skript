@@ -91,7 +91,8 @@ public abstract class TriggerItem implements Debuggable {
 				i = i.walk(e);
 			return true;
 		} catch (final StackOverflowError err) {
-			final File sc = start.getTrigger().getScript();
+			final Trigger t = start.getTrigger();
+			final File sc = t == null ? null : t.getScript();
 			Skript.adminBroadcast("<red>The script '<gold>" + (sc == null ? "<unknown>" : sc.getName()) + "<red>' infinitely repeated itself!");
 			if (Skript.debug())
 				err.printStackTrace();
@@ -143,12 +144,16 @@ public abstract class TriggerItem implements Debuggable {
 		return parent;
 	}
 	
+	/**
+	 * @return The trigger this item belongs to, or null if this is a stand-alone item (e.g. the effect of an effect command)
+	 */
+	@Nullable
 	public final Trigger getTrigger() {
 		TriggerItem i = this;
 		while (i != null && !(i instanceof Trigger))
 			i = i.getParent();
-		if (i == null)
-			throw new IllegalStateException("TriggerItem without a Trigger detected!");
+//		if (i == null)
+//			throw new IllegalStateException("TriggerItem without a Trigger detected!");
 		return (Trigger) i;
 	}
 	

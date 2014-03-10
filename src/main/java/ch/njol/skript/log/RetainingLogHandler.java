@@ -105,25 +105,30 @@ public class RetainingLogHandler extends LogHandler {
 	public final boolean printErrors(final CommandSender recipient, final @Nullable String def) {
 		assert !printedErrorOrLog;
 		printedErrorOrLog = true;
-		if (recipient == Bukkit.getConsoleSender())
-			return printErrors(def); // log as SEVERE instead of INFO
 		stop();
+		
+		final boolean console = recipient == Bukkit.getConsoleSender(); // log as SEVERE instead of INFO
+		
 		boolean hasError = false;
 		for (final LogEntry e : log) {
 			if (e.getLevel().intValue() >= Level.SEVERE.intValue()) {
-				recipient.sendMessage(e.getMessage());
+				if (console)
+					SkriptLogger.LOGGER.severe(e.getMessage());
+				else
+					recipient.sendMessage(e.getMessage());
 				e.logged();
 				hasError = true;
-			}
-		}
-		
-		for (final LogEntry e : log) {
-			if (e.getLevel().intValue() < Level.SEVERE.intValue()) {
+			} else {
 				e.discarded();
 			}
 		}
-		if (!hasError && def != null)
-			recipient.sendMessage(def);
+		
+		if (!hasError && def != null) {
+			if (console)
+				SkriptLogger.LOGGER.severe(def);
+			else
+				recipient.sendMessage(def);
+		}
 		return hasError;
 	}
 	

@@ -323,9 +323,9 @@ public class SkriptParser {
 					isLiteralList &= t instanceof Literal;
 					if (!last && m.group(1) != null) {
 						if (and.isUnknown()) {
-							and = Kleenean.get(m.group(1).equalsIgnoreCase("and"));
+							and = Kleenean.get(!m.group(1).equalsIgnoreCase("or")); // nor is and
 						} else {
-							if (and != Kleenean.get(m.group(1).equalsIgnoreCase("and"))) {
+							if (and != Kleenean.get(!m.group(1).equalsIgnoreCase("or"))) {
 								Skript.warning(MULTIPLE_AND_OR);
 								and = Kleenean.TRUE;
 							}
@@ -396,7 +396,9 @@ public class SkriptParser {
 				}
 			}
 		} finally {
-			log.printLog(); // log is empty
+			// log has been printed already or is not used after this (except for the error)
+			log.clear();
+			log.printLog();
 		}
 		
 		final Matcher m = listSplitPattern.matcher(expr);
@@ -436,9 +438,9 @@ public class SkriptParser {
 			isLiteralList &= t instanceof Literal;
 			if (!last && m.group(1) != null) {
 				if (and.isUnknown()) {
-					and = Kleenean.get(m.group(1).equalsIgnoreCase("and"));
+					and = Kleenean.get(!m.group(1).equalsIgnoreCase("or")); // nor is and
 				} else {
-					if (and != Kleenean.get(m.group(1).equalsIgnoreCase("and"))) {
+					if (and != Kleenean.get(!m.group(1).equalsIgnoreCase("or"))) {
 						Skript.warning(MULTIPLE_AND_OR);
 						and = Kleenean.TRUE;
 					}
