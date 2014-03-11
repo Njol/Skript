@@ -37,6 +37,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -115,7 +116,9 @@ public class ExprLore extends SimpleExpression<String> {
 			case ADD:
 			case REMOVE:
 			case REMOVE_ALL:
-				return new Class[] {String.class};
+				if (ChangerUtils.acceptsChange(item, ChangeMode.SET, ItemStack.class, ItemType.class))
+					return new Class[] {String.class};
+				return null;
 			case RESET:
 			default:
 				return null;
@@ -170,6 +173,11 @@ public class ExprLore extends SimpleExpression<String> {
 			((ItemStack) i).setItemMeta(meta);
 		else
 			((ItemType) i).setItemMeta(meta);
+		if (ChangerUtils.acceptsChange(item, ChangeMode.SET, i.getClass())) {
+			item.change(e, i instanceof ItemStack ? new ItemStack[] {(ItemStack) i} : new ItemType[] {(ItemType) i}, ChangeMode.SET);
+		} else {
+			item.change(e, i instanceof ItemStack ? new ItemType[] {new ItemType((ItemStack) i)} : new ItemStack[] {((ItemType) i).getRandom()}, ChangeMode.SET);
+		}
 		return;
 	}
 	

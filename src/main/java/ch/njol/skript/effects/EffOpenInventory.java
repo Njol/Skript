@@ -41,13 +41,13 @@ import ch.njol.util.Kleenean;
  * 
  * @author Peter Güttinger
  */
-@Name("Open Inventory")
+//TODO update doc (name/since, add example, change desc)
+@Name("Open/Close Inventory")
 @Description({"Opens an inventory to a player. The player can then access and modify the inventory as if it was a chest that he just opened.",
 		"Please note that currently 'show' and 'open' have the same effect, but 'show' will eventually show an unmodifiable view of the inventory in the future."})
 @Examples({"show the victim's inventory to the player",
 		"open the player's inventory for the player"})
 @Since("2.0, 2.1.1 (closing)")
-// TODO update doc
 public class EffOpenInventory extends Effect {
 	static {
 		Skript.registerEffect(EffOpenInventory.class,
