@@ -267,6 +267,7 @@ public abstract class Commands {
 	final static boolean handleEffectCommand(final CommandSender sender, String command) {
 		if (!(sender instanceof ConsoleCommandSender || sender.hasPermission("skript.effectcommands") || SkriptConfig.allowOpsToUseEffectCommands.value() && sender.isOp()))
 			return false;
+		final boolean wasLocal = Language.setUseLocal(false);
 		try {
 			command = "" + command.substring(SkriptConfig.effectCommandToken.value().length()).trim();
 			final RetainingLogHandler log = SkriptLogger.startRetainingLog();
@@ -298,6 +299,8 @@ public abstract class Commands {
 			Skript.exception(e, "Unexpected error while executing effect command '" + command + "' by '" + sender.getName() + "'");
 			sender.sendMessage(ChatColor.RED + "An internal error occurred while executing this effect. Please refer to the server log for details.");
 			return true;
+		} finally {
+			Language.setUseLocal(wasLocal);
 		}
 	}
 	

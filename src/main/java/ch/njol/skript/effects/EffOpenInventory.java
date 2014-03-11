@@ -46,7 +46,8 @@ import ch.njol.util.Kleenean;
 		"Please note that currently 'show' and 'open' have the same effect, but 'show' will eventually show an unmodifiable view of the inventory in the future."})
 @Examples({"show the victim's inventory to the player",
 		"open the player's inventory for the player"})
-@Since("2.0")
+@Since("2.0, 2.1.1 (closing)")
+// TODO update doc
 public class EffOpenInventory extends Effect {
 	static {
 		Skript.registerEffect(EffOpenInventory.class,

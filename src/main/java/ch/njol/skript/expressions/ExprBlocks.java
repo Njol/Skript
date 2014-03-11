@@ -103,7 +103,7 @@ public class ExprBlocks extends SimpleExpression<Block> {
 			final Location[] ls = (Location[]) from.getArray(e);
 			final Direction d = direction.getSingle(e);
 			if (ls.length == 0 || d == null)
-				return null;
+				return new Block[0];
 			final Block[] bs = new Block[ls.length];
 			for (int i = 0; i < ls.length; i++) {
 				bs[i] = d.getRelative(ls[i]).getBlock();
@@ -113,7 +113,7 @@ public class ExprBlocks extends SimpleExpression<Block> {
 		final ArrayList<Block> r = new ArrayList<Block>();
 		final Iterator<Block> iter = iterator(e);
 		if (iter == null)
-			return null;
+			return new Block[0];
 		for (final Block b : new IteratorIterable<Block>(iter))
 			r.add(b);
 		return r.toArray(new Block[r.size()]);

@@ -65,7 +65,7 @@ public class ExprExperience extends SimpleExpression<Experience> {
 	@Nullable
 	protected Experience[] get(final Event e) {
 		if (!(e instanceof ExperienceSpawnEvent))
-			return null;
+			return new Experience[0];
 		return new Experience[] {new Experience(((ExperienceSpawnEvent) e).getSpawnedXP())};
 	}
 	

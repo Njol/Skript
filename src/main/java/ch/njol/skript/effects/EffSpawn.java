@@ -37,6 +37,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Peter Güttinger
@@ -73,6 +74,7 @@ public class EffSpawn extends Effect {
 	}
 	
 	@Override
+	@SuppressFBWarnings("ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD")
 	public void execute(final Event e) {
 		lastSpawned = null;
 		final Number a = amount != null ? amount.getSingle(e) : 1;

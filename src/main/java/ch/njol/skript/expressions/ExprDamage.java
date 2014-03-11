@@ -71,7 +71,7 @@ public class ExprDamage extends SimpleExpression<Double> {
 	@Nullable
 	protected Double[] get(final Event e) {
 		if (!(e instanceof EntityDamageEvent))
-			return null;
+			return new Double[0];
 		return new Double[] {HealthUtils.getDamage((EntityDamageEvent) e)};
 	}
 	

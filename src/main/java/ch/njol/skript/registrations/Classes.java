@@ -63,6 +63,7 @@ import ch.njol.yggdrasil.Tag;
 import ch.njol.yggdrasil.Yggdrasil;
 import ch.njol.yggdrasil.YggdrasilInputStream;
 import ch.njol.yggdrasil.YggdrasilOutputStream;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Peter Güttinger
@@ -121,6 +122,7 @@ public abstract class Classes {
 	/**
 	 * Sorts the class infos according to sub/superclasses and relations set with {@link ClassInfo#before(String...)} and {@link ClassInfo#after(String...)}.
 	 */
+	@SuppressFBWarnings("LI_LAZY_INIT_STATIC")
 	private final static void sortClassInfos() {
 		assert classInfos == null;
 		

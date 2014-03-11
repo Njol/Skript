@@ -64,7 +64,7 @@ public class ExprEventCancelled extends SimpleExpression<Boolean> {
 	@Nullable
 	protected Boolean[] get(final Event e) {
 		if (!(e instanceof Cancellable))
-			return null;
+			return new Boolean[0];
 		return new Boolean[] {((Cancellable) e).isCancelled()};
 	}
 	

@@ -80,14 +80,14 @@ public class ExprCommand extends SimpleExpression<String> {
 		} else if (e instanceof ServerCommandEvent) {
 			s = ((ServerCommandEvent) e).getCommand().trim();
 		} else {
-			return null;
+			return new String[0];
 		}
 		if (what == FULL)
 			return new String[] {s};
 		final int c = s.indexOf(' ');
 		if (what == ARGS) {
 			if (c == -1)
-				return null;
+				return new String[0];
 			return new String[] {s.substring(c + 1).trim()};
 		}
 		assert what == LABEL;

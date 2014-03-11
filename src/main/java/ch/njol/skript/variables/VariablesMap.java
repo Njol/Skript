@@ -90,7 +90,7 @@ final class VariablesMap {
 			return hashMap.get(name);
 		} else {
 			final String[] split = Variables.splitVariableName(name);
-			TreeMap<String, Object> current = treeMap;
+			Map<String, Object> current = treeMap;
 			for (int i = 0; i < split.length; i++) {
 				final String n = split[i];
 				if (n.equals("*")) {
@@ -101,7 +101,7 @@ final class VariablesMap {
 				if (o == null)
 					return null;
 				if (o instanceof Map) {
-					current = (TreeMap<String, Object>) o;
+					current = (Map<String, Object>) o;
 					assert i != split.length - 1;
 					continue;
 				} else {

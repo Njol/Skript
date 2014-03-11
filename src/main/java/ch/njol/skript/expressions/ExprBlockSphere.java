@@ -84,7 +84,7 @@ public class ExprBlockSphere extends SimpleExpression<Block> {
 	protected Block[] get(final Event e) {
 		final Number r = radius.getSingle(e);
 		if (r == null)
-			return null;
+			return new Block[0];
 		final ArrayList<Block> list = new ArrayList<Block>((int) (1.1 * 4 / 3. * Math.PI * Math.pow(r.doubleValue(), 3)));
 		for (final Block b : new IteratorIterable<Block>(iterator(e)))
 			list.add(b);

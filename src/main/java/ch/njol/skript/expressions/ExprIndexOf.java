@@ -68,7 +68,7 @@ public class ExprIndexOf extends SimpleExpression<Integer> {
 	protected Integer[] get(final Event e) {
 		final String h = haystack.getSingle(e), n = needle.getSingle(e);
 		if (h == null || n == null)
-			return null;
+			return new Integer[0];
 		return new Integer[] {Integer.valueOf(first ? h.indexOf(n) + 1 : h.lastIndexOf(n) + 1)};
 	}
 	

@@ -21,7 +21,7 @@
 
 package ch.njol.skript.expressions;
 
-import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -43,11 +43,11 @@ import ch.njol.util.Kleenean;
  */
 @Name("Me")
 @Description("A 'me' expression that can be used in effect commands only.")
-@Examples({"!heal me", "!kick me", "!give a diamond axe to me"})
+@Examples({"!heal me", "!kick myself", "!give a diamond axe to me"})
 @Since("2.1.1")
-public class ExprMe extends SimpleExpression<Player> {
+public class ExprMe extends SimpleExpression<CommandSender> {
 	static {
-		Skript.registerExpression(ExprMe.class, Player.class, ExpressionType.SIMPLE, "me");
+		Skript.registerExpression(ExprMe.class, CommandSender.class, ExpressionType.SIMPLE, "me", "my[self]");
 	}
 	
 	@Override
@@ -60,8 +60,10 @@ public class ExprMe extends SimpleExpression<Player> {
 	
 	@Override
 	@Nullable
-	protected Player[] get(final Event e) {
-		return null;
+	protected CommandSender[] get(final Event e) {
+		if (e instanceof EffectCommandEvent)
+			return new CommandSender[] {((EffectCommandEvent) e).getSender()};
+		return new CommandSender[0];
 	}
 	
 	@Override
@@ -70,8 +72,8 @@ public class ExprMe extends SimpleExpression<Player> {
 	}
 	
 	@Override
-	public Class<? extends Player> getReturnType() {
-		return Player.class;
+	public Class<? extends CommandSender> getReturnType() {
+		return CommandSender.class;
 	}
 	
 	@Override

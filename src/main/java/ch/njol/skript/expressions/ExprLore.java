@@ -94,10 +94,10 @@ public class ExprLore extends SimpleExpression<String> {
 	protected String[] get(final Event e) {
 		final Object i = item.getSingle(e);
 		if (i == null || i instanceof ItemStack && ((ItemStack) i).getType() == Material.AIR)
-			return null;
+			return new String[0];
 		final ItemMeta meta = i instanceof ItemStack ? ((ItemStack) i).getItemMeta() : (ItemMeta) ((ItemType) i).getItemMeta();
 		if (meta == null || !meta.hasLore())
-			return null;
+			return new String[0];
 		return new String[] {StringUtils.join(meta.getLore(), "\n")};
 	}
 	

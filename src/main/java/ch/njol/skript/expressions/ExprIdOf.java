@@ -81,7 +81,7 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 		if (single) {
 			final ItemType t = getExpr().getSingle(e);
 			if (t == null)
-				return null;
+				return new Integer[0];
 			return new Integer[] {t.getTypes().get(0).getId()};
 		}
 		final ArrayList<Integer> r = new ArrayList<Integer>();
@@ -90,7 +90,7 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 				r.add(Integer.valueOf(d.getId()));
 			}
 		}
-		return r.toArray(new Integer[0]);
+		return r.toArray(new Integer[r.size()]);
 	}
 	
 	@Override

@@ -102,7 +102,7 @@ public class ExprWeather extends PropertyExpression<World, WeatherType> {
 						((WeatherChangeEvent) e).setCancelled(true);
 					if (((WeatherChangeEvent) e).getWorld().isThundering() != (t == WeatherType.THUNDER))
 						((WeatherChangeEvent) e).getWorld().setThundering(t == WeatherType.THUNDER);
-				} else {
+				} else if (e instanceof ThunderChangeEvent) {
 					if (((ThunderChangeEvent) e).toThunderState() && t != WeatherType.THUNDER)
 						((ThunderChangeEvent) e).setCancelled(true);
 					if (((ThunderChangeEvent) e).getWorld().hasStorm() != (t != WeatherType.CLEAR))

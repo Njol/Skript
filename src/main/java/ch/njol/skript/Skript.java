@@ -115,6 +115,7 @@ import ch.njol.util.StringUtils;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.CheckedIterator;
 import ch.njol.util.coll.iterator.EnumerationIterable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * <b>Skript</b> - A Bukkit plugin to modify how Minecraft behaves without having to write a single line of code (You'll likely be writing some code though if you're reading this
@@ -141,6 +142,7 @@ import ch.njol.util.coll.iterator.EnumerationIterable;
  * @see Comparators#registerComparator(Class, Class, Comparator)
  * @see Converters#registerConverter(Class, Class, Converter)
  */
+@SuppressFBWarnings("REC_CATCH_EXCEPTION")
 public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ PLUGIN ================

@@ -89,18 +89,18 @@ public class ExprSignText extends SimpleExpression<String> {
 	protected String[] get(final Event e) {
 		final Number l = line.getSingle(e);
 		if (l == null)
-			return null;
+			return new String[0];
 		final int line = l.intValue() - 1;
 		if (line < 0 || line > 3)
-			return null;
+			return new String[0];
 		if (getTime() >= 0 && block.isDefault() && e instanceof SignChangeEvent && !Delay.isDelayed(e)) {
 			return new String[] {((SignChangeEvent) e).getLine(line)};
 		}
 		final Block b = block.getSingle(e);
 		if (b == null)
-			return null;
+			return new String[0];
 		if (b.getType() != Material.SIGN_POST && b.getType() != Material.WALL_SIGN)
-			return null;
+			return new String[0];
 		return new String[] {((Sign) b.getState()).getLine(line)};
 	}
 	

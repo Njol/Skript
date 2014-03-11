@@ -101,7 +101,7 @@ public class ClassesTest {
 		
 		Bukkit.setServer(s);
 		
-		final Skript skript = (Skript) ObjenesisHelper.newInstance(Skript.class); // bypass the class loaded check
+		final Skript skript = (Skript) ObjenesisHelper.newInstance(Skript.class); // bypass the class loader check
 		final Field instance = Skript.class.getDeclaredField("instance");
 		instance.setAccessible(true);
 		instance.set(null, skript);

@@ -21,7 +21,6 @@
 
 package ch.njol.skript.aliases;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -39,8 +38,8 @@ import ch.njol.yggdrasil.YggdrasilSerializable;
 /**
  * @author Peter Güttinger
  */
-@SuppressWarnings({"serial", "deprecation"})
-public class ItemData implements Serializable, Cloneable, YggdrasilSerializable {
+@SuppressWarnings("deprecation")
+public class ItemData implements Cloneable, YggdrasilSerializable {
 	static {
 		Variables.yggdrasil.registerSingleClass(ItemData.class, "ItemData");
 	}

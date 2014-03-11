@@ -26,6 +26,7 @@ import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.StringUtils;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /*
  *   This file is part of Skript.
@@ -115,6 +116,7 @@ public class SkriptCommand implements CommandExecutor {
 	}
 	
 	@Override
+	@SuppressFBWarnings("REC_CATCH_EXCEPTION")
 	public boolean onCommand(final @Nullable CommandSender sender, final @Nullable Command command, final @Nullable String label, final @Nullable String[] args) {
 		if (sender == null || command == null || label == null || args == null)
 			throw new IllegalArgumentException();

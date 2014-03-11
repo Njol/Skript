@@ -57,19 +57,23 @@ import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Timespan;
 import ch.njol.skript.util.Version;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Peter Güttinger
  */
 public final class Updater {
 	
+	@SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 	public final static class VersionInfo implements Comparable<VersionInfo> {
 		final String name; // exact name, e.g. "2.0 (jar only)"
 		final Version version;
 		final String downloadURL;
 		@Nullable
+		@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "used in SkriptCommand")
 		String changelog;
 		@Nullable
+		@SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "used in SkriptCommand")
 		Date date;
 		
 		VersionInfo(final String name, final Version version, final String downloadURL) {

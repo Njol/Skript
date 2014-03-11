@@ -21,7 +21,6 @@
 
 package ch.njol.skript.variables;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,6 +55,7 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.variables.DatabaseStorage.Type;
 import ch.njol.skript.variables.SerializedVariable.Value;
+import ch.njol.util.Closeable;
 import ch.njol.util.Kleenean;
 import ch.njol.util.NonNullPair;
 import ch.njol.yggdrasil.Yggdrasil;
@@ -63,7 +63,7 @@ import ch.njol.yggdrasil.Yggdrasil;
 /**
  * @author Peter Güttinger
  */
-public abstract class Variables implements Closeable {
+public abstract class Variables {
 	private Variables() {}
 	
 	public final static short YGGDRASIL_VERSION = 1;
@@ -113,6 +113,13 @@ public abstract class Variables implements Closeable {
 			Skript.error("The config is missing the required 'databases' section that defines where the variables are saved");
 			return false;
 		}
+		
+		Skript.closeOnDisable(new Closeable() {
+			@Override
+			public void close() {
+				Variables.close();
+			}
+		});
 		
 		try {
 			boolean successful = true;
@@ -380,8 +387,7 @@ public abstract class Variables implements Closeable {
 		}
 	}, "Skript variable save thread");
 	
-	@Override
-	public void close() {
+	public static void close() {
 		while (queue.size() > 0) {
 			try {
 				Thread.sleep(10);

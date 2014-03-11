@@ -76,11 +76,11 @@ public class ExprNumbers extends SimpleExpression<Number> {
 		final Number s = start.getSingle(e), f = end.getSingle(e);
 		if (s == null || f == null || s.doubleValue() > f.doubleValue())
 			return null;
-		final Number[] array = integer ? new Integer[(int) (Math.floor(f.doubleValue()) - Math.ceil(s.doubleValue()) + 1)] : new Double[(int) Math.floor(f.doubleValue() - s.doubleValue() + 1)];
+		final Number[] array = integer ? new Long[(int) (Math.floor(f.doubleValue()) - Math.ceil(s.doubleValue()) + 1)] : new Double[(int) Math.floor(f.doubleValue() - s.doubleValue() + 1)];
 		final double low = integer ? Math.ceil(s.doubleValue()) : s.doubleValue();
 		for (int i = 0; i < array.length; i++) {
 			if (integer)
-				array[i] = Integer.valueOf((int) low + i);
+				array[i] = Long.valueOf((long) low + i);
 			else
 				array[i] = Double.valueOf(low + i);
 		}
@@ -107,7 +107,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 				if (!hasNext())
 					throw new NoSuchElementException();
 				if (integer)
-					return Integer.valueOf((int) i++);
+					return Long.valueOf((long) i++);
 				else
 					return Double.valueOf(i++);
 			}
@@ -136,7 +136,7 @@ public class ExprNumbers extends SimpleExpression<Number> {
 	
 	@Override
 	public Class<? extends Number> getReturnType() {
-		return integer ? Integer.class : Double.class;
+		return integer ? Long.class : Double.class;
 	}
 	
 }

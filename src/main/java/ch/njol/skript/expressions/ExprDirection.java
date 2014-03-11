@@ -136,7 +136,7 @@ public class ExprDirection extends SimpleExpression<Direction> {
 	protected Direction[] get(final Event e) {
 		final Number n = amount != null ? amount.getSingle(e) : 1;
 		if (n == null)
-			return null;
+			return new Direction[0];
 		final double ln = n.doubleValue();
 		if (direction != null) {
 			final Vector v = direction.clone().multiply(ln);
@@ -144,7 +144,7 @@ public class ExprDirection extends SimpleExpression<Direction> {
 			while (d != null) {
 				final Number n2 = d.amount != null ? d.amount.getSingle(e) : 1;
 				if (n2 == null)
-					return null;
+					return new Direction[0];
 				assert d.direction != null; // checked in init()
 				v.add(d.direction.clone().multiply(n2.doubleValue()));
 				d = d.next;
@@ -154,7 +154,7 @@ public class ExprDirection extends SimpleExpression<Direction> {
 		} else if (relativeTo != null) {
 			final Object o = relativeTo.getSingle(e);
 			if (o == null)
-				return null;
+				return new Direction[0];
 			if (o instanceof Block) {
 				final BlockFace f = Direction.getFacing((Block) o);
 				if (f == BlockFace.SELF || horizontal && (f == BlockFace.UP || f == BlockFace.DOWN))

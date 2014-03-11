@@ -74,7 +74,7 @@ public class ExprLocationAt extends SimpleExpression<Location> {
 		final World w = world.getSingle(e);
 		final Number x = this.x.getSingle(e), y = this.y.getSingle(e), z = this.z.getSingle(e);
 		if (w == null || x == null || y == null || z == null)
-			return null;
+			return new Location[0];
 		return new Location[] {new Location(w, x.doubleValue(), y.doubleValue(), z.doubleValue())};
 	}
 	

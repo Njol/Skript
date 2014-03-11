@@ -78,7 +78,7 @@ public class ExprDrops extends SimpleExpression<ItemStack> {
 	@Nullable
 	protected ItemStack[] get(final Event e) {
 		if (!(e instanceof EntityDeathEvent))
-			return null;
+			return new ItemStack[0];
 		return ((EntityDeathEvent) e).getDrops().toArray(new ItemStack[0]);
 	}
 	

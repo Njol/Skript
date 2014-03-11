@@ -139,50 +139,50 @@ public abstract class Utils {
 		return new Pair<String, Integer>(s, Integer.valueOf(-1));
 	}
 	
-	public final static class AmountResponse {
-		public final String s;
-		public final int amount;
-		public final boolean every;
-		
-		public AmountResponse(final String s, final int amount, final boolean every) {
-			this.s = s;
-			this.amount = amount;
-			this.every = every;
-		}
-		
-		public AmountResponse(final String s, final boolean every) {
-			this.s = s;
-			amount = -1;
-			this.every = every;
-		}
-		
-		public AmountResponse(final String s, final int amount) {
-			this.s = s;
-			this.amount = amount;
-			every = false;
-		}
-		
-		public AmountResponse(final String s) {
-			this.s = s;
-			amount = -1;
-			every = false;
-		}
-	}
-	
-	public final static AmountResponse getAmountWithEvery(final String s) {
-		if (s.matches("\\d+ of (all|every) .+")) {
-			return new AmountResponse("" + s.split(" ", 4)[3], Utils.parseInt("" + s.split(" ", 2)[0]), true);
-		} else if (s.matches("\\d+ of .+")) {
-			return new AmountResponse("" + s.split(" ", 3)[2], Utils.parseInt("" + s.split(" ", 2)[0]));
-		} else if (s.matches("\\d+ .+")) {
-			return new AmountResponse("" + s.split(" ", 2)[1], Utils.parseInt("" + s.split(" ", 2)[0]));
-		} else if (s.matches("an? .+")) {
-			return new AmountResponse("" + s.split(" ", 2)[1], 1);
-		} else if (s.matches("(all|every) .+")) {
-			return new AmountResponse("" + s.split(" ", 2)[1], true);
-		}
-		return new AmountResponse(s);
-	}
+//	public final static class AmountResponse {
+//		public final String s;
+//		public final int amount;
+//		public final boolean every;
+//		
+//		public AmountResponse(final String s, final int amount, final boolean every) {
+//			this.s = s;
+//			this.amount = amount;
+//			this.every = every;
+//		}
+//		
+//		public AmountResponse(final String s, final boolean every) {
+//			this.s = s;
+//			amount = -1;
+//			this.every = every;
+//		}
+//		
+//		public AmountResponse(final String s, final int amount) {
+//			this.s = s;
+//			this.amount = amount;
+//			every = false;
+//		}
+//		
+//		public AmountResponse(final String s) {
+//			this.s = s;
+//			amount = -1;
+//			every = false;
+//		}
+//	}
+//	
+//	public final static AmountResponse getAmountWithEvery(final String s) {
+//		if (s.matches("\\d+ of (all|every) .+")) {
+//			return new AmountResponse("" + s.split(" ", 4)[3], Utils.parseInt("" + s.split(" ", 2)[0]), true);
+//		} else if (s.matches("\\d+ of .+")) {
+//			return new AmountResponse("" + s.split(" ", 3)[2], Utils.parseInt("" + s.split(" ", 2)[0]));
+//		} else if (s.matches("\\d+ .+")) {
+//			return new AmountResponse("" + s.split(" ", 2)[1], Utils.parseInt("" + s.split(" ", 2)[0]));
+//		} else if (s.matches("an? .+")) {
+//			return new AmountResponse("" + s.split(" ", 2)[1], 1);
+//		} else if (s.matches("(all|every) .+")) {
+//			return new AmountResponse("" + s.split(" ", 2)[1], true);
+//		}
+//		return new AmountResponse(s);
+//	}
 	
 	private final static String[][] plurals = {
 			

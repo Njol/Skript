@@ -361,8 +361,13 @@ public class Language {
 		if (localized == null)
 			return false;
 		useLocal = b;
-		for (final LanguageChangeListener l : listeners)
-			l.onLanguageChange();
+		for (final LanguageChangeListener l : listeners) {
+			try {
+				l.onLanguageChange();
+			} catch (final Exception e) {
+				Skript.exception(e, "Error while changing the language " + (b ? "from english to" : "to english from") + " " + name, "Listener: " + l);
+			}
+		}
 		return !b;
 	}
 	

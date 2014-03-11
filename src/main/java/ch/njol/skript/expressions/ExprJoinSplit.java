@@ -74,7 +74,7 @@ public class ExprJoinSplit extends SimpleExpression<String> {
 		final String[] s = strings.getArray(e);
 		final String d = delimiter != null ? delimiter.getSingle(e) : "";
 		if (s.length == 0 || d == null)
-			return null;
+			return new String[0];
 		if (join) {
 			return new String[] {StringUtils.join(s, d)};
 		} else {

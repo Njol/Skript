@@ -72,16 +72,16 @@ public class ExprSubstring extends SimpleExpression<String> {
 	protected String[] get(final Event e) {
 		final String s = string.getSingle(e);
 		if (s == null)
-			return null;
+			return new String[0];
 		Number d1 = start != null ? start.getSingle(e) : 1;
 		final Number d2 = end != null ? end.getSingle(e) : s.length();
 		if (d1 == null || d2 == null)
-			return null;
+			return new String[0];
 		if (end == null)
 			d1 = s.length() - d1.doubleValue() + 1;
 		final int i1 = Math.max(0, (int) Math.round(d1.doubleValue()) - 1), i2 = Math.min((int) Math.round(d2.doubleValue()), s.length());
 		if (i1 >= i2)
-			return null;
+			return new String[0];
 		return new String[] {s.substring(i1, i2)};
 	}
 	

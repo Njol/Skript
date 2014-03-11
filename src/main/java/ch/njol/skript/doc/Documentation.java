@@ -46,10 +46,12 @@ import ch.njol.util.NonNullPair;
 import ch.njol.util.StringUtils;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.IteratorIterable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Peter Güttinger
  */
+@SuppressFBWarnings("ES_COMPARING_STRINGS_WITH_EQ")
 public class Documentation { // TODO list special expressions for events and event values
 
 	public final static void generate() {

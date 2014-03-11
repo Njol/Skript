@@ -65,7 +65,7 @@ public class ExprDistance extends SimpleExpression<Double> {
 	protected Double[] get(final Event e) {
 		final Location l1 = loc1.getSingle(e), l2 = loc2.getSingle(e);
 		if (l1 == null || l2 == null || l1.getWorld() != l2.getWorld())
-			return null;
+			return new Double[0];
 		return new Double[] {l1.distance(l2)};
 	}
 	
