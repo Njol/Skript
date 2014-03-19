@@ -45,7 +45,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011-2013 Peter Güttinger
+ * Copyright 2011-2014 Peter Güttinger
  * 
  */
 
