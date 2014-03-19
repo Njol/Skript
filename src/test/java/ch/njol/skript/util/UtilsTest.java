@@ -23,12 +23,27 @@ package ch.njol.skript.util;
 
 import static org.junit.Assert.*;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import org.junit.Test;
+
 /**
  * @author Peter Güttinger
  */
 public class UtilsTest {
 	
-//	@Test
+	@Test
 	@SuppressWarnings("null")
 	public void testPlural() {
 		
@@ -60,6 +75,31 @@ public class UtilsTest {
 		for (final String[] s : strings) {
 			assertEquals(s[1], Utils.toEnglishPlural(s[0]));
 			assertEquals(s[0], Utils.getEnglishPlural(s[1]).first);
+		}
+		
+	}
+	
+	@Test
+	@SuppressWarnings("null")
+	public void testSuperClass() {
+		
+		final Class<?>[][] classes = {
+				{Object.class, Object.class},
+				{String.class, String.class},
+				{String.class, Object.class, Object.class},
+				{Object.class, String.class, Object.class},
+				{String.class, String.class, String.class},
+				{Object.class, String.class, Object.class, String.class, Object.class},
+				{Double.class, Integer.class, Number.class},
+				{UnknownHostException.class, FileNotFoundException.class, IOException.class},
+				{SortedMap.class, TreeMap.class, SortedMap.class},
+				{LinkedList.class, ArrayList.class, AbstractList.class},
+				{List.class, Set.class, Collection.class},
+				{ArrayList.class, Set.class, Collection.class},
+		};
+		
+		for (final Class<?>[] cs : classes) {
+			assertEquals(cs[cs.length - 1], Utils.getSuperType(Arrays.copyOf(cs, cs.length - 1)));
 		}
 		
 	}

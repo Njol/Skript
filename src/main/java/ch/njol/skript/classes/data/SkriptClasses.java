@@ -457,6 +457,7 @@ public class SkriptClasses {
 						"dusk/day/dawn/night")
 				.examples("time in world is night")
 				.since("1.0")
+				.before("timespan") // otherwise "day" gets parsed as '1 day'
 				.defaultExpression(new SimpleLiteral<Timeperiod>(new Timeperiod(0, 23999), true))
 				.parser(new Parser<Timeperiod>() {
 					@Override

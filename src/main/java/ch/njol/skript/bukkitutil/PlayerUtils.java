@@ -19,7 +19,7 @@
  * 
  */
 
-package ch.njol.skript.util;
+package ch.njol.skript.bukkitutil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +28,7 @@ import org.bukkit.entity.Player;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.util.Task;
 
 /**
  * TODO check all updates and find out which ones are not required

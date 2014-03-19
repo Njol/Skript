@@ -382,7 +382,7 @@ public class FlatFileStorage extends VariablesStorage {
 					pw.close();
 					FileUtils.move(tempFile, f, true);
 				} catch (final IOException e) {
-					Skript.error("Unable to save variables: " + e.getLocalizedMessage());
+					Skript.error("Unable to make a final save of '" + databaseName + "' (no variables are lost): " + ExceptionUtils.toString(e)); // FIXME happens at random - check locks/threads
 				} finally {
 					if (pw != null)
 						pw.close();

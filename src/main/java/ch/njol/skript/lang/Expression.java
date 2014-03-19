@@ -91,6 +91,12 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	/**
 	 * Checks this expression against the given checker. This is the normal version of this method and the one which must be used for simple checks,
 	 * or as the innermost check of nested checks.
+	 * <p>
+	 * Usual implementation (may differ, e.g. may return false for nonexistent values independent of <tt>negated</tt):
+	 * 
+	 * <pre>
+	 * return negated ^ {@link #check(Event, Checker)};
+	 * </pre>
 	 * 
 	 * @param e The event
 	 * @param c A checker

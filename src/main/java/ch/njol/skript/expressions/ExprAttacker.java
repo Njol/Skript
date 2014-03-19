@@ -32,6 +32,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
+import ch.njol.skript.bukkitutil.ProjectileUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -81,7 +82,7 @@ public class ExprAttacker extends SimpleExpression<Entity> {
 			return null;
 		if (e instanceof EntityDamageByEntityEvent) {
 			if (((EntityDamageByEntityEvent) e).getDamager() instanceof Projectile) {
-				final Object o = ((Projectile) ((EntityDamageByEntityEvent) e).getDamager()).getShooter();
+				final Object o = ProjectileUtils.getShooter((Projectile) ((EntityDamageByEntityEvent) e).getDamager());
 				if (o instanceof Entity)
 					return (Entity) o;
 				return null;

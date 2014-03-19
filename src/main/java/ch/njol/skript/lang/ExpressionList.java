@@ -31,6 +31,7 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.classes.Changer.ChangeMode;
+import ch.njol.skript.conditions.CondCompare;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Utils;
@@ -46,7 +47,7 @@ import ch.njol.util.coll.CollectionUtils;
 public class ExpressionList<T> implements Expression<T> {
 	
 	protected final Expression<? extends T>[] expressions;
-	protected final boolean and;
+	protected boolean and;
 	private final boolean single;
 	private final Class<T> returnType;
 	@Nullable
@@ -167,14 +168,7 @@ public class ExpressionList<T> implements Expression<T> {
 	
 	@Override
 	public boolean check(final Event e, final Checker<? super T> c, final boolean negated) {
-		for (final Expression<? extends T> expr : expressions) {
-			final Boolean b = expr.check(e, c, negated);
-			if (and && !b)
-				return false;
-			if (!and && b)
-				return true;
-		}
-		return and;
+		return negated ^ check(e, c);
 	}
 	
 	@Override
@@ -208,6 +202,24 @@ public class ExpressionList<T> implements Expression<T> {
 	@Override
 	public boolean getAnd() {
 		return and;
+	}
+	
+	/**
+	 * For use in {@link CondCompare} only.
+	 * 
+	 * @return The old 'and' value
+	 */
+	public boolean setAnd(final boolean and) {
+		final boolean r = and;
+		this.and = and;
+		return r;
+	}
+	
+	/**
+	 * For use in {@link CondCompare} only.
+	 */
+	public void invertAnd() {
+		and = !and;
 	}
 	
 	@Override
@@ -284,7 +296,10 @@ public class ExpressionList<T> implements Expression<T> {
 			}
 			b.append(expressions[i].toString(e, debug));
 		}
-		return "" + b.append(")").toString();
+		b.append(")");
+		if (debug)
+			b.append("[").append(returnType).append("]");
+		return "" + b;
 	}
 	
 	@Override

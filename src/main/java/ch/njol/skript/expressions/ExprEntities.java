@@ -70,7 +70,7 @@ public class ExprEntities extends SimpleExpression<Entity> {
 		Skript.registerExpression(ExprEntities.class, Entity.class, ExpressionType.PATTERN_MATCHES_EVERYTHING,
 				"[all] %*entitydatas% [(in|of) [world[s]] %-worlds%]",
 				"[all] entities of type[s] %entitydatas% [(in|of) [world[s]] %-worlds%]",
-				"[all] %*entitydatas% (within|[with]in radius) %number% [(block[s]|meter[s])] (of|around) %location%",
+				"[all] %*entitydatas% (within|[with]in radius) %number% [(block[s]|met(er|re)[s])] (of|around) %location%",
 				"[all] entities of type[s] %entitydatas% in radius %number% (of|around) %location%");
 	}
 	

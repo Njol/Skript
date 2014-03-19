@@ -63,6 +63,11 @@ public abstract class Converters {
 		registerConverter(from, to, converter, 0);
 	}
 	
+	@Deprecated
+	public static <F, T> void registerConverter(final Class<F> from, final Class<T> to, final ch.njol.skript.classes.SerializableConverter<F, T> converter) {
+		registerConverter(from, to, (Converter<F, T>) converter);
+	}
+	
 	public static <F, T> void registerConverter(final Class<F> from, final Class<T> to, final Converter<F, T> converter, final int options) {
 		Skript.checkAcceptRegistrations();
 		final ConverterInfo<F, T> info = new ConverterInfo<F, T>(from, to, converter, options);
@@ -74,6 +79,11 @@ public abstract class Converters {
 			}
 		}
 		converters.add(info);
+	}
+	
+	@Deprecated
+	public static <F, T> void registerConverter(final Class<F> from, final Class<T> to, final ch.njol.skript.classes.SerializableConverter<F, T> converter, final int options) {
+		registerConverter(from, to, (Converter<F, T>) converter, options);
 	}
 	
 	// REMIND how to manage overriding of converters? - shouldn't actually matter

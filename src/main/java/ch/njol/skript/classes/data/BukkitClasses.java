@@ -51,6 +51,7 @@ import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.SkriptConfig;
 import ch.njol.skript.aliases.Aliases;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.ClassInfo;
@@ -502,7 +503,10 @@ public class BukkitClasses {
 					
 					@Override
 					public String toVariableNameString(final Player p) {
-						return "" + p.getName();
+						if (SkriptConfig.usePlayerUUIDsInVariableNames.value())
+							return "" + p.getUniqueId();
+						else
+							return "" + p.getName();
 					}
 					
 					@Override
@@ -573,7 +577,7 @@ public class BukkitClasses {
 					@Override
 					public Fields serialize(final OfflinePlayer p) {
 						final Fields f = new Fields();
-						f.putObject("name", p.getName());
+						f.putObject("name", p.getName()); // TODO save UUID once Bukkit supports it
 						return f;
 					}
 					

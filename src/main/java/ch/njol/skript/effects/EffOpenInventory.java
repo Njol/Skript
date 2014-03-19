@@ -37,11 +37,8 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
 
 /**
- * TODO update doc
- * 
  * @author Peter Güttinger
  */
-//TODO update doc (name/since, add example, change desc)
 @Name("Open/Close Inventory")
 @Description({"Opens an inventory to a player. The player can then access and modify the inventory as if it was a chest that he just opened.",
 		"Please note that currently 'show' and 'open' have the same effect, but 'show' will eventually show an unmodifiable view of the inventory in the future."})

@@ -89,6 +89,11 @@ public class EventValues {
 		registerEventValue(e, c, g, time, null, (Class<? extends E>[]) null);
 	}
 	
+	@Deprecated
+	public static <T, E extends Event> void registerEventValue(final Class<E> e, final Class<T> c, final ch.njol.skript.classes.SerializableGetter<T, E> g, final int time) {
+		registerEventValue(e, c, (Getter<T, E>) g, time);
+	}
+	
 	/**
 	 * Same as {@link #registerEventValue(Class, Class, Getter, int)}
 	 * 
@@ -109,6 +114,11 @@ public class EventValues {
 			}
 		}
 		eventValues.add(new EventValueInfo<E, T>(e, c, g, excludeErrorMessage, excludes));
+	}
+	
+	@Deprecated
+	public static <T, E extends Event> void registerEventValue(final Class<E> e, final Class<T> c, final ch.njol.skript.classes.SerializableGetter<T, E> g, final int time, final @Nullable String excludeErrorMessage, final @Nullable Class<? extends E>... excludes) {
+		registerEventValue(e, c, (Getter<T, E>) g, time, excludeErrorMessage, excludes);
 	}
 	
 	/**

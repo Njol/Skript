@@ -19,7 +19,7 @@
  * 
  */
 
-package ch.njol.skript.util;
+package ch.njol.skript.bukkitutil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

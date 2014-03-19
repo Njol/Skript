@@ -92,6 +92,16 @@ public abstract class SkriptConfig {
 	// everything handled by Variables
 	public final static OptionSection databases = new OptionSection("databases");
 	
+// TODO add once Bukkit supports UUIDs more extensively // REM: offline player's variable name
+//use player UUIDs in variable names: false
+//# Whether to use a player's UUID instead of their name in variables, e.g. {home.%player%} will look like
+//# {home.<some long number sequence with dashes and stuff>} instead of {home.njol}.
+//# Please note:
+//# - if this setting is changed old variables WILL NOT be renamed automatically.
+//# - players stored in variables are STILL SAVED BY NAME as Bukkit does not yet fully support UUIDs.
+	public final static Option<Boolean> usePlayerUUIDsInVariableNames = new Option<Boolean>("use player UUIDs in variable names", false)
+			.optional(true);
+	
 	@SuppressWarnings("null")
 	private final static DateFormat shortDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 	private final static Option<DateFormat> dateFormat = new Option<DateFormat>("date format", shortDateFormat, new Converter<String, DateFormat>() {
@@ -166,6 +176,7 @@ public abstract class SkriptConfig {
 		return mainConfig;
 	}
 	
+	// also used for reloading
 	static boolean load() {
 		try {
 			final File oldConfigFile = new File(Skript.getInstance().getDataFolder(), "config.cfg");

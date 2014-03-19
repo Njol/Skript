@@ -872,3 +872,5 @@ types:
 # -- IO Exceptions --
 io exceptions:
 	unknownhostexception: Kann keine Verbindung zu %s aufbauen
+	accessdeniedexception: Zugriff verweigert: %s
+

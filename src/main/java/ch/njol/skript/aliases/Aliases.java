@@ -740,123 +740,126 @@ public abstract class Aliases {
 	public static void load() {
 		
 		final boolean wasLocal = Language.isUsingLocal();
-		for (int l = 0; l < 2; l++) {
-			Language.setUseLocal(l == 1);
-			if (l == 1 && !Language.isUsingLocal())
-				break;
-			
-			final Config aliasConfig;
-			try {
-				final File file = new File(Skript.getInstance().getDataFolder(), "aliases-" + Language.getName() + ".sk");
-				if (!file.exists()) {
-					Skript.error("Could not find the " + Language.getName() + " aliases file " + file.getName());
+		try {
+			for (int l = 0; l < 2; l++) {
+				Language.setUseLocal(l == 1);
+				if (l == 1 && !Language.isUsingLocal())
+					break;
+				
+				final Config aliasConfig;
+				try {
+					final File file = new File(Skript.getInstance().getDataFolder(), "aliases-" + Language.getName() + ".sk");
+					if (!file.exists()) {
+						Skript.error("Could not find the " + Language.getName() + " aliases file " + file.getName());
+					}
+					aliasConfig = new Config(file, false, true, "=");
+				} catch (final IOException e) {
+					Skript.error("Could not load the " + Language.getName() + " aliases config: " + e.getLocalizedMessage());
+					return;
 				}
-				aliasConfig = new Config(file, false, true, "=");
-			} catch (final IOException e) {
-				Skript.error("Could not load the " + Language.getName() + " aliases config: " + e.getLocalizedMessage());
-				return;
-			}
-			
-			final ArrayList<String> aliasNodes = new ArrayList<String>();
-			
-			aliasConfig.validate(
-					new SectionValidator()
-							.addEntry("aliases", new Setter<String>() {
-								@Override
-								public void set(final String s) {
-									for (final String n : s.split(","))
-										aliasNodes.add(n.trim());
-								}
-							}, false)
-							.addEntry("item", new Setter<String>() {
-								@Override
-								public void set(final String s) {
-									final NonNullPair<String, Integer> g = Noun.stripGender(s, "item");
-									itemGender = Noun.getGenderID(g.second);
-									final NonNullPair<String, String> p = Noun.getPlural(g.first);
-									itemSingular = "" + p.first.toLowerCase();
-									itemPlural = "" + p.second.toLowerCase();
-								}
-							}, false)
-							.addEntry("block", new Setter<String>() {
-								@Override
-								public void set(final String s) {
-									final NonNullPair<String, Integer> g = Noun.stripGender(s, "block");
-									blockGender = Noun.getGenderID(g.second);
-									final NonNullPair<String, String> p = Noun.getPlural(g.first);
-									blockSingular = "" + p.first.toLowerCase();
-									blockPlural = "" + p.second.toLowerCase();
-								}
-							}, false)
-							.setAllowUndefinedSections(true));
-			
-			for (final Node node : aliasConfig.getMainNode()) {
-				if (node instanceof SectionNode) {
-					if (!aliasNodes.contains(node.getKey())) {
-						Skript.error(m_invalid_section.toString(node.getKey()));
+				
+				final ArrayList<String> aliasNodes = new ArrayList<String>();
+				
+				aliasConfig.validate(
+						new SectionValidator()
+								.addEntry("aliases", new Setter<String>() {
+									@Override
+									public void set(final String s) {
+										for (final String n : s.split(","))
+											aliasNodes.add(n.trim());
+									}
+								}, false)
+								.addEntry("item", new Setter<String>() {
+									@Override
+									public void set(final String s) {
+										final NonNullPair<String, Integer> g = Noun.stripGender(s, "item");
+										itemGender = Noun.getGenderID(g.second);
+										final NonNullPair<String, String> p = Noun.getPlural(g.first);
+										itemSingular = "" + p.first.toLowerCase();
+										itemPlural = "" + p.second.toLowerCase();
+									}
+								}, false)
+								.addEntry("block", new Setter<String>() {
+									@Override
+									public void set(final String s) {
+										final NonNullPair<String, Integer> g = Noun.stripGender(s, "block");
+										blockGender = Noun.getGenderID(g.second);
+										final NonNullPair<String, String> p = Noun.getPlural(g.first);
+										blockSingular = "" + p.first.toLowerCase();
+										blockPlural = "" + p.second.toLowerCase();
+									}
+								}, false)
+								.setAllowUndefinedSections(true));
+				
+				for (final Node node : aliasConfig.getMainNode()) {
+					if (node instanceof SectionNode) {
+						if (!aliasNodes.contains(node.getKey())) {
+							Skript.error(m_invalid_section.toString(node.getKey()));
+						}
 					}
 				}
-			}
-			
-			final Variations variations = new Variations();
-			int num = 0;
-			for (final String an : aliasNodes) {
-				final Node node = aliasConfig.getMainNode().get(an);
-				SkriptLogger.setNode(node);
-				if (node == null) {
-					Skript.error(m_section_not_found.toString(an));
-					continue;
-				}
-				if (!(node instanceof SectionNode)) {
-					Skript.error(m_not_a_section.toString(an));
-					continue;
-				}
-				int i = 0;
-				for (final Node n : (SectionNode) node) {
-					if (n instanceof EntryNode) {
-						i += addAliases(((EntryNode) n).getKey(), ((EntryNode) n).getValue(), variations);
-					} else if (n instanceof SectionNode) {
-						final String key = n.getKey();
-						if (key == null) {
-							assert false;
-							continue;
-						}
-						if (!(key.startsWith("{") && key.endsWith("}"))) {
-							Skript.error(m_unexpected_non_variation_section.toString());
-							continue;
-						}
-						final HashMap<String, ItemType> vs = new HashMap<String, ItemType>();
-						for (final Node a : (SectionNode) n) {
-							if (a instanceof SectionNode) {
-								Skript.error(m_unexpected_section.toString());
-								continue;
-							} else if (!(a instanceof EntryNode)) {
+				
+				final Variations variations = new Variations();
+				int num = 0;
+				for (final String an : aliasNodes) {
+					final Node node = aliasConfig.getMainNode().get(an);
+					SkriptLogger.setNode(node);
+					if (node == null) {
+						Skript.error(m_section_not_found.toString(an));
+						continue;
+					}
+					if (!(node instanceof SectionNode)) {
+						Skript.error(m_not_a_section.toString(an));
+						continue;
+					}
+					int i = 0;
+					for (final Node n : (SectionNode) node) {
+						if (n instanceof EntryNode) {
+							i += addAliases(((EntryNode) n).getKey(), ((EntryNode) n).getValue(), variations);
+						} else if (n instanceof SectionNode) {
+							final String key = n.getKey();
+							if (key == null) {
+								assert false;
 								continue;
 							}
-							final boolean noDefault = ((EntryNode) a).getValue().isEmpty() && ((EntryNode) a).getKey().equalsIgnoreCase("{default}");
-							final ItemType t = noDefault ? null : parseAlias(((EntryNode) a).getValue());
-							if (t != null || noDefault)
-								vs.put(Noun.normalizePluralMarkers(((EntryNode) a).getKey()), t);
+							if (!(key.startsWith("{") && key.endsWith("}"))) {
+								Skript.error(m_unexpected_non_variation_section.toString());
+								continue;
+							}
+							final HashMap<String, ItemType> vs = new HashMap<String, ItemType>();
+							for (final Node a : (SectionNode) n) {
+								if (a instanceof SectionNode) {
+									Skript.error(m_unexpected_section.toString());
+									continue;
+								} else if (!(a instanceof EntryNode)) {
+									continue;
+								}
+								final boolean noDefault = ((EntryNode) a).getValue().isEmpty() && ((EntryNode) a).getKey().equalsIgnoreCase("{default}");
+								final ItemType t = noDefault ? null : parseAlias(((EntryNode) a).getValue());
+								if (t != null || noDefault)
+									vs.put(Noun.normalizePluralMarkers(((EntryNode) a).getKey()), t);
+							}
+							variations.put(key.substring(1, key.length() - 1), vs);
 						}
-						variations.put(key.substring(1, key.length() - 1), vs);
 					}
+					if (Skript.logVeryHigh())
+						Skript.info(m_loaded_x_aliases_from.toString(i, node.getKey()));
+					num += i;
 				}
-				if (Skript.logVeryHigh())
-					Skript.info(m_loaded_x_aliases_from.toString(i, node.getKey()));
-				num += i;
-			}
-			SkriptLogger.setNode(null);
-			
-			if (Skript.logNormal())
-				Skript.info(m_loaded_x_aliases.toString(num));
-			
-			addMissingMaterialNames();
-			
+				SkriptLogger.setNode(null);
+				
+				if (Skript.logNormal())
+					Skript.info(m_loaded_x_aliases.toString(num));
+				
+				addMissingMaterialNames();
+				
 //			if (!SkriptConfig.keepConfigsLoaded.value())
 //				aliasConfig = null;
-			
+				
+			}
+		} finally {
+			Language.setUseLocal(wasLocal);
 		}
-		Language.setUseLocal(wasLocal);
 		
 	}
 	

@@ -199,7 +199,8 @@ public class Documentation { // TODO list special expressions for events and eve
 						b.append("<a href='../classes/#").append(p.first).append("'>").append(ci.getName().toString(p.second)).append("</a>");
 					} else {
 						b.append(c);
-						Skript.warning("Used class " + p.first + " has no docName/name defined");
+						if (ci != null && ci.getDocName() != ClassInfo.NO_DOC)
+							Skript.warning("Used class " + p.first + " has no docName/name defined");
 					}
 				}
 				return "" + b.append("%").toString();
@@ -243,7 +244,7 @@ public class Documentation { // TODO list special expressions for events and eve
 			return;
 		}
 		for (final SkriptEventInfo<?> i : Skript.getEvents()) {
-			if (info.getId().equals(i.getId()) && info != i && i.getDescription() != null) {
+			if (info.getId().equals(i.getId()) && info != i && i.getDescription() != null && i.getDescription() != SkriptEventInfo.NO_DOC) {
 				Skript.warning("Duplicate event id '" + info.getId() + "'");
 				return;
 			}
@@ -278,8 +279,8 @@ public class Documentation { // TODO list special expressions for events and eve
 	
 	private static ArrayList<Pattern> validation = new ArrayList<Pattern>();
 	static {
-		validation.add(Pattern.compile("<" + "(?!a href='|/a>|br ?/|/?(i|b|u|code|pre|ul|li)>)"));
-		validation.add(Pattern.compile("(?<!</a|'|br ?/|/?(i|b|u|code|pre|ul|li))" + ">"));
+		validation.add(Pattern.compile("<" + "(?!a href='|/a>|br ?/|/?(i|b|u|code|pre|ul|li|em)>)"));
+		validation.add(Pattern.compile("(?<!</a|'|br ?/|/?(i|b|u|code|pre|ul|li|em))" + ">"));
 	}
 	
 	private final static String[] urls = {"expressions", "effects", "conditions"};

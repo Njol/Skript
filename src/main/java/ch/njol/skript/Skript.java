@@ -62,6 +62,7 @@ import ch.njol.skript.Metrics.Graph;
 import ch.njol.skript.Metrics.Plotter;
 import ch.njol.skript.Updater.UpdateState;
 import ch.njol.skript.aliases.Aliases;
+import ch.njol.skript.bukkitutil.Workarounds;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Comparator;
 import ch.njol.skript.classes.Converter;
@@ -529,7 +530,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * Clears triggers, aliases, commands, variable names, etc.
+	 * Clears triggers, commands and variable names
 	 */
 	final static void disableScripts() {
 		VariableString.variableNames.clear();
@@ -883,7 +884,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	/**
 	 * Registers an event.
 	 * 
-	 * @param name The name of the event, used for error messages
+	 * @param name Capitalised name of the event without leading "On" which is added automatically (Start the name with an asterisk to prevent this). Used for error messages and
+	 *            the documentation.
 	 * @param c The event's class
 	 * @param event The Bukkit event this event applies to
 	 * @param patterns Skript patterns to match this event

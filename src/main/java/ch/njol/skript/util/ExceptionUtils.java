@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.localization.Language;
 
 public abstract class ExceptionUtils {
@@ -16,6 +17,8 @@ public abstract class ExceptionUtils {
 		if (Language.keyExists(IO_NODE + "." + e.getClass().getSimpleName())) {
 			return Language.format(IO_NODE + "." + e.getClass().getSimpleName(), e.getLocalizedMessage());
 		}
+		if (Skript.testing())
+			e.printStackTrace();
 		return e.getLocalizedMessage();
 	}
 	

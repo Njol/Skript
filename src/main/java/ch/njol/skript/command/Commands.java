@@ -412,7 +412,7 @@ public abstract class Commands {
 		
 		final String usage = ScriptLoader.replaceOptions(node.get("usage", desc));
 		final String description = ScriptLoader.replaceOptions(node.get("description", ""));
-		List<String> aliases = Arrays.asList(ScriptLoader.replaceOptions(node.get("aliases", "")).split("\\s*,\\s*/?"));
+		ArrayList<String> aliases = new ArrayList<String>(Arrays.asList(ScriptLoader.replaceOptions(node.get("aliases", "")).split("\\s*,\\s*/?")));
 		if (aliases.get(0).startsWith("/"))
 			aliases.set(0, aliases.get(0).substring(1));
 		else if (aliases.get(0).isEmpty())

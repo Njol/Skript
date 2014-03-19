@@ -179,7 +179,7 @@ public class SimpleEvents {
 						"while TNT will explode for sure after a short time.")
 				.examples("")
 				.since("1.0");
-		Skript.registerEvent("Hunger Meter Change", SimpleEvent.class, FoodLevelChangeEvent.class, "(food|hunger) (level|meter|bar) chang(e|ing)")
+		Skript.registerEvent("Hunger Meter Change", SimpleEvent.class, FoodLevelChangeEvent.class, "(food|hunger) (level|met(er|re)|bar) chang(e|ing)")
 				.description("Called when the hunger bar of a player changes, i.e. either increases by eating or decreases over time.")
 				.examples("")
 				.since("1.4.4");

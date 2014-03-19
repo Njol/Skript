@@ -22,6 +22,7 @@
 package ch.njol.skript.events;
 
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -37,6 +38,7 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
  */
 public class EvtPressurePlate extends SkriptEvent {
 	static {
+		// TODO is EntityInteractEvent similar for entities?
 		Skript.registerEvent("Pressure Plate / Trip", EvtPressurePlate.class, PlayerInteractEvent.class,
 				"[step[ping] on] [a] [pressure] plate",
 				"(trip|[step[ping] on] [a] tripwire)")
@@ -58,9 +60,10 @@ public class EvtPressurePlate extends SkriptEvent {
 	public boolean check(final Event e) {
 		// TODO !Update with every version [blocks]
 		// 'type.getData() == PressurePlate.class' doesn't work for gold and iron pressure plates
-		final Material type = ((PlayerInteractEvent) e).getClickedBlock().getType();
-		return ((PlayerInteractEvent) e).getAction() == Action.PHYSICAL &&
-				(tripwire ? type == Material.TRIPWIRE
+		final Block b = ((PlayerInteractEvent) e).getClickedBlock();
+		final Material type = b == null ? null : b.getType();
+		return type != null && ((PlayerInteractEvent) e).getAction() == Action.PHYSICAL &&
+				(tripwire ? (type == Material.TRIPWIRE || type == Material.TRIPWIRE_HOOK)
 						: (type == Material.WOOD_PLATE || type == Material.STONE_PLATE || type.getId() == 147 || type.getId() == 148)); // gold and iron pressure plates
 	}
 	

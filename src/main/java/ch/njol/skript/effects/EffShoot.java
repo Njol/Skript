@@ -31,6 +31,7 @@ import org.bukkit.util.Vector;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.bukkitutil.ProjectileUtils;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
@@ -98,7 +99,7 @@ public class EffShoot extends Effect {
 					final Vector vel = dir.getDirection(((LivingEntity) shooter).getLocation()).multiply(v.doubleValue());
 					if (Fireball.class.isAssignableFrom(d.getType())) {// fireballs explode in the shooter's face by default
 						final Fireball projectile = (Fireball) ((LivingEntity) shooter).getWorld().spawn(((LivingEntity) shooter).getEyeLocation().add(vel.clone().normalize().multiply(0.5)), d.getType());
-						projectile.setShooter((LivingEntity) shooter);
+						ProjectileUtils.setShooter(projectile, shooter);
 						projectile.setVelocity(vel);
 						lastSpawned = projectile;
 					} else if (Projectile.class.isAssignableFrom(d.getType())) {

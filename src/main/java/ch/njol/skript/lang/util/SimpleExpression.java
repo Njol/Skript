@@ -160,6 +160,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 		return check(get(e), c, negated, getAnd());
 	}
 	
+	// TODO return a kleenean (UNKNOWN if 'all' is null or empty)
 	public final static <T> boolean check(final @Nullable T[] all, final Checker<? super T> c, final boolean invert, final boolean and) {
 		if (all == null)
 			return false;
@@ -168,15 +169,15 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 			if (t == null)
 				continue;
 			hasElement = true;
-			final boolean b = invert ^ c.check(t);
+			final boolean b = c.check(t);
 			if (and && !b)
-				return false;
+				return invert ^ false;
 			if (!and && b)
-				return true;
+				return invert ^ true;
 		}
 		if (!hasElement)
 			return false;
-		return and;
+		return invert ^ and;
 	}
 	
 	/**

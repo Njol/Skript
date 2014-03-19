@@ -27,7 +27,6 @@ import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -35,14 +34,15 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.hooks.regions.classes.Region;
+import ch.njol.skript.util.AABB;
 import ch.njol.skript.variables.Variables;
-import ch.njol.util.coll.iterator.EmptyIterator;
 import ch.njol.yggdrasil.Fields;
 
-import com.sk89q.worldedit.BlockVector2D;
+import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
@@ -108,38 +108,40 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		
 		@Override
 		public Iterator<Block> getBlocks() {
-			final Iterator<BlockVector2D> iter = region.getPoints().iterator();
-			if (!iter.hasNext())
-				return EmptyIterator.get();
-			return new Iterator<Block>() {
-				@SuppressWarnings("null")
-				BlockVector2D current = iter.next();
-				int height = 0;
-				final int maxHeight = world.getMaxHeight();
-				
-				@SuppressWarnings("null")
-				@Override
-				public boolean hasNext() {
-					if (height >= maxHeight && iter.hasNext()) {
-						height = 0;
-						current = iter.next();
-					}
-					return height < maxHeight;
-				}
-				
-				@SuppressWarnings("null")
-				@Override
-				public Block next() {
-					if (!hasNext())
-						throw new NoSuchElementException();
-					return world.getBlockAt(current.getBlockX(), height++, current.getBlockZ());
-				}
-				
-				@Override
-				public void remove() {
-					throw new UnsupportedOperationException();
-				}
-			};
+			final BlockVector min = region.getMinimumPoint(), max = region.getMaximumPoint();
+			return new AABB(world, new Vector(min.getBlockX(), min.getBlockY(), min.getBlockZ()), new Vector(max.getBlockX() + 1, max.getBlockY() + 1, max.getBlockZ() + 1)).iterator();
+//			final Iterator<BlockVector2D> iter = region.getPoints().iterator();
+//			if (!iter.hasNext())
+//				return EmptyIterator.get();
+//			return new Iterator<Block>() {
+//				@SuppressWarnings("null")
+//				BlockVector2D current = iter.next();
+//				int height = 0;
+//				final int maxHeight = world.getMaxHeight();
+//				
+//				@SuppressWarnings("null")
+//				@Override
+//				public boolean hasNext() {
+//					if (height >= maxHeight && iter.hasNext()) {
+//						height = 0;
+//						current = iter.next();
+//					}
+//					return height < maxHeight;
+//				}
+//				
+//				@SuppressWarnings("null")
+//				@Override
+//				public Block next() {
+//					if (!hasNext())
+//						throw new NoSuchElementException();
+//					return world.getBlockAt(current.getBlockX(), height++, current.getBlockZ());
+//				}
+//				
+//				@Override
+//				public void remove() {
+//					throw new UnsupportedOperationException();
+//				}
+//			};
 		}
 		
 		@Override

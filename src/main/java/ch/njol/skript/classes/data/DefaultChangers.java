@@ -36,9 +36,9 @@ import org.bukkit.potion.PotionEffectType;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.bukkitutil.PlayerUtils;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.util.Experience;
-import ch.njol.skript.util.PlayerUtils;
 import ch.njol.util.coll.CollectionUtils;
 
 /**

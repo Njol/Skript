@@ -43,7 +43,7 @@ public final class SkriptEventInfo<E extends SkriptEvent> extends SyntaxElementI
 	private String since;
 	
 	/**
-	 * @param name Capitalized name of the event without leading "On" which is added automatically (Start the name with an asterisk to prevent this).
+	 * @param name Capitalised name of the event without leading "On" which is added automatically (Start the name with an asterisk to prevent this).
 	 * @param patterns
 	 * @param c The SkriptEvent's class
 	 * @param events The Bukkit-Events this SkriptEvent listens to

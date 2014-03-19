@@ -33,6 +33,7 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Condition;
 import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionList;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.RetainingLogHandler;
@@ -61,31 +62,31 @@ public class CondCompare extends Condition {
 	
 	private final static Patterns<Relation> patterns = new Patterns<Relation>(new Object[][] {
 			{"(1¦neither|) %objects% ((is|are) ((greater|more|higher|bigger|larger) than|above)|\\>) %objects%", Relation.GREATER},
-			{"(1¦neither|) %objects% ((is|are) (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(is not|are not|isn't|aren't) ((less|smaller) than|below)|\\>=) %objects%", Relation.GREATER_OR_EQUAL},
+			{"(1¦neither|) %objects% ((is|are) (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(2¦)((is|are) (not|4¦neither)|isn't|aren't) ((less|smaller) than|below)|\\>=) %objects%", Relation.GREATER_OR_EQUAL},
 			{"(1¦neither|) %objects% ((is|are) ((less|smaller) than|below)|\\<) %objects%", Relation.SMALLER},
-			{"(1¦neither|) %objects% ((is|are) (less|smaller|below) [than] or (equal to|the same as)|(is not|are not|isn't|aren't) ((greater|more|higher|bigger|larger) than|above)|\\<=) %objects%", Relation.SMALLER_OR_EQUAL},
-			{"(1¦neither|) %objects% ((is|are) (not|neither)|isn't|aren't|!=) [equal to] %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects% ((is|are) (less|smaller|below) [than] or (equal to|the same as)|(2¦)((is|are) (not|4¦neither)|isn't|aren't) ((greater|more|higher|bigger|larger) than|above)|\\<=) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"(1¦neither|) %objects% (2¦)((is|are) (not|4¦neither)|isn't|aren't|!=) [equal to] %objects%", Relation.EQUAL},
 			{"(1¦neither|) %objects% (is|are|=) [(equal to|the same as)] %objects%", Relation.EQUAL},
 			{"(1¦neither|) %objects% (is|are) between %objects% and %objects%", Relation.EQUAL},
-			{"(1¦neither|) %objects% (is not|are not|isn't|aren't) between %objects% and %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects% (2¦)(is not|are not|isn't|aren't) between %objects% and %objects%", Relation.EQUAL},
 			
 			{"(1¦neither|) %objects@-1% (was|were) ((greater|more|higher|bigger|larger) than|above) %objects%", Relation.GREATER},
-			{"(1¦neither|) %objects@-1% ((was|were) (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(was not|were not|wasn't|weren't) ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
+			{"(1¦neither|) %objects@-1% ((was|were) (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(2¦)((was|were) (not|4¦neither)|wasn't|weren't) ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
 			{"(1¦neither|) %objects@-1% (was|were) ((less|smaller) than|below) %objects%", Relation.SMALLER},
-			{"(1¦neither|) %objects@-1% ((was|were) (less|smaller|below) [than] or (equal to|the same as)|(was not|were not|wasn't|weren't) ((greater|more|higher|bigger|larger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
-			{"(1¦neither|) %objects@-1% ((was|were) (not|neither)|wasn't|weren't) [equal to] %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects@-1% ((was|were) (less|smaller|below) [than] or (equal to|the same as)|(2¦)((was|were) (not|4¦neither)|wasn't|weren't) ((greater|more|higher|bigger|larger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"(1¦neither|) %objects@-1% (2¦)((was|were) (not|4¦neither)|wasn't|weren't) [equal to] %objects%", Relation.EQUAL},
 			{"(1¦neither|) %objects@-1% (was|were) [(equal to|the same as)] %objects%", Relation.EQUAL},
 			{"(1¦neither|) %objects@-1% (was|were) between %objects% and %objects%", Relation.EQUAL},
-			{"(1¦neither|) %objects@-1% (was not|were not|wasn't|weren't) between %objects% and %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects@-1% (2¦)(was not|were not|wasn't|weren't) between %objects% and %objects%", Relation.EQUAL},
 			
 			{"(1¦neither|) %objects@1% will be ((greater|more|higher|bigger|larger) than|above) %objects%", Relation.GREATER},
-			{"(1¦neither|) %objects@1% (will be (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(will not|won't) be ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
+			{"(1¦neither|) %objects@1% (will be (greater|more|higher|bigger|larger|above) [than] or (equal to|the same as)|(2¦)(will (not|4¦neither)|won't) be ((less|smaller) than|below)) %objects%", Relation.GREATER_OR_EQUAL},
 			{"(1¦neither|) %objects@1% will be ((less|smaller) than|below) %objects%", Relation.SMALLER},
-			{"(1¦neither|) %objects@1% (will be (less|smaller|below) [than] or (equal to|the same as)|(will not|won't) be ((greater|more|higher|bigger|larger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
-			{"(1¦neither|) %objects@1% ((will (not|neither) be|won't be)|(isn't|aren't|is not|are not) (turning|changing) [in]to) [equal to] %objects%", Relation.NOT_EQUAL},
+			{"(1¦neither|) %objects@1% (will be (less|smaller|below) [than] or (equal to|the same as)|(2¦)(will (not|4¦neither)|won't) be ((greater|more|higher|bigger|larger) than|above)) %objects%", Relation.SMALLER_OR_EQUAL},
+			{"(1¦neither|) %objects@1% (2¦)((will (not|4¦neither) be|won't be)|(isn't|aren't|is not|are not) (turning|changing) [in]to) [equal to] %objects%", Relation.EQUAL},
 			{"(1¦neither|) %objects@1% (will be [(equal to|the same as)]|(is|are) (turning|changing) [in]to) %objects%", Relation.EQUAL},
 			{"(1¦neither|) %objects@1% will be between %objects% and %objects%", Relation.EQUAL},
-			{"(1¦neither|) %objects@1% (will not be|won't be) between %objects% and %objects%", Relation.NOT_EQUAL}
+			{"(1¦neither|) %objects@1% (2¦)(will not be|won't be) between %objects% and %objects%", Relation.EQUAL}
 	});
 	
 	static {
@@ -112,8 +113,16 @@ public class CondCompare extends Condition {
 		if (vars.length == 3)
 			third = vars[2];
 		relation = patterns.getInfo(matchedPattern);
-		if (parser.mark == 1) // "neither" on the left side
-			relation = relation.getInverse();
+		if ((parser.mark & 0x2) != 0) // "not" somewhere in the condition
+			setNegated(true);
+		if ((parser.mark & 0x1) != 0) // "neither" on the left side
+			setNegated(!isNegated());
+		if ((parser.mark & 0x4) != 0) {// "neither" on the right side
+			if (second instanceof ExpressionList)
+				((ExpressionList<?>) second).invertAnd();
+			if (third instanceof ExpressionList)
+				((ExpressionList<?>) third).invertAnd();
+		}
 		final boolean b = init();
 		final Expression<?> third = this.third;
 		if (!b) {
@@ -208,11 +217,12 @@ public class CondCompare extends Condition {
 	 * neither a nor b # x === a !# x && b !# x		// nor = and
 	 * a or b !# x === a !# x || b !# x
 	 * 
-	 * a !# x and y === a !# x && a !# y
-	 * a # neither x nor y === a !# x && a !# y		// nor = and
-	 * a !# x or y === a !# x || a !# y
+	 * a !# x and y === a !# x || a !# y							// e.g. "player doesn't have 2 emeralds and 5 gold ingots" == "NOT(player has 2 emeralds and 5 gold ingots)" == "player doesn't have 2 emeralds OR player doesn't have 5 gold ingots"
+	 * a # neither x nor y === a !# x && a !# y		// nor = or 	// e.g. "player has neither 2 emeralds nor 5 gold ingots" == "player doesn't have 2 emeralds AND player doesn't have 5 gold ingots"
+	 * a # neither x nor y === a !# x && a !# y		// nor = or 	// e.g. "player is neither the attacker nor the victim" == "player is not the attacker AND player is not the victim"
+	 * a !# x or y === a !# x && a !# y								// e.g. "player doesn't have 2 emeralds or 5 gold ingots" == "NOT(player has 2 emeralds or 5 gold ingots)" == "player doesn't have 2 emeralds AND player doesn't have 5 gold ingots"
 	 * 
-	 * a and b !# x and y === a !# x and y && b !# x and y === a !# x && a !# y && b !# x && b !# y
+	 * a and b !# x and y === a !# x and y && b !# x and y === (a !# x || a !# y) && (b !# x || b !# y)
 	 * a and b !# x or y === a !# x or y && b !# x or y
 	 * a and b # neither x nor y === a # neither x nor y && b # neither x nor y
 	 * 
@@ -220,8 +230,8 @@ public class CondCompare extends Condition {
 	 * a or b !# x or y === a !# x or y || b !# x or y
 	 * a or b # neither x nor y === a # neither x nor y || b # neither x nor y
 	 * 
-	 * neither a nor b # x and y === a !# x and y && b !# x and y							// nor = and
-	 * neither a nor b # x or y === a !# x or y && b !# x or y								// nor = and
+	 * neither a nor b # x and y === a !# x and y && b !# x and y		// nor = and
+	 * neither a nor b # x or y === a !# x or y && b !# x or y			// nor = and
 	 */
 	@Override
 	public boolean check(final Event e) {
@@ -243,7 +253,7 @@ public class CondCompare extends Condition {
 							}
 						});
 					}
-				});
+				}, isNegated());
 			}
 		});
 	}
@@ -253,9 +263,9 @@ public class CondCompare extends Condition {
 		String s;
 		final Expression<?> third = this.third;
 		if (third == null)
-			s = first.toString(e, debug) + " is " + relation + " " + second.toString(e, debug);
+			s = first.toString(e, debug) + " is " + (isNegated() ? "not " : "") + relation + " " + second.toString(e, debug);
 		else
-			s = first.toString(e, debug) + " is" + (relation == Relation.EQUAL ? "" : " not") + " between " + second.toString(e, debug) + " and " + third.toString(e, debug);
+			s = first.toString(e, debug) + " is " + (isNegated() ? "not " : "") + "between " + second.toString(e, debug) + " and " + third.toString(e, debug);
 		if (debug)
 			s += " (comparator: " + comp + ")";
 		return s;

@@ -149,6 +149,11 @@ public class ClassInfo<T> implements Debuggable {
 		return this;
 	}
 	
+	@Deprecated
+	public ClassInfo<T> changer(final SerializableChanger<? super T> changer) {
+		return changer((Changer<? super T>) changer);
+	}
+	
 	public ClassInfo<T> changer(final Changer<? super T> changer) {
 		assert this.changer == null;
 		this.changer = changer;

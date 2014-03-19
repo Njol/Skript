@@ -44,7 +44,6 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @Name("Ban")
-//TODO update doc (desc, ex, since) - also add note that a player will be banned even if the reason is invalid (e.g. nonexistent variable)
 @Description({"Bans/unbans a player or IP.",
 		"Starting with Skript 2.1.1 and Bukkit 1.7.2 R0.4, one can also ban players with a reason."})
 @Examples({"unban player",
@@ -108,7 +107,7 @@ public class EffBan extends Effect {
 				} else {
 					if (hasBanList) {
 						if (ban)
-							Bukkit.getBanList(BanList.Type.NAME).addBan(((Player) o).getName(), reason, expires, source);
+							Bukkit.getBanList(BanList.Type.NAME).addBan(((Player) o).getName(), reason, expires, source); // TODO ban UUID
 						else
 							Bukkit.getBanList(BanList.Type.NAME).pardon(((Player) o).getName());
 					} else {
