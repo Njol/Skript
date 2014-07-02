@@ -49,11 +49,10 @@ import ch.njol.util.Kleenean;
 		"	message \"You have a sword of sharpness %level of sharpness of the player's tool% equipped\""})
 @Since("2.0")
 public class ExprEnchantmentLevel extends PropertyExpression<ItemType, Integer> {
-	
 	static {
 		Skript.registerExpression(ExprEnchantmentLevel.class, Integer.class, ExpressionType.PROPERTY,
-				"[the] (%enchantment% level|level of [[the] enchant[ment]] %enchantment%) o(f|n) %itemtypes%",
-				"%itemtypes%'[s] (%enchantment% level|level of [[the] enchant[ment]] %enchantment%)");
+				"[the] (%-enchantment% level|level of [[the] enchant[ment]] %-enchantment%) o(f|n) %itemtypes%",
+				"%itemtypes%'[s] (%-enchantment% level|level of [[the] enchant[ment]] %-enchantment%)");
 	}
 	
 	@SuppressWarnings("null")

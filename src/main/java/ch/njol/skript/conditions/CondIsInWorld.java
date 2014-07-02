@@ -47,7 +47,6 @@ import ch.njol.util.Kleenean;
 		"the player is in the world of the victim"})
 @Since("1.4")
 public class CondIsInWorld extends Condition {
-	
 	static {
 		Skript.registerCondition(CondIsInWorld.class, "%entities% (is|are) in [[the] world[s]] %worlds%", "%entities% (is not|isn't|are not|aren't) in [[the] world[s]] %worlds%");
 	}
@@ -83,7 +82,7 @@ public class CondIsInWorld extends Condition {
 	
 	@Override
 	public String toString(final @Nullable Event e, final boolean debug) {
-		return entities.toString(e, debug) + " " + (entities.isSingle() ? "is" : "are") + " " + (isNegated() ? "not" : "") + " in world " + worlds.toString(e, debug);
+		return entities.toString(e, debug) + " " + (entities.isSingle() ? "is" : "are") + " " + (isNegated() ? "not " : "") + "in the world " + worlds.toString(e, debug);
 	}
 	
 }

@@ -32,6 +32,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.EventExecutor;
 import org.eclipse.jdt.annotation.Nullable;
@@ -174,6 +175,7 @@ public class EvtRegionBorder extends SelfRegisteringSkriptEvent {
 			return;
 		Bukkit.getPluginManager().registerEvent(PlayerMoveEvent.class, new Listener() {}, SkriptConfig.defaultEventPriority.value(), ee, Skript.getInstance(), true);
 		Bukkit.getPluginManager().registerEvent(PlayerTeleportEvent.class, new Listener() {}, SkriptConfig.defaultEventPriority.value(), ee, Skript.getInstance(), true);
+		Bukkit.getPluginManager().registerEvent(PlayerPortalEvent.class, new Listener() {}, SkriptConfig.defaultEventPriority.value(), ee, Skript.getInstance(), true);
 		registered = true;
 	}
 	

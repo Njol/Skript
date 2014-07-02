@@ -130,7 +130,7 @@ public class EffExit extends Effect { // TODO [code style] warn user about code 
 	
 	@Override
 	protected void execute(final Event e) {
-		throw new UnsupportedOperationException();
+		assert false;
 	}
 	
 	@Override

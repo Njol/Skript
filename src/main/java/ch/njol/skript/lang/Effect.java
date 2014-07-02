@@ -27,9 +27,13 @@ import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.lang.function.EffFunctionCall;
+import ch.njol.skript.log.ParseLogHandler;
+import ch.njol.skript.log.SkriptLogger;
 
 /**
- * An effect which is executed once execution of the trigger is at it's entry. After execution the trigger will continue with the next element in the trigger item list.
+ * An effect which is unconditionally executed when reached, and execution will usually continue with the next item of the trigger after this effect is executed (the stop effect
+ * for example stops the trigger, i.e. nothing else will be executed after it)
  * 
  * @author Peter Güttinger
  * @see Skript#registerEffect(Class, String...)
@@ -39,7 +43,7 @@ public abstract class Effect extends Statement {
 	protected Effect() {}
 	
 	/**
-	 * executes the effect.
+	 * Executes this effect.
 	 * 
 	 * @param e
 	 */
@@ -54,6 +58,21 @@ public abstract class Effect extends Statement {
 	@SuppressWarnings({"rawtypes", "unchecked", "null"})
 	@Nullable
 	public static Effect parse(final String s, final @Nullable String defaultError) {
+		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
+		try {
+			final EffFunctionCall f = EffFunctionCall.parse(s);
+			if (f != null) {
+				log.printLog();
+				return f;
+			} else if (log.hasError()) {
+				log.printError();
+				return null;
+			} else {
+				log.printError();
+			}
+		} finally {
+			log.stop();
+		}
 		return (Effect) SkriptParser.parse(s, (Iterator) Skript.getEffects().iterator(), defaultError);
 	}
 	

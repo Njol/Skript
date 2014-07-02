@@ -36,7 +36,7 @@ public class Version implements Serializable, Comparable<Version> {
 	
 	private final int[] version = new int[3];
 	/**
-	 * Everything after the version, e.g. "alpha", "b", "rc 1", "build 2314" etc. or null if nothing.
+	 * Everything after the version, e.g. "alpha", "b", "rc 1", "build 2314", "-SNAPSHOT" etc. or null if nothing.
 	 */
 	@Nullable
 	private final String postfix;

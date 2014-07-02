@@ -51,11 +51,11 @@ import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.localization.Adjective;
 import ch.njol.skript.localization.Language;
+import ch.njol.skript.localization.Language.LanguageListenerPriority;
 import ch.njol.skript.localization.LanguageChangeListener;
 import ch.njol.skript.localization.Message;
 import ch.njol.skript.localization.Noun;
 import ch.njol.skript.registrations.Classes;
-import ch.njol.skript.variables.Variables;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.yggdrasil.Fields;
@@ -199,7 +199,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 				names[i] = new Noun(LANGUAGE_NODE + "." + codeNames[i] + ".name");
 			}
 			
-			Language.addListener(this); // will initialise patterns
+			Language.addListener(this, LanguageListenerPriority.LATEST); // will initialise patterns, LATEST to make sure that m_age_pattern is updated before this
 		}
 		
 		@Override
@@ -542,7 +542,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 	
 	@Override
 	public void deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
-		fields.setFields(this, Variables.yggdrasil);
+		fields.setFields(this);
 	}
 	
 	@Deprecated

@@ -41,6 +41,7 @@ import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
 import ch.njol.skript.variables.Variables;
 import ch.njol.yggdrasil.Fields;
+import ch.njol.yggdrasil.YggdrasilID;
 
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -63,6 +64,11 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		return plugin.canBuild(p, l);
 	}
 	
+	static {
+		Variables.yggdrasil.registerSingleClass(WorldGuardRegion.class);
+	}
+	
+	@YggdrasilID("WorldGuardRegion")
 	public final class WorldGuardRegion extends Region {
 		
 		final World world;
@@ -154,7 +160,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		@Override
 		public void deserialize(final Fields fields) throws StreamCorruptedException, NotSerializableException {
 			final String r = fields.getAndRemoveObject("region", String.class);
-			fields.setFields(this, Variables.yggdrasil);
+			fields.setFields(this);
 			final ProtectedRegion region = plugin.getRegionManager(world).getRegion(r);
 			if (region == null)
 				throw new StreamCorruptedException("Invalid region " + r + " in world " + world);

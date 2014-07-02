@@ -21,48 +21,48 @@
 
 package ch.njol.skript.command;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.WeakHashMap;
 
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.Variable;
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.log.RetainingLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.skript.util.Utils;
+import ch.njol.skript.variables.Variables;
 
 /**
  * Represents an argument of a command
- * <p>
- * TODO allow named arguments (stored in local variables {_name})
  * 
  * @author Peter Güttinger
  */
 public class Argument<T> {
 	
 	@Nullable
+	private final String name;
+	
+	@Nullable
 	private final Expression<? extends T> def;
+	
 	private final ClassInfo<T> type;
 	private final boolean single;
+	
 	private final int index;
 	
 	private final boolean optional;
 	
 	private transient WeakHashMap<Event, T[]> current = new WeakHashMap<Event, T[]>();
 	
-	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
-		in.defaultReadObject();
-		current = new WeakHashMap<Event, T[]>();
-	}
-	
-	public Argument(final @Nullable Expression<? extends T> def, final ClassInfo<T> type, final boolean single, final int index, final boolean optional) {
+	private Argument(@Nullable final String name, final @Nullable Expression<? extends T> def, final ClassInfo<T> type, final boolean single, final int index, final boolean optional) {
+		this.name = name;
 		this.def = def;
 		this.type = type;
 		this.single = single;
@@ -72,7 +72,11 @@ public class Argument<T> {
 	
 	@SuppressWarnings("unchecked")
 	@Nullable
-	public static <T> Argument<T> newInstance(final ClassInfo<T> type, final @Nullable String def, final int index, final boolean single, final boolean forceOptional) {
+	public static <T> Argument<T> newInstance(@Nullable final String name, final ClassInfo<T> type, final @Nullable String def, final int index, final boolean single, final boolean forceOptional) {
+		if (name != null && !Variable.isValidVariableName(name, false, false)) {
+			Skript.error("An argument's name must be a valid variable name, and cannot be a list variable.");
+			return null;
+		}
 		Expression<? extends T> d = null;
 		if (def != null) {
 			if (def.startsWith("%") && def.endsWith("%")) {
@@ -96,10 +100,10 @@ public class Argument<T> {
 						else
 							d = (Expression<? extends T>) new SimpleLiteral<String>(def, false);
 					} else {
-						d = SkriptParser.parseLiteral(def, type.getC(), ParseContext.DEFAULT);
+						d = new SkriptParser(def, SkriptParser.PARSE_LITERALS, ParseContext.DEFAULT).parseExpression(type.getC());
 					}
 					if (d == null) {
-						log.printErrors("'" + def + "' is not " + type.getName().withIndefiniteArticle());
+						log.printErrors("Can't understand this expression: '" + def + "'");
 						return null;
 					}
 					log.printLog();
@@ -108,13 +112,13 @@ public class Argument<T> {
 				}
 			}
 		}
-		return new Argument<T>(d, type, single, index, def != null || forceOptional);
+		return new Argument<T>(name, d, type, single, index, def != null || forceOptional);
 	}
 	
 	@Override
 	public String toString() {
 		final Expression<? extends T> def = this.def;
-		return "<" + Utils.toEnglishPlural(type.getCodeName(), !single) + (def == null ? "" : " = " + def.toString()) + ">";
+		return "<" + (name != null ? name + ": " : "") + Utils.toEnglishPlural(type.getCodeName(), !single) + (def == null ? "" : " = " + def.toString()) + ">";
 	}
 	
 	public boolean isOptional() {
@@ -123,7 +127,7 @@ public class Argument<T> {
 	
 	public void setToDefault(final ScriptCommandEvent event) {
 		if (def != null)
-			current.put(event, def.getArray(event));
+			set(event, def.getArray(event));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -131,6 +135,16 @@ public class Argument<T> {
 		if (!(type.getC().isAssignableFrom(o.getClass().getComponentType())))
 			throw new IllegalArgumentException();
 		current.put(e, (T[]) o);
+		final String name = this.name;
+		if (name != null) {
+			if (single) {
+				if (o.length > 0)
+					Variables.setVariable(name, o[0], e, true);
+			} else {
+				for (int i = 0; i < o.length; i++)
+					Variables.setVariable(name + "::" + (i + 1), o[i], e, true);
+			}
+		}
 	}
 	
 	@Nullable
@@ -149,5 +163,10 @@ public class Argument<T> {
 	public boolean isSingle() {
 		return single;
 	}
+	
+//	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+//		in.defaultReadObject();
+//		current = new WeakHashMap<Event, T[]>();
+//	}
 	
 }

@@ -149,7 +149,6 @@ public abstract class Variables {
 						}
 						continue;
 					}
-					// TODO print number of loaded variables?
 					if (s.load(n))
 						storages.add(s);
 					else
@@ -303,9 +302,9 @@ public abstract class Variables {
 			if (value == null)
 				return false;
 			final NonNullPair<Object, VariablesStorage> v = tvs.get(name);
-			if (v != null && v.second != source) {// variable already loaded from another database
-				Skript.warning("The variable {" + name + "} was loaded twice from different databases (" + v.second.databaseName + " and " + source.databaseName + "), only the one from " + source.databaseName + " will be kept.");
-				v.second.save(name, null, null);
+			if (v != null && v.getSecond() != source) {// variable already loaded from another database
+				Skript.warning("The variable {" + name + "} was loaded twice from different databases (" + v.getSecond().databaseName + " and " + source.databaseName + "), only the one from " + source.databaseName + " will be kept.");
+				v.getSecond().save(name, null, null);
 			}
 			tvs.put(name, new NonNullPair<Object, VariablesStorage>(value, source));
 			return false;
@@ -344,7 +343,7 @@ public abstract class Variables {
 		assert tvs != null;
 		int n = 0;
 		for (final Entry<String, NonNullPair<Object, VariablesStorage>> tv : tvs.entrySet()) {
-			if (!variableLoaded(tv.getKey(), tv.getValue().first, tv.getValue().second))
+			if (!variableLoaded(tv.getKey(), tv.getValue().getFirst(), tv.getValue().getSecond()))
 				n++;
 		}
 		return n;

@@ -194,13 +194,13 @@ public class Documentation { // TODO list special expressions for events and eve
 						b.append("/");
 					first = false;
 					final NonNullPair<String, Boolean> p = Utils.getEnglishPlural(c);
-					final ClassInfo<?> ci = Classes.getClassInfoNoError(p.first);
+					final ClassInfo<?> ci = Classes.getClassInfoNoError(p.getFirst());
 					if (ci != null && ci.getDocName() != null && ci.getDocName() != ClassInfo.NO_DOC) {
-						b.append("<a href='../classes/#").append(p.first).append("'>").append(ci.getName().toString(p.second)).append("</a>");
+						b.append("<a href='../classes/#").append(p.getFirst()).append("'>").append(ci.getName().toString(p.getSecond())).append("</a>");
 					} else {
 						b.append(c);
 						if (ci != null && ci.getDocName() != ClassInfo.NO_DOC)
-							Skript.warning("Used class " + p.first + " has no docName/name defined");
+							Skript.warning("Used class " + p.getFirst() + " has no docName/name defined");
 					}
 				}
 				return "" + b.append("%").toString();

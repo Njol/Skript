@@ -92,7 +92,7 @@ public abstract class SkriptConfig {
 	// everything handled by Variables
 	public final static OptionSection databases = new OptionSection("databases");
 	
-// TODO add once Bukkit supports UUIDs more extensively // REM: offline player's variable name
+// TODO [UUID] add once Bukkit supports UUIDs more extensively // REM: offline player's variable name
 //use player UUIDs in variable names: false
 //# Whether to use a player's UUID instead of their name in variables, e.g. {home.%player%} will look like
 //# {home.<some long number sequence with dashes and stuff>} instead of {home.njol}.

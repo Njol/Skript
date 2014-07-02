@@ -287,7 +287,7 @@ public abstract class Aliases {
 								String s = name.substring(0, i) + "¦" + o[j] + "¦" + o[j + 1] + "¦" + name.substring(end + 1);
 								if (o[j + 2] != null) {
 									final NonNullPair<String, Integer> p = Noun.stripGender(s, s);
-									s = p.first + "@" + o[j + 2];
+									s = p.getFirst() + "@" + o[j + 2];
 								}
 								r.put(s, value);
 							}
@@ -326,9 +326,9 @@ public abstract class Aliases {
 		for (final Entry<String, ItemType> e : as.entrySet()) {
 			final String s = "" + e.getKey().trim().replaceAll("\\s+", " ");
 			final NonNullPair<String, Integer> g = Noun.stripGender(s, "" + e.getKey());
-			final NonNullPair<String, String> p = Noun.getPlural(g.first);
-			final String lcs = p.first.toLowerCase();
-			final String lcp = p.second.toLowerCase();
+			final NonNullPair<String, String> p = Noun.getPlural(g.getFirst());
+			final String lcs = p.getFirst().toLowerCase();
+			final String lcp = p.getSecond().toLowerCase();
 			if (numberWordPattern.matcher(lcs).matches() || numberWordPattern.matcher(lcp).matches()) {
 				if (!printedStartingWithNumberError) {
 					Skript.error(m_starting_with_number.toString());
@@ -394,15 +394,15 @@ public abstract class Aliases {
 				if (d.dataMin == -1 && d.dataMax == -1) {
 					if (n != null) {
 						if (n.singular.equals("" + d.getId()) && n.singular.equals(n.plural)) {
-							n.singular = p.first;
-							n.plural = p.second;
+							n.singular = p.getFirst();
+							n.plural = p.getSecond();
 						}
 					} else {
-						materialNames.put(Integer.valueOf(d.getId()), new MaterialName(d.getId(), p.first, p.second, g.second));
+						materialNames.put(Integer.valueOf(d.getId()), new MaterialName(d.getId(), p.getFirst(), p.getSecond(), g.getSecond()));
 					}
 				} else {
 					if (n == null)
-						materialNames.put(Integer.valueOf(d.getId()), n = new MaterialName(d.getId(), "" + d.getId(), "" + d.getId(), g.second));
+						materialNames.put(Integer.valueOf(d.getId()), n = new MaterialName(d.getId(), "" + d.getId(), "" + d.getId(), g.getSecond()));
 					@SuppressWarnings("null")
 					final NonNullPair<Short, Short> data = new NonNullPair<Short, Short>(Short.valueOf(d.dataMin), Short.valueOf(d.dataMax));
 					n.names.put(data, p);
@@ -773,20 +773,20 @@ public abstract class Aliases {
 									@Override
 									public void set(final String s) {
 										final NonNullPair<String, Integer> g = Noun.stripGender(s, "item");
-										itemGender = Noun.getGenderID(g.second);
-										final NonNullPair<String, String> p = Noun.getPlural(g.first);
-										itemSingular = "" + p.first.toLowerCase();
-										itemPlural = "" + p.second.toLowerCase();
+										itemGender = Noun.getGenderID(g.getSecond());
+										final NonNullPair<String, String> p = Noun.getPlural(g.getFirst());
+										itemSingular = "" + p.getFirst().toLowerCase();
+										itemPlural = "" + p.getSecond().toLowerCase();
 									}
 								}, false)
 								.addEntry("block", new Setter<String>() {
 									@Override
 									public void set(final String s) {
 										final NonNullPair<String, Integer> g = Noun.stripGender(s, "block");
-										blockGender = Noun.getGenderID(g.second);
-										final NonNullPair<String, String> p = Noun.getPlural(g.first);
-										blockSingular = "" + p.first.toLowerCase();
-										blockPlural = "" + p.second.toLowerCase();
+										blockGender = Noun.getGenderID(g.getSecond());
+										final NonNullPair<String, String> p = Noun.getPlural(g.getFirst());
+										blockSingular = "" + p.getFirst().toLowerCase();
+										blockPlural = "" + p.getSecond().toLowerCase();
 									}
 								}, false)
 								.setAllowUndefinedSections(true));

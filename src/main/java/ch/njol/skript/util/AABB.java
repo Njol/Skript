@@ -32,6 +32,7 @@ import org.bukkit.util.Vector;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
+import ch.njol.util.Math2;
 
 /**
  * AABB = Axis-Aligned Bounding Box
@@ -107,17 +108,17 @@ public class AABB implements Iterable<Block> {
 	}
 	
 	/**
-	 * Returns an iterator which iterates over all blocks that are
+	 * Returns an iterator which iterates over all blocks that are in this AABB
 	 */
 	@Override
 	public Iterator<Block> iterator() {
 		return new Iterator<Block>() {
-			private final int minX = (int) Math.ceil(lowerBound.getX() - Skript.EPSILON),
-					minY = (int) Math.ceil(lowerBound.getY() - Skript.EPSILON),
-					minZ = (int) Math.ceil(lowerBound.getZ() - Skript.EPSILON);
-			private final int maxX = (int) Math.floor(upperBound.getX() + Skript.EPSILON) - 1,
-					maxY = (int) Math.floor(upperBound.getY() + Skript.EPSILON) - 1,
-					maxZ = (int) Math.floor(upperBound.getZ() + Skript.EPSILON) - 1;
+			private final int minX = Math2.ceilI(lowerBound.getX() - Skript.EPSILON),
+					minY = Math2.ceilI(lowerBound.getY() - Skript.EPSILON),
+					minZ = Math2.ceilI(lowerBound.getZ() - Skript.EPSILON);
+			private final int maxX = Math2.floorI(upperBound.getX() + Skript.EPSILON) - 1,
+					maxY = Math2.floorI(upperBound.getY() + Skript.EPSILON) - 1,
+					maxZ = Math2.floorI(upperBound.getZ() + Skript.EPSILON) - 1;
 			
 			private int x = minX - 1,// next() increases x by one immediately
 					y = minY,
@@ -125,12 +126,14 @@ public class AABB implements Iterable<Block> {
 			
 			@Override
 			public boolean hasNext() {
-				return x < maxX || y < maxY || z < maxZ;
+				return y <= maxY && (x != maxX || y != maxY || z != maxZ);
 			}
 			
 			@SuppressWarnings("null")
 			@Override
 			public Block next() {
+				if (!hasNext())
+					throw new NoSuchElementException();
 				x++;
 				if (x > maxX) {
 					x = minX;

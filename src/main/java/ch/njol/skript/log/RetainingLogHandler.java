@@ -64,7 +64,7 @@ public class RetainingLogHandler extends LogHandler {
 	}
 	
 	/**
-	 * Print all retained errors or the given one if no errors were retained.
+	 * Prints all retained errors or the given one if no errors were retained.
 	 * <p>
 	 * This handler is stopped if not already done.
 	 * 
@@ -72,24 +72,27 @@ public class RetainingLogHandler extends LogHandler {
 	 * @return Whether there were any errors
 	 */
 	public final boolean printErrors(final @Nullable String def) {
+		return printErrors(def, ErrorQuality.SEMANTIC_ERROR);
+	}
+	
+	public final boolean printErrors(final @Nullable String def, final ErrorQuality quality) {
 		assert !printedErrorOrLog;
 		printedErrorOrLog = true;
 		stop();
+		
 		boolean hasError = false;
 		for (final LogEntry e : log) {
 			if (e.getLevel().intValue() >= Level.SEVERE.intValue()) {
 				SkriptLogger.log(e);
 				hasError = true;
+			} else {
+				e.discarded("not printed");
 			}
 		}
+		
 		if (!hasError && def != null)
 			SkriptLogger.log(SkriptLogger.SEVERE, def);
 		
-		for (final LogEntry e : log) {
-			if (e.getLevel().intValue() < Level.SEVERE.intValue()) {
-				e.discarded();
-			}
-		}
 		return hasError;
 	}
 	
@@ -119,7 +122,7 @@ public class RetainingLogHandler extends LogHandler {
 				e.logged();
 				hasError = true;
 			} else {
-				e.discarded();
+				e.discarded("not printed");
 			}
 		}
 		
@@ -170,7 +173,7 @@ public class RetainingLogHandler extends LogHandler {
 	 */
 	public void clear() {
 		for (final LogEntry e : log)
-			e.discarded();
+			e.discarded("cleared");
 		log.clear();
 		numErrors = 0;
 	}

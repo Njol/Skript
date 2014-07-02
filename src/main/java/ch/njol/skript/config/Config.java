@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 import org.eclipse.jdt.annotation.NonNull;
@@ -118,7 +117,7 @@ public class Config {
 	 * @throws IOException
 	 */
 	public Config(final String s, final String fileName, final boolean simple, final boolean allowEmptySections, final String defaultSeparator) throws IOException {
-		this(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), fileName, simple, allowEmptySections, defaultSeparator);
+		this(new ByteArrayInputStream(s.getBytes(ConfigReader.UTF_8)), fileName, simple, allowEmptySections, defaultSeparator);
 	}
 	
 	void setIndentation(final String indent) {

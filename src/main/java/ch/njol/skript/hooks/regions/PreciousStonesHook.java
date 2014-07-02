@@ -45,10 +45,12 @@ import ch.njol.skript.hooks.regions.Factions2Hook.FactionsRegion;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.AABB;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.NullableChecker;
 import ch.njol.util.coll.iterator.CheckedIterator;
 import ch.njol.util.coll.iterator.EmptyIterator;
 import ch.njol.yggdrasil.Fields;
+import ch.njol.yggdrasil.YggdrasilID;
 
 /**
  * @author Peter Güttinger
@@ -67,6 +69,11 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {
 		return PreciousStones.API().canPlace(p, l);
 	}
 	
+	static {
+		Variables.yggdrasil.registerSingleClass(PreciousStonesRegion.class);
+	}
+	
+	@YggdrasilID("PreciousStonesRegion")
 	public final class PreciousStonesRegion extends Region {
 		
 		transient Field field;

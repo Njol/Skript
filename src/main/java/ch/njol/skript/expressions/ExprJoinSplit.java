@@ -50,7 +50,7 @@ public class ExprJoinSplit extends SimpleExpression<String> {
 	static {
 		Skript.registerExpression(ExprJoinSplit.class, String.class, ExpressionType.COMBINED,
 				"(concat[enate]|join) %strings% [(with|using|by) [[the] delimiter] %-string%]",
-				"split %string% (at|using|by) [[the] delimiter] %string%", "%string% [split] (at|using|by) [[the] delimiter] %string%");
+				"split %string% (at|using|by) [[the] delimiter] %string%", "%string% split (at|using|by) [[the] delimiter] %string%");
 	}
 	
 	private boolean join;

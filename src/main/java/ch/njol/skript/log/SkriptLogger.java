@@ -170,14 +170,14 @@ public abstract class SkriptLogger {
 		if (entry == null)
 			return;
 		if (Skript.testing() && node != null && node.debug())
-			System.out.print("---> " + entry.level + ": " + entry.getMessage() + " ::" + LogEntry.findCaller());
+			System.out.print("---> " + entry.level + "/" + ErrorQuality.get(entry.quality) + ": " + entry.getMessage() + " ::" + LogEntry.findCaller());
 		for (final LogHandler h : handlers) {
 			final LogResult r = h.log(entry);
 			switch (r) {
 				case CACHED:
 					return;
 				case DONT_LOG:
-					entry.discarded();
+					entry.discarded("denied by " + h);
 					return;
 				case LOG:
 					continue;
@@ -195,8 +195,8 @@ public abstract class SkriptLogger {
 		}
 	}
 	
-	public static void logTracked(final Level level, final String message) {
-		log(new LogEntry(level, 0, message, node, true));
+	public static void logTracked(final Level level, final String message, final ErrorQuality quality) {
+		log(new LogEntry(level, quality.quality(), message, node, true));
 	}
 	
 	/**

@@ -21,9 +21,6 @@
 
 package ch.njol.skript.events;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.Event;
@@ -32,7 +29,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
 import ch.njol.skript.events.bukkit.ScheduledEvent;
-import ch.njol.skript.events.bukkit.ScheduledWorldEvent;
+import ch.njol.skript.events.bukkit.ScheduledNoWorldEvent;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptEventInfo;
@@ -45,9 +42,9 @@ import ch.njol.skript.util.Timespan;
  */
 public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 	static {
-		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledEvent.class, "every %timespan%")
+		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledNoWorldEvent.class, "every %timespan%")
 				.description(SkriptEventInfo.NO_DOC);
-		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledWorldEvent.class, "every %timespan% in [world[s]] %worlds%")
+		Skript.registerEvent("*Periodical", EvtPeriodical.class, ScheduledEvent.class, "every %timespan% in [world[s]] %worlds%")
 				.description("An event that is called periodically. The event is used like 'every &lt;<a href='../classes/#timespan'>timespan</a>&gt;', e.g. 'every second' or 'every 5 minutes'.")
 				.examples("every second",
 						"every minecraft hour",
@@ -66,18 +63,19 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 	
 	@Nullable
 	private transient World[] worlds;
-	@Nullable
-	private String[] worldNames;
 	
-	@SuppressWarnings({"unchecked", "null"})
+//	@Nullable
+//	private String[] worldNames;
+	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean init(final Literal<?>[] args, final int matchedPattern, final ParseResult parser) {
 		period = ((Literal<Timespan>) args[0]).getSingle();
 		if (args.length > 1 && args[1] != null) {
 			worlds = ((Literal<World>) args[1]).getArray();
-			worldNames = new String[worlds.length];
-			for (int i = 0; i < worlds.length; i++)
-				worldNames[i] = worlds[i].getName();
+//			worldNames = new String[worlds.length];
+//			for (int i = 0; i < worlds.length; i++)
+//				worldNames[i] = worlds[i].getName();
 		}
 		return true;
 	}
@@ -88,24 +86,12 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 			assert false;
 			return;
 		}
-		final ScheduledEvent e = w == null ? new ScheduledEvent() : new ScheduledWorldEvent(w);
+		final ScheduledEvent e = w == null ? new ScheduledNoWorldEvent() : new ScheduledEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerStart(t);
 		t.execute(e);
 		SkriptEventHandler.logTriggerEnd(t);
 		SkriptEventHandler.logEventEnd();
-	}
-	
-	@SuppressWarnings("null")
-	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
-		in.defaultReadObject();
-		if (worldNames != null) {
-			worlds = new World[worldNames.length];
-			for (int i = 0; i < worlds.length; i++) {
-				if ((worlds[i] = Bukkit.getWorld(worldNames[i])) == null)
-					throw new IOException();
-			}
-		}
 	}
 	
 	@SuppressWarnings("null")
@@ -157,5 +143,17 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 	public String toString(final @Nullable Event e, final boolean debug) {
 		return "every " + period;
 	}
+	
+//	@SuppressWarnings("null")
+//	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+//		in.defaultReadObject();
+//		if (worldNames != null) {
+//			worlds = new World[worldNames.length];
+//			for (int i = 0; i < worlds.length; i++) {
+//				if ((worlds[i] = Bukkit.getWorld(worldNames[i])) == null)
+//					throw new IOException();
+//			}
+//		}
+//	}
 	
 }

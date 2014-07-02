@@ -46,6 +46,7 @@ import ch.njol.skript.ScriptLoader.ScriptInfo;
 import ch.njol.skript.command.Commands;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.Trigger;
+import ch.njol.skript.lang.function.Functions;
 
 /**
  * @author Peter Güttinger
@@ -232,6 +233,8 @@ public abstract class SkriptEventHandler {
 		}
 		
 		info.commands = Commands.unregisterCommands(script);
+		
+		info.functions = Functions.clearFunctions(script);
 		
 		return info;
 	}

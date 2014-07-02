@@ -33,8 +33,10 @@ import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.skript.util.Patterns;
 import ch.njol.util.Kleenean;
 
@@ -96,7 +98,7 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 			@Override
 			public Number calculate(final Number n1, final Number n2, final boolean integer) {
 				if (integer)
-					return Long.valueOf((int) Math.pow(n1.intValue(), n2.intValue()));
+					return Long.valueOf((long) Math.pow(n1.longValue(), n2.longValue()));
 				return Double.valueOf(Math.pow(n1.doubleValue(), n2.doubleValue()));
 			}
 		};
@@ -193,8 +195,11 @@ public class ExprArithmetic extends SimpleExpression<Number> {
 		return first.toString(e, debug) + " " + op + " " + second.toString(e, debug);
 	}
 	
+	@SuppressWarnings("null")
 	@Override
 	public Expression<? extends Number> simplify() {
+		if (first instanceof Literal && second instanceof Literal)
+			return new SimpleLiteral<Number>(getArray(null), Number.class, false);
 		return this;
 	}
 	

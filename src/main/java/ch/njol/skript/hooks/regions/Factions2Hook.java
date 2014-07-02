@@ -40,8 +40,10 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
+import ch.njol.skript.variables.Variables;
 import ch.njol.util.coll.iterator.EmptyIterator;
 import ch.njol.yggdrasil.Fields;
+import ch.njol.yggdrasil.YggdrasilID;
 
 import com.massivecraft.factions.Factions;
 import com.massivecraft.factions.entity.BoardColls;
@@ -76,6 +78,11 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 		return FactionsListenerMain.canPlayerBuildAt(p, PS.valueOf(l), false);
 	}
 	
+	static {
+		Variables.yggdrasil.registerSingleClass(FactionsRegion.class);
+	}
+	
+	@YggdrasilID("FactionsRegion")
 	public final class FactionsRegion extends Region {
 		
 		private transient Faction faction;

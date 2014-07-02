@@ -62,7 +62,6 @@ import ch.njol.skript.util.Container;
 import ch.njol.skript.util.Container.ContainerType;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.Utils;
-import ch.njol.skript.variables.Variables;
 import ch.njol.util.coll.iterator.EmptyIterable;
 import ch.njol.util.coll.iterator.SingleItemIterable;
 import ch.njol.yggdrasil.Fields;
@@ -1143,7 +1142,7 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 		meta = fields.getAndRemoveObject("meta", Object.class);
 		if (meta != null && !(meta instanceof ItemMeta))
 			throw new StreamCorruptedException();
-		fields.setFields(this, Variables.yggdrasil);
+		fields.setFields(this);
 	}
 	
 }

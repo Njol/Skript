@@ -66,10 +66,13 @@ public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
 		@SuppressWarnings("unchecked")
 		final Literal<? extends R>[] exprs = new Literal[expressions.length];
-		for (int i = 0; i < exprs.length; i++)
+		final Class<?>[] classes = new Class[expressions.length];
+		for (int i = 0; i < exprs.length; i++) {
 			if ((exprs[i] = (Literal<? extends R>) expressions[i].getConvertedExpression(to)) == null)
 				return null;
-		return new LiteralList<R>(exprs, (Class<R>) Utils.getSuperType(to), and, this);
+			classes[i] = exprs[i].getReturnType();
+		}
+		return new LiteralList<R>(exprs, (Class<R>) Utils.getSuperType(classes), and, this);
 	}
 	
 	@Override

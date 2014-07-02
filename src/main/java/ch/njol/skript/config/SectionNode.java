@@ -276,8 +276,8 @@ public class SectionNode extends Node implements Iterable<Node> {
 			SkriptLogger.setNode(this);
 			
 			final NonNullPair<String, String> line = Node.splitLine(fullLine);
-			String value = line.first;
-			final String comment = line.second;
+			String value = line.getFirst();
+			final String comment = line.getSecond();
 			
 			final SectionNode parent = this.parent;
 			if (!indentationSet && parent != null && parent.parent == null && !value.isEmpty() && !value.matches("\\s*") && !value.matches("\\S.*")) {

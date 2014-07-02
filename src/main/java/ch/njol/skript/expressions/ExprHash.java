@@ -21,7 +21,7 @@
 
 package ch.njol.skript.expressions;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -61,6 +61,9 @@ public class ExprHash extends PropertyExpression<String, String> {
 		Skript.registerExpression(ExprHash.class, String.class, ExpressionType.PROPERTY, "[md5]( |-)hash(ed|[( |-|)code] of) %strings%");
 	}
 	
+	@SuppressWarnings("null")
+	private final static Charset UTF_8 = Charset.forName("UTF-8");
+	
 	@Nullable
 	static MessageDigest md5 = null;
 	static {
@@ -88,7 +91,7 @@ public class ExprHash extends PropertyExpression<String, String> {
 		assert md5 != null;
 		final String[] r = new String[source.length];
 		for (int i = 0; i < r.length; i++)
-			r[i] = toHex(md5.digest(source[i].getBytes(StandardCharsets.UTF_8)));
+			r[i] = toHex(md5.digest(source[i].getBytes(UTF_8)));
 		return r;
 	}
 	

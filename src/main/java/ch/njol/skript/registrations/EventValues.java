@@ -122,10 +122,10 @@ public class EventValues {
 	}
 	
 	/**
-	 * Gets a specific value from an event. Returns null if the event doesn't have such a value (conversions are done to try and get the desired value).<br>
+	 * Gets a specific value from an event. Returns null if the event doesn't have such a value (conversions are done to try and get the desired value).
+	 * <p>
 	 * It is recommended to use {@link EventValues#getEventValueGetter(Class, Class, int)} or {@link EventValueExpression#EventValueExpression(Class)} instead of invoking this
-	 * method
-	 * repeatedly.
+	 * method repeatedly.
 	 * 
 	 * @param e
 	 * @param c

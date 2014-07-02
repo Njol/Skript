@@ -42,7 +42,7 @@ public class Noun extends Message {
 	
 	public final static String GENDERS_SECTION = "genders.";
 	
-	// FIXME remove NO_GENDER and add boolean/flag uncountable (e.g. Luft: 'die Luft', aber nicht 'eine Luft')
+	// TODO remove NO_GENDER and add boolean/flag uncountable (e.g. Luft: 'die Luft', aber nicht 'eine Luft')
 	public final static int PLURAL = -2, NO_GENDER = -3; // -1 is sometimes used as 'not set'
 	public final static String PLURAL_TOKEN = "x", NO_GENDER_TOKEN = "-";
 	
@@ -70,8 +70,8 @@ public class Noun extends Message {
 			gender = 0;
 		}
 		final NonNullPair<String, String> p = Noun.getPlural(value);
-		singular = p.first;
-		plural = p.second;
+		singular = p.getFirst();
+		plural = p.getSecond();
 		if (gender == PLURAL && !Objects.equals(singular, plural))
 			Skript.warning("Noun '" + key + "' is of gender 'plural', but has different singular and plural values.");
 	}
@@ -127,8 +127,16 @@ public class Noun extends Message {
 		} else if (gender == NO_GENDER) {
 			// nothing
 		} else if ((flags & Language.F_DEFINITE_ARTICLE) != 0) {
+			if (gender < 0 || gender >= definiteArticles.size()) {
+				assert false : gender;
+				return "";
+			}
 			return definiteArticles.get(gender) + " ";
 		} else if ((flags & Language.F_INDEFINITE_ARTICLE) != 0) {
+			if (gender < 0 || gender >= indefiniteArticles.size()) {
+				assert false : gender;
+				return "";
+			}
 			return indefiniteArticles.get(gender) + " ";
 		}
 		return "";
@@ -219,18 +227,18 @@ public class Noun extends Message {
 		while ((c = s.indexOf('¦', c + 1)) != -1) {
 			final String x = s.substring(last, c);
 			if ((part & 1) != 0)
-				r.first += x;
+				r.setFirst(r.getFirst() + x);
 			if ((part & 2) != 0)
-				r.second += x;
+				r.setSecond(r.getSecond() + x);
 			part = i >= 2 ? (part % 3) + 1 : (part == 2 ? 3 : 2);
 			last = c + 1;
 			i--;
 		}
 		final String x = s.substring(last);
 		if ((part & 1) != 0)
-			r.first += x;
+			r.setFirst(r.getFirst() + x);
 		if ((part & 2) != 0)
-			r.second += x;
+			r.setSecond(r.getSecond() + x);
 		return r;
 	}
 	

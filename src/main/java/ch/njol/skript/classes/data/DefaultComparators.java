@@ -88,6 +88,8 @@ public class DefaultComparators {
 		Comparators.registerComparator(Number.class, Number.class, new Comparator<Number, Number>() {
 			@Override
 			public Relation compare(final Number n1, final Number n2) {
+				if (n1 instanceof Long && n2 instanceof Long)
+					return Relation.get(n1.longValue() - n2.longValue());
 				final double diff = n1.doubleValue() - n2.doubleValue();
 				if (Math.abs(diff) < Skript.EPSILON)
 					return Relation.EQUAL;
@@ -244,6 +246,19 @@ public class DefaultComparators {
 			@Override
 			public Relation compare(final CommandSender s1, final CommandSender s2) {
 				return Relation.get(s1.equals(s2));
+			}
+			
+			@Override
+			public boolean supportsOrdering() {
+				return false;
+			}
+		});
+		
+		// OfflinePlayer - OfflinePlayer
+		Comparators.registerComparator(OfflinePlayer.class, OfflinePlayer.class, new Comparator<OfflinePlayer, OfflinePlayer>() {
+			@Override
+			public Relation compare(final OfflinePlayer p1, final OfflinePlayer p2) {
+				return Relation.get(p1.getName().equals(p2.getName()));
 			}
 			
 			@Override

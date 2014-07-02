@@ -76,7 +76,10 @@ public abstract class Condition extends Statement {
 	
 	@SuppressWarnings({"rawtypes", "unchecked", "null"})
 	@Nullable
-	public static Condition parse(final String s, final String defaultError) {
+	public static Condition parse(String s, final String defaultError) {
+		s = s.trim();
+		while (s.startsWith("(") && SkriptParser.next(s, 0, ParseContext.DEFAULT) == s.length())
+			s = s.substring(1, s.length() - 1);
 		return (Condition) SkriptParser.parse(s, (Iterator) Skript.getConditions().iterator(), defaultError);
 	}
 	

@@ -46,8 +46,8 @@ public class NounTest {
 		for (final String[] test : tests) {
 			@SuppressWarnings("null")
 			final NonNullPair<String, String> p = Noun.getPlural(test[0]);
-			assertEquals(test[1], p.first);
-			assertEquals(test[2], p.second);
+			assertEquals(test[1], p.getFirst());
+			assertEquals(test[2], p.getSecond());
 		}
 	}
 	

@@ -70,6 +70,7 @@ import ch.njol.skript.classes.data.BukkitClasses;
 import ch.njol.skript.classes.data.BukkitEventValues;
 import ch.njol.skript.classes.data.DefaultComparators;
 import ch.njol.skript.classes.data.DefaultConverters;
+import ch.njol.skript.classes.data.DefaultFunctions;
 import ch.njol.skript.classes.data.JavaClasses;
 import ch.njol.skript.classes.data.SkriptClasses;
 import ch.njol.skript.command.Commands;
@@ -87,6 +88,7 @@ import ch.njol.skript.lang.Statement;
 import ch.njol.skript.lang.SyntaxElementInfo;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.VariableString;
+import ch.njol.skript.lang.function.Functions;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.Message;
@@ -260,6 +262,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		
 		new DefaultComparators();
 		new DefaultConverters();
+		new DefaultFunctions();
 		
 		try {
 			getAddonInstance().loadClasses("ch.njol.skript", "conditions", "effects", "events", "expressions", "entity");
@@ -330,6 +333,10 @@ public final class Skript extends JavaPlugin implements Listener {
 				
 				Documentation.generate(); // TODO move to test classes?
 				
+				if (logNormal())
+					info("Loading variables...");
+				final long vls = System.currentTimeMillis();
+				
 				final LogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler() {
 					private final List<LogEntry> log = new ArrayList<LogEntry>();
 					
@@ -375,6 +382,10 @@ public final class Skript extends JavaPlugin implements Listener {
 					h.stop();
 				}
 				
+				final long vld = System.currentTimeMillis() - vls;
+				if (logNormal())
+					info("Loaded " + Variables.numVariables() + " variables in " + ((vld / 100) / 10.) + " seconds");
+				
 				ScriptLoader.loadScripts();
 				
 				Skript.info(m_finished_loading.toString());
@@ -399,6 +410,12 @@ public final class Skript extends JavaPlugin implements Listener {
 					@Override
 					public int getValue() {
 						return ScriptLoader.loadedCommands();
+					}
+				});
+				scriptData.addPlotter(new Plotter("functions") {
+					@Override
+					public int getValue() {
+						return ScriptLoader.loadedFunctions();
 					}
 				});
 				scriptData.addPlotter(new Plotter("variables") {
@@ -530,12 +547,13 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	/**
-	 * Clears triggers, commands and variable names
+	 * Clears triggers, commands, functions and variable names
 	 */
 	final static void disableScripts() {
 		VariableString.variableNames.clear();
 		SkriptEventHandler.removeAllTriggers();
 		Commands.clearCommands();
+		Functions.clearFunctions();
 	}
 	
 	/**
@@ -732,6 +750,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	private static void stopAcceptingRegistrations() {
 		acceptRegistrations = false;
+		
 		Converters.createMissingConverters();
 		
 		Classes.onRegistrationsStop();
@@ -1080,7 +1099,8 @@ public final class Skript extends JavaPlugin implements Listener {
 		logEx("  Skript: " + getVersion());
 		logEx("  Bukkit: " + Bukkit.getBukkitVersion());
 		logEx("  Minecraft: " + getMinecraftVersion());
-		logEx("  Java: " + System.getProperty("java.version"));
+		logEx("  Java: " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.version") + ")");
+		logEx("  OS: " + System.getProperty("os.name") + " " + System.getProperty("os.arch") + " " + System.getProperty("os.version"));
 		logEx();
 		logEx("Running CraftBukkit: " + runningCraftBukkit);
 		logEx();

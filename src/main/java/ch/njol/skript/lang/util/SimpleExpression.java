@@ -183,7 +183,7 @@ public abstract class SimpleExpression<T> implements Expression<T> {
 	/**
 	 * Converts this expression to another type. Unless the expression is special, the default implementation is sufficient.
 	 * <p>
-	 * This method is guaranteed to never being called with a supertype of the return type of this expression, or the return type itself.
+	 * This method is never called with a supertype of the return type of this expression, or the return type itself.
 	 * 
 	 * @param to The desired return type of the returned expression
 	 * @return Expression with the desired return type or null if it can't be converted to the given type

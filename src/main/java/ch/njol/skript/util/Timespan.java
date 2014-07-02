@@ -174,19 +174,19 @@ public class Timespan implements YggdrasilSerializable, Comparable<Timespan> { /
 	@SuppressWarnings("null")
 	public static String toString(final long millis, final int flags) {
 		for (int i = 0; i < simpleValues.length - 1; i++) {
-			if (millis >= simpleValues[i].second) {
-				if (millis % simpleValues[i].second != 0) {
-					return toString(Math.floor(1. * millis / simpleValues[i].second), simpleValues[i], flags) + " " + GeneralWords.and + " " + toString(1. * (millis % simpleValues[i].second) / simpleValues[i + 1].second, simpleValues[i + 1], flags);
+			if (millis >= simpleValues[i].getSecond()) {
+				if (millis % simpleValues[i].getSecond() != 0) {
+					return toString(Math.floor(1. * millis / simpleValues[i].getSecond()), simpleValues[i], flags) + " " + GeneralWords.and + " " + toString(1. * (millis % simpleValues[i].getSecond()) / simpleValues[i + 1].getSecond(), simpleValues[i + 1], flags);
 				} else {
-					return toString(1. * millis / simpleValues[i].second, simpleValues[i], flags);
+					return toString(1. * millis / simpleValues[i].getSecond(), simpleValues[i], flags);
 				}
 			}
 		}
-		return toString(1. * millis / simpleValues[simpleValues.length - 1].second, simpleValues[simpleValues.length - 1], flags);
+		return toString(1. * millis / simpleValues[simpleValues.length - 1].getSecond(), simpleValues[simpleValues.length - 1], flags);
 	}
 	
 	private static String toString(final double amount, final NonNullPair<Noun, Integer> p, final int flags) {
-		return p.first.withAmount(amount, flags);
+		return p.getFirst().withAmount(amount, flags);
 	}
 	
 	@Override

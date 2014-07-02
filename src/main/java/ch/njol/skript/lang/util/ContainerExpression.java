@@ -35,12 +35,12 @@ import ch.njol.util.Kleenean;
 /**
  * @author Peter Güttinger
  */
-public class ContanerExpression extends SimpleExpression<Object> {
+public class ContainerExpression extends SimpleExpression<Object> {
 	
 	final Expression<?> expr;
 	private final Class<?> c;
 	
-	public ContanerExpression(final Expression<?> expr, final Class<?> c) {
+	public ContainerExpression(final Expression<?> expr, final Class<?> c) {
 		this.expr = expr;
 		this.c = c;
 	}

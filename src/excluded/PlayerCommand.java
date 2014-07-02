@@ -250,7 +250,7 @@ public class PlayerCommand implements CommandExecutor {
 						}
 					} else if (action.equals("l") || action.equals("list")) {
 						if (!(node instanceof SectionNode)) {
-							sender.sendMessage("selected node is not a saction, switching to parent node");
+							sender.sendMessage("selected node is not a section, switching to parent node");
 							node = node.getParent();
 						}
 						int page = 1;

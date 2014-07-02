@@ -58,7 +58,7 @@ public class NodeTest {
 		
 		for (final String[] d : data) {
 			final NonNullPair<String, String> p = Node.splitLine(d[0]);
-			assertArrayEquals(d[0], new String[] {d[1], d[2]}, new String[] {p.first, p.second});
+			assertArrayEquals(d[0], new String[] {d[1], d[2]}, new String[] {p.getFirst(), p.getSecond()});
 		}
 		
 	}

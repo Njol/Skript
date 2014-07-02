@@ -74,7 +74,7 @@ public abstract class TriggerItem implements Debuggable {
 	 * Executes this item.
 	 * 
 	 * @param e
-	 * @return Whether the next item should be run or this ite's parent
+	 * @return Whether the next item should be run or this item's parent
 	 */
 	protected abstract boolean run(Event e);
 	

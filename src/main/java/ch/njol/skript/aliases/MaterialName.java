@@ -46,12 +46,12 @@ final class MaterialName {
 		@SuppressWarnings("null")
 		NonNullPair<String, String> s = names.get(new NonNullPair<Short, Short>(Short.valueOf(dataMin), Short.valueOf(dataMax)));
 		if (s != null)
-			return p ? s.second : s.first;
+			return p ? s.getSecond() : s.getFirst();
 		if (dataMin == -1 && dataMax == -1 || dataMin == 0 && dataMax == 0)
 			return p ? plural : singular;
 		s = names.get(new NonNullPair<Short, Short>((short) -1, (short) -1));
 		if (s != null)
-			return p ? s.second : s.first;
+			return p ? s.getSecond() : s.getFirst();
 		return p ? plural : singular;
 	}
 	
@@ -61,7 +61,7 @@ final class MaterialName {
 		@SuppressWarnings("null")
 		final NonNullPair<String, String> s = names.get(new NonNullPair<Short, Short>(Short.valueOf(dataMin), Short.valueOf(dataMax)));
 		if (s != null)
-			return p ? s.second : s.first;
+			return p ? s.getSecond() : s.getFirst();
 		if (dataMin == -1 && dataMax == -1 || dataMin == 0 && dataMax == 0)
 			return p ? plural : singular;
 		return (p ? plural : singular) + ":" + (dataMin == -1 ? 0 : dataMin) + (dataMin == dataMax ? "" : "-" + (dataMax == -1 ? (id <= Skript.MAXBLOCKID ? 15 : Short.MAX_VALUE) : dataMax));

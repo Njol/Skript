@@ -35,16 +35,16 @@ import ch.njol.skript.config.Node;
 public class LogEntry {
 	
 	public final Level level;
-	public int quality;
+	public final int quality;
 	
-	public String message;
+	public final String message;
 	
 	@Nullable
-	private final Node node;
+	public final Node node;
 	
 	@Nullable
 	private final String from;
-	private boolean tracked = false;
+	private final boolean tracked;
 	
 	public LogEntry(final Level level, final String message) {
 		this(level, ErrorQuality.SEMANTIC_ERROR.quality(), message, SkriptLogger.getNode());
@@ -110,10 +110,10 @@ public class LogEntry {
 	
 	private boolean used = false;
 	
-	void discarded() {
+	void discarded(final String info) {
 		used = true;
 		if (tracked)
-			SkriptLogger.LOGGER.warning(" # LogEntry '" + message + "'" + from + " discarded" + findCaller());
+			SkriptLogger.LOGGER.warning(" # LogEntry '" + message + "'" + from + " discarded" + findCaller() + "; " + (new Exception()).getStackTrace()[1] + "; " + info);
 	}
 	
 	void logged() {

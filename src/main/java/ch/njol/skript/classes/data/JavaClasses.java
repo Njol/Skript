@@ -50,6 +50,7 @@ public class JavaClasses {
 	
 	static {
 		Classes.registerClass(new ClassInfo<Object>(Object.class, "object")
+				.user("objects?")
 				.name("Object")
 				.description("The supertype of all types, meaning that if %object% is used in e.g. a condition it will accept all kinds of expressions.")
 				.usage("")

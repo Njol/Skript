@@ -270,7 +270,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		final NonNullPair<String, byte[]>[] d = (NonNullPair<String, byte[]>[]) in.readObject();
 		data = (T[]) Array.newInstance(c, d.length);
 		for (int i = 0; i < data.length; i++) {
-			data[i] = (T) Classes.deserialize(d[i].first, d[i].second);
+			data[i] = (T) Classes.deserialize(d[i].getFirst(), d[i].getSecond());
 		}
 	}
 	

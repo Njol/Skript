@@ -107,7 +107,7 @@ public class EffBan extends Effect {
 				} else {
 					if (hasBanList) {
 						if (ban)
-							Bukkit.getBanList(BanList.Type.NAME).addBan(((Player) o).getName(), reason, expires, source); // TODO ban UUID
+							Bukkit.getBanList(BanList.Type.NAME).addBan(((Player) o).getName(), reason, expires, source); // TODO [UUID] ban UUID
 						else
 							Bukkit.getBanList(BanList.Type.NAME).pardon(((Player) o).getName());
 					} else {

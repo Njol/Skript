@@ -52,8 +52,11 @@ public abstract class TriggerSection extends TriggerItem {
 	
 	protected TriggerSection(final SectionNode node) {
 		ScriptLoader.currentSections.add(this);
-		setTriggerItems(ScriptLoader.loadItems(node));
-		ScriptLoader.currentSections.remove(ScriptLoader.currentSections.size() - 1);
+		try {
+			setTriggerItems(ScriptLoader.loadItems(node));
+		} finally {
+			ScriptLoader.currentSections.remove(ScriptLoader.currentSections.size() - 1);
+		}
 	}
 	
 	/**

@@ -70,7 +70,6 @@ import ch.njol.skript.util.DamageCauseUtils;
 import ch.njol.skript.util.EnchantmentType;
 import ch.njol.skript.util.PotionEffectUtils;
 import ch.njol.skript.util.StringMode;
-import ch.njol.skript.variables.Variables;
 import ch.njol.util.StringUtils;
 import ch.njol.yggdrasil.Fields;
 
@@ -291,9 +290,17 @@ public class BukkitClasses {
 						return "(" + l.getWorld().getName() + ":" + l.getX() + "," + l.getY() + "," + l.getZ() + "|yaw=" + l.getYaw() + "/pitch=" + l.getPitch() + ")";
 					}
 				}).serializer(new Serializer<Location>() {
+					@SuppressWarnings("null")
 					@Override
 					public Fields serialize(final Location l) throws NotSerializableException {
-						return new Fields(l);
+						final Fields f = new Fields();
+						f.putObject("world", l.getWorld());
+						f.putPrimitive("x", l.getX());
+						f.putPrimitive("y", l.getY());
+						f.putPrimitive("z", l.getZ());
+						f.putPrimitive("yaw", l.getYaw());
+						f.putPrimitive("pitch", l.getPitch());
+						return f;
 					}
 					
 					@Override
@@ -303,9 +310,9 @@ public class BukkitClasses {
 					
 					@Override
 					public Location deserialize(final Fields f) throws StreamCorruptedException, NotSerializableException {
-						final Location l = new Location(null, 0, 0, 0); // null is allowed
-						f.setFields(l, Variables.yggdrasil);
-						return l;
+						return new Location(f.getObject("world", World.class),
+								f.getPrimitive("x", double.class), f.getPrimitive("y", double.class), f.getPrimitive("z", double.class),
+								f.getPrimitive("yaw", float.class), f.getPrimitive("pitch", float.class));
 					}
 					
 					@Override
@@ -504,7 +511,7 @@ public class BukkitClasses {
 					@Override
 					public String toVariableNameString(final Player p) {
 						if (SkriptConfig.usePlayerUUIDsInVariableNames.value())
-							return "" + p.getUniqueId();
+							return "" + p.getUniqueId(); // TODO [UUID] wrong UUID?
 						else
 							return "" + p.getName();
 					}
@@ -577,7 +584,7 @@ public class BukkitClasses {
 					@Override
 					public Fields serialize(final OfflinePlayer p) {
 						final Fields f = new Fields();
-						f.putObject("name", p.getName()); // TODO save UUID once Bukkit supports it
+						f.putObject("name", p.getName()); // FIXME [UUID] save UUID once Bukkit supports it
 						return f;
 					}
 					

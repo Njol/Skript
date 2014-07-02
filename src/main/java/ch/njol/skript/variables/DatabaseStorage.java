@@ -447,12 +447,13 @@ public class DatabaseStorage extends VariablesStorage {
 	
 	protected void checkDatabase() {
 		try {
+			final long lastRowID; // local variable as this is used to clean the database below
 			ResultSet r = null;
 			try {
 				synchronized (dbLock) {
 					if (db == null)
 						return;
-					final long lastRowID = this.lastRowID; // local variable as this is used to clean the database below
+					lastRowID = this.lastRowID;
 					final PreparedStatement monitorQuery = this.monitorQuery;
 					assert monitorQuery != null;
 					monitorQuery.setLong(1, lastRowID);
@@ -472,10 +473,14 @@ public class DatabaseStorage extends VariablesStorage {
 					@Override
 					public void run() {
 						try {
-							final PreparedStatement monitorCleanUpQuery = DatabaseStorage.this.monitorCleanUpQuery;
-							assert monitorCleanUpQuery != null;
-							monitorCleanUpQuery.setLong(1, lastRowID);
-							monitorCleanUpQuery.executeUpdate();
+							synchronized (dbLock) {
+								if (closed || db == null)
+									return;
+								final PreparedStatement monitorCleanUpQuery = DatabaseStorage.this.monitorCleanUpQuery;
+								assert monitorCleanUpQuery != null;
+								monitorCleanUpQuery.setLong(1, lastRowID);
+								monitorCleanUpQuery.executeUpdate();
+							}
 						} catch (final SQLException e) {
 							sqlException(e);
 						}

@@ -15,39 +15,21 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2014 Peter Güttinger
  * 
  */
 
 package ch.njol.skript.events.bukkit;
 
-import org.bukkit.World;
 import org.bukkit.event.HandlerList;
-
-import ch.njol.skript.registrations.EventValues;
-import ch.njol.skript.util.Getter;
 
 /**
  * @author Peter Güttinger
  */
-public class ScheduledWorldEvent extends ScheduledEvent {
-	static {
-		EventValues.registerEventValue(ScheduledWorldEvent.class, World.class, new Getter<World, ScheduledWorldEvent>() {
-			@Override
-			public World get(final ScheduledWorldEvent e) {
-				return e.getWorld();
-			}
-		}, 0);
-	}
+public class ScheduledNoWorldEvent extends ScheduledEvent {
 	
-	private final World world;
-	
-	public ScheduledWorldEvent(final World world) {
-		this.world = world;
-	}
-	
-	public final World getWorld() {
-		return world;
+	public ScheduledNoWorldEvent() {
+		super(null);
 	}
 	
 	// Bukkit stuff

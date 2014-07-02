@@ -50,9 +50,9 @@ import ch.njol.util.Math2;
 public class ExprRound extends PropertyExpression<Number, Long> {
 	static {
 		Skript.registerExpression(ExprRound.class, Long.class, ExpressionType.PROPERTY,
-				"floor\\(%number%\\)", "(a|the|) round[ed] down %number%",
-				"round\\(%number%\\)", "(a|the|) round[ed] %number%",
-				"ceil[ing]\\(%number%\\)", "(a|the|) round[ed] up %number%");
+				"(a|the|) round[ed] down %number%",
+				"(a|the|) round[ed] %number%",
+				"(a|the|) round[ed] up %number%");
 	}
 	
 	int action;
@@ -61,7 +61,7 @@ public class ExprRound extends PropertyExpression<Number, Long> {
 	@Override
 	public boolean init(final Expression<?>[] exprs, final int matchedPattern, final Kleenean isDelayed, final ParseResult parseResult) {
 		setExpr((Expression<? extends Number>) exprs[0]);
-		action = matchedPattern / 2 - 1;
+		action = matchedPattern - 1;
 		return true;
 	}
 	

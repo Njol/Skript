@@ -33,7 +33,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.config.SectionNode;
-import ch.njol.skript.lang.util.ContanerExpression;
+import ch.njol.skript.lang.util.ContainerExpression;
 import ch.njol.skript.util.Container;
 import ch.njol.skript.util.Container.ContainerType;
 
@@ -65,15 +65,18 @@ public class Loop extends TriggerSection {
 			final ContainerType type = expr.getReturnType().getAnnotation(ContainerType.class);
 			if (type == null)
 				throw new SkriptAPIException(expr.getReturnType().getName() + " implements Container but is missing the required @ContainerType annotation");
-			this.expr = new ContanerExpression(expr, type.value());
+			this.expr = new ContainerExpression(expr, type.value());
 		} else {
 			this.expr = expr;
 		}
 		ScriptLoader.currentSections.add(this);
 		ScriptLoader.currentLoops.add(this);
-		setTriggerItems(ScriptLoader.loadItems(node));
-		ScriptLoader.currentLoops.remove(ScriptLoader.currentLoops.size() - 1);
-		ScriptLoader.currentSections.remove(ScriptLoader.currentSections.size() - 1);
+		try {
+			setTriggerItems(ScriptLoader.loadItems(node));
+		} finally {
+			ScriptLoader.currentLoops.remove(ScriptLoader.currentLoops.size() - 1);
+			ScriptLoader.currentSections.remove(ScriptLoader.currentSections.size() - 1);
+		}
 		super.setNext(this);
 	}
 	

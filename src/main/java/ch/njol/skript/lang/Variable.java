@@ -97,6 +97,28 @@ public class Variable<T> implements Expression<T> {
 		this.source = source;
 	}
 	
+	public final static boolean isValidVariableName(String name, final boolean allowListVariable, final boolean printErrors) {
+		name = name.startsWith(LOCAL_VARIABLE_TOKEN) ? "" + name.substring(LOCAL_VARIABLE_TOKEN.length()).trim() : "" + name.trim();
+		if (name.startsWith(SEPARATOR) || name.endsWith(SEPARATOR)) {
+			if (printErrors)
+				Skript.error("A variable's name must neither start nor end with the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
+			return false;
+		} else if (name.contains("*") && (!allowListVariable || name.indexOf("*") != name.length() - 1 || !name.endsWith(SEPARATOR + "*"))) {
+			if (printErrors) {
+				if (name.indexOf("*") == 0)
+					Skript.error("[2.0] Local variables now start with an underscore, e.g. {_local variable} (error in variable {" + name + "})");
+				else
+					Skript.error("A variable's name must not contain any asterisks except at the end after '" + SEPARATOR + "' to denote a list variable, e.g. {variable" + SEPARATOR + "*} (error in variable {" + name + "})");
+			}
+			return false;
+		} else if (name.contains(SEPARATOR + SEPARATOR)) {
+			if (printErrors)
+				Skript.error("A variable's name must not contain the separator '" + SEPARATOR + "' multiple times in a row (error in variable {" + name + "})");
+			return false;
+		}
+		return true;
+	}
+	
 	/**
 	 * Prints errors
 	 */
@@ -107,22 +129,8 @@ public class Variable<T> implements Expression<T> {
 //			return null;
 //		} else 
 		name = "" + name.trim();
-		if (name.startsWith("#")) {
-			Skript.error("Variables must not start with '#'."); // used as comment character in CSV
+		if (!isValidVariableName(name, true, true))
 			return null;
-		} else if (name.startsWith(SEPARATOR) || name.endsWith(SEPARATOR)) {
-			Skript.error("A variable's name must neither start nor end with the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
-			return null;
-		} else if (name.contains("*") && (name.indexOf("*") != name.length() - 1 || !name.endsWith(SEPARATOR + "*"))) {
-			if (name.indexOf("*") == 0)
-				Skript.error("[2.0] Local variables now start with an underscore, e.g. {_local variable} (error in variable {" + name + "})");
-			else
-				Skript.error("A variable's name must not contain any asterisks except at the end after '" + SEPARATOR + "' to denote a list variable, e.g. {variable" + SEPARATOR + "*} (error in variable {" + name + "})");
-			return null;
-		} else if (name.contains(SEPARATOR + SEPARATOR)) {
-			Skript.error("A variable's name must not contain the separator '" + SEPARATOR + "' multiple times in a row (error in variable {" + name + "})");
-			return null;
-		}
 		final VariableString vs = VariableString.newInstance(name.startsWith(LOCAL_VARIABLE_TOKEN) ? "" + name.substring(LOCAL_VARIABLE_TOKEN.length()).trim() : name, StringMode.VARIABLE_NAME);
 		if (vs == null)
 			return null;

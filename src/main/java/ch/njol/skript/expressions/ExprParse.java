@@ -42,11 +42,12 @@ import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.skript.lang.VariableString;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.localization.Language;
+import ch.njol.skript.log.ErrorQuality;
 import ch.njol.skript.log.LogEntry;
 import ch.njol.skript.log.ParseLogHandler;
 import ch.njol.skript.log.SkriptLogger;
 import ch.njol.util.Kleenean;
-import ch.njol.util.Pair;
+import ch.njol.util.NonNullPair;
 
 /**
  * @author Peter Güttinger
@@ -99,12 +100,12 @@ public class ExprParse extends SimpleExpression<Object> {
 		if (exprs[1] == null) {
 			String pattern = "" + parseResult.regexes.get(0).group();
 			if (!VariableString.isQuotedCorrectly(pattern, false)) {
-				Skript.error("Invalid amount and/or placement of double quotes in '" + pattern + "'");
+				Skript.error("Invalid amount and/or placement of double quotes in '" + pattern + "'", ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 			// escape '¦'
 			final StringBuilder b = new StringBuilder(pattern.length());
-			for (int i = 0; i < b.length(); i++) {
+			for (int i = 0; i < pattern.length(); i++) {
 				final char c = pattern.charAt(i);
 				if (c == '\\') {
 					b.append(c);
@@ -117,16 +118,16 @@ public class ExprParse extends SimpleExpression<Object> {
 				}
 			}
 			pattern = "" + b.toString();
-			final Pair<String, boolean[]> p = SkriptParser.validatePattern(pattern);
+			final NonNullPair<String, boolean[]> p = SkriptParser.validatePattern(pattern);
 			if (p == null)
 				return false;
-			this.pattern = p.first;
-			plurals = p.second;
+			this.pattern = p.getFirst();
+			plurals = p.getSecond();
 		} else {
 			c = ((Literal<ClassInfo<?>>) exprs[1]).getSingle();
 			final Parser<?> p = c.getParser();
-			if (p == null || !p.canParse(ParseContext.COMMAND)) {
-				Skript.error("Text cannot be parsed as " + c.getName().withIndefiniteArticle());
+			if (p == null || !p.canParse(ParseContext.COMMAND)) { // TODO special parse context?
+				Skript.error("Text cannot be parsed as " + c.getName().withIndefiniteArticle(), ErrorQuality.SEMANTIC_ERROR);
 				return false;
 			}
 		}

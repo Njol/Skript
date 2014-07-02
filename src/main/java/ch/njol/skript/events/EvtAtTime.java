@@ -37,7 +37,6 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptEventHandler;
 import ch.njol.skript.events.bukkit.ScheduledEvent;
-import ch.njol.skript.events.bukkit.ScheduledWorldEvent;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SelfRegisteringSkriptEvent;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
@@ -52,7 +51,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<EvtAtTime> {
 	static {
-		Skript.registerEvent("*At Time", EvtAtTime.class, ScheduledWorldEvent.class, "at %time% [in %worlds%]")
+		Skript.registerEvent("*At Time", EvtAtTime.class, ScheduledEvent.class, "at %time% [in %worlds%]")
 				.description("An event that occurs at a given <a href='../classes/#time'>minecraft time</a> in every world or only in specific worlds.")
 				.examples("at 18:00", "at 7am in \"world\"")
 				.since("1.3.4");
@@ -144,7 +143,7 @@ public class EvtAtTime extends SelfRegisteringSkriptEvent implements Comparable<
 			assert false;
 			return;
 		}
-		final ScheduledEvent e = new ScheduledWorldEvent(w);
+		final ScheduledEvent e = new ScheduledEvent(w);
 		SkriptEventHandler.logEventStart(e);
 		SkriptEventHandler.logTriggerEnd(t);
 		t.execute(e);

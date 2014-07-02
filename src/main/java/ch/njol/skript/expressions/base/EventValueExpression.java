@@ -48,18 +48,23 @@ import ch.njol.skript.util.Utils;
 import ch.njol.util.Kleenean;
 
 /**
- * A useful class for creating default expressions. It simply returns the event value of the given type.<br/>
+ * A useful class for creating default expressions. It simply returns the event value of the given type.
+ * <p>
  * This class can be used as default expression with <code>new EventValueExpression&lt;T&gt;(T.class)</code> or extended to make it manually placeable in expressions with:
  * 
  * <pre>
- * class MyExpression extends EventValueExpression&lt;T&gt; {
- * public MyExpression() {
- * 	super(T.class);
+ * class MyExpression extends EventValueExpression&lt;SomeClass&gt; {
+ * 	public MyExpression() {
+ * 		super(SomeClass.class);
+ * 	}
+ * 	// ...
  * }
  * </pre>
  * 
  * @author Peter Güttinger
  * @see Classes#registerClass(ClassInfo)
+ * @see ClassInfo#defaultExpression(DefaultExpression)
+ * @see DefaultExpression
  */
 public class EventValueExpression<T> extends SimpleExpression<T> implements DefaultExpression<T> {
 	
@@ -128,7 +133,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 			}
 			for (final Class<? extends Event> e : es) {
 				if (getters.containsKey(e)) {
-					hasValue = true;
+					hasValue = getters.get(e) != null;
 					continue;
 				}
 				final Getter<? extends T, ?> getter = EventValues.getEventValueGetter(e, c, getTime());

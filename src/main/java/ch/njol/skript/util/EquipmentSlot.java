@@ -23,10 +23,12 @@ package ch.njol.skript.util;
 
 import java.util.Locale;
 
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.bukkitutil.PlayerUtils;
 import ch.njol.skript.registrations.Classes;
 
 /**
@@ -124,6 +126,8 @@ public class EquipmentSlot extends Slot {
 	@Override
 	public void setItem(final @Nullable ItemStack item) {
 		slot.set(e, item);
+		if (e.getHolder() instanceof Player)
+			PlayerUtils.updateInventory((Player) e.getHolder());
 	}
 	
 	@Override
