@@ -101,7 +101,7 @@ public abstract class VariablesStorage implements Closeable {
 		try {
 			final T r = Classes.parse(v, type, ParseContext.CONFIG);
 			if (r == null)
-				log.printError("The entry for '" + key + "' in the database '" + databaseName + "' must be a " + Classes.getSuperClassInfo(type).getName());
+				log.printError("The entry for '" + key + "' in the database '" + databaseName + "' must be " + Classes.getSuperClassInfo(type).getName().withIndefiniteArticle());
 			else
 				log.printLog();
 			return r;

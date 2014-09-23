@@ -37,7 +37,8 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 @Name("UUID")
 @Description({"The UUID of a player or world.",
 		"In the future there will be an option to use a player's UUID instead of the name in variable names (i.e. when %player% is used), but for now this can be used.",
-		"<em>Please note that this expression does not work for offline players!</em>"}) // TODO [UUID] update documentation when fixed
+		"<em>Please note that this expression does not work for offline players!</em>"})
+// TODO [UUID] update documentation when fixed
 @Examples({"# prevents people from joining the server if they use the name of a player",
 		"# who has played on this server at least once since this script has been added",
 		"on login:",
