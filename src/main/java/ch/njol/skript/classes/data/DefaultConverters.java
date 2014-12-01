@@ -181,7 +181,7 @@ public class DefaultConverters {
 		// Location - World
 //		Skript.registerConverter(Location.class, World.class, new Converter<Location, World>() {
 //			private final static long serialVersionUID = 3270661123492313649L;
-//			
+//
 //			@Override
 //			public World convert(final Location l) {
 //				if (l == null)

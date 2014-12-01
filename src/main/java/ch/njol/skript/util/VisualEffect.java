@@ -56,18 +56,14 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 	private final static String LANGUAGE_NODE = "visual effects";
 	
 	private static enum Type implements YggdrasilSerializable {
-		@SuppressWarnings("null")
 		ENDER_SIGNAL(Effect.ENDER_SIGNAL),
-		@SuppressWarnings("null")
 		MOBSPAWNER_FLAMES(Effect.MOBSPAWNER_FLAMES),
-		@SuppressWarnings("null")
 		POTION_BREAK(Effect.POTION_BREAK) {
 			@Override
 			public Object getData(final @Nullable Object raw, final Location l) {
 				return new PotionEffect(raw == null ? PotionEffectType.SPEED : (PotionEffectType) raw, 1, 0);
 			}
 		},
-		@SuppressWarnings("null")
 		SMOKE(Effect.SMOKE) {
 			@Override
 			public Object getData(final @Nullable Object raw, final Location l) {
@@ -76,21 +72,19 @@ public final class VisualEffect implements SyntaxElement, YggdrasilSerializable 
 				return Direction.getFacing(((Direction) raw).getDirection(l), false); // TODO allow this to not be a literal
 			}
 		},
-		@SuppressWarnings("null")
 		HURT(EntityEffect.HURT),
-		@SuppressWarnings("null")
 		SHEEP_EAT(EntityEffect.SHEEP_EAT),
-		@SuppressWarnings("null")
 		WOLF_HEARTS(EntityEffect.WOLF_HEARTS),
-		@SuppressWarnings("null")
 		WOLF_SHAKE(EntityEffect.WOLF_SHAKE),
-		@SuppressWarnings("null")
 		WOLF_SMOKE(EntityEffect.WOLF_SMOKE);
 		
 		final Object effect;
 		
-		private Type(final Object effect) {
-			assert effect instanceof Effect || effect instanceof EntityEffect;
+		private Type(final Effect effect) {
+			this.effect = effect;
+		}
+		
+		private Type(final EntityEffect effect) {
 			this.effect = effect;
 		}
 		

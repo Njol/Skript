@@ -37,10 +37,10 @@ import ch.njol.util.Kleenean;
  */
 public class ContainerExpression extends SimpleExpression<Object> {
 	
-	final Expression<?> expr;
+	final Expression<? extends Container<?>> expr;
 	private final Class<?> c;
 	
-	public ContainerExpression(final Expression<?> expr, final Class<?> c) {
+	public ContainerExpression(final Expression<? extends Container<?>> expr, final Class<?> c) {
 		this.expr = expr;
 		this.c = c;
 	}
@@ -53,7 +53,7 @@ public class ContainerExpression extends SimpleExpression<Object> {
 	@Override
 	@Nullable
 	public Iterator<Object> iterator(final Event e) {
-		final Iterator<? extends Container<?>> iter = (Iterator<? extends Container<?>>) expr.iterator(e);
+		final Iterator<? extends Container<?>> iter = expr.iterator(e);
 		if (iter == null)
 			return null;
 		return new Iterator<Object>() {

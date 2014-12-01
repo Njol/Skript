@@ -88,8 +88,8 @@ public final class Updater {
 		}
 		
 		@Override
-		public int compareTo(final VersionInfo o) {
-			return version.compareTo(o.version);
+		public int compareTo(final @Nullable VersionInfo o) {
+			return version.compareTo(o == null ? null : o.version);
 		}
 	}
 	

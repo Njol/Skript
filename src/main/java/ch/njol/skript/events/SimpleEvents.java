@@ -229,7 +229,7 @@ public class SimpleEvents {
 				.description("Called when a player fishes something. This is not of much use yet.")
 				.examples("")
 				.since("1.0");
-		if (Skript.supports("org.bukkit.event.player.PlayerItemBreakEvent")) {
+		if (Skript.classExists("org.bukkit.event.player.PlayerItemBreakEvent")) {
 			Skript.registerEvent("Item Break", SimpleEvent.class, PlayerItemBreakEvent.class, "[player] tool break[ing]", "[player] break[ing] (a|the|) tool")
 					.description("Called when a player breaks his tool because its damage reached the maximum value.",
 							"This event cannot be cancelled.")

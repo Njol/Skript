@@ -26,11 +26,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -104,6 +104,7 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Comparators;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.registrations.EventValues;
+import ch.njol.skript.util.EmptyStacktraceException;
 import ch.njol.skript.util.ExceptionUtils;
 import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Getter;
@@ -118,7 +119,8 @@ import ch.njol.util.StringUtils;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.CheckedIterator;
 import ch.njol.util.coll.iterator.EnumerationIterable;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+// TODO meaningful error if someone uses an %expression with percent signs% outside of text or a variable
 
 /**
  * <b>Skript</b> - A Bukkit plugin to modify how Minecraft behaves without having to write a single line of code (You'll likely be writing some code though if you're reading this
@@ -145,7 +147,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * @see Comparators#registerComparator(Class, Class, Comparator)
  * @see Converters#registerConverter(Class, Class, Converter)
  */
-@SuppressFBWarnings("REC_CATCH_EXCEPTION")
 public final class Skript extends JavaPlugin implements Listener {
 	
 	// ================ PLUGIN ================
@@ -338,17 +339,18 @@ public final class Skript extends JavaPlugin implements Listener {
 				final long vls = System.currentTimeMillis();
 				
 				final LogHandler h = SkriptLogger.startLogHandler(new ErrorDescLogHandler() {
-					private final List<LogEntry> log = new ArrayList<LogEntry>();
+//					private final List<LogEntry> log = new ArrayList<LogEntry>();
 					
 					@Override
 					public LogResult log(final LogEntry entry) {
 						super.log(entry);
 						if (entry.level.intValue() >= Level.SEVERE.intValue()) {
 							logEx(entry.message); // no [Skript] prefix
-							return LogResult.DONT_LOG;
+							return LogResult.DO_NOT_LOG;
 						} else {
-							log.add(entry);
-							return LogResult.CACHED;
+//							log.add(entry);
+//							return LogResult.CACHED;
+							return LogResult.LOG;
 						}
 					}
 					
@@ -369,7 +371,7 @@ public final class Skript extends JavaPlugin implements Listener {
 					@Override
 					protected void onStop() {
 						super.onStop();
-						SkriptLogger.logAll(log);
+//						SkriptLogger.logAll(log);
 					}
 				});
 				final CountingLogHandler c = SkriptLogger.startLogHandler(new CountingLogHandler(SkriptLogger.SEVERE));
@@ -528,12 +530,83 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * 
 	 * @param className
 	 * @return Whether the given class exists.
+	 * @deprecated use {@link #classExists(String)}
 	 */
+	@Deprecated
 	public final static boolean supports(final String className) {
+		return classExists(className);
+	}
+	
+	/**
+	 * Tests whether a given class exists in the classpath.
+	 * 
+	 * @param className The {@link Class#getCanonicalName() canonical name} of the class
+	 * @return Whether the given class exists.
+	 */
+	public final static boolean classExists(final String className) {
 		try {
 			Class.forName(className);
 			return true;
 		} catch (final ClassNotFoundException e) {
+			return false;
+		}
+	}
+	
+	/**
+	 * Tests whether a method exists in the given class.
+	 * 
+	 * @param c The class
+	 * @param methodName The name of the method
+	 * @param parameterTypes The parameter types of the method
+	 * @return Whether the given method exists.
+	 */
+	public final static boolean methodExists(final Class<?> c, final String methodName, final Class<?>... parameterTypes) {
+		try {
+			c.getDeclaredMethod(methodName, parameterTypes);
+			return true;
+		} catch (final NoSuchMethodException e) {
+			return false;
+		} catch (final SecurityException e) {
+			return false;
+		}
+	}
+	
+	/**
+	 * Tests whether a method exists in the given class, and whether the return type matches the expected one.
+	 * <p>
+	 * Note that this method doesn't work properly if multiple methods with the same name and parameters exist but have different return types.
+	 * 
+	 * @param c The class
+	 * @param methodName The name of the method
+	 * @param parameterTypes The parameter types of the method
+	 * @param returnType The expected return type
+	 * @return Whether the given method exists.
+	 */
+	public final static boolean methodExists(final Class<?> c, final String methodName, final Class<?>[] parameterTypes, final Class<?> returnType) {
+		try {
+			final Method m = c.getDeclaredMethod(methodName, parameterTypes);
+			return m.getReturnType() == returnType;
+		} catch (final NoSuchMethodException e) {
+			return false;
+		} catch (final SecurityException e) {
+			return false;
+		}
+	}
+	
+	/**
+	 * Tests whether a field exists in the given class.
+	 * 
+	 * @param c The class
+	 * @param fieldName The name of the field
+	 * @return Whether the given field exists.
+	 */
+	public final static boolean fieldExists(final Class<?> c, final String fieldName) {
+		try {
+			c.getDeclaredField(fieldName);
+			return true;
+		} catch (final NoSuchFieldException e) {
+			return false;
+		} catch (final SecurityException e) {
 			return false;
 		}
 	}
@@ -650,7 +723,10 @@ public final class Skript extends JavaPlugin implements Listener {
 											f.set(null, null);
 										}
 									}
-								} catch (final Throwable ex) {}
+								} catch (final Throwable ex) {
+									if (testing())
+										ex.printStackTrace();
+								}
 							}
 						}
 					} finally {
@@ -715,6 +791,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	 */
 	public final static int MAXDATAVALUE = Short.MAX_VALUE - Short.MIN_VALUE;
 	
+	// TODO localise Infinity, -Infinity, NaN (and decimal point?)
 	public final static String toString(final double n) {
 		return StringUtils.toString(n, SkriptConfig.numberAccuracy.value());
 	}
@@ -995,6 +1072,8 @@ public final class Skript extends JavaPlugin implements Listener {
 	}
 	
 	public static void debug(final String info) {
+		if (!debug())
+			return;
 		SkriptLogger.log(SkriptLogger.DEBUG, info);
 	}
 	
@@ -1040,21 +1119,21 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * Used if something happens that shouldn't happen
 	 * 
 	 * @param info Description of the error and additional information
-	 * @return an EmptyStackException to throw if code execution should terminate.
+	 * @return an EmptyStacktraceException to throw if code execution should terminate.
 	 */
-	public final static EmptyStackException exception(final String... info) {
+	public final static EmptyStacktraceException exception(final String... info) {
 		return exception(null, info);
 	}
 	
-	public final static EmptyStackException exception(final @Nullable Throwable cause, final String... info) {
+	public final static EmptyStacktraceException exception(final @Nullable Throwable cause, final String... info) {
 		return exception(cause, null, null, info);
 	}
 	
-	public final static EmptyStackException exception(final @Nullable Throwable cause, final @Nullable Thread thread, final String... info) {
+	public final static EmptyStacktraceException exception(final @Nullable Throwable cause, final @Nullable Thread thread, final String... info) {
 		return exception(cause, thread, null, info);
 	}
 	
-	public final static EmptyStackException exception(final @Nullable Throwable cause, final @Nullable TriggerItem item, final String... info) {
+	public final static EmptyStacktraceException exception(final @Nullable Throwable cause, final @Nullable TriggerItem item, final String... info) {
 		return exception(cause, null, item, info);
 	}
 	
@@ -1063,9 +1142,9 @@ public final class Skript extends JavaPlugin implements Listener {
 	 * 
 	 * @param cause exception that shouldn't occur
 	 * @param info Description of the error and additional information
-	 * @return an EmptyStackException to throw if code execution should terminate.
+	 * @return an EmptyStacktraceException to throw if code execution should terminate.
 	 */
-	public final static EmptyStackException exception(@Nullable Throwable cause, final @Nullable Thread thread, final @Nullable TriggerItem item, final String... info) {
+	public final static EmptyStacktraceException exception(@Nullable Throwable cause, final @Nullable Thread thread, final @Nullable TriggerItem item, final String... info) {
 		
 		logEx();
 		logEx("[Skript] Severe Error:");
@@ -1112,7 +1191,7 @@ public final class Skript extends JavaPlugin implements Listener {
 		logEx("End of Error.");
 		logEx();
 		
-		return new EmptyStackException();
+		return new EmptyStacktraceException();
 	}
 	
 	final static void logEx() {

@@ -25,6 +25,7 @@ import java.util.HashMap;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.localization.GeneralWords;
 import ch.njol.skript.localization.Language;
 import ch.njol.skript.localization.LanguageChangeListener;
@@ -62,7 +63,7 @@ public class Timespan implements YggdrasilSerializable, Comparable<Timespan> { /
 	public final static Timespan parse(final String s) {
 		if (s.isEmpty())
 			return null;
-		int t = 0;
+		long t = 0;
 		boolean minecraftTime = false;
 		boolean isMinecraftTimeSet = false;
 		if (s.matches("^\\d+:\\d\\d(:\\d\\d)?(\\.\\d{1,4})?$")) { // MM:SS[.ms] or HH:MM:SS[.ms]
@@ -175,8 +176,9 @@ public class Timespan implements YggdrasilSerializable, Comparable<Timespan> { /
 	public static String toString(final long millis, final int flags) {
 		for (int i = 0; i < simpleValues.length - 1; i++) {
 			if (millis >= simpleValues[i].getSecond()) {
-				if (millis % simpleValues[i].getSecond() != 0) {
-					return toString(Math.floor(1. * millis / simpleValues[i].getSecond()), simpleValues[i], flags) + " " + GeneralWords.and + " " + toString(1. * (millis % simpleValues[i].getSecond()) / simpleValues[i + 1].getSecond(), simpleValues[i + 1], flags);
+				final double second = 1. * (millis % simpleValues[i].getSecond()) / simpleValues[i + 1].getSecond();
+				if (!"0".equals(Skript.toString(second))) { // bad style but who cares...
+					return toString(Math.floor(1. * millis / simpleValues[i].getSecond()), simpleValues[i], flags) + " " + GeneralWords.and + " " + toString(second, simpleValues[i + 1], flags);
 				} else {
 					return toString(1. * millis / simpleValues[i].getSecond(), simpleValues[i], flags);
 				}
@@ -190,8 +192,8 @@ public class Timespan implements YggdrasilSerializable, Comparable<Timespan> { /
 	}
 	
 	@Override
-	public int compareTo(final Timespan o) {
-		final long d = millis - o.millis;
+	public int compareTo(final @Nullable Timespan o) {
+		final long d = o == null ? millis : millis - o.millis;
 		return d > 0 ? 1 : d < 0 ? -1 : 0;
 	}
 	

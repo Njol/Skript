@@ -37,6 +37,8 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
+import ch.njol.util.Predicate;
+import ch.njol.util.coll.CollectionUtils;
 
 /**
  * @author Peter Güttinger
@@ -83,7 +85,12 @@ public class CondIsBanned extends Condition {
 				} else if (o instanceof OfflinePlayer) {
 					return ((OfflinePlayer) o).isBanned();
 				} else if (o instanceof String) {
-					return Bukkit.getIPBans().contains(o) || Bukkit.getOfflinePlayer((String) o).isBanned();
+					return Bukkit.getIPBans().contains(o) || !ipBanned && CollectionUtils.contains(Bukkit.getBannedPlayers(), new Predicate<OfflinePlayer>() {
+						@Override
+						public boolean test(final @Nullable OfflinePlayer t) {
+							return t != null && ((String) o).equals(t.getName());
+						}
+					});
 				}
 				assert false;
 				return false;
@@ -93,7 +100,7 @@ public class CondIsBanned extends Condition {
 	
 	@Override
 	public String toString(final @Nullable Event e, final boolean debug) {
-		return players.toString(e, debug) + (players.isSingle() ? " is " : " are ") + (isNegated() ? "not " : "") + "banned";
+		return players.toString(e, debug) + (players.isSingle() ? " is " : " are ") + (isNegated() ? "not " : "") + (ipBanned ? "IP-" : "") + "banned";
 	}
 	
 }

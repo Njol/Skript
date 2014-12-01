@@ -37,7 +37,6 @@ import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Firework;
-import org.bukkit.entity.Fish;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Minecart;
@@ -193,14 +192,14 @@ public class DefaultComparators {
 		entityMaterials.put(EnderPearl.class, Material.ENDER_PEARL);
 		entityMaterials.put(Snowball.class, Material.SNOW_BALL);
 		entityMaterials.put(ThrownExpBottle.class, Material.EXP_BOTTLE);
-		entityMaterials.put(Fish.class, Material.RAW_FISH); // TODO 1.7
+//		entityMaterials.put(Fish.class, Material.RAW_FISH); // TODO 1.7
 		entityMaterials.put(TNTPrimed.class, Material.TNT);
 		entityMaterials.put(Slime.class, Material.SLIME_BALL);
-		if (Skript.isRunningMinecraft(1, 4))
+		if (Skript.classExists("org.bukkit.entity.ItemFrame"))
 			entityMaterials.put(ItemFrame.class, Material.ITEM_FRAME);
-		if (Skript.isRunningMinecraft(1, 4, 6))
+		if (Skript.classExists("org.bukkit.entity.Firework"))
 			entityMaterials.put(Firework.class, Material.FIREWORK);
-		if (Skript.isRunningMinecraft(1, 5)) {
+		if (Skript.classExists("org.bukkit.entity.minecart.StorageMinecart")) {
 			entityMaterials.put(org.bukkit.entity.minecart.StorageMinecart.class, Material.STORAGE_MINECART);
 			entityMaterials.put(org.bukkit.entity.minecart.PoweredMinecart.class, Material.POWERED_MINECART);
 			entityMaterials.put(RideableMinecart.class, Material.MINECART);
@@ -220,7 +219,7 @@ public class DefaultComparators {
 				return Relation.get(i.isOfType(((Item) e).getItemStack()));
 			if (e instanceof ThrownPotion)
 				return Relation.get(i.isOfType(Material.POTION.getId(), PotionEffectUtils.guessData((ThrownPotion) e)));
-			if (Skript.isRunningMinecraft(1, 4) && e instanceof WitherSkull)
+			if (Skript.classExists("org.bukkit.entity.WitherSkull") && e instanceof WitherSkull)
 				return Relation.get(i.isOfType(Material.SKULL_ITEM.getId(), (short) 1));
 			if (entityMaterials.containsKey(e.getType()))
 				return Relation.get(i.isOfType(entityMaterials.get(e.getType()).getId(), (short) 0));

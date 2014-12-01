@@ -131,7 +131,7 @@ public class DefaultChangers {
 		}
 		
 		@Override
-		public void change(final Player[] players, final Object[] delta, final ChangeMode mode) {
+		public void change(final Player[] players, final @Nullable Object[] delta, final ChangeMode mode) {
 			entityChanger.change(players, delta, mode);
 		}
 	};

@@ -39,6 +39,9 @@ import ch.njol.skript.conditions.CondCompare;
 import ch.njol.skript.lang.ExpressionInfo;
 import ch.njol.skript.lang.SkriptEventInfo;
 import ch.njol.skript.lang.SyntaxElementInfo;
+import ch.njol.skript.lang.function.Functions;
+import ch.njol.skript.lang.function.JavaFunction;
+import ch.njol.skript.lang.function.Parameter;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.Utils;
 import ch.njol.util.Callback;
@@ -49,11 +52,14 @@ import ch.njol.util.coll.iterator.IteratorIterable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
+ * TODO list special expressions for events and event values
+ * TODO compare doc in code with changed one of the webserver and warn about differences?
+ * 
  * @author Peter Güttinger
  */
 @SuppressFBWarnings("ES_COMPARING_STRINGS_WITH_EQ")
-public class Documentation { // TODO list special expressions for events and event values
-
+public class Documentation {
+	
 	public final static void generate() {
 		if (!generate)
 			return;
@@ -76,15 +82,15 @@ public class Documentation { // TODO list special expressions for events and eve
 	private final static void asSql(final PrintWriter pw) {
 		pw.println("-- syntax elements");
 //		pw.println("DROP TABLE IF EXISTS syntax_elements;");
-//		pw.println("CREATE TABLE syntax_elements (" +
-//				"id VARCHAR(20) NOT NULL PRIMARY KEY," +
-//				"name VARCHAR(100) NOT NULL," +
-//				"type ENUM('condition','effect','expression','event') NOT NULL," +
-//				"patterns VARCHAR(2000) NOT NULL," +
-//				"description VARCHAR(2000) NOT NULL," +
-//				"examples VARCHAR(2000) NOT NULL," +
-//				"since VARCHAR(100) NOT NULL" +
-//				");");
+		pw.println("CREATE TABLE IF NOT EXISTS syntax_elements (" +
+				"id VARCHAR(20) NOT NULL PRIMARY KEY," +
+				"name VARCHAR(100) NOT NULL," +
+				"type ENUM('condition','effect','expression','event') NOT NULL," +
+				"patterns VARCHAR(2000) NOT NULL," +
+				"description VARCHAR(2000) NOT NULL," +
+				"examples VARCHAR(2000) NOT NULL," +
+				"since VARCHAR(100) NOT NULL" +
+				");");
 		pw.println("UPDATE syntax_elements SET patterns='';");
 		pw.println();
 		pw.println("-- expressions");
@@ -115,42 +121,35 @@ public class Documentation { // TODO list special expressions for events and eve
 		pw.println();
 		pw.println("-- classes");
 //		pw.println("DROP TABLE IF EXISTS classes;");
-//		pw.println("CREATE TABLE classes (" +
-//				"id VARCHAR(20) NOT NULL PRIMARY KEY," +
-//				"name VARCHAR(100) NOT NULL," +
-//				"description VARCHAR(2000) NOT NULL," +
-//				"patterns VARCHAR(2000) NOT NULL," +
-//				"`usage` VARCHAR(2000) NOT NULL," +
-//				"examples VARCHAR(2000) NOT NULL," +
-//				"since VARCHAR(100) NOT NULL" +
-//				");");
+		pw.println("CREATE TABLE IF NOT EXISTS classes (" +
+				"id VARCHAR(20) NOT NULL PRIMARY KEY," +
+				"name VARCHAR(100) NOT NULL," +
+				"description VARCHAR(2000) NOT NULL," +
+				"patterns VARCHAR(2000) NOT NULL," +
+				"`usage` VARCHAR(2000) NOT NULL," +
+				"examples VARCHAR(2000) NOT NULL," +
+				"since VARCHAR(100) NOT NULL" +
+				");");
 		pw.println("UPDATE classes SET patterns='';");
 		pw.println();
-		for (final ClassInfo<?> c : Classes.getClassInfos()) {
-			if (c.getDocName() == ClassInfo.NO_DOC)
-				continue;
-			if (c.getDocName() == null || c.getDescription() == null || c.getUsage() == null || c.getExamples() == null || c.getSince() == null) {
-				Skript.warning("Class " + c.getCodeName() + " is missing information");
-				continue;
-			}
-			final String desc = validateHTML(StringUtils.join(c.getDescription(), "<br/>"), "classes");
-			final String usage = validateHTML(StringUtils.join(c.getUsage(), "<br/>"), "classes");
-			final String since = c.getSince() == null ? "" : validateHTML(c.getSince(), "classes");
-			if (desc == null || usage == null || since == null) {
-				Skript.warning("Class " + c.getCodeName() + "'s description, usage or 'since' is invalid");
-				continue;
-			}
-			final String patterns = c.getUserInputPatterns() == null ? "" : convertRegex(StringUtils.join(c.getUserInputPatterns(), "\n"));
-			insertOnDuplicateKeyUpdate(pw, "classes",
-					"id, name, description, patterns, `usage`, examples, since",
-					"patterns = TRIM(LEADING '\n' FROM CONCAT(patterns, '\n', '" + escapeSQL(patterns) + "'))",
-					escapeHTML(c.getCodeName()),
-					escapeHTML(c.getDocName()),
-					desc,
-					patterns,
-					usage,
-					escapeHTML(StringUtils.join(c.getExamples(), "\n")),
-					since);
+		for (final ClassInfo<?> info : Classes.getClassInfos()) {
+			assert info != null;
+			insertClass(pw, info);
+		}
+		
+		pw.println();
+		pw.println();
+		pw.println("-- functions");
+		pw.println("CREATE TABLE IF NOT EXISTS functions (" +
+				"name VARCHAR(100) NOT NULL," +
+				"parameters VARCHAR(2000) NOT NULL," +
+				"description VARCHAR(2000) NOT NULL," +
+				"examples VARCHAR(2000) NOT NULL," +
+				"since VARCHAR(100) NOT NULL" +
+				");");
+		for (final JavaFunction<?> func : Functions.getJavaFunctions()) {
+			assert func != null;
+			insertFunction(pw, func);
 		}
 	}
 	
@@ -165,7 +164,7 @@ public class Documentation { // TODO list special expressions for events and eve
 	private final static String cleanPatterns(final String patterns) {
 		final String s = StringUtils.replaceAll("" +
 				escapeHTML(patterns) // escape HTML
-				.replaceAll("(?<=[\\(\\|]).+?¦", "") // remove marks
+				.replaceAll("(?<=[\\(\\|])[-0-9]+?¦", "") // remove marks
 				.replace("()", "") // remove empty mark setting groups (mark¦)
 				.replaceAll("\\(([^|]+?)\\|\\)", "[$1]") // replace (mark¦x|) groups with [x]
 				.replaceAll("\\(\\|([^|]+?)\\)", "[$1]") // dito
@@ -268,13 +267,64 @@ public class Documentation { // TODO list special expressions for events and eve
 				since);
 	}
 	
-	private final static void insertOnDuplicateKeyUpdate(final PrintWriter pw, final String table, final String fields, final String update, final String... values) {
-		for (int i = 0; i < values.length; i++) {
-			final String v = values[i];
-			assert v != null;
-			values[i] = escapeSQL(v);
+	private final static void insertClass(final PrintWriter pw, final ClassInfo<?> info) {
+		if (info.getDocName() == ClassInfo.NO_DOC)
+			return;
+		if (info.getDocName() == null || info.getDescription() == null || info.getUsage() == null || info.getExamples() == null || info.getSince() == null) {
+			Skript.warning("Class " + info.getCodeName() + " is missing information");
+			return;
 		}
+		final String desc = validateHTML(StringUtils.join(info.getDescription(), "<br/>"), "classes");
+		final String usage = validateHTML(StringUtils.join(info.getUsage(), "<br/>"), "classes");
+		final String since = info.getSince() == null ? "" : validateHTML(info.getSince(), "classes");
+		if (desc == null || usage == null || since == null) {
+			Skript.warning("Class " + info.getCodeName() + "'s description, usage or 'since' is invalid");
+			return;
+		}
+		final String patterns = info.getUserInputPatterns() == null ? "" : convertRegex(StringUtils.join(info.getUserInputPatterns(), "\n"));
+		insertOnDuplicateKeyUpdate(pw, "classes",
+				"id, name, description, patterns, `usage`, examples, since",
+				"patterns = TRIM(LEADING '\n' FROM CONCAT(patterns, '\n', '" + escapeSQL(patterns) + "'))",
+				escapeHTML(info.getCodeName()),
+				escapeHTML(info.getDocName()),
+				desc,
+				patterns,
+				usage,
+				escapeHTML(StringUtils.join(info.getExamples(), "\n")),
+				since);
+	}
+	
+	private final static void insertFunction(final PrintWriter pw, final JavaFunction<?> func) {
+		final StringBuilder params = new StringBuilder();
+		for (final Parameter<?> p : func.getParameters()) {
+			if (params.length() != 0)
+				params.append(", ");
+			params.append(p.toString());
+		}
+		final String desc = validateHTML(StringUtils.join(func.getDescription(), "<br/>"), "functions");
+		final String since = validateHTML(func.getSince(), "functions");
+		if (desc == null || since == null) {
+			Skript.warning("Function " + func.getName() + "'s description or 'since' is invalid");
+			return;
+		}
+		replaceInto(pw, "functions", "name, parameters, description, examples, since",
+				escapeHTML(func.getName()),
+				escapeHTML(params.toString()),
+				desc,
+				escapeHTML(StringUtils.join(func.getExamples(), "\n")),
+				since);
+	}
+	
+	private final static void insertOnDuplicateKeyUpdate(final PrintWriter pw, final String table, final String fields, final String update, final String... values) {
+		for (int i = 0; i < values.length; i++)
+			values[i] = escapeSQL("" + values[i]);
 		pw.println("INSERT INTO " + table + " (" + fields + ") VALUES ('" + StringUtils.join(values, "','") + "') ON DUPLICATE KEY UPDATE " + update + ";");
+	}
+	
+	private final static void replaceInto(final PrintWriter pw, final String table, final String fields, final String... values) {
+		for (int i = 0; i < values.length; i++)
+			values[i] = escapeSQL("" + values[i]);
+		pw.println("REPLACE INTO " + table + " (" + fields + ") VALUES ('" + StringUtils.join(values, "','") + "');");
 	}
 	
 	private static ArrayList<Pattern> validation = new ArrayList<Pattern>();
@@ -313,6 +363,9 @@ public class Documentation { // TODO list special expressions for events and eve
 						if (s[1].equals(i.getId()))
 							continue linkLoop;
 					}
+				} else if (s[0].equals("../functions/")) {
+					if (Functions.getFunction("" + s[1]) != null)
+						continue;
 				} else {
 					final int i = CollectionUtils.indexOf(urls, s[0].substring("../".length(), s[0].length() - 1));
 					if (i != -1) {

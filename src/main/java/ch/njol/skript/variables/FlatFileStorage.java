@@ -50,11 +50,12 @@ import ch.njol.skript.util.FileUtils;
 import ch.njol.skript.util.Task;
 import ch.njol.skript.util.Utils;
 import ch.njol.skript.util.Version;
+import ch.njol.util.NotifyingReference;
 
 /**
  * TODO use a database (SQLite) instead and only load a limited amount of variables into RAM - e.g. 2 GB (configurable). If more variables are available they will be loaded when
  * accessed. (rem: print a warning when Skript starts)
- * rem: store null variables to prevent looking up the same variables over and over again
+ * rem: store null variables (in memory) to prevent looking up the same variables over and over again
  * 
  * @author Peter Güttinger
  */
@@ -63,8 +64,10 @@ public class FlatFileStorage extends VariablesStorage {
 	@SuppressWarnings("null")
 	public final static Charset UTF_8 = Charset.forName("UTF-8");
 	
-	@Nullable
-	private volatile PrintWriter changesWriter;
+	/**
+	 * A Lock on this object must be acquired after connectionLock (if that lock is used) (and thus also after {@link Variables#getReadLock()}).
+	 */
+	private final NotifyingReference<PrintWriter> changesWriter = new NotifyingReference<PrintWriter>();
 	
 	private volatile boolean loaded = false;
 	
@@ -190,9 +193,7 @@ public class FlatFileStorage extends VariablesStorage {
 			Skript.info(file.getName() + " successfully updated.");
 		}
 		
-		synchronized (fileLock) { // only synchronised because of the assertion in connect()
-			connect();
-		}
+		connect();
 		
 		saveTask = new Task(Skript.getInstance(), 5 * 60 * 20, 5 * 60 * 20, true) {
 			@Override
@@ -210,6 +211,11 @@ public class FlatFileStorage extends VariablesStorage {
 		};
 		
 		return ioEx == null;
+	}
+	
+	@Override
+	protected void allLoaded() {
+		// no transaction support
 	}
 	
 	@Override
@@ -262,22 +268,25 @@ public class FlatFileStorage extends VariablesStorage {
 		return r.toArray(new String[r.size()]);
 	}
 	
+	@SuppressWarnings("resource")
 	@Override
 	protected boolean save(final String name, final @Nullable String type, final @Nullable byte[] value) {
-		synchronized (fileLock) {
-			if (!loaded) {
-				assert type == null;
-				return true; // deleting variables is not really required for this kind of storage, as it will be completely rewritten every once in a while, and at least once when the server stops.
+		synchronized (connectionLock) {
+			synchronized (changesWriter) {
+				if (!loaded && type == null)
+					return true; // deleting variables is not really required for this kind of storage, as it will be completely rewritten every once in a while, and at least once when the server stops.
+				PrintWriter cw;
+				while ((cw = changesWriter.get()) == null) {
+					try {
+						changesWriter.wait();
+					} catch (final InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+				}
+				writeCSV(cw, name, type, value == null ? "" : encode(value));
+				cw.flush();
+				changes.incrementAndGet();
 			}
-			PrintWriter cw;
-			while ((cw = changesWriter) == null) {
-				try {
-					fileLock.wait();
-				} catch (final InterruptedException e) {}
-			}
-			writeCSV(cw, name, type, value == null ? "" : encode(value));
-			cw.flush();
-			changes.incrementAndGet();
 		}
 		return true;
 	}
@@ -303,28 +312,32 @@ public class FlatFileStorage extends VariablesStorage {
 	
 	@Override
 	protected final void disconnect() {
-		synchronized (fileLock) {
+		synchronized (connectionLock) {
 			clearChangesQueue();
-			final PrintWriter cw = changesWriter;
-			if (cw != null) {
-				cw.close();
-				changesWriter = null;
+			synchronized (changesWriter) {
+				final PrintWriter cw = changesWriter.get();
+				if (cw != null) {
+					cw.close();
+					changesWriter.set(null);
+				}
 			}
 		}
 	}
 	
 	@Override
 	protected final boolean connect() {
-		synchronized (fileLock) {
-			if (changesWriter != null)
-				return true;
-			try {
-				changesWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file, true), UTF_8));
-				loaded = true;
-				return true;
-			} catch (final FileNotFoundException e) {
-				Skript.exception(e);
-				return false;
+		synchronized (connectionLock) {
+			synchronized (changesWriter) {
+				if (changesWriter.get() != null)
+					return true;
+				try {
+					changesWriter.set(new PrintWriter(new OutputStreamWriter(new FileOutputStream(file, true), UTF_8)));
+					loaded = true;
+					return true;
+				} catch (final FileNotFoundException e) {
+					Skript.exception(e);
+					return false;
+				}
 			}
 		}
 	}
@@ -352,7 +365,7 @@ public class FlatFileStorage extends VariablesStorage {
 		}
 		try {
 			Variables.getReadLock().lock();
-			synchronized (fileLock) {
+			synchronized (connectionLock) {
 				try {
 					final File f = file;
 					if (f == null) {
@@ -363,10 +376,10 @@ public class FlatFileStorage extends VariablesStorage {
 					if (loadError) {
 						try {
 							final File backup = FileUtils.backup(f);
-							Skript.info("Created a backup of your old variables.csv as " + backup.getName());
+							Skript.info("Created a backup of the old " + f.getName() + " as " + backup.getName());
 							loadError = false;
 						} catch (final IOException e) {
-							Skript.error("Could not backup the old variables.csv: " + ExceptionUtils.toString(e));
+							Skript.error("Could not backup the old " + f.getName() + ": " + ExceptionUtils.toString(e));
 							Skript.error("No variables are saved!");
 							return;
 						}
@@ -394,7 +407,6 @@ public class FlatFileStorage extends VariablesStorage {
 				} finally {
 					if (!finalSave) {
 						connect();
-						fileLock.notifyAll();
 					}
 				}
 			}

@@ -36,7 +36,7 @@ public class PlayerData extends EntityData<Player> {
 		EntityData.register(PlayerData.class, "player", Player.class, 1, "non-op", "player", "op");
 	}
 	
-	// used by EntityData.getAll
+	// used by EntityData.getAll to efficiently get all players
 	int op = 0;
 	
 	@Override

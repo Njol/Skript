@@ -87,7 +87,7 @@ public abstract class Node {
 //	protected Node(final String key, final SectionNode parent, final ConfigReader r) {
 //		this(key, parent, r.getLine(), r.getLineNum());
 //	}
-//	
+//
 	/**
 	 * Key of this node. <tt>null</tt> for empty or invalid nodes, and the config's main node.
 	 */
@@ -118,7 +118,7 @@ public abstract class Node {
 	}
 	
 	@SuppressWarnings("null")
-	private final static Pattern linePattern = Pattern.compile("^((?:[^#]|##)*)(#(?!#).*)$");
+	private final static Pattern linePattern = Pattern.compile("^((?:[^#]|##)*)(\\s*#(?!#).*)$");
 	
 	/**
 	 * Splits a line into value and comment.
@@ -199,14 +199,14 @@ public abstract class Node {
 //	/**
 //	 * get a node via path:to:the:node. relative paths are possible by starting with a ':'; a double colon '::' will go up a node.<br/>
 //	 * selecting the n-th node can be done with #n.
-//	 * 
+//	 *
 //	 * @param path
 //	 * @return the node at the given path or null if the path is invalid
 //	 */
 //	public Node getNode(final String path) {
 //		return getNode(path, false);
 //	}
-//	
+//
 //	public Node getNode(String path, final boolean create) {
 //		Node n;
 //		if (path.startsWith(":")) {

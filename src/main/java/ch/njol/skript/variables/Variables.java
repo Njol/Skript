@@ -58,6 +58,7 @@ import ch.njol.skript.variables.SerializedVariable.Value;
 import ch.njol.util.Closeable;
 import ch.njol.util.Kleenean;
 import ch.njol.util.NonNullPair;
+import ch.njol.util.SynchronizedReference;
 import ch.njol.yggdrasil.Yggdrasil;
 
 /**
@@ -75,6 +76,11 @@ public abstract class Variables {
 		yggdrasil.registerSingleClass(Kleenean.class, "Kleenean");
 		yggdrasil.registerClassResolver(new ConfigurationSerializer<ConfigurationSerializable>() {
 			{
+				init(); // separate method for the annotation
+			}
+			
+			@SuppressWarnings("unchecked")
+			private final void init() {
 				// used by asserts
 				info = (ClassInfo<? extends ConfigurationSerializable>) Classes.getExactClassInfo(Object.class);
 			}
@@ -121,6 +127,26 @@ public abstract class Variables {
 			}
 		});
 		
+		// reports once per second how many variables were loaded. Useful to make clear that Skript is still doing something if it's loading many variables
+		final Thread loadingLoggerThread = new Thread() {
+			@Override
+			public void run() {
+				while (true) {
+					try {
+						Thread.sleep(Skript.logNormal() ? 1000 : 5000); // low verbosity won't disable these messages, but makes them more rare
+					} catch (final InterruptedException e) {}
+					synchronized (tempVars) {
+						final Map<String, NonNullPair<Object, VariablesStorage>> tvs = tempVars.get();
+						if (tvs != null)
+							Skript.info("Loaded " + tvs.size() + " variables so far...");
+						else
+							break;
+					}
+				}
+			}
+		};
+		loadingLoggerThread.start();
+		
 		try {
 			boolean successful = true;
 			for (final Node node : (SectionNode) databases) {
@@ -149,10 +175,30 @@ public abstract class Variables {
 						}
 						continue;
 					}
+					
+					final int x;
+					synchronized (tempVars) {
+						final Map<String, NonNullPair<Object, VariablesStorage>> tvs = tempVars.get();
+						assert tvs != null;
+						x = tvs.size();
+					}
+					final long start = System.currentTimeMillis();
+					if (Skript.logVeryHigh())
+						Skript.info("Loading database '" + node.getKey() + "'...");
+					
 					if (s.load(n))
 						storages.add(s);
 					else
 						successful = false;
+					
+					final int d;
+					synchronized (tempVars) {
+						final Map<String, NonNullPair<Object, VariablesStorage>> tvs = tempVars.get();
+						assert tvs != null;
+						d = tvs.size() - x;
+					}
+					if (Skript.logVeryHigh())
+						Skript.info("Loaded " + d + " variables from the database '" + n.getKey() + "' in " + ((System.currentTimeMillis() - start) / 100) / 10.0 + " seconds");
 				} else {
 					Skript.error("Invalid line in databases: databases must be defined as sections");
 					successful = false;
@@ -171,9 +217,11 @@ public abstract class Variables {
 			if (n != 0) {
 				Skript.warning(n + " variables were possibly discarded due to not belonging to any database (SQL databases keep such variables and will continue to generate this warning, while CSV discards them).");
 			}
+			
+			loadingLoggerThread.interrupt();
+			
+			saveThread.start();
 		}
-		
-		saveThread.start();
 		return true;
 	}
 	
@@ -278,12 +326,18 @@ public abstract class Variables {
 		saveVariableChange(name, value);
 	}
 	
-	// stores loaded variables while variable storages are loaded.
-	@Nullable
-	private static Map<String, NonNullPair<Object, VariablesStorage>> tempVars = new HashMap<String, NonNullPair<Object, VariablesStorage>>();
+	/**
+	 * Stores loaded variables while variable storages are loaded.
+	 * <p>
+	 * Access must be synchronised.
+	 */
+	final static SynchronizedReference<Map<String, NonNullPair<Object, VariablesStorage>>> tempVars = new SynchronizedReference<Map<String, NonNullPair<Object, VariablesStorage>>>(new HashMap<String, NonNullPair<Object, VariablesStorage>>());
+	
+	private static final int MAX_CONFLICT_WARNINGS = 50;
+	private static int loadConflicts = 0;
 	
 	/**
-	 * Sets a variable and moves it to the appropriate database if the config was changed.
+	 * Sets a variable and moves it to the appropriate database if the config was changed. Must only be used while variables are loaded when Skript is starting.
 	 * <p>
 	 * Must be called on Bukkit's main thread.
 	 * <p>
@@ -297,17 +351,23 @@ public abstract class Variables {
 	final static boolean variableLoaded(final String name, final @Nullable Object value, final VariablesStorage source) {
 		assert Bukkit.isPrimaryThread(); // required by serialisation
 		
-		final Map<String, NonNullPair<Object, VariablesStorage>> tvs = tempVars;
-		if (tvs != null) {
-			if (value == null)
+		synchronized (tempVars) {
+			final Map<String, NonNullPair<Object, VariablesStorage>> tvs = tempVars.get();
+			if (tvs != null) {
+				if (value == null)
+					return false;
+				final NonNullPair<Object, VariablesStorage> v = tvs.get(name);
+				if (v != null && v.getSecond() != source) {// variable already loaded from another database
+					loadConflicts++;
+					if (loadConflicts <= MAX_CONFLICT_WARNINGS)
+						Skript.warning("The variable {" + name + "} was loaded twice from different databases (" + v.getSecond().databaseName + " and " + source.databaseName + "), only the one from " + source.databaseName + " will be kept.");
+					else if (loadConflicts == MAX_CONFLICT_WARNINGS + 1)
+						Skript.warning("[!] More than " + MAX_CONFLICT_WARNINGS + " variables were loaded more than once from different databases, no more warnings will be printed.");
+					v.getSecond().save(name, null, null);
+				}
+				tvs.put(name, new NonNullPair<Object, VariablesStorage>(value, source));
 				return false;
-			final NonNullPair<Object, VariablesStorage> v = tvs.get(name);
-			if (v != null && v.getSecond() != source) {// variable already loaded from another database
-				Skript.warning("The variable {" + name + "} was loaded twice from different databases (" + v.getSecond().databaseName + " and " + source.databaseName + "), only the one from " + source.databaseName + " will be kept.");
-				v.getSecond().save(name, null, null);
 			}
-			tvs.put(name, new NonNullPair<Object, VariablesStorage>(value, source));
-			return false;
 		}
 		
 		variablesLock.writeLock().lock();
@@ -338,15 +398,32 @@ public abstract class Variables {
 	 */
 	@SuppressWarnings("null")
 	private static int onStoragesLoaded() {
-		final Map<String, NonNullPair<Object, VariablesStorage>> tvs = tempVars;
-		tempVars = null;
-		assert tvs != null;
-		int n = 0;
-		for (final Entry<String, NonNullPair<Object, VariablesStorage>> tv : tvs.entrySet()) {
-			if (!variableLoaded(tv.getKey(), tv.getValue().getFirst(), tv.getValue().getSecond()))
-				n++;
+		if (loadConflicts > MAX_CONFLICT_WARNINGS)
+			Skript.warning("A total of " + loadConflicts + " variables were loaded more than once from different databases");
+		Skript.debug("Databases loaded, setting variables...");
+		
+		synchronized (tempVars) {
+			final Map<String, NonNullPair<Object, VariablesStorage>> tvs = tempVars.get();
+			tempVars.set(null);
+			assert tvs != null;
+			variablesLock.writeLock().lock();
+			try {
+				int n = 0;
+				for (final Entry<String, NonNullPair<Object, VariablesStorage>> tv : tvs.entrySet()) {
+					if (!variableLoaded(tv.getKey(), tv.getValue().getFirst(), tv.getValue().getSecond()))
+						n++;
+				}
+				
+				for (final VariablesStorage s : storages)
+					s.allLoaded();
+				
+				Skript.debug("Variables set. Queue size = " + queue.size());
+				
+				return n;
+			} finally {
+				variablesLock.writeLock().unlock();
+			}
 		}
-		return n;
 	}
 	
 	public final static SerializedVariable serialize(final String name, final @Nullable Object value) {

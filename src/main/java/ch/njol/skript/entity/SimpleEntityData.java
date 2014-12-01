@@ -41,7 +41,6 @@ import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Firework;
-import org.bukkit.entity.Fish;
 import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Giant;
 import org.bukkit.entity.HumanEntity;
@@ -130,7 +129,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 		types.add(new SimpleEntityDataInfo("ender pearl", EnderPearl.class));
 		types.add(new SimpleEntityDataInfo("small fireball", SmallFireball.class));
 		types.add(new SimpleEntityDataInfo("fireball", Fireball.class));
-		types.add(new SimpleEntityDataInfo("fish", Fish.class)); // REMIND 1.7: fish, salmon, clownfish, pufferfish
+//		types.add(new SimpleEntityDataInfo("fish", Fish.class)); // REMIND 1.7: fish, salmon, clownfish, pufferfish
 		types.add(new SimpleEntityDataInfo("ghast", Ghast.class));
 		types.add(new SimpleEntityDataInfo("giant", Giant.class));
 		types.add(new SimpleEntityDataInfo("iron golem", IronGolem.class));
@@ -147,14 +146,14 @@ public class SimpleEntityData extends EntityData<Entity> {
 		types.add(new SimpleEntityDataInfo("tnt", TNTPrimed.class));
 		types.add(new SimpleEntityDataInfo("zombie", Zombie.class));
 		
-		if (Skript.isRunningMinecraft(1, 4)) {
+		if (Skript.classExists("org.bukkit.entity.ItemFrame")) {
 			types.add(new SimpleEntityDataInfo("item frame", ItemFrame.class));
 			types.add(new SimpleEntityDataInfo("bat", Bat.class));
 			types.add(new SimpleEntityDataInfo("witch", Witch.class));
 			types.add(new SimpleEntityDataInfo("wither", Wither.class));
 			types.add(new SimpleEntityDataInfo("wither skull", WitherSkull.class));
 		}
-		if (Skript.isRunningMinecraft(1, 4, 6))
+		if (Skript.classExists("org.bukkit.entity.Firework"))
 			types.add(new SimpleEntityDataInfo("firework", Firework.class));
 		
 		// TODO !Update with every version [entities]
@@ -226,7 +225,7 @@ public class SimpleEntityData extends EntityData<Entity> {
 	}
 	
 	@Override
-	protected boolean init(final Class<? extends Entity> c, final Entity e) {
+	protected boolean init(final @Nullable Class<? extends Entity> c, final @Nullable Entity e) {
 		assert false;
 		return false;
 	}

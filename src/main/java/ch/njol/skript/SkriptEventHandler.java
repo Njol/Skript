@@ -287,7 +287,7 @@ public abstract class SkriptEventHandler {
 //				i.remove();
 //		}
 //	}
-//	
+//
 //	private final static boolean unregisterEvent(Class<? extends Event> event) {
 //		try {
 //			Method m = null;

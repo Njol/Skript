@@ -29,6 +29,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -50,6 +51,7 @@ import ch.njol.util.Kleenean;
 		"message \"You're not allowed to use commands during the game\"",
 		"cancel the event"})
 @Since("2.0")
+@Events("command")
 public class ExprCommand extends SimpleExpression<String> {
 	static {
 		Skript.registerExpression(ExprCommand.class, String.class, ExpressionType.SIMPLE,

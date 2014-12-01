@@ -15,47 +15,19 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
-package ch.njol.skript.log;
+package ch.njol.skript.util;
 
 /**
  * @author Peter Güttinger
  */
-public abstract class LogHandler {
+public class EmptyStacktraceException extends RuntimeException {
+	private static final long serialVersionUID = 5107844579323721139L;
 	
-	public static enum LogResult {
-		LOG, CACHED, DO_NOT_LOG;
+	public EmptyStacktraceException() {
+		super(null, null, true, false);
 	}
-	
-	/**
-	 * @param entry
-	 * @return Whether to print the specified entry or not.
-	 */
-	public abstract LogResult log(LogEntry entry);
-	
-	/**
-	 * Called just after the handler is removed from the active handlers stack.
-	 */
-	protected void onStop() {}
-	
-	public final void stop() {
-		SkriptLogger.removeHandler(this);
-		onStop();
-	}
-	
-	public boolean isStopped() {
-		return SkriptLogger.isStopped(this);
-	}
-	
-//	/**
-//	 * Will be useful should Skript ever be written in Java 7
-//	 */
-//	@Override
-//	public final void close() throws Exception {
-//		stop();
-//	}
-	
 }

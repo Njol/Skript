@@ -75,8 +75,8 @@ public class ExprIdOf extends PropertyExpression<ItemType, Integer> {
 		return true;
 	}
 	
+	@SuppressWarnings("null")
 	@Override
-	@Nullable
 	protected Integer[] get(final Event e, final ItemType[] source) {
 		if (single) {
 			final ItemType t = getExpr().getSingle(e);

@@ -222,6 +222,7 @@ enchantments:
 		luck: Luck of the Sea
 		unknown_enchant_62: Lure
 		lure: Lure
+		unknown_enchant_8: Depth Strider
 
 # -- Potion Effects --
 potions:
@@ -772,6 +773,7 @@ game modes:
 	survival: survival
 	creative: creative
 	adventure: adventure
+	spectator: spectator
 
 # -- Visual Effects --
 visual effects:

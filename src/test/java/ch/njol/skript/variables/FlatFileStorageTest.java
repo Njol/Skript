@@ -61,6 +61,8 @@ public class FlatFileStorageTest {
 				{"\" \"", " "},
 				{"a, \"\"\"\", b, \", c\", d", "a", "\"", "b", ", c", "d"},
 				{"a, \"\"\", b, \", c", "a", "\", b, ", "c"},
+				
+				{"\"\t\0\"", "\t\0"},
 		};
 		for (final String[] v : vs) {
 			assert Arrays.equals(Arrays.copyOfRange(v, 1, v.length), FlatFileStorage.splitCSV(v[0])) : v[0] + ": " + Arrays.toString(Arrays.copyOfRange(v, 1, v.length)) + " != " + Arrays.toString(FlatFileStorage.splitCSV(v[0]));

@@ -41,7 +41,7 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @Name("Console")
-@Description("Represents the server's console which can recieve messages and execute commands")
+@Description("Represents the server's console which can receive messages and execute commands")
 @Examples({"execute console command \"/stop\"",
 		"send \"message to console\" to the console"})
 @Since("1.3.1")

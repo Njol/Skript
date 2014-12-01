@@ -97,7 +97,7 @@ public class Time implements YggdrasilSerializable {
 	public final static Time parse(final String s) {
 //		if (s.matches("\\d+")) {
 //			return new Time(Integer.parseInt(s));
-//		} else 
+//		} else
 		if (s.matches("\\d?\\d:\\d\\d")) {
 			int hours = Utils.parseInt(s.split(":")[0]);
 			if (hours == 24) { // allows to write 24:00 - 24:59 instead of 0:00-0:59

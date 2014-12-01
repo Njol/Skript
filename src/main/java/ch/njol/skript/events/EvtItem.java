@@ -42,7 +42,7 @@ import ch.njol.util.Checker;
  * @author Peter Güttinger
  */
 public class EvtItem extends SkriptEvent {
-	private final static boolean hasConsumeEvent = Skript.supports("org.bukkit.event.player.PlayerItemConsumeEvent");
+	private final static boolean hasConsumeEvent = Skript.classExists("org.bukkit.event.player.PlayerItemConsumeEvent");
 	static {
 		Skript.registerEvent("Dispense", EvtItem.class, BlockDispenseEvent.class, "dispens(e|ing) [[of] %itemtypes%]")
 				.description("Called when a dispenser dispenses an item.")
@@ -56,6 +56,7 @@ public class EvtItem extends SkriptEvent {
 				.description("Called when a player drops an item from his inventory.")
 				.examples("")
 				.since("");
+		// TODO limit to InventoryAction.PICKUP_* and similar (e.g. COLLECT_TO_CURSOR)
 		Skript.registerEvent("Craft", EvtItem.class, CraftItemEvent.class, "[player] craft[ing] [[of] %itemtypes%]")
 				.description("Called when a player crafts an item.")
 				.examples("")

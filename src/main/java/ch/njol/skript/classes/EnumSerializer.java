@@ -56,16 +56,14 @@ public class EnumSerializer<T extends Enum<T>> extends Serializer<T> {
 	}
 	
 	@Override
-	public boolean canBeInstantiated(final Class<? extends T> c) {
+	public boolean canBeInstantiated() {
 		assert false;
 		return false;
 	}
 	
 	@Override
-	@Nullable
 	public Fields serialize(final T t) {
-		assert false;
-		return null;
+		throw new IllegalStateException(); // not used
 	}
 	
 	@Override

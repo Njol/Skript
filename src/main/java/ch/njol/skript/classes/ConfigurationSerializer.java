@@ -52,7 +52,7 @@ public class ConfigurationSerializer<T extends ConfigurationSerializable> extend
 	}
 	
 	@Override
-	public boolean canBeInstantiated(final Class<? extends T> c) {
+	public boolean canBeInstantiated() {
 		return false;
 	}
 	

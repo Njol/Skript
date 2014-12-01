@@ -30,6 +30,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.bukkitutil.HealthUtils;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -48,8 +49,8 @@ import ch.njol.util.coll.CollectionUtils;
 @Description("How much damage is done in a damage event, possibly ignoring armour, criticals and/or enchantments. Can be changed (remember that in Skript '1' is one full heart, not half a heart).")
 @Examples({"increase the damage by 2"})
 @Since("1.3.5")
+@Events("damage")
 public class ExprDamage extends SimpleExpression<Double> {
-	
 	static {
 		Skript.registerExpression(ExprDamage.class, Double.class, ExpressionType.SIMPLE, "[the] damage");
 	}

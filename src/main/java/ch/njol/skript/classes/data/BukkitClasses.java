@@ -26,6 +26,9 @@ import java.io.StreamCorruptedException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -47,7 +50,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
-import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
@@ -223,7 +225,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Block> c) {
+					public boolean canBeInstantiated() {
 						return false;
 					}
 					
@@ -316,8 +318,8 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Location> c) {
-						return false; // no nullary constructor
+					public boolean canBeInstantiated() {
+						return false; // no nullary constructor - also, saving the location manually prevents errors should Location ever be changed
 					}
 					
 					@Override
@@ -346,25 +348,30 @@ public class BukkitClasses {
 					}
 				}));
 		
+		// FIXME update doc
 		Classes.registerClass(new ClassInfo<World>(World.class, "world")
 				.user("worlds?")
 				.name("World")
 				.description("One of the server's worlds. Worlds can be put into scripts by surrounding their name with double quotes, e.g. \"world_nether\", " +
 						"but this might not work reliably as <a href='#string'>text</a> uses the same syntax.")
 				.usage("<code>\"world_name\"</code>, e.g. \"world\"")
-				.examples("broadcast \"Hello!\" to \"world_nether\"")
-				.since("1.0")
+				.examples("broadcast \"Hello!\" to the world \"world_nether\"")
+				.since("1.0, 2.2 (alternate syntax)")
 				.after("string")
 				.defaultExpression(new EventValueExpression<World>(World.class))
 				.parser(new Parser<World>() {
+					@SuppressWarnings("null")
+					private final Pattern parsePattern = Pattern.compile("(?:(?:the )?world )?\"(.+)\"", Pattern.CASE_INSENSITIVE);
+					
 					@Override
 					@Nullable
 					public World parse(final String s, final ParseContext context) {
 						// REMIND allow shortcuts '[over]world', 'nether' and '[the_]end' (server.properties: 'level-name=world') // inconsistent with 'world is "..."'
 						if (context == ParseContext.COMMAND || context == ParseContext.CONFIG)
 							return Bukkit.getWorld(s);
-						if (s.matches("\".+\""))
-							return Bukkit.getWorld(s.substring(1, s.length() - 1));
+						final Matcher m = parsePattern.matcher(s);
+						if (m.matches())
+							return Bukkit.getWorld(m.group(1));
 						return null;
 					}
 					
@@ -396,7 +403,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends World> c) {
+					public boolean canBeInstantiated() {
 						return false;
 					}
 					
@@ -483,6 +490,7 @@ public class BukkitClasses {
 					@Nullable
 					public Player parse(final String s, final ParseContext context) {
 						if (context == ParseContext.COMMAND) {
+							@SuppressWarnings("deprecation")
 							final List<Player> ps = Bukkit.matchPlayer(s);
 							if (ps.size() == 1)
 								return ps.get(0);
@@ -511,14 +519,17 @@ public class BukkitClasses {
 					@Override
 					public String toVariableNameString(final Player p) {
 						if (SkriptConfig.usePlayerUUIDsInVariableNames.value())
-							return "" + p.getUniqueId(); // TODO [UUID] wrong UUID?
+							return "" + p.getUniqueId();
 						else
 							return "" + p.getName();
 					}
 					
 					@Override
 					public String getVariableNamePattern() {
-						return "\\S+";
+						if (SkriptConfig.usePlayerUUIDsInVariableNames.value())
+							return "[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}";
+						else
+							return "\\S+";
 					}
 					
 					@Override
@@ -540,6 +551,7 @@ public class BukkitClasses {
 				.defaultExpression(new EventValueExpression<OfflinePlayer>(OfflinePlayer.class))
 				.after("string", "world")
 				.parser(new Parser<OfflinePlayer>() {
+					@SuppressWarnings("deprecation")
 					@Override
 					@Nullable
 					public OfflinePlayer parse(final String s, final ParseContext context) {
@@ -547,6 +559,9 @@ public class BukkitClasses {
 							if (!s.matches("\\S+") || s.length() > 16)
 								return null;
 							return Bukkit.getOfflinePlayer(s);
+							// TODO return an unresolved player and resolve it on a different thread after the command was parsed, and block the command until it is ready
+							// FIXME add note to changelog if not fixed in the next update
+//							return new UnresolvedOfflinePlayer(s);
 						}
 //						if (s.matches("\"\\S+\""))
 //							return Bukkit.getOfflinePlayer(s.substring(1, s.length() - 1));
@@ -566,12 +581,18 @@ public class BukkitClasses {
 					
 					@Override
 					public String toVariableNameString(final OfflinePlayer p) {
-						return "" + p.getName();
+						if (SkriptConfig.usePlayerUUIDsInVariableNames.value())
+							return "" + p.getUniqueId();
+						else
+							return "" + p.getName();
 					}
 					
 					@Override
 					public String getVariableNamePattern() {
-						return "\\S+";
+						if (SkriptConfig.usePlayerUUIDsInVariableNames.value())
+							return "[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}";
+						else
+							return "\\S+";
 					}
 					
 					@Override
@@ -581,10 +602,14 @@ public class BukkitClasses {
 						return "" + p.getName();
 					}
 				}).serializer(new Serializer<OfflinePlayer>() {
+					private final boolean uuidSupported = Skript.methodExists(OfflinePlayer.class, "getUniqueId");
+					
 					@Override
 					public Fields serialize(final OfflinePlayer p) {
 						final Fields f = new Fields();
-						f.putObject("name", p.getName()); // FIXME [UUID] save UUID once Bukkit supports it
+						if (uuidSupported)
+							f.putObject("uuid", p.getUniqueId());
+						f.putObject("name", p.getName());
 						return f;
 					}
 					
@@ -594,20 +619,30 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends OfflinePlayer> c) {
+					public boolean canBeInstantiated() {
 						return false;
 					}
 					
+					@SuppressWarnings("deprecation")
 					@Override
 					protected OfflinePlayer deserialize(final Fields fields) throws StreamCorruptedException {
-						final String name = fields.getObject("name", String.class);
-						OfflinePlayer p;
-						if (name == null || (p = Bukkit.getOfflinePlayer(name)) == null)
-							throw new StreamCorruptedException();
-						return p;
+						if (fields.hasField("uuid") && uuidSupported) {
+							final UUID uuid = fields.getObject("uuid", UUID.class);
+							OfflinePlayer p;
+							if (uuid == null || (p = Bukkit.getOfflinePlayer(uuid)) == null)
+								throw new StreamCorruptedException();
+							return p;
+						} else {
+							final String name = fields.getObject("name", String.class);
+							OfflinePlayer p;
+							if (name == null || (p = Bukkit.getOfflinePlayer(name)) == null)
+								throw new StreamCorruptedException();
+							return p;
+						}
 					}
 					
 //					return p.getName();
+					@SuppressWarnings("deprecation")
 					@Override
 					@Nullable
 					public OfflinePlayer deserialize(final String s) {
@@ -665,9 +700,6 @@ public class BukkitClasses {
 				.name(ClassInfo.NO_DOC)
 				.defaultExpression(new EventValueExpression<InventoryHolder>(InventoryHolder.class)));
 		
-		@SuppressWarnings("null")
-		@NonNull
-		final GameMode GameModeSURVIVAL = GameMode.SURVIVAL;
 		Classes.registerClass(new ClassInfo<GameMode>(GameMode.class, "gamemode")
 				.user("game ?modes?")
 				.name("Game Mode")
@@ -676,7 +708,7 @@ public class BukkitClasses {
 				.examples("player's gamemode is survival",
 						"set the player argument's game mode to creative")
 				.since("1.0")
-				.defaultExpression(new SimpleLiteral<GameMode>(GameModeSURVIVAL, true))
+				.defaultExpression(new SimpleLiteral<GameMode>(GameMode.SURVIVAL, true))
 				.parser(new Parser<GameMode>() {
 					private final Message[] names = new Message[GameMode.values().length];
 					{
@@ -852,7 +884,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends PotionEffectType> c) {
+					public boolean canBeInstantiated() {
 						return false;
 					}
 					
@@ -969,7 +1001,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Chunk> c) {
+					public boolean canBeInstantiated() {
 						return false;
 					}
 					
@@ -1047,7 +1079,7 @@ public class BukkitClasses {
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Enchantment> c) {
+					public boolean canBeInstantiated() {
 						return false;
 					}
 					

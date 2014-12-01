@@ -38,6 +38,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.SkriptAPIException;
+import ch.njol.skript.bukkitutil.PlayerUtils;
 import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.Serializer;
@@ -85,7 +86,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		}
 		
 		@Override
-		public boolean canBeInstantiated(final Class<? extends EntityData> c) {
+		public boolean canBeInstantiated() {
 			return false;
 		}
 		
@@ -425,7 +426,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		}
 	}
 	
-	@SuppressWarnings("null")
+	@SuppressWarnings({"null", "unchecked"})
 	public E[] getAll(final World... worlds) {
 		assert worlds != null && worlds.length > 0 : Arrays.toString(worlds);
 		final List<E> list = new ArrayList<E>();
@@ -443,14 +444,14 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 	 * @param worlds worlds or null for all
 	 * @return All entities of this type in the given worlds
 	 */
-	@SuppressWarnings("null")
+	@SuppressWarnings({"null", "unchecked"})
 	public final static <E extends Entity> E[] getAll(final EntityData<?>[] types, final Class<E> type, @Nullable World[] worlds) {
 		assert types.length > 0;
 		if (type == Player.class) {
 			if (worlds == null && types.length == 1 && types[0] instanceof PlayerData && ((PlayerData) types[0]).op == 0)
-				return (E[]) Bukkit.getOnlinePlayers();
+				return (E[]) PlayerUtils.getOnlinePlayers().toArray(new Player[0]);
 			final List<Player> list = new ArrayList<Player>();
-			for (final Player p : Bukkit.getOnlinePlayers()) {
+			for (final Player p : PlayerUtils.getOnlinePlayers()) {
 				if (worlds != null && !CollectionUtils.contains(worlds, p.getWorld()))
 					continue;
 				for (final EntityData<?> t : types) {
@@ -484,6 +485,7 @@ public abstract class EntityData<E extends Entity> implements SyntaxElement, Ygg
 		for (final EntityDataInfo<?> info : infos) {
 			if (info.entityClass != Entity.class && (e == null ? info.entityClass.isAssignableFrom(c) : info.entityClass.isInstance(e))) {
 				try {
+					@SuppressWarnings("unchecked")
 					final EntityData<E> d = (EntityData<E>) info.c.newInstance();
 					if (d.init(c, e))
 						return d;

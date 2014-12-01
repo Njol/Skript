@@ -92,15 +92,7 @@ public abstract class SkriptConfig {
 	// everything handled by Variables
 	public final static OptionSection databases = new OptionSection("databases");
 	
-// TODO [UUID] add once Bukkit supports UUIDs more extensively // REM: offline player's variable name
-//use player UUIDs in variable names: false
-//# Whether to use a player's UUID instead of their name in variables, e.g. {home.%player%} will look like
-//# {home.<some long number sequence with dashes and stuff>} instead of {home.njol}.
-//# Please note:
-//# - if this setting is changed old variables WILL NOT be renamed automatically.
-//# - players stored in variables are STILL SAVED BY NAME as Bukkit does not yet fully support UUIDs.
-	public final static Option<Boolean> usePlayerUUIDsInVariableNames = new Option<Boolean>("use player UUIDs in variable names", false)
-			.optional(true);
+	public final static Option<Boolean> usePlayerUUIDsInVariableNames = new Option<Boolean>("use player UUIDs in variable names", false); // TODO change to true later (as well as in the default config)
 	
 	@SuppressWarnings("null")
 	private final static DateFormat shortDateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
@@ -134,9 +126,7 @@ public abstract class SkriptConfig {
 				}
 			});
 	
-	@SuppressWarnings("null")
-	private final static EventPriority EventPriorityNORMAL = EventPriority.NORMAL;
-	public final static Option<EventPriority> defaultEventPriority = new Option<EventPriority>("plugin priority", EventPriorityNORMAL, new Converter<String, EventPriority>() {
+	public final static Option<EventPriority> defaultEventPriority = new Option<EventPriority>("plugin priority", EventPriority.NORMAL, new Converter<String, EventPriority>() {
 		@Override
 		@Nullable
 		public EventPriority convert(final String s) {

@@ -41,6 +41,8 @@ import ch.njol.skript.util.Timespan;
 import ch.njol.skript.variables.SerializedVariable.Value;
 import ch.njol.util.Closeable;
 
+// FIXME ! large databases (>25 MB) cause the server to be unresponsive instead of loading slowly
+
 /**
  * @author Peter Güttinger
  */
@@ -63,7 +65,7 @@ public abstract class VariablesStorage implements Closeable {
 	@Nullable
 	private Pattern variablePattern;
 	
-	// started in load()
+	// created in the constructor, started in load()
 	private final Thread writeThread;
 	
 	protected VariablesStorage(final String name) {
@@ -178,6 +180,12 @@ public abstract class VariablesStorage implements Closeable {
 	 */
 	protected abstract boolean load_i(SectionNode n);
 	
+	/**
+	 * Called after all storages have been loaded, and variables have been redistributed if settings have changed. This should commit the first transaction (which is not empty if
+	 * variables have been moved from another database to this one or vice versa), and start repeating transactions if applicable.
+	 */
+	protected abstract void allLoaded();
+	
 	protected abstract boolean requiresFile();
 	
 	protected abstract File getFile(String file);
@@ -185,7 +193,7 @@ public abstract class VariablesStorage implements Closeable {
 	/**
 	 * Must be locked after {@link Variables#getReadLock()} (if that lock is used at all)
 	 */
-	protected final Object fileLock = new Object();
+	protected final Object connectionLock = new Object();
 	
 	/**
 	 * (Re)connects to the database (not called on the first connect - do this in {@link #load_i(SectionNode)}).
@@ -209,7 +217,7 @@ public abstract class VariablesStorage implements Closeable {
 		backupTask = new Task(Skript.getInstance(), t.getTicks(), t.getTicks(), true) {
 			@Override
 			public void run() {
-				synchronized (fileLock) {
+				synchronized (connectionLock) {
 					disconnect();
 					try {
 						FileUtils.backup(file);
@@ -217,14 +225,13 @@ public abstract class VariablesStorage implements Closeable {
 						Skript.error("Automatic variables backup failed: " + e.getLocalizedMessage());
 					} finally {
 						connect();
-						fileLock.notifyAll();
 					}
 				}
 			}
 		};
 	}
 	
-	final boolean accept(final @Nullable String var) {
+	boolean accept(final @Nullable String var) {
 		if (var == null)
 			return false;
 		return variablePattern != null ? variablePattern.matcher(var).matches() : true;
@@ -258,6 +265,10 @@ public abstract class VariablesStorage implements Closeable {
 		}
 	}
 	
+	/**
+	 * Called when Skript gets disabled. The default implementation will wait for all variables to be saved before setting {@link #closed} to true and stopping the write thread,
+	 * thus <tt>super.close()</tt> must be called if this method is overridden!
+	 */
 	@Override
 	public void close() {
 		while (changesQueue.size() > 0) {
@@ -277,7 +288,7 @@ public abstract class VariablesStorage implements Closeable {
 	}
 	
 	/**
-	 * Saves a variable.
+	 * Saves a variable. This is called from the main thread while variables are transferred between databases, and from the {@link #writeThread} afterwards.
 	 * 
 	 * @param name
 	 * @param type

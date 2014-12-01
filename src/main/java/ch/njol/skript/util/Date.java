@@ -46,8 +46,9 @@ public class Date implements Comparable<Date>, YggdrasilSerializable {
 	}
 	
 	@Override
-	public int compareTo(final Date other) {
-		return (int) (timestamp - other.timestamp);
+	public int compareTo(final @Nullable Date other) {
+		final long d = other == null ? timestamp : timestamp - other.timestamp;
+		return d < 0 ? -1 : d > 0 ? 1 : 0;
 	}
 	
 	@Override

@@ -80,11 +80,11 @@ public abstract class BlockUtils {
 		attached[Material.WALL_SIGN.getId()] = wallSign;
 		attached[Material.TRAP_DOOR.getId()] = trapdoor;
 		attached[Material.LEVER.getId()] = lever;
-		if (Skript.isRunningMinecraft(1, 3)) {
+		if (Skript.fieldExists(Material.class, "COCOA")) {
 			attached[Material.COCOA.getId()] = cocoa;
 			attached[Material.TRIPWIRE_HOOK.getId()] = tripwireHook;
 		}
-		if (Skript.isRunningMinecraft(1, 4))
+		if (Skript.fieldExists(Material.class, "WOOD_BUTTON"))
 			attached[Material.WOOD_BUTTON.getId()] = button;
 	}
 	
@@ -100,7 +100,7 @@ public abstract class BlockUtils {
 	/**
 	 * @param b
 	 * @param type
-	 * @param dataMin The miminum data value from 0 to 15, can be -1
+	 * @param dataMin The minimum data value from 0 to 15, can be -1
 	 * @param dataMax The maximum data value from 0 to 15, can be -1
 	 * @param applyPhysics TODO add effect that sets block without physics checks
 	 * @return Whether the block could be set successfully

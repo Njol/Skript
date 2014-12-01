@@ -220,7 +220,7 @@ public abstract class Converters {
 		return r;
 	}
 	
-	private final static Map<Pair<Class<?>, Class<?>>, Converter<?, ?>> convertersQuickAccess = new HashMap<Pair<Class<?>, Class<?>>, Converter<?, ?>>();
+	private final static Map<Pair<Class<?>, Class<?>>, Converter<?, ?>> convertersCache = new HashMap<Pair<Class<?>, Class<?>>, Converter<?, ?>>();
 	
 	/**
 	 * Tests whether a converter between the given classes exists.
@@ -251,13 +251,14 @@ public abstract class Converters {
 	 * @param to
 	 * @return the converter or null if none exist
 	 */
+	@SuppressWarnings("unchecked")
 	@Nullable
 	public final static <F, T> Converter<? super F, ? extends T> getConverter(final Class<F> from, final Class<T> to) {
 		final Pair<Class<?>, Class<?>> p = new Pair<Class<?>, Class<?>>(from, to);
-		if (convertersQuickAccess.containsKey(p)) // can contain null to denote nonexistence of a converter
-			return (Converter<? super F, ? extends T>) convertersQuickAccess.get(p);
+		if (convertersCache.containsKey(p)) // can contain null to denote nonexistence of a converter
+			return (Converter<? super F, ? extends T>) convertersCache.get(p);
 		final Converter<? super F, ? extends T> c = getConverter_i(from, to);
-		convertersQuickAccess.put(p, c);
+		convertersCache.put(p, c);
 		return c;
 	}
 	
@@ -296,6 +297,7 @@ public abstract class Converters {
 	}
 	
 	public final static <F, T> T[] convert(final F[] from, final Class<T> to, final Converter<? super F, ? extends T> conv) {
+		@SuppressWarnings("unchecked")
 		T[] ts = (T[]) Array.newInstance(to, from.length);
 		int j = 0;
 		for (int i = 0; i < from.length; i++) {

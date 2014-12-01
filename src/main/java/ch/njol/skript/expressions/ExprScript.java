@@ -28,6 +28,7 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.config.Config;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -47,6 +48,7 @@ import ch.njol.util.Kleenean;
 		"on script unload:",
 		"	set {running.%script%} to false"})
 @Since("2.0")
+@Events("Script Load/Unload")
 public class ExprScript extends SimpleExpression<String> {
 	static {
 		Skript.registerExpression(ExprScript.class, String.class, ExpressionType.SIMPLE, "[the] script[['s] name]");

@@ -54,6 +54,7 @@ public class Option<T> {
 		this.key = "" + key.toLowerCase(Locale.ENGLISH);
 		this.defaultValue = defaultValue;
 		parsedValue = defaultValue;
+		@SuppressWarnings("unchecked")
 		final Class<T> c = (Class<T>) defaultValue.getClass();
 		if (c == String.class) {
 			parser = new Converter<String, T>() {

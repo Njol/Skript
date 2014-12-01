@@ -15,47 +15,30 @@
  *  along with Skript.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * 
- * Copyright 2011, 2012 Peter Güttinger
+ * Copyright 2011-2013 Peter Güttinger
  * 
  */
 
-package ch.njol.skript.log;
+package ch.njol.skript.doc;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import ch.njol.skript.lang.SkriptEvent;
+import ch.njol.skript.lang.SkriptEventInfo;
 
 /**
  * @author Peter Güttinger
  */
-public abstract class LogHandler {
-	
-	public static enum LogResult {
-		LOG, CACHED, DO_NOT_LOG;
-	}
-	
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface Events {
 	/**
-	 * @param entry
-	 * @return Whether to print the specified entry or not.
+	 * A list of {@link SkriptEventInfo#getName() name(s)} of {@link SkriptEvent events} this expression is useful for.
 	 */
-	public abstract LogResult log(LogEntry entry);
-	
-	/**
-	 * Called just after the handler is removed from the active handlers stack.
-	 */
-	protected void onStop() {}
-	
-	public final void stop() {
-		SkriptLogger.removeHandler(this);
-		onStop();
-	}
-	
-	public boolean isStopped() {
-		return SkriptLogger.isStopped(this);
-	}
-	
-//	/**
-//	 * Will be useful should Skript ever be written in Java 7
-//	 */
-//	@Override
-//	public final void close() throws Exception {
-//		stop();
-//	}
-	
+	String[] value();
 }

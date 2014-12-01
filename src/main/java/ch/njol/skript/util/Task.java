@@ -125,15 +125,24 @@ public abstract class Task implements Runnable, Closeable {
 	}
 	
 	/**
+	 * Equivalent to <tt>{@link #callSync(Callable, Plugin) callSync}(c, {@link Skript#getInstance()})</tt>
+	 */
+	@Nullable
+	public final static <T> T callSync(final Callable<T> c) {
+		return callSync(c, Skript.getInstance());
+	}
+	
+	/**
 	 * Calls a method on Bukkit's main thread.
 	 * <p>
 	 * Hint: Use a Callable&lt;Void&gt; to make a task which blocks your current thread until it is completed.
 	 * 
 	 * @param c The method
+	 * @param p The plugin that owns the task. Must be enabled.
 	 * @return What the method returned or null if it threw an error or was stopped (usually due to the server shutting down)
 	 */
 	@Nullable
-	public final static <T> T callSync(final Callable<T> c) {
+	public final static <T> T callSync(final Callable<T> c, final Plugin p) {
 		if (Bukkit.isPrimaryThread()) {
 			try {
 				return c.call();
@@ -141,7 +150,7 @@ public abstract class Task implements Runnable, Closeable {
 				Skript.exception(e);
 			}
 		}
-		final Future<T> f = Bukkit.getScheduler().callSyncMethod(Skript.getInstance(), c);
+		final Future<T> f = Bukkit.getScheduler().callSyncMethod(p, c);
 		try {
 			while (true) {
 				try {

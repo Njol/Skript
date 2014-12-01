@@ -27,6 +27,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -42,6 +43,7 @@ import ch.njol.skript.lang.ExpressionType;
 		"on command:",
 		"	log \"%executor% used command /%command% %arguments%\" to \"commands.log\""})
 @Since("2.0")
+@Events("command")
 public class ExprCommandSender extends EventValueExpression<CommandSender> {
 	static {
 		Skript.registerExpression(ExprCommandSender.class, CommandSender.class, ExpressionType.SIMPLE, "[the] [command['s]] (sender|executor)");

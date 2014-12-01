@@ -34,6 +34,7 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.bukkitutil.ProjectileUtils;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -56,6 +57,7 @@ import ch.njol.util.Kleenean;
 		"	health of attacker is less than or equal to 2",
 		"	damage victim by 1 heart"})
 @Since("1.3")
+@Events({"damage", "death", "destroy"})
 public class ExprAttacker extends SimpleExpression<Entity> {
 	static {
 		Skript.registerExpression(ExprAttacker.class, Entity.class, ExpressionType.SIMPLE, "[the] (attacker|damager)");

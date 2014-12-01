@@ -21,6 +21,8 @@
 
 package ch.njol.skript.entity;
 
+import java.util.ArrayList;
+
 import org.bukkit.entity.Minecart;
 import org.bukkit.entity.PoweredMinecart;
 import org.bukkit.entity.StorageMinecart;
@@ -40,15 +42,16 @@ import ch.njol.skript.variables.Variables;
  */
 @SuppressWarnings("deprecation")
 public class MinecartData extends EntityData<Minecart> {
+	@SuppressWarnings("null")
 	private static enum MinecartType {
 		ANY(Minecart.class, "minecart"),
-		NORMAL(Skript.isRunningMinecraft(1, 5) ? RideableMinecart.class : Minecart.class, "regular minecart"),
-		STORAGE(Skript.isRunningMinecraft(1, 5) ? org.bukkit.entity.minecart.StorageMinecart.class : StorageMinecart.class, "storage minecart"),
-		POWERED(Skript.isRunningMinecraft(1, 5) ? org.bukkit.entity.minecart.PoweredMinecart.class : PoweredMinecart.class, "powered minecart"),
+		NORMAL(Skript.classExists("org.bukkit.entity.minecart.RideableMinecart") ? RideableMinecart.class : Minecart.class, "regular minecart"),
+		STORAGE(Skript.classExists("org.bukkit.entity.minecart.StorageMinecart") ? org.bukkit.entity.minecart.StorageMinecart.class : StorageMinecart.class, "storage minecart"),
+		POWERED(Skript.classExists("org.bukkit.entity.minecart.PoweredMinecart") ? org.bukkit.entity.minecart.PoweredMinecart.class : PoweredMinecart.class, "powered minecart"),
 		// 1.5
-		HOPPER(Skript.isRunningMinecraft(1, 5) ? HopperMinecart.class : null, "hopper minecart"),
-		EXPLOSIVE(Skript.isRunningMinecraft(1, 5) ? ExplosiveMinecart.class : null, "explosive minecart"),
-		SPAWNER(Skript.isRunningMinecraft(1, 5) ? SpawnerMinecart.class : null, "spawner minecart");
+		HOPPER(Skript.classExists("org.bukkit.entity.minecart.HopperMinecart") ? HopperMinecart.class : null, "hopper minecart"),
+		EXPLOSIVE(Skript.classExists("org.bukkit.entity.minecart.ExplosiveMinecart") ? ExplosiveMinecart.class : null, "explosive minecart"),
+		SPAWNER(Skript.classExists("org.bukkit.entity.minecart.SpawnerMinecart") ? SpawnerMinecart.class : null, "spawner minecart");
 		
 		@Nullable
 		final Class<? extends Minecart> c;
@@ -66,10 +69,12 @@ public class MinecartData extends EntityData<Minecart> {
 		
 		public static String[] codeNames;
 		static {
-			codeNames = new String[values().length - (Skript.isRunningMinecraft(1, 5) ? 0 : 3)];
-			for (int i = 0; i < codeNames.length; i++) {
-				codeNames[i] = values()[i].codeName;
+			final ArrayList<String> cn = new ArrayList<String>();
+			for (final MinecartType t : values()) {
+				if (t.c != null)
+					cn.add(t.codeName);
 			}
+			codeNames = cn.toArray(new String[0]);
 		}
 	}
 	

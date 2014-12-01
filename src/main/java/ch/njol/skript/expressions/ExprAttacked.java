@@ -33,6 +33,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -54,6 +55,7 @@ import ch.njol.util.Kleenean;
 		"	victim is a creeper",
 		"	damage the attacked by 1 heart"})
 @Since("1.3")
+@Events({"damage", "death"})
 public class ExprAttacked extends SimpleExpression<Entity> {
 	static {
 		Skript.registerExpression(ExprAttacked.class, Entity.class, ExpressionType.SIMPLE, "[the] (attacked|damaged|victim) [<(.+)>]");

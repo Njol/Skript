@@ -36,7 +36,7 @@ public class FilteringLogHandler extends LogHandler {
 	
 	@Override
 	public LogResult log(final LogEntry entry) {
-		return entry.level.intValue() >= minimum ? LogResult.LOG : LogResult.DONT_LOG;
+		return entry.level.intValue() >= minimum ? LogResult.LOG : LogResult.DO_NOT_LOG;
 	}
 	
 }

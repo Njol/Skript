@@ -29,7 +29,7 @@ import org.bukkit.event.Event;
 public abstract class SelfRegisteringSkriptEvent extends SkriptEvent {
 	
 	/**
-	 * This method is called after the whole trigger is loaded for events that fire themselves. This is also called when the script is deserialized.
+	 * This method is called after the whole trigger is loaded for events that fire themselves. This is also called when the script is deserialised.
 	 * 
 	 * @param t the trigger to register to this event
 	 */

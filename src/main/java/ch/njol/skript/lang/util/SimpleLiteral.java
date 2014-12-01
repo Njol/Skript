@@ -21,15 +21,11 @@
 
 package ch.njol.skript.lang.util;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.Array;
 
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
-import ch.njol.skript.SkriptAPIException;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.ClassInfo;
@@ -42,10 +38,8 @@ import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.registrations.Converters;
 import ch.njol.skript.util.StringMode;
 import ch.njol.skript.util.Utils;
-import ch.njol.skript.variables.SerializedVariable;
 import ch.njol.util.Checker;
 import ch.njol.util.Kleenean;
-import ch.njol.util.NonNullPair;
 import ch.njol.util.coll.CollectionUtils;
 import ch.njol.util.coll.iterator.NonNullIterator;
 
@@ -76,7 +70,7 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 		this.isDefault = false;
 	}
 	
-	@SuppressWarnings("null")
+	@SuppressWarnings({"null", "unchecked"})
 	public SimpleLiteral(final T data, final boolean isDefault) {
 		assert data != null;
 		this.data = (T[]) Array.newInstance(data.getClass(), 1);
@@ -249,29 +243,6 @@ public class SimpleLiteral<T> implements Literal<T>, DefaultExpression<T> {
 	@Override
 	public Expression<T> simplify() {
 		return this;
-	}
-	
-	private void writeObject(final ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-		out.writeObject(data.getClass().getComponentType());
-		final SerializedVariable.Value[] d = new SerializedVariable.Value[data.length];
-		for (int i = 0; i < data.length; i++) {
-			if ((d[i] = Classes.serialize(data[i])) == null) {
-				throw new SkriptAPIException("Parsed class cannot be serialized: " + data[i].getClass().getName());
-			}
-		}
-		out.writeObject(d);
-	}
-	
-	@SuppressWarnings("null")
-	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
-		in.defaultReadObject();
-		final Class<?> c = (Class<?>) in.readObject();
-		final NonNullPair<String, byte[]>[] d = (NonNullPair<String, byte[]>[]) in.readObject();
-		data = (T[]) Array.newInstance(c, d.length);
-		for (int i = 0; i < data.length; i++) {
-			data[i] = (T) Classes.deserialize(d[i].getFirst(), d[i].getSecond());
-		}
 	}
 	
 }

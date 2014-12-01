@@ -58,14 +58,14 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent { // TODO on jump
 //	private final static class BlockLocation {
 //		final World world;
 //		final int x, y, z;
-//		
+//
 //		BlockLocation(final World world, final int x, final int y, final int z) {
 //			this.world = world;
 //			this.x = x;
 //			this.y = y;
 //			this.z = z;
 //		}
-//		
+//
 //		@Override
 //		public boolean equals(final Object obj) {
 //			if (obj == this)
@@ -75,7 +75,7 @@ public class EvtMoveOn extends SelfRegisteringSkriptEvent { // TODO on jump
 //			final BlockLocation other = (BlockLocation) obj;
 //			return world == other.world && x == other.x && y == other.y && z == other.z;
 //		}
-//		
+//
 //		@Override
 //		public int hashCode() {
 //			return world.hashCode() + 29 * (x + 17 * (y + 31 * z));

@@ -104,6 +104,7 @@ public abstract class Utils {
 	 * @param type Can be null for any entity
 	 * @return The entity's target
 	 */
+	@SuppressWarnings("unchecked")
 	@Nullable
 	public static <T extends Entity> T getTarget(final LivingEntity entity, @Nullable final EntityData<T> type) {
 		if (entity instanceof Creature) {
@@ -143,32 +144,32 @@ public abstract class Utils {
 //		public final String s;
 //		public final int amount;
 //		public final boolean every;
-//		
+//
 //		public AmountResponse(final String s, final int amount, final boolean every) {
 //			this.s = s;
 //			this.amount = amount;
 //			this.every = every;
 //		}
-//		
+//
 //		public AmountResponse(final String s, final boolean every) {
 //			this.s = s;
 //			amount = -1;
 //			this.every = every;
 //		}
-//		
+//
 //		public AmountResponse(final String s, final int amount) {
 //			this.s = s;
 //			this.amount = amount;
 //			every = false;
 //		}
-//		
+//
 //		public AmountResponse(final String s) {
 //			this.s = s;
 //			amount = -1;
 //			every = false;
 //		}
 //	}
-//	
+//
 //	public final static AmountResponse getAmountWithEvery(final String s) {
 //		if (s.matches("\\d+ of (all|every) .+")) {
 //			return new AmountResponse("" + s.split(" ", 4)[3], Utils.parseInt("" + s.split(" ", 2)[0]), true);

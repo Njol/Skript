@@ -80,6 +80,7 @@ public class Variable<T> implements Expression<T> {
 	@Nullable
 	private final Variable<?> source;
 	
+	@SuppressWarnings("unchecked")
 	private Variable(final VariableString name, final Class<? extends T>[] types, final boolean local, final boolean list, final @Nullable Variable<?> source) {
 		assert name != null;
 		assert types != null && types.length > 0;
@@ -97,16 +98,28 @@ public class Variable<T> implements Expression<T> {
 		this.source = source;
 	}
 	
+	/**
+	 * Checks whether a string is a valid variable name. This is used to verify variable names as well as command and function arguments.
+	 * 
+	 * @param name The name to test
+	 * @param allowListVariable Whether to allow a list variable
+	 * @param printErrors Whether to print errors when they are encountered
+	 * @return true if the name is valid, false otherwise.
+	 */
 	public final static boolean isValidVariableName(String name, final boolean allowListVariable, final boolean printErrors) {
 		name = name.startsWith(LOCAL_VARIABLE_TOKEN) ? "" + name.substring(LOCAL_VARIABLE_TOKEN.length()).trim() : "" + name.trim();
-		if (name.startsWith(SEPARATOR) || name.endsWith(SEPARATOR)) {
+		if (!allowListVariable && name.contains(SEPARATOR)) {
+			if (printErrors)
+				Skript.error("List variables are not allowed here (error in variable {" + name + "})");
+			return false;
+		} else if (name.startsWith(SEPARATOR) || name.endsWith(SEPARATOR)) {
 			if (printErrors)
 				Skript.error("A variable's name must neither start nor end with the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
 			return false;
 		} else if (name.contains("*") && (!allowListVariable || name.indexOf("*") != name.length() - 1 || !name.endsWith(SEPARATOR + "*"))) {
 			if (printErrors) {
 				if (name.indexOf("*") == 0)
-					Skript.error("[2.0] Local variables now start with an underscore, e.g. {_local variable} (error in variable {" + name + "})");
+					Skript.error("[2.0] Local variables now start with an underscore, e.g. {_local variable}. The asterisk is reserved for list variables. (error in variable {" + name + "})");
 				else
 					Skript.error("A variable's name must not contain any asterisks except at the end after '" + SEPARATOR + "' to denote a list variable, e.g. {variable" + SEPARATOR + "*} (error in variable {" + name + "})");
 			}
@@ -127,7 +140,7 @@ public class Variable<T> implements Expression<T> {
 //		if (name.startsWith(LOCAL_VARIABLE_TOKEN) && name.contains(SEPARATOR)) {
 //			Skript.error("Local variables cannot be lists, i.e. must not contain the separator '" + SEPARATOR + "' (error in variable {" + name + "})");
 //			return null;
-//		} else 
+//		} else
 		name = "" + name.trim();
 		if (!isValidVariableName(name, true, true))
 			return null;
@@ -508,6 +521,7 @@ public class Variable<T> implements Expression<T> {
 		return getAll(e);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public T[] getAll(final Event e) {
 		if (list)

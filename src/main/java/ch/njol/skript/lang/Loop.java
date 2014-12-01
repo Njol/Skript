@@ -21,8 +21,6 @@
 
 package ch.njol.skript.lang;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -49,15 +47,10 @@ public class Loop extends TriggerSection {
 	private transient Map<Event, Object> current = new WeakHashMap<Event, Object>();
 	private transient Map<Event, Iterator<?>> currentIter = new WeakHashMap<Event, Iterator<?>>();
 	
-	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
-		in.defaultReadObject();
-		current = new WeakHashMap<Event, Object>();
-		currentIter = new WeakHashMap<Event, Iterator<?>>();
-	}
-	
 	@Nullable
 	private TriggerItem actualNext;
 	
+	@SuppressWarnings("unchecked")
 	public <T> Loop(final Expression<?> expr, final SectionNode node) {
 		assert expr != null;
 		assert node != null;
@@ -65,7 +58,7 @@ public class Loop extends TriggerSection {
 			final ContainerType type = expr.getReturnType().getAnnotation(ContainerType.class);
 			if (type == null)
 				throw new SkriptAPIException(expr.getReturnType().getName() + " implements Container but is missing the required @ContainerType annotation");
-			this.expr = new ContainerExpression(expr, type.value());
+			this.expr = new ContainerExpression((Expression<? extends Container<?>>) expr, type.value());
 		} else {
 			this.expr = expr;
 		}

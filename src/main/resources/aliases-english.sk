@@ -324,15 +324,19 @@ default aliases:
 
 
 	# -- glass --
-	{wool} [stained] glass [pane] = 160
 	glass = 20
 	glass pane¦s = 102
 	thin glass = 102
 	window¦s = 102
 	window glass = 102
+	{wool} [stained] glass = 95
+	{wool} [stained] glass pane = 160
+	{wool} [stained] thin glass = 160
+	{wool} [stained] window¦s = 160
+	{wool} [stained] window glass = 160
 	
 	<any> glass pane = any stained glass pane, glass pane
-	<any> glass = any glass pane, glass
+	<any> glass = any glass pane, stained glass, glass
 	
 
 	# -- lapis lazuli --
@@ -710,7 +714,7 @@ default aliases:
 		stone brick[s] = 109
 		nether [brick[s]] = 114
 		sand[ ]stone = 128
-		[nether] quarz = 156
+		[nether] quartz = 156
 		acacia [wood] = 163
 		dark oak [wood] = 164
 	{stairs direction}:
@@ -916,8 +920,8 @@ default aliases:
 	any retracted piston¦s = retracted piston, retracted sticky piston
 
 	redstone lamp¦s = 123, 124
-	(inactive|unpowered|unlit) restone lamp¦s = 123
-	restone lamp¦ off¦s off = 123
+	(inactive|unpowered|unlit) redstone lamp¦s = 123
+	redstone lamp¦ off¦s off = 123
 	(active|glowing|powered|lit) redstone lamp¦s = 124
 	redstone lamp¦ on¦s on = 124
 	
@@ -988,8 +992,8 @@ default aliases:
 	# -- redstone repeater: see redstone
 
 
-	# -- locked chest --
-	locked chest¦s = 95
+	# -- locked chest: does not exist anymore, replaced with::
+	# -- stained glass: see glass
 
 
 	# -- trapdoor: see doors
@@ -1017,7 +1021,8 @@ default aliases:
 
 
 	# -- iron bars --
-	[iron] bars @x = 101
+	iron bars @x = 101
+	bars @x = 101
 
 
 	# -- glass pane: see glass
@@ -1151,7 +1156,7 @@ default aliases:
 	# -- weighted pressure plates, redstone comparator, daylight sensor, redstone block: see redstone
 	
 	
-	# -- nether quarz ore, quarz block -- 
+	# -- nether quartz ore, quartz block -- 
 	[nether] quartz ore = 153
 	{quartz block}:
 		(normal|regular) = :0
@@ -1163,10 +1168,10 @@ default aliases:
 		ew pillar = :4
 	{quartz block} [nether] quartz = 155
 	{quartz block} [nether] quartz block¦s = 155
-	pillar [nether] quartz (block|item) = 155:2
+	pillar [nether] quartz (block|item)¦s = 155:2
 	[nether] quartz = 155, 406
 	[nether] quartz item¦s = 406
-	# quarz stairs: see stairs
+	# quartz stairs: see stairs
 	
 	
 	# -- hopper: see redstone
@@ -1747,7 +1752,7 @@ default aliases:
 	# -- nether brick item: see nether brick stuff
 	
 	
-	# -- nether quarz: see nether quarz block
+	# -- nether quartz: see nether quartz block
 	
 	
 	# -- minecart with TNT/hopper: see minecarts

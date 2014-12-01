@@ -176,7 +176,7 @@ final public class ScriptLoader {
 	
 //	private final static class SerializedScript {
 //		public SerializedScript() {}
-//		
+//
 //		public final List<Trigger> triggers = new ArrayList<Trigger>();
 //		public final List<ScriptCommand> commands = new ArrayList<ScriptCommand>();
 //	}
@@ -813,7 +813,7 @@ final public class ScriptLoader {
 	}
 	
 	/**
-	 * @see #isCurrentEvent(Class)
+	 * Use this sparingly; {@link #isCurrentEvent(Class)} or {@link #isCurrentEvent(Class...)} should be used in most cases.
 	 */
 	@Nullable
 	public static Class<? extends Event>[] getCurrentEvents() {

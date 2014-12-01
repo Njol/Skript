@@ -98,14 +98,12 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Number>() {
 					@Override
-					@Nullable
 					public Fields serialize(final Number n) {
-						assert false; // serialised natively by Yggdrasil
-						return null;
+						throw new IllegalStateException(); // serialised natively by Yggdrasil
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Number> c) {
+					public boolean canBeInstantiated() {
 						return true;
 					}
 					
@@ -166,14 +164,12 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Long>() {
 					@Override
-					@Nullable
 					public Fields serialize(final Long n) {
-						assert false;
-						return null;
+						throw new IllegalStateException(); // serialised natively by Yggdrasil
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Long> c) {
+					public boolean canBeInstantiated() {
 						return true;
 					}
 					
@@ -229,14 +225,12 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Integer>() {
 					@Override
-					@Nullable
 					public Fields serialize(final Integer n) {
-						assert false;
-						return null;
+						throw new IllegalStateException(); // serialised natively by Yggdrasil
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Integer> c) {
+					public boolean canBeInstantiated() {
 						return true;
 					}
 					
@@ -294,14 +288,12 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Double>() {
 					@Override
-					@Nullable
 					public Fields serialize(final Double n) {
-						assert false;
-						return null;
+						throw new IllegalStateException(); // serialised natively by Yggdrasil
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Double> c) {
+					public boolean canBeInstantiated() {
 						return true;
 					}
 					
@@ -357,14 +349,12 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Float>() {
 					@Override
-					@Nullable
 					public Fields serialize(final Float n) {
-						assert false;
-						return null;
+						throw new IllegalStateException(); // serialised natively by Yggdrasil
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Float> c) {
+					public boolean canBeInstantiated() {
 						return true;
 					}
 					
@@ -430,14 +420,12 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Boolean>() {
 					@Override
-					@Nullable
 					public Fields serialize(final Boolean n) {
-						assert false;
-						return null;
+						throw new IllegalStateException(); // serialised natively by Yggdrasil
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Boolean> c) {
+					public boolean canBeInstantiated() {
 						return true;
 					}
 					
@@ -493,14 +481,12 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Short>() {
 					@Override
-					@Nullable
 					public Fields serialize(final Short n) {
-						assert false;
-						return null;
+						throw new IllegalStateException(); // serialised natively by Yggdrasil
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Short> c) {
+					public boolean canBeInstantiated() {
 						return true;
 					}
 					
@@ -556,14 +542,12 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<Byte>() {
 					@Override
-					@Nullable
 					public Fields serialize(final Byte n) {
-						assert false;
-						return null;
+						throw new IllegalStateException(); // serialised natively by Yggdrasil
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends Byte> c) {
+					public boolean canBeInstantiated() {
 						return true;
 					}
 					
@@ -654,14 +638,12 @@ public class JavaClasses {
 					}
 				}).serializer(new Serializer<String>() {
 					@Override
-					@Nullable
 					public Fields serialize(final String n) {
-						assert false; // natively supported by Yggdrasil
-						return null;
+						throw new IllegalStateException(); // serialised natively by Yggdrasil
 					}
 					
 					@Override
-					public boolean canBeInstantiated(final Class<? extends String> c) {
+					public boolean canBeInstantiated() {
 						return true;
 					}
 					

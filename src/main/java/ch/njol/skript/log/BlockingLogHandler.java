@@ -30,7 +30,7 @@ public class BlockingLogHandler extends LogHandler {
 	
 	@Override
 	public LogResult log(final LogEntry entry) {
-		return LogResult.DONT_LOG;
+		return LogResult.DO_NOT_LOG;
 	}
 	
 }

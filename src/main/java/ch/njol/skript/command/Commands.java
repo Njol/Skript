@@ -45,6 +45,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.SimpleCommandMap;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -79,6 +80,8 @@ import ch.njol.util.Callback;
 import ch.njol.util.NonNullPair;
 import ch.njol.util.StringUtils;
 
+//TODO option to disable replacement of <color>s in command arguments?
+
 /**
  * @author Peter Güttinger
  */
@@ -97,7 +100,13 @@ public abstract class Commands {
 	private static Map<String, Command> cmKnownCommands;
 	@Nullable
 	private static Set<String> cmAliases;
+	
 	static {
+		init(); // separate method for the annotation
+	}
+	
+	@SuppressWarnings("unchecked")
+	private final static void init() {
 		try {
 			if (Bukkit.getPluginManager() instanceof SimplePluginManager) {
 				final Field commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
@@ -192,7 +201,7 @@ public abstract class Commands {
 	}
 	
 	@Nullable
-	private final static Listener pre1_3chatListener = Skript.isRunningMinecraft(1, 3) ? null : new Listener() {
+	private final static Listener pre1_3chatListener = Skript.classExists("org.bukkit.event.player.AsyncPlayerChatEvent") ? null : new Listener() {
 		@SuppressWarnings("null")
 		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 		public void onPlayerChat(final PlayerChatEvent e) {
@@ -203,7 +212,7 @@ public abstract class Commands {
 		}
 	};
 	@Nullable
-	private final static Listener post1_3chatListener = !Skript.isRunningMinecraft(1, 3) ? null : new Listener() {
+	private final static Listener post1_3chatListener = !Skript.classExists("org.bukkit.event.player.AsyncPlayerChatEvent") ? null : new Listener() {
 		@SuppressWarnings("null")
 		@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 		public void onPlayerChat(final AsyncPlayerChatEvent e) {
@@ -255,8 +264,8 @@ public abstract class Commands {
 //				c.sendHelp(sender);
 //				return true;
 //			}
-			if (SkriptConfig.logPlayerCommands.value() && !(sender instanceof ConsoleCommandSender))
-				SkriptLogger.LOGGER.info(sender.getName() + ": /" + command);
+			if (SkriptConfig.logPlayerCommands.value() && sender instanceof Player)
+				SkriptLogger.LOGGER.info(sender.getName() + " [" + ((Player) sender).getUniqueId() + "]: /" + command);
 			c.execute(sender, "" + cmd[0], cmd.length == 1 ? "" : "" + cmd[1]);
 			return true;
 		}

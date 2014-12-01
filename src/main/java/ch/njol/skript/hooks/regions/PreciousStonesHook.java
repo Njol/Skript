@@ -78,6 +78,9 @@ public class PreciousStonesHook extends RegionsPlugin<PreciousStones> {
 		
 		transient Field field;
 		
+		@SuppressWarnings({"null", "unused"})
+		private PreciousStonesRegion() {}
+		
 		public PreciousStonesRegion(final Field f) {
 			field = f;
 		}

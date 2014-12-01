@@ -28,6 +28,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.bukkitutil.HealthUtils;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -45,6 +46,7 @@ import ch.njol.util.coll.CollectionUtils;
 @Description("The health of a creature, e.g. a player, mob, villager, etc. from 0 to the creature's max health, e.g. 10 for players.")
 @Examples({"message \"You have %health% HP left.\""})
 @Since("1.0")
+@Events("damage")
 public class ExprHealth extends PropertyExpression<LivingEntity, Double> {
 	static {
 		register(ExprHealth.class, Double.class, "health", "livingentities");
@@ -85,7 +87,7 @@ public class ExprHealth extends PropertyExpression<LivingEntity, Double> {
 //	public Class<?>[] acceptChange() {
 //		return Skript.array(Number.class);
 //	}
-//	
+//
 //	@Override
 //	public void change(Event e, final Changer2<Number> changer) throws UnsupportedOperationException {
 //		getExpr().change(e, new Changer2<LivingEntity>() {

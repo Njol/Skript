@@ -34,6 +34,7 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -55,6 +56,7 @@ import ch.njol.util.Kleenean;
 		"clicked block is a chest:",
 		"	show the inventory of the clicked block to the player"})
 @Since("1.0")
+@Events("click")
 public class ExprClicked extends SimpleExpression<Object> {
 	static {
 		Skript.registerExpression(ExprClicked.class, Object.class, ExpressionType.SIMPLE, "[the] clicked (block|%-*itemtype/entitydata%)");

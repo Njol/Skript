@@ -89,11 +89,13 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 		final T o = getValue(e);
 		if (o == null)
 			return null;
+		@SuppressWarnings("unchecked")
 		final T[] one = (T[]) Array.newInstance(c, 1);
 		one[0] = o;
 		return one;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Nullable
 	private <E extends Event> T getValue(final E e) {
 		if (getters.containsKey(e.getClass())) {
@@ -170,6 +172,7 @@ public class EventValueExpression<T> extends SimpleExpression<T> implements Defa
 		return Classes.getDebugMessage(getValue(e));
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	@Nullable
 	public Class<?>[] acceptChange(final ChangeMode mode) {

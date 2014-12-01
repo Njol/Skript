@@ -21,6 +21,10 @@
 
 package ch.njol.skript.lang.function;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.bukkit.event.Event;
 import org.eclipse.jdt.annotation.Nullable;
 
@@ -43,6 +47,7 @@ public class FunctionReference<T> {
 	
 	private Function<? extends T> function;
 	
+	private boolean singleUberParam;
 	private final Expression<?>[] parameters;
 	
 	private boolean single;
@@ -51,11 +56,14 @@ public class FunctionReference<T> {
 	
 	@Nullable
 	private final Node node;
+	@Nullable
+	public final File script;
 	
 	@SuppressWarnings("null")
-	public FunctionReference(final String functionName, final @Nullable Node node, @Nullable final Class<? extends T>[] returnTypes, final Expression<?>[] params) {
+	public FunctionReference(final String functionName, final @Nullable Node node, @Nullable final File script, @Nullable final Class<? extends T>[] returnTypes, final Expression<?>[] params) {
 		this.functionName = functionName;
 		this.node = node;
+		this.script = script;
 		this.returnTypes = returnTypes;
 		parameters = params;
 	}
@@ -68,7 +76,8 @@ public class FunctionReference<T> {
 			if (first)
 				Skript.error("The function '" + functionName + "' does not exist.");
 			else
-				Skript.error("The function '" + functionName + "' was deleted or renamed, but is still used in other script(s). These will continue to use the old version of the function.");
+				Skript.error("The function '" + functionName + "' was deleted or renamed, but is still used in other script(s)."
+						+ " These will continue to use the old version of the function until Skript restarts.");
 			return false;
 		}
 		if (newFunc == function)
@@ -81,48 +90,68 @@ public class FunctionReference<T> {
 				if (first)
 					Skript.error("The function '" + functionName + "' doesn't return any value.");
 				else
-					Skript.error("The function '" + functionName + "' was redefined with no return value, but is still used in other script(s). These will continue to use the old version of the function.");
+					Skript.error("The function '" + functionName + "' was redefined with no return value, but is still used in other script(s)."
+							+ " These will continue to use the old version of the function until Skript restarts.");
 				return false;
 			}
 			if (!CollectionUtils.containsAnySuperclass(returnTypes, rt.getC())) {
 				if (first)
 					Skript.error("The returned value of the function '" + functionName + "', " + newFunc.returnType + ", is " + SkriptParser.notOfType(returnTypes) + ".");
 				else
-					Skript.error("The function '" + functionName + "' was redefined with a different, incompatible return type, but is still used in other script(s). These will continue to use the old version of the function.");
+					Skript.error("The function '" + functionName + "' was redefined with a different, incompatible return type, but is still used in other script(s)."
+							+ " These will continue to use the old version of the function until Skript restarts.");
 				return false;
 			}
 			if (first) {
 				single = newFunc.single;
 			} else if (single && !newFunc.single) {
-				Skript.error("The function '" + functionName + "' was redefined with a different, incompatible return type, but is still used in other script(s). These will continue to use the old version of the function.");
+				Skript.error("The function '" + functionName + "' was redefined with a different, incompatible return type, but is still used in other script(s)."
+						+ " These will continue to use the old version of the function until Skript restarts.");
 				return false;
 			}
 		}
 		
-		if (parameters.length > newFunc.getMaxParamaters()) {
-			if (first)
-				Skript.error("The function '" + functionName + "' has only " + newFunc.getMaxParamaters() + " arguments, but " + parameters.length + " are given.");
-			else
-				Skript.error("The function '" + functionName + "' was redefined with a different, incompatible amount of arguments, but is still used in other script(s). These will continue to use the old version of the function.");
-			return false;
+		// check number of parameters only if the function does not have a single parameter that accepts multiple values
+		singleUberParam = newFunc.getMaxParameters() == 1 && !newFunc.parameters[0].single;
+		if (!singleUberParam) {
+			if (parameters.length > newFunc.getMaxParameters()) {
+				if (first) {
+					if (newFunc.getMaxParameters() == 0)
+						Skript.error("The function '" + functionName + "' has no arguments, but " + parameters.length + " are given."
+								+ " To call a function without parameters, just write the function name followed by '()', e.g. 'func()'.");
+					else
+						Skript.error("The function '" + functionName + "' has only " + newFunc.getMaxParameters() + " argument" + (newFunc.getMaxParameters() == 1 ? "" : "s") + ","
+								+ " but " + parameters.length + " are given."
+								+ " If you want to use lists in function calls, you have to use additional parentheses, e.g. 'give(player, (iron ore and gold ore))'");
+				} else {
+					Skript.error("The function '" + functionName + "' was redefined with a different, incompatible amount of arguments, but is still used in other script(s)."
+							+ " These will continue to use the old version of the function until Skript restarts.");
+				}
+				return false;
+			}
 		}
 		if (parameters.length < newFunc.getMinParameters()) {
 			if (first)
-				Skript.error("The function '" + functionName + "' requires at least " + newFunc.getMinParameters() + " arguments, but " + parameters.length + " are given.");
+				Skript.error("The function '" + functionName + "' requires at least " + newFunc.getMinParameters() + " argument" + (newFunc.getMinParameters() == 1 ? "" : "s") + ","
+						+ " but only " + parameters.length + " " + (parameters.length == 1 ? "is" : "are") + " given.");
 			else
-				Skript.error("The function '" + functionName + "' was redefined with a different, incompatible amount of arguments, but is still used in other script(s). These will continue to use the old version of the function.");
+				Skript.error("The function '" + functionName + "' was redefined with a different, incompatible amount of arguments, but is still used in other script(s)."
+						+ " These will continue to use the old version of the function until Skript restarts.");
 			return false;
 		}
 		for (int i = 0; i < parameters.length; i++) {
-			final Parameter<?> p = newFunc.parameters[i];
+			final Parameter<?> p = newFunc.parameters[singleUberParam ? 0 : i];
 			final RetainingLogHandler log = SkriptLogger.startRetainingLog();
 			try {
 				final Expression<?> e = parameters[i].getConvertedExpression(p.type.getC());
 				if (e == null) {
 					if (first)
-						Skript.error("The " + StringUtils.fancyOrderNumber(i + 1) + " argument of the function '" + functionName + "' is not of the required type " + p.type + ".");
+						Skript.error("The " + StringUtils.fancyOrderNumber(i + 1) + " argument given to the function '" + functionName + "' is not of the required type " + p.type + "."
+								+ " Check the correct order of the arguments and put lists into parentheses if appropriate (e.g. 'give(player, (iron ore and gold ore))')."
+								+ " Please note that storing the value in a variable and then using that variable as parameter will suppress this error, but it still won't work.");
 					else
-						Skript.error("The function '" + functionName + "' was redefined with different, incompatible arguments, but is still used in other script(s). These will continue to use the old version of the function.");
+						Skript.error("The function '" + functionName + "' was redefined with different, incompatible arguments, but is still used in other script(s)."
+								+ " These will continue to use the old version of the function until Skript restarts.");
 					return false;
 				}
 				parameters[i] = e;
@@ -139,9 +168,16 @@ public class FunctionReference<T> {
 	
 	@Nullable
 	protected T[] execute(final Event e) {
-		final Object[][] params = new Object[parameters.length][];
-		for (int i = 0; i < params.length; i++)
-			params[i] = parameters[i].getArray(e); // TODO what if an argument is not available? pass null or abort?
+		final Object[][] params = new Object[singleUberParam ? 1 : parameters.length][];
+		if (singleUberParam && parameters.length > 1) {
+			final ArrayList<Object> l = new ArrayList<Object>();
+			for (int i = 0; i < params.length; i++)
+				l.addAll(Arrays.asList(parameters[i].getArray(e))); // TODO what if an argument is not available? pass null or abort?
+			params[0] = l.toArray();
+		} else {
+			for (int i = 0; i < params.length; i++)
+				params[i] = parameters[i].getArray(e); // TODO what if an argument is not available? pass null or abort?
+		}
 		return function.execute(params);
 	}
 	

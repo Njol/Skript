@@ -21,10 +21,7 @@
 
 package ch.njol.skript.aliases;
 
-import java.io.IOException;
 import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +46,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.classes.ConfigurationSerializer;
 import ch.njol.skript.lang.Unit;
 import ch.njol.skript.localization.Adjective;
 import ch.njol.skript.localization.GeneralWords;
@@ -1092,39 +1088,6 @@ public class ItemType implements Unit, Iterable<ItemData>, Container<ItemStack>,
 	
 	public String getDebugMessage() {
 		return toString(true, 0, null);
-	}
-	
-	private void writeObject(final ObjectOutputStream out) throws IOException {
-		out.defaultWriteObject();
-		final Map<Enchantment, Integer> enchantments = this.enchantments;
-		if (enchantments == null) {
-			out.writeObject(null);
-		} else {
-			// Integer instead of int to allow nulls
-			final Integer[][] enchs = new Integer[enchantments.size()][];
-			int i = 0;
-			for (final Entry<Enchantment, Integer> e : enchantments.entrySet()) {
-				enchs[i] = new Integer[] {Integer.valueOf(e.getKey().getId()), e.getValue()};
-				i++;
-			}
-			out.writeObject(enchs);
-		}
-		final Object m = meta;
-		out.writeObject(m == null ? null : ConfigurationSerializer.serializeCS((ItemMeta) m));
-	}
-	
-	private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-		final Object o = in.readObject();
-		if (o == null)
-			return;
-		final Integer[][] enchs = (Integer[][]) o;
-		enchantments = new HashMap<Enchantment, Integer>(enchs.length);
-		for (final Integer[] e : enchs)
-			enchantments.put(Enchantment.getById(e[0]), e[1]);
-		final String m = (String) in.readObject();
-		if (m != null)
-			meta = ConfigurationSerializer.deserializeCS(m, ItemMeta.class);
 	}
 	
 	@Override

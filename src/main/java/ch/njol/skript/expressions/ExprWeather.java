@@ -31,6 +31,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -52,6 +53,7 @@ import ch.njol.util.coll.CollectionUtils;
 @Examples({"set weather to clear",
 		"weather in \"world\" is rainy"})
 @Since("1.0")
+@Events("weather change")
 public class ExprWeather extends PropertyExpression<World, WeatherType> {
 	static {
 		Skript.registerExpression(ExprWeather.class, WeatherType.class, ExpressionType.PROPERTY, "[the] weather [(in|of) %worlds%]", "%worlds%'[s] weather");

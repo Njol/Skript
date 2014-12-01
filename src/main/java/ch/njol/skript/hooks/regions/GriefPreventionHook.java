@@ -23,12 +23,17 @@ package ch.njol.skript.hooks.regions;
 
 import java.io.IOException;
 import java.io.StreamCorruptedException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import me.ryanhamshire.GriefPrevention.Claim;
+import me.ryanhamshire.GriefPrevention.DataStore;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 
 import org.bukkit.Bukkit;
@@ -39,6 +44,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
 import ch.njol.skript.variables.Variables;
@@ -52,6 +58,68 @@ import ch.njol.yggdrasil.YggdrasilID;
 public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 	
 	public GriefPreventionHook() throws IOException {}
+	
+	boolean supportsUUIDs;
+	@Nullable
+	Method getClaim;
+	@Nullable
+	Field claimsField;
+	
+	@SuppressWarnings("null")
+	@Override
+	protected boolean init() {
+		// ownerID is a public field
+		supportsUUIDs = Skript.fieldExists(Claim.class, "ownerID");
+		try {
+			getClaim = DataStore.class.getDeclaredMethod("getClaim", long.class);
+			getClaim.setAccessible(true);
+			if (!Claim.class.isAssignableFrom(getClaim.getReturnType()))
+				getClaim = null;
+		} catch (final NoSuchMethodException e) {} catch (final SecurityException e) {}
+		try {
+			claimsField = DataStore.class.getDeclaredField("claims");
+			claimsField.setAccessible(true);
+			if (!List.class.isAssignableFrom(claimsField.getType()))
+				claimsField = null;
+		} catch (final NoSuchFieldException e) {} catch (final SecurityException e) {}
+		if (getClaim == null && claimsField == null) {
+			Skript.error("Skript " + Skript.getVersion() + " is not compatible with GriefPrevention " + plugin.getDescription().getVersion() + "."
+					+ " Please report this at http://dev.bukkit.org/bukkit-plugins/skript/tickets/ if this error occurred after you updated GriefPrevention.");
+			return false;
+		}
+		return super.init();
+	}
+	
+	@Nullable
+	Claim getClaim(final long id) {
+		if (getClaim != null) {
+			try {
+				return (Claim) getClaim.invoke(plugin.dataStore, id);
+			} catch (final IllegalAccessException e) {
+				assert false : e;
+			} catch (final IllegalArgumentException e) {
+				assert false : e;
+			} catch (final InvocationTargetException e) {
+				throw new RuntimeException(e.getCause());
+			}
+		} else {
+			assert claimsField != null;
+			try {
+				final List<?> claims = (List<?>) claimsField.get(plugin.dataStore);
+				for (final Object claim : claims) {
+					if (!(claim instanceof Claim))
+						continue;
+					if (((Claim) claim).getID() == id)
+						return (Claim) claim;
+				}
+			} catch (final IllegalArgumentException e) {
+				assert false : e;
+			} catch (final IllegalAccessException e) {
+				assert false : e;
+			}
+		}
+		return null;
+	}
 	
 	@Override
 	public String getName() {
@@ -71,6 +139,9 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 	public final class GriefPreventionRegion extends Region {
 		
 		private transient Claim claim;
+		
+		@SuppressWarnings({"null", "unused"})
+		private GriefPreventionRegion() {}
 		
 		public GriefPreventionRegion(final Claim c) {
 			claim = c;
@@ -96,10 +167,13 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 			return p.getName().equalsIgnoreCase(claim.getOwnerName());
 		}
 		
-		@SuppressWarnings("null")
+		@SuppressWarnings({"null", "deprecation"})
 		@Override
 		public Collection<OfflinePlayer> getOwners() {
-			return Arrays.asList(Bukkit.getOfflinePlayer(claim.getOwnerName()));
+			if (supportsUUIDs)
+				return Arrays.asList(Bukkit.getOfflinePlayer(claim.ownerID));
+			else
+				return Arrays.asList(Bukkit.getOfflinePlayer(claim.getOwnerName()));
 		}
 		
 		@Override
@@ -129,7 +203,7 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 		@Override
 		public void deserialize(final Fields fields) throws StreamCorruptedException {
 			final long id = fields.getPrimitive("id", long.class);
-			final Claim c = plugin.dataStore.getClaim(id);
+			final Claim c = getClaim(id);
 			if (c == null)
 				throw new StreamCorruptedException("Invalid claim " + id);
 			claim = c;
@@ -171,7 +245,7 @@ public class GriefPreventionHook extends RegionsPlugin<GriefPrevention> {
 	@Nullable
 	public Region getRegion_i(final World world, final String name) {
 		try {
-			final Claim c = plugin.dataStore.getClaim(Long.parseLong(name));
+			final Claim c = getClaim(Long.parseLong(name));
 			if (c != null && world.equals(c.getLesserBoundaryCorner().getWorld()))
 				return new GriefPreventionRegion(c);
 			return null;

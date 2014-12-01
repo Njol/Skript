@@ -21,16 +21,12 @@
 
 package ch.njol.skript.variables;
 
-import java.io.Serializable;
-
 import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * @author Peter Güttinger
  */
-public class SerializedVariable implements Serializable {
-	private static final long serialVersionUID = -1895962303654561763L;
-	
+public class SerializedVariable {
 	public String name;
 	@Nullable
 	public Value value;
@@ -40,9 +36,7 @@ public class SerializedVariable implements Serializable {
 		this.value = value;
 	}
 	
-	public final static class Value implements Serializable {
-		private static final long serialVersionUID = -4548432385432002060L;
-		
+	public final static class Value {
 		public String type;
 		public byte[] data;
 		

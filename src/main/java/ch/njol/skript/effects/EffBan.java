@@ -52,7 +52,7 @@ import ch.njol.util.Kleenean;
 @Since("1.4, 2.1.1 (ban reason)")
 public class EffBan extends Effect {
 	
-	public final static boolean hasBanList = Skript.supports("org.bukkit.BanList");
+	public final static boolean hasBanList = Skript.classExists("org.bukkit.BanList");
 	
 	static {
 		Skript.registerEffect(EffBan.class,
@@ -107,7 +107,7 @@ public class EffBan extends Effect {
 				} else {
 					if (hasBanList) {
 						if (ban)
-							Bukkit.getBanList(BanList.Type.NAME).addBan(((Player) o).getName(), reason, expires, source); // TODO [UUID] ban UUID
+							Bukkit.getBanList(BanList.Type.NAME).addBan(((Player) o).getName(), reason, expires, source); // FIXME [UUID] ban UUID
 						else
 							Bukkit.getBanList(BanList.Type.NAME).pardon(((Player) o).getName());
 					} else {

@@ -37,6 +37,7 @@ public class OptionSection {
 		this.key = key;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Nullable
 	public final <T> T get(String key) {
 		if (this.getClass() == OptionSection.class)

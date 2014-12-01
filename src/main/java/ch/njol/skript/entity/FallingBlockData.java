@@ -109,6 +109,7 @@ public class FallingBlockData extends EntityData<FallingBlock> {
 		return true;
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	@Nullable
 	public FallingBlock spawn(final Location loc) {

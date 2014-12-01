@@ -30,7 +30,9 @@ public enum ParseContext {
 	 */
 	DEFAULT,
 	/**
-	 * Not actually used
+	 * Used for parsing events of triggers.
+	 * <p>
+	 * TODO? replace with {@link #DEFAULT} + {@link SkriptParser#PARSE_LITERALS}
 	 */
 	EVENT,
 	/**

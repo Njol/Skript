@@ -58,6 +58,7 @@ public class ConvertedLiteral<F, T> extends ConvertedExpression<F, T> implements
 	
 	@SuppressWarnings("unchecked")
 	@Override
+	@Nullable
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
 		if (CollectionUtils.containsSuperclass(to, this.to))
 			return (Literal<? extends R>) this;

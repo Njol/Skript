@@ -49,7 +49,7 @@ import ch.njol.skript.util.Task;
 @SuppressWarnings("deprecation")
 public class EvtChat extends SelfRegisteringSkriptEvent {
 	static {
-		Skript.registerEvent("Chat", EvtChat.class, Skript.isRunningMinecraft(1, 3) ? AsyncPlayerChatEvent.class : PlayerChatEvent.class, "chat")
+		Skript.registerEvent("Chat", EvtChat.class, PlayerChatEventHandler.usesAsyncEvent ? AsyncPlayerChatEvent.class : PlayerChatEvent.class, "chat")
 				.description("Called whenever a player chats.")
 				.examples("")
 				.since("1.4.1");
@@ -76,7 +76,7 @@ public class EvtChat extends SelfRegisteringSkriptEvent {
 			if (e == null)
 				return;
 			if (!triggers.isEmpty()) {
-				if (!Skript.isRunningMinecraft(1, 3) || !e.isAsynchronous()) {
+				if (e instanceof PlayerChatEvent || !e.isAsynchronous()) {
 					execute(e);
 					return;
 				}

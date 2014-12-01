@@ -51,6 +51,8 @@ import ch.njol.util.Kleenean;
 
 /**
  * Used to access a loop's current value.
+ * <p>
+ * TODO expression to get the current # of execution (e.g. loop-index/number/count/etc (not number though));
  * 
  * @author Peter Güttinger
  */
@@ -95,7 +97,7 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 		int j = 1;
 		Loop loop = null;
 		for (final Loop l : ScriptLoader.currentLoops) {
-			if ((c != null && c.isAssignableFrom(l.getLoopedExpression().getReturnType())) || l.getLoopedExpression().isLoopOf(s)) {
+			if ((c != null && c.isAssignableFrom(l.getLoopedExpression().getReturnType())) || "value".equals(s) || l.getLoopedExpression().isLoopOf(s)) {
 				if (j < i) {
 					j++;
 					continue;
@@ -127,6 +129,7 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 		return true;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	@Nullable
 	protected <R> ConvertedExpression<Object, ? extends R> getConvertedExpr(final Class<R>... to) {
@@ -154,6 +157,7 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 	@Nullable
 	protected Object[] get(final Event e) {
 		if (isVariableLoop) {
+			@SuppressWarnings("unchecked")
 			final Entry<String, Object> current = (Entry<String, Object>) loop.getCurrent(e);
 			if (current == null)
 				return null;
@@ -173,6 +177,7 @@ public class ExprLoopValue extends SimpleExpression<Object> {
 		if (e == null)
 			return name;
 		if (isVariableLoop) {
+			@SuppressWarnings("unchecked")
 			final Entry<String, Object> current = (Entry<String, Object>) loop.getCurrent(e);
 			if (current == null)
 				return Classes.getDebugMessage(null);

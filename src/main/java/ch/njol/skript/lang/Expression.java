@@ -33,6 +33,7 @@ import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.classes.Changer.ChangerUtils;
 import ch.njol.skript.classes.Converter;
 import ch.njol.skript.conditions.CondIsSet;
+import ch.njol.skript.lang.util.ConvertedExpression;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.log.ErrorQuality;
 import ch.njol.util.Checker;
@@ -70,7 +71,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * Do not use this in conditions, use {@link #check(Event, Checker, boolean)} instead.
 	 * 
 	 * @param e The event
-	 * @return An array of values of this expression which must neither be null nor contain nulls.
+	 * @return An array of values of this expression which must neither be null nor contain nulls, and which must not be an internal array.
 	 */
 	public T[] getArray(final Event e);
 	
@@ -79,7 +80,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * {@link #getSingle(Event)}.
 	 * 
 	 * @param e The event
-	 * @return An array of all possible values of this expression for the given event which must neither be null nor contain nulls.
+	 * @return An array of all possible values of this expression for the given event which must neither be null nor contain nulls, and which must not be an internal array.
 	 */
 	public T[] getAll(final Event e);
 	
@@ -92,7 +93,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * Checks this expression against the given checker. This is the normal version of this method and the one which must be used for simple checks,
 	 * or as the innermost check of nested checks.
 	 * <p>
-	 * Usual implementation (may differ, e.g. may return false for nonexistent values independent of <tt>negated</tt):
+	 * Usual implementation (may differ, e.g. may return false for nonexistent values independent of <tt>negated</tt>):
 	 * 
 	 * <pre>
 	 * return negated ^ {@link #check(Event, Checker)};
@@ -122,11 +123,15 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * <p>
 	 * Please note that expressions whose {@link #getReturnType() returnType} is not Object will not be parsed at all for a certain class if there's no converter from the
 	 * expression's returnType to the desired class. Thus this method should only be overridden if this expression's returnType is Object.
+	 * <p>
+	 * The returned expression should delegate this method to the original expression's method to prevent excessive converted expression chains (see also
+	 * {@link ConvertedExpression}).
 	 * 
 	 * @param to The desired return type of the returned expression
 	 * @return Expression with the desired return type or null if the expression can't be converted to the given type. Returns the expression itself if it already returns the
 	 *         desired type.
 	 * @see Converter
+	 * @see ConvertedExpression
 	 */
 	@Nullable
 	public <R> Expression<? extends R> getConvertedExpression(final Class<R>... to);
@@ -134,7 +139,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	/**
 	 * Gets the return type of this expression.
 	 * 
-	 * @return The type returned by {@link #getSingle(Event)} and {@link #getArray(Event)}
+	 * @return A supertype of any objects returned by {@link #getSingle(Event)} and the component type of any arrays returned by {@link #getArray(Event)}
 	 */
 	public abstract Class<? extends T> getReturnType();
 	
@@ -144,7 +149,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * This method significantly influences {@link #check(Event, Checker)}, {@link #check(Event, Checker, boolean)} and {@link CondIsSet} and thus breaks conditions that use this
 	 * expression if it returns a wrong value.
 	 * <p>
-	 * This method must return true if this is a {@link #isSingle() single} expression.
+	 * This method must return true if this is a {@link #isSingle() single} expression. // TODO make this method irrelevant for single expressions
 	 * 
 	 * @return Whether this expression returns all values at once or only part of them.
 	 */
@@ -157,7 +162,7 @@ public interface Expression<T> extends SyntaxElement, Debuggable {
 	 * it only <i>can be</i> after a delay (e.g. if the preceding delay is in an if or a loop) as well as if there's no delay involved.
 	 * <p>
 	 * If this method returns false the expression will be discarded and an error message is printed. Custom error messages must be of {@link ErrorQuality#SEMANTIC_ERROR} to be
-	 * printed.
+	 * printed (NB: {@link Skript#error(String)} always creates semantic errors).
 	 * 
 	 * @param time -1 for past or 1 for future. 0 is never passed to this method as it represents the default state.
 	 * @return Whether this expression has distinct time states, e.g. a player never changes but a block can. This should be sensitive for the event (using

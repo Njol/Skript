@@ -28,6 +28,7 @@ import ch.njol.skript.ScriptLoader;
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.Changer.ChangeMode;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -47,6 +48,7 @@ import ch.njol.util.Kleenean;
 @Examples({"on experience spawn:",
 		"	add 5 to the spawned experience"})
 @Since("2.1")
+@Events("experience spawn")
 public class ExprExperience extends SimpleExpression<Experience> {
 	static {
 		Skript.registerExpression(ExprExperience.class, Experience.class, ExpressionType.SIMPLE, "[the] (spawned|dropped|) [e]xp[erience] [orb[s]]");

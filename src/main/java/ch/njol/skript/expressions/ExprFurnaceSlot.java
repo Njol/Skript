@@ -34,6 +34,7 @@ import org.eclipse.jdt.annotation.Nullable;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Events;
 import ch.njol.skript.doc.Examples;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
@@ -58,6 +59,7 @@ import ch.njol.util.Kleenean;
 		"give the result of the block to the player",
 		"clear the result slot of the block"})
 @Since("1.0")
+@Events({"smelt", "fuel burn"})
 public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	private final static int ORE = 0, FUEL = 1, RESULT = 2;
 	private final static String[] slotNames = {"ore", "fuel", "result"};
@@ -166,7 +168,6 @@ public class ExprFurnaceSlot extends PropertyExpression<Block, Slot> {
 	}
 	
 	@Override
-	@Nullable
 	protected Slot[] get(final Event e, final Block[] source) {
 		return get(source, new Getter<Slot, Block>() {
 			@SuppressWarnings("null")

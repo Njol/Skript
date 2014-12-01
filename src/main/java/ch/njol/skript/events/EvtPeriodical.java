@@ -144,16 +144,4 @@ public class EvtPeriodical extends SelfRegisteringSkriptEvent {
 		return "every " + period;
 	}
 	
-//	@SuppressWarnings("null")
-//	private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
-//		in.defaultReadObject();
-//		if (worldNames != null) {
-//			worlds = new World[worldNames.length];
-//			for (int i = 0; i < worlds.length; i++) {
-//				if ((worlds[i] = Bukkit.getWorld(worldNames[i])) == null)
-//					throw new IOException();
-//			}
-//		}
-//	}
-	
 }

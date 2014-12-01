@@ -74,7 +74,7 @@ public abstract class TriggerItem implements Debuggable {
 	 * Executes this item.
 	 * 
 	 * @param e
-	 * @return Whether the next item should be run or this item's parent
+	 * @return True if the next item should be run, or false for the item following this item's parent.
 	 */
 	protected abstract boolean run(Event e);
 	
@@ -93,11 +93,11 @@ public abstract class TriggerItem implements Debuggable {
 		} catch (final StackOverflowError err) {
 			final Trigger t = start.getTrigger();
 			final File sc = t == null ? null : t.getScript();
-			Skript.adminBroadcast("<red>The script '<gold>" + (sc == null ? "<unknown>" : sc.getName()) + "<red>' infinitely repeated itself!");
+			Skript.adminBroadcast("<red>The script '<gold>" + (sc == null ? "<unknown>" : sc.getName()) + "<red>' infinitely (or excessively) repeated itself!");
 			if (Skript.debug())
 				err.printStackTrace();
 		} catch (final Exception ex) {
-			if (ex.getStackTrace().length != 0)// empty exceptions have already been printed
+			if (ex.getStackTrace().length != 0) // empty exceptions have already been printed
 				Skript.exception(ex, i);
 		}
 		return false;

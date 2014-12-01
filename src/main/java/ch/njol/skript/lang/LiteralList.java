@@ -61,10 +61,10 @@ public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 		return getAll(null);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	@Nullable
 	public <R> Literal<? extends R> getConvertedExpression(final Class<R>... to) {
-		@SuppressWarnings("unchecked")
 		final Literal<? extends R>[] exprs = new Literal[expressions.length];
 		final Class<?>[] classes = new Class[expressions.length];
 		for (int i = 0; i < exprs.length; i++) {
@@ -86,6 +86,7 @@ public class LiteralList<T> extends ExpressionList<T> implements Literal<T> {
 		for (int i = 0; i < expressions.length; i++)
 			isSimpleList &= expressions[i].isSingle();
 		if (isSimpleList) {
+			@SuppressWarnings("unchecked")
 			final T[] values = (T[]) Array.newInstance(getReturnType(), expressions.length);
 			for (int i = 0; i < values.length; i++)
 				values[i] = ((Literal<? extends T>) expressions[i]).getSingle();

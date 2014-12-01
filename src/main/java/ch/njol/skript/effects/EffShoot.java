@@ -97,13 +97,15 @@ public class EffShoot extends Effect {
 			for (final EntityData<?> d : types.getArray(e)) {
 				if (shooter instanceof LivingEntity) {
 					final Vector vel = dir.getDirection(((LivingEntity) shooter).getLocation()).multiply(v.doubleValue());
-					if (Fireball.class.isAssignableFrom(d.getType())) {// fireballs explode in the shooter's face by default
-						final Fireball projectile = (Fireball) ((LivingEntity) shooter).getWorld().spawn(((LivingEntity) shooter).getEyeLocation().add(vel.clone().normalize().multiply(0.5)), d.getType());
+					final Class<? extends Entity> type = d.getType();
+					if (Fireball.class.isAssignableFrom(type)) {// fireballs explode in the shooter's face by default
+						final Fireball projectile = (Fireball) ((LivingEntity) shooter).getWorld().spawn(((LivingEntity) shooter).getEyeLocation().add(vel.clone().normalize().multiply(0.5)), type);
 						ProjectileUtils.setShooter(projectile, shooter);
 						projectile.setVelocity(vel);
 						lastSpawned = projectile;
-					} else if (Projectile.class.isAssignableFrom(d.getType())) {
-						final Projectile projectile = ((LivingEntity) shooter).launchProjectile((Class<? extends Projectile>) d.getType());
+					} else if (Projectile.class.isAssignableFrom(type)) {
+						@SuppressWarnings("unchecked")
+						final Projectile projectile = ((LivingEntity) shooter).launchProjectile((Class<? extends Projectile>) type);
 						set(projectile, d);
 						projectile.setVelocity(vel);
 						lastSpawned = projectile;

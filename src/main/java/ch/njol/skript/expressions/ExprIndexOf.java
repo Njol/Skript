@@ -39,7 +39,7 @@ import ch.njol.util.Kleenean;
  * @author Peter Güttinger
  */
 @Name("Index Of")
-@Description("The first of last index of a character (or text) in a text, or -1 if it doesn't occur in the text. Indices range from 1 to the <a href='#ExprIndexOf'>length</a> of the text.")
+@Description("The first or last index of a character (or text) in a text, or -1 if it doesn't occur in the text. Indices range from 1 to the <a href='#ExprIndexOf'>length</a> of the text.")
 @Examples({"set {_@} to the first index of \"@\" in the text argument",
 		"if {_s} contains \"abc\":",
 		"	set {_s} to the first (index of \"abc\" in {_s} + 3) characters of {_s} # removes everything after the first \"abc\" from {_s}"})
@@ -69,7 +69,8 @@ public class ExprIndexOf extends SimpleExpression<Integer> {
 		final String h = haystack.getSingle(e), n = needle.getSingle(e);
 		if (h == null || n == null)
 			return new Integer[0];
-		return new Integer[] {Integer.valueOf(first ? h.indexOf(n) + 1 : h.lastIndexOf(n) + 1)};
+		final int i = first ? h.indexOf(n) : h.lastIndexOf(n);
+		return new Integer[] {Integer.valueOf(i == -1 ? -1 : i + 1)};
 	}
 	
 	@Override

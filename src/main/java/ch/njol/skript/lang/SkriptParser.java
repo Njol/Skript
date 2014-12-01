@@ -375,6 +375,13 @@ public class SkriptParser {
 	private final static String MULTIPLE_AND_OR = "List has multiple 'and' or 'or', will default to 'and'. Use brackets if you want to define multiple lists.";
 	private final static String MISSING_AND_OR = "List is missing 'and' or 'or', defaulting to 'and'";
 	
+	private boolean suppressMissingAndOrWarnings = false;
+	
+	private SkriptParser suppressMissingAndOrWarnings() {
+		suppressMissingAndOrWarnings = true;
+		return this;
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Nullable
 	public final <T> Expression<? extends T> parseExpression(final Class<? extends T>... types) {
@@ -526,7 +533,7 @@ public class SkriptParser {
 			if (ts.size() == 1)
 				return ts.get(0);
 			
-			if (and.isUnknown())
+			if (and.isUnknown() && !suppressMissingAndOrWarnings)
 				Skript.warning(MISSING_AND_OR + ": " + expr);
 			
 			final Class<? extends T>[] exprRetTypes = new Class[ts.size()];
@@ -564,7 +571,7 @@ public class SkriptParser {
 //				}
 //				log.clear();
 //			}
-//			
+//
 //			if ((flags & PARSE_LITERALS) != 0) {
 //				// Hack as items use '..., ... and ...' for enchantments. Numbers and times are parsed beforehand as they use the same (deprecated) id[:data] syntax.
 //				final SkriptParser p = new SkriptParser(expr, PARSE_LITERALS, context);
@@ -582,12 +589,12 @@ public class SkriptParser {
 //			log.clear();
 //			log.printLog();
 //		}
-//		
+//
 //		final Matcher m = listSplitPattern.matcher(expr);
 //		if (!m.find())
 //			return new UnparsedLiteral(expr, log.getError());
 //		m.reset();
-//		
+//
 //		final List<Expression<?>> ts = new ArrayList<Expression<?>>();
 //		Kleenean and = Kleenean.UNKNOWN;
 //		boolean last = false;
@@ -616,7 +623,7 @@ public class SkriptParser {
 //				return null;
 //			if (!last)
 //				start = m.end();
-//			
+//
 //			isLiteralList &= t instanceof Literal;
 //			if (!last && m.group(1) != null) {
 //				if (and.isUnknown()) {
@@ -635,12 +642,12 @@ public class SkriptParser {
 //			return ts.get(0);
 //		if (and.isUnknown())
 //			Skript.warning(MISSING_AND_OR);
-//		
+//
 //		final Class<?>[] exprRetTypes = new Class[ts.size()];
 //		int i = 0;
 //		for (final Expression<?> t : ts)
 //			exprRetTypes[i++] = t.getReturnType();
-//		
+//
 //		if (isLiteralList) {
 //			final Literal<Object>[] ls = ts.toArray(new Literal[ts.size()]);
 //			assert ls != null;
@@ -656,7 +663,7 @@ public class SkriptParser {
 	private final static Pattern functionCallPattern = Pattern.compile("(" + Functions.functionNamePattern + ")\\((.*)\\)");
 	
 	/**
-	 * @param types null for any
+	 * @param types The required return type or null if it is not used (e.g. when calling a void function)
 	 * @return The parsed function, or null if the given expression is not a function call or is an invalid function call (check for an error to differentiate these two)
 	 */
 	@SuppressWarnings("unchecked")
@@ -667,47 +674,68 @@ public class SkriptParser {
 		final ParseLogHandler log = SkriptLogger.startParseLogHandler();
 		try {
 			final Matcher m = functionCallPattern.matcher(expr);
-			if (m.matches()) {
-				if ((flags & PARSE_EXPRESSIONS) == 0) {
-					Skript.error("Functions cannot be used here.");
-					log.printError();
-					return null;
-				}
-				final String functionName = "" + m.group(1);
-				final Function<?> function = Functions.getFunction(functionName);
-				if (function == null) {
-					Skript.error("The function '" + functionName + "' does not exist");
-					log.printError();
-					return null;
-				}
-				final String args = m.group(2);
-				final List<Expression<?>> params = new ArrayList<Expression<?>>();
-				if (args.length() != 0) {
-					final int p = 0;
-					int j = 0;
-					for (int i = 0; i != -1 && i <= args.length(); i = next(args, i, context)) {
-						if (i == args.length() || args.charAt(i) == ',') {
-							final Expression<?> e = new SkriptParser("" + args.substring(j, i).trim(), flags | PARSE_LITERALS, context).parseExpression(function.getParameter(p).getType().getC());
-							if (e == null) {
-								log.printError("Can't understand this expression: '" + args.substring(j, i) + "'", ErrorQuality.NOT_AN_EXPRESSION);
-								return null;
-							}
-							params.add(e);
-							j = i + 1;
-						}
-					}
-				}
-				@SuppressWarnings("null")
-				final FunctionReference<T> e = new FunctionReference<T>(functionName, SkriptLogger.getNode(), types, params.toArray(new Expression[params.size()]));
-				if (!e.validateFunction(true)) {
-					log.printError();
-					return null;
-				}
+			if (!m.matches()) {
 				log.printLog();
-				return e;
+				return null;
+			}
+			if ((flags & PARSE_EXPRESSIONS) == 0) {
+				Skript.error("Functions cannot be used here.");
+				log.printError();
+				return null;
+			}
+			final String functionName = "" + m.group(1);
+			final Function<?> function = Functions.getFunction(functionName);
+			if (function == null) {
+				Skript.error("The function '" + functionName + "' does not exist");
+				log.printError();
+				return null;
+			}
+			final String args = m.group(2);
+			final Expression<?>[] params;
+			if (args.length() != 0) {
+				final Expression<?> ps = new SkriptParser(args, flags | PARSE_LITERALS, context).suppressMissingAndOrWarnings().parseExpression(Object.class);
+				if (ps == null) {
+					log.printError();
+					return null;
+				}
+				if (ps instanceof ExpressionList) {
+					if (!ps.getAnd()) {
+						Skript.error("Function arguments must be separated by commas and optionally an 'and', but not an 'or'."
+								+ " Put the 'or' into a second set of parentheses if you want to make it a single parameter, e.g. 'give(player, (sword or axe))'");
+						log.printError();
+						return null;
+					}
+					params = ((ExpressionList<?>) ps).getExpressions();
+				} else {
+					params = new Expression[] {ps};
+				}
+			} else {
+				params = new Expression[0];
+			}
+//			final List<Expression<?>> params = new ArrayList<Expression<?>>();
+//			if (args.length() != 0) {
+//				final int p = 0;
+//				int j = 0;
+//				for (int i = 0; i != -1 && i <= args.length(); i = next(args, i, context)) {
+//					if (i == args.length() || args.charAt(i) == ',') {
+//						final Expression<?> e = new SkriptParser("" + args.substring(j, i).trim(), flags | PARSE_LITERALS, context).parseExpression(function.getParameter(p).getType().getC());
+//						if (e == null) {
+//							log.printError("Can't understand this expression: '" + args.substring(j, i) + "'", ErrorQuality.NOT_AN_EXPRESSION);
+//							return null;
+//						}
+//						params.add(e);
+//						j = i + 1;
+//					}
+//				}
+//			}
+//			@SuppressWarnings("null")
+			final FunctionReference<T> e = new FunctionReference<T>(functionName, SkriptLogger.getNode(), ScriptLoader.currentScript != null ? ScriptLoader.currentScript.getFile() : null, types, params);//.toArray(new Expression[params.size()]));
+			if (!e.validateFunction(true)) {
+				log.printError();
+				return null;
 			}
 			log.printLog();
-			return null;
+			return e;
 		} finally {
 			log.stop();
 		}
@@ -894,7 +922,7 @@ public class SkriptParser {
 	
 	/**
 	 * @param cs
-	 * @return "not x" or "neither x, y nor z"
+	 * @return "not an x" or "neither an x, a y nor a z"
 	 */
 	public final static String notOfType(final Class<?>... cs) {
 		if (cs.length == 1) {

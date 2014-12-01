@@ -73,7 +73,7 @@ public class Comparators {
 	
 	private final static java.util.Comparator<Object> javaComparator = new java.util.Comparator<Object>() {
 		@Override
-		public int compare(final Object o1, final Object o2) {
+		public int compare(final @Nullable Object o1, final @Nullable Object o2) {
 			return Comparators.compare(o1, o2).getRelation();
 		}
 	};

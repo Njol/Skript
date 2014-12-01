@@ -177,10 +177,10 @@ public class UnparsedLiteral implements Literal<Object> {
 //	private <T> Literal<T> convert(final Class<T> to, final Parser<?> parser, final ParseContext context) {
 //		assert parser.canParse(context);
 //		final SimpleLog log = SkriptLogger.startSubLog();
-//		
+//
 //		String last = data;
 //		LogEntry lastError = null;
-//		
+//
 //		final T r = (T) parser.parse(data, context);
 //		if (r != null) {
 //			log.stop();
@@ -189,7 +189,7 @@ public class UnparsedLiteral implements Literal<Object> {
 //		}
 //		lastError = log.getFirstError();
 //		log.clear();
-//		
+//
 //		final Deque<T> ts = new LinkedList<T>();
 //		final Matcher m = SkriptParser.listSplitPattern.matcher(data);
 //		int end = data.length();

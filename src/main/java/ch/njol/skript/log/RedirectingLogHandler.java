@@ -54,7 +54,7 @@ public class RedirectingLogHandler extends LogHandler {
 			SkriptLogger.LOGGER.log(entry.getLevel(), prefix + entry.toString());
 		if (entry.level == Level.SEVERE)
 			numErrors++;
-		return LogResult.DONT_LOG;
+		return LogResult.DO_NOT_LOG;
 	}
 	
 	public int numErrors() {

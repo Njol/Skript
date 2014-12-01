@@ -27,6 +27,7 @@ import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -37,6 +38,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import org.eclipse.jdt.annotation.Nullable;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.hooks.regions.classes.Region;
 import ch.njol.skript.util.AABB;
 import ch.njol.skript.variables.Variables;
@@ -45,6 +47,7 @@ import ch.njol.yggdrasil.YggdrasilID;
 
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 /**
@@ -53,6 +56,14 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 	
 	public WorldGuardHook() throws IOException {}
+	
+	boolean supportsUUIDs;
+	
+	@Override
+	protected boolean init() {
+		supportsUUIDs = Skript.methodExists(DefaultDomain.class, "getUniqueIds");
+		return super.init();
+	}
 	
 	@Override
 	public String getName() {
@@ -74,6 +85,11 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 		final World world;
 		private transient ProtectedRegion region;
 		
+		@SuppressWarnings({"null", "unused"})
+		private WorldGuardRegion() {
+			world = null;
+		}
+		
 		public WorldGuardRegion(final World w, final ProtectedRegion r) {
 			world = w;
 			region = r;
@@ -84,32 +100,58 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 			return l.getWorld().equals(world) && region.contains(l.getBlockX(), l.getBlockY(), l.getBlockZ());
 		}
 		
+		@SuppressWarnings("deprecation")
 		@Override
 		public boolean isMember(final OfflinePlayer p) {
-			return region.isMember(p.getName());
+			if (supportsUUIDs)
+				return region.isMember(plugin.wrapOfflinePlayer(p));
+			else
+				return region.isMember(p.getName());
 		}
 		
+		@SuppressWarnings("deprecation")
 		@Override
 		public Collection<OfflinePlayer> getMembers() {
-			final Collection<String> ps = region.getMembers().getPlayers();
-			final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ps.size());
-			for (final String p : ps)
-				r.add(Bukkit.getOfflinePlayer(p));
-			return r;
+			if (supportsUUIDs) {
+				final Collection<UUID> ids = region.getMembers().getUniqueIds();
+				final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ids.size());
+				for (final UUID id : ids)
+					r.add(Bukkit.getOfflinePlayer(id));
+				return r;
+			} else {
+				final Collection<String> ps = region.getMembers().getPlayers();
+				final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ps.size());
+				for (final String p : ps)
+					r.add(Bukkit.getOfflinePlayer(p));
+				return r;
+			}
 		}
 		
+		@SuppressWarnings("deprecation")
 		@Override
 		public boolean isOwner(final OfflinePlayer p) {
-			return region.isOwner(p.getName());
+			if (supportsUUIDs)
+				return region.isOwner(plugin.wrapOfflinePlayer(p));
+			else
+				return region.isOwner(p.getName());
 		}
 		
+		@SuppressWarnings("deprecation")
 		@Override
 		public Collection<OfflinePlayer> getOwners() {
-			final Collection<String> ps = region.getOwners().getPlayers();
-			final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ps.size());
-			for (final String p : ps)
-				r.add(Bukkit.getOfflinePlayer(p));
-			return r;
+			if (supportsUUIDs) {
+				final Collection<UUID> ids = region.getOwners().getUniqueIds();
+				final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ids.size());
+				for (final UUID id : ids)
+					r.add(Bukkit.getOfflinePlayer(id));
+				return r;
+			} else {
+				final Collection<String> ps = region.getOwners().getPlayers();
+				final Collection<OfflinePlayer> r = new ArrayList<OfflinePlayer>(ps.size());
+				for (final String p : ps)
+					r.add(Bukkit.getOfflinePlayer(p));
+				return r;
+			}
 		}
 		
 		@Override
@@ -124,7 +166,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 //				BlockVector2D current = iter.next();
 //				int height = 0;
 //				final int maxHeight = world.getMaxHeight();
-//				
+//
 //				@SuppressWarnings("null")
 //				@Override
 //				public boolean hasNext() {
@@ -134,7 +176,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 //					}
 //					return height < maxHeight;
 //				}
-//				
+//
 //				@SuppressWarnings("null")
 //				@Override
 //				public Block next() {
@@ -142,7 +184,7 @@ public class WorldGuardHook extends RegionsPlugin<WorldGuardPlugin> {
 //						throw new NoSuchElementException();
 //					return world.getBlockAt(current.getBlockX(), height++, current.getBlockZ());
 //				}
-//				
+//
 //				@Override
 //				public void remove() {
 //					throw new UnsupportedOperationException();
