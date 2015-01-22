@@ -215,7 +215,7 @@ public class Factions2Hook extends RegionsPlugin<Factions> {
 	@SuppressWarnings("null")
 	@Override
 	public Collection<? extends Region> getRegionsAt_i(final Location l) {
-		return Arrays.asList(new FactionsRegion(BoardColls.get().getFactionAt(PS.valueOf(l))));
+		return Arrays.asList(new FactionsRegion(BoardColl.get().getFactionAt(PS.valueOf(l)).getName()));
 	}
 	
 	@Override
