@@ -158,14 +158,12 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static Skript getInstance() {
 		final Skript i = instance;
-		if (i == null)
-			throw new IllegalStateException();
+		if (i == null) throw new NullPointerException("Instance is null.");
 		return i;
 	}
 	
 	public Skript() throws IllegalStateException {
-		if (instance != null)
-			throw new IllegalStateException("Cannot create multiple instances of Skript!");
+		if (instance != null) throw new IllegalStateException("Cannot create multiple instances of Skript!");
 		instance = this;
 	}
 	
@@ -174,8 +172,7 @@ public final class Skript extends JavaPlugin implements Listener {
 	
 	public static Version getVersion() {
 		final Version v = version;
-		if (v == null)
-			throw new IllegalStateException();
+		if (v == null) throw new NullPointerException("Version is null.");
 		return v;
 	}
 	
